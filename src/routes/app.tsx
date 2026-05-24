@@ -5,7 +5,7 @@ import { supabase } from "@/integrations/supabase/client";
 import type { Session } from "@supabase/supabase-js";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Minus, Plus, X, LogOut } from "lucide-react";
+import { Minus, Plus, X, LogOut, Printer } from "lucide-react";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
 
@@ -143,6 +143,10 @@ function AppPage() {
     navigate({ to: "/login" });
   };
 
+  const handlePrint = () => {
+    window.print();
+  };
+
   if (!authChecked || !session) {
     return (
       <div className="min-h-screen flex items-center justify-center text-sm text-muted-foreground">
@@ -157,24 +161,37 @@ function AppPage() {
 
   return (
     <main className="min-h-screen bg-background">
-      <div className="max-w-2xl mx-auto px-4 py-10 space-y-12">
-        <header className="flex items-center justify-between">
+      <style>{`
+        @media print {
+          @page { margin: 1.5cm; }
+          body { background: white !important; color: black !important; }
+          .print\:hidden { display: none !important; }
+        }
+      `}</style>
+      <div className="max-w-2xl mx-auto px-4 py-10 space-y-12 print:py-4">
+        <header className="flex items-center justify-between print:mb-4">
           <div>
             <h1 className="text-2xl font-semibold tracking-tight">Counter</h1>
-            <p className="text-xs text-muted-foreground mt-1">{session.user.email}</p>
+            <p className="text-xs text-muted-foreground mt-1 print:text-black/60">{session.user.email}</p>
           </div>
-          <Button variant="ghost" size="sm" onClick={signOut}>
-            <LogOut className="h-4 w-4 mr-2" />
-            Sign out
-          </Button>
+          <div className="flex items-center gap-2">
+            <Button variant="ghost" size="sm" onClick={handlePrint} className="print:hidden">
+              <Printer className="h-4 w-4 mr-2" />
+              Print
+            </Button>
+            <Button variant="ghost" size="sm" onClick={signOut} className="print:hidden">
+              <LogOut className="h-4 w-4 mr-2" />
+              Sign out
+            </Button>
+          </div>
         </header>
 
         <section className="space-y-4">
-          <h2 className="text-sm font-medium text-muted-foreground uppercase tracking-wide">
+          <h2 className="text-sm font-medium text-muted-foreground uppercase tracking-wide print:text-black/70">
             Items
           </h2>
 
-          <form onSubmit={addItem} className="flex gap-2">
+          <form onSubmit={addItem} className="flex gap-2 print:hidden">
             <Input
               placeholder="Add an item…"
               value={newName}
@@ -192,7 +209,7 @@ function AppPage() {
               No items yet. Add one above.
             </p>
           ) : (
-            <ul className="divide-y border rounded-md">
+            <ul className="divide-y border rounded-md print:border-black/20 print:divide-black/10">
               {items.map((item) => (
                 <li key={item.id} className="flex items-center gap-3 px-4 py-3">
                   <span className="flex-1 truncate">{item.name}</span>
@@ -200,20 +217,20 @@ function AppPage() {
                     <Button
                       variant="outline"
                       size="icon"
-                      className="h-8 w-8"
+                      className="h-8 w-8 print:hidden"
                       onClick={() => updateCount(item, -1)}
                       disabled={item.count === 0}
                       aria-label={`Decrease ${item.name}`}
                     >
                       <Minus className="h-4 w-4" />
                     </Button>
-                    <span className="w-8 text-center tabular-nums font-medium">
+                    <span className="w-8 text-center tabular-nums font-medium print:w-auto print:px-2">
                       {item.count}
                     </span>
                     <Button
                       variant="outline"
                       size="icon"
-                      className="h-8 w-8"
+                      className="h-8 w-8 print:hidden"
                       onClick={() => updateCount(item, 1)}
                       aria-label={`Increase ${item.name}`}
                     >
@@ -223,7 +240,7 @@ function AppPage() {
                   <Button
                     variant="ghost"
                     size="icon"
-                    className="h-8 w-8 text-muted-foreground hover:text-destructive"
+                    className="h-8 w-8 text-muted-foreground hover:text-destructive print:hidden"
                     onClick={() => deleteItem(item.id)}
                     aria-label={`Delete ${item.name}`}
                   >
@@ -237,13 +254,13 @@ function AppPage() {
 
         <section className="space-y-4">
           <div className="flex items-baseline justify-between">
-            <h2 className="text-sm font-medium text-muted-foreground uppercase tracking-wide">
+            <h2 className="text-sm font-medium text-muted-foreground uppercase tracking-wide print:text-black/70">
               Rooms
             </h2>
             <button
               type="button"
               onClick={resetRooms}
-              className="text-xs text-muted-foreground hover:text-foreground underline underline-offset-4"
+              className="text-xs text-muted-foreground hover:text-foreground underline underline-offset-4 print:hidden"
             >
               Reset all
             </button>
@@ -261,8 +278,8 @@ function AppPage() {
                     "aspect-square rounded-md border text-sm font-medium transition-colors",
                     "tabular-nums",
                     done
-                      ? "bg-muted text-muted-foreground line-through border-transparent"
-                      : "bg-background hover:bg-accent",
+                      ? "bg-muted text-muted-foreground line-through border-transparent print:bg-black/10 print:text-black/40 print:border-black/20 print:line-through"
+                      : "bg-background hover:bg-accent print:bg-white print:text-black print:border-black/40",
                   )}
                   aria-pressed={done}
                   aria-label={`Room ${n}${done ? " done" : ""}`}
