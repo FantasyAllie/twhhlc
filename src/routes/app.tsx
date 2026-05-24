@@ -224,7 +224,7 @@ function AppPage() {
                     >
                       <Minus className="h-4 w-4" />
                     </Button>
-                    <span className="w-8 text-center tabular-nums font-medium">
+                    <span className="w-8 text-center tabular-nums font-medium print:w-auto print:px-2">
                       {item.count}
                     </span>
                     <Button
