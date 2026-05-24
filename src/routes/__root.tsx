@@ -73,14 +73,18 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
     meta: [
       { charSet: "utf-8" },
       { name: "viewport", content: "width=device-width, initial-scale=1" },
-      { title: "Lovable App" },
-      { name: "description", content: "Lovable Generated Project" },
+      { title: "Counter" },
+      { name: "description", content: "Item Counter Plus is a digital tool for tracking and managing multiple item counts with room assignment functionality." },
       { name: "author", content: "Lovable" },
-      { property: "og:title", content: "Lovable App" },
-      { property: "og:description", content: "Lovable Generated Project" },
+      { property: "og:title", content: "Counter" },
+      { property: "og:description", content: "Item Counter Plus is a digital tool for tracking and managing multiple item counts with room assignment functionality." },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary" },
       { name: "twitter:site", content: "@Lovable" },
+      { name: "twitter:title", content: "Counter" },
+      { name: "twitter:description", content: "Item Counter Plus is a digital tool for tracking and managing multiple item counts with room assignment functionality." },
+      { property: "og:image", content: "https://pub-bb2e103a32db4e198524a2e9ed8f35b4.r2.dev/e186d390-09c6-4909-bc94-d564c336e411/id-preview-a9ec80fc--08069dca-d536-45f9-85ab-1855c11135fd.lovable.app-1779607106677.png" },
+      { name: "twitter:image", content: "https://pub-bb2e103a32db4e198524a2e9ed8f35b4.r2.dev/e186d390-09c6-4909-bc94-d564c336e411/id-preview-a9ec80fc--08069dca-d536-45f9-85ab-1855c11135fd.lovable.app-1779607106677.png" },
     ],
     links: [
       {
