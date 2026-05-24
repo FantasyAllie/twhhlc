@@ -209,7 +209,7 @@ function AppPage() {
               No items yet. Add one above.
             </p>
           ) : (
-            <ul className="divide-y border rounded-md">
+            <ul className="divide-y border rounded-md print:border-black/20 print:divide-black/10">
               {items.map((item) => (
                 <li key={item.id} className="flex items-center gap-3 px-4 py-3">
                   <span className="flex-1 truncate">{item.name}</span>
