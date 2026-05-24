@@ -187,7 +187,7 @@ function AppPage() {
         </header>
 
         <section className="space-y-4">
-          <h2 className="text-sm font-medium text-muted-foreground uppercase tracking-wide">
+          <h2 className="text-sm font-medium text-muted-foreground uppercase tracking-wide print:text-black/70">
             Items
           </h2>
 
