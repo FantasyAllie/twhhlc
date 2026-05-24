@@ -260,7 +260,7 @@ function AppPage() {
             <button
               type="button"
               onClick={resetRooms}
-              className="text-xs text-muted-foreground hover:text-foreground underline underline-offset-4"
+              className="text-xs text-muted-foreground hover:text-foreground underline underline-offset-4 print:hidden"
             >
               Reset all
             </button>
