@@ -278,8 +278,8 @@ function AppPage() {
                     "aspect-square rounded-md border text-sm font-medium transition-colors",
                     "tabular-nums",
                     done
-                      ? "bg-muted text-muted-foreground line-through border-transparent"
-                      : "bg-background hover:bg-accent",
+                      ? "bg-muted text-muted-foreground line-through border-transparent print:bg-black/10 print:text-black/40 print:border-black/20 print:line-through"
+                      : "bg-background hover:bg-accent print:bg-white print:text-black print:border-black/40",
                   )}
                   aria-pressed={done}
                   aria-label={`Room ${n}${done ? " done" : ""}`}
