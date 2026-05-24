@@ -217,7 +217,7 @@ function AppPage() {
                     <Button
                       variant="outline"
                       size="icon"
-                      className="h-8 w-8"
+                      className="h-8 w-8 print:hidden"
                       onClick={() => updateCount(item, -1)}
                       disabled={item.count === 0}
                       aria-label={`Decrease ${item.name}`}
