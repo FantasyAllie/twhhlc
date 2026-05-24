@@ -143,6 +143,10 @@ function AppPage() {
     navigate({ to: "/login" });
   };
 
+  const handlePrint = () => {
+    window.print();
+  };
+
   if (!authChecked || !session) {
     return (
       <div className="min-h-screen flex items-center justify-center text-sm text-muted-foreground">
