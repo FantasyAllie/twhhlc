@@ -230,7 +230,7 @@ function AppPage() {
                     <Button
                       variant="outline"
                       size="icon"
-                      className="h-8 w-8"
+                      className="h-8 w-8 print:hidden"
                       onClick={() => updateCount(item, 1)}
                       aria-label={`Increase ${item.name}`}
                     >
