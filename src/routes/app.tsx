@@ -191,7 +191,7 @@ function AppPage() {
             Items
           </h2>
 
-          <form onSubmit={addItem} className="flex gap-2">
+          <form onSubmit={addItem} className="flex gap-2 print:hidden">
             <Input
               placeholder="Add an item…"
               value={newName}
