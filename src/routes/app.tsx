@@ -161,16 +161,29 @@ function AppPage() {
 
   return (
     <main className="min-h-screen bg-background">
-      <div className="max-w-2xl mx-auto px-4 py-10 space-y-12">
-        <header className="flex items-center justify-between">
+      <style>{`
+        @media print {
+          @page { margin: 1.5cm; }
+          body { background: white !important; color: black !important; }
+          .print\:hidden { display: none !important; }
+        }
+      `}</style>
+      <div className="max-w-2xl mx-auto px-4 py-10 space-y-12 print:py-4">
+        <header className="flex items-center justify-between print:mb-4">
           <div>
             <h1 className="text-2xl font-semibold tracking-tight">Counter</h1>
-            <p className="text-xs text-muted-foreground mt-1">{session.user.email}</p>
+            <p className="text-xs text-muted-foreground mt-1 print:text-black/60">{session.user.email}</p>
           </div>
-          <Button variant="ghost" size="sm" onClick={signOut}>
-            <LogOut className="h-4 w-4 mr-2" />
-            Sign out
-          </Button>
+          <div className="flex items-center gap-2">
+            <Button variant="ghost" size="sm" onClick={handlePrint} className="print:hidden">
+              <Printer className="h-4 w-4 mr-2" />
+              Print
+            </Button>
+            <Button variant="ghost" size="sm" onClick={signOut} className="print:hidden">
+              <LogOut className="h-4 w-4 mr-2" />
+              Sign out
+            </Button>
+          </div>
         </header>
 
         <section className="space-y-4">
