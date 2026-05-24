@@ -240,7 +240,7 @@ function AppPage() {
                   <Button
                     variant="ghost"
                     size="icon"
-                    className="h-8 w-8 text-muted-foreground hover:text-destructive"
+                    className="h-8 w-8 text-muted-foreground hover:text-destructive print:hidden"
                     onClick={() => deleteItem(item.id)}
                     aria-label={`Delete ${item.name}`}
                   >
