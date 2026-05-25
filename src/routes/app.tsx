@@ -221,60 +221,6 @@ function AppPage() {
     }
   };
 
-  const applyDefaultsToRoom = async (roomNumber: number) => {
-    const cat = roomCategory(roomNumber);
-    if (!cat) return;
-    const items = template.filter((t) => t.category === cat && t.default_count > 0);
-    if (items.length === 0) {
-      toast.message("No defaults set for this category.");
-      return;
-    }
-
-    qc.setQueryData<RoomCount[]>(["room_counts"], (old) => {
-      const list = old ? [...old] : [];
-      for (const item of items) {
-        const current = list.find(
-          (c) => c.room_number === roomNumber && c.item_kind === "template" && c.item_id === item.id,
-        )?.count ?? 0;
-        const next = current + item.default_count;
-        const idx = list.findIndex(
-          (c) => c.room_number === roomNumber && c.item_kind === "template" && c.item_id === item.id,
-        );
-        if (idx >= 0) list[idx] = { ...list[idx], count: next };
-        else
-          list.push({
-            id: `temp-${roomNumber}-template-${item.id}`,
-            room_number: roomNumber,
-            item_kind: "template",
-            item_id: item.id,
-            count: next,
-          });
-      }
-      return list;
-    });
-
-    const nowIso = new Date().toISOString();
-    const rows = items.map((item) => {
-      const current = counts.find(
-        (c) => c.room_number === roomNumber && c.item_kind === "template" && c.item_id === item.id,
-      )?.count ?? 0;
-      return {
-        room_number: roomNumber,
-        item_kind: "template",
-        item_id: item.id,
-        count: current + item.default_count,
-        updated_at: nowIso,
-      };
-    });
-    const { error } = await supabase
-      .from("room_item_counts")
-      .upsert(rows, { onConflict: "user_id,room_number,item_kind,item_id" });
-    if (error) {
-      toast.error(error.message);
-      qc.invalidateQueries({ queryKey: ["room_counts"] });
-    }
-  };
-
  const deleteExtra = async (id: string) => {
  qc.setQueryData<RoomExtra[]>(["room_extras"], (old) =>
  old?.filter((e) => e.id !== id) ?? [],
