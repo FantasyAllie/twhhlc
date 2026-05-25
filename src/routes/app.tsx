@@ -410,11 +410,13 @@ function AppPage() {
         <div className="flex items-center justify-between text-xs text-muted-foreground print:hidden">
           <button
             type="button"
-            onClick={() => markNotDone(n)}
-            className="underline underline-offset-4 hover:text-foreground"
-            disabled={!doneSet.has(n)}
+            onClick={() => toggleRoom(n)}
+            className={cn(
+              "underline underline-offset-4 hover:text-foreground",
+              doneSet.has(n) && "text-emerald-600",
+            )}
           >
-            Mark not done
+            {doneSet.has(n) ? "Mark as not done" : "Mark as done"}
           </button>
           <button
             type="button"
