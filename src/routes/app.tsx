@@ -546,6 +546,18 @@ function AppPage() {
  </Button>
  </form>
 
+      {cat && visibleTemplate.some((t) => t.default_count > 0) && (
+        <Button
+          type="button"
+          variant="outline"
+          className="w-full h-10"
+          onClick={() => applyDefaultsToRoom(n)}
+        >
+          <ListPlus className="h-4 w-4 mr-2" />
+          Add all defaults
+        </Button>
+      )}
+
  <div className="flex gap-2">
  <Button
  type="button"
