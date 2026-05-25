@@ -14,26 +14,56 @@ export type Database = {
   }
   public: {
     Tables: {
-      items: {
+      room_extra_items: {
         Row: {
-          count: number
           created_at: string
           id: string
           name: string
+          room_number: number
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          name: string
+          room_number: number
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          name?: string
+          room_number?: number
+          user_id?: string
+        }
+        Relationships: []
+      }
+      room_item_counts: {
+        Row: {
+          count: number
+          id: string
+          item_id: string
+          item_kind: string
+          room_number: number
+          updated_at: string
           user_id: string
         }
         Insert: {
           count?: number
-          created_at?: string
           id?: string
-          name: string
+          item_id: string
+          item_kind: string
+          room_number: number
+          updated_at?: string
           user_id: string
         }
         Update: {
           count?: number
-          created_at?: string
           id?: string
-          name?: string
+          item_id?: string
+          item_kind?: string
+          room_number?: number
+          updated_at?: string
           user_id?: string
         }
         Relationships: []
@@ -58,6 +88,27 @@ export type Database = {
           id?: string
           room_number?: number
           updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      template_items: {
+        Row: {
+          created_at: string
+          id: string
+          name: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          name: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          name?: string
           user_id?: string
         }
         Relationships: []
