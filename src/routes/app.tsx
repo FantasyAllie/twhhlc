@@ -452,36 +452,46 @@ function AppPage() {
  </p>
  ) : (
  <ul className="divide-y">
- {visibleTemplate.map((item) => {
- const count = getCount(n, "template", item.id);
- return (
- <li key={`t-${item.id}`} className="flex items-center gap-3 py-2">
- <span className="flex-1 truncate">{item.name}</span>
- <div className="flex items-center gap-1">
- <Button
- variant="outline"
- size="icon"
- className="h-8 w-8"
- onClick={() => updateCount(n, "template", item.id, -1)}
- disabled={count === 0}
- aria-label={`Decrease ${item.name}`}
- >
- <Minus className="h-4 w-4" />
- </Button>
- <span className="w-8 text-center tabular-nums font-medium">{count}</span>
- <Button
- variant="outline"
- size="icon"
- className="h-8 w-8"
- onClick={() => updateCount(n, "template", item.id, 1)}
- aria-label={`Increase ${item.name}`}
- >
- <Plus className="h-4 w-4" />
- </Button>
- </div>
- </li>
- );
- })}
+  {visibleTemplate.map((item) => {
+  const count = getCount(n, "template", item.id);
+  return (
+  <li key={`t-${item.id}`} className="flex items-center gap-3 py-2">
+  <span className="flex-1 truncate">{item.name}</span>
+  <div className="flex items-center gap-1">
+  <Button
+  variant="outline"
+  size="icon"
+  className="h-8 w-8"
+  onClick={() => updateCount(n, "template", item.id, -1)}
+  disabled={count === 1}
+  aria-label={`Decrease ${item.name}`}
+  >
+  <Minus className="h-4 w-4" />
+  </Button>
+  <span className="w-8 text-center tabular-nums font-medium">{count}</span>
+  <Button
+  variant="outline"
+  size="icon"
+  className="h-8 w-8"
+  onClick={() => updateCount(n, "template", item.id, 1)}
+  aria-label={`Increase ${item.name}`}
+  >
+  <Plus className="h-4 w-4" />
+  </Button>
+  {item.default_count > 0 && (
+  <Button
+  variant="outline"
+  size="sm"
+  className="h-8 text-xs ml-1"
+  onClick={() => updateCount(n, "template", item.id, item.default_count)}
+  >
+  +All
+  </Button>
+  )}
+  </div>
+  </li>
+  );
+  })}
  {roomExtras.map((item) => {
  const count = getCount(n, "extra", item.id);
  return (
