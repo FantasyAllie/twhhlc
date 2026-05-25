@@ -1,11 +1,10 @@
-import { useEffect, useState } from "react";
-import { createFileRoute, useNavigate } from "@tanstack/react-router";
+import { useState } from "react";
+import { createFileRoute } from "@tanstack/react-router";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
-import type { Session } from "@supabase/supabase-js";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Minus, Plus, X, LogOut, Printer, ChevronDown } from "lucide-react";
+import { Minus, Plus, X, Printer, ChevronDown } from "lucide-react";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
 
@@ -31,34 +30,14 @@ type RoomCount = {
 type Room = { id: string; room_number: number; done: boolean };
 
 function AppPage() {
-  const navigate = useNavigate();
   const qc = useQueryClient();
-  const [session, setSession] = useState<Session | null>(null);
-  const [authChecked, setAuthChecked] = useState(false);
   const [openRoom, setOpenRoom] = useState<number | null>(null);
   const [showTemplate, setShowTemplate] = useState(false);
   const [newTemplateName, setNewTemplateName] = useState("");
   const [newExtraName, setNewExtraName] = useState("");
 
-  useEffect(() => {
-    const { data: sub } = supabase.auth.onAuthStateChange((_e, s) => {
-      setSession(s);
-      if (!s && authChecked) navigate({ to: "/login" });
-    });
-    supabase.auth.getSession().then(({ data }) => {
-      setSession(data.session);
-      setAuthChecked(true);
-      if (!data.session) navigate({ to: "/login" });
-    });
-    return () => sub.subscription.unsubscribe();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
-
-  const userId = session?.user.id;
-
   const templateQ = useQuery({
-    queryKey: ["template_items", userId],
-    enabled: !!userId,
+    queryKey: ["template_items"],
     queryFn: async (): Promise<TemplateItem[]> => {
       const { data, error } = await supabase
         .from("template_items")
@@ -70,8 +49,7 @@ function AppPage() {
   });
 
   const extrasQ = useQuery({
-    queryKey: ["room_extras", userId],
-    enabled: !!userId,
+    queryKey: ["room_extras"],
     queryFn: async (): Promise<RoomExtra[]> => {
       const { data, error } = await supabase
         .from("room_extra_items")
@@ -83,8 +61,7 @@ function AppPage() {
   });
 
   const countsQ = useQuery({
-    queryKey: ["room_counts", userId],
-    enabled: !!userId,
+    queryKey: ["room_counts"],
     queryFn: async (): Promise<RoomCount[]> => {
       const { data, error } = await supabase
         .from("room_item_counts")
@@ -95,8 +72,7 @@ function AppPage() {
   });
 
   const roomsQ = useQuery({
-    queryKey: ["rooms", userId],
-    enabled: !!userId,
+    queryKey: ["rooms"],
     queryFn: async (): Promise<Room[]> => {
       const { data, error } = await supabase
         .from("rooms")
@@ -122,54 +98,54 @@ function AppPage() {
   const addTemplateItem = async (e: React.FormEvent) => {
     e.preventDefault();
     const name = newTemplateName.trim();
-    if (!name || !userId) return;
+    if (!name) return;
     setNewTemplateName("");
     const { error } = await supabase
       .from("template_items")
-      .insert({ name, user_id: userId });
+      .insert({ name });
     if (error) toast.error(error.message);
-    qc.invalidateQueries({ queryKey: ["template_items", userId] });
+    qc.invalidateQueries({ queryKey: ["template_items"] });
   };
 
   const deleteTemplateItem = async (id: string) => {
-    qc.setQueryData<TemplateItem[]>(["template_items", userId], (old) =>
+    qc.setQueryData<TemplateItem[]>(["template_items"], (old) =>
       old?.filter((i) => i.id !== id) ?? [],
     );
-    qc.setQueryData<RoomCount[]>(["room_counts", userId], (old) =>
+    qc.setQueryData<RoomCount[]>(["room_counts"], (old) =>
       old?.filter((c) => !(c.item_kind === "template" && c.item_id === id)) ?? [],
     );
     const { error } = await supabase.from("template_items").delete().eq("id", id);
     if (error) {
       toast.error(error.message);
-      qc.invalidateQueries({ queryKey: ["template_items", userId] });
-      qc.invalidateQueries({ queryKey: ["room_counts", userId] });
+      qc.invalidateQueries({ queryKey: ["template_items"] });
+      qc.invalidateQueries({ queryKey: ["room_counts"] });
     }
   };
 
   // --- Room extras ---
   const addExtra = async (roomNumber: number) => {
     const name = newExtraName.trim();
-    if (!name || !userId) return;
+    if (!name) return;
     setNewExtraName("");
     const { error } = await supabase
       .from("room_extra_items")
-      .insert({ name, user_id: userId, room_number: roomNumber });
+      .insert({ name, room_number: roomNumber });
     if (error) toast.error(error.message);
-    qc.invalidateQueries({ queryKey: ["room_extras", userId] });
+    qc.invalidateQueries({ queryKey: ["room_extras"] });
   };
 
   const deleteExtra = async (id: string) => {
-    qc.setQueryData<RoomExtra[]>(["room_extras", userId], (old) =>
+    qc.setQueryData<RoomExtra[]>(["room_extras"], (old) =>
       old?.filter((e) => e.id !== id) ?? [],
     );
-    qc.setQueryData<RoomCount[]>(["room_counts", userId], (old) =>
+    qc.setQueryData<RoomCount[]>(["room_counts"], (old) =>
       old?.filter((c) => !(c.item_kind === "extra" && c.item_id === id)) ?? [],
     );
     const { error } = await supabase.from("room_extra_items").delete().eq("id", id);
     if (error) {
       toast.error(error.message);
-      qc.invalidateQueries({ queryKey: ["room_extras", userId] });
-      qc.invalidateQueries({ queryKey: ["room_counts", userId] });
+      qc.invalidateQueries({ queryKey: ["room_extras"] });
+      qc.invalidateQueries({ queryKey: ["room_counts"] });
     }
   };
 
@@ -180,12 +156,11 @@ function AppPage() {
     itemId: string,
     delta: number,
   ) => {
-    if (!userId) return;
     const current = getCount(roomNumber, kind, itemId);
     const next = Math.max(0, current + delta);
     if (next === current) return;
 
-    qc.setQueryData<RoomCount[]>(["room_counts", userId], (old) => {
+    qc.setQueryData<RoomCount[]>(["room_counts"], (old) => {
       const list = old ? [...old] : [];
       const idx = list.findIndex(
         (c) => c.room_number === roomNumber && c.item_kind === kind && c.item_id === itemId,
@@ -206,7 +181,6 @@ function AppPage() {
       .from("room_item_counts")
       .upsert(
         {
-          user_id: userId,
           room_number: roomNumber,
           item_kind: kind,
           item_id: itemId,
@@ -217,17 +191,16 @@ function AppPage() {
       );
     if (error) {
       toast.error(error.message);
-      qc.invalidateQueries({ queryKey: ["room_counts", userId] });
+      qc.invalidateQueries({ queryKey: ["room_counts"] });
     }
   };
 
   // --- Room toggle ---
   const toggleRoom = async (roomNumber: number) => {
-    if (!userId) return;
     const existing = rooms.find((r) => r.room_number === roomNumber);
     const nextDone = !existing?.done;
 
-    qc.setQueryData<Room[]>(["rooms", userId], (old) => {
+    qc.setQueryData<Room[]>(["rooms"], (old) => {
       const list = old ? [...old] : [];
       const idx = list.findIndex((r) => r.room_number === roomNumber);
       if (idx >= 0) list[idx] = { ...list[idx], done: nextDone };
@@ -237,7 +210,6 @@ function AppPage() {
 
     const { error } = await supabase.from("rooms").upsert(
       {
-        user_id: userId,
         room_number: roomNumber,
         done: nextDone,
         updated_at: new Date().toISOString(),
@@ -245,7 +217,7 @@ function AppPage() {
       { onConflict: "user_id,room_number" },
     );
     if (error) toast.error(error.message);
-    qc.invalidateQueries({ queryKey: ["rooms", userId] });
+    qc.invalidateQueries({ queryKey: ["rooms"] });
   };
 
   const openOrToggle = (roomNumber: number) => {
@@ -258,48 +230,32 @@ function AppPage() {
   };
 
   const resetRoomCounts = async (roomNumber: number) => {
-    if (!userId) return;
-    qc.setQueryData<RoomCount[]>(["room_counts", userId], (old) =>
+    qc.setQueryData<RoomCount[]>(["room_counts"], (old) =>
       old?.filter((c) => c.room_number !== roomNumber) ?? [],
     );
     const { error } = await supabase
       .from("room_item_counts")
       .delete()
-      .eq("user_id", userId)
       .eq("room_number", roomNumber);
     if (error) toast.error(error.message);
-    qc.invalidateQueries({ queryKey: ["room_counts", userId] });
+    qc.invalidateQueries({ queryKey: ["room_counts"] });
   };
 
   const resetAll = async () => {
-    if (!userId) return;
     if (!confirm("Reset done state and counts for all 50 rooms?")) return;
-    qc.setQueryData<Room[]>(["rooms", userId], (old) =>
+    qc.setQueryData<Room[]>(["rooms"], (old) =>
       old?.map((r) => ({ ...r, done: false })) ?? [],
     );
-    qc.setQueryData<RoomCount[]>(["room_counts", userId], () => []);
+    qc.setQueryData<RoomCount[]>(["room_counts"], () => []);
     const [r1, r2] = await Promise.all([
-      supabase.from("rooms").update({ done: false }).eq("user_id", userId),
-      supabase.from("room_item_counts").delete().eq("user_id", userId),
+      supabase.from("rooms").update({ done: false }).neq("room_number", -1),
+      supabase.from("room_item_counts").delete().neq("room_number", -1),
     ]);
     if (r1.error) toast.error(r1.error.message);
     if (r2.error) toast.error(r2.error.message);
-    qc.invalidateQueries({ queryKey: ["rooms", userId] });
-    qc.invalidateQueries({ queryKey: ["room_counts", userId] });
+    qc.invalidateQueries({ queryKey: ["rooms"] });
+    qc.invalidateQueries({ queryKey: ["room_counts"] });
   };
-
-  const signOut = async () => {
-    await supabase.auth.signOut();
-    navigate({ to: "/login" });
-  };
-
-  if (!authChecked || !session) {
-    return (
-      <div className="min-h-screen flex items-center justify-center text-sm text-muted-foreground">
-        Loading…
-      </div>
-    );
-  }
 
   const roomsForPrint = Array.from({ length: 50 }, (_, i) => i + 1);
 
