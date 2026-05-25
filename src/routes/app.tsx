@@ -36,6 +36,22 @@ function AppPage() {
   const [newTemplateName, setNewTemplateName] = useState("");
   const [newExtraName, setNewExtraName] = useState("");
 
+  // Track responsive column count so we can insert the open-room panel
+  // right after the row containing the clicked room.
+  const [cols, setCols] = useState(10);
+  useEffect(() => {
+    const md = window.matchMedia("(min-width: 768px)");
+    const sm = window.matchMedia("(min-width: 640px)");
+    const update = () => setCols(md.matches ? 10 : sm.matches ? 8 : 5);
+    update();
+    md.addEventListener("change", update);
+    sm.addEventListener("change", update);
+    return () => {
+      md.removeEventListener("change", update);
+      sm.removeEventListener("change", update);
+    };
+  }, []);
+
   const templateQ = useQuery({
     queryKey: ["template_items"],
     queryFn: async (): Promise<TemplateItem[]> => {
