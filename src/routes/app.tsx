@@ -830,6 +830,85 @@ function AppPage() {
  </p>
  </section>
  </div>
+
+ <Dialog open={exportOpen} onOpenChange={setExportOpen}>
+ <DialogContent className="max-w-md">
+ <DialogHeader>
+ <DialogTitle>Export totals</DialogTitle>
+ <DialogDescription>
+ Totals across all rooms, grouped by item name.
+ </DialogDescription>
+ </DialogHeader>
+ {(() => {
+ const totals = new Map<string, number>();
+ const nameFor = (c: RoomCount) => {
+ if (c.item_kind === "template") {
+ return template.find((t) => t.id === c.item_id)?.name;
+ }
+ return extras.find((e) => e.id === c.item_id)?.name;
+ };
+ for (const c of counts) {
+ if (c.count <= 0) continue;
+ const raw = nameFor(c);
+ if (!raw) continue;
+ const key = raw.trim();
+ if (!key) continue;
+ totals.set(key, (totals.get(key) ?? 0) + c.count);
+ }
+ const rows = Array.from(totals.entries()).sort((a, b) =>
+ a[0].localeCompare(b[0], undefined, { sensitivity: "base" })
+ );
+ const grand = rows.reduce((s, [, n]) => s + n, 0);
+ const text = rows.map(([n, c]) => `${n}: ${c}`).join("\n");
+ if (rows.length === 0) {
+ return (
+ <p className="text-sm text-muted-foreground py-4">
+ No counted items yet.
+ </p>
+ );
+ }
+ return (
+ <div className="space-y-4">
+ <ul className="divide-y rounded-md border">
+ {rows.map(([name, count]) => (
+ <li
+ key={name}
+ className="flex items-center justify-between px-3 py-2 text-sm"
+ >
+ <span className="truncate pr-3">{name}</span>
+ <span className="font-mono font-semibold tabular-nums">
+ {count}
+ </span>
+ </li>
+ ))}
+ </ul>
+ <div className="flex items-center justify-between text-sm">
+ <span className="text-muted-foreground">
+ {rows.length} item{rows.length === 1 ? "" : "s"}
+ </span>
+ <span className="font-medium">Total: {grand}</span>
+ </div>
+ <div className="flex justify-end gap-2">
+ <Button
+ variant="outline"
+ size="sm"
+ onClick={async () => {
+ try {
+ await navigator.clipboard.writeText(text);
+ toast.success("Copied to clipboard");
+ } catch {
+ toast.error("Copy failed");
+ }
+ }}
+ >
+ Copy
+ </Button>
+ </div>
+ </div>
+ );
+ })()}
+ </DialogContent>
+ </Dialog>
  </main>
  );
 }
