@@ -281,26 +281,48 @@ function AppPage() {
  qc.invalidateQueries({ queryKey: ["room_counts"] });
  }
 
- // Auto-mark room as done when any item becomes positive.
- if (next > 0) {
- const room = rooms.find((r) => r.room_number === roomNumber);
- if (!room?.done) {
- qc.setQueryData<Room[]>(["rooms"], (old) => {
- const list = old ? [...old] : [];
- const idx = list.findIndex((r) => r.room_number === roomNumber);
- if (idx >= 0) list[idx] = { ...list[idx], done: true };
- else list.push({ id: `temp-${roomNumber}`, room_number: roomNumber, done: true, category: null });
- return list;
- });
- const { error: roomErr } = await supabase.from("rooms").upsert(
- { room_number: roomNumber, done: true, updated_at: new Date().toISOString() },
- { onConflict: "user_id,room_number" },
- );
- if (roomErr) toast.error(roomErr.message);
- qc.invalidateQueries({ queryKey: ["rooms"] });
- }
- }
- };
+  // Auto-mark room as done when any item becomes positive.
+  if (next > 0) {
+  const room = rooms.find((r) => r.room_number === roomNumber);
+  if (!room?.done) {
+  qc.setQueryData<Room[]>(["rooms"], (old) => {
+  const list = old ? [...old] : [];
+  const idx = list.findIndex((r) => r.room_number === roomNumber);
+  if (idx >= 0) list[idx] = { ...list[idx], done: true };
+  else list.push({ id: `temp-${roomNumber}`, room_number: roomNumber, done: true, category: null });
+  return list;
+  });
+  const { error: roomErr } = await supabase.from("rooms").upsert(
+  { room_number: roomNumber, done: true, updated_at: new Date().toISOString() },
+  { onConflict: "user_id,room_number" },
+  );
+  if (roomErr) toast.error(roomErr.message);
+  qc.invalidateQueries({ queryKey: ["rooms"] });
+  }
+  }
+
+  // Auto-mark room as not done when no items have counts above default.
+  const roomCountsAfter = (qc.getQueryData<RoomCount[]>(["room_counts"]) ?? [])
+  .filter((c) => c.room_number === roomNumber);
+  const anyMarked = roomCountsAfter.some((c) => c.count > 1);
+  if (!anyMarked) {
+  const room = rooms.find((r) => r.room_number === roomNumber);
+  if (room?.done) {
+  qc.setQueryData<Room[]>(["rooms"], (old) => {
+  const list = old ? [...old] : [];
+  const idx = list.findIndex((r) => r.room_number === roomNumber);
+  if (idx >= 0) list[idx] = { ...list[idx], done: false };
+  return list;
+  });
+  const { error: roomErr } = await supabase.from("rooms").upsert(
+  { room_number: roomNumber, done: false, updated_at: new Date().toISOString() },
+  { onConflict: "user_id,room_number" },
+  );
+  if (roomErr) toast.error(roomErr.message);
+  qc.invalidateQueries({ queryKey: ["rooms"] });
+  }
+  }
+  };
 
  // --- Room toggle ---
  const toggleRoom = async (roomNumber: number) => {
