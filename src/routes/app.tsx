@@ -493,14 +493,18 @@ function AppPage() {
           </div>
 
           {/* On-screen interactive accordion */}
-          <div className="space-y-3 print:hidden">
-            <div className="grid grid-cols-5 sm:grid-cols-8 md:grid-cols-10 gap-2">
-              {Array.from({ length: 50 }, (_, i) => i + 1).map((n) => {
+          <div className="print:hidden grid grid-cols-5 sm:grid-cols-8 md:grid-cols-10 gap-2">
+            {(() => {
+              const allRooms = Array.from({ length: 50 }, (_, i) => i + 1);
+              const openRowEnd =
+                openRoom !== null ? Math.ceil(openRoom / cols) * cols : null;
+              const nodes: React.ReactNode[] = [];
+              for (const n of allRooms) {
                 const done = doneSet.has(n);
                 const isOpen = openRoom === n;
-                return (
+                nodes.push(
                   <button
-                    key={n}
+                    key={`r-${n}`}
                     type="button"
                     onClick={() => openOrToggle(n)}
                     className={cn(
@@ -516,25 +520,28 @@ function AppPage() {
                     aria-label={`Room ${n}${done ? " done" : ""}`}
                   >
                     {n}
-                  </button>
+                  </button>,
                 );
-              })}
-            </div>
-            {openRoom !== null && (
-              <div className="space-y-2">
-                <div className="flex items-center justify-between">
-                  <h3 className="text-sm font-semibold">Room {openRoom}</h3>
-                  <button
-                    type="button"
-                    onClick={() => setOpenRoom(null)}
-                    className="text-xs text-muted-foreground hover:text-foreground underline underline-offset-4"
-                  >
-                    Close
-                  </button>
-                </div>
-                {renderRoomPanel(openRoom)}
-              </div>
-            )}
+                if (n === openRowEnd && openRoom !== null) {
+                  nodes.push(
+                    <div key={`panel-${openRoom}`} className="col-span-full space-y-2 mt-1">
+                      <div className="flex items-center justify-between">
+                        <h3 className="text-sm font-semibold">Room {openRoom}</h3>
+                        <button
+                          type="button"
+                          onClick={() => setOpenRoom(null)}
+                          className="text-xs text-muted-foreground hover:text-foreground underline underline-offset-4"
+                        >
+                          Close
+                        </button>
+                      </div>
+                      {renderRoomPanel(openRoom)}
+                    </div>,
+                  );
+                }
+              }
+              return nodes;
+            })()}
           </div>
 
           {/* Print-only: every room expanded */}
