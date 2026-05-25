@@ -691,88 +691,115 @@ function AppPage() {
  <DialogHeader>
  <DialogTitle>Template items</DialogTitle>
  <DialogDescription>
- Items shown in each room based on the room's category.
+  Pick which rooms each item should show up in.
  </DialogDescription>
  </DialogHeader>
- <Tabs value={templateTab} onValueChange={(v) => { setTemplateTab(v as Category); setNewTemplateCategory(v as Category); }}>
- <TabsList className="grid grid-cols-3 w-full">
- {CATEGORIES.map((c) => (
- <TabsTrigger key={c.value} value={c.value}>{c.label}</TabsTrigger>
- ))}
- </TabsList>
- {CATEGORIES.map((c) => {
- const items = template.filter((t) => t.category === c.value);
- return (
- <TabsContent key={c.value} value={c.value} className="space-y-3">
- <form
- onSubmit={(e) => { setNewTemplateCategory(c.value); addTemplateItem(e); }}
- className="flex gap-2"
- >
- <Input
- placeholder={`Add a ${c.label} item…`}
- value={newTemplateCategory === c.value ? newTemplateName : ""}
- onChange={(e) => { setNewTemplateCategory(c.value); setNewTemplateName(e.target.value); }}
- />
- <Button type="submit" disabled={!(newTemplateCategory === c.value && newTemplateName.trim())}>
- Add
- </Button>
- </form>
- {items.length === 0 ? (
- <p className="text-sm text-muted-foreground">No items yet.</p>
- ) : (
- <ul className="divide-y border-t">
- {items.map((item, idx) => (
- <li key={item.id} className="flex items-center gap-3 py-2">
- <span className="flex-1 truncate">{item.name}</span>
-                          <label className="flex items-center gap-1 text-xs text-muted-foreground">
-                            Default
-                            <Input
-                              type="number"
-                              min={0}
-                              value={item.default_count}
-                              onChange={(e) =>
-                                setTemplateDefault(item.id, Number(e.target.value))
-                              }
-                              className="h-8 w-16 text-center"
-                            />
-                          </label>
- <Button
- variant="ghost"
- size="icon"
- className="h-8 w-8 text-muted-foreground"
- onClick={() => moveTemplateItem(item.id, -1)}
- disabled={idx === 0}
- aria-label={`Move ${item.name} up`}
- >
- <ArrowUp className="h-4 w-4" />
- </Button>
- <Button
- variant="ghost"
- size="icon"
- className="h-8 w-8 text-muted-foreground"
- onClick={() => moveTemplateItem(item.id, 1)}
- disabled={idx === items.length - 1}
- aria-label={`Move ${item.name} down`}
- >
- <ArrowDown className="h-4 w-4" />
- </Button>
- <Button
- variant="ghost"
- size="icon"
- className="h-8 w-8 text-muted-foreground hover:text-destructive"
- onClick={() => deleteTemplateItem(item.id)}
- aria-label={`Delete ${item.name}`}
- >
- <X className="h-4 w-4" />
- </Button>
- </li>
- ))}
- </ul>
- )}
- </TabsContent>
- );
- })}
- </Tabs>
+  <div className="space-y-3">
+    <form onSubmit={addTemplateItem} className="flex gap-2">
+      <Input
+        placeholder="Add an item…"
+        value={newTemplateName}
+        onChange={(e) => setNewTemplateName(e.target.value)}
+      />
+      <Button type="submit" disabled={!newTemplateName.trim()}>
+        Add
+      </Button>
+    </form>
+    {template.length === 0 ? (
+      <p className="text-sm text-muted-foreground">No items yet.</p>
+    ) : (
+      <ul className="divide-y border-t max-h-[60vh] overflow-y-auto -mx-6 px-6">
+        {template.map((item, idx) => {
+          const assignedCount = assignments.filter(
+            (a) => a.template_item_id === item.id,
+          ).length;
+          return (
+            <li key={item.id} className="flex items-center gap-2 py-2">
+              <span className="flex-1 truncate">{item.name}</span>
+              <label className="flex items-center gap-1 text-xs text-muted-foreground">
+                Default
+                <Input
+                  type="number"
+                  min={0}
+                  value={item.default_count}
+                  onChange={(e) =>
+                    setTemplateDefault(item.id, Number(e.target.value))
+                  }
+                  className="h-8 w-14 text-center"
+                />
+              </label>
+              <Popover>
+                <PopoverTrigger asChild>
+                  <Button variant="outline" size="sm" className="h-8 text-xs">
+                    Rooms ({assignedCount})
+                  </Button>
+                </PopoverTrigger>
+                <PopoverContent align="end" className="w-56 p-2">
+                  <Button
+                    type="button"
+                    variant="secondary"
+                    size="sm"
+                    className="w-full h-8 mb-2"
+                    onClick={() => assignAllRooms(item.id)}
+                  >
+                    All Rooms
+                  </Button>
+                  <div className="max-h-64 overflow-y-auto space-y-1">
+                    {rooms.map((r) => {
+                      const checked = isAssigned(item.id, r.room_number);
+                      return (
+                        <label
+                          key={r.room_number}
+                          className="flex items-center gap-2 px-2 py-1 rounded hover:bg-accent cursor-pointer text-sm"
+                        >
+                          <Checkbox
+                            checked={checked}
+                            onCheckedChange={() =>
+                              toggleAssignment(item.id, r.room_number)
+                            }
+                          />
+                          <span className="tabular-nums">Room {r.room_number}</span>
+                        </label>
+                      );
+                    })}
+                  </div>
+                </PopoverContent>
+              </Popover>
+              <Button
+                variant="ghost"
+                size="icon"
+                className="h-8 w-8 text-muted-foreground"
+                onClick={() => moveTemplateItem(item.id, -1)}
+                disabled={idx === 0}
+                aria-label={`Move ${item.name} up`}
+              >
+                <ArrowUp className="h-4 w-4" />
+              </Button>
+              <Button
+                variant="ghost"
+                size="icon"
+                className="h-8 w-8 text-muted-foreground"
+                onClick={() => moveTemplateItem(item.id, 1)}
+                disabled={idx === template.length - 1}
+                aria-label={`Move ${item.name} down`}
+              >
+                <ArrowDown className="h-4 w-4" />
+              </Button>
+              <Button
+                variant="ghost"
+                size="icon"
+                className="h-8 w-8 text-muted-foreground hover:text-destructive"
+                onClick={() => deleteTemplateItem(item.id)}
+                aria-label={`Delete ${item.name}`}
+              >
+                <X className="h-4 w-4" />
+              </Button>
+            </li>
+          );
+        })}
+      </ul>
+    )}
+  </div>
  </DialogContent>
  </Dialog>
 
