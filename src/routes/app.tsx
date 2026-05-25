@@ -62,6 +62,8 @@ function AppPage() {
  const [templateTab, setTemplateTab] = useState<Category>("double");
  const [newExtraName, setNewExtraName] = useState("");
 
+ const [exportOpen, setExportOpen] = useState(false);
+
  // Track responsive column count so we can insert the open-room panel
  // right after the row containing the clicked room.
  const [cols, setCols] = useState(10);
