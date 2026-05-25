@@ -4,9 +4,24 @@ import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Minus, Plus, X, Printer, ChevronDown } from "lucide-react";
+import { Minus, Plus, X, Printer, Menu } from "lucide-react";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogDescription,
+} from "@/components/ui/dialog";
+import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 
 export const Route = createFileRoute("/app")({
   head: () => ({
@@ -18,7 +33,16 @@ export const Route = createFileRoute("/app")({
   component: AppPage,
 });
 
-type TemplateItem = { id: string; name: string; created_at: string };
+type Category = "double" | "super_king" | "super_king_twin";
+const CATEGORIES: { value: Category; label: string }[] = [
+  { value: "double", label: "Double" },
+  { value: "super_king", label: "Super King" },
+  { value: "super_king_twin", label: "Super King / Twin" },
+];
+const categoryLabel = (c: Category | null | undefined) =>
+  CATEGORIES.find((x) => x.value === c)?.label ?? "Uncategorised";
+
+type TemplateItem = { id: string; name: string; created_at: string; category: Category };
 type RoomExtra = { id: string; room_number: number; name: string; created_at: string };
 type RoomCount = {
   id: string;
@@ -27,13 +51,16 @@ type RoomCount = {
   item_id: string;
   count: number;
 };
-type Room = { id: string; room_number: number; done: boolean };
+type Room = { id: string; room_number: number; done: boolean; category: Category | null };
 
 function AppPage() {
   const qc = useQueryClient();
   const [openRoom, setOpenRoom] = useState<number | null>(null);
-  const [showTemplate, setShowTemplate] = useState(false);
+  const [templateOpen, setTemplateOpen] = useState(false);
+  const [categoriesOpen, setCategoriesOpen] = useState(false);
   const [newTemplateName, setNewTemplateName] = useState("");
+  const [newTemplateCategory, setNewTemplateCategory] = useState<Category>("double");
+  const [templateTab, setTemplateTab] = useState<Category>("double");
   const [newExtraName, setNewExtraName] = useState("");
 
   // Track responsive column count so we can insert the open-room panel
@@ -57,10 +84,10 @@ function AppPage() {
     queryFn: async (): Promise<TemplateItem[]> => {
       const { data, error } = await supabase
         .from("template_items")
-        .select("id,name,created_at")
+        .select("id,name,created_at,category")
         .order("created_at", { ascending: true });
       if (error) throw error;
-      return data ?? [];
+      return (data ?? []) as TemplateItem[];
     },
   });
 
@@ -92,10 +119,10 @@ function AppPage() {
     queryFn: async (): Promise<Room[]> => {
       const { data, error } = await supabase
         .from("rooms")
-        .select("id,room_number,done")
+        .select("id,room_number,done,category")
         .order("room_number", { ascending: true });
       if (error) throw error;
-      return data ?? [];
+      return (data ?? []) as Room[];
     },
   });
 
@@ -115,10 +142,11 @@ function AppPage() {
     e.preventDefault();
     const name = newTemplateName.trim();
     if (!name) return;
+    const category = newTemplateCategory;
     setNewTemplateName("");
     const { error } = await supabase
       .from("template_items")
-      .insert({ name });
+      .insert({ name, category });
     if (error) toast.error(error.message);
     qc.invalidateQueries({ queryKey: ["template_items"] });
   };
@@ -275,17 +303,59 @@ function AppPage() {
 
   const roomsForPrint = Array.from({ length: 50 }, (_, i) => i + 1);
 
+  // --- Room category ---
+  const setRoomCategory = async (roomNumber: number, category: Category) => {
+    qc.setQueryData<Room[]>(["rooms"], (old) => {
+      const list = old ? [...old] : [];
+      const idx = list.findIndex((r) => r.room_number === roomNumber);
+      if (idx >= 0) list[idx] = { ...list[idx], category };
+      else
+        list.push({
+          id: `temp-${roomNumber}`,
+          room_number: roomNumber,
+          done: false,
+          category,
+        });
+      return list;
+    });
+    const { error } = await supabase.from("rooms").upsert(
+      {
+        room_number: roomNumber,
+        category,
+        updated_at: new Date().toISOString(),
+      },
+      { onConflict: "user_id,room_number" },
+    );
+    if (error) toast.error(error.message);
+    qc.invalidateQueries({ queryKey: ["rooms"] });
+  };
+
+  const roomCategory = (n: number): Category | null =>
+    rooms.find((r) => r.room_number === n)?.category ?? null;
+
   const renderRoomPanel = (n: number) => {
     const roomExtras = extras.filter((e) => e.room_number === n);
+    const cat = roomCategory(n);
+    const visibleTemplate = cat ? template.filter((t) => t.category === cat) : [];
     return (
       <div className="border rounded-md p-4 space-y-4 bg-muted/30 print:bg-white print:border-black/20">
-        {template.length === 0 && roomExtras.length === 0 ? (
+        {!cat && (
+          <p className="text-sm text-muted-foreground print:hidden">
+            No category set for this room. Open the menu → Room categories to assign one.
+          </p>
+        )}
+        {cat && (
+          <p className="text-xs text-muted-foreground print:text-black/60">
+            Category: <span className="font-medium">{categoryLabel(cat)}</span>
+          </p>
+        )}
+        {visibleTemplate.length === 0 && roomExtras.length === 0 ? (
           <p className="text-sm text-muted-foreground">
-            No items yet. Add a template item above, or an extra below.
+            No items yet. Add template items from the menu, or add an extra below.
           </p>
         ) : (
           <ul className="divide-y print:divide-black/10">
-            {template.map((item) => {
+            {visibleTemplate.map((item) => {
               const count = getCount(n, "template", item.id);
               return (
                 <li key={`t-${item.id}`} className="flex items-center gap-3 py-2">
