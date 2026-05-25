@@ -21,7 +21,8 @@ import {
  DialogTitle,
  DialogDescription,
 } from "@/components/ui/dialog";
-import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { Checkbox } from "@/components/ui/checkbox";
 
 export const Route = createFileRoute("/app")({
   head: () => ({
@@ -51,6 +52,7 @@ type RoomCount = {
  count: number;
 };
 type Room = { id: string; room_number: number; done: boolean; category: Category | null };
+type TemplateItemRoom = { id: string; template_item_id: string; room_number: number };
 
 function AppPage() {
  const qc = useQueryClient();
@@ -59,7 +61,6 @@ function AppPage() {
  const [categoriesOpen, setCategoriesOpen] = useState(false);
  const [newTemplateName, setNewTemplateName] = useState("");
  const [newTemplateCategory, setNewTemplateCategory] = useState<Category>("double");
- const [templateTab, setTemplateTab] = useState<Category>("double");
  const [newExtraName, setNewExtraName] = useState("");
 
  const [exportOpen, setExportOpen] = useState(false);
@@ -128,11 +129,78 @@ function AppPage() {
  },
  });
 
+  const assignmentsQ = useQuery({
+    queryKey: ["template_item_rooms"],
+    queryFn: async (): Promise<TemplateItemRoom[]> => {
+      const { data, error } = await supabase
+        .from("template_item_rooms")
+        .select("id,template_item_id,room_number");
+      if (error) throw error;
+      return (data ?? []) as TemplateItemRoom[];
+    },
+  });
+
  const template = templateQ.data ?? [];
  const extras = extrasQ.data ?? [];
  const counts = countsQ.data ?? [];
  const rooms = roomsQ.data ?? [];
+  const assignments = assignmentsQ.data ?? [];
  const doneSet = new Set(rooms.filter((r) => r.done).map((r) => r.room_number));
+
+  const isAssigned = (templateItemId: string, roomNumber: number) =>
+    assignments.some(
+      (a) => a.template_item_id === templateItemId && a.room_number === roomNumber,
+    );
+
+  const toggleAssignment = async (templateItemId: string, roomNumber: number) => {
+    const existing = assignments.find(
+      (a) => a.template_item_id === templateItemId && a.room_number === roomNumber,
+    );
+    if (existing) {
+      qc.setQueryData<TemplateItemRoom[]>(["template_item_rooms"], (old) =>
+        old?.filter((a) => a.id !== existing.id) ?? [],
+      );
+      const { error } = await supabase
+        .from("template_item_rooms")
+        .delete()
+        .eq("id", existing.id);
+      if (error) {
+        toast.error(error.message);
+        qc.invalidateQueries({ queryKey: ["template_item_rooms"] });
+      }
+    } else {
+      const tempId = `temp-${templateItemId}-${roomNumber}`;
+      qc.setQueryData<TemplateItemRoom[]>(["template_item_rooms"], (old) => [
+        ...(old ?? []),
+        { id: tempId, template_item_id: templateItemId, room_number: roomNumber },
+      ]);
+      const { error } = await supabase
+        .from("template_item_rooms")
+        .insert({ template_item_id: templateItemId, room_number: roomNumber });
+      if (error) toast.error(error.message);
+      qc.invalidateQueries({ queryKey: ["template_item_rooms"] });
+    }
+  };
+
+  const assignAllRooms = async (templateItemId: string) => {
+    const missing = rooms
+      .map((r) => r.room_number)
+      .filter((n) => !isAssigned(templateItemId, n));
+    if (missing.length === 0) return;
+    qc.setQueryData<TemplateItemRoom[]>(["template_item_rooms"], (old) => [
+      ...(old ?? []),
+      ...missing.map((n) => ({
+        id: `temp-${templateItemId}-${n}`,
+        template_item_id: templateItemId,
+        room_number: n,
+      })),
+    ]);
+    const { error } = await supabase
+      .from("template_item_rooms")
+      .insert(missing.map((n) => ({ template_item_id: templateItemId, room_number: n })));
+    if (error) toast.error(error.message);
+    qc.invalidateQueries({ queryKey: ["template_item_rooms"] });
+  };
 
  const getCount = (roomNumber: number, kind: "template" | "extra", itemId: string) =>
  counts.find(
@@ -439,20 +507,9 @@ function AppPage() {
 
  const renderRoomPanel = (n: number) => {
  const roomExtras = extras.filter((e) => e.room_number === n);
- const cat = roomCategory(n);
- const visibleTemplate = cat ? template.filter((t) => t.category === cat) : [];
+  const visibleTemplate = template.filter((t) => isAssigned(t.id, n));
  return (
  <div className="border rounded-md p-4 space-y-4 bg-muted/30">
- {!cat && (
- <p className="text-sm text-muted-foreground">
- No category set for this room. Open the menu → Room categories to assign one.
- </p>
- )}
- {cat && (
- <p className="text-xs text-muted-foreground">
- Category: <span className="font-medium">{categoryLabel(cat)}</span>
- </p>
- )}
  {visibleTemplate.length === 0 && roomExtras.length === 0 ? (
  <p className="text-sm text-muted-foreground">
  No items yet. Add template items from the menu, or add an extra below.
