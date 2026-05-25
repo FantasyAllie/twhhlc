@@ -95,6 +95,30 @@ export type Database = {
         }
         Relationships: []
       }
+      template_item_rooms: {
+        Row: {
+          created_at: string
+          id: string
+          room_number: number
+          template_item_id: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          room_number: number
+          template_item_id: string
+          user_id?: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          room_number?: number
+          template_item_id?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       template_items: {
         Row: {
           category: string
