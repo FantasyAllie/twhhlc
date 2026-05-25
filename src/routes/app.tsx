@@ -730,7 +730,7 @@ function AppPage() {
  </DialogHeader>
  <div className="max-h-[60vh] overflow-y-auto -mx-6 px-6">
  <ul className="divide-y">
- {Array.from({ length: 50 }, (_, i) => i + 1).map((n) => {
+ {rooms.map((r) => r.room_number).map((n) => {
  const cat = roomCategory(n);
  return (
  <li key={n} className="flex items-center gap-3 py-2">
@@ -775,7 +775,7 @@ function AppPage() {
  {/* On-screen interactive accordion */}
  <div className=" grid grid-cols-5 sm:grid-cols-8 md:grid-cols-10 gap-2">
  {(() => {
- const allRooms = Array.from({ length: 50 }, (_, i) => i + 1);
+  const allRooms = rooms.map((r) => r.room_number);
  const openRowEnd =
  openRoom !== null ? Math.ceil(openRoom / cols) * cols : null;
  const nodes: React.ReactNode[] = [];
