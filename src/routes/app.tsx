@@ -379,24 +379,27 @@ function AppPage() {
           </Button>
         </form>
 
-        <div className="flex items-center justify-between text-xs text-muted-foreground print:hidden">
-          <button
+        <div className="flex gap-2 print:hidden">
+          <Button
             type="button"
-            onClick={() => toggleRoom(n)}
+            variant="outline"
             className={cn(
-              "underline underline-offset-4 hover:text-foreground",
-              doneSet.has(n) && "text-emerald-600",
+              "flex-1 h-10",
+              doneSet.has(n) &&
+                "bg-emerald-50 border-emerald-200 text-emerald-700 hover:bg-emerald-100 hover:text-emerald-800",
             )}
+            onClick={() => toggleRoom(n)}
           >
             {doneSet.has(n) ? "Mark as not done" : "Mark as done"}
-          </button>
-          <button
+          </Button>
+          <Button
             type="button"
+            variant="ghost"
+            className="h-10 text-muted-foreground hover:text-destructive"
             onClick={() => resetRoomCounts(n)}
-            className="underline underline-offset-4 hover:text-foreground"
           >
             Reset counts
-          </button>
+          </Button>
         </div>
       </div>
     );
