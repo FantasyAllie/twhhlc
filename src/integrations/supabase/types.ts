@@ -27,7 +27,7 @@ export type Database = {
           id?: string
           name: string
           room_number: number
-          user_id: string
+          user_id?: string
         }
         Update: {
           created_at?: string
@@ -55,7 +55,7 @@ export type Database = {
           item_kind: string
           room_number: number
           updated_at?: string
-          user_id: string
+          user_id?: string
         }
         Update: {
           count?: number
@@ -81,7 +81,7 @@ export type Database = {
           id?: string
           room_number: number
           updated_at?: string
-          user_id: string
+          user_id?: string
         }
         Update: {
           done?: boolean
@@ -103,7 +103,7 @@ export type Database = {
           created_at?: string
           id?: string
           name: string
-          user_id: string
+          user_id?: string
         }
         Update: {
           created_at?: string
