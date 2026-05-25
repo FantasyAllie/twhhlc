@@ -659,6 +659,18 @@ function AppPage() {
  {items.map((item, idx) => (
  <li key={item.id} className="flex items-center gap-3 py-2">
  <span className="flex-1 truncate">{item.name}</span>
+                          <label className="flex items-center gap-1 text-xs text-muted-foreground">
+                            Default
+                            <Input
+                              type="number"
+                              min={0}
+                              value={item.default_count}
+                              onChange={(e) =>
+                                setTemplateDefault(item.id, Number(e.target.value))
+                              }
+                              className="h-8 w-16 text-center"
+                            />
+                          </label>
  <Button
  variant="ghost"
  size="icon"
