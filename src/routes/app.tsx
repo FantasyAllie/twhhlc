@@ -4,7 +4,7 @@ import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Minus, Plus, X, Menu, ArrowUp, ArrowDown } from "lucide-react";
+import { Minus, Plus, X, Menu, ArrowUp, ArrowDown, ListPlus } from "lucide-react";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
 import {
@@ -41,7 +41,7 @@ const CATEGORIES: { value: Category; label: string }[] = [
 const categoryLabel = (c: Category | null | undefined) =>
  CATEGORIES.find((x) => x.value === c)?.label ?? "Uncategorised";
 
-type TemplateItem = { id: string; name: string; created_at: string; category: Category; position: number };
+type TemplateItem = { id: string; name: string; created_at: string; category: Category; position: number; default_count: number };
 type RoomExtra = { id: string; room_number: number; name: string; created_at: string };
 type RoomCount = {
  id: string;
@@ -83,7 +83,7 @@ function AppPage() {
  queryFn: async (): Promise<TemplateItem[]> => {
  const { data, error } = await supabase
  .from("template_items")
- .select("id,name,created_at,category,position")
+  .select("id,name,created_at,category,position,default_count")
  .order("position", { ascending: true })
  .order("created_at", { ascending: true });
  if (error) throw error;
@@ -205,6 +205,75 @@ function AppPage() {
  if (error) toast.error(error.message);
  qc.invalidateQueries({ queryKey: ["room_extras"] });
  };
+
+  const setTemplateDefault = async (id: string, value: number) => {
+    const next = Math.max(0, Math.floor(value) || 0);
+    qc.setQueryData<TemplateItem[]>(["template_items"], (old) =>
+      old?.map((t) => (t.id === id ? { ...t, default_count: next } : t)) ?? [],
+    );
+    const { error } = await supabase
+      .from("template_items")
+      .update({ default_count: next })
+      .eq("id", id);
+    if (error) {
+      toast.error(error.message);
+      qc.invalidateQueries({ queryKey: ["template_items"] });
+    }
+  };
+
+  const applyDefaultsToRoom = async (roomNumber: number) => {
+    const cat = roomCategory(roomNumber);
+    if (!cat) return;
+    const items = template.filter((t) => t.category === cat && t.default_count > 0);
+    if (items.length === 0) {
+      toast.message("No defaults set for this category.");
+      return;
+    }
+
+    qc.setQueryData<RoomCount[]>(["room_counts"], (old) => {
+      const list = old ? [...old] : [];
+      for (const item of items) {
+        const current = list.find(
+          (c) => c.room_number === roomNumber && c.item_kind === "template" && c.item_id === item.id,
+        )?.count ?? 0;
+        const next = current + item.default_count;
+        const idx = list.findIndex(
+          (c) => c.room_number === roomNumber && c.item_kind === "template" && c.item_id === item.id,
+        );
+        if (idx >= 0) list[idx] = { ...list[idx], count: next };
+        else
+          list.push({
+            id: `temp-${roomNumber}-template-${item.id}`,
+            room_number: roomNumber,
+            item_kind: "template",
+            item_id: item.id,
+            count: next,
+          });
+      }
+      return list;
+    });
+
+    const nowIso = new Date().toISOString();
+    const rows = items.map((item) => {
+      const current = counts.find(
+        (c) => c.room_number === roomNumber && c.item_kind === "template" && c.item_id === item.id,
+      )?.count ?? 0;
+      return {
+        room_number: roomNumber,
+        item_kind: "template",
+        item_id: item.id,
+        count: current + item.default_count,
+        updated_at: nowIso,
+      };
+    });
+    const { error } = await supabase
+      .from("room_item_counts")
+      .upsert(rows, { onConflict: "user_id,room_number,item_kind,item_id" });
+    if (error) {
+      toast.error(error.message);
+      qc.invalidateQueries({ queryKey: ["room_counts"] });
+    }
+  };
 
  const deleteExtra = async (id: string) => {
  qc.setQueryData<RoomExtra[]>(["room_extras"], (old) =>
@@ -477,6 +546,18 @@ function AppPage() {
  </Button>
  </form>
 
+      {cat && visibleTemplate.some((t) => t.default_count > 0) && (
+        <Button
+          type="button"
+          variant="outline"
+          className="w-full h-10"
+          onClick={() => applyDefaultsToRoom(n)}
+        >
+          <ListPlus className="h-4 w-4 mr-2" />
+          Add all defaults
+        </Button>
+      )}
+
  <div className="flex gap-2">
  <Button
  type="button"
@@ -578,6 +659,18 @@ function AppPage() {
  {items.map((item, idx) => (
  <li key={item.id} className="flex items-center gap-3 py-2">
  <span className="flex-1 truncate">{item.name}</span>
+                          <label className="flex items-center gap-1 text-xs text-muted-foreground">
+                            Default
+                            <Input
+                              type="number"
+                              min={0}
+                              value={item.default_count}
+                              onChange={(e) =>
+                                setTemplateDefault(item.id, Number(e.target.value))
+                              }
+                              className="h-8 w-16 text-center"
+                            />
+                          </label>
  <Button
  variant="ghost"
  size="icon"
