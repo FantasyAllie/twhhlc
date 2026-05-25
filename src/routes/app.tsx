@@ -248,7 +248,7 @@ function AppPage() {
       const list = old ? [...old] : [];
       const idx = list.findIndex((r) => r.room_number === roomNumber);
       if (idx >= 0) list[idx] = { ...list[idx], done: nextDone };
-      else list.push({ id: `temp-${roomNumber}`, room_number: roomNumber, done: nextDone });
+      else list.push({ id: `temp-${roomNumber}`, room_number: roomNumber, done: nextDone, category: null });
       return list;
     });
 
