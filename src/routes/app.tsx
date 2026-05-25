@@ -508,8 +508,24 @@ function AppPage() {
  const renderRoomPanel = (n: number) => {
  const roomExtras = extras.filter((e) => e.room_number === n);
   const visibleTemplate = template.filter((t) => isAssigned(t.id, n));
+  const cat = roomCategory(n);
  return (
  <div className="border rounded-md p-4 space-y-4 bg-muted/30">
+  <div className="flex items-center gap-2 flex-wrap">
+    <span className="text-xs text-muted-foreground">Category:</span>
+    {CATEGORIES.map((c) => (
+      <Button
+        key={c.value}
+        type="button"
+        size="sm"
+        variant={cat === c.value ? "default" : "outline"}
+        className="h-7 text-xs"
+        onClick={() => setRoomCategory(n, c.value)}
+      >
+        {c.label}
+      </Button>
+    ))}
+  </div>
  {visibleTemplate.length === 0 && roomExtras.length === 0 ? (
  <p className="text-sm text-muted-foreground">
  No items yet. Add template items from the menu, or add an extra below.
