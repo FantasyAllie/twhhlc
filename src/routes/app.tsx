@@ -4,7 +4,7 @@ import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Minus, Plus, X, Printer, Menu } from "lucide-react";
+import { Minus, Plus, X, Printer, Menu, ArrowUp, ArrowDown } from "lucide-react";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
 import {
@@ -42,7 +42,7 @@ const CATEGORIES: { value: Category; label: string }[] = [
 const categoryLabel = (c: Category | null | undefined) =>
   CATEGORIES.find((x) => x.value === c)?.label ?? "Uncategorised";
 
-type TemplateItem = { id: string; name: string; created_at: string; category: Category };
+type TemplateItem = { id: string; name: string; created_at: string; category: Category; position: number };
 type RoomExtra = { id: string; room_number: number; name: string; created_at: string };
 type RoomCount = {
   id: string;
@@ -84,7 +84,8 @@ function AppPage() {
     queryFn: async (): Promise<TemplateItem[]> => {
       const { data, error } = await supabase
         .from("template_items")
-        .select("id,name,created_at,category")
+        .select("id,name,created_at,category,position")
+        .order("position", { ascending: true })
         .order("created_at", { ascending: true });
       if (error) throw error;
       return (data ?? []) as TemplateItem[];
@@ -143,10 +144,13 @@ function AppPage() {
     const name = newTemplateName.trim();
     if (!name) return;
     const category = newTemplateCategory;
+    const maxPos = template
+      .filter((t) => t.category === category)
+      .reduce((m, t) => Math.max(m, t.position), 0);
     setNewTemplateName("");
     const { error } = await supabase
       .from("template_items")
-      .insert({ name, category });
+      .insert({ name, category, position: maxPos + 1 });
     if (error) toast.error(error.message);
     qc.invalidateQueries({ queryKey: ["template_items"] });
   };
@@ -164,6 +168,31 @@ function AppPage() {
       qc.invalidateQueries({ queryKey: ["template_items"] });
       qc.invalidateQueries({ queryKey: ["room_counts"] });
     }
+  };
+
+  const moveTemplateItem = async (id: string, dir: -1 | 1) => {
+    const item = template.find((t) => t.id === id);
+    if (!item) return;
+    const siblings = template
+      .filter((t) => t.category === item.category)
+      .sort((a, b) => a.position - b.position || a.created_at.localeCompare(b.created_at));
+    const idx = siblings.findIndex((t) => t.id === id);
+    const swapIdx = idx + dir;
+    if (swapIdx < 0 || swapIdx >= siblings.length) return;
+    const other = siblings[swapIdx];
+    qc.setQueryData<TemplateItem[]>(["template_items"], (old) =>
+      old?.map((t) =>
+        t.id === item.id ? { ...t, position: other.position }
+        : t.id === other.id ? { ...t, position: item.position }
+        : t,
+      ) ?? [],
+    );
+    const [r1, r2] = await Promise.all([
+      supabase.from("template_items").update({ position: other.position }).eq("id", item.id),
+      supabase.from("template_items").update({ position: item.position }).eq("id", other.id),
+    ]);
+    if (r1.error || r2.error) toast.error((r1.error ?? r2.error)!.message);
+    qc.invalidateQueries({ queryKey: ["template_items"] });
   };
 
   // --- Room extras ---
@@ -559,9 +588,29 @@ function AppPage() {
                       <p className="text-sm text-muted-foreground">No items yet.</p>
                     ) : (
                       <ul className="divide-y border-t">
-                        {items.map((item) => (
+                        {items.map((item, idx) => (
                           <li key={item.id} className="flex items-center gap-3 py-2">
                             <span className="flex-1 truncate">{item.name}</span>
+                            <Button
+                              variant="ghost"
+                              size="icon"
+                              className="h-8 w-8 text-muted-foreground"
+                              onClick={() => moveTemplateItem(item.id, -1)}
+                              disabled={idx === 0}
+                              aria-label={`Move ${item.name} up`}
+                            >
+                              <ArrowUp className="h-4 w-4" />
+                            </Button>
+                            <Button
+                              variant="ghost"
+                              size="icon"
+                              className="h-8 w-8 text-muted-foreground"
+                              onClick={() => moveTemplateItem(item.id, 1)}
+                              disabled={idx === items.length - 1}
+                              aria-label={`Move ${item.name} down`}
+                            >
+                              <ArrowDown className="h-4 w-4" />
+                            </Button>
                             <Button
                               variant="ghost"
                               size="icon"
