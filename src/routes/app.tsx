@@ -255,12 +255,6 @@ function AppPage() {
     }
     setOpenRoom(roomNumber);
     setNewExtraName("");
-    // Mark done when opening (per spec: "Just a click on the number" marks done)
-    if (!doneSet.has(roomNumber)) toggleRoom(roomNumber);
-  };
-
-  const markNotDone = (roomNumber: number) => {
-    if (doneSet.has(roomNumber)) toggleRoom(roomNumber);
   };
 
   const resetRoomCounts = async (roomNumber: number) => {
