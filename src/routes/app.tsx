@@ -4,7 +4,7 @@ import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Minus, Plus, X, Printer, Menu, ArrowUp, ArrowDown } from "lucide-react";
+import { Minus, Plus, X, Menu, ArrowUp, ArrowDown } from "lucide-react";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
 import {
@@ -329,7 +329,7 @@ function AppPage() {
     qc.invalidateQueries({ queryKey: ["room_counts"] });
   };
 
-  const roomsForPrint = Array.from({ length: 50 }, (_, i) => i + 1);
+  
 
   // --- Room category ---
   const setRoomCategory = async (roomNumber: number, category: Category) => {
@@ -505,14 +505,6 @@ function AppPage() {
 
   return (
     <main className="min-h-screen bg-background">
-      <style>{`
-        @media print {
-          @page { margin: 1.5cm; }
-          body { background: white !important; color: black !important; }
-          .print\\:hidden { display: none !important; }
-          .print-room { break-inside: avoid; page-break-inside: avoid; }
-        }
-      `}</style>
       <div className="max-w-2xl mx-auto px-4 py-10 space-y-10 print:py-4">
         <header className="flex items-center justify-between print:mb-4">
           <div>
@@ -522,10 +514,6 @@ function AppPage() {
             </p>
           </div>
           <div className="flex items-center gap-2">
-            <Button variant="ghost" size="sm" onClick={() => window.print()} className="print:hidden">
-              <Printer className="h-4 w-4 mr-2" />
-              Print
-            </Button>
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
                 <Button variant="ghost" size="sm" className="print:hidden" aria-label="Menu">
@@ -735,20 +723,6 @@ function AppPage() {
             })()}
           </div>
 
-          {/* Print-only: every room expanded */}
-          <div className="hidden print:block space-y-4">
-            {roomsForPrint.map((n) => (
-              <div key={n} className="print-room space-y-2">
-                <h3 className="text-sm font-semibold">
-                  Room {n}
-                  {doneSet.has(n) && (
-                    <span className="ml-2 text-xs text-black/60">(done)</span>
-                  )}
-                </h3>
-                {renderRoomPanel(n)}
-              </div>
-            ))}
-          </div>
 
           <p className="text-xs text-muted-foreground print:hidden">
             {doneSet.size} of 50 done
