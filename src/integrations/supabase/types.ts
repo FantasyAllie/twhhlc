@@ -70,6 +70,7 @@ export type Database = {
       }
       rooms: {
         Row: {
+          category: string | null
           done: boolean
           id: string
           room_number: number
@@ -77,6 +78,7 @@ export type Database = {
           user_id: string
         }
         Insert: {
+          category?: string | null
           done?: boolean
           id?: string
           room_number: number
@@ -84,6 +86,7 @@ export type Database = {
           user_id?: string
         }
         Update: {
+          category?: string | null
           done?: boolean
           id?: string
           room_number?: number
@@ -94,18 +97,21 @@ export type Database = {
       }
       template_items: {
         Row: {
+          category: string
           created_at: string
           id: string
           name: string
           user_id: string
         }
         Insert: {
+          category?: string
           created_at?: string
           id?: string
           name: string
           user_id?: string
         }
         Update: {
+          category?: string
           created_at?: string
           id?: string
           name?: string

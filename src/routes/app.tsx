@@ -4,9 +4,24 @@ import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Minus, Plus, X, Printer, ChevronDown } from "lucide-react";
+import { Minus, Plus, X, Printer, Menu } from "lucide-react";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogDescription,
+} from "@/components/ui/dialog";
+import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 
 export const Route = createFileRoute("/app")({
   head: () => ({
@@ -18,7 +33,16 @@ export const Route = createFileRoute("/app")({
   component: AppPage,
 });
 
-type TemplateItem = { id: string; name: string; created_at: string };
+type Category = "double" | "super_king" | "super_king_twin";
+const CATEGORIES: { value: Category; label: string }[] = [
+  { value: "double", label: "Double" },
+  { value: "super_king", label: "Super King" },
+  { value: "super_king_twin", label: "Super King / Twin" },
+];
+const categoryLabel = (c: Category | null | undefined) =>
+  CATEGORIES.find((x) => x.value === c)?.label ?? "Uncategorised";
+
+type TemplateItem = { id: string; name: string; created_at: string; category: Category };
 type RoomExtra = { id: string; room_number: number; name: string; created_at: string };
 type RoomCount = {
   id: string;
@@ -27,13 +51,16 @@ type RoomCount = {
   item_id: string;
   count: number;
 };
-type Room = { id: string; room_number: number; done: boolean };
+type Room = { id: string; room_number: number; done: boolean; category: Category | null };
 
 function AppPage() {
   const qc = useQueryClient();
   const [openRoom, setOpenRoom] = useState<number | null>(null);
-  const [showTemplate, setShowTemplate] = useState(false);
+  const [templateOpen, setTemplateOpen] = useState(false);
+  const [categoriesOpen, setCategoriesOpen] = useState(false);
   const [newTemplateName, setNewTemplateName] = useState("");
+  const [newTemplateCategory, setNewTemplateCategory] = useState<Category>("double");
+  const [templateTab, setTemplateTab] = useState<Category>("double");
   const [newExtraName, setNewExtraName] = useState("");
 
   // Track responsive column count so we can insert the open-room panel
@@ -57,10 +84,10 @@ function AppPage() {
     queryFn: async (): Promise<TemplateItem[]> => {
       const { data, error } = await supabase
         .from("template_items")
-        .select("id,name,created_at")
+        .select("id,name,created_at,category")
         .order("created_at", { ascending: true });
       if (error) throw error;
-      return data ?? [];
+      return (data ?? []) as TemplateItem[];
     },
   });
 
@@ -92,10 +119,10 @@ function AppPage() {
     queryFn: async (): Promise<Room[]> => {
       const { data, error } = await supabase
         .from("rooms")
-        .select("id,room_number,done")
+        .select("id,room_number,done,category")
         .order("room_number", { ascending: true });
       if (error) throw error;
-      return data ?? [];
+      return (data ?? []) as Room[];
     },
   });
 
@@ -115,10 +142,11 @@ function AppPage() {
     e.preventDefault();
     const name = newTemplateName.trim();
     if (!name) return;
+    const category = newTemplateCategory;
     setNewTemplateName("");
     const { error } = await supabase
       .from("template_items")
-      .insert({ name });
+      .insert({ name, category });
     if (error) toast.error(error.message);
     qc.invalidateQueries({ queryKey: ["template_items"] });
   };
@@ -220,7 +248,7 @@ function AppPage() {
       const list = old ? [...old] : [];
       const idx = list.findIndex((r) => r.room_number === roomNumber);
       if (idx >= 0) list[idx] = { ...list[idx], done: nextDone };
-      else list.push({ id: `temp-${roomNumber}`, room_number: roomNumber, done: nextDone });
+      else list.push({ id: `temp-${roomNumber}`, room_number: roomNumber, done: nextDone, category: null });
       return list;
     });
 
@@ -275,17 +303,59 @@ function AppPage() {
 
   const roomsForPrint = Array.from({ length: 50 }, (_, i) => i + 1);
 
+  // --- Room category ---
+  const setRoomCategory = async (roomNumber: number, category: Category) => {
+    qc.setQueryData<Room[]>(["rooms"], (old) => {
+      const list = old ? [...old] : [];
+      const idx = list.findIndex((r) => r.room_number === roomNumber);
+      if (idx >= 0) list[idx] = { ...list[idx], category };
+      else
+        list.push({
+          id: `temp-${roomNumber}`,
+          room_number: roomNumber,
+          done: false,
+          category,
+        });
+      return list;
+    });
+    const { error } = await supabase.from("rooms").upsert(
+      {
+        room_number: roomNumber,
+        category,
+        updated_at: new Date().toISOString(),
+      },
+      { onConflict: "user_id,room_number" },
+    );
+    if (error) toast.error(error.message);
+    qc.invalidateQueries({ queryKey: ["rooms"] });
+  };
+
+  const roomCategory = (n: number): Category | null =>
+    rooms.find((r) => r.room_number === n)?.category ?? null;
+
   const renderRoomPanel = (n: number) => {
     const roomExtras = extras.filter((e) => e.room_number === n);
+    const cat = roomCategory(n);
+    const visibleTemplate = cat ? template.filter((t) => t.category === cat) : [];
     return (
       <div className="border rounded-md p-4 space-y-4 bg-muted/30 print:bg-white print:border-black/20">
-        {template.length === 0 && roomExtras.length === 0 ? (
+        {!cat && (
+          <p className="text-sm text-muted-foreground print:hidden">
+            No category set for this room. Open the menu → Room categories to assign one.
+          </p>
+        )}
+        {cat && (
+          <p className="text-xs text-muted-foreground print:text-black/60">
+            Category: <span className="font-medium">{categoryLabel(cat)}</span>
+          </p>
+        )}
+        {visibleTemplate.length === 0 && roomExtras.length === 0 ? (
           <p className="text-sm text-muted-foreground">
-            No items yet. Add a template item above, or an extra below.
+            No items yet. Add template items from the menu, or add an extra below.
           </p>
         ) : (
           <ul className="divide-y print:divide-black/10">
-            {template.map((item) => {
+            {visibleTemplate.map((item) => {
               const count = getCount(n, "template", item.id);
               return (
                 <li key={`t-${item.id}`} className="flex items-center gap-3 py-2">
@@ -428,57 +498,127 @@ function AppPage() {
               <Printer className="h-4 w-4 mr-2" />
               Print
             </Button>
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button variant="ghost" size="sm" className="print:hidden" aria-label="Menu">
+                  <Menu className="h-4 w-4" />
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end">
+                <DropdownMenuItem onSelect={() => setTemplateOpen(true)}>
+                  Template items
+                </DropdownMenuItem>
+                <DropdownMenuItem onSelect={() => setCategoriesOpen(true)}>
+                  Room categories
+                </DropdownMenuItem>
+                <DropdownMenuSeparator />
+                <DropdownMenuItem
+                  onSelect={() => resetAll()}
+                  className="text-destructive focus:text-destructive"
+                >
+                  Reset all
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
           </div>
         </header>
 
-        {/* Manage template */}
-        <section className="space-y-3 print:hidden">
-          <button
-            type="button"
-            onClick={() => setShowTemplate((v) => !v)}
-            className="flex items-center gap-1 text-sm font-medium text-muted-foreground uppercase tracking-wide hover:text-foreground"
-          >
-            <ChevronDown
-              className={cn("h-4 w-4 transition-transform", showTemplate && "rotate-180")}
-            />
-            Template items ({template.length})
-          </button>
-          {showTemplate && (
-            <div className="border rounded-md p-4 space-y-3 bg-muted/30">
-              <p className="text-xs text-muted-foreground">
-                Shared list — appears in every room.
-              </p>
-              <form onSubmit={addTemplateItem} className="flex gap-2">
-                <Input
-                  placeholder="Add a template item…"
-                  value={newTemplateName}
-                  onChange={(e) => setNewTemplateName(e.target.value)}
-                />
-                <Button type="submit" disabled={!newTemplateName.trim()}>
-                  Add
-                </Button>
-              </form>
-              {template.length > 0 && (
-                <ul className="divide-y border-t">
-                  {template.map((item) => (
-                    <li key={item.id} className="flex items-center gap-3 py-2">
-                      <span className="flex-1 truncate">{item.name}</span>
-                      <Button
-                        variant="ghost"
-                        size="icon"
-                        className="h-8 w-8 text-muted-foreground hover:text-destructive"
-                        onClick={() => deleteTemplateItem(item.id)}
-                        aria-label={`Delete ${item.name}`}
-                      >
-                        <X className="h-4 w-4" />
+        {/* Template items dialog */}
+        <Dialog open={templateOpen} onOpenChange={setTemplateOpen}>
+          <DialogContent className="max-w-lg">
+            <DialogHeader>
+              <DialogTitle>Template items</DialogTitle>
+              <DialogDescription>
+                Items shown in each room based on the room's category.
+              </DialogDescription>
+            </DialogHeader>
+            <Tabs value={templateTab} onValueChange={(v) => { setTemplateTab(v as Category); setNewTemplateCategory(v as Category); }}>
+              <TabsList className="grid grid-cols-3 w-full">
+                {CATEGORIES.map((c) => (
+                  <TabsTrigger key={c.value} value={c.value}>{c.label}</TabsTrigger>
+                ))}
+              </TabsList>
+              {CATEGORIES.map((c) => {
+                const items = template.filter((t) => t.category === c.value);
+                return (
+                  <TabsContent key={c.value} value={c.value} className="space-y-3">
+                    <form
+                      onSubmit={(e) => { setNewTemplateCategory(c.value); addTemplateItem(e); }}
+                      className="flex gap-2"
+                    >
+                      <Input
+                        placeholder={`Add a ${c.label} item…`}
+                        value={newTemplateCategory === c.value ? newTemplateName : ""}
+                        onChange={(e) => { setNewTemplateCategory(c.value); setNewTemplateName(e.target.value); }}
+                      />
+                      <Button type="submit" disabled={!(newTemplateCategory === c.value && newTemplateName.trim())}>
+                        Add
                       </Button>
+                    </form>
+                    {items.length === 0 ? (
+                      <p className="text-sm text-muted-foreground">No items yet.</p>
+                    ) : (
+                      <ul className="divide-y border-t">
+                        {items.map((item) => (
+                          <li key={item.id} className="flex items-center gap-3 py-2">
+                            <span className="flex-1 truncate">{item.name}</span>
+                            <Button
+                              variant="ghost"
+                              size="icon"
+                              className="h-8 w-8 text-muted-foreground hover:text-destructive"
+                              onClick={() => deleteTemplateItem(item.id)}
+                              aria-label={`Delete ${item.name}`}
+                            >
+                              <X className="h-4 w-4" />
+                            </Button>
+                          </li>
+                        ))}
+                      </ul>
+                    )}
+                  </TabsContent>
+                );
+              })}
+            </Tabs>
+          </DialogContent>
+        </Dialog>
+
+        {/* Room categories dialog */}
+        <Dialog open={categoriesOpen} onOpenChange={setCategoriesOpen}>
+          <DialogContent className="max-w-lg">
+            <DialogHeader>
+              <DialogTitle>Room categories</DialogTitle>
+              <DialogDescription>
+                Assign a category to each room. Template items for that category will appear in the room.
+              </DialogDescription>
+            </DialogHeader>
+            <div className="max-h-[60vh] overflow-y-auto -mx-6 px-6">
+              <ul className="divide-y">
+                {Array.from({ length: 50 }, (_, i) => i + 1).map((n) => {
+                  const cat = roomCategory(n);
+                  return (
+                    <li key={n} className="flex items-center gap-3 py-2">
+                      <span className="w-12 text-sm font-medium tabular-nums">Room {n}</span>
+                      <div className="flex-1 flex flex-wrap gap-1 justify-end">
+                        {CATEGORIES.map((c) => (
+                          <Button
+                            key={c.value}
+                            type="button"
+                            size="sm"
+                            variant={cat === c.value ? "default" : "outline"}
+                            className="h-7 text-xs"
+                            onClick={() => setRoomCategory(n, c.value)}
+                          >
+                            {c.label}
+                          </Button>
+                        ))}
+                      </div>
                     </li>
-                  ))}
-                </ul>
-              )}
+                  );
+                })}
+              </ul>
             </div>
-          )}
-        </section>
+          </DialogContent>
+        </Dialog>
 
         {/* Rooms */}
         <section className="space-y-4">
