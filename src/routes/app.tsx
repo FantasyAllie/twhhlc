@@ -4,7 +4,7 @@ import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Minus, Plus, X, Menu, ArrowUp, ArrowDown, ListPlus } from "lucide-react";
+import { Minus, Plus, X, Menu, ArrowUp, ArrowDown } from "lucide-react";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
 import {
@@ -221,60 +221,6 @@ function AppPage() {
     }
   };
 
-  const applyDefaultsToRoom = async (roomNumber: number) => {
-    const cat = roomCategory(roomNumber);
-    if (!cat) return;
-    const items = template.filter((t) => t.category === cat && t.default_count > 0);
-    if (items.length === 0) {
-      toast.message("No defaults set for this category.");
-      return;
-    }
-
-    qc.setQueryData<RoomCount[]>(["room_counts"], (old) => {
-      const list = old ? [...old] : [];
-      for (const item of items) {
-        const current = list.find(
-          (c) => c.room_number === roomNumber && c.item_kind === "template" && c.item_id === item.id,
-        )?.count ?? 0;
-        const next = current + item.default_count;
-        const idx = list.findIndex(
-          (c) => c.room_number === roomNumber && c.item_kind === "template" && c.item_id === item.id,
-        );
-        if (idx >= 0) list[idx] = { ...list[idx], count: next };
-        else
-          list.push({
-            id: `temp-${roomNumber}-template-${item.id}`,
-            room_number: roomNumber,
-            item_kind: "template",
-            item_id: item.id,
-            count: next,
-          });
-      }
-      return list;
-    });
-
-    const nowIso = new Date().toISOString();
-    const rows = items.map((item) => {
-      const current = counts.find(
-        (c) => c.room_number === roomNumber && c.item_kind === "template" && c.item_id === item.id,
-      )?.count ?? 0;
-      return {
-        room_number: roomNumber,
-        item_kind: "template",
-        item_id: item.id,
-        count: current + item.default_count,
-        updated_at: nowIso,
-      };
-    });
-    const { error } = await supabase
-      .from("room_item_counts")
-      .upsert(rows, { onConflict: "user_id,room_number,item_kind,item_id" });
-    if (error) {
-      toast.error(error.message);
-      qc.invalidateQueries({ queryKey: ["room_counts"] });
-    }
-  };
-
  const deleteExtra = async (id: string) => {
  qc.setQueryData<RoomExtra[]>(["room_extras"], (old) =>
  old?.filter((e) => e.id !== id) ?? [],
@@ -452,36 +398,46 @@ function AppPage() {
  </p>
  ) : (
  <ul className="divide-y">
- {visibleTemplate.map((item) => {
- const count = getCount(n, "template", item.id);
- return (
- <li key={`t-${item.id}`} className="flex items-center gap-3 py-2">
- <span className="flex-1 truncate">{item.name}</span>
- <div className="flex items-center gap-1">
- <Button
- variant="outline"
- size="icon"
- className="h-8 w-8"
- onClick={() => updateCount(n, "template", item.id, -1)}
- disabled={count === 0}
- aria-label={`Decrease ${item.name}`}
- >
- <Minus className="h-4 w-4" />
- </Button>
- <span className="w-8 text-center tabular-nums font-medium">{count}</span>
- <Button
- variant="outline"
- size="icon"
- className="h-8 w-8"
- onClick={() => updateCount(n, "template", item.id, 1)}
- aria-label={`Increase ${item.name}`}
- >
- <Plus className="h-4 w-4" />
- </Button>
- </div>
- </li>
- );
- })}
+  {visibleTemplate.map((item) => {
+  const count = getCount(n, "template", item.id);
+  return (
+  <li key={`t-${item.id}`} className="flex items-center gap-3 py-2">
+  <span className="flex-1 truncate">{item.name}</span>
+  <div className="flex items-center gap-1">
+  <Button
+  variant="outline"
+  size="icon"
+  className="h-8 w-8"
+  onClick={() => updateCount(n, "template", item.id, -1)}
+  disabled={count === 1}
+  aria-label={`Decrease ${item.name}`}
+  >
+  <Minus className="h-4 w-4" />
+  </Button>
+  <span className="w-8 text-center tabular-nums font-medium">{count}</span>
+  <Button
+  variant="outline"
+  size="icon"
+  className="h-8 w-8"
+  onClick={() => updateCount(n, "template", item.id, 1)}
+  aria-label={`Increase ${item.name}`}
+  >
+  <Plus className="h-4 w-4" />
+  </Button>
+  {item.default_count > 0 && (
+  <Button
+  variant="outline"
+  size="sm"
+  className="h-8 text-xs ml-1"
+  onClick={() => updateCount(n, "template", item.id, item.default_count)}
+  >
+  +All
+  </Button>
+  )}
+  </div>
+  </li>
+  );
+  })}
  {roomExtras.map((item) => {
  const count = getCount(n, "extra", item.id);
  return (
@@ -545,18 +501,6 @@ function AppPage() {
  Add
  </Button>
  </form>
-
-      {cat && visibleTemplate.some((t) => t.default_count > 0) && (
-        <Button
-          type="button"
-          variant="outline"
-          className="w-full h-10"
-          onClick={() => applyDefaultsToRoom(n)}
-        >
-          <ListPlus className="h-4 w-4 mr-2" />
-          Add all defaults
-        </Button>
-      )}
 
  <div className="flex gap-2">
  <Button
