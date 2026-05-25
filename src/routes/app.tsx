@@ -748,7 +748,11 @@ function AppPage() {
                   >
                     All Rooms
                   </Button>
-                  <div className="max-h-64 overflow-y-auto space-y-1">
+                  <div
+                    className="max-h-64 overflow-y-auto overscroll-contain space-y-1"
+                    onWheel={(e) => e.stopPropagation()}
+                    onTouchMove={(e) => e.stopPropagation()}
+                  >
                     {rooms.map((r) => {
                       const checked = isAssigned(item.id, r.room_number);
                       return (
