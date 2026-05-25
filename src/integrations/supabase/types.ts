@@ -99,6 +99,7 @@ export type Database = {
         Row: {
           category: string
           created_at: string
+          default_count: number
           id: string
           name: string
           position: number
@@ -107,6 +108,7 @@ export type Database = {
         Insert: {
           category?: string
           created_at?: string
+          default_count?: number
           id?: string
           name: string
           position?: number
@@ -115,6 +117,7 @@ export type Database = {
         Update: {
           category?: string
           created_at?: string
+          default_count?: number
           id?: string
           name?: string
           position?: number

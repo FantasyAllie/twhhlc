@@ -1,0 +1,1 @@
+ALTER TABLE public.template_items ADD COLUMN default_count integer NOT NULL DEFAULT 0;
