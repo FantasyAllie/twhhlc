@@ -4,7 +4,7 @@ import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Minus, Plus, X, Menu, ArrowUp, ArrowDown } from "lucide-react";
+import { Minus, Plus, X, Menu, ArrowUp, ArrowDown, ListPlus } from "lucide-react";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
 import {
@@ -41,7 +41,7 @@ const CATEGORIES: { value: Category; label: string }[] = [
 const categoryLabel = (c: Category | null | undefined) =>
  CATEGORIES.find((x) => x.value === c)?.label ?? "Uncategorised";
 
-type TemplateItem = { id: string; name: string; created_at: string; category: Category; position: number };
+type TemplateItem = { id: string; name: string; created_at: string; category: Category; position: number; default_count: number };
 type RoomExtra = { id: string; room_number: number; name: string; created_at: string };
 type RoomCount = {
  id: string;
@@ -83,7 +83,7 @@ function AppPage() {
  queryFn: async (): Promise<TemplateItem[]> => {
  const { data, error } = await supabase
  .from("template_items")
- .select("id,name,created_at,category,position")
+  .select("id,name,created_at,category,position,default_count")
  .order("position", { ascending: true })
  .order("created_at", { ascending: true });
  if (error) throw error;
