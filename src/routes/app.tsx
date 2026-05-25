@@ -390,7 +390,7 @@ function AppPage() {
   };
 
  const resetAll = async () => {
- if (!confirm("Reset done state and counts for all 50 rooms?")) return;
+ if (!confirm("Reset done state and counts for all rooms?")) return;
  qc.setQueryData<Room[]>(["rooms"], (old) =>
  old?.map((r) => ({ ...r, done: false })) ?? [],
  );
@@ -826,7 +826,7 @@ function AppPage() {
 
 
  <p className="text-xs text-muted-foreground">
- {doneSet.size} of 50 done
+ {doneSet.size} of {rooms.length} done
  </p>
  </section>
  </div>
