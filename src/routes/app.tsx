@@ -280,6 +280,26 @@ function AppPage() {
  toast.error(error.message);
  qc.invalidateQueries({ queryKey: ["room_counts"] });
  }
+
+ // Auto-mark room as done when any item becomes positive.
+ if (next > 0) {
+ const room = rooms.find((r) => r.room_number === roomNumber);
+ if (!room?.done) {
+ qc.setQueryData<Room[]>(["rooms"], (old) => {
+ const list = old ? [...old] : [];
+ const idx = list.findIndex((r) => r.room_number === roomNumber);
+ if (idx >= 0) list[idx] = { ...list[idx], done: true };
+ else list.push({ id: `temp-${roomNumber}`, room_number: roomNumber, done: true, category: null });
+ return list;
+ });
+ const { error: roomErr } = await supabase.from("rooms").upsert(
+ { room_number: roomNumber, done: true, updated_at: new Date().toISOString() },
+ { onConflict: "user_id,room_number" },
+ );
+ if (roomErr) toast.error(roomErr.message);
+ qc.invalidateQueries({ queryKey: ["rooms"] });
+ }
+ }
  };
 
  // --- Room toggle ---
@@ -404,12 +424,22 @@ function AppPage() {
   <li key={`t-${item.id}`} className="flex items-center gap-3 py-2">
   <span className="flex-1 truncate">{item.name}</span>
   <div className="flex items-center gap-1">
+  {item.default_count > 0 && (
+  <Button
+  variant="outline"
+  size="sm"
+  className="h-8 text-xs mr-1"
+  onClick={() => updateCount(n, "template", item.id, item.default_count)}
+  >
+  + All
+  </Button>
+  )}
   <Button
   variant="outline"
   size="icon"
   className="h-8 w-8"
   onClick={() => updateCount(n, "template", item.id, -1)}
-  disabled={count === 1}
+  disabled={count === 0}
   aria-label={`Decrease ${item.name}`}
   >
   <Minus className="h-4 w-4" />
@@ -424,16 +454,6 @@ function AppPage() {
   >
   <Plus className="h-4 w-4" />
   </Button>
-  {item.default_count > 0 && (
-  <Button
-  variant="outline"
-  size="sm"
-  className="h-8 text-xs ml-1"
-  onClick={() => updateCount(n, "template", item.id, item.default_count)}
-  >
-  +All
-  </Button>
-  )}
   </div>
   </li>
   );
