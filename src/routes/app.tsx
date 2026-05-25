@@ -401,17 +401,13 @@ function AppPage() {
           <div>
             <h1 className="text-2xl font-semibold tracking-tight">Counter</h1>
             <p className="text-xs text-muted-foreground mt-1 print:text-black/60">
-              {session.user.email}
+              Shared workspace
             </p>
           </div>
           <div className="flex items-center gap-2">
             <Button variant="ghost" size="sm" onClick={() => window.print()} className="print:hidden">
               <Printer className="h-4 w-4 mr-2" />
               Print
-            </Button>
-            <Button variant="ghost" size="sm" onClick={signOut} className="print:hidden">
-              <LogOut className="h-4 w-4 mr-2" />
-              Sign out
             </Button>
           </div>
         </header>
