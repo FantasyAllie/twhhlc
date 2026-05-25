@@ -33,11 +33,10 @@ export const Route = createFileRoute("/app")({
   component: AppPage,
 });
 
-type Category = "double" | "super_king" | "super_king_twin";
+type Category = "double" | "super_king";
 const CATEGORIES: { value: Category; label: string }[] = [
   { value: "double", label: "Double" },
   { value: "super_king", label: "Super King" },
-  { value: "super_king_twin", label: "Super King / Twin" },
 ];
 const categoryLabel = (c: Category | null | undefined) =>
   CATEGORIES.find((x) => x.value === c)?.label ?? "Uncategorised";
