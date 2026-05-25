@@ -306,7 +306,7 @@ function AppPage() {
   // Auto-mark room as not done when no items have counts above default.
   const roomCountsAfter = (qc.getQueryData<RoomCount[]>(["room_counts"]) ?? [])
   .filter((c) => c.room_number === roomNumber);
-  const anyMarked = roomCountsAfter.some((c) => c.count > 1);
+  const anyMarked = roomCountsAfter.some((c) => c.count > 0);
   if (!anyMarked) {
   const room = rooms.find((r) => r.room_number === roomNumber);
   if (room?.done) {
