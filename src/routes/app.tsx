@@ -743,14 +743,14 @@ function AppPage() {
  key={`r-${n}`}
  type="button"
  onClick={() => openOrToggle(n)}
- className={cn(
- "aspect-square rounded-md border text-sm font-medium transition-colors tabular-nums",
- isOpen
- ? "ring-2 ring-ring border-transparent bg-accent"
- : done
- ? "bg-muted text-muted-foreground line-through border-transparent"
- : "bg-background hover:bg-accent",
- )}
+                  className={cn(
+                    "aspect-square rounded-md border text-sm font-medium transition-colors tabular-nums",
+                    isOpen
+                      ? "ring-2 ring-ring border-transparent bg-accent"
+                      : done
+                        ? "bg-green-100 text-green-800 line-through border-transparent"
+                        : "bg-red-100 text-red-900 hover:bg-red-200 border-red-200",
+                  )}
  aria-pressed={done}
  aria-expanded={isOpen}
  aria-label={`Room ${n}${done ? " done" : ""}`}
