@@ -600,6 +600,9 @@ function AppPage() {
  </p>
  </div>
  <div className="flex items-center gap-2">
+ <Button variant="outline" size="sm" onClick={() => setExportOpen(true)}>
+ Export
+ </Button>
  <DropdownMenu>
  <DropdownMenuTrigger asChild>
  <Button variant="ghost" size="sm" className="" aria-label="Menu">
