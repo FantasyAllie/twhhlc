@@ -511,20 +511,8 @@ function AppPage() {
   const cat = roomCategory(n);
  return (
  <div className="border rounded-md p-4 space-y-4 bg-muted/30">
-  <div className="flex items-center gap-2 flex-wrap">
-    <span className="text-xs text-muted-foreground">Category:</span>
-    {CATEGORIES.map((c) => (
-      <Button
-        key={c.value}
-        type="button"
-        size="sm"
-        variant={cat === c.value ? "default" : "outline"}
-        className="h-7 text-xs"
-        onClick={() => setRoomCategory(n, c.value)}
-      >
-        {c.label}
-      </Button>
-    ))}
+  <div className="flex items-center">
+    <span className="text-sm font-medium">{categoryLabel(cat)}</span>
   </div>
  {visibleTemplate.length === 0 && roomExtras.length === 0 ? (
  <p className="text-sm text-muted-foreground">
