@@ -577,7 +577,7 @@ function AppPage() {
   <Button
     type="button"
     variant="ghost"
-    className="h-10 text-muted-foreground hover:text-destructive"
+    className="w-full h-10 text-muted-foreground hover:text-destructive"
     onClick={() => resetRoomCounts(n)}
   >
     Reset counts
