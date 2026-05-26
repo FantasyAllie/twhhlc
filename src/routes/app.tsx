@@ -516,7 +516,7 @@ function AppPage() {
   </div>
  {visibleTemplate.length === 0 && roomExtras.length === 0 ? (
  <p className="text-sm text-muted-foreground">
- No items yet. Add template items from the menu, or add an extra below.
+ No items yet. Add linen list items from the menu, or add an extra below.
  </p>
  ) : (
  <ul className="divide-y">
@@ -672,10 +672,10 @@ function AppPage() {
  </DropdownMenuTrigger>
  <DropdownMenuContent align="end">
  <DropdownMenuItem onSelect={() => setTemplateOpen(true)}>
- Template items
+              Linen List
  </DropdownMenuItem>
  <DropdownMenuItem onSelect={() => setCategoriesOpen(true)}>
- Room categories
+              Room Type
  </DropdownMenuItem>
  <DropdownMenuSeparator />
  <DropdownMenuItem
@@ -689,11 +689,11 @@ function AppPage() {
  </div>
  </header>
 
- {/* Template items dialog */}
+ {/* Linen list dialog */}
  <Dialog open={templateOpen} onOpenChange={setTemplateOpen}>
  <DialogContent className="max-w-lg">
  <DialogHeader>
- <DialogTitle>Template items</DialogTitle>
+ <DialogTitle>Linen List</DialogTitle>
  <DialogDescription>
   Pick which rooms each item should show up in.
  </DialogDescription>
@@ -811,13 +811,13 @@ function AppPage() {
  </DialogContent>
  </Dialog>
 
- {/* Room categories dialog */}
+ {/* Room type dialog */}
  <Dialog open={categoriesOpen} onOpenChange={setCategoriesOpen}>
  <DialogContent className="max-w-lg">
  <DialogHeader>
- <DialogTitle>Room categories</DialogTitle>
- <DialogDescription>
- Assign a category to each room. Template items for that category will appear in the room.
+              <DialogTitle>Room Type</DialogTitle>
+              <DialogDescription>
+                Assign a type to each room. Linen list items for that type will appear in the room.
  </DialogDescription>
  </DialogHeader>
  <div className="max-h-[60vh] overflow-y-auto -mx-6 px-6">
