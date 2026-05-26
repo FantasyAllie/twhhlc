@@ -691,7 +691,7 @@ function AppPage() {
 
  {/* Linen list dialog */}
  <Dialog open={templateOpen} onOpenChange={setTemplateOpen}>
- <DialogContent className="max-w-lg">
+<DialogContent className="max-w-2xl">
  <DialogHeader>
  <DialogTitle>Linen List</DialogTitle>
  <DialogDescription>
