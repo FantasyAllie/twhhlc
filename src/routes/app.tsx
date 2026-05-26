@@ -61,7 +61,7 @@ function AppPage() {
  const [categoriesOpen, setCategoriesOpen] = useState(false);
  const [newTemplateName, setNewTemplateName] = useState("");
  const [newTemplateCategory, setNewTemplateCategory] = useState<Category>("double");
- const [newExtraName, setNewExtraName] = useState("");
+ 
 
  const [exportOpen, setExportOpen] = useState(false);
 
