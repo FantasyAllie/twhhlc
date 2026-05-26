@@ -990,6 +990,49 @@ function AppPage() {
  </div>
  <div className="flex justify-end gap-2">
  <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() => {
+                            const dateStr = new Date().toLocaleDateString(
+                              undefined,
+                              { year: "numeric", month: "long", day: "numeric" }
+                            );
+                            const win = window.open("", "_blank");
+                            if (!win) {
+                              toast.error("Pop-up blocked");
+                              return;
+                            }
+                            const tableRows = rows
+                              .map(
+                                ([n, c]) =>
+                                  `<tr><td>${n.replace(/[<>&]/g, (s) => ({ "<": "&lt;", ">": "&gt;", "&": "&amp;" }[s]!))}</td><td class="num">${c}</td></tr>`
+                              )
+                              .join("");
+                            win.document.write(`<!doctype html><html><head><title>Linen Totals - ${dateStr}</title><style>
+                              body{font-family:system-ui,-apple-system,sans-serif;color:#000;background:#fff;padding:2rem;max-width:640px;margin:0 auto;}
+                              h1{font-size:1.5rem;margin:0 0 .25rem;}
+                              .date{color:#444;margin:0 0 1.5rem;font-size:.95rem;}
+                              table{width:100%;border-collapse:collapse;font-size:1rem;}
+                              th,td{text-align:left;padding:.5rem .75rem;border-bottom:1px solid #ccc;}
+                              th.num,td.num{text-align:right;font-variant-numeric:tabular-nums;}
+                              tfoot td{font-weight:600;border-top:2px solid #000;border-bottom:none;padding-top:.75rem;}
+                              @media print{body{padding:0;}}
+                            </style></head><body>
+                              <h1>Linen Totals</h1>
+                              <p class="date">${dateStr}</p>
+                              <table>
+                                <thead><tr><th>Item</th><th class="num">Count</th></tr></thead>
+                                <tbody>${tableRows}</tbody>
+                                <tfoot><tr><td>Total</td><td class="num">${grand}</td></tr></tfoot>
+                              </table>
+                              <script>window.onload=()=>{window.print();}</script>
+                            </body></html>`);
+                            win.document.close();
+                          }}
+                        >
+                          Print
+                        </Button>
+                        <Button
  variant="outline"
  size="sm"
  onClick={async () => {
