@@ -391,7 +391,7 @@ function AppPage() {
  return;
  }
  setOpenRoom(roomNumber);
- setNewExtraName("");
+ 
  };
 
   const resetRoomCounts = async (roomNumber: number) => {
