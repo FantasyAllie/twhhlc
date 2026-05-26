@@ -71,7 +71,7 @@ function AppPage() {
  useEffect(() => {
  const md = window.matchMedia("(min-width: 768px)");
  const sm = window.matchMedia("(min-width: 640px)");
- const update = () => setCols(md.matches ? 10 : sm.matches ? 8 : 5);
+ const update = () => setCols(md.matches ? 10 : sm.matches ? 8 : 4);
  update();
  md.addEventListener("change", update);
  sm.addEventListener("change", update);
@@ -589,10 +589,10 @@ function AppPage() {
 
  return (
  <main className="min-h-screen bg-background">
- <div className="max-w-2xl mx-auto px-4 py-10 space-y-10">
- <header className="flex items-center justify-between">
- <div>
- <h1 className="text-2xl font-semibold tracking-tight">Three Ways House Hotel Linen Counter</h1>
+ <div className="max-w-2xl mx-auto px-4 py-6 sm:py-10 space-y-8 sm:space-y-10">
+ <header className="flex items-start sm:items-center justify-between gap-3 flex-wrap">
+ <div className="min-w-0 flex-1">
+ <h1 className="text-xl sm:text-2xl font-semibold tracking-tight">Three Ways House Hotel Linen Counter</h1>
  <p className="text-xs text-muted-foreground mt-1">
  Shared workspace
  </p>
@@ -628,7 +628,7 @@ function AppPage() {
 
  {/* Linen list dialog */}
  <Dialog open={templateOpen} onOpenChange={setTemplateOpen}>
-<DialogContent className="max-w-2xl">
+<DialogContent className="max-w-2xl w-[calc(100vw-1.5rem)] sm:w-full p-4 sm:p-6">
  <DialogHeader>
  <DialogTitle>Linen List</DialogTitle>
  <DialogDescription>
@@ -649,14 +649,14 @@ function AppPage() {
     {template.length === 0 ? (
       <p className="text-sm text-muted-foreground">No items yet.</p>
     ) : (
-      <ul className="divide-y border-t max-h-[60vh] overflow-y-auto -mx-6 px-6">
+       <ul className="divide-y border-t max-h-[60vh] overflow-y-auto -mx-4 sm:-mx-6 px-4 sm:px-6">
         {template.map((item, idx) => {
           const assignedCount = assignments.filter(
             (a) => a.template_item_id === item.id,
           ).length;
           return (
-            <li key={item.id} className="flex items-center gap-2 py-2">
-              <span className="flex-1 truncate">{item.name}</span>
+            <li key={item.id} className="flex items-center gap-1.5 flex-wrap py-2">
+              <span className="flex-1 min-w-full sm:min-w-0 truncate">{item.name}</span>
               <label className="flex items-center gap-1 text-xs text-muted-foreground">
                 Default
                 <Input
@@ -750,14 +750,14 @@ function AppPage() {
 
  {/* Room type dialog */}
  <Dialog open={categoriesOpen} onOpenChange={setCategoriesOpen}>
- <DialogContent className="max-w-lg">
+<DialogContent className="max-w-lg w-[calc(100vw-1.5rem)] sm:w-full p-4 sm:p-6">
  <DialogHeader>
               <DialogTitle>Room Type</DialogTitle>
               <DialogDescription>
                 Assign a type to each room. Linen list items for that type will appear in the room.
  </DialogDescription>
  </DialogHeader>
- <div className="max-h-[60vh] overflow-y-auto -mx-6 px-6">
+ <div className="max-h-[60vh] overflow-y-auto -mx-4 sm:-mx-6 px-4 sm:px-6">
  <ul className="divide-y">
  {rooms.map((r) => r.room_number).map((n) => {
  const cat = roomCategory(n);
@@ -802,7 +802,7 @@ function AppPage() {
  </div>
 
  {/* On-screen interactive accordion */}
- <div className=" grid grid-cols-5 sm:grid-cols-8 md:grid-cols-10 gap-2">
+ <div className="grid grid-cols-4 sm:grid-cols-8 md:grid-cols-10 gap-2">
  {(() => {
   const allRooms = rooms.map((r) => r.room_number);
   const openIdx =
@@ -869,7 +869,7 @@ function AppPage() {
  </div>
 
  <Dialog open={exportOpen} onOpenChange={setExportOpen}>
- <DialogContent className="max-w-md">
+<DialogContent className="max-w-md w-[calc(100vw-1.5rem)] sm:w-full p-4 sm:p-6">
  <DialogHeader>
  <DialogTitle>Export totals</DialogTitle>
  <DialogDescription>
