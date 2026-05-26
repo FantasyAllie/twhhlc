@@ -915,7 +915,7 @@ function AppPage() {
  Close
  </button>
  </div>
- {renderRoomPanel(openRoom)}
+  {renderRoomPanel(openRoom!)}
  </div>,
  );
  }
