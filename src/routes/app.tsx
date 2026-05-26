@@ -1018,7 +1018,7 @@ function AppPage() {
                               tfoot td{font-weight:600;border-top:2px solid #000;border-bottom:none;padding-top:.75rem;}
                               @media print{body{padding:0;}}
                             </style></head><body>
-                              <h1>Three Ways House Hotel Linen</h1>`
+                              <h1>Three Ways House Hotel Linen</h1>
                               <p class="date">${dateStr}</p>
                               <table>
                                 <thead><tr><th>Item</th><th class="num">Count</th></tr></thead>
