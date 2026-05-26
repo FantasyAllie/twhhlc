@@ -574,28 +574,15 @@ function AppPage() {
  )}
 
 
- <div className="flex gap-2">
- <Button
- type="button"
- variant="outline"
- className={cn(
- "flex-1 h-10",
- doneSet.has(n) &&
- "bg-emerald-50 border-emerald-200 text-emerald-700 hover:bg-emerald-100 hover:text-emerald-800",
- )}
- onClick={() => toggleRoom(n)}
- >
- {doneSet.has(n) ? "Mark as not done" : "Mark as done"}
- </Button>
- <Button
- type="button"
- variant="ghost"
- className="h-10 text-muted-foreground hover:text-destructive"
- onClick={() => resetRoomCounts(n)}
- >
- Reset counts
- </Button>
- </div>
+  <Button
+    type="button"
+    variant="ghost"
+    className="h-10 text-muted-foreground hover:text-destructive"
+    onClick={() => resetRoomCounts(n)}
+  >
+    Reset counts
+  </Button>
+
  </div>
  );
  };
