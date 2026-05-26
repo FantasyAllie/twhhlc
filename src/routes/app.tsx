@@ -672,10 +672,10 @@ function AppPage() {
  </DropdownMenuTrigger>
  <DropdownMenuContent align="end">
  <DropdownMenuItem onSelect={() => setTemplateOpen(true)}>
- Template items
+              Linen List
  </DropdownMenuItem>
  <DropdownMenuItem onSelect={() => setCategoriesOpen(true)}>
- Room categories
+              Room Type
  </DropdownMenuItem>
  <DropdownMenuSeparator />
  <DropdownMenuItem
@@ -693,7 +693,7 @@ function AppPage() {
  <Dialog open={templateOpen} onOpenChange={setTemplateOpen}>
  <DialogContent className="max-w-lg">
  <DialogHeader>
- <DialogTitle>Template items</DialogTitle>
+ <DialogTitle>Linen List</DialogTitle>
  <DialogDescription>
   Pick which rooms each item should show up in.
  </DialogDescription>
@@ -815,9 +815,9 @@ function AppPage() {
  <Dialog open={categoriesOpen} onOpenChange={setCategoriesOpen}>
  <DialogContent className="max-w-lg">
  <DialogHeader>
- <DialogTitle>Room categories</DialogTitle>
- <DialogDescription>
- Assign a category to each room. Template items for that category will appear in the room.
+              <DialogTitle>Room Type</DialogTitle>
+              <DialogDescription>
+                Assign a type to each room. Linen list items for that type will appear in the room.
  </DialogDescription>
  </DialogHeader>
  <div className="max-h-[60vh] overflow-y-auto -mx-6 px-6">
