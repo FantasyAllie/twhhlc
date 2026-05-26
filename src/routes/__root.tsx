@@ -76,6 +76,9 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
       { title: "Counter" },
       { name: "description", content: "Item Counter Plus is a digital tool for tracking and managing multiple item counts with room assignment functionality." },
       { name: "author", content: "Lovable" },
+      { name: "apple-mobile-web-app-capable", content: "yes" },
+      { name: "apple-mobile-web-app-title", content: "Counter" },
+      { name: "theme-color", content: "#3b82f6" },
       { property: "og:title", content: "Counter" },
       { property: "og:description", content: "Item Counter Plus is a digital tool for tracking and managing multiple item counts with room assignment functionality." },
       { property: "og:type", content: "website" },
@@ -90,6 +93,14 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
       {
         rel: "stylesheet",
         href: appCss,
+      },
+      {
+        rel: "apple-touch-icon",
+        href: "/apple-touch-icon.png",
+      },
+      {
+        rel: "manifest",
+        href: "/manifest.json",
       },
     ],
   }),
