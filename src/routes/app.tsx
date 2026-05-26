@@ -265,16 +265,6 @@ function AppPage() {
  };
 
  // --- Room extras ---
- const addExtra = async (roomNumber: number) => {
- const name = newExtraName.trim();
- if (!name) return;
- setNewExtraName("");
- const { error } = await supabase
- .from("room_extra_items")
- .insert({ name, room_number: roomNumber });
- if (error) toast.error(error.message);
- qc.invalidateQueries({ queryKey: ["room_extras"] });
- };
 
   const setTemplateDefault = async (id: string, value: number) => {
     const next = Math.max(0, Math.floor(value) || 0);
