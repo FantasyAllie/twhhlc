@@ -384,30 +384,6 @@ function AppPage() {
   }
   };
 
- // --- Room toggle ---
- const toggleRoom = async (roomNumber: number) => {
- const existing = rooms.find((r) => r.room_number === roomNumber);
- const nextDone = !existing?.done;
-
- qc.setQueryData<Room[]>(["rooms"], (old) => {
- const list = old ? [...old] : [];
- const idx = list.findIndex((r) => r.room_number === roomNumber);
- if (idx >= 0) list[idx] = { ...list[idx], done: nextDone };
- else list.push({ id: `temp-${roomNumber}`, room_number: roomNumber, done: nextDone, category: null });
- return list;
- });
-
- const { error } = await supabase.from("rooms").upsert(
- {
- room_number: roomNumber,
- done: nextDone,
- updated_at: new Date().toISOString(),
- },
- { onConflict: "user_id,room_number" },
- );
- if (error) toast.error(error.message);
- qc.invalidateQueries({ queryKey: ["rooms"] });
- };
 
  const openOrToggle = (roomNumber: number) => {
  if (openRoom === roomNumber) {
