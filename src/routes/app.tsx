@@ -516,7 +516,7 @@ function AppPage() {
   </div>
  {visibleTemplate.length === 0 && roomExtras.length === 0 ? (
  <p className="text-sm text-muted-foreground">
- No items yet. Add template items from the menu, or add an extra below.
+ No items yet. Add linen list items from the menu, or add an extra below.
  </p>
  ) : (
  <ul className="divide-y">
@@ -689,7 +689,7 @@ function AppPage() {
  </div>
  </header>
 
- {/* Template items dialog */}
+ {/* Linen list dialog */}
  <Dialog open={templateOpen} onOpenChange={setTemplateOpen}>
  <DialogContent className="max-w-lg">
  <DialogHeader>
@@ -811,7 +811,7 @@ function AppPage() {
  </DialogContent>
  </Dialog>
 
- {/* Room categories dialog */}
+ {/* Room type dialog */}
  <Dialog open={categoriesOpen} onOpenChange={setCategoriesOpen}>
  <DialogContent className="max-w-lg">
  <DialogHeader>
