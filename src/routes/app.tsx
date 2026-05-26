@@ -71,7 +71,7 @@ function AppPage() {
  useEffect(() => {
  const md = window.matchMedia("(min-width: 768px)");
  const sm = window.matchMedia("(min-width: 640px)");
- const update = () => setCols(md.matches ? 10 : sm.matches ? 8 : 5);
+ const update = () => setCols(md.matches ? 10 : sm.matches ? 8 : 4);
  update();
  md.addEventListener("change", update);
  sm.addEventListener("change", update);
