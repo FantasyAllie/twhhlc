@@ -919,6 +919,7 @@ function AppPage() {
  </div>,
  );
  }
+  }
  return nodes;
  })()}
  </div>
