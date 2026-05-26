@@ -61,7 +61,7 @@ function AppPage() {
  const [categoriesOpen, setCategoriesOpen] = useState(false);
  const [newTemplateName, setNewTemplateName] = useState("");
  const [newTemplateCategory, setNewTemplateCategory] = useState<Category>("double");
- const [newExtraName, setNewExtraName] = useState("");
+ 
 
  const [exportOpen, setExportOpen] = useState(false);
 
@@ -265,16 +265,6 @@ function AppPage() {
  };
 
  // --- Room extras ---
- const addExtra = async (roomNumber: number) => {
- const name = newExtraName.trim();
- if (!name) return;
- setNewExtraName("");
- const { error } = await supabase
- .from("room_extra_items")
- .insert({ name, room_number: roomNumber });
- if (error) toast.error(error.message);
- qc.invalidateQueries({ queryKey: ["room_extras"] });
- };
 
   const setTemplateDefault = async (id: string, value: number) => {
     const next = Math.max(0, Math.floor(value) || 0);
@@ -394,30 +384,6 @@ function AppPage() {
   }
   };
 
- // --- Room toggle ---
- const toggleRoom = async (roomNumber: number) => {
- const existing = rooms.find((r) => r.room_number === roomNumber);
- const nextDone = !existing?.done;
-
- qc.setQueryData<Room[]>(["rooms"], (old) => {
- const list = old ? [...old] : [];
- const idx = list.findIndex((r) => r.room_number === roomNumber);
- if (idx >= 0) list[idx] = { ...list[idx], done: nextDone };
- else list.push({ id: `temp-${roomNumber}`, room_number: roomNumber, done: nextDone, category: null });
- return list;
- });
-
- const { error } = await supabase.from("rooms").upsert(
- {
- room_number: roomNumber,
- done: nextDone,
- updated_at: new Date().toISOString(),
- },
- { onConflict: "user_id,room_number" },
- );
- if (error) toast.error(error.message);
- qc.invalidateQueries({ queryKey: ["rooms"] });
- };
 
  const openOrToggle = (roomNumber: number) => {
  if (openRoom === roomNumber) {
@@ -425,7 +391,7 @@ function AppPage() {
  return;
  }
  setOpenRoom(roomNumber);
- setNewExtraName("");
+ 
  };
 
   const resetRoomCounts = async (roomNumber: number) => {
@@ -607,45 +573,16 @@ function AppPage() {
  </ul>
  )}
 
- <form
- onSubmit={(e) => {
- e.preventDefault();
- addExtra(n);
- }}
- className="flex gap-2"
- >
- <Input
- placeholder="Add an extra item for this room…"
- value={newExtraName}
- onChange={(e) => setNewExtraName(e.target.value)}
- />
- <Button type="submit" disabled={!newExtraName.trim()}>
- Add
- </Button>
- </form>
 
- <div className="flex gap-2">
- <Button
- type="button"
- variant="outline"
- className={cn(
- "flex-1 h-10",
- doneSet.has(n) &&
- "bg-emerald-50 border-emerald-200 text-emerald-700 hover:bg-emerald-100 hover:text-emerald-800",
- )}
- onClick={() => toggleRoom(n)}
- >
- {doneSet.has(n) ? "Mark as not done" : "Mark as done"}
- </Button>
- <Button
- type="button"
- variant="ghost"
- className="h-10 text-muted-foreground hover:text-destructive"
- onClick={() => resetRoomCounts(n)}
- >
- Reset counts
- </Button>
- </div>
+  <Button
+    type="button"
+    variant="ghost"
+    className="h-10 text-muted-foreground hover:text-destructive"
+    onClick={() => resetRoomCounts(n)}
+  >
+    Reset counts
+  </Button>
+
  </div>
  );
  };
