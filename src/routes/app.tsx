@@ -573,22 +573,6 @@ function AppPage() {
  </ul>
  )}
 
- <form
- onSubmit={(e) => {
- e.preventDefault();
- addExtra(n);
- }}
- className="flex gap-2"
- >
- <Input
- placeholder="Add an extra item for this room…"
- value={newExtraName}
- onChange={(e) => setNewExtraName(e.target.value)}
- />
- <Button type="submit" disabled={!newExtraName.trim()}>
- Add
- </Button>
- </form>
 
  <div className="flex gap-2">
  <Button
