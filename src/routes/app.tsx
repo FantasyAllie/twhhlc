@@ -750,14 +750,14 @@ function AppPage() {
 
  {/* Room type dialog */}
  <Dialog open={categoriesOpen} onOpenChange={setCategoriesOpen}>
- <DialogContent className="max-w-lg">
+<DialogContent className="max-w-lg w-[calc(100vw-1.5rem)] sm:w-full p-4 sm:p-6">
  <DialogHeader>
               <DialogTitle>Room Type</DialogTitle>
               <DialogDescription>
                 Assign a type to each room. Linen list items for that type will appear in the room.
  </DialogDescription>
  </DialogHeader>
- <div className="max-h-[60vh] overflow-y-auto -mx-6 px-6">
+ <div className="max-h-[60vh] overflow-y-auto -mx-4 sm:-mx-6 px-4 sm:px-6">
  <ul className="divide-y">
  {rooms.map((r) => r.room_number).map((n) => {
  const cat = roomCategory(n);
@@ -802,7 +802,7 @@ function AppPage() {
  </div>
 
  {/* On-screen interactive accordion */}
- <div className=" grid grid-cols-5 sm:grid-cols-8 md:grid-cols-10 gap-2">
+ <div className="grid grid-cols-4 sm:grid-cols-8 md:grid-cols-10 gap-2">
  {(() => {
   const allRooms = rooms.map((r) => r.room_number);
   const openIdx =
@@ -869,7 +869,7 @@ function AppPage() {
  </div>
 
  <Dialog open={exportOpen} onOpenChange={setExportOpen}>
- <DialogContent className="max-w-md">
+<DialogContent className="max-w-md w-[calc(100vw-1.5rem)] sm:w-full p-4 sm:p-6">
  <DialogHeader>
  <DialogTitle>Export totals</DialogTitle>
  <DialogDescription>
