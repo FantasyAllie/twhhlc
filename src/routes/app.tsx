@@ -580,7 +580,7 @@ function AppPage() {
     className="w-full h-10 text-muted-foreground hover:text-destructive"
     onClick={() => resetRoomCounts(n)}
   >
-    Reset counts
+    Reset Tally
   </Button>
 
  </div>
