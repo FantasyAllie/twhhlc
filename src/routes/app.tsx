@@ -868,10 +868,13 @@ function AppPage() {
  <div className=" grid grid-cols-5 sm:grid-cols-8 md:grid-cols-10 gap-2">
  {(() => {
   const allRooms = rooms.map((r) => r.room_number);
- const openRowEnd =
- openRoom !== null ? Math.ceil(openRoom / cols) * cols : null;
+  const openIdx =
+  openRoom !== null ? allRooms.indexOf(openRoom) : -1;
+  const openRowEndIdx =
+  openIdx >= 0 ? Math.ceil((openIdx + 1) / cols) * cols - 1 : -1;
  const nodes: React.ReactNode[] = [];
- for (const n of allRooms) {
+  for (let i = 0; i < allRooms.length; i++) {
+  const n = allRooms[i];
  const done = doneSet.has(n);
  const isOpen = openRoom === n;
  nodes.push(
@@ -894,7 +897,9 @@ function AppPage() {
  {n}
  </button>,
  );
- if (n === openRowEnd && openRoom !== null) {
+  if (openRoom !== null && (i === openRowEndIdx || i === allRooms.length - 1) && i >= openIdx && openIdx >= 0) {
+  // only insert once: at the end of the open row, or at last item if open row extends past list
+  if (i === openRowEndIdx || (openRowEndIdx >= allRooms.length && i === allRooms.length - 1)) {
  nodes.push(
  <div key={`panel-${openRoom}`} className="col-span-full space-y-2 mt-1">
  <div className="flex items-center justify-between">
