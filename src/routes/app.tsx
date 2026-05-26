@@ -897,9 +897,12 @@ function AppPage() {
  {n}
  </button>,
  );
-  if (openRoom !== null && (i === openRowEndIdx || i === allRooms.length - 1) && i >= openIdx && openIdx >= 0) {
-  // only insert once: at the end of the open row, or at last item if open row extends past list
-  if (i === openRowEndIdx || (openRowEndIdx >= allRooms.length && i === allRooms.length - 1)) {
+   if (
+   openIdx >= 0 &&
+   i >= openIdx &&
+   (i === openRowEndIdx ||
+   (openRowEndIdx >= allRooms.length && i === allRooms.length - 1))
+   ) {
  nodes.push(
  <div key={`panel-${openRoom}`} className="col-span-full space-y-2 mt-1">
  <div className="flex items-center justify-between">
@@ -915,7 +918,6 @@ function AppPage() {
  {renderRoomPanel(openRoom)}
  </div>,
  );
- }
  }
  return nodes;
  })()}
