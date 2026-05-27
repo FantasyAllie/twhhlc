@@ -678,7 +678,51 @@ function AppPage() {
           ).length;
           return (
             <li key={item.id} className="flex items-center gap-1.5 flex-wrap py-2">
-              <span className="flex-1 min-w-full sm:min-w-0 truncate">{item.name}</span>
+              {editingItemId === item.id ? (
+                <form
+                  onSubmit={(e) => {
+                    e.preventDefault();
+                    renameTemplateItem(item.id, editingItemName);
+                  }}
+                  className="flex-1 min-w-full sm:min-w-0 flex items-center gap-1"
+                >
+                  <Input
+                    autoFocus
+                    value={editingItemName}
+                    onChange={(e) => setEditingItemName(e.target.value)}
+                    onBlur={() => renameTemplateItem(item.id, editingItemName)}
+                    onKeyDown={(e) => {
+                      if (e.key === "Escape") setEditingItemId(null);
+                    }}
+                    className="h-8"
+                  />
+                  <Button
+                    type="submit"
+                    variant="ghost"
+                    size="icon"
+                    className="h-8 w-8 text-muted-foreground"
+                    aria-label="Save name"
+                  >
+                    <Check className="h-4 w-4" />
+                  </Button>
+                </form>
+              ) : (
+                <>
+                  <span className="flex-1 min-w-0 truncate">{item.name}</span>
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    className="h-8 w-8 text-muted-foreground"
+                    onClick={() => {
+                      setEditingItemId(item.id);
+                      setEditingItemName(item.name);
+                    }}
+                    aria-label={`Rename ${item.name}`}
+                  >
+                    <Pencil className="h-4 w-4" />
+                  </Button>
+                </>
+              )}
               <label className="flex items-center gap-1 text-xs text-muted-foreground">
                 Default
                 <Input
