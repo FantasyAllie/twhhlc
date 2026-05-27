@@ -283,6 +283,26 @@ function AppPage() {
     }
   };
 
+  const renameTemplateItem = async (id: string, name: string) => {
+    const trimmed = name.trim();
+    if (!trimmed) {
+      setEditingItemId(null);
+      return;
+    }
+    qc.setQueryData<TemplateItem[]>(["template_items"], (old) =>
+      old?.map((t) => (t.id === id ? { ...t, name: trimmed } : t)) ?? [],
+    );
+    setEditingItemId(null);
+    const { error } = await supabase
+      .from("template_items")
+      .update({ name: trimmed })
+      .eq("id", id);
+    if (error) {
+      toast.error(error.message);
+      qc.invalidateQueries({ queryKey: ["template_items"] });
+    }
+  };
+
  const deleteExtra = async (id: string) => {
  qc.setQueryData<RoomExtra[]>(["room_extras"], (old) =>
  old?.filter((e) => e.id !== id) ?? [],
