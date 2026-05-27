@@ -677,14 +677,14 @@ function AppPage() {
             (a) => a.template_item_id === item.id,
           ).length;
           return (
-            <li key={item.id} className="flex items-center gap-1.5 flex-wrap py-2">
+            <li key={item.id} className="flex flex-col sm:flex-row sm:items-center gap-2 py-2">
               {editingItemId === item.id ? (
                 <form
                   onSubmit={(e) => {
                     e.preventDefault();
                     renameTemplateItem(item.id, editingItemName);
                   }}
-                  className="flex-1 min-w-full sm:min-w-0 flex items-center gap-1"
+                  className="flex items-center gap-1 w-full"
                 >
                   <Input
                     autoFocus
@@ -694,7 +694,7 @@ function AppPage() {
                     onKeyDown={(e) => {
                       if (e.key === "Escape") setEditingItemId(null);
                     }}
-                    className="h-8"
+                    className="h-8 flex-1"
                   />
                   <Button
                     type="submit"
@@ -707,7 +707,7 @@ function AppPage() {
                   </Button>
                 </form>
               ) : (
-                <>
+                <div className="flex items-center gap-1.5 w-full sm:w-auto sm:flex-1 min-w-0">
                   <span className="flex-1 min-w-0 truncate">{item.name}</span>
                   <Button
                     variant="ghost"
@@ -721,90 +721,92 @@ function AppPage() {
                   >
                     <Pencil className="h-4 w-4" />
                   </Button>
-                </>
+                </div>
               )}
-              <label className="flex items-center gap-1 text-xs text-muted-foreground">
-                Default
-                <Input
-                  type="number"
-                  min={0}
-                  value={item.default_count}
-                  onChange={(e) =>
-                    setTemplateDefault(item.id, Number(e.target.value))
-                  }
-                  className="h-8 w-14 text-center"
-                />
-              </label>
-              <Popover>
-                <PopoverTrigger asChild>
-                  <Button variant="outline" size="sm" className="h-8 text-xs">
-                    Rooms ({assignedCount})
-                  </Button>
-                </PopoverTrigger>
-                <PopoverContent align="end" className="w-56 p-2">
-                  <Button
-                    type="button"
-                    variant="secondary"
-                    size="sm"
-                    className="w-full h-8 mb-2"
-                    onClick={() => assignAllRooms(item.id)}
-                  >
-                    All Rooms
-                  </Button>
-                  <div
-                    className="max-h-64 overflow-y-auto overscroll-contain space-y-1"
-                    onWheel={(e) => e.stopPropagation()}
-                    onTouchMove={(e) => e.stopPropagation()}
-                  >
-                    {rooms.map((r) => {
-                      const checked = isAssigned(item.id, r.room_number);
-                      return (
-                        <label
-                          key={r.room_number}
-                          className="flex items-center gap-2 px-2 py-1 rounded hover:bg-accent cursor-pointer text-sm"
-                        >
-                          <Checkbox
-                            checked={checked}
-                            onCheckedChange={() =>
-                              toggleAssignment(item.id, r.room_number)
-                            }
-                          />
-                          <span className="tabular-nums">Room {r.room_number}</span>
-                        </label>
-                      );
-                    })}
-                  </div>
-                </PopoverContent>
-              </Popover>
-              <Button
-                variant="ghost"
-                size="icon"
-                className="h-8 w-8 text-muted-foreground"
-                onClick={() => moveTemplateItem(item.id, -1)}
-                disabled={idx === 0}
-                aria-label={`Move ${item.name} up`}
-              >
-                <ArrowUp className="h-4 w-4" />
-              </Button>
-              <Button
-                variant="ghost"
-                size="icon"
-                className="h-8 w-8 text-muted-foreground"
-                onClick={() => moveTemplateItem(item.id, 1)}
-                disabled={idx === template.length - 1}
-                aria-label={`Move ${item.name} down`}
-              >
-                <ArrowDown className="h-4 w-4" />
-              </Button>
-              <Button
-                variant="ghost"
-                size="icon"
-                className="h-8 w-8 text-muted-foreground hover:text-destructive"
-                onClick={() => deleteTemplateItem(item.id)}
-                aria-label={`Delete ${item.name}`}
-              >
-                <X className="h-4 w-4" />
-              </Button>
+              <div className="flex flex-wrap items-center gap-1.5">
+                <label className="flex items-center gap-1 text-xs text-muted-foreground">
+                  Default
+                  <Input
+                    type="number"
+                    min={0}
+                    value={item.default_count}
+                    onChange={(e) =>
+                      setTemplateDefault(item.id, Number(e.target.value))
+                    }
+                    className="h-8 w-14 text-center"
+                  />
+                </label>
+                <Popover>
+                  <PopoverTrigger asChild>
+                    <Button variant="outline" size="sm" className="h-8 text-xs">
+                      Rooms ({assignedCount})
+                    </Button>
+                  </PopoverTrigger>
+                  <PopoverContent align="end" className="w-56 p-2">
+                    <Button
+                      type="button"
+                      variant="secondary"
+                      size="sm"
+                      className="w-full h-8 mb-2"
+                      onClick={() => assignAllRooms(item.id)}
+                    >
+                      All Rooms
+                    </Button>
+                    <div
+                      className="max-h-64 overflow-y-auto overscroll-contain space-y-1"
+                      onWheel={(e) => e.stopPropagation()}
+                      onTouchMove={(e) => e.stopPropagation()}
+                    >
+                      {rooms.map((r) => {
+                        const checked = isAssigned(item.id, r.room_number);
+                        return (
+                          <label
+                            key={r.room_number}
+                            className="flex items-center gap-2 px-2 py-1 rounded hover:bg-accent cursor-pointer text-sm"
+                          >
+                            <Checkbox
+                              checked={checked}
+                              onCheckedChange={() =>
+                                toggleAssignment(item.id, r.room_number)
+                              }
+                            />
+                            <span className="tabular-nums">Room {r.room_number}</span>
+                          </label>
+                        );
+                      })}
+                    </div>
+                  </PopoverContent>
+                </Popover>
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  className="h-8 w-8 text-muted-foreground"
+                  onClick={() => moveTemplateItem(item.id, -1)}
+                  disabled={idx === 0}
+                  aria-label={`Move ${item.name} up`}
+                >
+                  <ArrowUp className="h-4 w-4" />
+                </Button>
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  className="h-8 w-8 text-muted-foreground"
+                  onClick={() => moveTemplateItem(item.id, 1)}
+                  disabled={idx === template.length - 1}
+                  aria-label={`Move ${item.name} down`}
+                >
+                  <ArrowDown className="h-4 w-4" />
+                </Button>
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  className="h-8 w-8 text-muted-foreground hover:text-destructive"
+                  onClick={() => deleteTemplateItem(item.id)}
+                  aria-label={`Delete ${item.name}`}
+                >
+                  <X className="h-4 w-4" />
+                </Button>
+              </div>
             </li>
           );
         })}
