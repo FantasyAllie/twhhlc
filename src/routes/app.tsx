@@ -752,9 +752,9 @@ function AppPage() {
  <Dialog open={categoriesOpen} onOpenChange={setCategoriesOpen}>
 <DialogContent className="max-w-lg w-[calc(100vw-1.5rem)] sm:w-full p-4 sm:p-6">
  <DialogHeader>
-              <DialogTitle>Room Type</DialogTitle>
-              <DialogDescription>
-                Assign a type to each room. Linen list items for that type will appear in the room.
+               <DialogTitle>Room Type</DialogTitle>
+               <DialogDescription>
+                 Assign a type to each room so you know what it is when counting.
  </DialogDescription>
  </DialogHeader>
  <div className="max-h-[60vh] overflow-y-auto -mx-4 sm:-mx-6 px-4 sm:px-6">
