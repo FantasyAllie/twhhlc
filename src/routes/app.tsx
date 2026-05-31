@@ -11,7 +11,11 @@ import {
  DropdownMenu,
  DropdownMenuContent,
  DropdownMenuItem,
+  DropdownMenuLabel,
  DropdownMenuSeparator,
+  DropdownMenuSub,
+  DropdownMenuSubContent,
+  DropdownMenuSubTrigger,
  DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import {
@@ -53,6 +57,13 @@ type RoomCount = {
 };
 type Room = { id: string; room_number: number; done: boolean; category: Category | null };
 type TemplateItemRoom = { id: string; template_item_id: string; room_number: number };
+type SnapshotRow = { name: string; count: number };
+type ExportSnapshot = {
+  id: string;
+  created_at: string;
+  totals: SnapshotRow[];
+  grand_total: number;
+};
 
 function AppPage() {
  const qc = useQueryClient();
@@ -66,6 +77,7 @@ function AppPage() {
  
 
  const [exportOpen, setExportOpen] = useState(false);
+  const [viewingSnapshot, setViewingSnapshot] = useState<ExportSnapshot | null>(null);
 
  // Track responsive column count so we can insert the open-room panel
  // right after the row containing the clicked room.
@@ -142,11 +154,25 @@ function AppPage() {
     },
   });
 
+  const snapshotsQ = useQuery({
+    queryKey: ["export_snapshots"],
+    queryFn: async (): Promise<ExportSnapshot[]> => {
+      const { data, error } = await supabase
+        .from("export_snapshots")
+        .select("id,created_at,totals,grand_total")
+        .order("created_at", { ascending: false })
+        .limit(100);
+      if (error) throw error;
+      return (data ?? []) as ExportSnapshot[];
+    },
+  });
+
  const template = templateQ.data ?? [];
  const extras = extrasQ.data ?? [];
  const counts = countsQ.data ?? [];
  const rooms = roomsQ.data ?? [];
   const assignments = assignmentsQ.data ?? [];
+  const snapshots = snapshotsQ.data ?? [];
  const doneSet = new Set(rooms.filter((r) => r.done).map((r) => r.room_number));
 
   const isAssigned = (templateItemId: string, roomNumber: number) =>
@@ -461,7 +487,50 @@ function AppPage() {
  qc.invalidateQueries({ queryKey: ["room_counts"] });
  };
 
- 
+  // --- Export totals + snapshots ---
+  const computeTotals = (): { rows: SnapshotRow[]; grand: number } => {
+    const totals = new Map<string, number>();
+    const nameFor = (c: RoomCount) => {
+      if (c.item_kind === "template") return template.find((t) => t.id === c.item_id)?.name;
+      return extras.find((e) => e.id === c.item_id)?.name;
+    };
+    for (const c of counts) {
+      if (c.count <= 0) continue;
+      const raw = nameFor(c);
+      if (!raw) continue;
+      const key = raw.trim();
+      if (!key) continue;
+      totals.set(key, (totals.get(key) ?? 0) + c.count);
+    }
+    const rows = Array.from(totals.entries())
+      .sort((a, b) => a[0].localeCompare(b[0], undefined, { sensitivity: "base" }))
+      .map(([name, count]) => ({ name, count }));
+    const grand = rows.reduce((s, r) => s + r.count, 0);
+    return { rows, grand };
+  };
+
+  const openExport = async () => {
+    setExportOpen(true);
+    const { rows, grand } = computeTotals();
+    if (rows.length === 0) return;
+    const { error } = await supabase
+      .from("export_snapshots")
+      .insert({ totals: rows, grand_total: grand });
+    if (error) {
+      toast.error(error.message);
+      return;
+    }
+    qc.invalidateQueries({ queryKey: ["export_snapshots"] });
+  };
+
+  const deleteSnapshot = async (id: string) => {
+    qc.setQueryData<ExportSnapshot[]>(["export_snapshots"], (old) =>
+      old?.filter((s) => s.id !== id) ?? [],
+    );
+    const { error } = await supabase.from("export_snapshots").delete().eq("id", id);
+    if (error) toast.error(error.message);
+    qc.invalidateQueries({ queryKey: ["export_snapshots"] });
+  };
 
  // --- Room category ---
  const setRoomCategory = async (roomNumber: number, category: Category) => {
@@ -620,7 +689,7 @@ function AppPage() {
  </p>
  </div>
  <div className="flex items-center gap-2">
- <Button variant="outline" size="sm" onClick={() => setExportOpen(true)}>
+  <Button variant="outline" size="sm" onClick={openExport}>
  Export
  </Button>
  <DropdownMenu>
@@ -636,6 +705,33 @@ function AppPage() {
  <DropdownMenuItem onSelect={() => setCategoriesOpen(true)}>
               Room Type
  </DropdownMenuItem>
+  <DropdownMenuSub>
+    <DropdownMenuSubTrigger>History</DropdownMenuSubTrigger>
+    <DropdownMenuSubContent className="max-h-80 overflow-y-auto">
+      {snapshots.length === 0 ? (
+        <DropdownMenuLabel className="text-xs font-normal text-muted-foreground">
+          No exports yet
+        </DropdownMenuLabel>
+      ) : (
+        snapshots.map((s) => (
+          <DropdownMenuItem
+            key={s.id}
+            onSelect={() => setViewingSnapshot(s)}
+          >
+            {new Date(s.created_at).toLocaleString(undefined, {
+              month: "short",
+              day: "numeric",
+              hour: "numeric",
+              minute: "2-digit",
+            })}
+            <span className="ml-2 text-xs text-muted-foreground">
+              ({s.grand_total})
+            </span>
+          </DropdownMenuItem>
+        ))
+      )}
+    </DropdownMenuSubContent>
+  </DropdownMenuSub>
  <DropdownMenuSeparator />
  <DropdownMenuItem
  onSelect={() => resetAll()}
@@ -1056,6 +1152,83 @@ function AppPage() {
  );
  })()}
  </DialogContent>
+ </Dialog>
+
+ <Dialog open={!!viewingSnapshot} onOpenChange={(o) => !o && setViewingSnapshot(null)}>
+   <DialogContent className="max-w-md w-[calc(100vw-1.5rem)] sm:w-full p-4 sm:p-6">
+     <DialogHeader>
+       <DialogTitle>
+         {viewingSnapshot
+           ? new Date(viewingSnapshot.created_at).toLocaleString(undefined, {
+               year: "numeric",
+               month: "long",
+               day: "numeric",
+               hour: "numeric",
+               minute: "2-digit",
+             })
+           : "Snapshot"}
+       </DialogTitle>
+       <DialogDescription>Saved totals from this export.</DialogDescription>
+     </DialogHeader>
+     {viewingSnapshot && (
+       <div className="space-y-4">
+         {viewingSnapshot.totals.length === 0 ? (
+           <p className="text-sm text-muted-foreground py-4">No items in this snapshot.</p>
+         ) : (
+           <ul className="divide-y rounded-md border max-h-[60vh] overflow-y-auto">
+             {viewingSnapshot.totals.map((r) => (
+               <li
+                 key={r.name}
+                 className="flex items-center justify-between px-3 py-2 text-sm"
+               >
+                 <span className="truncate pr-3">{r.name}</span>
+                 <span className="font-mono font-semibold tabular-nums">{r.count}</span>
+               </li>
+             ))}
+           </ul>
+         )}
+         <div className="flex items-center justify-between text-sm">
+           <span className="text-muted-foreground">
+             {viewingSnapshot.totals.length} item
+             {viewingSnapshot.totals.length === 1 ? "" : "s"}
+           </span>
+           <span className="font-medium">Total: {viewingSnapshot.grand_total}</span>
+         </div>
+         <div className="flex justify-between gap-2">
+           <Button
+             variant="ghost"
+             size="sm"
+             className="text-destructive hover:text-destructive"
+             onClick={async () => {
+               if (!confirm("Delete this snapshot?")) return;
+               const id = viewingSnapshot.id;
+               setViewingSnapshot(null);
+               await deleteSnapshot(id);
+             }}
+           >
+             Delete
+           </Button>
+           <Button
+             variant="outline"
+             size="sm"
+             onClick={async () => {
+               try {
+                 const text = viewingSnapshot.totals
+                   .map((r) => `${r.name}: ${r.count}`)
+                   .join("\n");
+                 await navigator.clipboard.writeText(text);
+                 toast.success("Copied to clipboard");
+               } catch {
+                 toast.error("Copy failed");
+               }
+             }}
+           >
+             Copy
+           </Button>
+         </div>
+       </div>
+     )}
+   </DialogContent>
  </Dialog>
  </main>
  );
