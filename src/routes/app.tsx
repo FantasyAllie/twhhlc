@@ -760,16 +760,6 @@ function AppPage() {
  </p>
  </div>
   <div className="flex items-center gap-2">
-  <Button
-    variant={locked ? "default" : "outline"}
-    size="sm"
-    onClick={() => setLocked((p) => !p)}
-    aria-label={locked ? "Unlock list" : "Lock list"}
-    title={locked ? "List is locked" : "Lock list to prevent accidental changes"}
-  >
-    {locked ? <Unlock className="h-4 w-4 mr-1" /> : <Lock className="h-4 w-4 mr-1" />}
-    {locked ? "Unlock" : "Lock"}
-  </Button>
   <Button variant="outline" size="sm" onClick={openExport}>
   Export
   </Button>
@@ -830,16 +820,28 @@ function AppPage() {
  </div>
  </header>
 
- {/* Linen list dialog */}
- <Dialog open={templateOpen} onOpenChange={setTemplateOpen}>
-<DialogContent className="max-w-2xl w-[calc(100vw-1.5rem)] sm:w-full p-4 sm:p-6">
- <DialogHeader>
- <DialogTitle>Linen List</DialogTitle>
- <DialogDescription>
-  Pick which rooms each item should show up in.
- </DialogDescription>
- </DialogHeader>
+  {/* Linen list dialog */}
+  <Dialog open={templateOpen} onOpenChange={setTemplateOpen}>
+ <DialogContent className="max-w-2xl w-[calc(100vw-1.5rem)] sm:w-full p-4 sm:p-6">
+  <DialogHeader>
+  <DialogTitle>Linen List</DialogTitle>
+  <DialogDescription>
+   Pick which rooms each item should show up in.
+  </DialogDescription>
+  </DialogHeader>
   <div className="space-y-3">
+    <div className="flex justify-end">
+      <Button
+        variant={locked ? "default" : "outline"}
+        size="sm"
+        onClick={() => setLocked((p) => !p)}
+        aria-label={locked ? "Unlock list" : "Lock list"}
+        title={locked ? "List is locked" : "Lock list to prevent accidental changes"}
+      >
+        {locked ? <Unlock className="h-4 w-4 mr-1" /> : <Lock className="h-4 w-4 mr-1" />}
+        {locked ? "Unlock" : "Lock"}
+      </Button>
+    </div>
     <form onSubmit={addTemplateItem} className="flex gap-2">
       <Input
         placeholder="Add an item…"
