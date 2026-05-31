@@ -676,6 +676,7 @@ function AppPage() {
   size="icon"
   className="h-8 w-8"
   onClick={() => updateCount(n, "template", item.id, 1)}
+  disabled={locked}
   aria-label={`Increase ${item.name}`}
   >
   <Plus className="h-4 w-4" />
