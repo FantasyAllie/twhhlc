@@ -829,18 +829,19 @@ function AppPage() {
    Pick which rooms each item should show up in.
   </DialogDescription>
   </DialogHeader>
-  <div className="flex justify-end">
-    <Button
-      variant={locked ? "default" : "outline"}
-      size="sm"
-      onClick={() => setLocked((p) => !p)}
-      aria-label={locked ? "Unlock list" : "Lock list"}
-      title={locked ? "List is locked" : "Lock list to prevent accidental changes"}
-    >
-      {locked ? <Unlock className="h-4 w-4 mr-1" /> : <Lock className="h-4 w-4 mr-1" />}
-      {locked ? "Unlock" : "Lock"}
-    </Button>
-  </div>
+  <div className="space-y-3">
+    <div className="flex justify-end">
+      <Button
+        variant={locked ? "default" : "outline"}
+        size="sm"
+        onClick={() => setLocked((p) => !p)}
+        aria-label={locked ? "Unlock list" : "Lock list"}
+        title={locked ? "List is locked" : "Lock list to prevent accidental changes"}
+      >
+        {locked ? <Unlock className="h-4 w-4 mr-1" /> : <Lock className="h-4 w-4 mr-1" />}
+        {locked ? "Unlock" : "Lock"}
+      </Button>
+    </div>
     <form onSubmit={addTemplateItem} className="flex gap-2">
       <Input
         placeholder="Add an item…"
