@@ -781,6 +781,18 @@ function AppPage() {
           </DropdownMenuItem>
         ))
       )}
+      {snapshots.length > 0 && (
+        <>
+          <DropdownMenuSeparator />
+          <DropdownMenuItem
+            onSelect={clearAllSnapshots}
+            className="text-destructive focus:text-destructive"
+          >
+            <Trash2 className="h-4 w-4 mr-2" />
+            Clear history
+          </DropdownMenuItem>
+        </>
+      )}
     </DropdownMenuSubContent>
   </DropdownMenuSub>
  </DropdownMenuContent>
