@@ -1033,18 +1033,20 @@ function AppPage() {
 
  {/* Rooms */}
  <section className="space-y-4">
- <div className="flex items-baseline justify-between">
- <h2 className="text-sm font-medium text-muted-foreground uppercase tracking-wide">
- Rooms
- </h2>
- <button
- type="button"
- onClick={resetAll}
- className="text-xs text-muted-foreground hover:text-foreground underline underline-offset-4"
- >
- Reset all
- </button>
- </div>
+  <div className="flex items-baseline justify-between">
+  <h2 className="text-sm font-medium text-muted-foreground uppercase tracking-wide">
+  Rooms
+  </h2>
+  {!locked && (
+  <button
+  type="button"
+  onClick={resetAll}
+  className="text-xs text-muted-foreground hover:text-foreground underline underline-offset-4"
+  >
+  Reset all
+  </button>
+  )}
+  </div>
 
  {/* On-screen interactive accordion */}
  <div className="grid grid-cols-4 sm:grid-cols-8 md:grid-cols-10 gap-2">
