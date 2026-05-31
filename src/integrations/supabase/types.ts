@@ -14,6 +14,30 @@ export type Database = {
   }
   public: {
     Tables: {
+      export_snapshots: {
+        Row: {
+          created_at: string
+          grand_total: number
+          id: string
+          totals: Json
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          grand_total?: number
+          id?: string
+          totals: Json
+          user_id?: string
+        }
+        Update: {
+          created_at?: string
+          grand_total?: number
+          id?: string
+          totals?: Json
+          user_id?: string
+        }
+        Relationships: []
+      }
       room_extra_items: {
         Row: {
           created_at: string
