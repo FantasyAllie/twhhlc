@@ -4,7 +4,7 @@ import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Minus, Plus, X, Menu, ArrowUp, ArrowDown, Pencil, Check, Trash2 } from "lucide-react";
+import { Minus, Plus, X, Menu, ArrowUp, ArrowDown, Pencil, Check, Trash2, Lock, Unlock } from "lucide-react";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
 import {
@@ -76,8 +76,16 @@ function AppPage() {
  const [editingItemName, setEditingItemName] = useState("");
  
 
- const [exportOpen, setExportOpen] = useState(false);
+  const [exportOpen, setExportOpen] = useState(false);
   const [viewingSnapshot, setViewingSnapshot] = useState<ExportSnapshot | null>(null);
+  const [locked, setLocked] = useState(() => {
+    try { return localStorage.getItem("linen-locked") === "true"; } catch { return false; }
+  });
+
+  useEffect(() => {
+    try { localStorage.setItem("linen-locked", String(locked)); } catch {}
+    if (locked) setOpenRoom(null);
+  }, [locked]);
 
  // Track responsive column count so we can insert the open-room panel
  // right after the row containing the clicked room.
@@ -647,6 +655,7 @@ function AppPage() {
   size="sm"
   className="h-8 text-xs mr-1"
   onClick={() => updateCount(n, "template", item.id, item.default_count)}
+  disabled={locked}
   >
   + All
   </Button>
@@ -656,7 +665,7 @@ function AppPage() {
   size="icon"
   className="h-8 w-8"
   onClick={() => updateCount(n, "template", item.id, -1)}
-  disabled={count === 0}
+  disabled={count === 0 || locked}
   aria-label={`Decrease ${item.name}`}
   >
   <Minus className="h-4 w-4" />
@@ -667,6 +676,7 @@ function AppPage() {
   size="icon"
   className="h-8 w-8"
   onClick={() => updateCount(n, "template", item.id, 1)}
+  disabled={locked}
   aria-label={`Increase ${item.name}`}
   >
   <Plus className="h-4 w-4" />
@@ -691,7 +701,7 @@ function AppPage() {
  size="icon"
  className="h-8 w-8"
  onClick={() => updateCount(n, "extra", item.id, -1)}
- disabled={count === 0}
+ disabled={count === 0 || locked}
  aria-label={`Decrease ${item.name}`}
  >
  <Minus className="h-4 w-4" />
@@ -701,7 +711,8 @@ function AppPage() {
  variant="outline"
  size="icon"
  className="h-8 w-8"
- onClick={() => updateCount(n, "extra", item.id, 1)}
+  onClick={() => updateCount(n, "extra", item.id, 1)}
+  disabled={locked}
  aria-label={`Increase ${item.name}`}
  >
  <Plus className="h-4 w-4" />
@@ -710,7 +721,8 @@ function AppPage() {
  variant="ghost"
  size="icon"
  className="h-8 w-8 text-muted-foreground hover:text-destructive"
- onClick={() => deleteExtra(item.id)}
+  onClick={() => deleteExtra(item.id)}
+  disabled={locked}
  aria-label={`Delete ${item.name}`}
  >
  <X className="h-4 w-4" />
@@ -727,7 +739,8 @@ function AppPage() {
     type="button"
     variant="ghost"
     className="w-full h-10 text-muted-foreground hover:text-destructive"
-    onClick={() => resetRoomCounts(n)}
+  onClick={() => resetRoomCounts(n)}
+  disabled={locked}
   >
     Reset Tally
   </Button>
@@ -746,11 +759,21 @@ function AppPage() {
  Shared workspace
  </p>
  </div>
- <div className="flex items-center gap-2">
+  <div className="flex items-center gap-2">
+  <Button
+    variant={locked ? "default" : "outline"}
+    size="sm"
+    onClick={() => setLocked((p) => !p)}
+    aria-label={locked ? "Unlock list" : "Lock list"}
+    title={locked ? "List is locked" : "Lock list to prevent accidental changes"}
+  >
+    {locked ? <Unlock className="h-4 w-4 mr-1" /> : <Lock className="h-4 w-4 mr-1" />}
+    {locked ? "Unlock" : "Lock"}
+  </Button>
   <Button variant="outline" size="sm" onClick={openExport}>
- Export
- </Button>
- <DropdownMenu>
+  Export
+  </Button>
+  <DropdownMenu>
  <DropdownMenuTrigger asChild>
  <Button variant="ghost" size="sm" className="" aria-label="Menu">
  <Menu className="h-4 w-4" />
@@ -1015,18 +1038,20 @@ function AppPage() {
 
  {/* Rooms */}
  <section className="space-y-4">
- <div className="flex items-baseline justify-between">
- <h2 className="text-sm font-medium text-muted-foreground uppercase tracking-wide">
- Rooms
- </h2>
- <button
- type="button"
- onClick={resetAll}
- className="text-xs text-muted-foreground hover:text-foreground underline underline-offset-4"
- >
- Reset all
- </button>
- </div>
+  <div className="flex items-baseline justify-between">
+  <h2 className="text-sm font-medium text-muted-foreground uppercase tracking-wide">
+  Rooms
+  </h2>
+  {!locked && (
+  <button
+  type="button"
+  onClick={resetAll}
+  className="text-xs text-muted-foreground hover:text-foreground underline underline-offset-4"
+  >
+  Reset all
+  </button>
+  )}
+  </div>
 
  {/* On-screen interactive accordion */}
  <div className="grid grid-cols-4 sm:grid-cols-8 md:grid-cols-10 gap-2">
@@ -1042,10 +1067,10 @@ function AppPage() {
  const done = doneSet.has(n);
  const isOpen = openRoom === n;
  nodes.push(
- <button
- key={`r-${n}`}
- type="button"
- onClick={() => openOrToggle(n)}
+  <button
+  key={`r-${n}`}
+  type="button"
+  onClick={() => { if (locked) { toast.info("List is locked — unlock to edit"); return; } openOrToggle(n); }}
                   className={cn(
                     "aspect-square rounded-md border text-sm font-medium transition-colors tabular-nums",
                     isOpen
