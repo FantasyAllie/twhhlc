@@ -647,17 +647,17 @@ function AppPage() {
   size="sm"
   className="h-8 text-xs mr-1"
   onClick={() => updateCount(n, "template", item.id, item.default_count)}
-  disabled={locked}
+ 
   >
   + All
   </Button>
-  )}
+
   <Button
   variant="outline"
   size="icon"
   className="h-8 w-8"
   onClick={() => updateCount(n, "template", item.id, -1)}
-  disabled={count === 0 || locked}
+  disabled={count === 0}
   aria-label={`Decrease ${item.name}`}
   >
   <Minus className="h-4 w-4" />
@@ -668,7 +668,7 @@ function AppPage() {
   size="icon"
   className="h-8 w-8"
   onClick={() => updateCount(n, "template", item.id, 1)}
-  disabled={locked}
+ 
   aria-label={`Increase ${item.name}`}
   >
   <Plus className="h-4 w-4" />
@@ -693,7 +693,7 @@ function AppPage() {
  size="icon"
  className="h-8 w-8"
  onClick={() => updateCount(n, "extra", item.id, -1)}
- disabled={count === 0 || locked}
+ disabled={count === 0}
  aria-label={`Decrease ${item.name}`}
  >
  <Minus className="h-4 w-4" />
@@ -704,7 +704,7 @@ function AppPage() {
  size="icon"
  className="h-8 w-8"
   onClick={() => updateCount(n, "extra", item.id, 1)}
-  disabled={locked}
+ 
  aria-label={`Increase ${item.name}`}
  >
  <Plus className="h-4 w-4" />
@@ -714,7 +714,7 @@ function AppPage() {
  size="icon"
  className="h-8 w-8 text-muted-foreground hover:text-destructive"
   onClick={() => deleteExtra(item.id)}
-  disabled={locked}
+ 
  aria-label={`Delete ${item.name}`}
  >
  <X className="h-4 w-4" />
@@ -732,7 +732,7 @@ function AppPage() {
     variant="ghost"
     className="w-full h-10 text-muted-foreground hover:text-destructive"
   onClick={() => resetRoomCounts(n)}
-  disabled={locked}
+ 
   >
     Reset Tally
   </Button>
@@ -792,7 +792,7 @@ function AppPage() {
             </span>
           </DropdownMenuItem>
         ))
-      )}
+    
       {snapshots.length > 0 && (
         <>
           <DropdownMenuSeparator />
@@ -804,7 +804,7 @@ function AppPage() {
             Clear history
           </DropdownMenuItem>
         </>
-      )}
+    
     </DropdownMenuSubContent>
   </DropdownMenuSub>
  </DropdownMenuContent>
@@ -886,7 +886,7 @@ function AppPage() {
                     <Pencil className="h-4 w-4" />
                   </Button>
                 </div>
-              )}
+            
               <div className="flex flex-wrap items-center gap-1.5">
                 <label className="flex items-center gap-1 text-xs text-muted-foreground">
                   Default
@@ -975,7 +975,7 @@ function AppPage() {
           );
         })}
       </ul>
-    )}
+  
   </div>
  </DialogContent>
  </Dialog>
@@ -1024,7 +1024,7 @@ function AppPage() {
   <h2 className="text-sm font-medium text-muted-foreground uppercase tracking-wide">
   Rooms
   </h2>
-  {!locked && (
+  
   <button
   type="button"
   onClick={resetAll}
@@ -1032,7 +1032,7 @@ function AppPage() {
   >
   Reset all
   </button>
-  )}
+
   </div>
 
  {/* On-screen interactive accordion */}
@@ -1052,7 +1052,7 @@ function AppPage() {
   <button
   key={`r-${n}`}
   type="button"
-  onClick={() => { if (locked) { toast.info("List is locked — unlock to edit"); return; } openOrToggle(n); }}
+  onClick={() => { openOrToggle(n); }}
                   className={cn(
                     "aspect-square rounded-md border text-sm font-medium transition-colors tabular-nums",
                     isOpen
@@ -1060,7 +1060,7 @@ function AppPage() {
                       : done
                         ? "bg-green-100 text-green-800 line-through border-transparent"
                         : "bg-red-100 text-red-900 hover:bg-red-200 border-red-200",
-                  )}
+                
  aria-pressed={done}
  aria-expanded={isOpen}
  aria-label={`Room ${n}${done ? " done" : ""}`}
@@ -1226,7 +1226,7 @@ function AppPage() {
                </li>
              ))}
            </ul>
-         )}
+       
          <div className="flex items-center justify-between text-sm">
            <span className="text-muted-foreground">
              {viewingSnapshot.totals.length} item
@@ -1282,7 +1282,7 @@ function AppPage() {
           </div>
          </div>
        </div>
-     )}
+   
    </DialogContent>
  </Dialog>
  </main>
