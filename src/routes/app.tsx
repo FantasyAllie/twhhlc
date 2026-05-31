@@ -487,7 +487,50 @@ function AppPage() {
  qc.invalidateQueries({ queryKey: ["room_counts"] });
  };
 
- 
+  // --- Export totals + snapshots ---
+  const computeTotals = (): { rows: SnapshotRow[]; grand: number } => {
+    const totals = new Map<string, number>();
+    const nameFor = (c: RoomCount) => {
+      if (c.item_kind === "template") return template.find((t) => t.id === c.item_id)?.name;
+      return extras.find((e) => e.id === c.item_id)?.name;
+    };
+    for (const c of counts) {
+      if (c.count <= 0) continue;
+      const raw = nameFor(c);
+      if (!raw) continue;
+      const key = raw.trim();
+      if (!key) continue;
+      totals.set(key, (totals.get(key) ?? 0) + c.count);
+    }
+    const rows = Array.from(totals.entries())
+      .sort((a, b) => a[0].localeCompare(b[0], undefined, { sensitivity: "base" }))
+      .map(([name, count]) => ({ name, count }));
+    const grand = rows.reduce((s, r) => s + r.count, 0);
+    return { rows, grand };
+  };
+
+  const openExport = async () => {
+    setExportOpen(true);
+    const { rows, grand } = computeTotals();
+    if (rows.length === 0) return;
+    const { error } = await supabase
+      .from("export_snapshots")
+      .insert({ totals: rows, grand_total: grand });
+    if (error) {
+      toast.error(error.message);
+      return;
+    }
+    qc.invalidateQueries({ queryKey: ["export_snapshots"] });
+  };
+
+  const deleteSnapshot = async (id: string) => {
+    qc.setQueryData<ExportSnapshot[]>(["export_snapshots"], (old) =>
+      old?.filter((s) => s.id !== id) ?? [],
+    );
+    const { error } = await supabase.from("export_snapshots").delete().eq("id", id);
+    if (error) toast.error(error.message);
+    qc.invalidateQueries({ queryKey: ["export_snapshots"] });
+  };
 
  // --- Room category ---
  const setRoomCategory = async (roomNumber: number, category: Category) => {
