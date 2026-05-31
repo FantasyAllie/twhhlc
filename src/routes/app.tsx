@@ -11,7 +11,11 @@ import {
  DropdownMenu,
  DropdownMenuContent,
  DropdownMenuItem,
+  DropdownMenuLabel,
  DropdownMenuSeparator,
+  DropdownMenuSub,
+  DropdownMenuSubContent,
+  DropdownMenuSubTrigger,
  DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import {
@@ -53,6 +57,13 @@ type RoomCount = {
 };
 type Room = { id: string; room_number: number; done: boolean; category: Category | null };
 type TemplateItemRoom = { id: string; template_item_id: string; room_number: number };
+type SnapshotRow = { name: string; count: number };
+type ExportSnapshot = {
+  id: string;
+  created_at: string;
+  totals: SnapshotRow[];
+  grand_total: number;
+};
 
 function AppPage() {
  const qc = useQueryClient();
