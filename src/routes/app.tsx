@@ -739,7 +739,8 @@ function AppPage() {
     type="button"
     variant="ghost"
     className="w-full h-10 text-muted-foreground hover:text-destructive"
-    onClick={() => resetRoomCounts(n)}
+  onClick={() => resetRoomCounts(n)}
+  disabled={locked}
   >
     Reset Tally
   </Button>
