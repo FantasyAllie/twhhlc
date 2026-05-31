@@ -77,6 +77,7 @@ function AppPage() {
  
 
  const [exportOpen, setExportOpen] = useState(false);
+  const [viewingSnapshot, setViewingSnapshot] = useState<ExportSnapshot | null>(null);
 
  // Track responsive column count so we can insert the open-room panel
  // right after the row containing the clicked room.
