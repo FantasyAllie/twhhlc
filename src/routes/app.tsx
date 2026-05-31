@@ -4,7 +4,7 @@ import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Minus, Plus, X, Menu, ArrowUp, ArrowDown, Pencil, Check } from "lucide-react";
+import { Minus, Plus, X, Menu, ArrowUp, ArrowDown, Pencil, Check, Trash2 } from "lucide-react";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
 import {
@@ -545,6 +545,13 @@ function AppPage() {
     qc.invalidateQueries({ queryKey: ["export_snapshots"] });
   };
 
+  const clearAllSnapshots = async () => {
+    qc.setQueryData<ExportSnapshot[]>(["export_snapshots"], []);
+    const { error } = await supabase.from("export_snapshots").delete().neq("id", "00000000-0000-0000-0000-000000000000");
+    if (error) toast.error(error.message);
+    qc.invalidateQueries({ queryKey: ["export_snapshots"] });
+  };
+
   const printTotals = (rows: SnapshotRow[], grand: number, when: Date) => {
     const dateStr = when.toLocaleDateString(undefined, {
       year: "numeric",
@@ -780,6 +787,18 @@ function AppPage() {
             </span>
           </DropdownMenuItem>
         ))
+      )}
+      {snapshots.length > 0 && (
+        <>
+          <DropdownMenuSeparator />
+          <DropdownMenuItem
+            onSelect={clearAllSnapshots}
+            className="text-destructive focus:text-destructive"
+          >
+            <Trash2 className="h-4 w-4 mr-2" />
+            Clear history
+          </DropdownMenuItem>
+        </>
       )}
     </DropdownMenuSubContent>
   </DropdownMenuSub>
