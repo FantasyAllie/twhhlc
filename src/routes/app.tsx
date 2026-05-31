@@ -665,7 +665,7 @@ function AppPage() {
   size="icon"
   className="h-8 w-8"
   onClick={() => updateCount(n, "template", item.id, -1)}
-  disabled={count === 0}
+  disabled={count === 0 || locked}
   aria-label={`Decrease ${item.name}`}
   >
   <Minus className="h-4 w-4" />
