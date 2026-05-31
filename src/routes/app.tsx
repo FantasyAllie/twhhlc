@@ -825,13 +825,34 @@ useEffect(() => {
  </DialogDescription>
  </DialogHeader>
   <div className="space-y-3">
+    <div className="flex justify-end">
+      <Button
+        type="button"
+        variant={linenLocked ? "default" : "outline"}
+        size="sm"
+        className="h-8 gap-1.5"
+        onClick={() => {
+          setLinenLocked((v) => {
+            const next = !v;
+            toast.success(next ? "Linen list locked" : "Linen list unlocked");
+            return next;
+          });
+        }}
+        aria-pressed={linenLocked}
+        aria-label={linenLocked ? "Unlock linen list" : "Lock linen list"}
+      >
+        {linenLocked ? <Lock className="h-4 w-4" /> : <Unlock className="h-4 w-4" />}
+        {linenLocked ? "Locked" : "Unlocked"}
+      </Button>
+    </div>
     <form onSubmit={addTemplateItem} className="flex gap-2">
       <Input
         placeholder="Add an item…"
         value={newTemplateName}
         onChange={(e) => setNewTemplateName(e.target.value)}
+        disabled={linenLocked}
       />
-      <Button type="submit" disabled={!newTemplateName.trim()}>
+      <Button type="submit" disabled={linenLocked || !newTemplateName.trim()}>
         Add
       </Button>
     </form>
