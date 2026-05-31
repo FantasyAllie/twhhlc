@@ -721,7 +721,8 @@ function AppPage() {
  variant="ghost"
  size="icon"
  className="h-8 w-8 text-muted-foreground hover:text-destructive"
- onClick={() => deleteExtra(item.id)}
+  onClick={() => deleteExtra(item.id)}
+  disabled={locked}
  aria-label={`Delete ${item.name}`}
  >
  <X className="h-4 w-4" />
