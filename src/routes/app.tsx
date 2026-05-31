@@ -154,11 +154,25 @@ function AppPage() {
     },
   });
 
+  const snapshotsQ = useQuery({
+    queryKey: ["export_snapshots"],
+    queryFn: async (): Promise<ExportSnapshot[]> => {
+      const { data, error } = await supabase
+        .from("export_snapshots")
+        .select("id,created_at,totals,grand_total")
+        .order("created_at", { ascending: false })
+        .limit(100);
+      if (error) throw error;
+      return (data ?? []) as ExportSnapshot[];
+    },
+  });
+
  const template = templateQ.data ?? [];
  const extras = extrasQ.data ?? [];
  const counts = countsQ.data ?? [];
  const rooms = roomsQ.data ?? [];
   const assignments = assignmentsQ.data ?? [];
+  const snapshots = snapshotsQ.data ?? [];
  const doneSet = new Set(rooms.filter((r) => r.done).map((r) => r.room_number));
 
   const isAssigned = (templateItemId: string, roomNumber: number) =>
