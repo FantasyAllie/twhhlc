@@ -4,7 +4,7 @@ import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Minus, Plus, X, Menu, ArrowUp, ArrowDown, Pencil, Check, Trash2 } from "lucide-react";
+import { Minus, Plus, X, Menu, ArrowUp, ArrowDown, Pencil, Check, Trash2, Lock, Unlock } from "lucide-react";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
 import {
@@ -69,6 +69,14 @@ function AppPage() {
  const qc = useQueryClient();
  const [openRoom, setOpenRoom] = useState<number | null>(null);
  const [templateOpen, setTemplateOpen] = useState(false);
+const [linenLocked, setLinenLocked] = useState<boolean>(() => {
+  if (typeof window === "undefined") return false;
+  return window.localStorage.getItem("linen-locked") === "1";
+});
+useEffect(() => {
+  if (typeof window === "undefined") return;
+  window.localStorage.setItem("linen-locked", linenLocked ? "1" : "0");
+}, [linenLocked]);
  const [categoriesOpen, setCategoriesOpen] = useState(false);
  const [newTemplateName, setNewTemplateName] = useState("");
  const [newTemplateCategory, setNewTemplateCategory] = useState<Category>("double");
@@ -817,13 +825,34 @@ function AppPage() {
  </DialogDescription>
  </DialogHeader>
   <div className="space-y-3">
+    <div className="flex justify-end">
+      <Button
+        type="button"
+        variant={linenLocked ? "default" : "outline"}
+        size="sm"
+        className="h-8 gap-1.5"
+        onClick={() => {
+          setLinenLocked((v) => {
+            const next = !v;
+            toast.success(next ? "Linen list locked" : "Linen list unlocked");
+            return next;
+          });
+        }}
+        aria-pressed={linenLocked}
+        aria-label={linenLocked ? "Unlock linen list" : "Lock linen list"}
+      >
+        {linenLocked ? <Lock className="h-4 w-4" /> : <Unlock className="h-4 w-4" />}
+        {linenLocked ? "Locked" : "Unlocked"}
+      </Button>
+    </div>
     <form onSubmit={addTemplateItem} className="flex gap-2">
       <Input
         placeholder="Add an item…"
         value={newTemplateName}
         onChange={(e) => setNewTemplateName(e.target.value)}
+        disabled={linenLocked}
       />
-      <Button type="submit" disabled={!newTemplateName.trim()}>
+      <Button type="submit" disabled={linenLocked || !newTemplateName.trim()}>
         Add
       </Button>
     </form>
@@ -877,6 +906,7 @@ function AppPage() {
                       setEditingItemName(item.name);
                     }}
                     aria-label={`Rename ${item.name}`}
+                    disabled={linenLocked}
                   >
                     <Pencil className="h-4 w-4" />
                   </Button>
@@ -893,11 +923,12 @@ function AppPage() {
                       setTemplateDefault(item.id, Number(e.target.value))
                     }
                     className="h-8 w-14 text-center"
+                    disabled={linenLocked}
                   />
                 </label>
                 <Popover>
                   <PopoverTrigger asChild>
-                    <Button variant="outline" size="sm" className="h-8 text-xs">
+                    <Button variant="outline" size="sm" className="h-8 text-xs" disabled={linenLocked}>
                       Rooms ({assignedCount})
                     </Button>
                   </PopoverTrigger>
@@ -941,7 +972,7 @@ function AppPage() {
                   size="icon"
                   className="h-8 w-8 text-muted-foreground"
                   onClick={() => moveTemplateItem(item.id, -1)}
-                  disabled={idx === 0}
+                  disabled={linenLocked || idx === 0}
                   aria-label={`Move ${item.name} up`}
                 >
                   <ArrowUp className="h-4 w-4" />
@@ -951,7 +982,7 @@ function AppPage() {
                   size="icon"
                   className="h-8 w-8 text-muted-foreground"
                   onClick={() => moveTemplateItem(item.id, 1)}
-                  disabled={idx === template.length - 1}
+                  disabled={linenLocked || idx === template.length - 1}
                   aria-label={`Move ${item.name} down`}
                 >
                   <ArrowDown className="h-4 w-4" />
@@ -962,6 +993,7 @@ function AppPage() {
                   className="h-8 w-8 text-muted-foreground hover:text-destructive"
                   onClick={() => deleteTemplateItem(item.id)}
                   aria-label={`Delete ${item.name}`}
+                  disabled={linenLocked}
                 >
                   <X className="h-4 w-4" />
                 </Button>
