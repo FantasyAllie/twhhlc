@@ -78,14 +78,6 @@ function AppPage() {
 
   const [exportOpen, setExportOpen] = useState(false);
   const [viewingSnapshot, setViewingSnapshot] = useState<ExportSnapshot | null>(null);
-  const [locked, setLocked] = useState(() => {
-    try { return localStorage.getItem("linen-locked") === "true"; } catch { return false; }
-  });
-
-  useEffect(() => {
-    try { localStorage.setItem("linen-locked", String(locked)); } catch {}
-    if (locked) setOpenRoom(null);
-  }, [locked]);
 
  // Track responsive column count so we can insert the open-room panel
  // right after the row containing the clicked room.
@@ -830,18 +822,6 @@ function AppPage() {
   </DialogDescription>
   </DialogHeader>
   <div className="space-y-3">
-    <div className="flex justify-end">
-      <Button
-        variant={locked ? "default" : "outline"}
-        size="sm"
-        onClick={() => setLocked((p) => !p)}
-        aria-label={locked ? "Unlock list" : "Lock list"}
-        title={locked ? "List is locked" : "Lock list to prevent accidental changes"}
-      >
-        {locked ? <Unlock className="h-4 w-4 mr-1" /> : <Lock className="h-4 w-4 mr-1" />}
-        {locked ? "Unlock" : "Lock"}
-      </Button>
-    </div>
     <form onSubmit={addTemplateItem} className="flex gap-2">
       <Input
         placeholder="Add an item…"
