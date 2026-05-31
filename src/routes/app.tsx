@@ -1229,7 +1229,8 @@ function AppPage() {
            >
              Delete
            </Button>
-           <Button
+          <div className="flex gap-2">
+          <Button
              variant="outline"
              size="sm"
              onClick={async () => {
@@ -1259,6 +1260,7 @@ function AppPage() {
           >
             Print
           </Button>
+          </div>
          </div>
        </div>
      )}
