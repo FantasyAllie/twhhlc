@@ -4,7 +4,7 @@ import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Minus, Plus, X, Menu, ArrowUp, ArrowDown, Pencil, Check, Trash2 } from "lucide-react";
+import { Minus, Plus, X, Menu, ArrowUp, ArrowDown, Pencil, Check, Trash2, Lock, Unlock } from "lucide-react";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
 import {
@@ -69,6 +69,14 @@ function AppPage() {
  const qc = useQueryClient();
  const [openRoom, setOpenRoom] = useState<number | null>(null);
  const [templateOpen, setTemplateOpen] = useState(false);
+const [linenLocked, setLinenLocked] = useState<boolean>(() => {
+  if (typeof window === "undefined") return false;
+  return window.localStorage.getItem("linen-locked") === "1";
+});
+useEffect(() => {
+  if (typeof window === "undefined") return;
+  window.localStorage.setItem("linen-locked", linenLocked ? "1" : "0");
+}, [linenLocked]);
  const [categoriesOpen, setCategoriesOpen] = useState(false);
  const [newTemplateName, setNewTemplateName] = useState("");
  const [newTemplateCategory, setNewTemplateCategory] = useState<Category>("double");
