@@ -520,6 +520,19 @@ function AppPage() {
       toast.error(error.message);
       return;
     }
+    // Keep only the 5 most recent snapshots.
+    const { data: keep } = await supabase
+      .from("export_snapshots")
+      .select("id")
+      .order("created_at", { ascending: false })
+      .limit(5);
+    const keepIds = (keep ?? []).map((s) => s.id);
+    if (keepIds.length > 0) {
+      await supabase
+        .from("export_snapshots")
+        .delete()
+        .not("id", "in", `(${keepIds.join(",")})`);
+    }
     qc.invalidateQueries({ queryKey: ["export_snapshots"] });
   };
 
