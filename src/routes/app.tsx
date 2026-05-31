@@ -906,6 +906,7 @@ useEffect(() => {
                       setEditingItemName(item.name);
                     }}
                     aria-label={`Rename ${item.name}`}
+                    disabled={linenLocked}
                   >
                     <Pencil className="h-4 w-4" />
                   </Button>
@@ -922,11 +923,12 @@ useEffect(() => {
                       setTemplateDefault(item.id, Number(e.target.value))
                     }
                     className="h-8 w-14 text-center"
+                    disabled={linenLocked}
                   />
                 </label>
                 <Popover>
                   <PopoverTrigger asChild>
-                    <Button variant="outline" size="sm" className="h-8 text-xs">
+                    <Button variant="outline" size="sm" className="h-8 text-xs" disabled={linenLocked}>
                       Rooms ({assignedCount})
                     </Button>
                   </PopoverTrigger>
@@ -970,7 +972,7 @@ useEffect(() => {
                   size="icon"
                   className="h-8 w-8 text-muted-foreground"
                   onClick={() => moveTemplateItem(item.id, -1)}
-                  disabled={idx === 0}
+                  disabled={linenLocked || idx === 0}
                   aria-label={`Move ${item.name} up`}
                 >
                   <ArrowUp className="h-4 w-4" />
@@ -980,7 +982,7 @@ useEffect(() => {
                   size="icon"
                   className="h-8 w-8 text-muted-foreground"
                   onClick={() => moveTemplateItem(item.id, 1)}
-                  disabled={idx === template.length - 1}
+                  disabled={linenLocked || idx === template.length - 1}
                   aria-label={`Move ${item.name} down`}
                 >
                   <ArrowDown className="h-4 w-4" />
@@ -991,6 +993,7 @@ useEffect(() => {
                   className="h-8 w-8 text-muted-foreground hover:text-destructive"
                   onClick={() => deleteTemplateItem(item.id)}
                   aria-label={`Delete ${item.name}`}
+                  disabled={linenLocked}
                 >
                   <X className="h-4 w-4" />
                 </Button>
