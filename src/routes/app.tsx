@@ -1246,6 +1246,19 @@ function AppPage() {
            >
              Copy
            </Button>
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() =>
+              printTotals(
+                viewingSnapshot.totals,
+                viewingSnapshot.grand_total,
+                new Date(viewingSnapshot.created_at),
+              )
+            }
+          >
+            Print
+          </Button>
          </div>
        </div>
      )}
