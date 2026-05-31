@@ -783,13 +783,6 @@ function AppPage() {
       )}
     </DropdownMenuSubContent>
   </DropdownMenuSub>
- <DropdownMenuSeparator />
- <DropdownMenuItem
- onSelect={() => resetAll()}
- className="text-destructive focus:text-destructive"
- >
- Reset all
- </DropdownMenuItem>
  </DropdownMenuContent>
  </DropdownMenu>
  </div>
