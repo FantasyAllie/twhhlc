@@ -647,11 +647,10 @@ function AppPage() {
   size="sm"
   className="h-8 text-xs mr-1"
   onClick={() => updateCount(n, "template", item.id, item.default_count)}
- 
   >
   + All
   </Button>
-
+  )}
   <Button
   variant="outline"
   size="icon"
