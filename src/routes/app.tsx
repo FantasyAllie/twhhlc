@@ -689,7 +689,7 @@ function AppPage() {
  </p>
  </div>
  <div className="flex items-center gap-2">
- <Button variant="outline" size="sm" onClick={() => setExportOpen(true)}>
+  <Button variant="outline" size="sm" onClick={openExport}>
  Export
  </Button>
  <DropdownMenu>
@@ -705,6 +705,33 @@ function AppPage() {
  <DropdownMenuItem onSelect={() => setCategoriesOpen(true)}>
               Room Type
  </DropdownMenuItem>
+  <DropdownMenuSub>
+    <DropdownMenuSubTrigger>History</DropdownMenuSubTrigger>
+    <DropdownMenuSubContent className="max-h-80 overflow-y-auto">
+      {snapshots.length === 0 ? (
+        <DropdownMenuLabel className="text-xs font-normal text-muted-foreground">
+          No exports yet
+        </DropdownMenuLabel>
+      ) : (
+        snapshots.map((s) => (
+          <DropdownMenuItem
+            key={s.id}
+            onSelect={() => setViewingSnapshot(s)}
+          >
+            {new Date(s.created_at).toLocaleString(undefined, {
+              month: "short",
+              day: "numeric",
+              hour: "numeric",
+              minute: "2-digit",
+            })}
+            <span className="ml-2 text-xs text-muted-foreground">
+              ({s.grand_total})
+            </span>
+          </DropdownMenuItem>
+        ))
+      )}
+    </DropdownMenuSubContent>
+  </DropdownMenuSub>
  <DropdownMenuSeparator />
  <DropdownMenuItem
  onSelect={() => resetAll()}
