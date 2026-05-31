@@ -1062,10 +1062,10 @@ function AppPage() {
  const done = doneSet.has(n);
  const isOpen = openRoom === n;
  nodes.push(
- <button
- key={`r-${n}`}
- type="button"
- onClick={() => openOrToggle(n)}
+  <button
+  key={`r-${n}`}
+  type="button"
+  onClick={() => { if (locked) { toast.info("List is locked — unlock to edit"); return; } openOrToggle(n); }}
                   className={cn(
                     "aspect-square rounded-md border text-sm font-medium transition-colors tabular-nums",
                     isOpen
