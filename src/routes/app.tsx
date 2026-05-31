@@ -520,6 +520,19 @@ function AppPage() {
       toast.error(error.message);
       return;
     }
+    // Keep only the 5 most recent snapshots.
+    const { data: keep } = await supabase
+      .from("export_snapshots")
+      .select("id")
+      .order("created_at", { ascending: false })
+      .limit(5);
+    const keepIds = (keep ?? []).map((s) => s.id);
+    if (keepIds.length > 0) {
+      await supabase
+        .from("export_snapshots")
+        .delete()
+        .not("id", "in", `(${keepIds.join(",")})`);
+    }
     qc.invalidateQueries({ queryKey: ["export_snapshots"] });
   };
 
@@ -530,6 +543,44 @@ function AppPage() {
     const { error } = await supabase.from("export_snapshots").delete().eq("id", id);
     if (error) toast.error(error.message);
     qc.invalidateQueries({ queryKey: ["export_snapshots"] });
+  };
+
+  const printTotals = (rows: SnapshotRow[], grand: number, when: Date) => {
+    const dateStr = when.toLocaleDateString(undefined, {
+      year: "numeric",
+      month: "long",
+      day: "numeric",
+    });
+    const win = window.open("", "_blank");
+    if (!win) {
+      toast.error("Pop-up blocked");
+      return;
+    }
+    const esc = (s: string) =>
+      s.replace(/[<>&]/g, (ch) => ({ "<": "&lt;", ">": "&gt;", "&": "&amp;" }[ch]!));
+    const tableRows = rows
+      .map((r) => `<tr><td>${esc(r.name)}</td><td class="num">${r.count}</td></tr>`)
+      .join("");
+    win.document.write(`<!doctype html><html><head><title>Three Ways House Hotel Linen - ${dateStr}</title><style>
+      body{font-family:system-ui,-apple-system,sans-serif;color:#000;background:#fff;padding:2rem;max-width:640px;margin:0 auto;}
+      h1{font-size:1.5rem;margin:0 0 .25rem;}
+      .date{color:#444;margin:0 0 1.5rem;font-size:.95rem;}
+      table{width:100%;border-collapse:collapse;font-size:1rem;}
+      th,td{text-align:left;padding:.5rem .75rem;border-bottom:1px solid #ccc;}
+      th.num,td.num{text-align:right;font-variant-numeric:tabular-nums;}
+      tfoot td{font-weight:600;border-top:2px solid #000;border-bottom:none;padding-top:.75rem;}
+      @media print{body{padding:0;}}
+    </style></head><body>
+      <h1>Three Ways House Hotel Linen</h1>
+      <p class="date">${dateStr}</p>
+      <table>
+        <thead><tr><th>Item</th><th class="num">Count</th></tr></thead>
+        <tbody>${tableRows}</tbody>
+        <tfoot><tr><td>Total</td><td class="num">${grand}</td></tr></tfoot>
+      </table>
+      <script>window.onload=()=>{window.print();}</script>
+    </body></html>`);
+    win.document.close();
   };
 
  // --- Room category ---
@@ -1093,43 +1144,13 @@ function AppPage() {
  <Button
                           variant="outline"
                           size="sm"
-                          onClick={() => {
-                            const dateStr = new Date().toLocaleDateString(
-                              undefined,
-                              { year: "numeric", month: "long", day: "numeric" }
-                            );
-                            const win = window.open("", "_blank");
-                            if (!win) {
-                              toast.error("Pop-up blocked");
-                              return;
-                            }
-                            const tableRows = rows
-                              .map(
-                                ([n, c]) =>
-                                  `<tr><td>${n.replace(/[<>&]/g, (s) => ({ "<": "&lt;", ">": "&gt;", "&": "&amp;" }[s]!))}</td><td class="num">${c}</td></tr>`
-                              )
-                              .join("");
-                            win.document.write(`<!doctype html><html><head><title>Three Ways House Hotel Linen - ${dateStr}</title><style>
-                              body{font-family:system-ui,-apple-system,sans-serif;color:#000;background:#fff;padding:2rem;max-width:640px;margin:0 auto;}
-                              h1{font-size:1.5rem;margin:0 0 .25rem;}
-                              .date{color:#444;margin:0 0 1.5rem;font-size:.95rem;}
-                              table{width:100%;border-collapse:collapse;font-size:1rem;}
-                              th,td{text-align:left;padding:.5rem .75rem;border-bottom:1px solid #ccc;}
-                              th.num,td.num{text-align:right;font-variant-numeric:tabular-nums;}
-                              tfoot td{font-weight:600;border-top:2px solid #000;border-bottom:none;padding-top:.75rem;}
-                              @media print{body{padding:0;}}
-                            </style></head><body>
-                              <h1>Three Ways House Hotel Linen</h1>
-                              <p class="date">${dateStr}</p>
-                              <table>
-                                <thead><tr><th>Item</th><th class="num">Count</th></tr></thead>
-                                <tbody>${tableRows}</tbody>
-                                <tfoot><tr><td>Total</td><td class="num">${grand}</td></tr></tfoot>
-                              </table>
-                              <script>window.onload=()=>{window.print();}</script>
-                            </body></html>`);
-                            win.document.close();
-                          }}
+                          onClick={() =>
+                            printTotals(
+                              rows.map(([name, count]) => ({ name, count })),
+                              grand,
+                              new Date(),
+                            )
+                          }
                         >
                           Print
                         </Button>
@@ -1208,7 +1229,8 @@ function AppPage() {
            >
              Delete
            </Button>
-           <Button
+          <div className="flex gap-2">
+          <Button
              variant="outline"
              size="sm"
              onClick={async () => {
@@ -1225,6 +1247,20 @@ function AppPage() {
            >
              Copy
            </Button>
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() =>
+              printTotals(
+                viewingSnapshot.totals,
+                viewingSnapshot.grand_total,
+                new Date(viewingSnapshot.created_at),
+              )
+            }
+          >
+            Print
+          </Button>
+          </div>
          </div>
        </div>
      )}
