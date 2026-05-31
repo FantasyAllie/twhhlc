@@ -219,6 +219,7 @@ useEffect(() => {
   };
 
   const assignAllRooms = async (templateItemId: string) => {
+    if (!confirm("Add this item to every room?")) return;
     const missing = rooms
       .map((r) => r.room_number)
       .filter((n) => !isAssigned(templateItemId, n));
@@ -234,6 +235,21 @@ useEffect(() => {
     const { error } = await supabase
       .from("template_item_rooms")
       .insert(missing.map((n) => ({ template_item_id: templateItemId, room_number: n })));
+    if (error) toast.error(error.message);
+    qc.invalidateQueries({ queryKey: ["template_item_rooms"] });
+  };
+
+  const removeAllRooms = async (templateItemId: string) => {
+    if (!confirm("Remove this item from all rooms?")) return;
+    const existing = assignments.filter((a) => a.template_item_id === templateItemId);
+    if (existing.length === 0) return;
+    qc.setQueryData<TemplateItemRoom[]>(["template_item_rooms"], (old) =>
+      old?.filter((a) => a.template_item_id !== templateItemId) ?? [],
+    );
+    const { error } = await supabase
+      .from("template_item_rooms")
+      .delete()
+      .eq("template_item_id", templateItemId);
     if (error) toast.error(error.message);
     qc.invalidateQueries({ queryKey: ["template_item_rooms"] });
   };
@@ -938,9 +954,13 @@ useEffect(() => {
                       variant="secondary"
                       size="sm"
                       className="w-full h-8 mb-2"
-                      onClick={() => assignAllRooms(item.id)}
+                      onClick={() =>
+                        assignedCount === rooms.length
+                          ? removeAllRooms(item.id)
+                          : assignAllRooms(item.id)
+                      }
                     >
-                      All Rooms
+                      {assignedCount === rooms.length ? "No Rooms" : "All Rooms"}
                     </Button>
                     <div
                       className="max-h-64 overflow-y-auto overscroll-contain space-y-1"
