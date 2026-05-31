@@ -954,9 +954,13 @@ useEffect(() => {
                       variant="secondary"
                       size="sm"
                       className="w-full h-8 mb-2"
-                      onClick={() => assignAllRooms(item.id)}
+                      onClick={() =>
+                        assignedCount === rooms.length
+                          ? removeAllRooms(item.id)
+                          : assignAllRooms(item.id)
+                      }
                     >
-                      All Rooms
+                      {assignedCount === rooms.length ? "No Rooms" : "All Rooms"}
                     </Button>
                     <div
                       className="max-h-64 overflow-y-auto overscroll-contain space-y-1"
