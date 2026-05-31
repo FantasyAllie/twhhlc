@@ -760,16 +760,6 @@ function AppPage() {
  </p>
  </div>
   <div className="flex items-center gap-2">
-  <Button
-    variant={locked ? "default" : "outline"}
-    size="sm"
-    onClick={() => setLocked((p) => !p)}
-    aria-label={locked ? "Unlock list" : "Lock list"}
-    title={locked ? "List is locked" : "Lock list to prevent accidental changes"}
-  >
-    {locked ? <Unlock className="h-4 w-4 mr-1" /> : <Lock className="h-4 w-4 mr-1" />}
-    {locked ? "Unlock" : "Lock"}
-  </Button>
   <Button variant="outline" size="sm" onClick={openExport}>
   Export
   </Button>
