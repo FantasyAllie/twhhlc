@@ -545,6 +545,13 @@ function AppPage() {
     qc.invalidateQueries({ queryKey: ["export_snapshots"] });
   };
 
+  const clearAllSnapshots = async () => {
+    qc.setQueryData<ExportSnapshot[]>(["export_snapshots"], []);
+    const { error } = await supabase.from("export_snapshots").delete().neq("id", "00000000-0000-0000-0000-000000000000");
+    if (error) toast.error(error.message);
+    qc.invalidateQueries({ queryKey: ["export_snapshots"] });
+  };
+
   const printTotals = (rows: SnapshotRow[], grand: number, when: Date) => {
     const dateStr = when.toLocaleDateString(undefined, {
       year: "numeric",
