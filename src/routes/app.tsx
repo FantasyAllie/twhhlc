@@ -76,9 +76,8 @@ function AppPage() {
  const [editingItemName, setEditingItemName] = useState("");
  
 
-  const [exportOpen, setExportOpen] = useState(false);
+ const [exportOpen, setExportOpen] = useState(false);
   const [viewingSnapshot, setViewingSnapshot] = useState<ExportSnapshot | null>(null);
-
 
  // Track responsive column count so we can insert the open-room panel
  // right after the row containing the clicked room.
@@ -648,7 +647,6 @@ function AppPage() {
   size="sm"
   className="h-8 text-xs mr-1"
   onClick={() => updateCount(n, "template", item.id, item.default_count)}
-  
   >
   + All
   </Button>
@@ -669,7 +667,6 @@ function AppPage() {
   size="icon"
   className="h-8 w-8"
   onClick={() => updateCount(n, "template", item.id, 1)}
-  
   aria-label={`Increase ${item.name}`}
   >
   <Plus className="h-4 w-4" />
@@ -704,8 +701,7 @@ function AppPage() {
  variant="outline"
  size="icon"
  className="h-8 w-8"
-  onClick={() => updateCount(n, "extra", item.id, 1)}
-  
+ onClick={() => updateCount(n, "extra", item.id, 1)}
  aria-label={`Increase ${item.name}`}
  >
  <Plus className="h-4 w-4" />
@@ -714,8 +710,7 @@ function AppPage() {
  variant="ghost"
  size="icon"
  className="h-8 w-8 text-muted-foreground hover:text-destructive"
-  onClick={() => deleteExtra(item.id)}
-  
+ onClick={() => deleteExtra(item.id)}
  aria-label={`Delete ${item.name}`}
  >
  <X className="h-4 w-4" />
@@ -732,8 +727,7 @@ function AppPage() {
     type="button"
     variant="ghost"
     className="w-full h-10 text-muted-foreground hover:text-destructive"
-  onClick={() => resetRoomCounts(n)}
-  
+    onClick={() => resetRoomCounts(n)}
   >
     Reset Tally
   </Button>
@@ -752,11 +746,11 @@ function AppPage() {
  Shared workspace
  </p>
  </div>
-  <div className="flex items-center gap-2">
+ <div className="flex items-center gap-2">
   <Button variant="outline" size="sm" onClick={openExport}>
-  Export
-  </Button>
-  <DropdownMenu>
+ Export
+ </Button>
+ <DropdownMenu>
  <DropdownMenuTrigger asChild>
  <Button variant="ghost" size="sm" className="" aria-label="Menu">
  <Menu className="h-4 w-4" />
@@ -813,15 +807,15 @@ function AppPage() {
  </div>
  </header>
 
-  {/* Linen list dialog */}
-  <Dialog open={templateOpen} onOpenChange={setTemplateOpen}>
- <DialogContent className="max-w-2xl w-[calc(100vw-1.5rem)] sm:w-full p-4 sm:p-6">
-  <DialogHeader>
-  <DialogTitle>Linen List</DialogTitle>
-  <DialogDescription>
-   Pick which rooms each item should show up in.
-  </DialogDescription>
-  </DialogHeader>
+ {/* Linen list dialog */}
+ <Dialog open={templateOpen} onOpenChange={setTemplateOpen}>
+<DialogContent className="max-w-2xl w-[calc(100vw-1.5rem)] sm:w-full p-4 sm:p-6">
+ <DialogHeader>
+ <DialogTitle>Linen List</DialogTitle>
+ <DialogDescription>
+  Pick which rooms each item should show up in.
+ </DialogDescription>
+ </DialogHeader>
   <div className="space-y-3">
     <form onSubmit={addTemplateItem} className="flex gap-2">
       <Input
@@ -1021,18 +1015,18 @@ function AppPage() {
 
  {/* Rooms */}
  <section className="space-y-4">
-  <div className="flex items-baseline justify-between">
-  <h2 className="text-sm font-medium text-muted-foreground uppercase tracking-wide">
-  Rooms
-  </h2>
-  <button
-  type="button"
-  onClick={resetAll}
-  className="text-xs text-muted-foreground hover:text-foreground underline underline-offset-4"
-  >
-  Reset all
-  </button>
-  </div>
+ <div className="flex items-baseline justify-between">
+ <h2 className="text-sm font-medium text-muted-foreground uppercase tracking-wide">
+ Rooms
+ </h2>
+ <button
+ type="button"
+ onClick={resetAll}
+ className="text-xs text-muted-foreground hover:text-foreground underline underline-offset-4"
+ >
+ Reset all
+ </button>
+ </div>
 
  {/* On-screen interactive accordion */}
  <div className="grid grid-cols-4 sm:grid-cols-8 md:grid-cols-10 gap-2">
@@ -1048,10 +1042,10 @@ function AppPage() {
  const done = doneSet.has(n);
  const isOpen = openRoom === n;
  nodes.push(
-  <button
-  key={`r-${n}`}
-  type="button"
-  onClick={() => openOrToggle(n)}
+ <button
+ key={`r-${n}`}
+ type="button"
+ onClick={() => openOrToggle(n)}
                   className={cn(
                     "aspect-square rounded-md border text-sm font-medium transition-colors tabular-nums",
                     isOpen
