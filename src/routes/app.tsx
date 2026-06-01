@@ -592,15 +592,16 @@ useEffect(() => {
     if (rows.length === 0) return;
     const { error } = await supabase
       .from("export_snapshots")
-      .insert({ totals: rows, grand_total: grand });
+      .insert({ totals: rows, grand_total: grand, kind: "totals" } as never);
     if (error) {
       toast.error(error.message);
       return;
     }
-    // Keep only the 5 most recent snapshots.
+    // Keep only the 5 most recent totals snapshots.
     const { data: keep } = await supabase
       .from("export_snapshots")
       .select("id")
+      .eq("kind", "totals")
       .order("created_at", { ascending: false })
       .limit(5);
     const keepIds = (keep ?? []).map((s) => s.id);
@@ -608,6 +609,50 @@ useEffect(() => {
       await supabase
         .from("export_snapshots")
         .delete()
+        .eq("kind", "totals")
+        .not("id", "in", `(${keepIds.join(",")})`);
+    }
+    qc.invalidateQueries({ queryKey: ["export_snapshots"] });
+  };
+
+  const computeRejectTotals = (): { rows: SnapshotRow[]; grand: number } => {
+    const totals = new Map<string, number>();
+    for (const r of rejects) {
+      if (r.count <= 0) continue;
+      const name = template.find((t) => t.id === r.template_item_id)?.name?.trim();
+      if (!name) continue;
+      totals.set(name, (totals.get(name) ?? 0) + r.count);
+    }
+    const rows = Array.from(totals.entries())
+      .sort((a, b) => a[0].localeCompare(b[0], undefined, { sensitivity: "base" }))
+      .map(([name, count]) => ({ name, count }));
+    const grand = rows.reduce((s, r) => s + r.count, 0);
+    return { rows, grand };
+  };
+
+  const openRejectExport = async () => {
+    setRejectExportOpen(true);
+    const { rows, grand } = computeRejectTotals();
+    if (rows.length === 0) return;
+    const { error } = await supabase
+      .from("export_snapshots")
+      .insert({ totals: rows, grand_total: grand, kind: "rejects" } as never);
+    if (error) {
+      toast.error(error.message);
+      return;
+    }
+    const { data: keep } = await supabase
+      .from("export_snapshots")
+      .select("id")
+      .eq("kind", "rejects")
+      .order("created_at", { ascending: false })
+      .limit(5);
+    const keepIds = (keep ?? []).map((s) => s.id);
+    if (keepIds.length > 0) {
+      await supabase
+        .from("export_snapshots")
+        .delete()
+        .eq("kind", "rejects")
         .not("id", "in", `(${keepIds.join(",")})`);
     }
     qc.invalidateQueries({ queryKey: ["export_snapshots"] });
@@ -629,12 +674,21 @@ useEffect(() => {
     qc.invalidateQueries({ queryKey: ["export_snapshots"] });
   };
 
-  const printTotals = (rows: SnapshotRow[], grand: number, when: Date) => {
+  const printTotals = (
+    rows: SnapshotRow[],
+    grand: number,
+    when: Date,
+    kind: "totals" | "rejects" = "totals",
+  ) => {
     const dateStr = when.toLocaleDateString(undefined, {
       year: "numeric",
       month: "long",
       day: "numeric",
     });
+    const heading =
+      kind === "rejects"
+        ? "Three Ways House Hotel Linen Rejects"
+        : "Three Ways House Hotel Linen";
     const win = window.open("", "_blank");
     if (!win) {
       toast.error("Pop-up blocked");
@@ -645,7 +699,7 @@ useEffect(() => {
     const tableRows = rows
       .map((r) => `<tr><td>${esc(r.name)}</td><td class="num">${r.count}</td></tr>`)
       .join("");
-    win.document.write(`<!doctype html><html><head><title>Three Ways House Hotel Linen - ${dateStr}</title><style>
+    win.document.write(`<!doctype html><html><head><title>${esc(heading)} - ${dateStr}</title><style>
       body{font-family:system-ui,-apple-system,sans-serif;color:#000;background:#fff;padding:2rem;max-width:640px;margin:0 auto;}
       h1{font-size:1.5rem;margin:0 0 .25rem;}
       .date{color:#444;margin:0 0 1.5rem;font-size:.95rem;}
@@ -655,7 +709,7 @@ useEffect(() => {
       tfoot td{font-weight:600;border-top:2px solid #000;border-bottom:none;padding-top:.75rem;}
       @media print{body{padding:0;}}
     </style></head><body>
-      <h1>Three Ways House Hotel Linen</h1>
+      <h1>${esc(heading)}</h1>
       <p class="date">${dateStr}</p>
       <table>
         <thead><tr><th>Item</th><th class="num">Count</th></tr></thead>
