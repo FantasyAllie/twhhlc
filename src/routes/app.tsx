@@ -1125,6 +1125,8 @@ useEffect(() => {
  <h2 className="text-sm font-medium text-muted-foreground uppercase tracking-wide">
  Rooms
  </h2>
+
+ {/* Rejects dialog inserted via separate block below */}
  <button
  type="button"
  onClick={resetAll}
