@@ -63,6 +63,7 @@ type ExportSnapshot = {
   created_at: string;
   totals: SnapshotRow[];
   grand_total: number;
+  kind?: "totals" | "rejects";
 };
 type RejectCount = { id: string; template_item_id: string; count: number };
 
@@ -88,6 +89,7 @@ useEffect(() => {
  const [exportOpen, setExportOpen] = useState(false);
   const [viewingSnapshot, setViewingSnapshot] = useState<ExportSnapshot | null>(null);
   const [rejectsOpen, setRejectsOpen] = useState(false);
+  const [rejectExportOpen, setRejectExportOpen] = useState(false);
 
  // Track responsive column count so we can insert the open-room panel
  // right after the row containing the clicked room.
@@ -169,7 +171,7 @@ useEffect(() => {
     queryFn: async (): Promise<ExportSnapshot[]> => {
       const { data, error } = await supabase
         .from("export_snapshots")
-        .select("id,created_at,totals,grand_total")
+          .select("id,created_at,totals,grand_total,kind")
         .order("created_at", { ascending: false })
         .limit(100);
       if (error) throw error;
@@ -590,15 +592,16 @@ useEffect(() => {
     if (rows.length === 0) return;
     const { error } = await supabase
       .from("export_snapshots")
-      .insert({ totals: rows, grand_total: grand });
+      .insert({ totals: rows, grand_total: grand, kind: "totals" } as never);
     if (error) {
       toast.error(error.message);
       return;
     }
-    // Keep only the 5 most recent snapshots.
+    // Keep only the 5 most recent totals snapshots.
     const { data: keep } = await supabase
       .from("export_snapshots")
       .select("id")
+      .eq("kind", "totals")
       .order("created_at", { ascending: false })
       .limit(5);
     const keepIds = (keep ?? []).map((s) => s.id);
@@ -606,6 +609,50 @@ useEffect(() => {
       await supabase
         .from("export_snapshots")
         .delete()
+        .eq("kind", "totals")
+        .not("id", "in", `(${keepIds.join(",")})`);
+    }
+    qc.invalidateQueries({ queryKey: ["export_snapshots"] });
+  };
+
+  const computeRejectTotals = (): { rows: SnapshotRow[]; grand: number } => {
+    const totals = new Map<string, number>();
+    for (const r of rejects) {
+      if (r.count <= 0) continue;
+      const name = template.find((t) => t.id === r.template_item_id)?.name?.trim();
+      if (!name) continue;
+      totals.set(name, (totals.get(name) ?? 0) + r.count);
+    }
+    const rows = Array.from(totals.entries())
+      .sort((a, b) => a[0].localeCompare(b[0], undefined, { sensitivity: "base" }))
+      .map(([name, count]) => ({ name, count }));
+    const grand = rows.reduce((s, r) => s + r.count, 0);
+    return { rows, grand };
+  };
+
+  const openRejectExport = async () => {
+    setRejectExportOpen(true);
+    const { rows, grand } = computeRejectTotals();
+    if (rows.length === 0) return;
+    const { error } = await supabase
+      .from("export_snapshots")
+      .insert({ totals: rows, grand_total: grand, kind: "rejects" } as never);
+    if (error) {
+      toast.error(error.message);
+      return;
+    }
+    const { data: keep } = await supabase
+      .from("export_snapshots")
+      .select("id")
+      .eq("kind", "rejects")
+      .order("created_at", { ascending: false })
+      .limit(5);
+    const keepIds = (keep ?? []).map((s) => s.id);
+    if (keepIds.length > 0) {
+      await supabase
+        .from("export_snapshots")
+        .delete()
+        .eq("kind", "rejects")
         .not("id", "in", `(${keepIds.join(",")})`);
     }
     qc.invalidateQueries({ queryKey: ["export_snapshots"] });
@@ -627,12 +674,21 @@ useEffect(() => {
     qc.invalidateQueries({ queryKey: ["export_snapshots"] });
   };
 
-  const printTotals = (rows: SnapshotRow[], grand: number, when: Date) => {
+  const printTotals = (
+    rows: SnapshotRow[],
+    grand: number,
+    when: Date,
+    kind: "totals" | "rejects" = "totals",
+  ) => {
     const dateStr = when.toLocaleDateString(undefined, {
       year: "numeric",
       month: "long",
       day: "numeric",
     });
+    const heading =
+      kind === "rejects"
+        ? "Three Ways House Hotel Linen Rejects"
+        : "Three Ways House Hotel Linen";
     const win = window.open("", "_blank");
     if (!win) {
       toast.error("Pop-up blocked");
@@ -643,7 +699,7 @@ useEffect(() => {
     const tableRows = rows
       .map((r) => `<tr><td>${esc(r.name)}</td><td class="num">${r.count}</td></tr>`)
       .join("");
-    win.document.write(`<!doctype html><html><head><title>Three Ways House Hotel Linen - ${dateStr}</title><style>
+    win.document.write(`<!doctype html><html><head><title>${esc(heading)} - ${dateStr}</title><style>
       body{font-family:system-ui,-apple-system,sans-serif;color:#000;background:#fff;padding:2rem;max-width:640px;margin:0 auto;}
       h1{font-size:1.5rem;margin:0 0 .25rem;}
       .date{color:#444;margin:0 0 1.5rem;font-size:.95rem;}
@@ -653,7 +709,7 @@ useEffect(() => {
       tfoot td{font-weight:600;border-top:2px solid #000;border-bottom:none;padding-top:.75rem;}
       @media print{body{padding:0;}}
     </style></head><body>
-      <h1>Three Ways House Hotel Linen</h1>
+      <h1>${esc(heading)}</h1>
       <p class="date">${dateStr}</p>
       <table>
         <thead><tr><th>Item</th><th class="num">Count</th></tr></thead>
@@ -860,6 +916,11 @@ useEffect(() => {
               hour: "numeric",
               minute: "2-digit",
             })}
+            {s.kind === "rejects" && (
+              <span className="ml-2 text-xs uppercase tracking-wide text-muted-foreground">
+                Rejects
+              </span>
+            )}
             <span className="ml-2 text-xs text-muted-foreground">
               ({s.grand_total})
             </span>
@@ -1170,14 +1231,19 @@ useEffect(() => {
            <span className="text-muted-foreground">
              Total: {rejects.reduce((s, r) => s + r.count, 0)}
            </span>
-           <Button
-             variant="ghost"
-             size="sm"
-             className="text-destructive hover:text-destructive"
-             onClick={resetRejects}
-           >
-             Reset all
-           </Button>
+           <div className="flex items-center gap-2">
+             <Button
+               variant="ghost"
+               size="sm"
+               className="text-destructive hover:text-destructive"
+               onClick={resetRejects}
+             >
+               Reset all
+             </Button>
+             <Button variant="outline" size="sm" onClick={openRejectExport}>
+               Export
+             </Button>
+           </div>
          </div>
        </div>
      )}
@@ -1438,6 +1504,7 @@ useEffect(() => {
                 viewingSnapshot.totals,
                 viewingSnapshot.grand_total,
                 new Date(viewingSnapshot.created_at),
+                                viewingSnapshot.kind,
               )
             }
           >
@@ -1447,6 +1514,75 @@ useEffect(() => {
          </div>
        </div>
      )}
+   </DialogContent>
+ </Dialog>
+
+ {/* Reject export dialog */}
+ <Dialog open={rejectExportOpen} onOpenChange={setRejectExportOpen}>
+   <DialogContent className="max-w-md w-[calc(100vw-1.5rem)] sm:w-full p-4 sm:p-6">
+     <DialogHeader>
+       <DialogTitle>Export rejects</DialogTitle>
+       <DialogDescription>
+         Totals of linen rejected as dirty before use.
+       </DialogDescription>
+     </DialogHeader>
+     {(() => {
+       const { rows, grand } = computeRejectTotals();
+       const text = rows.map((r) => `${r.name}: ${r.count}`).join("\n");
+       if (rows.length === 0) {
+         return (
+           <p className="text-sm text-muted-foreground py-4">
+             No rejects tallied yet.
+           </p>
+         );
+       }
+       return (
+         <div className="space-y-4">
+           <ul className="divide-y rounded-md border">
+             {rows.map((r) => (
+               <li
+                 key={r.name}
+                 className="flex items-center justify-between px-3 py-2 text-sm"
+               >
+                 <span className="truncate pr-3">{r.name}</span>
+                 <span className="font-mono font-semibold tabular-nums">
+                   {r.count}
+                 </span>
+               </li>
+             ))}
+           </ul>
+           <div className="flex items-center justify-between text-sm">
+             <span className="text-muted-foreground">
+               {rows.length} item{rows.length === 1 ? "" : "s"}
+             </span>
+             <span className="font-medium">Total: {grand}</span>
+           </div>
+           <div className="flex justify-end gap-2">
+             <Button
+               variant="outline"
+               size="sm"
+               onClick={() => printTotals(rows, grand, new Date(), "rejects")}
+             >
+               Print
+             </Button>
+             <Button
+               variant="outline"
+               size="sm"
+               onClick={async () => {
+                 try {
+                   await navigator.clipboard.writeText(text);
+                   toast.success("Copied to clipboard");
+                 } catch {
+                   toast.error("Copy failed");
+                 }
+               }}
+             >
+               Copy
+             </Button>
+           </div>
+         </div>
+       );
+     })()}
    </DialogContent>
  </Dialog>
  </main>
