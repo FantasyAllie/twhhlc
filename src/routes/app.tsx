@@ -1504,6 +1504,7 @@ useEffect(() => {
                 viewingSnapshot.totals,
                 viewingSnapshot.grand_total,
                 new Date(viewingSnapshot.created_at),
+                                viewingSnapshot.kind,
               )
             }
           >
