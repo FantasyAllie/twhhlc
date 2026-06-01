@@ -916,6 +916,11 @@ useEffect(() => {
               hour: "numeric",
               minute: "2-digit",
             })}
+            {s.kind === "rejects" && (
+              <span className="ml-2 text-xs uppercase tracking-wide text-muted-foreground">
+                Rejects
+              </span>
+            )}
             <span className="ml-2 text-xs text-muted-foreground">
               ({s.grand_total})
             </span>
