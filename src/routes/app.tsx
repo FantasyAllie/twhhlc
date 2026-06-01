@@ -597,13 +597,13 @@ useEffect(() => {
       toast.error(error.message);
       return;
     }
-    // Keep only the 5 most recent totals snapshots.
+    // Keep only the 6 most recent totals snapshots.
     const { data: keep } = await supabase
       .from("export_snapshots")
       .select("id")
       .eq("kind", "totals")
       .order("created_at", { ascending: false })
-      .limit(5);
+      .limit(6);
     const keepIds = (keep ?? []).map((s) => s.id);
     if (keepIds.length > 0) {
       await supabase
