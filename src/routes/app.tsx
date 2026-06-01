@@ -1231,14 +1231,19 @@ useEffect(() => {
            <span className="text-muted-foreground">
              Total: {rejects.reduce((s, r) => s + r.count, 0)}
            </span>
-           <Button
-             variant="ghost"
-             size="sm"
-             className="text-destructive hover:text-destructive"
-             onClick={resetRejects}
-           >
-             Reset all
-           </Button>
+           <div className="flex items-center gap-2">
+             <Button
+               variant="ghost"
+               size="sm"
+               className="text-destructive hover:text-destructive"
+               onClick={resetRejects}
+             >
+               Reset all
+             </Button>
+             <Button variant="outline" size="sm" onClick={openRejectExport}>
+               Export
+             </Button>
+           </div>
          </div>
        </div>
      )}
