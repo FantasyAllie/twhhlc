@@ -1119,14 +1119,77 @@ useEffect(() => {
  </DialogContent>
  </Dialog>
 
+ {/* Rejects dialog */}
+ <Dialog open={rejectsOpen} onOpenChange={setRejectsOpen}>
+   <DialogContent className="max-w-md w-[calc(100vw-1.5rem)] sm:w-full p-4 sm:p-6">
+     <DialogHeader>
+       <DialogTitle>Rejects</DialogTitle>
+       <DialogDescription>
+         Tally linen that was dirty before use. Not tied to any room.
+       </DialogDescription>
+     </DialogHeader>
+     {template.length === 0 ? (
+       <p className="text-sm text-muted-foreground py-4">
+         No linen items yet. Add some from the Linen List.
+       </p>
+     ) : (
+       <div className="space-y-3">
+         <ul className="divide-y rounded-md border max-h-[60vh] overflow-y-auto">
+           {template.map((item) => {
+             const count = getRejectCount(item.id);
+             return (
+               <li key={item.id} className="flex items-center gap-3 px-3 py-2">
+                 <span className="flex-1 truncate text-sm">{item.name}</span>
+                 <div className="flex items-center gap-1">
+                   <Button
+                     variant="outline"
+                     size="icon"
+                     className="h-8 w-8"
+                     onClick={() => updateRejectCount(item.id, -1)}
+                     disabled={count === 0}
+                     aria-label={`Decrease ${item.name}`}
+                   >
+                     <Minus className="h-4 w-4" />
+                   </Button>
+                   <span className="w-8 text-center tabular-nums font-medium">{count}</span>
+                   <Button
+                     variant="outline"
+                     size="icon"
+                     className="h-8 w-8"
+                     onClick={() => updateRejectCount(item.id, 1)}
+                     aria-label={`Increase ${item.name}`}
+                   >
+                     <Plus className="h-4 w-4" />
+                   </Button>
+                 </div>
+               </li>
+             );
+           })}
+         </ul>
+         <div className="flex items-center justify-between text-sm">
+           <span className="text-muted-foreground">
+             Total: {rejects.reduce((s, r) => s + r.count, 0)}
+           </span>
+           <Button
+             variant="ghost"
+             size="sm"
+             className="text-destructive hover:text-destructive"
+             onClick={resetRejects}
+           >
+             Reset all
+           </Button>
+         </div>
+       </div>
+     )}
+   </DialogContent>
+ </Dialog>
+
  {/* Rooms */}
  <section className="space-y-4">
  <div className="flex items-baseline justify-between">
  <h2 className="text-sm font-medium text-muted-foreground uppercase tracking-wide">
  Rooms
  </h2>
-
- {/* Rejects dialog inserted via separate block below */}
  <button
  type="button"
  onClick={resetAll}
