@@ -89,6 +89,7 @@ useEffect(() => {
  const [exportOpen, setExportOpen] = useState(false);
   const [viewingSnapshot, setViewingSnapshot] = useState<ExportSnapshot | null>(null);
   const [rejectsOpen, setRejectsOpen] = useState(false);
+  const [rejectExportOpen, setRejectExportOpen] = useState(false);
 
  // Track responsive column count so we can insert the open-room panel
  // right after the row containing the clicked room.
@@ -170,7 +171,7 @@ useEffect(() => {
     queryFn: async (): Promise<ExportSnapshot[]> => {
       const { data, error } = await supabase
         .from("export_snapshots")
-        .select("id,created_at,totals,grand_total")
+          .select("id,created_at,totals,grand_total,kind")
         .order("created_at", { ascending: false })
         .limit(100);
       if (error) throw error;
