@@ -38,6 +38,30 @@ export type Database = {
         }
         Relationships: []
       }
+      reject_counts: {
+        Row: {
+          count: number
+          id: string
+          template_item_id: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          count?: number
+          id?: string
+          template_item_id: string
+          updated_at?: string
+          user_id?: string
+        }
+        Update: {
+          count?: number
+          id?: string
+          template_item_id?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       room_extra_items: {
         Row: {
           created_at: string

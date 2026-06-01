@@ -64,6 +64,7 @@ type ExportSnapshot = {
   totals: SnapshotRow[];
   grand_total: number;
 };
+type RejectCount = { id: string; template_item_id: string; count: number };
 
 function AppPage() {
  const qc = useQueryClient();
@@ -86,6 +87,7 @@ useEffect(() => {
 
  const [exportOpen, setExportOpen] = useState(false);
   const [viewingSnapshot, setViewingSnapshot] = useState<ExportSnapshot | null>(null);
+  const [rejectsOpen, setRejectsOpen] = useState(false);
 
  // Track responsive column count so we can insert the open-room panel
  // right after the row containing the clicked room.
@@ -175,12 +177,61 @@ useEffect(() => {
     },
   });
 
+  const rejectsQ = useQuery({
+    queryKey: ["reject_counts"],
+    queryFn: async (): Promise<RejectCount[]> => {
+      const { data, error } = await supabase
+        .from("reject_counts" as never)
+        .select("id,template_item_id,count");
+      if (error) throw error;
+      return (data ?? []) as RejectCount[];
+    },
+  });
+
  const template = templateQ.data ?? [];
  const extras = extrasQ.data ?? [];
  const counts = countsQ.data ?? [];
  const rooms = roomsQ.data ?? [];
   const assignments = assignmentsQ.data ?? [];
   const snapshots = snapshotsQ.data ?? [];
+  const rejects = (rejectsQ.data ?? []) as RejectCount[];
+
+  const getRejectCount = (templateItemId: string) =>
+    rejects.find((r) => r.template_item_id === templateItemId)?.count ?? 0;
+
+  const updateRejectCount = async (templateItemId: string, delta: number) => {
+    const current = getRejectCount(templateItemId);
+    const next = Math.max(0, current + delta);
+    if (next === current) return;
+    qc.setQueryData<RejectCount[]>(["reject_counts"], (old) => {
+      const list = old ? [...old] : [];
+      const idx = list.findIndex((r) => r.template_item_id === templateItemId);
+      if (idx >= 0) list[idx] = { ...list[idx], count: next };
+      else list.push({ id: `temp-${templateItemId}`, template_item_id: templateItemId, count: next });
+      return list;
+    });
+    const { error } = await supabase
+      .from("reject_counts" as never)
+      .upsert(
+        { template_item_id: templateItemId, count: next, updated_at: new Date().toISOString() } as never,
+        { onConflict: "user_id,template_item_id" },
+      );
+    if (error) {
+      toast.error(error.message);
+      qc.invalidateQueries({ queryKey: ["reject_counts"] });
+    }
+  };
+
+  const resetRejects = async () => {
+    if (!confirm("Reset all reject tallies?")) return;
+    qc.setQueryData<RejectCount[]>(["reject_counts"], []);
+    const { error } = await supabase
+      .from("reject_counts" as never)
+      .delete()
+      .neq("id", "00000000-0000-0000-0000-000000000000");
+    if (error) toast.error(error.message);
+    qc.invalidateQueries({ queryKey: ["reject_counts"] });
+  };
  const doneSet = new Set(rooms.filter((r) => r.done).map((r) => r.room_number));
 
   const isAssigned = (templateItemId: string, roomNumber: number) =>
@@ -787,6 +838,9 @@ useEffect(() => {
  <DropdownMenuItem onSelect={() => setCategoriesOpen(true)}>
               Room Type
  </DropdownMenuItem>
+  <DropdownMenuItem onSelect={() => setRejectsOpen(true)}>
+              Rejects
+  </DropdownMenuItem>
   <DropdownMenuSub>
     <DropdownMenuSubTrigger>History</DropdownMenuSubTrigger>
     <DropdownMenuSubContent className="max-h-80 overflow-y-auto">
@@ -1063,6 +1117,71 @@ useEffect(() => {
  </ul>
  </div>
  </DialogContent>
+ </Dialog>
+
+ {/* Rejects dialog */}
+ <Dialog open={rejectsOpen} onOpenChange={setRejectsOpen}>
+   <DialogContent className="max-w-md w-[calc(100vw-1.5rem)] sm:w-full p-4 sm:p-6">
+     <DialogHeader>
+       <DialogTitle>Rejects</DialogTitle>
+       <DialogDescription>
+         Tally linen that was dirty before use. Not tied to any room.
+       </DialogDescription>
+     </DialogHeader>
+     {template.length === 0 ? (
+       <p className="text-sm text-muted-foreground py-4">
+         No linen items yet. Add some from the Linen List.
+       </p>
+     ) : (
+       <div className="space-y-3">
+         <ul className="divide-y rounded-md border max-h-[60vh] overflow-y-auto">
+           {template.map((item) => {
+             const count = getRejectCount(item.id);
+             return (
+               <li key={item.id} className="flex items-center gap-3 px-3 py-2">
+                 <span className="flex-1 truncate text-sm">{item.name}</span>
+                 <div className="flex items-center gap-1">
+                   <Button
+                     variant="outline"
+                     size="icon"
+                     className="h-8 w-8"
+                     onClick={() => updateRejectCount(item.id, -1)}
+                     disabled={count === 0}
+                     aria-label={`Decrease ${item.name}`}
+                   >
+                     <Minus className="h-4 w-4" />
+                   </Button>
+                   <span className="w-8 text-center tabular-nums font-medium">{count}</span>
+                   <Button
+                     variant="outline"
+                     size="icon"
+                     className="h-8 w-8"
+                     onClick={() => updateRejectCount(item.id, 1)}
+                     aria-label={`Increase ${item.name}`}
+                   >
+                     <Plus className="h-4 w-4" />
+                   </Button>
+                 </div>
+               </li>
+             );
+           })}
+         </ul>
+         <div className="flex items-center justify-between text-sm">
+           <span className="text-muted-foreground">
+             Total: {rejects.reduce((s, r) => s + r.count, 0)}
+           </span>
+           <Button
+             variant="ghost"
+             size="sm"
+             className="text-destructive hover:text-destructive"
+             onClick={resetRejects}
+           >
+             Reset all
+           </Button>
+         </div>
+       </div>
+     )}
+   </DialogContent>
  </Dialog>
 
  {/* Rooms */}
