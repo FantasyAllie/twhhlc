@@ -646,7 +646,7 @@ useEffect(() => {
       .select("id")
       .eq("kind", "rejects")
       .order("created_at", { ascending: false })
-      .limit(5);
+      .limit(6);
     const keepIds = (keep ?? []).map((s) => s.id);
     if (keepIds.length > 0) {
       await supabase
