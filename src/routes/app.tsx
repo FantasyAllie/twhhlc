@@ -1516,6 +1516,75 @@ useEffect(() => {
      )}
    </DialogContent>
  </Dialog>
+
+ {/* Reject export dialog */}
+ <Dialog open={rejectExportOpen} onOpenChange={setRejectExportOpen}>
+   <DialogContent className="max-w-md w-[calc(100vw-1.5rem)] sm:w-full p-4 sm:p-6">
+     <DialogHeader>
+       <DialogTitle>Export rejects</DialogTitle>
+       <DialogDescription>
+         Totals of linen rejected as dirty before use.
+       </DialogDescription>
+     </DialogHeader>
+     {(() => {
+       const { rows, grand } = computeRejectTotals();
+       const text = rows.map((r) => `${r.name}: ${r.count}`).join("\n");
+       if (rows.length === 0) {
+         return (
+           <p className="text-sm text-muted-foreground py-4">
+             No rejects tallied yet.
+           </p>
+         );
+       }
+       return (
+         <div className="space-y-4">
+           <ul className="divide-y rounded-md border">
+             {rows.map((r) => (
+               <li
+                 key={r.name}
+                 className="flex items-center justify-between px-3 py-2 text-sm"
+               >
+                 <span className="truncate pr-3">{r.name}</span>
+                 <span className="font-mono font-semibold tabular-nums">
+                   {r.count}
+                 </span>
+               </li>
+             ))}
+           </ul>
+           <div className="flex items-center justify-between text-sm">
+             <span className="text-muted-foreground">
+               {rows.length} item{rows.length === 1 ? "" : "s"}
+             </span>
+             <span className="font-medium">Total: {grand}</span>
+           </div>
+           <div className="flex justify-end gap-2">
+             <Button
+               variant="outline"
+               size="sm"
+               onClick={() => printTotals(rows, grand, new Date(), "rejects")}
+             >
+               Print
+             </Button>
+             <Button
+               variant="outline"
+               size="sm"
+               onClick={async () => {
+                 try {
+                   await navigator.clipboard.writeText(text);
+                   toast.success("Copied to clipboard");
+                 } catch {
+                   toast.error("Copy failed");
+                 }
+               }}
+             >
+               Copy
+             </Button>
+           </div>
+         </div>
+       );
+     })()}
+   </DialogContent>
+ </Dialog>
  </main>
  );
 }
