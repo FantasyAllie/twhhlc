@@ -63,6 +63,7 @@ type ExportSnapshot = {
   created_at: string;
   totals: SnapshotRow[];
   grand_total: number;
+  kind?: "totals" | "rejects";
 };
 type RejectCount = { id: string; template_item_id: string; count: number };
 
