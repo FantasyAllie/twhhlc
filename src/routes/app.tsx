@@ -1185,9 +1185,9 @@ useEffect(() => {
    <DialogContent className="max-w-md w-[calc(100vw-1.5rem)] sm:w-full p-4 sm:p-6">
      <DialogHeader>
        <DialogTitle>Rejects</DialogTitle>
-       <DialogDescription>
-         Tally linen that was dirty before use. Not tied to any room.
-       </DialogDescription>
+        <DialogDescription>
+          Tally all linen rejects before sending back to be cleaned
+        </DialogDescription>
      </DialogHeader>
      {template.length === 0 ? (
        <p className="text-sm text-muted-foreground py-4">
