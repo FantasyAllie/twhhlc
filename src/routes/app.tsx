@@ -755,6 +755,42 @@ useEffect(() => {
  const roomExtras = extras.filter((e) => e.room_number === n);
   const visibleTemplate = template.filter((t) => isAssigned(t.id, n));
   const cat = roomCategory(n);
+  const COLOR_MAP: Record<string, { bg: string; border: string }> = {
+    white:  { bg: "#ffffff", border: "#d4d4d8" },
+    ivory:  { bg: "#fffff0", border: "#eae6c8" },
+    cream:  { bg: "#fdf6e3", border: "#ead9a8" },
+    beige:  { bg: "#f5f0e1", border: "#dccfa8" },
+    tan:    { bg: "#f1e2c4", border: "#c9b48a" },
+    brown:  { bg: "#e4ccb4", border: "#a87a4f" },
+    black:  { bg: "#3f3f46", border: "#18181b" },
+    grey:   { bg: "#e5e7eb", border: "#9ca3af" },
+    gray:   { bg: "#e5e7eb", border: "#9ca3af" },
+    silver: { bg: "#e5e7eb", border: "#9ca3af" },
+    red:    { bg: "#fecaca", border: "#ef4444" },
+    pink:   { bg: "#fbcfe8", border: "#ec4899" },
+    orange: { bg: "#fed7aa", border: "#f97316" },
+    yellow: { bg: "#fef08a", border: "#eab308" },
+    gold:   { bg: "#fde68a", border: "#d4a017" },
+    green:  { bg: "#bbf7d0", border: "#22c55e" },
+    blue:   { bg: "#bfdbfe", border: "#3b82f6" },
+    navy:   { bg: "#c7d2fe", border: "#1e3a8a" },
+    teal:   { bg: "#99f6e4", border: "#14b8a6" },
+    purple: { bg: "#e9d5ff", border: "#a855f7" },
+  };
+  const detectColor = (name: string) => {
+    const lower = name.toLowerCase();
+    for (const key of Object.keys(COLOR_MAP)) {
+      if (new RegExp(`\\b${key}\\b`).test(lower)) return COLOR_MAP[key];
+    }
+    return null;
+  };
+  const colorStyle = (name: string): React.CSSProperties | undefined => {
+    const c = detectColor(name);
+    if (!c) return undefined;
+    return { backgroundColor: c.bg, borderLeft: `4px solid ${c.border}` };
+  };
+  const textClassFor = (name: string) =>
+    /\bblack\b/i.test(name) ? "text-white" : "";
  return (
  <div className="border rounded-md p-4 space-y-4 bg-muted/30">
   <div className="flex items-center">
@@ -765,12 +801,19 @@ useEffect(() => {
  No items yet. Add linen list items from the menu, or add an extra below.
  </p>
  ) : (
- <ul className="divide-y">
+  <ul className="space-y-1">
   {visibleTemplate.map((item) => {
   const count = getCount(n, "template", item.id);
   return (
-  <li key={`t-${item.id}`} className="flex items-center gap-3 py-2">
-  <span className="flex-1 truncate">{item.name}</span>
+   <li
+     key={`t-${item.id}`}
+     className={cn(
+       "flex items-center gap-3 py-2 px-2 rounded-md border",
+       textClassFor(item.name),
+     )}
+     style={colorStyle(item.name)}
+   >
+   <span className="flex-1 truncate">{item.name}</span>
   <div className="flex items-center gap-1">
   {item.default_count > 0 && (
   <Button
@@ -809,8 +852,15 @@ useEffect(() => {
  {roomExtras.map((item) => {
  const count = getCount(n, "extra", item.id);
  return (
- <li key={`e-${item.id}`} className="flex items-center gap-3 py-2">
- <span className="flex-1 truncate">
+  <li
+    key={`e-${item.id}`}
+    className={cn(
+      "flex items-center gap-3 py-2 px-2 rounded-md border",
+      textClassFor(item.name),
+    )}
+    style={colorStyle(item.name)}
+  >
+  <span className="flex-1 truncate">
  {item.name}
  <span className="ml-2 text-xs text-muted-foreground">
  extra
