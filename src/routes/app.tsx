@@ -51,6 +51,13 @@ const CATEGORIES: { value: Category; label: string }[] = [
 const categoryLabel = (c: Category | null | undefined) =>
  CATEGORIES.find((x) => x.value === c)?.label ?? "Uncategorised";
 
+const COLOR_SWATCHES: Record<"green" | "yellow" | "red" | "blue", { bg: string; border: string; solid: string; label: string }> = {
+  green:  { bg: "#dcfce7", border: "#86efac", solid: "#22c55e", label: "Green" },
+  yellow: { bg: "#fef9c3", border: "#fde047", solid: "#eab308", label: "Yellow" },
+  red:    { bg: "#fee2e2", border: "#fca5a5", solid: "#ef4444", label: "Red" },
+  blue:   { bg: "#dbeafe", border: "#93c5fd", solid: "#3b82f6", label: "Blue" },
+};
+
 type ItemColor = "green" | "yellow" | "red" | "blue";
 type TemplateItem = { id: string; name: string; created_at: string; category: Category; position: number; default_count: number; color: ItemColor | null };
 type RoomExtra = { id: string; room_number: number; name: string; created_at: string };
