@@ -200,6 +200,7 @@ export type Database = {
       template_items: {
         Row: {
           category: string
+          color: string | null
           created_at: string
           default_count: number
           id: string
@@ -209,6 +210,7 @@ export type Database = {
         }
         Insert: {
           category?: string
+          color?: string | null
           created_at?: string
           default_count?: number
           id?: string
@@ -218,6 +220,7 @@ export type Database = {
         }
         Update: {
           category?: string
+          color?: string | null
           created_at?: string
           default_count?: number
           id?: string
