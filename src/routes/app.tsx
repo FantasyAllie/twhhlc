@@ -833,8 +833,8 @@ useEffect(() => {
      )}
      style={colorStyle(item.name)}
    >
-   <span className="flex-1 truncate">{item.name}</span>
-  <div className="flex items-center gap-1">
+    <span className="flex-1 min-w-0 truncate">{item.name}</span>
+   <div className="flex items-center gap-1 shrink-0">
   {item.default_count > 0 && (
   <Button
   variant="outline"
@@ -880,13 +880,13 @@ useEffect(() => {
     )}
     style={colorStyle(item.name)}
   >
-  <span className="flex-1 truncate">
+  <span className="flex-1 min-w-0 truncate">
  {item.name}
  <span className="ml-2 text-xs text-muted-foreground">
  extra
  </span>
  </span>
- <div className="flex items-center gap-1">
+ <div className="flex items-center gap-1 shrink-0">
  <Button
  variant="outline"
  size="icon"
