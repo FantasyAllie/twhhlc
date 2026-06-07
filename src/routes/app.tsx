@@ -8,6 +8,9 @@ import { Minus, Plus, X, Menu, ArrowUp, ArrowDown, Pencil, Check, Trash2, Lock, 
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
 import { getToken, getStoredUser, clearSession } from "@/lib/auth-client";
+import { setSession } from "@/lib/auth-client";
+import { useServerFn } from "@tanstack/react-start";
+import { updateMyPassword, updateMyUsername } from "@/lib/auth.functions";
 import {
  DropdownMenu,
  DropdownMenuContent,
@@ -1013,6 +1016,7 @@ useEffect(() => {
       <Link to="/users">Users</Link>
     </DropdownMenuItem>
   )}
+  <DropdownMenuItem onSelect={() => setAccountOpen(true)}>Account</DropdownMenuItem>
   <DropdownMenuLabel className="text-xs font-normal text-muted-foreground">
     {authUser ? `Signed in as ${authUser.username}` : ""}
   </DropdownMenuLabel>
