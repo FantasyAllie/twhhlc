@@ -1007,6 +1007,16 @@ useEffect(() => {
       )}
     </DropdownMenuSubContent>
   </DropdownMenuSub>
+  <DropdownMenuSeparator />
+  {authUser?.role === "admin" && (
+    <DropdownMenuItem asChild>
+      <Link to="/users">Users</Link>
+    </DropdownMenuItem>
+  )}
+  <DropdownMenuLabel className="text-xs font-normal text-muted-foreground">
+    {authUser ? `Signed in as ${authUser.username}` : ""}
+  </DropdownMenuLabel>
+  <DropdownMenuItem onSelect={signOut}>Sign out</DropdownMenuItem>
  </DropdownMenuContent>
  </DropdownMenu>
  </div>
