@@ -88,6 +88,7 @@ function AppPage() {
     clearSession();
     navigate({ to: "/login", replace: true });
   };
+  const [accountOpen, setAccountOpen] = useState(false);
  const [openRoom, setOpenRoom] = useState<number | null>(null);
  const [templateOpen, setTemplateOpen] = useState(false);
 const [linenLocked, setLinenLocked] = useState<boolean>(() => {
