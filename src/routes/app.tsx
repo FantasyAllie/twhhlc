@@ -1109,6 +1109,56 @@ useEffect(() => {
                 </div>
               )}
               <div className="flex flex-wrap items-center gap-1.5">
+                <Popover>
+                  <PopoverTrigger asChild>
+                    <Button
+                      variant="outline"
+                      size="icon"
+                      className="h-8 w-8 p-0"
+                      disabled={linenLocked}
+                      aria-label={`Set colour for ${item.name}`}
+                      title={item.color ? COLOR_SWATCHES[item.color].label : "No colour"}
+                    >
+                      <span
+                        className="block h-4 w-4 rounded-full border"
+                        style={{
+                          backgroundColor: item.color ? COLOR_SWATCHES[item.color].solid : "transparent",
+                          borderColor: item.color ? COLOR_SWATCHES[item.color].solid : "hsl(var(--border))",
+                        }}
+                      />
+                    </Button>
+                  </PopoverTrigger>
+                  <PopoverContent align="end" className="w-auto p-2">
+                    <div className="flex items-center gap-1.5">
+                      {(Object.keys(COLOR_SWATCHES) as ItemColor[]).map((key) => (
+                        <button
+                          key={key}
+                          type="button"
+                          onClick={() => setTemplateColor(item.id, key)}
+                          aria-label={COLOR_SWATCHES[key].label}
+                          title={COLOR_SWATCHES[key].label}
+                          className={cn(
+                            "h-6 w-6 rounded-full border-2 transition",
+                            item.color === key ? "ring-2 ring-offset-1 ring-foreground" : "",
+                          )}
+                          style={{ backgroundColor: COLOR_SWATCHES[key].solid, borderColor: COLOR_SWATCHES[key].solid }}
+                        />
+                      ))}
+                      <button
+                        type="button"
+                        onClick={() => setTemplateColor(item.id, null)}
+                        aria-label="No colour"
+                        title="No colour"
+                        className={cn(
+                          "h-6 w-6 rounded-full border-2 flex items-center justify-center bg-background",
+                          item.color === null ? "ring-2 ring-offset-1 ring-foreground" : "",
+                        )}
+                      >
+                        <X className="h-3 w-3 text-muted-foreground" />
+                      </button>
+                    </div>
+                  </PopoverContent>
+                </Popover>
                 <label className="flex items-center gap-1 text-xs text-muted-foreground">
                   Default
                   <Input
