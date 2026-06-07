@@ -407,6 +407,20 @@ useEffect(() => {
     }
   };
 
+  const setTemplateColor = async (id: string, color: ItemColor | null) => {
+    qc.setQueryData<TemplateItem[]>(["template_items"], (old) =>
+      old?.map((t) => (t.id === id ? { ...t, color } : t)) ?? [],
+    );
+    const { error } = await supabase
+      .from("template_items")
+      .update({ color } as never)
+      .eq("id", id);
+    if (error) {
+      toast.error(error.message);
+      qc.invalidateQueries({ queryKey: ["template_items"] });
+    }
+  };
+
   const renameTemplateItem = async (id: string, name: string) => {
     const trimmed = name.trim();
     if (!trimmed) {
