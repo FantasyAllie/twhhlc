@@ -71,6 +71,20 @@ type RejectCount = { id: string; template_item_id: string; count: number };
 
 function AppPage() {
  const qc = useQueryClient();
+  const navigate = useNavigate();
+  const [authUser, setAuthUser] = useState(() => getStoredUser());
+  useEffect(() => {
+    if (!getToken() || !getStoredUser()) {
+      navigate({ to: "/login", replace: true });
+    }
+    const onChange = () => setAuthUser(getStoredUser());
+    window.addEventListener("tw-auth-changed", onChange);
+    return () => window.removeEventListener("tw-auth-changed", onChange);
+  }, [navigate]);
+  const signOut = () => {
+    clearSession();
+    navigate({ to: "/login", replace: true });
+  };
  const [openRoom, setOpenRoom] = useState<number | null>(null);
  const [templateOpen, setTemplateOpen] = useState(false);
 const [linenLocked, setLinenLocked] = useState<boolean>(() => {
