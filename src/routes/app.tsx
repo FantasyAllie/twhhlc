@@ -51,7 +51,8 @@ const CATEGORIES: { value: Category; label: string }[] = [
 const categoryLabel = (c: Category | null | undefined) =>
  CATEGORIES.find((x) => x.value === c)?.label ?? "Uncategorised";
 
-type TemplateItem = { id: string; name: string; created_at: string; category: Category; position: number; default_count: number };
+type ItemColor = "green" | "yellow" | "red" | "blue";
+type TemplateItem = { id: string; name: string; created_at: string; category: Category; position: number; default_count: number; color: ItemColor | null };
 type RoomExtra = { id: string; room_number: number; name: string; created_at: string };
 type RoomCount = {
  id: string;
