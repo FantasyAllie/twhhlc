@@ -1,0 +1,1 @@
+ALTER TABLE public.template_items ADD COLUMN IF NOT EXISTS color text CHECK (color IS NULL OR color IN ('green','yellow','red','blue'));

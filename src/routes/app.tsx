@@ -51,7 +51,15 @@ const CATEGORIES: { value: Category; label: string }[] = [
 const categoryLabel = (c: Category | null | undefined) =>
  CATEGORIES.find((x) => x.value === c)?.label ?? "Uncategorised";
 
-type TemplateItem = { id: string; name: string; created_at: string; category: Category; position: number; default_count: number };
+const COLOR_SWATCHES: Record<"green" | "yellow" | "red" | "blue", { bg: string; border: string; solid: string; label: string }> = {
+  green:  { bg: "#dcfce7", border: "#86efac", solid: "#22c55e", label: "Green" },
+  yellow: { bg: "#fef9c3", border: "#fde047", solid: "#eab308", label: "Yellow" },
+  red:    { bg: "#fee2e2", border: "#fca5a5", solid: "#ef4444", label: "Red" },
+  blue:   { bg: "#dbeafe", border: "#93c5fd", solid: "#3b82f6", label: "Blue" },
+};
+
+type ItemColor = "green" | "yellow" | "red" | "blue";
+type TemplateItem = { id: string; name: string; created_at: string; category: Category; position: number; default_count: number; color: ItemColor | null };
 type RoomExtra = { id: string; room_number: number; name: string; created_at: string };
 type RoomCount = {
  id: string;
@@ -132,7 +140,7 @@ useEffect(() => {
  queryFn: async (): Promise<TemplateItem[]> => {
  const { data, error } = await supabase
  .from("template_items")
-  .select("id,name,created_at,category,position,default_count")
+   .select("id,name,created_at,category,position,default_count,color")
  .order("position", { ascending: true })
  .order("created_at", { ascending: true });
  if (error) throw error;
@@ -399,6 +407,20 @@ useEffect(() => {
     const { error } = await supabase
       .from("template_items")
       .update({ default_count: next })
+      .eq("id", id);
+    if (error) {
+      toast.error(error.message);
+      qc.invalidateQueries({ queryKey: ["template_items"] });
+    }
+  };
+
+  const setTemplateColor = async (id: string, color: ItemColor | null) => {
+    qc.setQueryData<TemplateItem[]>(["template_items"], (old) =>
+      old?.map((t) => (t.id === id ? { ...t, color } : t)) ?? [],
+    );
+    const { error } = await supabase
+      .from("template_items")
+      .update({ color } as never)
       .eq("id", id);
     if (error) {
       toast.error(error.message);
@@ -775,42 +797,11 @@ useEffect(() => {
  const roomExtras = extras.filter((e) => e.room_number === n);
   const visibleTemplate = template.filter((t) => isAssigned(t.id, n));
   const cat = roomCategory(n);
-  const COLOR_MAP: Record<string, { bg: string; border: string }> = {
-    white:  { bg: "#fafafa", border: "#e4e4e7" },
-    ivory:  { bg: "#fefce8", border: "#f5f1d4" },
-    cream:  { bg: "#fef9ec", border: "#f3ead0" },
-    beige:  { bg: "#faf6ec", border: "#e8ddc4" },
-    tan:    { bg: "#f7eedd", border: "#e0cba7" },
-    brown:  { bg: "#f1e4d3", border: "#c9ad8a" },
-    black:  { bg: "#52525b", border: "#27272a" },
-    grey:   { bg: "#f1f5f9", border: "#cbd5e1" },
-    gray:   { bg: "#f1f5f9", border: "#cbd5e1" },
-    silver: { bg: "#f1f5f9", border: "#cbd5e1" },
-    red:    { bg: "#fee2e2", border: "#fca5a5" },
-    pink:   { bg: "#fce7f3", border: "#f9a8d4" },
-    orange: { bg: "#ffedd5", border: "#fdba74" },
-    yellow: { bg: "#fef9c3", border: "#fde047" },
-    gold:   { bg: "#fef3c7", border: "#fcd34d" },
-    green:  { bg: "#dcfce7", border: "#86efac" },
-    blue:   { bg: "#dbeafe", border: "#93c5fd" },
-    navy:   { bg: "#e0e7ff", border: "#a5b4fc" },
-    teal:   { bg: "#ccfbf1", border: "#5eead4" },
-    purple: { bg: "#f3e8ff", border: "#d8b4fe" },
-  };
-  const detectColor = (name: string) => {
-    const lower = name.toLowerCase();
-    for (const key of Object.keys(COLOR_MAP)) {
-      if (new RegExp(`\\b${key}\\b`).test(lower)) return COLOR_MAP[key];
-    }
-    return null;
-  };
-  const colorStyle = (name: string): React.CSSProperties | undefined => {
-    const c = detectColor(name);
+  const colorStyle = (color: ItemColor | null | undefined): React.CSSProperties | undefined => {
+    const c = color ? COLOR_SWATCHES[color] : null;
     if (!c) return undefined;
     return { backgroundColor: c.bg, borderLeft: `4px solid ${c.border}` };
   };
-  const textClassFor = (name: string) =>
-    /\bblack\b/i.test(name) ? "text-white" : "";
  return (
  <div className="border rounded-md p-4 space-y-4 bg-muted/30">
   <div className="flex items-center">
@@ -827,11 +818,8 @@ useEffect(() => {
   return (
    <li
      key={`t-${item.id}`}
-     className={cn(
-       "flex items-center gap-3 py-2 px-2 rounded-md border",
-       textClassFor(item.name),
-     )}
-     style={colorStyle(item.name)}
+      className="flex items-center gap-3 py-2 px-2 rounded-md border"
+      style={colorStyle(item.color)}
    >
      <span className="flex-1 min-w-0 break-words">{item.name}</span>
    <div className="flex items-center gap-1 shrink-0">
@@ -874,11 +862,7 @@ useEffect(() => {
  return (
   <li
     key={`e-${item.id}`}
-    className={cn(
-      "flex items-center gap-3 py-2 px-2 rounded-md border",
-      textClassFor(item.name),
-    )}
-    style={colorStyle(item.name)}
+    className="flex items-center gap-3 py-2 px-2 rounded-md border"
   >
    <span className="flex-1 min-w-0 break-words">
  {item.name}
@@ -1125,6 +1109,56 @@ useEffect(() => {
                 </div>
               )}
               <div className="flex flex-wrap items-center gap-1.5">
+                <Popover>
+                  <PopoverTrigger asChild>
+                    <Button
+                      variant="outline"
+                      size="icon"
+                      className="h-8 w-8 p-0"
+                      disabled={linenLocked}
+                      aria-label={`Set colour for ${item.name}`}
+                      title={item.color ? COLOR_SWATCHES[item.color].label : "No colour"}
+                    >
+                      <span
+                        className="block h-4 w-4 rounded-full border"
+                        style={{
+                          backgroundColor: item.color ? COLOR_SWATCHES[item.color].solid : "transparent",
+                          borderColor: item.color ? COLOR_SWATCHES[item.color].solid : "hsl(var(--border))",
+                        }}
+                      />
+                    </Button>
+                  </PopoverTrigger>
+                  <PopoverContent align="end" className="w-auto p-2">
+                    <div className="flex items-center gap-1.5">
+                      {(Object.keys(COLOR_SWATCHES) as ItemColor[]).map((key) => (
+                        <button
+                          key={key}
+                          type="button"
+                          onClick={() => setTemplateColor(item.id, key)}
+                          aria-label={COLOR_SWATCHES[key].label}
+                          title={COLOR_SWATCHES[key].label}
+                          className={cn(
+                            "h-6 w-6 rounded-full border-2 transition",
+                            item.color === key ? "ring-2 ring-offset-1 ring-foreground" : "",
+                          )}
+                          style={{ backgroundColor: COLOR_SWATCHES[key].solid, borderColor: COLOR_SWATCHES[key].solid }}
+                        />
+                      ))}
+                      <button
+                        type="button"
+                        onClick={() => setTemplateColor(item.id, null)}
+                        aria-label="No colour"
+                        title="No colour"
+                        className={cn(
+                          "h-6 w-6 rounded-full border-2 flex items-center justify-center bg-background",
+                          item.color === null ? "ring-2 ring-offset-1 ring-foreground" : "",
+                        )}
+                      >
+                        <X className="h-3 w-3 text-muted-foreground" />
+                      </button>
+                    </div>
+                  </PopoverContent>
+                </Popover>
                 <label className="flex items-center gap-1 text-xs text-muted-foreground">
                   Default
                   <Input
