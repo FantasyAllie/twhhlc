@@ -790,42 +790,11 @@ useEffect(() => {
  const roomExtras = extras.filter((e) => e.room_number === n);
   const visibleTemplate = template.filter((t) => isAssigned(t.id, n));
   const cat = roomCategory(n);
-  const COLOR_MAP: Record<string, { bg: string; border: string }> = {
-    white:  { bg: "#fafafa", border: "#e4e4e7" },
-    ivory:  { bg: "#fefce8", border: "#f5f1d4" },
-    cream:  { bg: "#fef9ec", border: "#f3ead0" },
-    beige:  { bg: "#faf6ec", border: "#e8ddc4" },
-    tan:    { bg: "#f7eedd", border: "#e0cba7" },
-    brown:  { bg: "#f1e4d3", border: "#c9ad8a" },
-    black:  { bg: "#52525b", border: "#27272a" },
-    grey:   { bg: "#f1f5f9", border: "#cbd5e1" },
-    gray:   { bg: "#f1f5f9", border: "#cbd5e1" },
-    silver: { bg: "#f1f5f9", border: "#cbd5e1" },
-    red:    { bg: "#fee2e2", border: "#fca5a5" },
-    pink:   { bg: "#fce7f3", border: "#f9a8d4" },
-    orange: { bg: "#ffedd5", border: "#fdba74" },
-    yellow: { bg: "#fef9c3", border: "#fde047" },
-    gold:   { bg: "#fef3c7", border: "#fcd34d" },
-    green:  { bg: "#dcfce7", border: "#86efac" },
-    blue:   { bg: "#dbeafe", border: "#93c5fd" },
-    navy:   { bg: "#e0e7ff", border: "#a5b4fc" },
-    teal:   { bg: "#ccfbf1", border: "#5eead4" },
-    purple: { bg: "#f3e8ff", border: "#d8b4fe" },
-  };
-  const detectColor = (name: string) => {
-    const lower = name.toLowerCase();
-    for (const key of Object.keys(COLOR_MAP)) {
-      if (new RegExp(`\\b${key}\\b`).test(lower)) return COLOR_MAP[key];
-    }
-    return null;
-  };
-  const colorStyle = (name: string): React.CSSProperties | undefined => {
-    const c = detectColor(name);
+  const colorStyle = (color: ItemColor | null | undefined): React.CSSProperties | undefined => {
+    const c = color ? COLOR_SWATCHES[color] : null;
     if (!c) return undefined;
     return { backgroundColor: c.bg, borderLeft: `4px solid ${c.border}` };
   };
-  const textClassFor = (name: string) =>
-    /\bblack\b/i.test(name) ? "text-white" : "";
  return (
  <div className="border rounded-md p-4 space-y-4 bg-muted/30">
   <div className="flex items-center">
@@ -842,11 +811,8 @@ useEffect(() => {
   return (
    <li
      key={`t-${item.id}`}
-     className={cn(
-       "flex items-center gap-3 py-2 px-2 rounded-md border",
-       textClassFor(item.name),
-     )}
-     style={colorStyle(item.name)}
+      className="flex items-center gap-3 py-2 px-2 rounded-md border"
+      style={colorStyle(item.color)}
    >
      <span className="flex-1 min-w-0 break-words">{item.name}</span>
    <div className="flex items-center gap-1 shrink-0">
@@ -889,11 +855,7 @@ useEffect(() => {
  return (
   <li
     key={`e-${item.id}`}
-    className={cn(
-      "flex items-center gap-3 py-2 px-2 rounded-md border",
-      textClassFor(item.name),
-    )}
-    style={colorStyle(item.name)}
+    className="flex items-center gap-3 py-2 px-2 rounded-md border"
   >
    <span className="flex-1 min-w-0 break-words">
  {item.name}
