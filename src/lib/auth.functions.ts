@@ -100,7 +100,7 @@ async function verifyToken(token: string): Promise<TokenPayload | null> {
       false,
       ["verify"],
     );
-    const ok = await crypto.subtle.verify("HMAC", key, b64urlToBytes(s), enc.encode(`${h}.${b}`));
+    const ok = await crypto.subtle.verify("HMAC", key, b64urlToBytes(s) as BufferSource, enc.encode(`${h}.${b}`));
     if (!ok) return null;
     const payload = JSON.parse(b64urlToString(b)) as TokenPayload;
     if (typeof payload.exp !== "number" || payload.exp * 1000 < Date.now()) return null;
