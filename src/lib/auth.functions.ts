@@ -253,3 +253,60 @@ export const deleteUser = createServerFn({ method: "POST" })
     if (error) throw new Error(error.message);
     return { ok: true };
   });
+
+export const updateMyPassword = createServerFn({ method: "POST" })
+  .inputValidator((d: { token: string; currentPassword: string; newPassword: string }) => d)
+  .handler(async ({ data }) => {
+    const p = await verifyToken(data.token);
+    if (!p) throw new Error("Not authenticated");
+    validatePassword(data.newPassword);
+    const db = await getAdminDb();
+    const { data: row, error } = await db
+      .from("app_users")
+      .select("password_hash")
+      .eq("id", p.sub)
+      .maybeSingle();
+    if (error || !row) throw new Error("Account not found");
+    const ok = await verifyPassword(data.currentPassword, (row as { password_hash: string }).password_hash);
+    if (!ok) throw new Error("Current password is incorrect");
+    const password_hash = await hashPassword(data.newPassword);
+    const { error: uerr } = await db
+      .from("app_users")
+      .update({ password_hash, updated_at: new Date().toISOString() })
+      .eq("id", p.sub);
+    if (uerr) throw new Error(uerr.message);
+    return { ok: true };
+  });
+
+export const updateMyUsername = createServerFn({ method: "POST" })
+  .inputValidator((d: { token: string; currentPassword: string; newUsername: string }) => d)
+  .handler(async ({ data }): Promise<{ token: string; user: SessionUser }> => {
+    const p = await verifyToken(data.token);
+    if (!p) throw new Error("Not authenticated");
+    const username = validateUsername(data.newUsername);
+    const db = await getAdminDb();
+    const { data: row, error } = await db
+      .from("app_users")
+      .select("password_hash,role")
+      .eq("id", p.sub)
+      .maybeSingle();
+    if (error || !row) throw new Error("Account not found");
+    const ok = await verifyPassword(data.currentPassword, (row as { password_hash: string }).password_hash);
+    if (!ok) throw new Error("Current password is incorrect");
+    const { data: existing } = await db
+      .from("app_users")
+      .select("id")
+      .ilike("username", username)
+      .neq("id", p.sub)
+      .maybeSingle();
+    if (existing) throw new Error("That username is already taken");
+    const { error: uerr } = await db
+      .from("app_users")
+      .update({ username, updated_at: new Date().toISOString() })
+      .eq("id", p.sub);
+    if (uerr) throw new Error(uerr.message);
+    const role = (row as { role: "admin" | "user" }).role;
+    const exp = Math.floor(Date.now() / 1000) + 60 * 60 * 24 * 30;
+    const token = await signToken({ sub: p.sub, username, role, exp });
+    return { token, user: { id: p.sub, username, role } };
+  });
