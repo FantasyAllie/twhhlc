@@ -1666,6 +1666,164 @@ useEffect(() => {
      })()}
    </DialogContent>
  </Dialog>
+  <AccountDialog
+    open={accountOpen}
+    onOpenChange={setAccountOpen}
+    currentUsername={authUser?.username ?? ""}
+    onUsernameChanged={(u) => setAuthUser((prev) => prev ? { ...prev, username: u } : prev)}
+  />
  </main>
  );
+}
+
+function AccountDialog({
+  open,
+  onOpenChange,
+  currentUsername,
+  onUsernameChanged,
+}: {
+  open: boolean;
+  onOpenChange: (o: boolean) => void;
+  currentUsername: string;
+  onUsernameChanged: (u: string) => void;
+}) {
+  const pwFn = useServerFn(updateMyPassword);
+  const unFn = useServerFn(updateMyUsername);
+  const [username, setUsername] = useState(currentUsername);
+  const [unCurrentPw, setUnCurrentPw] = useState("");
+  const [currentPw, setCurrentPw] = useState("");
+  const [newPw, setNewPw] = useState("");
+  const [confirmPw, setConfirmPw] = useState("");
+  const [busy, setBusy] = useState(false);
+
+  useEffect(() => {
+    if (open) {
+      setUsername(currentUsername);
+      setUnCurrentPw("");
+      setCurrentPw("");
+      setNewPw("");
+      setConfirmPw("");
+    }
+  }, [open, currentUsername]);
+
+  async function saveUsername(e: React.FormEvent) {
+    e.preventDefault();
+    if (busy) return;
+    const token = getToken();
+    if (!token) return;
+    if (username.trim() === currentUsername) {
+      toast.info("Username is unchanged");
+      return;
+    }
+    setBusy(true);
+    try {
+      const res = await unFn({
+        data: { token, currentPassword: unCurrentPw, newUsername: username.trim() },
+      });
+      setSession(res.token, res.user);
+      onUsernameChanged(res.user.username);
+      toast.success("Username updated");
+      setUnCurrentPw("");
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : "Failed to update username");
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  async function savePassword(e: React.FormEvent) {
+    e.preventDefault();
+    if (busy) return;
+    const token = getToken();
+    if (!token) return;
+    if (newPw !== confirmPw) {
+      toast.error("New passwords do not match");
+      return;
+    }
+    setBusy(true);
+    try {
+      await pwFn({ data: { token, currentPassword: currentPw, newPassword: newPw } });
+      toast.success("Password updated");
+      setCurrentPw("");
+      setNewPw("");
+      setConfirmPw("");
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : "Failed to update password");
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  return (
+    <Dialog open={open} onOpenChange={onOpenChange}>
+      <DialogContent>
+        <DialogHeader>
+          <DialogTitle>Account</DialogTitle>
+          <DialogDescription>
+            Update your username or password. Your current password is required to confirm changes.
+          </DialogDescription>
+        </DialogHeader>
+        <div className="space-y-6">
+          <form onSubmit={saveUsername} className="space-y-2">
+            <h3 className="text-sm font-semibold">Change username</h3>
+            <div className="space-y-1">
+              <label className="text-xs font-medium">New username</label>
+              <Input
+                value={username}
+                onChange={(e) => setUsername(e.target.value)}
+                autoCapitalize="none"
+                autoCorrect="off"
+              />
+            </div>
+            <div className="space-y-1">
+              <label className="text-xs font-medium">Current password</label>
+              <Input
+                type="password"
+                value={unCurrentPw}
+                onChange={(e) => setUnCurrentPw(e.target.value)}
+                autoComplete="current-password"
+              />
+            </div>
+            <div className="flex justify-end">
+              <Button type="submit" size="sm" disabled={busy}>Save username</Button>
+            </div>
+          </form>
+          <div className="border-t" />
+          <form onSubmit={savePassword} className="space-y-2">
+            <h3 className="text-sm font-semibold">Change password</h3>
+            <div className="space-y-1">
+              <label className="text-xs font-medium">Current password</label>
+              <Input
+                type="password"
+                value={currentPw}
+                onChange={(e) => setCurrentPw(e.target.value)}
+                autoComplete="current-password"
+              />
+            </div>
+            <div className="space-y-1">
+              <label className="text-xs font-medium">New password</label>
+              <Input
+                type="password"
+                value={newPw}
+                onChange={(e) => setNewPw(e.target.value)}
+                autoComplete="new-password"
+              />
+            </div>
+            <div className="space-y-1">
+              <label className="text-xs font-medium">Confirm new password</label>
+              <Input
+                type="password"
+                value={confirmPw}
+                onChange={(e) => setConfirmPw(e.target.value)}
+                autoComplete="new-password"
+              />
+            </div>
+            <div className="flex justify-end">
+              <Button type="submit" size="sm" disabled={busy}>Save password</Button>
+            </div>
+          </form>
+        </div>
+      </DialogContent>
+    </Dialog>
+  );
 }
