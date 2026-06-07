@@ -1061,7 +1061,6 @@ useEffect(() => {
             (a) => a.template_item_id === item.id,
           ).length;
           return (
-            <li key={item.id} className="flex flex-col sm:flex-row sm:items-center gap-2 py-2">
             <li key={item.id} className="flex items-center gap-1.5 py-2">
               <span
                 className="h-3 w-3 rounded-full border shrink-0"
