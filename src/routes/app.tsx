@@ -1055,8 +1055,14 @@ useEffect(() => {
     {template.length === 0 ? (
       <p className="text-sm text-muted-foreground">No items yet.</p>
     ) : (
-       <ul className="divide-y border-t max-h-[60vh] overflow-y-auto -mx-4 sm:-mx-6 px-4 sm:px-6">
-        {template.map((item, idx) => {
+        <ul className="divide-y border-t max-h-[60vh] overflow-y-auto -mx-4 sm:-mx-6 px-4 sm:px-6">
+          <li className="flex items-center gap-1.5 py-1.5 text-xs font-medium text-muted-foreground uppercase tracking-wide">
+            <span className="h-3 w-3 shrink-0" aria-hidden />
+            <span className="flex-1 min-w-0">Item</span>
+            <span className="shrink-0 w-[72px] text-center">Rooms</span>
+            <span className="shrink-0 w-[88px] text-right">Actions</span>
+          </li>
+          {template.map((item, idx) => {
           const assignedCount = assignments.filter(
             (a) => a.template_item_id === item.id,
           ).length;
