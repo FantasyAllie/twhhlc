@@ -1061,121 +1061,21 @@ useEffect(() => {
             (a) => a.template_item_id === item.id,
           ).length;
           return (
-            <li key={item.id} className="flex flex-col sm:flex-row sm:items-center gap-2 py-2">
-              {editingItemId === item.id ? (
-                <form
-                  onSubmit={(e) => {
-                    e.preventDefault();
-                    renameTemplateItem(item.id, editingItemName);
-                  }}
-                  className="flex items-center gap-1 w-full"
-                >
-                  <Input
-                    autoFocus
-                    value={editingItemName}
-                    onChange={(e) => setEditingItemName(e.target.value)}
-                    onBlur={() => renameTemplateItem(item.id, editingItemName)}
-                    onKeyDown={(e) => {
-                      if (e.key === "Escape") setEditingItemId(null);
-                    }}
-                    className="h-8 flex-1"
-                  />
-                  <Button
-                    type="submit"
-                    variant="ghost"
-                    size="icon"
-                    className="h-8 w-8 text-muted-foreground"
-                    aria-label="Save name"
-                  >
-                    <Check className="h-4 w-4" />
-                  </Button>
-                </form>
-              ) : (
-                <div className="flex items-center gap-1.5 w-full sm:w-auto sm:flex-1 min-w-0">
-                  <span className="flex-1 min-w-0 truncate">{item.name}</span>
-                  <Button
-                    variant="ghost"
-                    size="icon"
-                    className="h-8 w-8 text-muted-foreground"
-                    onClick={() => {
-                      setEditingItemId(item.id);
-                      setEditingItemName(item.name);
-                    }}
-                    aria-label={`Rename ${item.name}`}
-                    disabled={linenLocked}
-                  >
-                    <Pencil className="h-4 w-4" />
-                  </Button>
-                </div>
-              )}
-              <div className="flex flex-wrap items-center gap-1.5">
-                <Popover>
-                  <PopoverTrigger asChild>
-                    <Button
-                      variant="outline"
-                      size="icon"
-                      className="h-8 w-8 p-0"
-                      disabled={linenLocked}
-                      aria-label={`Set colour for ${item.name}`}
-                      title={item.color ? COLOR_SWATCHES[item.color].label : "No colour"}
-                    >
-                      <span
-                        className="block h-4 w-4 rounded-full border"
-                        style={{
-                          backgroundColor: item.color ? COLOR_SWATCHES[item.color].solid : "transparent",
-                          borderColor: item.color ? COLOR_SWATCHES[item.color].solid : "hsl(var(--border))",
-                        }}
-                      />
-                    </Button>
-                  </PopoverTrigger>
-                  <PopoverContent align="end" className="w-auto p-2">
-                    <div className="flex items-center gap-1.5">
-                      {(Object.keys(COLOR_SWATCHES) as ItemColor[]).map((key) => (
-                        <button
-                          key={key}
-                          type="button"
-                          onClick={() => setTemplateColor(item.id, key)}
-                          aria-label={COLOR_SWATCHES[key].label}
-                          title={COLOR_SWATCHES[key].label}
-                          className={cn(
-                            "h-6 w-6 rounded-full border-2 transition",
-                            item.color === key ? "ring-2 ring-offset-1 ring-foreground" : "",
-                          )}
-                          style={{ backgroundColor: COLOR_SWATCHES[key].solid, borderColor: COLOR_SWATCHES[key].solid }}
-                        />
-                      ))}
-                      <button
-                        type="button"
-                        onClick={() => setTemplateColor(item.id, null)}
-                        aria-label="No colour"
-                        title="No colour"
-                        className={cn(
-                          "h-6 w-6 rounded-full border-2 flex items-center justify-center bg-background",
-                          item.color === null ? "ring-2 ring-offset-1 ring-foreground" : "",
-                        )}
-                      >
-                        <X className="h-3 w-3 text-muted-foreground" />
-                      </button>
-                    </div>
-                  </PopoverContent>
-                </Popover>
-                <label className="flex items-center gap-1 text-xs text-muted-foreground">
-                  Default
-                  <Input
-                    type="number"
-                    min={0}
-                    value={item.default_count}
-                    onChange={(e) =>
-                      setTemplateDefault(item.id, Number(e.target.value))
-                    }
-                    className="h-8 w-14 text-center"
-                    disabled={linenLocked}
-                  />
-                </label>
+            <li key={item.id} className="flex items-center gap-1.5 py-2">
+              <span
+                className="h-3 w-3 rounded-full border shrink-0"
+                style={{
+                  backgroundColor: item.color ? COLOR_SWATCHES[item.color].solid : "transparent",
+                  borderColor: item.color ? COLOR_SWATCHES[item.color].solid : "hsl(var(--border))",
+                }}
+                aria-hidden
+              />
+              <span className="flex-1 min-w-0 break-words text-sm">{item.name}</span>
+              <div className="flex items-center gap-1 shrink-0">
                 <Popover>
                   <PopoverTrigger asChild>
                     <Button variant="outline" size="sm" className="h-8 text-xs" disabled={linenLocked}>
-                      Rooms ({assignedCount})
+                      {assignedCount}
                     </Button>
                   </PopoverTrigger>
                   <PopoverContent align="end" className="w-56 p-2">
@@ -1217,26 +1117,120 @@ useEffect(() => {
                     </div>
                   </PopoverContent>
                 </Popover>
-                <Button
-                  variant="ghost"
-                  size="icon"
-                  className="h-8 w-8 text-muted-foreground"
-                  onClick={() => moveTemplateItem(item.id, -1)}
-                  disabled={linenLocked || idx === 0}
-                  aria-label={`Move ${item.name} up`}
-                >
-                  <ArrowUp className="h-4 w-4" />
-                </Button>
-                <Button
-                  variant="ghost"
-                  size="icon"
-                  className="h-8 w-8 text-muted-foreground"
-                  onClick={() => moveTemplateItem(item.id, 1)}
-                  disabled={linenLocked || idx === template.length - 1}
-                  aria-label={`Move ${item.name} down`}
-                >
-                  <ArrowDown className="h-4 w-4" />
-                </Button>
+                <Popover>
+                  <PopoverTrigger asChild>
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      className="h-8 w-8 text-muted-foreground"
+                      aria-label={`Edit ${item.name}`}
+                      disabled={linenLocked}
+                    >
+                      <Pencil className="h-4 w-4" />
+                    </Button>
+                  </PopoverTrigger>
+                  <PopoverContent align="end" className="w-64 p-3 space-y-3">
+                    <div className="space-y-1">
+                      <label className="text-xs font-medium text-muted-foreground">Name</label>
+                      <form
+                        onSubmit={(e) => {
+                          e.preventDefault();
+                          renameTemplateItem(item.id, editingItemName);
+                        }}
+                        className="flex items-center gap-1"
+                      >
+                        <Input
+                          autoFocus
+                          defaultValue={item.name}
+                          onFocus={(e) => {
+                            setEditingItemId(item.id);
+                            setEditingItemName(e.currentTarget.value);
+                          }}
+                          onChange={(e) => setEditingItemName(e.target.value)}
+                          onBlur={() => {
+                            if (editingItemId === item.id) renameTemplateItem(item.id, editingItemName);
+                          }}
+                          className="h-8 flex-1"
+                        />
+                        <Button
+                          type="submit"
+                          variant="ghost"
+                          size="icon"
+                          className="h-8 w-8 text-muted-foreground"
+                          aria-label="Save name"
+                        >
+                          <Check className="h-4 w-4" />
+                        </Button>
+                      </form>
+                    </div>
+                    <div className="space-y-1">
+                      <label className="text-xs font-medium text-muted-foreground">Default count</label>
+                      <Input
+                        type="number"
+                        min={0}
+                        value={item.default_count}
+                        onChange={(e) => setTemplateDefault(item.id, Number(e.target.value))}
+                        className="h-8 w-20"
+                      />
+                    </div>
+                    <div className="space-y-1">
+                      <label className="text-xs font-medium text-muted-foreground">Colour</label>
+                      <div className="flex items-center gap-1.5">
+                        {(Object.keys(COLOR_SWATCHES) as ItemColor[]).map((key) => (
+                          <button
+                            key={key}
+                            type="button"
+                            onClick={() => setTemplateColor(item.id, key)}
+                            aria-label={COLOR_SWATCHES[key].label}
+                            title={COLOR_SWATCHES[key].label}
+                            className={cn(
+                              "h-6 w-6 rounded-full border-2 transition",
+                              item.color === key ? "ring-2 ring-offset-1 ring-foreground" : "",
+                            )}
+                            style={{ backgroundColor: COLOR_SWATCHES[key].solid, borderColor: COLOR_SWATCHES[key].solid }}
+                          />
+                        ))}
+                        <button
+                          type="button"
+                          onClick={() => setTemplateColor(item.id, null)}
+                          aria-label="No colour"
+                          title="No colour"
+                          className={cn(
+                            "h-6 w-6 rounded-full border-2 flex items-center justify-center bg-background",
+                            item.color === null ? "ring-2 ring-offset-1 ring-foreground" : "",
+                          )}
+                        >
+                          <X className="h-3 w-3 text-muted-foreground" />
+                        </button>
+                      </div>
+                    </div>
+                    <div className="flex items-center justify-between pt-1 border-t">
+                      <span className="text-xs text-muted-foreground">Reorder</span>
+                      <div className="flex items-center gap-1">
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          className="h-8 w-8 text-muted-foreground"
+                          onClick={() => moveTemplateItem(item.id, -1)}
+                          disabled={idx === 0}
+                          aria-label="Move up"
+                        >
+                          <ArrowUp className="h-4 w-4" />
+                        </Button>
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          className="h-8 w-8 text-muted-foreground"
+                          onClick={() => moveTemplateItem(item.id, 1)}
+                          disabled={idx === template.length - 1}
+                          aria-label="Move down"
+                        >
+                          <ArrowDown className="h-4 w-4" />
+                        </Button>
+                      </div>
+                    </div>
+                  </PopoverContent>
+                </Popover>
                 <Button
                   variant="ghost"
                   size="icon"
