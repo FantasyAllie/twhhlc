@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { createFileRoute } from "@tanstack/react-router";
+import { createFileRoute, useNavigate, Link } from "@tanstack/react-router";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
@@ -7,6 +7,7 @@ import { Input } from "@/components/ui/input";
 import { Minus, Plus, X, Menu, ArrowUp, ArrowDown, Pencil, Check, Trash2, Lock, Unlock } from "lucide-react";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
+import { getToken, getStoredUser, clearSession } from "@/lib/auth-client";
 import {
  DropdownMenu,
  DropdownMenuContent,
@@ -29,6 +30,7 @@ import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover
 import { Checkbox } from "@/components/ui/checkbox";
 
 export const Route = createFileRoute("/app")({
+  ssr: false,
   head: () => ({
     meta: [
       { title: "Three Ways House Hotel Linen Counter" },
@@ -69,6 +71,20 @@ type RejectCount = { id: string; template_item_id: string; count: number };
 
 function AppPage() {
  const qc = useQueryClient();
+  const navigate = useNavigate();
+  const [authUser, setAuthUser] = useState(() => getStoredUser());
+  useEffect(() => {
+    if (!getToken() || !getStoredUser()) {
+      navigate({ to: "/login", replace: true });
+    }
+    const onChange = () => setAuthUser(getStoredUser());
+    window.addEventListener("tw-auth-changed", onChange);
+    return () => window.removeEventListener("tw-auth-changed", onChange);
+  }, [navigate]);
+  const signOut = () => {
+    clearSession();
+    navigate({ to: "/login", replace: true });
+  };
  const [openRoom, setOpenRoom] = useState<number | null>(null);
  const [templateOpen, setTemplateOpen] = useState(false);
 const [linenLocked, setLinenLocked] = useState<boolean>(() => {
@@ -991,6 +1007,16 @@ useEffect(() => {
       )}
     </DropdownMenuSubContent>
   </DropdownMenuSub>
+  <DropdownMenuSeparator />
+  {authUser?.role === "admin" && (
+    <DropdownMenuItem asChild>
+      <Link to="/users">Users</Link>
+    </DropdownMenuItem>
+  )}
+  <DropdownMenuLabel className="text-xs font-normal text-muted-foreground">
+    {authUser ? `Signed in as ${authUser.username}` : ""}
+  </DropdownMenuLabel>
+  <DropdownMenuItem onSelect={signOut}>Sign out</DropdownMenuItem>
  </DropdownMenuContent>
  </DropdownMenu>
  </div>
