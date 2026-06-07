@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { createFileRoute } from "@tanstack/react-router";
+import { createFileRoute, useNavigate, Link } from "@tanstack/react-router";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
@@ -7,6 +7,7 @@ import { Input } from "@/components/ui/input";
 import { Minus, Plus, X, Menu, ArrowUp, ArrowDown, Pencil, Check, Trash2, Lock, Unlock } from "lucide-react";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
+import { getToken, getStoredUser, clearSession } from "@/lib/auth-client";
 import {
  DropdownMenu,
  DropdownMenuContent,
@@ -29,6 +30,7 @@ import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover
 import { Checkbox } from "@/components/ui/checkbox";
 
 export const Route = createFileRoute("/app")({
+  ssr: false,
   head: () => ({
     meta: [
       { title: "Three Ways House Hotel Linen Counter" },
