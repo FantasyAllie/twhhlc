@@ -133,7 +133,7 @@ useEffect(() => {
  queryFn: async (): Promise<TemplateItem[]> => {
  const { data, error } = await supabase
  .from("template_items")
-  .select("id,name,created_at,category,position,default_count")
+   .select("id,name,created_at,category,position,default_count,color")
  .order("position", { ascending: true })
  .order("created_at", { ascending: true });
  if (error) throw error;
