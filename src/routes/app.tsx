@@ -96,12 +96,8 @@ function AppPage() {
     return () => window.removeEventListener("tw-auth-changed", onChange);
   }, [navigate]);
   useEffect(() => {
-    if (authUser?.role === "reception") {
-      document.title = "Three Ways House Hotel Room Checker";
-    } else {
-      document.title = "Three Ways House Hotel Linen Counter";
-    }
-  }, [authUser]);
+    document.title = "Three Ways House Hotel HouseKeeping";
+  }, []);
   // Realtime: push room status changes to all signed-in clients (esp. reception)
   useEffect(() => {
     if (!authUser) return;
