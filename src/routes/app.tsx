@@ -907,7 +907,7 @@ useEffect(() => {
               : "border bg-card hover:bg-muted"
           )}
         >
-          {showAll ? "Hide extra linen" : "Show all linen"}
+          {showAll ? "Hide extra linen" : "Show extra linen"}
         </button>
       </div>
     )}
