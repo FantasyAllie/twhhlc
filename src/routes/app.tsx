@@ -4,7 +4,7 @@ import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Minus, Plus, X, Menu, ArrowUp, ArrowDown, Pencil, Check, Trash2, Lock, Unlock } from "lucide-react";
+import { Minus, Plus, X, Menu, ArrowUp, ArrowDown, Pencil, Check, Trash2, Lock, Unlock, Circle } from "lucide-react";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
 import { getToken, getStoredUser, clearSession } from "@/lib/auth-client";
@@ -874,34 +874,42 @@ useEffect(() => {
 
     {!isReception && (
       <div className="flex flex-col sm:flex-row gap-2">
-        <div className="flex items-center justify-between gap-3 rounded-md border bg-card px-3 py-2 flex-1">
-          <label
-            htmlFor={`reception-done-${n}`}
-            className="text-sm font-medium cursor-pointer"
-          >
-            Mark as done (Reception)
-          </label>
-          <Switch
-            id={`reception-done-${n}`}
-            checked={receptionDoneSet.has(n)}
-            onCheckedChange={() => toggleReceptionDone(n)}
-          />
-        </div>
-        <div className="flex items-center justify-between gap-3 rounded-md border bg-card px-3 py-2 flex-1">
-          <label
-            htmlFor={`show-all-linen-${n}`}
-            className="text-sm font-medium cursor-pointer"
-          >
-            Show all linen
-          </label>
-          <Switch
-            id={`show-all-linen-${n}`}
-            checked={showAll}
-            onCheckedChange={(v) =>
-              setShowAllLinen((prev) => ({ ...prev, [n]: !!v }))
-            }
-          />
-        </div>
+        <button
+          type="button"
+          onClick={() => toggleReceptionDone(n)}
+          className={cn(
+            "flex items-center justify-center gap-2 rounded-md border px-3 py-2 flex-1 text-sm font-medium transition-colors cursor-pointer",
+            receptionDoneSet.has(n)
+              ? "border-primary bg-primary/10 text-primary"
+              : "border bg-card hover:bg-muted"
+          )}
+        >
+          {receptionDoneSet.has(n) ? (
+            <Check className="h-4 w-4" />
+          ) : (
+            <Circle className="h-4 w-4" />
+          )}
+          Mark as done (Reception)
+        </button>
+        <button
+          type="button"
+          onClick={() =>
+            setShowAllLinen((prev) => ({ ...prev, [n]: !prev[n] }))
+          }
+          className={cn(
+            "flex items-center justify-center gap-2 rounded-md border px-3 py-2 flex-1 text-sm font-medium transition-colors cursor-pointer",
+            showAll
+              ? "border-primary bg-primary/10 text-primary"
+              : "border bg-card hover:bg-muted"
+          )}
+        >
+          {showAll ? (
+            <Check className="h-4 w-4" />
+          ) : (
+            <Circle className="h-4 w-4" />
+          )}
+          Show all linen
+        </button>
       </div>
     )}
 
