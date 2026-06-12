@@ -875,18 +875,18 @@ useEffect(() => {
    </div>
 
     {!isReception && (
-      <div className="flex flex-col sm:flex-row gap-2">
+      <div className="flex flex-row gap-2">
         <button
           type="button"
           onClick={() => toggleReceptionDone(n)}
           className={cn(
-            "flex items-center justify-center gap-2 rounded-md border px-3 py-2 flex-1 text-sm font-medium transition-colors cursor-pointer",
+            "flex items-center justify-center gap-1.5 rounded-md border px-2 sm:px-3 py-2 flex-1 text-xs sm:text-sm font-medium transition-colors cursor-pointer",
             receptionDoneSet.has(n)
               ? "border-primary bg-primary/10 text-primary"
               : "border bg-card hover:bg-muted"
           )}
         >
-          Mark as done (Reception)
+          Mark done (Reception)
         </button>
         <button
           type="button"
@@ -894,7 +894,7 @@ useEffect(() => {
             setShowAllLinen((prev) => ({ ...prev, [n]: !prev[n] }))
           }
           className={cn(
-            "flex items-center justify-center gap-2 rounded-md border px-3 py-2 flex-1 text-sm font-medium transition-colors cursor-pointer",
+            "flex items-center justify-center gap-1.5 rounded-md border px-2 sm:px-3 py-2 flex-1 text-xs sm:text-sm font-medium transition-colors cursor-pointer",
             showAll
               ? "border-primary bg-primary/10 text-primary"
               : "border bg-card hover:bg-muted"
@@ -1531,7 +1531,7 @@ useEffect(() => {
       <div
         key={`r-${n}`}
         className={cn(
-          "aspect-square rounded-md border text-sm font-medium transition-colors tabular-nums flex items-center justify-center cursor-default",
+          "rounded-md border text-xs sm:text-sm font-medium transition-colors tabular-nums flex items-center justify-center cursor-default h-10 sm:h-auto sm:aspect-square",
           done && "line-through",
         )}
         style={
@@ -1551,7 +1551,7 @@ useEffect(() => {
         type="button"
         onClick={() => openOrToggle(n)}
         className={cn(
-          "aspect-square rounded-md border text-sm font-medium transition-colors tabular-nums",
+          "rounded-md border text-xs sm:text-sm font-medium transition-colors tabular-nums h-10 sm:h-auto sm:aspect-square",
           isOpen && "ring-2 ring-ring border-transparent bg-accent",
         )}
         style={
