@@ -837,16 +837,31 @@ useEffect(() => {
     if (!c) return undefined;
     return { backgroundColor: c.bg, borderLeft: `4px solid ${c.border}` };
   };
- return (
- <div className="border rounded-md p-4 space-y-4 bg-muted/30">
-  <div className="flex items-center">
-    <span className="text-sm font-medium">{categoryLabel(cat)}</span>
-  </div>
- {visibleTemplate.length === 0 && roomExtras.length === 0 ? (
- <p className="text-sm text-muted-foreground">
- No items yet. Add linen list items from the menu, or add an extra below.
- </p>
- ) : (
+  return (
+  <div className="border rounded-md p-4 space-y-4 bg-muted/30">
+   <div className="flex items-center">
+     <span className="text-sm font-medium">{categoryLabel(cat)}</span>
+   </div>
+
+   <div className="flex items-center justify-between gap-3 rounded-md border bg-card px-3 py-2">
+     <label
+       htmlFor={`reception-done-${n}`}
+       className="text-sm font-medium cursor-pointer"
+     >
+       Mark room as done for reception
+     </label>
+     <Switch
+       id={`reception-done-${n}`}
+       checked={receptionDoneSet.has(n)}
+       onCheckedChange={() => toggleReceptionDone(n)}
+     />
+   </div>
+
+  {visibleTemplate.length === 0 && roomExtras.length === 0 ? (
+  <p className="text-sm text-muted-foreground">
+  No items yet. Add linen list items from the menu, or add an extra below.
+  </p>
+  ) : (
   <ul className="space-y-1">
   {visibleTemplate.map((item) => {
   const count = getCount(n, "template", item.id);
