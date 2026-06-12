@@ -1032,14 +1032,14 @@ useEffect(() => {
           <div className="min-w-0 flex-1">
             {isReception ? (
               <>
-                <h1 className="text-xl sm:text-2xl font-semibold tracking-tight">Three Ways House Hotel Room Checker</h1>
+                <h1 className="text-xl sm:text-2xl font-semibold tracking-tight">Three Ways House Hotel HouseKeeping</h1>
                 <p className="text-xs text-muted-foreground mt-1">
                   This checker shows when Housekeeping have finished with a room and the room is ready for a customer. Green means room is ready, Red means room is not ready, or has not been serviced
                 </p>
               </>
             ) : (
               <>
-                <h1 className="text-xl sm:text-2xl font-semibold tracking-tight">Three Ways House Hotel Linen Counter</h1>
+                <h1 className="text-xl sm:text-2xl font-semibold tracking-tight">Three Ways House Hotel HouseKeeping</h1>
                 <p className="text-xs text-muted-foreground mt-1">
                   Shared workspace
                 </p>
