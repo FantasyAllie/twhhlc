@@ -919,10 +919,10 @@ useEffect(() => {
       className="flex items-center gap-3 py-2 px-2 rounded-md border"
       style={colorStyle(item.color)}
    >
-     <span
-       className="flex-1 min-w-0 break-words"
-       style={item.color ? { color: "#0f172a" } : undefined}
-     >{item.name}</span>
+      <span
+        className="flex-1 min-w-0 break-words"
+        style={item.color ? { color: theme === "dark" ? "#f8fafc" : "#0f172a" } : undefined}
+      >{item.name}</span>
    <div className="flex items-center gap-1 shrink-0">
   {item.default_count > 0 && (
   <Button
