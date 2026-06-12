@@ -100,6 +100,23 @@ function AppPage() {
       document.title = "Three Ways House Hotel Linen Counter";
     }
   }, [authUser]);
+  // Realtime: push room status changes to all signed-in clients (esp. reception)
+  useEffect(() => {
+    if (!authUser) return;
+    const channel = supabase
+      .channel("rooms-realtime")
+      .on(
+        "postgres_changes",
+        { event: "*", schema: "public", table: "rooms" },
+        () => {
+          qc.invalidateQueries({ queryKey: ["rooms"] });
+        },
+      )
+      .subscribe();
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, [authUser, qc]);
   const signOut = () => {
     clearSession();
     navigate({ to: "/login", replace: true });
