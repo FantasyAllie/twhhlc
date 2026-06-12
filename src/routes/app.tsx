@@ -919,7 +919,10 @@ useEffect(() => {
       className="flex items-center gap-3 py-2 px-2 rounded-md border"
       style={colorStyle(item.color)}
    >
-     <span className="flex-1 min-w-0 break-words">{item.name}</span>
+     <span
+       className="flex-1 min-w-0 break-words"
+       style={item.color ? { color: "#0f172a" } : undefined}
+     >{item.name}</span>
    <div className="flex items-center gap-1 shrink-0">
   {item.default_count > 0 && (
   <Button
@@ -941,7 +944,10 @@ useEffect(() => {
   >
   <Minus className="h-4 w-4" />
   </Button>
-  <span className="w-8 text-center tabular-nums font-medium">{count}</span>
+  <span
+    className="w-8 text-center tabular-nums font-medium"
+    style={item.color ? { color: "#0f172a" } : undefined}
+  >{count}</span>
   <Button
   variant="outline"
   size="icon"
