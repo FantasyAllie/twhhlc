@@ -967,22 +967,8 @@ useEffect(() => {
     Reset Tally
   </Button>
 
-  <div className="flex items-center justify-between gap-3 rounded-md border bg-card px-3 py-2">
-    <label
-      htmlFor={`reception-done-${n}`}
-      className="text-sm font-medium cursor-pointer"
-    >
-      Mark room as done for reception
-    </label>
-    <Switch
-      id={`reception-done-${n}`}
-      checked={receptionDoneSet.has(n)}
-      onCheckedChange={() => toggleReceptionDone(n)}
-    />
   </div>
-
- </div>
- );
+  );
  };
 
  return (
