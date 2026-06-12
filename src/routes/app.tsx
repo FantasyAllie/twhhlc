@@ -884,11 +884,6 @@ useEffect(() => {
               : "border bg-card hover:bg-muted"
           )}
         >
-          {receptionDoneSet.has(n) ? (
-            <Check className="h-4 w-4" />
-          ) : (
-            <Circle className="h-4 w-4" />
-          )}
           Mark as done (Reception)
         </button>
         <button
