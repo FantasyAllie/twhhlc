@@ -1037,7 +1037,7 @@ useEffect(() => {
               <>
                 <h1 className="text-xl sm:text-2xl font-semibold tracking-tight">Three Ways House Hotel HouseKeeping</h1>
                 <p className="text-xs text-muted-foreground mt-1">
-                  Shared workspace
+                  Shared workspace for Housekeeping staff
                 </p>
               </>
             )}
