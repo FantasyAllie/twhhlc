@@ -31,6 +31,7 @@ import {
 } from "@/components/ui/dialog";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Checkbox } from "@/components/ui/checkbox";
+import { Switch } from "@/components/ui/switch";
 
 export const Route = createFileRoute("/app")({
   ssr: false,
@@ -68,7 +69,7 @@ type RoomCount = {
  item_id: string;
  count: number;
 };
-type Room = { id: string; room_number: number; done: boolean; category: Category | null };
+type Room = { id: string; room_number: number; done: boolean; done_reception: boolean; category: Category | null };
 type TemplateItemRoom = { id: string; template_item_id: string; room_number: number };
 type SnapshotRow = { name: string; count: number };
 type ExportSnapshot = {
@@ -176,7 +177,7 @@ useEffect(() => {
  queryFn: async (): Promise<Room[]> => {
  const { data, error } = await supabase
  .from("rooms")
- .select("id,room_number,done,category")
+        .select("id,room_number,done,done_reception,category")
  .order("room_number", { ascending: true });
  if (error) throw error;
  return (data ?? []) as Room[];
@@ -262,7 +263,40 @@ useEffect(() => {
     if (error) toast.error(error.message);
     qc.invalidateQueries({ queryKey: ["reject_counts"] });
   };
- const doneSet = new Set(rooms.filter((r) => r.done).map((r) => r.room_number));
+  const isReception = authUser?.role === "reception";
+  const doneSet = new Set(
+    rooms
+      .filter((r) => (isReception ? r.done_reception : r.done))
+      .map((r) => r.room_number),
+  );
+  const receptionDoneSet = new Set(
+    rooms.filter((r) => r.done_reception).map((r) => r.room_number),
+  );
+
+  const toggleReceptionDone = async (roomNumber: number) => {
+    const current = receptionDoneSet.has(roomNumber);
+    const next = !current;
+    qc.setQueryData<Room[]>(["rooms"], (old) => {
+      const list = old ? [...old] : [];
+      const idx = list.findIndex((r) => r.room_number === roomNumber);
+      if (idx >= 0) list[idx] = { ...list[idx], done_reception: next };
+      else
+        list.push({
+          id: `temp-${roomNumber}`,
+          room_number: roomNumber,
+          done: false,
+          done_reception: next,
+          category: null,
+        });
+      return list;
+    });
+    const { error } = await supabase.from("rooms").upsert(
+      { room_number: roomNumber, done_reception: next, updated_at: new Date().toISOString() },
+      { onConflict: "user_id,room_number" },
+    );
+    if (error) toast.error(error.message);
+    qc.invalidateQueries({ queryKey: ["rooms"] });
+  };
 
   const isAssigned = (templateItemId: string, roomNumber: number) =>
     assignments.some(
@@ -516,7 +550,7 @@ useEffect(() => {
   const list = old ? [...old] : [];
   const idx = list.findIndex((r) => r.room_number === roomNumber);
   if (idx >= 0) list[idx] = { ...list[idx], done: true };
-  else list.push({ id: `temp-${roomNumber}`, room_number: roomNumber, done: true, category: null });
+  else list.push({ id: `temp-${roomNumber}`, room_number: roomNumber, done: true, done_reception: false, category: null });
   return list;
   });
   const { error: roomErr } = await supabase.from("rooms").upsert(
@@ -593,11 +627,11 @@ useEffect(() => {
  const resetAll = async () => {
  if (!confirm("Reset done state and counts for all rooms?")) return;
  qc.setQueryData<Room[]>(["rooms"], (old) =>
- old?.map((r) => ({ ...r, done: false })) ?? [],
+ old?.map((r) => ({ ...r, done: false, done_reception: false })) ?? [],
  );
  qc.setQueryData<RoomCount[]>(["room_counts"], () => []);
  const [r1, r2] = await Promise.all([
- supabase.from("rooms").update({ done: false }).neq("room_number", -1),
+ supabase.from("rooms").update({ done: false, done_reception: false }).neq("room_number", -1),
  supabase.from("room_item_counts").delete().neq("room_number", -1),
  ]);
  if (r1.error) toast.error(r1.error.message);
@@ -774,6 +808,7 @@ useEffect(() => {
  id: `temp-${roomNumber}`,
  room_number: roomNumber,
  done: false,
+ done_reception: false,
  category,
  });
  return list;
@@ -916,6 +951,20 @@ useEffect(() => {
   >
     Reset Tally
   </Button>
+
+  <div className="flex items-center justify-between gap-3 rounded-md border bg-card px-3 py-2">
+    <label
+      htmlFor={`reception-done-${n}`}
+      className="text-sm font-medium cursor-pointer"
+    >
+      Mark room as done for reception
+    </label>
+    <Switch
+      id={`reception-done-${n}`}
+      checked={receptionDoneSet.has(n)}
+      onCheckedChange={() => toggleReceptionDone(n)}
+    />
+  </div>
 
  </div>
  );
