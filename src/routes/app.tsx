@@ -1114,6 +1114,10 @@ useEffect(() => {
       )}
     </DropdownMenuSubContent>
       </DropdownMenuSub>
+      <DropdownMenuItem onSelect={(e) => { e.preventDefault(); toggleTheme(); }}>
+        {theme === "dark" ? <Sun className="h-4 w-4 mr-2" /> : <Moon className="h-4 w-4 mr-2" />}
+        {theme === "dark" ? "Light mode" : "Dark mode"}
+      </DropdownMenuItem>
       <DropdownMenuSeparator />
     </>
   )}
@@ -1123,10 +1127,6 @@ useEffect(() => {
     </DropdownMenuItem>
   )}
   <DropdownMenuItem onSelect={() => setAccountOpen(true)}>Account</DropdownMenuItem>
-  <DropdownMenuItem onSelect={(e) => { e.preventDefault(); toggleTheme(); }}>
-    {theme === "dark" ? <Sun className="h-4 w-4 mr-2" /> : <Moon className="h-4 w-4 mr-2" />}
-    {theme === "dark" ? "Light mode" : "Dark mode"}
-  </DropdownMenuItem>
   <DropdownMenuLabel className="text-xs font-normal text-muted-foreground">
     {authUser ? `Signed in as ${authUser.username}` : ""}
   </DropdownMenuLabel>
