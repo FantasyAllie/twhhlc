@@ -1127,15 +1127,15 @@ useEffect(() => {
       <DropdownMenuSeparator />
     </>
   )}
+  <DropdownMenuLabel className="text-xs font-normal text-muted-foreground">
+    {authUser ? `Signed in as ${authUser.username}` : ""}
+  </DropdownMenuLabel>
   {authUser?.role === "admin" && (
     <DropdownMenuItem asChild>
       <Link to="/users"><Users className="h-4 w-4 mr-2" />Users</Link>
     </DropdownMenuItem>
   )}
   <DropdownMenuItem onSelect={() => setAccountOpen(true)}><User className="h-4 w-4 mr-2" />Account</DropdownMenuItem>
-  <DropdownMenuLabel className="text-xs font-normal text-muted-foreground">
-    {authUser ? `Signed in as ${authUser.username}` : ""}
-  </DropdownMenuLabel>
   <DropdownMenuItem onSelect={signOut}><LogOut className="h-4 w-4 mr-2" />Sign out</DropdownMenuItem>
  </DropdownMenuContent>
  </DropdownMenu>
