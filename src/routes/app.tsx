@@ -84,6 +84,7 @@ type RejectCount = { id: string; template_item_id: string; count: number };
 function AppPage() {
  const qc = useQueryClient();
   const navigate = useNavigate();
+  const { theme, toggleTheme } = useTheme();
   const [authUser, setAuthUser] = useState(() => getStoredUser());
   useEffect(() => {
     if (!getToken() || !getStoredUser()) {
