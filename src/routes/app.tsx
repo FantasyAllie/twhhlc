@@ -1526,10 +1526,13 @@ useEffect(() => {
         key={`r-${n}`}
         className={cn(
           "aspect-square rounded-md border text-sm font-medium transition-colors tabular-nums flex items-center justify-center cursor-default",
-          done
-            ? "bg-green-100 text-green-800 line-through border-transparent"
-            : "bg-red-100 text-red-900 border-red-200",
+          done && "line-through",
         )}
+        style={
+          done
+            ? { backgroundColor: theme === "dark" ? "#14532d" : "#dcfce7", color: theme === "dark" ? "#86efac" : "#166534", borderColor: "transparent" }
+            : { backgroundColor: theme === "dark" ? "#7f1d1d" : "#fee2e2", color: theme === "dark" ? "#fca5a5" : "#991b1b", borderColor: theme === "dark" ? "#991b1b" : "#fca5a5" }
+        }
         aria-label={`Room ${n}${done ? " done" : ""}`}
       >
         {n}
