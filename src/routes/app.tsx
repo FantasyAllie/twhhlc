@@ -107,6 +107,7 @@ function AppPage() {
   const [accountOpen, setAccountOpen] = useState(false);
  const [openRoom, setOpenRoom] = useState<number | null>(null);
  const [templateOpen, setTemplateOpen] = useState(false);
+const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
 const [linenLocked, setLinenLocked] = useState<boolean>(() => {
   if (typeof window === "undefined") return false;
   return window.localStorage.getItem("linen-locked") === "1";
