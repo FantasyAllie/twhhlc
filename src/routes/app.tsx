@@ -587,6 +587,10 @@ useEffect(() => {
 
 
  const openOrToggle = (roomNumber: number) => {
+    if (isReception) {
+      toggleReceptionDone(roomNumber);
+      return;
+    }
  if (openRoom === roomNumber) {
  setOpenRoom(null);
  return;
