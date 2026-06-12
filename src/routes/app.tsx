@@ -68,7 +68,7 @@ type RoomCount = {
  item_id: string;
  count: number;
 };
-type Room = { id: string; room_number: number; done: boolean; category: Category | null };
+type Room = { id: string; room_number: number; done: boolean; done_reception: boolean; category: Category | null };
 type TemplateItemRoom = { id: string; template_item_id: string; room_number: number };
 type SnapshotRow = { name: string; count: number };
 type ExportSnapshot = {
