@@ -176,7 +176,7 @@ useEffect(() => {
  queryFn: async (): Promise<Room[]> => {
  const { data, error } = await supabase
  .from("rooms")
- .select("id,room_number,done,category")
+        .select("id,room_number,done,done_reception,category")
  .order("room_number", { ascending: true });
  if (error) throw error;
  return (data ?? []) as Room[];
@@ -516,7 +516,7 @@ useEffect(() => {
   const list = old ? [...old] : [];
   const idx = list.findIndex((r) => r.room_number === roomNumber);
   if (idx >= 0) list[idx] = { ...list[idx], done: true };
-  else list.push({ id: `temp-${roomNumber}`, room_number: roomNumber, done: true, category: null });
+  else list.push({ id: `temp-${roomNumber}`, room_number: roomNumber, done: true, done_reception: false, category: null });
   return list;
   });
   const { error: roomErr } = await supabase.from("rooms").upsert(
@@ -774,6 +774,7 @@ useEffect(() => {
  id: `temp-${roomNumber}`,
  room_number: roomNumber,
  done: false,
+ done_reception: false,
  category,
  });
  return list;
