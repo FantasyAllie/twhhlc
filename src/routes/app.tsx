@@ -1620,7 +1620,7 @@ useEffect(() => {
  </div>
 
  <Dialog open={openRoom !== null} onOpenChange={(o) => { if (!o) setOpenRoom(null); }}>
-  <DialogContent className="max-w-2xl w-[calc(100vw-1.5rem)] sm:w-full p-4 sm:p-6 max-h-[90vh] overflow-y-auto">
+  <DialogContent className="max-w-2xl w-[calc(100vw-1.5rem)] sm:w-full p-4 sm:p-6 max-h-[90vh] overflow-y-auto top-4 translate-y-0 sm:top-8">
    <DialogHeader>
     <DialogTitle>Room {openRoom}</DialogTitle>
    </DialogHeader>
