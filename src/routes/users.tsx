@@ -70,7 +70,7 @@ function UsersPage() {
 
   const [newUsername, setNewUsername] = useState("");
   const [newPassword, setNewPassword] = useState("");
-  const [newRole, setNewRole] = useState<"admin" | "user">("user");
+  const [newRole, setNewRole] = useState<"admin" | "user" | "reception">("user");
   const [busy, setBusy] = useState(false);
 
   const [pwUser, setPwUser] = useState<AppUserRow | null>(null);
@@ -108,7 +108,12 @@ function UsersPage() {
 
   async function onToggleRole(u: AppUserRow) {
     if (!token) return;
-    const next: "admin" | "user" = u.role === "admin" ? "user" : "admin";
+    const cycle: Record<AppUserRow["role"], AppUserRow["role"]> = {
+      admin: "user",
+      user: "reception",
+      reception: "admin",
+    };
+    const next = cycle[u.role];
     try {
       await roleFn({ data: { token, id: u.id, role: next } });
       toast.success(`Role updated to ${next}`);
@@ -180,9 +185,10 @@ function UsersPage() {
               <select
                 className="w-full h-9 rounded-md border bg-background px-3 text-sm"
                 value={newRole}
-                onChange={(e) => setNewRole(e.target.value as "admin" | "user")}
+                onChange={(e) => setNewRole(e.target.value as "admin" | "user" | "reception")}
               >
                 <option value="user">User</option>
+                <option value="reception">Reception</option>
                 <option value="admin">Admin</option>
               </select>
             </div>
@@ -211,7 +217,7 @@ function UsersPage() {
                       <KeyRound className="h-4 w-4" />
                     </Button>
                     <Button size="sm" variant="ghost" onClick={() => onToggleRole(u)}>
-                      {u.role === "admin" ? "Make user" : "Make admin"}
+                      {u.role === "admin" ? "Make user" : u.role === "user" ? "Make reception" : "Make admin"}
                     </Button>
                     <Button
                       size="sm"

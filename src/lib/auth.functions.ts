@@ -156,7 +156,7 @@ export const login = createServerFn({ method: "POST" })
     if (!row) throw new Error("Invalid username or password");
     const ok = await verifyPassword(password, (row as { password_hash: string }).password_hash);
     if (!ok) throw new Error("Invalid username or password");
-    const r = row as { id: string; username: string; role: "admin" | "user" };
+    const r = row as { id: string; username: string; role: "admin" | "user" | "reception" };
     const exp = Math.floor(Date.now() / 1000) + 60 * 60 * 24 * 30; // 30 days
     const token = await signToken({ sub: r.id, username: r.username, role: r.role, exp });
     const user: SessionUser = { id: r.id, username: r.username, role: r.role };
@@ -305,7 +305,7 @@ export const updateMyUsername = createServerFn({ method: "POST" })
       .update({ username, updated_at: new Date().toISOString() })
       .eq("id", p.sub);
     if (uerr) throw new Error(uerr.message);
-    const role = (row as { role: "admin" | "user" }).role;
+    const role = (row as { role: "admin" | "user" | "reception" }).role;
     const exp = Math.floor(Date.now() / 1000) + 60 * 60 * 24 * 30;
     const token = await signToken({ sub: p.sub, username, role, exp });
     return { token, user: { id: p.sub, username, role } };
