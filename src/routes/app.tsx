@@ -946,7 +946,7 @@ useEffect(() => {
   </Button>
   <span
     className="w-8 text-center tabular-nums font-medium"
-    style={item.color ? { color: "#0f172a" } : undefined}
+    style={item.color ? { color: theme === "dark" ? "#f8fafc" : "#0f172a" } : undefined}
   >{count}</span>
   <Button
   variant="outline"
