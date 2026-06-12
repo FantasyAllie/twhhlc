@@ -866,7 +866,7 @@ useEffect(() => {
   const colorStyle = (color: ItemColor | null | undefined): React.CSSProperties | undefined => {
     const c = color ? COLOR_SWATCHES[color] : null;
     if (!c) return undefined;
-    return { backgroundColor: c.bg, borderLeft: `4px solid ${c.border}` };
+    return { backgroundColor: theme === "dark" ? c.darkBg : c.bg, borderLeft: `4px solid ${c.border}` };
   };
   return (
   <div className="border rounded-md p-4 space-y-4 bg-muted/30">
