@@ -70,7 +70,7 @@ async function getSecret(): Promise<string> {
   return s;
 }
 
-type TokenPayload = { sub: string; username: string; role: "admin" | "user"; exp: number };
+type TokenPayload = { sub: string; username: string; role: "admin" | "user" | "reception"; exp: number };
 
 async function signToken(payload: TokenPayload): Promise<string> {
   const secret = await getSecret();
@@ -137,8 +137,8 @@ function validatePassword(p: string) {
 
 // ---------- server functions ----------
 
-export type SessionUser = { id: string; username: string; role: "admin" | "user" };
-export type AppUserRow = { id: string; username: string; role: "admin" | "user"; created_at: string };
+export type SessionUser = { id: string; username: string; role: "admin" | "user" | "reception" };
+export type AppUserRow = { id: string; username: string; role: "admin" | "user" | "reception"; created_at: string };
 
 export const login = createServerFn({ method: "POST" })
   .inputValidator((d: { username: string; password: string }) => d)
@@ -156,7 +156,7 @@ export const login = createServerFn({ method: "POST" })
     if (!row) throw new Error("Invalid username or password");
     const ok = await verifyPassword(password, (row as { password_hash: string }).password_hash);
     if (!ok) throw new Error("Invalid username or password");
-    const r = row as { id: string; username: string; role: "admin" | "user" };
+    const r = row as { id: string; username: string; role: "admin" | "user" | "reception" };
     const exp = Math.floor(Date.now() / 1000) + 60 * 60 * 24 * 30; // 30 days
     const token = await signToken({ sub: r.id, username: r.username, role: r.role, exp });
     const user: SessionUser = { id: r.id, username: r.username, role: r.role };
@@ -185,12 +185,12 @@ export const listUsers = createServerFn({ method: "POST" })
   });
 
 export const createUser = createServerFn({ method: "POST" })
-  .inputValidator((d: { token: string; username: string; password: string; role: "admin" | "user" }) => d)
+  .inputValidator((d: { token: string; username: string; password: string; role: "admin" | "user" | "reception" }) => d)
   .handler(async ({ data }) => {
     await requireAdmin(data.token);
     const username = validateUsername(data.username);
     validatePassword(data.password);
-    if (data.role !== "admin" && data.role !== "user") throw new Error("Invalid role");
+    if (data.role !== "admin" && data.role !== "user" && data.role !== "reception") throw new Error("Invalid role");
     const db = await getAdminDb();
     const { data: existing } = await db
       .from("app_users")
@@ -220,12 +220,12 @@ export const updateUserPassword = createServerFn({ method: "POST" })
   });
 
 export const updateUserRole = createServerFn({ method: "POST" })
-  .inputValidator((d: { token: string; id: string; role: "admin" | "user" }) => d)
+  .inputValidator((d: { token: string; id: string; role: "admin" | "user" | "reception" }) => d)
   .handler(async ({ data }) => {
     const actor = await requireAdmin(data.token);
-    if (data.role !== "admin" && data.role !== "user") throw new Error("Invalid role");
+    if (data.role !== "admin" && data.role !== "user" && data.role !== "reception") throw new Error("Invalid role");
     const db = await getAdminDb();
-    if (data.role === "user") {
+    if (data.role !== "admin") {
       // Prevent removing the last admin
       const { count } = await db
         .from("app_users")
@@ -305,7 +305,7 @@ export const updateMyUsername = createServerFn({ method: "POST" })
       .update({ username, updated_at: new Date().toISOString() })
       .eq("id", p.sub);
     if (uerr) throw new Error(uerr.message);
-    const role = (row as { role: "admin" | "user" }).role;
+    const role = (row as { role: "admin" | "user" | "reception" }).role;
     const exp = Math.floor(Date.now() / 1000) + 60 * 60 * 24 * 30;
     const token = await signToken({ sub: p.sub, username, role, exp });
     return { token, user: { id: p.sub, username, role } };
