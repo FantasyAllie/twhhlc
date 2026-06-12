@@ -4,7 +4,7 @@ import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Minus, Plus, X, Menu, ArrowUp, ArrowDown, Pencil, Check, Trash2, Lock, Unlock } from "lucide-react";
+import { Minus, Plus, X, Menu, ArrowUp, ArrowDown, Pencil, Check, Trash2, Lock, Unlock, Sun, Moon } from "lucide-react";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
 import { getToken, getStoredUser, clearSession } from "@/lib/auth-client";
@@ -32,6 +32,7 @@ import {
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Switch } from "@/components/ui/switch";
+import { useTheme } from "@/components/theme-provider";
 
 export const Route = createFileRoute("/app")({
   ssr: false,
@@ -84,6 +85,7 @@ type RejectCount = { id: string; template_item_id: string; count: number };
 function AppPage() {
  const qc = useQueryClient();
   const navigate = useNavigate();
+  const { theme, toggleTheme } = useTheme();
   const [authUser, setAuthUser] = useState(() => getStoredUser());
   useEffect(() => {
     if (!getToken() || !getStoredUser()) {
@@ -1115,6 +1117,10 @@ useEffect(() => {
     </DropdownMenuItem>
   )}
   <DropdownMenuItem onSelect={() => setAccountOpen(true)}>Account</DropdownMenuItem>
+  <DropdownMenuItem onSelect={(e) => { e.preventDefault(); toggleTheme(); }}>
+    {theme === "dark" ? <Sun className="h-4 w-4 mr-2" /> : <Moon className="h-4 w-4 mr-2" />}
+    {theme === "dark" ? "Light mode" : "Dark mode"}
+  </DropdownMenuItem>
   <DropdownMenuLabel className="text-xs font-normal text-muted-foreground">
     {authUser ? `Signed in as ${authUser.username}` : ""}
   </DropdownMenuLabel>
