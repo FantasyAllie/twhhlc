@@ -695,21 +695,7 @@ useEffect(() => {
       toast.error(error.message);
       return;
     }
-    // Keep only the 6 most recent totals snapshots.
-    const { data: keep } = await supabase
-      .from("export_snapshots")
-      .select("id")
-      .eq("kind", "totals")
-      .order("created_at", { ascending: false })
-      .limit(6);
-    const keepIds = (keep ?? []).map((s) => s.id);
-    if (keepIds.length > 0) {
-      await supabase
-        .from("export_snapshots")
-        .delete()
-        .eq("kind", "totals")
-        .not("id", "in", `(${keepIds.join(",")})`);
-    }
+    await pruneSnapshots("totals");
     qc.invalidateQueries({ queryKey: ["export_snapshots"] });
   };
 
@@ -739,20 +725,7 @@ useEffect(() => {
       toast.error(error.message);
       return;
     }
-    const { data: keep } = await supabase
-      .from("export_snapshots")
-      .select("id")
-      .eq("kind", "rejects")
-      .order("created_at", { ascending: false })
-      .limit(6);
-    const keepIds = (keep ?? []).map((s) => s.id);
-    if (keepIds.length > 0) {
-      await supabase
-        .from("export_snapshots")
-        .delete()
-        .eq("kind", "rejects")
-        .not("id", "in", `(${keepIds.join(",")})`);
-    }
+    await pruneSnapshots("rejects");
     qc.invalidateQueries({ queryKey: ["export_snapshots"] });
   };
 
