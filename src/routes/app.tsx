@@ -1089,42 +1089,62 @@ useEffect(() => {
           No exports yet
         </DropdownMenuLabel>
       ) : (
-        snapshots.map((s) => (
-          <div key={s.id} className="flex items-center">
-            <DropdownMenuItem
-              className="flex-1"
-              onSelect={() => setViewingSnapshot(s)}
-            >
-              <span className="flex items-center">
-                {new Date(s.created_at).toLocaleString(undefined, {
+        (() => {
+          const groups = new Map<string, typeof snapshots>();
+          for (const s of snapshots) {
+            const key = new Date(s.created_at).toDateString();
+            const list = groups.get(key) ?? [];
+            if (list.length < 6) list.push(s);
+            groups.set(key, list);
+          }
+          const days = Array.from(groups.entries()).slice(0, 6);
+          return days.map(([day, items], idx) => (
+            <div key={day}>
+              {idx > 0 && <DropdownMenuSeparator />}
+              <DropdownMenuLabel className="text-xs font-semibold text-muted-foreground">
+                {new Date(items[0].created_at).toLocaleDateString(undefined, {
+                  weekday: "short",
                   month: "short",
                   day: "numeric",
-                  hour: "numeric",
-                  minute: "2-digit",
                 })}
-                {s.kind === "rejects" && (
-                  <span className="ml-2 text-xs uppercase tracking-wide text-muted-foreground">
-                    Rejects
-                  </span>
-                )}
-                <span className="ml-2 text-xs text-muted-foreground">
-                  ({s.grand_total})
-                </span>
-              </span>
-            </DropdownMenuItem>
-            <button
-              className="mr-2 p-1 rounded-sm text-muted-foreground hover:text-destructive hover:bg-accent"
-              onClick={(e) => {
-                e.stopPropagation();
-                e.preventDefault();
-                removeSnapshot(s.id);
-              }}
-              aria-label="Delete history item"
-            >
-              <X className="h-3 w-3" />
-            </button>
-          </div>
-        ))
+              </DropdownMenuLabel>
+              {items.map((s) => (
+                <div key={s.id} className="flex items-center">
+                  <DropdownMenuItem
+                    className="flex-1"
+                    onSelect={() => setViewingSnapshot(s)}
+                  >
+                    <span className="flex items-center">
+                      {new Date(s.created_at).toLocaleTimeString(undefined, {
+                        hour: "numeric",
+                        minute: "2-digit",
+                      })}
+                      {s.kind === "rejects" && (
+                        <span className="ml-2 text-xs uppercase tracking-wide text-muted-foreground">
+                          Rejects
+                        </span>
+                      )}
+                      <span className="ml-2 text-xs text-muted-foreground">
+                        ({s.grand_total})
+                      </span>
+                    </span>
+                  </DropdownMenuItem>
+                  <button
+                    className="mr-2 p-1 rounded-sm text-muted-foreground hover:text-destructive hover:bg-accent"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      e.preventDefault();
+                      removeSnapshot(s.id);
+                    }}
+                    aria-label="Delete history item"
+                  >
+                    <X className="h-3 w-3" />
+                  </button>
+                </div>
+              ))}
+            </div>
+          ));
+        })()
       )}
       {snapshots.length > 0 && (
         <>
