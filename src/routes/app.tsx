@@ -4,7 +4,7 @@ import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Minus, Plus, X, Menu, ArrowUp, ArrowDown, Pencil, Check, Trash2, Lock, Unlock, Sun, Moon } from "lucide-react";
+import { Minus, Plus, X, Menu, ArrowUp, ArrowDown, Pencil, Check, Trash2, Lock, Unlock, Sun, Moon, List, Bed, Ban, History, Users, User, LogOut } from "lucide-react";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
 import { getToken, getStoredUser, clearSession } from "@/lib/auth-client";
@@ -1062,16 +1062,22 @@ useEffect(() => {
   {!isReception && (
     <>
       <DropdownMenuItem onSelect={() => setTemplateOpen(true)}>
+        <List className="h-4 w-4 mr-2" />
         Linen List
       </DropdownMenuItem>
       <DropdownMenuItem onSelect={() => setCategoriesOpen(true)}>
+        <Bed className="h-4 w-4 mr-2" />
         Room Type
       </DropdownMenuItem>
       <DropdownMenuItem onSelect={() => setRejectsOpen(true)}>
+        <Ban className="h-4 w-4 mr-2" />
         Rejects
       </DropdownMenuItem>
       <DropdownMenuSub>
-    <DropdownMenuSubTrigger>History</DropdownMenuSubTrigger>
+        <DropdownMenuSubTrigger>
+          <History className="h-4 w-4 mr-2" />
+          History
+        </DropdownMenuSubTrigger>
     <DropdownMenuSubContent className="max-h-80 overflow-y-auto">
       {snapshots.length === 0 ? (
         <DropdownMenuLabel className="text-xs font-normal text-muted-foreground">
@@ -1123,14 +1129,14 @@ useEffect(() => {
   )}
   {authUser?.role === "admin" && (
     <DropdownMenuItem asChild>
-      <Link to="/users">Users</Link>
+      <Link to="/users"><Users className="h-4 w-4 mr-2" />Users</Link>
     </DropdownMenuItem>
   )}
-  <DropdownMenuItem onSelect={() => setAccountOpen(true)}>Account</DropdownMenuItem>
+  <DropdownMenuItem onSelect={() => setAccountOpen(true)}><User className="h-4 w-4 mr-2" />Account</DropdownMenuItem>
   <DropdownMenuLabel className="text-xs font-normal text-muted-foreground">
     {authUser ? `Signed in as ${authUser.username}` : ""}
   </DropdownMenuLabel>
-  <DropdownMenuItem onSelect={signOut}>Sign out</DropdownMenuItem>
+  <DropdownMenuItem onSelect={signOut}><LogOut className="h-4 w-4 mr-2" />Sign out</DropdownMenuItem>
  </DropdownMenuContent>
  </DropdownMenu>
  </div>
