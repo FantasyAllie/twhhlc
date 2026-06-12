@@ -898,11 +898,6 @@ useEffect(() => {
               : "border bg-card hover:bg-muted"
           )}
         >
-          {showAll ? (
-            <Check className="h-4 w-4" />
-          ) : (
-            <Circle className="h-4 w-4" />
-          )}
           Show all linen
         </button>
       </div>
