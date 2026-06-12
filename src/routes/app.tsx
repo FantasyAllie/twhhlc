@@ -53,11 +53,11 @@ const CATEGORIES: { value: Category; label: string }[] = [
 const categoryLabel = (c: Category | null | undefined) =>
  CATEGORIES.find((x) => x.value === c)?.label ?? "Uncategorised";
 
-const COLOR_SWATCHES: Record<"green" | "yellow" | "red" | "blue", { bg: string; border: string; solid: string; label: string }> = {
-  green:  { bg: "#dcfce7", border: "#86efac", solid: "#22c55e", label: "Green" },
-  yellow: { bg: "#fef9c3", border: "#fde047", solid: "#eab308", label: "Yellow" },
-  red:    { bg: "#fee2e2", border: "#fca5a5", solid: "#ef4444", label: "Red" },
-  blue:   { bg: "#dbeafe", border: "#93c5fd", solid: "#3b82f6", label: "Blue" },
+const COLOR_SWATCHES: Record<"green" | "yellow" | "red" | "blue", { bg: string; darkBg: string; border: string; solid: string; label: string }> = {
+  green:  { bg: "#dcfce7", darkBg: "#14532d", border: "#86efac", solid: "#22c55e", label: "Green" },
+  yellow: { bg: "#fef9c3", darkBg: "#713f12", border: "#fde047", solid: "#eab308", label: "Yellow" },
+  red:    { bg: "#fee2e2", darkBg: "#7f1d1d", border: "#fca5a5", solid: "#ef4444", label: "Red" },
+  blue:   { bg: "#dbeafe", darkBg: "#1e3a8a", border: "#93c5fd", solid: "#3b82f6", label: "Blue" },
 };
 
 type ItemColor = "green" | "yellow" | "red" | "blue";
