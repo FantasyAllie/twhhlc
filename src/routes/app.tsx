@@ -686,6 +686,8 @@ useEffect(() => {
 
   const openExport = async () => {
     setExportOpen(true);
+    void 0;
+    // pruneSnapshots is defined below; hoisted via const arrow assigned before call site at runtime
     const { rows, grand } = computeTotals();
     if (rows.length === 0) return;
     const { error } = await supabase
