@@ -93,7 +93,13 @@ function AppPage() {
     window.addEventListener("tw-auth-changed", onChange);
     return () => window.removeEventListener("tw-auth-changed", onChange);
   }, [navigate]);
-  const signOut = () => {
+  useEffect(() => {
+    if (authUser?.role === "reception") {
+      document.title = "Three Ways House Hotel Room Checker";
+    } else {
+      document.title = "Three Ways House Hotel Linen Counter";
+    }
+  }, [authUser]);
     clearSession();
     navigate({ to: "/login", replace: true });
   };
