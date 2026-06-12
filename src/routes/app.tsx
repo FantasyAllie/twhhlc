@@ -4,7 +4,7 @@ import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Minus, Plus, X, Menu, ArrowUp, ArrowDown, Pencil, Check, Trash2, Lock, Unlock, Circle } from "lucide-react";
+import { Minus, Plus, X, Menu, ArrowUp, ArrowDown, Pencil, Check, Trash2, Lock, Unlock } from "lucide-react";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
 import { getToken, getStoredUser, clearSession } from "@/lib/auth-client";
@@ -884,11 +884,6 @@ useEffect(() => {
               : "border bg-card hover:bg-muted"
           )}
         >
-          {receptionDoneSet.has(n) ? (
-            <Check className="h-4 w-4" />
-          ) : (
-            <Circle className="h-4 w-4" />
-          )}
           Mark as done (Reception)
         </button>
         <button
@@ -903,11 +898,6 @@ useEffect(() => {
               : "border bg-card hover:bg-muted"
           )}
         >
-          {showAll ? (
-            <Check className="h-4 w-4" />
-          ) : (
-            <Circle className="h-4 w-4" />
-          )}
           Show all linen
         </button>
       </div>
