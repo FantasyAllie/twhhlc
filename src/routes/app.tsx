@@ -684,8 +684,32 @@ useEffect(() => {
     return { rows, grand };
   };
 
+  const pruneSnapshots = async (kind: "totals" | "rejects") => {
+    const { data } = await supabase
+      .from("export_snapshots")
+      .select("id,created_at")
+      .eq("kind", kind)
+      .order("created_at", { ascending: false })
+      .limit(500);
+    if (!data) return;
+    const byDay = new Map<string, number>();
+    const keep = new Set<string>();
+    for (const r of data) {
+      const day = new Date(r.created_at).toDateString();
+      const seen = byDay.get(day);
+      if (seen === undefined && byDay.size >= 6) continue;
+      const next = (seen ?? 0) + 1;
+      if (next > 6) continue;
+      byDay.set(day, next);
+      keep.add(r.id);
+    }
+    const remove = data.filter((r) => !keep.has(r.id)).map((r) => r.id);
+    if (remove.length > 0) {
+      await supabase.from("export_snapshots").delete().in("id", remove);
+    }
+  };
+
   const openExport = async () => {
-    await ensurePruneDefined();
     setExportOpen(true);
     const { rows, grand } = computeTotals();
     if (rows.length === 0) return;
