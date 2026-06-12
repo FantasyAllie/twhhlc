@@ -587,17 +587,12 @@ useEffect(() => {
 
 
  const openOrToggle = (roomNumber: number) => {
-    if (isReception) {
-      toggleReceptionDone(roomNumber);
+    if (openRoom === roomNumber) {
+      setOpenRoom(null);
       return;
     }
- if (openRoom === roomNumber) {
- setOpenRoom(null);
- return;
- }
- setOpenRoom(roomNumber);
- 
- };
+    setOpenRoom(roomNumber);
+  };
 
   const resetRoomCounts = async (roomNumber: number) => {
     qc.setQueryData<RoomCount[]>(["room_counts"], (old) =>
