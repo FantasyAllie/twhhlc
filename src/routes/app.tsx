@@ -100,6 +100,7 @@ function AppPage() {
       document.title = "Three Ways House Hotel Linen Counter";
     }
   }, [authUser]);
+  const signOut = () => {
     clearSession();
     navigate({ to: "/login", replace: true });
   };
