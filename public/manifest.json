@@ -1,6 +1,6 @@
 {
-  "name": "Item Counter Plus",
-  "short_name": "Counter",
+  "name": "TW Housekeeping",
+  "short_name": "TW Housekeeping",
   "start_url": "/",
   "display": "standalone",
   "background_color": "#ffffff",
