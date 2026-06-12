@@ -53,11 +53,11 @@ const CATEGORIES: { value: Category; label: string }[] = [
 const categoryLabel = (c: Category | null | undefined) =>
  CATEGORIES.find((x) => x.value === c)?.label ?? "Uncategorised";
 
-const COLOR_SWATCHES: Record<"green" | "yellow" | "red" | "blue", { bg: string; border: string; solid: string; label: string }> = {
-  green:  { bg: "#dcfce7", border: "#86efac", solid: "#22c55e", label: "Green" },
-  yellow: { bg: "#fef9c3", border: "#fde047", solid: "#eab308", label: "Yellow" },
-  red:    { bg: "#fee2e2", border: "#fca5a5", solid: "#ef4444", label: "Red" },
-  blue:   { bg: "#dbeafe", border: "#93c5fd", solid: "#3b82f6", label: "Blue" },
+const COLOR_SWATCHES: Record<"green" | "yellow" | "red" | "blue", { bg: string; darkBg: string; border: string; solid: string; label: string }> = {
+  green:  { bg: "#dcfce7", darkBg: "#14532d", border: "#86efac", solid: "#22c55e", label: "Green" },
+  yellow: { bg: "#fef9c3", darkBg: "#713f12", border: "#fde047", solid: "#eab308", label: "Yellow" },
+  red:    { bg: "#fee2e2", darkBg: "#7f1d1d", border: "#fca5a5", solid: "#ef4444", label: "Red" },
+  blue:   { bg: "#dbeafe", darkBg: "#1e3a8a", border: "#93c5fd", solid: "#3b82f6", label: "Blue" },
 };
 
 type ItemColor = "green" | "yellow" | "red" | "blue";
@@ -866,7 +866,7 @@ useEffect(() => {
   const colorStyle = (color: ItemColor | null | undefined): React.CSSProperties | undefined => {
     const c = color ? COLOR_SWATCHES[color] : null;
     if (!c) return undefined;
-    return { backgroundColor: c.bg, borderLeft: `4px solid ${c.border}` };
+    return { backgroundColor: theme === "dark" ? c.darkBg : c.bg, borderLeft: `4px solid ${c.border}` };
   };
   return (
   <div className="border rounded-md p-4 space-y-4 bg-muted/30">
@@ -919,10 +919,10 @@ useEffect(() => {
       className="flex items-center gap-3 py-2 px-2 rounded-md border"
       style={colorStyle(item.color)}
    >
-     <span
-       className="flex-1 min-w-0 break-words"
-       style={item.color ? { color: "#0f172a" } : undefined}
-     >{item.name}</span>
+      <span
+        className="flex-1 min-w-0 break-words"
+        style={item.color ? { color: theme === "dark" ? "#f8fafc" : "#0f172a" } : undefined}
+      >{item.name}</span>
    <div className="flex items-center gap-1 shrink-0">
   {item.default_count > 0 && (
   <Button
@@ -946,7 +946,7 @@ useEffect(() => {
   </Button>
   <span
     className="w-8 text-center tabular-nums font-medium"
-    style={item.color ? { color: "#0f172a" } : undefined}
+    style={item.color ? { color: theme === "dark" ? "#f8fafc" : "#0f172a" } : undefined}
   >{count}</span>
   <Button
   variant="outline"
