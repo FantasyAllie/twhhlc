@@ -1431,13 +1431,15 @@ useEffect(() => {
  <h2 className="text-sm font-medium text-muted-foreground uppercase tracking-wide">
  Rooms
  </h2>
- <button
- type="button"
- onClick={resetAll}
- className="text-xs text-muted-foreground hover:text-foreground underline underline-offset-4"
- >
- Reset all
- </button>
+  {!isReception && (
+    <button
+      type="button"
+      onClick={resetAll}
+      className="text-xs text-muted-foreground hover:text-foreground underline underline-offset-4"
+    >
+      Reset all
+    </button>
+  )}
  </div>
 
  {/* On-screen interactive accordion */}
