@@ -627,11 +627,11 @@ useEffect(() => {
  const resetAll = async () => {
  if (!confirm("Reset done state and counts for all rooms?")) return;
  qc.setQueryData<Room[]>(["rooms"], (old) =>
- old?.map((r) => ({ ...r, done: false })) ?? [],
+ old?.map((r) => ({ ...r, done: false, done_reception: false })) ?? [],
  );
  qc.setQueryData<RoomCount[]>(["room_counts"], () => []);
  const [r1, r2] = await Promise.all([
- supabase.from("rooms").update({ done: false }).neq("room_number", -1),
+ supabase.from("rooms").update({ done: false, done_reception: false }).neq("room_number", -1),
  supabase.from("room_item_counts").delete().neq("room_number", -1),
  ]);
  if (r1.error) toast.error(r1.error.message);
