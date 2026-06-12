@@ -986,9 +986,11 @@ useEffect(() => {
  </p>
  </div>
  <div className="flex items-center gap-2">
-  <Button variant="outline" size="sm" onClick={openExport}>
- Export
- </Button>
+   {!isReception && (
+     <Button variant="outline" size="sm" onClick={openExport}>
+       Export
+     </Button>
+   )}
  <DropdownMenu>
  <DropdownMenuTrigger asChild>
  <Button variant="ghost" size="sm" className="" aria-label="Menu">
@@ -996,16 +998,18 @@ useEffect(() => {
  </Button>
  </DropdownMenuTrigger>
  <DropdownMenuContent align="end">
- <DropdownMenuItem onSelect={() => setTemplateOpen(true)}>
-              Linen List
- </DropdownMenuItem>
- <DropdownMenuItem onSelect={() => setCategoriesOpen(true)}>
-              Room Type
- </DropdownMenuItem>
-  <DropdownMenuItem onSelect={() => setRejectsOpen(true)}>
-              Rejects
-  </DropdownMenuItem>
-  <DropdownMenuSub>
+  {!isReception && (
+    <>
+      <DropdownMenuItem onSelect={() => setTemplateOpen(true)}>
+        Linen List
+      </DropdownMenuItem>
+      <DropdownMenuItem onSelect={() => setCategoriesOpen(true)}>
+        Room Type
+      </DropdownMenuItem>
+      <DropdownMenuItem onSelect={() => setRejectsOpen(true)}>
+        Rejects
+      </DropdownMenuItem>
+      <DropdownMenuSub>
     <DropdownMenuSubTrigger>History</DropdownMenuSubTrigger>
     <DropdownMenuSubContent className="max-h-80 overflow-y-auto">
       {snapshots.length === 0 ? (
@@ -1048,8 +1052,10 @@ useEffect(() => {
         </>
       )}
     </DropdownMenuSubContent>
-  </DropdownMenuSub>
-  <DropdownMenuSeparator />
+      </DropdownMenuSub>
+      <DropdownMenuSeparator />
+    </>
+  )}
   {authUser?.role === "admin" && (
     <DropdownMenuItem asChild>
       <Link to="/users">Users</Link>
