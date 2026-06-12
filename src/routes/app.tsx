@@ -856,38 +856,37 @@ useEffect(() => {
    </div>
 
     {!isReception && (
-      <div className="flex items-center justify-between gap-3 rounded-md border bg-card px-3 py-2">
-        <label
-          htmlFor={`reception-done-${n}`}
-          className="text-sm font-medium cursor-pointer"
-        >
-          Mark room as done for reception
-        </label>
-        <Switch
-          id={`reception-done-${n}`}
-          checked={receptionDoneSet.has(n)}
-          onCheckedChange={() => toggleReceptionDone(n)}
-        />
+      <div className="flex flex-col sm:flex-row gap-2">
+        <div className="flex items-center justify-between gap-3 rounded-md border bg-card px-3 py-2 flex-1">
+          <label
+            htmlFor={`reception-done-${n}`}
+            className="text-sm font-medium cursor-pointer"
+          >
+            Mark room as done for reception
+          </label>
+          <Switch
+            id={`reception-done-${n}`}
+            checked={receptionDoneSet.has(n)}
+            onCheckedChange={() => toggleReceptionDone(n)}
+          />
+        </div>
+        <div className="flex items-center justify-between gap-3 rounded-md border bg-card px-3 py-2 flex-1">
+          <label
+            htmlFor={`show-all-linen-${n}`}
+            className="text-sm font-medium cursor-pointer"
+          >
+            Show all linen
+          </label>
+          <Switch
+            id={`show-all-linen-${n}`}
+            checked={showAll}
+            onCheckedChange={(v) =>
+              setShowAllLinen((prev) => ({ ...prev, [n]: !!v }))
+            }
+          />
+        </div>
       </div>
     )}
-
-     {!isReception && (
-       <div className="flex items-center justify-between gap-3 rounded-md border bg-card px-3 py-2">
-         <label
-           htmlFor={`show-all-linen-${n}`}
-           className="text-sm font-medium cursor-pointer"
-         >
-           Show all linen
-         </label>
-         <Switch
-           id={`show-all-linen-${n}`}
-           checked={showAll}
-           onCheckedChange={(v) =>
-             setShowAllLinen((prev) => ({ ...prev, [n]: !!v }))
-           }
-         />
-       </div>
-     )}
 
   {visibleTemplate.length === 0 && roomExtras.length === 0 ? (
   <p className="text-sm text-muted-foreground">
