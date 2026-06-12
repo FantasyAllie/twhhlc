@@ -1539,10 +1539,6 @@ useEffect(() => {
  <div className="grid grid-cols-4 sm:grid-cols-8 md:grid-cols-10 gap-2">
  {(() => {
   const allRooms = rooms.map((r) => r.room_number);
-  const openIdx =
-  openRoom !== null ? allRooms.indexOf(openRoom) : -1;
-  const openRowEndIdx =
-  openIdx >= 0 ? Math.ceil((openIdx + 1) / cols) * cols - 1 : -1;
  const nodes: React.ReactNode[] = [];
   for (let i = 0; i < allRooms.length; i++) {
   const n = allRooms[i];
@@ -1591,28 +1587,6 @@ useEffect(() => {
       </button>,
     );
   }
-   if (
-   openIdx >= 0 &&
-   i >= openIdx &&
-   (i === openRowEndIdx ||
-   (openRowEndIdx >= allRooms.length && i === allRooms.length - 1))
-   ) {
- nodes.push(
- <div key={`panel-${openRoom}`} className="col-span-full space-y-2 mt-1">
- <div className="flex items-center justify-between">
- <h3 className="text-sm font-semibold">Room {openRoom}</h3>
- <button
- type="button"
- onClick={() => setOpenRoom(null)}
- className="text-xs text-muted-foreground hover:text-foreground underline underline-offset-4"
- >
- Close
- </button>
- </div>
-  {renderRoomPanel(openRoom!)}
- </div>,
- );
- }
   }
  return nodes;
  })()}
@@ -1626,6 +1600,15 @@ useEffect(() => {
             )}
  </section>
  </div>
+
+ <Dialog open={openRoom !== null} onOpenChange={(o) => { if (!o) setOpenRoom(null); }}>
+  <DialogContent className="max-w-2xl w-[calc(100vw-1.5rem)] sm:w-full p-4 sm:p-6 max-h-[90vh] overflow-y-auto">
+   <DialogHeader>
+    <DialogTitle>Room {openRoom}</DialogTitle>
+   </DialogHeader>
+   {openRoom !== null && renderRoomPanel(openRoom)}
+  </DialogContent>
+ </Dialog>
 
  <Dialog open={exportOpen} onOpenChange={setExportOpen}>
 <DialogContent className="max-w-md w-[calc(100vw-1.5rem)] sm:w-full p-4 sm:p-6">
