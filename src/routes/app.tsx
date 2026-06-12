@@ -862,7 +862,7 @@ useEffect(() => {
             htmlFor={`reception-done-${n}`}
             className="text-sm font-medium cursor-pointer"
           >
-            Mark room as done for reception
+            Mark room as done
           </label>
           <Switch
             id={`reception-done-${n}`}
