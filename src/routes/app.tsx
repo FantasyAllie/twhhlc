@@ -93,6 +93,13 @@ function AppPage() {
     window.addEventListener("tw-auth-changed", onChange);
     return () => window.removeEventListener("tw-auth-changed", onChange);
   }, [navigate]);
+  useEffect(() => {
+    if (authUser?.role === "reception") {
+      document.title = "Three Ways House Hotel Room Checker";
+    } else {
+      document.title = "Three Ways House Hotel Linen Counter";
+    }
+  }, [authUser]);
   const signOut = () => {
     clearSession();
     navigate({ to: "/login", replace: true });
@@ -976,12 +983,23 @@ useEffect(() => {
  <main className="min-h-screen bg-background">
  <div className="max-w-2xl mx-auto px-4 py-6 sm:py-10 space-y-8 sm:space-y-10">
  <header className="flex items-start sm:items-center justify-between gap-3 flex-wrap">
- <div className="min-w-0 flex-1">
- <h1 className="text-xl sm:text-2xl font-semibold tracking-tight">Three Ways House Hotel Linen Counter</h1>
- <p className="text-xs text-muted-foreground mt-1">
- Shared workspace
- </p>
- </div>
+          <div className="min-w-0 flex-1">
+            {isReception ? (
+              <>
+                <h1 className="text-xl sm:text-2xl font-semibold tracking-tight">Three Ways House Hotel Room Checker</h1>
+                <p className="text-xs text-muted-foreground mt-1">
+                  This checker shows when Housekeeping have finished with a room and the room is ready for a customer. Green means room is ready, Red means room is not ready, or has not been serviced
+                </p>
+              </>
+            ) : (
+              <>
+                <h1 className="text-xl sm:text-2xl font-semibold tracking-tight">Three Ways House Hotel Linen Counter</h1>
+                <p className="text-xs text-muted-foreground mt-1">
+                  Shared workspace
+                </p>
+              </>
+            )}
+          </div>
  <div className="flex items-center gap-2">
    {!isReception && (
      <Button variant="outline" size="sm" onClick={openExport}>
