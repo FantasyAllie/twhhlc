@@ -1531,7 +1531,7 @@ useEffect(() => {
       <div
         key={`r-${n}`}
         className={cn(
-          "aspect-square rounded-md border text-sm font-medium transition-colors tabular-nums flex items-center justify-center cursor-default",
+          "rounded-md border text-xs sm:text-sm font-medium transition-colors tabular-nums flex items-center justify-center cursor-default h-10 sm:h-auto sm:aspect-square",
           done && "line-through",
         )}
         style={
