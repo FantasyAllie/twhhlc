@@ -107,6 +107,7 @@ function AppPage() {
   const [accountOpen, setAccountOpen] = useState(false);
  const [openRoom, setOpenRoom] = useState<number | null>(null);
  const [templateOpen, setTemplateOpen] = useState(false);
+const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
 const [linenLocked, setLinenLocked] = useState<boolean>(() => {
   if (typeof window === "undefined") return false;
   return window.localStorage.getItem("linen-locked") === "1";
@@ -836,7 +837,12 @@ useEffect(() => {
 
  const renderRoomPanel = (n: number) => {
  const roomExtras = extras.filter((e) => e.room_number === n);
-  const visibleTemplate = template.filter((t) => isAssigned(t.id, n));
+   const showAll = !!showAllLinen[n];
+   const visibleTemplate = template.filter((t) => {
+     if (isAssigned(t.id, n)) return true;
+     if (showAll) return true;
+     return getCount(n, "template", t.id) > 0;
+   });
   const cat = roomCategory(n);
   const colorStyle = (color: ItemColor | null | undefined): React.CSSProperties | undefined => {
     const c = color ? COLOR_SWATCHES[color] : null;
@@ -864,6 +870,24 @@ useEffect(() => {
         />
       </div>
     )}
+
+     {!isReception && (
+       <div className="flex items-center justify-between gap-3 rounded-md border bg-card px-3 py-2">
+         <label
+           htmlFor={`show-all-linen-${n}`}
+           className="text-sm font-medium cursor-pointer"
+         >
+           Show all linen
+         </label>
+         <Switch
+           id={`show-all-linen-${n}`}
+           checked={showAll}
+           onCheckedChange={(v) =>
+             setShowAllLinen((prev) => ({ ...prev, [n]: !!v }))
+           }
+         />
+       </div>
+     )}
 
   {visibleTemplate.length === 0 && roomExtras.length === 0 ? (
   <p className="text-sm text-muted-foreground">
