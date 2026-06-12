@@ -875,18 +875,18 @@ useEffect(() => {
    </div>
 
     {!isReception && (
-      <div className="flex flex-col sm:flex-row gap-2">
+      <div className="flex flex-row gap-2">
         <button
           type="button"
           onClick={() => toggleReceptionDone(n)}
           className={cn(
-            "flex items-center justify-center gap-2 rounded-md border px-3 py-2 flex-1 text-sm font-medium transition-colors cursor-pointer",
+            "flex items-center justify-center gap-1.5 rounded-md border px-2 sm:px-3 py-2 flex-1 text-xs sm:text-sm font-medium transition-colors cursor-pointer",
             receptionDoneSet.has(n)
               ? "border-primary bg-primary/10 text-primary"
               : "border bg-card hover:bg-muted"
           )}
         >
-          Mark as done (Reception)
+          Mark done (Reception)
         </button>
         <button
           type="button"
@@ -894,7 +894,7 @@ useEffect(() => {
             setShowAllLinen((prev) => ({ ...prev, [n]: !prev[n] }))
           }
           className={cn(
-            "flex items-center justify-center gap-2 rounded-md border px-3 py-2 flex-1 text-sm font-medium transition-colors cursor-pointer",
+            "flex items-center justify-center gap-1.5 rounded-md border px-2 sm:px-3 py-2 flex-1 text-xs sm:text-sm font-medium transition-colors cursor-pointer",
             showAll
               ? "border-primary bg-primary/10 text-primary"
               : "border bg-card hover:bg-muted"
