@@ -1535,9 +1535,11 @@ useEffect(() => {
  </div>
 
 
- <p className="text-xs text-muted-foreground">
- {doneSet.size} of {rooms.length} done
- </p>
+            {!isReception && (
+              <p className="text-xs text-muted-foreground">
+                {doneSet.size} of {rooms.length} done
+              </p>
+            )}
  </section>
  </div>
 
