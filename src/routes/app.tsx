@@ -893,7 +893,7 @@ useEffect(() => {
               : "border bg-card hover:bg-muted"
           )}
         >
-          Mark done (Reception)
+          {receptionDoneSet.has(n) ? "Mark not done (Reception)" : "Mark done (Reception)"}
         </button>
         <button
           type="button"
@@ -907,7 +907,7 @@ useEffect(() => {
               : "border bg-card hover:bg-muted"
           )}
         >
-          Show all linen
+          {showAll ? "Hide extra linen" : "Show all linen"}
         </button>
       </div>
     )}
