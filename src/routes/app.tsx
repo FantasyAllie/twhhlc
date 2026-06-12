@@ -685,6 +685,7 @@ useEffect(() => {
   };
 
   const openExport = async () => {
+    await ensurePruneDefined();
     setExportOpen(true);
     const { rows, grand } = computeTotals();
     if (rows.length === 0) return;
