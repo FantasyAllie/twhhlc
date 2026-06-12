@@ -1,0 +1,1 @@
+ALTER TABLE public.rooms ADD COLUMN IF NOT EXISTS done_reception boolean NOT NULL DEFAULT false;

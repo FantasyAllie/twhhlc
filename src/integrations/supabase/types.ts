@@ -150,6 +150,7 @@ export type Database = {
         Row: {
           category: string | null
           done: boolean
+          done_reception: boolean
           id: string
           room_number: number
           updated_at: string
@@ -158,6 +159,7 @@ export type Database = {
         Insert: {
           category?: string | null
           done?: boolean
+          done_reception?: boolean
           id?: string
           room_number: number
           updated_at?: string
@@ -166,6 +168,7 @@ export type Database = {
         Update: {
           category?: string | null
           done?: boolean
+          done_reception?: boolean
           id?: string
           room_number?: number
           updated_at?: string
