@@ -772,6 +772,17 @@ useEffect(() => {
     qc.invalidateQueries({ queryKey: ["export_snapshots"] });
   };
 
+  const removeSnapshot = async (id: string) => {
+    qc.setQueryData<ExportSnapshot[]>(["export_snapshots"], (old) =>
+      old?.filter((s) => s.id !== id) ?? [],
+    );
+    const { error } = await supabase.from("export_snapshots").delete().eq("id", id);
+    if (error) {
+      toast.error(error.message);
+      qc.invalidateQueries({ queryKey: ["export_snapshots"] });
+    }
+  };
+
   const printTotals = (
     rows: SnapshotRow[],
     grand: number,
@@ -1081,25 +1092,40 @@ useEffect(() => {
         </DropdownMenuLabel>
       ) : (
         snapshots.map((s) => (
-          <DropdownMenuItem
-            key={s.id}
-            onSelect={() => setViewingSnapshot(s)}
-          >
-            {new Date(s.created_at).toLocaleString(undefined, {
-              month: "short",
-              day: "numeric",
-              hour: "numeric",
-              minute: "2-digit",
-            })}
-            {s.kind === "rejects" && (
-              <span className="ml-2 text-xs uppercase tracking-wide text-muted-foreground">
-                Rejects
+          <div key={s.id} className="flex items-center">
+            <DropdownMenuItem
+              className="flex-1"
+              onSelect={() => setViewingSnapshot(s)}
+            >
+              <span className="flex items-center">
+                {new Date(s.created_at).toLocaleString(undefined, {
+                  month: "short",
+                  day: "numeric",
+                  hour: "numeric",
+                  minute: "2-digit",
+                })}
+                {s.kind === "rejects" && (
+                  <span className="ml-2 text-xs uppercase tracking-wide text-muted-foreground">
+                    Rejects
+                  </span>
+                )}
+                <span className="ml-2 text-xs text-muted-foreground">
+                  ({s.grand_total})
+                </span>
               </span>
-            )}
-            <span className="ml-2 text-xs text-muted-foreground">
-              ({s.grand_total})
-            </span>
-          </DropdownMenuItem>
+            </DropdownMenuItem>
+            <button
+              className="mr-2 p-1 rounded-sm text-muted-foreground hover:text-destructive hover:bg-accent"
+              onClick={(e) => {
+                e.stopPropagation();
+                e.preventDefault();
+                removeSnapshot(s.id);
+              }}
+              aria-label="Delete history item"
+            >
+              <X className="h-3 w-3" />
+            </button>
+          </div>
         ))
       )}
       {snapshots.length > 0 && (
