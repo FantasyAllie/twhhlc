@@ -56,7 +56,7 @@ function LoginPage() {
       >
         <div className="space-y-1 text-center">
           <h1 className="text-xl font-semibold">Three Ways House Hotel</h1>
-          <p className="text-sm text-muted-foreground">Linen Counter — sign in</p>
+          <p className="text-sm text-muted-foreground">Housekeeping — sign in</p>
         </div>
         <div className="space-y-2">
           <label className="text-sm font-medium" htmlFor="u">Username</label>
