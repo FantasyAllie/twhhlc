@@ -772,6 +772,17 @@ useEffect(() => {
     qc.invalidateQueries({ queryKey: ["export_snapshots"] });
   };
 
+  const deleteSnapshot = async (id: string) => {
+    qc.setQueryData<ExportSnapshot[]>(["export_snapshots"], (old) =>
+      old?.filter((s) => s.id !== id) ?? [],
+    );
+    const { error } = await supabase.from("export_snapshots").delete().eq("id", id);
+    if (error) {
+      toast.error(error.message);
+      qc.invalidateQueries({ queryKey: ["export_snapshots"] });
+    }
+  };
+
   const printTotals = (
     rows: SnapshotRow[],
     grand: number,
