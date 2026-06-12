@@ -684,6 +684,31 @@ useEffect(() => {
     return { rows, grand };
   };
 
+  const pruneSnapshots = async (kind: "totals" | "rejects") => {
+    const { data } = await supabase
+      .from("export_snapshots")
+      .select("id,created_at")
+      .eq("kind", kind)
+      .order("created_at", { ascending: false })
+      .limit(500);
+    if (!data) return;
+    const byDay = new Map<string, number>();
+    const keep = new Set<string>();
+    for (const r of data) {
+      const day = new Date(r.created_at).toDateString();
+      const seen = byDay.get(day);
+      if (seen === undefined && byDay.size >= 6) continue;
+      const next = (seen ?? 0) + 1;
+      if (next > 6) continue;
+      byDay.set(day, next);
+      keep.add(r.id);
+    }
+    const remove = data.filter((r) => !keep.has(r.id)).map((r) => r.id);
+    if (remove.length > 0) {
+      await supabase.from("export_snapshots").delete().in("id", remove);
+    }
+  };
+
   const openExport = async () => {
     setExportOpen(true);
     const { rows, grand } = computeTotals();
@@ -695,21 +720,7 @@ useEffect(() => {
       toast.error(error.message);
       return;
     }
-    // Keep only the 6 most recent totals snapshots.
-    const { data: keep } = await supabase
-      .from("export_snapshots")
-      .select("id")
-      .eq("kind", "totals")
-      .order("created_at", { ascending: false })
-      .limit(6);
-    const keepIds = (keep ?? []).map((s) => s.id);
-    if (keepIds.length > 0) {
-      await supabase
-        .from("export_snapshots")
-        .delete()
-        .eq("kind", "totals")
-        .not("id", "in", `(${keepIds.join(",")})`);
-    }
+    await pruneSnapshots("totals");
     qc.invalidateQueries({ queryKey: ["export_snapshots"] });
   };
 
@@ -739,20 +750,7 @@ useEffect(() => {
       toast.error(error.message);
       return;
     }
-    const { data: keep } = await supabase
-      .from("export_snapshots")
-      .select("id")
-      .eq("kind", "rejects")
-      .order("created_at", { ascending: false })
-      .limit(6);
-    const keepIds = (keep ?? []).map((s) => s.id);
-    if (keepIds.length > 0) {
-      await supabase
-        .from("export_snapshots")
-        .delete()
-        .eq("kind", "rejects")
-        .not("id", "in", `(${keepIds.join(",")})`);
-    }
+    await pruneSnapshots("rejects");
     qc.invalidateQueries({ queryKey: ["export_snapshots"] });
   };
 
@@ -1091,42 +1089,62 @@ useEffect(() => {
           No exports yet
         </DropdownMenuLabel>
       ) : (
-        snapshots.map((s) => (
-          <div key={s.id} className="flex items-center">
-            <DropdownMenuItem
-              className="flex-1"
-              onSelect={() => setViewingSnapshot(s)}
-            >
-              <span className="flex items-center">
-                {new Date(s.created_at).toLocaleString(undefined, {
+        (() => {
+          const groups = new Map<string, typeof snapshots>();
+          for (const s of snapshots) {
+            const key = new Date(s.created_at).toDateString();
+            const list = groups.get(key) ?? [];
+            if (list.length < 6) list.push(s);
+            groups.set(key, list);
+          }
+          const days = Array.from(groups.entries()).slice(0, 6);
+          return days.map(([day, items], idx) => (
+            <div key={day}>
+              {idx > 0 && <DropdownMenuSeparator />}
+              <DropdownMenuLabel className="text-xs font-semibold text-muted-foreground">
+                {new Date(items[0].created_at).toLocaleDateString(undefined, {
+                  weekday: "short",
                   month: "short",
                   day: "numeric",
-                  hour: "numeric",
-                  minute: "2-digit",
                 })}
-                {s.kind === "rejects" && (
-                  <span className="ml-2 text-xs uppercase tracking-wide text-muted-foreground">
-                    Rejects
-                  </span>
-                )}
-                <span className="ml-2 text-xs text-muted-foreground">
-                  ({s.grand_total})
-                </span>
-              </span>
-            </DropdownMenuItem>
-            <button
-              className="mr-2 p-1 rounded-sm text-muted-foreground hover:text-destructive hover:bg-accent"
-              onClick={(e) => {
-                e.stopPropagation();
-                e.preventDefault();
-                removeSnapshot(s.id);
-              }}
-              aria-label="Delete history item"
-            >
-              <X className="h-3 w-3" />
-            </button>
-          </div>
-        ))
+              </DropdownMenuLabel>
+              {items.map((s) => (
+                <div key={s.id} className="flex items-center">
+                  <DropdownMenuItem
+                    className="flex-1"
+                    onSelect={() => setViewingSnapshot(s)}
+                  >
+                    <span className="flex items-center">
+                      {new Date(s.created_at).toLocaleTimeString(undefined, {
+                        hour: "numeric",
+                        minute: "2-digit",
+                      })}
+                      {s.kind === "rejects" && (
+                        <span className="ml-2 text-xs uppercase tracking-wide text-muted-foreground">
+                          Rejects
+                        </span>
+                      )}
+                      <span className="ml-2 text-xs text-muted-foreground">
+                        ({s.grand_total})
+                      </span>
+                    </span>
+                  </DropdownMenuItem>
+                  <button
+                    className="mr-2 p-1 rounded-sm text-muted-foreground hover:text-destructive hover:bg-accent"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      e.preventDefault();
+                      removeSnapshot(s.id);
+                    }}
+                    aria-label="Delete history item"
+                  >
+                    <X className="h-3 w-3" />
+                  </button>
+                </div>
+              ))}
+            </div>
+          ));
+        })()
       )}
       {snapshots.length > 0 && (
         <>
