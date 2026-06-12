@@ -4,7 +4,7 @@ import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Minus, Plus, X, Menu, ArrowUp, ArrowDown, Pencil, Check, Trash2, Lock, Unlock } from "lucide-react";
+import { Minus, Plus, X, Menu, ArrowUp, ArrowDown, Pencil, Check, Trash2, Lock, Unlock, Sun, Moon } from "lucide-react";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
 import { getToken, getStoredUser, clearSession } from "@/lib/auth-client";
@@ -1115,6 +1115,10 @@ useEffect(() => {
     </DropdownMenuItem>
   )}
   <DropdownMenuItem onSelect={() => setAccountOpen(true)}>Account</DropdownMenuItem>
+  <DropdownMenuItem onSelect={(e) => { e.preventDefault(); toggleTheme(); }}>
+    {theme === "dark" ? <Sun className="h-4 w-4 mr-2" /> : <Moon className="h-4 w-4 mr-2" />}
+    {theme === "dark" ? "Light mode" : "Dark mode"}
+  </DropdownMenuItem>
   <DropdownMenuLabel className="text-xs font-normal text-muted-foreground">
     {authUser ? `Signed in as ${authUser.username}` : ""}
   </DropdownMenuLabel>
