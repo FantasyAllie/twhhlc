@@ -262,7 +262,40 @@ useEffect(() => {
     if (error) toast.error(error.message);
     qc.invalidateQueries({ queryKey: ["reject_counts"] });
   };
- const doneSet = new Set(rooms.filter((r) => r.done).map((r) => r.room_number));
+  const isReception = authUser?.role === "reception";
+  const doneSet = new Set(
+    rooms
+      .filter((r) => (isReception ? r.done_reception : r.done))
+      .map((r) => r.room_number),
+  );
+  const receptionDoneSet = new Set(
+    rooms.filter((r) => r.done_reception).map((r) => r.room_number),
+  );
+
+  const toggleReceptionDone = async (roomNumber: number) => {
+    const current = receptionDoneSet.has(roomNumber);
+    const next = !current;
+    qc.setQueryData<Room[]>(["rooms"], (old) => {
+      const list = old ? [...old] : [];
+      const idx = list.findIndex((r) => r.room_number === roomNumber);
+      if (idx >= 0) list[idx] = { ...list[idx], done_reception: next };
+      else
+        list.push({
+          id: `temp-${roomNumber}`,
+          room_number: roomNumber,
+          done: false,
+          done_reception: next,
+          category: null,
+        });
+      return list;
+    });
+    const { error } = await supabase.from("rooms").upsert(
+      { room_number: roomNumber, done_reception: next, updated_at: new Date().toISOString() },
+      { onConflict: "user_id,room_number" },
+    );
+    if (error) toast.error(error.message);
+    qc.invalidateQueries({ queryKey: ["rooms"] });
+  };
 
   const isAssigned = (templateItemId: string, roomNumber: number) =>
     assignments.some(
