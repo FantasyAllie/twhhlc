@@ -1551,7 +1551,7 @@ useEffect(() => {
         type="button"
         onClick={() => openOrToggle(n)}
         className={cn(
-          "aspect-square rounded-md border text-sm font-medium transition-colors tabular-nums",
+          "rounded-md border text-xs sm:text-sm font-medium transition-colors tabular-nums h-10 sm:h-auto sm:aspect-square",
           isOpen && "ring-2 ring-ring border-transparent bg-accent",
         )}
         style={
