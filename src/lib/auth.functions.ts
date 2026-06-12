@@ -70,7 +70,7 @@ async function getSecret(): Promise<string> {
   return s;
 }
 
-type TokenPayload = { sub: string; username: string; role: "admin" | "user"; exp: number };
+type TokenPayload = { sub: string; username: string; role: "admin" | "user" | "reception"; exp: number };
 
 async function signToken(payload: TokenPayload): Promise<string> {
   const secret = await getSecret();
@@ -137,8 +137,8 @@ function validatePassword(p: string) {
 
 // ---------- server functions ----------
 
-export type SessionUser = { id: string; username: string; role: "admin" | "user" };
-export type AppUserRow = { id: string; username: string; role: "admin" | "user"; created_at: string };
+export type SessionUser = { id: string; username: string; role: "admin" | "user" | "reception" };
+export type AppUserRow = { id: string; username: string; role: "admin" | "user" | "reception"; created_at: string };
 
 export const login = createServerFn({ method: "POST" })
   .inputValidator((d: { username: string; password: string }) => d)
@@ -185,12 +185,12 @@ export const listUsers = createServerFn({ method: "POST" })
   });
 
 export const createUser = createServerFn({ method: "POST" })
-  .inputValidator((d: { token: string; username: string; password: string; role: "admin" | "user" }) => d)
+  .inputValidator((d: { token: string; username: string; password: string; role: "admin" | "user" | "reception" }) => d)
   .handler(async ({ data }) => {
     await requireAdmin(data.token);
     const username = validateUsername(data.username);
     validatePassword(data.password);
-    if (data.role !== "admin" && data.role !== "user") throw new Error("Invalid role");
+    if (data.role !== "admin" && data.role !== "user" && data.role !== "reception") throw new Error("Invalid role");
     const db = await getAdminDb();
     const { data: existing } = await db
       .from("app_users")
@@ -220,12 +220,12 @@ export const updateUserPassword = createServerFn({ method: "POST" })
   });
 
 export const updateUserRole = createServerFn({ method: "POST" })
-  .inputValidator((d: { token: string; id: string; role: "admin" | "user" }) => d)
+  .inputValidator((d: { token: string; id: string; role: "admin" | "user" | "reception" }) => d)
   .handler(async ({ data }) => {
     const actor = await requireAdmin(data.token);
-    if (data.role !== "admin" && data.role !== "user") throw new Error("Invalid role");
+    if (data.role !== "admin" && data.role !== "user" && data.role !== "reception") throw new Error("Invalid role");
     const db = await getAdminDb();
-    if (data.role === "user") {
+    if (data.role !== "admin") {
       // Prevent removing the last admin
       const { count } = await db
         .from("app_users")
