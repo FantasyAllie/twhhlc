@@ -587,17 +587,12 @@ useEffect(() => {
 
 
  const openOrToggle = (roomNumber: number) => {
-    if (isReception) {
-      toggleReceptionDone(roomNumber);
+    if (openRoom === roomNumber) {
+      setOpenRoom(null);
       return;
     }
- if (openRoom === roomNumber) {
- setOpenRoom(null);
- return;
- }
- setOpenRoom(roomNumber);
- 
- };
+    setOpenRoom(roomNumber);
+  };
 
   const resetRoomCounts = async (roomNumber: number) => {
     qc.setQueryData<RoomCount[]>(["room_counts"], (old) =>
@@ -847,19 +842,21 @@ useEffect(() => {
      <span className="text-sm font-medium">{categoryLabel(cat)}</span>
    </div>
 
-   <div className="flex items-center justify-between gap-3 rounded-md border bg-card px-3 py-2">
-     <label
-       htmlFor={`reception-done-${n}`}
-       className="text-sm font-medium cursor-pointer"
-     >
-       Mark room as done for reception
-     </label>
-     <Switch
-       id={`reception-done-${n}`}
-       checked={receptionDoneSet.has(n)}
-       onCheckedChange={() => toggleReceptionDone(n)}
-     />
-   </div>
+    {!isReception && (
+      <div className="flex items-center justify-between gap-3 rounded-md border bg-card px-3 py-2">
+        <label
+          htmlFor={`reception-done-${n}`}
+          className="text-sm font-medium cursor-pointer"
+        >
+          Mark room as done for reception
+        </label>
+        <Switch
+          id={`reception-done-${n}`}
+          checked={receptionDoneSet.has(n)}
+          onCheckedChange={() => toggleReceptionDone(n)}
+        />
+      </div>
+    )}
 
   {visibleTemplate.length === 0 && roomExtras.length === 0 ? (
   <p className="text-sm text-muted-foreground">
@@ -1455,26 +1452,43 @@ useEffect(() => {
   const n = allRooms[i];
  const done = doneSet.has(n);
  const isOpen = openRoom === n;
- nodes.push(
- <button
- key={`r-${n}`}
- type="button"
- onClick={() => openOrToggle(n)}
-                  className={cn(
-                    "aspect-square rounded-md border text-sm font-medium transition-colors tabular-nums",
-                    isOpen
-                      ? "ring-2 ring-ring border-transparent bg-accent"
-                      : done
-                        ? "bg-green-100 text-green-800 line-through border-transparent"
-                        : "bg-red-100 text-red-900 hover:bg-red-200 border-red-200",
-                  )}
- aria-pressed={done}
- aria-expanded={isOpen}
- aria-label={`Room ${n}${done ? " done" : ""}`}
- >
- {n}
- </button>,
- );
+  if (isReception) {
+    nodes.push(
+      <div
+        key={`r-${n}`}
+        className={cn(
+          "aspect-square rounded-md border text-sm font-medium transition-colors tabular-nums flex items-center justify-center cursor-default",
+          done
+            ? "bg-green-100 text-green-800 line-through border-transparent"
+            : "bg-red-100 text-red-900 border-red-200",
+        )}
+        aria-label={`Room ${n}${done ? " done" : ""}`}
+      >
+        {n}
+      </div>,
+    );
+  } else {
+    nodes.push(
+      <button
+        key={`r-${n}`}
+        type="button"
+        onClick={() => openOrToggle(n)}
+        className={cn(
+          "aspect-square rounded-md border text-sm font-medium transition-colors tabular-nums",
+          isOpen
+            ? "ring-2 ring-ring border-transparent bg-accent"
+            : done
+              ? "bg-green-100 text-green-800 line-through border-transparent"
+              : "bg-red-100 text-red-900 hover:bg-red-200 border-red-200",
+        )}
+        aria-pressed={done}
+        aria-expanded={isOpen}
+        aria-label={`Room ${n}${done ? " done" : ""}`}
+      >
+        {n}
+      </button>,
+    );
+  }
    if (
    openIdx >= 0 &&
    i >= openIdx &&
