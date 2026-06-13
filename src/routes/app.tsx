@@ -38,7 +38,7 @@ export const Route = createFileRoute("/app")({
   ssr: false,
   head: () => ({
     meta: [
-      { title: "Three Ways House Hotel HouseKeeping" },
+      { title: "Three Ways House Hotel Housekeeping" },
       { name: "description", content: "Count items per room across 50 rooms." },
     ],
   }),
@@ -104,7 +104,7 @@ function AppPage() {
     return () => window.removeEventListener("tw-auth-changed", onChange);
   }, [navigate]);
   useEffect(() => {
-    document.title = "Three Ways House Hotel HouseKeeping";
+    document.title = "Three Ways House Hotel Housekeeping";
   }, []);
   // Realtime: push room status changes to all signed-in clients (esp. reception)
   useEffect(() => {
@@ -1267,14 +1267,14 @@ useEffect(() => {
           <div className="min-w-0 flex-1">
             {isReception ? (
               <>
-                <h1 className="text-xl sm:text-2xl font-semibold tracking-tight">Three Ways House Hotel HouseKeeping</h1>
+                <h1 className="text-xl sm:text-2xl font-semibold tracking-tight">Three Ways House Hotel Housekeeping</h1>
                 <p className="text-xs text-muted-foreground mt-1 whitespace-pre-line">
                   This checker shows when Housekeeping have finished with a room and the room is ready for a customer. Click on a room to send a message to housekeeping.{"\n\n"}Green means room is ready.{"\n"}Red means room is not ready, or has not been serviced
                 </p>
               </>
             ) : (
               <>
-                <h1 className="text-xl sm:text-2xl font-semibold tracking-tight">Three Ways House Hotel HouseKeeping</h1>
+                <h1 className="text-xl sm:text-2xl font-semibold tracking-tight">Three Ways House Hotel Housekeeping</h1>
                 <p className="text-xs text-muted-foreground mt-1">
                   Shared workspace for Housekeeping staff
                 </p>
