@@ -38,7 +38,7 @@ export const Route = createFileRoute("/app")({
   ssr: false,
   head: () => ({
     meta: [
-      { title: "Three Ways House Hotel HouseKeeping" },
+      { title: "Three Ways House Hotel Housekeeping" },
       { name: "description", content: "Count items per room across 50 rooms." },
     ],
   }),
