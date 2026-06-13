@@ -1304,10 +1304,6 @@ useEffect(() => {
         <Bed className="h-4 w-4 mr-2" />
         Room Type
       </DropdownMenuItem>
-      <DropdownMenuItem onSelect={() => setRejectsOpen(true)}>
-        <Ban className="h-4 w-4 mr-2" />
-        Rejects
-      </DropdownMenuItem>
       <DropdownMenuSub>
         <DropdownMenuSubTrigger>
           <History className="h-4 w-4 mr-2" />
