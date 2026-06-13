@@ -104,7 +104,7 @@ function AppPage() {
     return () => window.removeEventListener("tw-auth-changed", onChange);
   }, [navigate]);
   useEffect(() => {
-    document.title = "Three Ways House Hotel HouseKeeping";
+    document.title = "Three Ways House Hotel Housekeeping";
   }, []);
   // Realtime: push room status changes to all signed-in clients (esp. reception)
   useEffect(() => {
