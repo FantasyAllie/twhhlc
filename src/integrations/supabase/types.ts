@@ -146,6 +146,39 @@ export type Database = {
         }
         Relationships: []
       }
+      room_messages: {
+        Row: {
+          created_at: string
+          created_by_username: string | null
+          dismissed: boolean
+          id: string
+          message: string
+          room_number: number
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          created_by_username?: string | null
+          dismissed?: boolean
+          id?: string
+          message: string
+          room_number: number
+          updated_at?: string
+          user_id?: string
+        }
+        Update: {
+          created_at?: string
+          created_by_username?: string | null
+          dismissed?: boolean
+          id?: string
+          message?: string
+          room_number?: number
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       rooms: {
         Row: {
           category: string | null
