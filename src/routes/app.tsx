@@ -81,6 +81,14 @@ type ExportSnapshot = {
   kind?: "totals" | "rejects";
 };
 type RejectCount = { id: string; template_item_id: string; count: number };
+type RoomMessage = {
+  id: string;
+  room_number: number;
+  message: string;
+  created_by_username: string | null;
+  dismissed: boolean;
+  created_at: string;
+};
 
 function AppPage() {
  const qc = useQueryClient();
