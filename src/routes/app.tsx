@@ -1460,13 +1460,9 @@ useEffect(() => {
           <li className="flex items-center gap-1.5 py-1.5 text-xs font-medium text-muted-foreground uppercase tracking-wide">
             <span className="h-3 w-3 shrink-0" aria-hidden />
             <span className="flex-1 min-w-0">Item</span>
-            <span className="shrink-0 w-[72px] text-center">Rooms</span>
             <span className="shrink-0 w-[88px] text-right">Actions</span>
           </li>
           {template.map((item, idx) => {
-          const assignedCount = assignments.filter(
-            (a) => a.template_item_id === item.id,
-          ).length;
           return (
             <li key={item.id} className="flex items-center gap-1.5 py-2">
               <span
@@ -1479,51 +1475,6 @@ useEffect(() => {
               />
               <span className="flex-1 min-w-0 break-words text-sm">{item.name}</span>
               <div className="flex items-center gap-1 shrink-0">
-                <Popover>
-                  <PopoverTrigger asChild>
-                    <Button variant="outline" size="sm" className="h-8 text-xs" disabled={linenLocked}>
-                      {assignedCount}
-                    </Button>
-                  </PopoverTrigger>
-                  <PopoverContent align="end" className="w-56 p-2">
-                    <Button
-                      type="button"
-                      variant="secondary"
-                      size="sm"
-                      className="w-full h-8 mb-2"
-                      onClick={() =>
-                        assignedCount === rooms.length
-                          ? removeAllRooms(item.id)
-                          : assignAllRooms(item.id)
-                      }
-                    >
-                      {assignedCount === rooms.length ? "No Rooms" : "All Rooms"}
-                    </Button>
-                    <div
-                      className="max-h-64 overflow-y-auto overscroll-contain space-y-1"
-                      onWheel={(e) => e.stopPropagation()}
-                      onTouchMove={(e) => e.stopPropagation()}
-                    >
-                      {rooms.map((r) => {
-                        const checked = isAssigned(item.id, r.room_number);
-                        return (
-                          <label
-                            key={r.room_number}
-                            className="flex items-center gap-2 px-2 py-1 rounded hover:bg-accent cursor-pointer text-sm"
-                          >
-                            <Checkbox
-                              checked={checked}
-                              onCheckedChange={() =>
-                                toggleAssignment(item.id, r.room_number)
-                              }
-                            />
-                            <span className="tabular-nums">Room {r.room_number}</span>
-                          </label>
-                        );
-                      })}
-                    </div>
-                  </PopoverContent>
-                </Popover>
                 <Popover>
                   <PopoverTrigger asChild>
                     <Button
