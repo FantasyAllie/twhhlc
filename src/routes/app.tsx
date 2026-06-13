@@ -81,6 +81,14 @@ type ExportSnapshot = {
   kind?: "totals" | "rejects";
 };
 type RejectCount = { id: string; template_item_id: string; count: number };
+type RoomMessage = {
+  id: string;
+  room_number: number;
+  message: string;
+  created_by_username: string | null;
+  dismissed: boolean;
+  created_at: string;
+};
 
 function AppPage() {
  const qc = useQueryClient();
@@ -108,6 +116,13 @@ function AppPage() {
         { event: "*", schema: "public", table: "rooms" },
         () => {
           qc.invalidateQueries({ queryKey: ["rooms"] });
+        },
+      )
+      .on(
+        "postgres_changes",
+        { event: "*", schema: "public", table: "room_messages" },
+        () => {
+          qc.invalidateQueries({ queryKey: ["room_messages"] });
         },
       )
       .subscribe();
@@ -242,6 +257,18 @@ useEffect(() => {
     },
   });
 
+  const messagesQ = useQuery({
+    queryKey: ["room_messages"],
+    queryFn: async (): Promise<RoomMessage[]> => {
+      const { data, error } = await supabase
+        .from("room_messages" as never)
+        .select("id,room_number,message,created_by_username,dismissed,created_at")
+        .order("created_at", { ascending: false });
+      if (error) throw error;
+      return (data ?? []) as RoomMessage[];
+    },
+  });
+
  const template = templateQ.data ?? [];
  const extras = extrasQ.data ?? [];
  const counts = countsQ.data ?? [];
@@ -249,6 +276,53 @@ useEffect(() => {
   const assignments = assignmentsQ.data ?? [];
   const snapshots = snapshotsQ.data ?? [];
   const rejects = (rejectsQ.data ?? []) as RejectCount[];
+  const roomMessages = (messagesQ.data ?? []) as RoomMessage[];
+  const activeMessagesByRoom = (n: number) =>
+    roomMessages.filter((m) => m.room_number === n && !m.dismissed);
+  const hasActiveMessage = (n: number) => activeMessagesByRoom(n).length > 0;
+
+  const [newMessageText, setNewMessageText] = useState("");
+
+  const submitRoomMessage = async (roomNumber: number) => {
+    const text = newMessageText.trim();
+    if (!text) return;
+    const { error } = await supabase.from("room_messages" as never).insert({
+      room_number: roomNumber,
+      message: text,
+      created_by_username: authUser?.username ?? null,
+    } as never);
+    if (error) {
+      toast.error(error.message);
+      return;
+    }
+    setNewMessageText("");
+    qc.invalidateQueries({ queryKey: ["room_messages"] });
+    toast.success("Message sent");
+  };
+
+  const dismissRoomMessage = async (id: string) => {
+    qc.setQueryData<RoomMessage[]>(["room_messages"], (old) =>
+      old?.map((m) => (m.id === id ? { ...m, dismissed: true } : m)) ?? [],
+    );
+    const { error } = await supabase
+      .from("room_messages" as never)
+      .update({ dismissed: true, updated_at: new Date().toISOString() } as never)
+      .eq("id", id);
+    if (error) toast.error(error.message);
+    qc.invalidateQueries({ queryKey: ["room_messages"] });
+  };
+
+  const deleteRoomMessage = async (id: string) => {
+    qc.setQueryData<RoomMessage[]>(["room_messages"], (old) =>
+      old?.filter((m) => m.id !== id) ?? [],
+    );
+    const { error } = await supabase
+      .from("room_messages" as never)
+      .delete()
+      .eq("id", id);
+    if (error) toast.error(error.message);
+    qc.invalidateQueries({ queryKey: ["room_messages"] });
+  };
 
   const getRejectCount = (templateItemId: string) =>
     rejects.find((r) => r.template_item_id === templateItemId)?.count ?? 0;
@@ -878,6 +952,86 @@ useEffect(() => {
    <div className="flex items-center">
      <span className="text-sm font-medium">{categoryLabel(cat)}</span>
    </div>
+
+    {/* Reception messages */}
+    {(() => {
+      const msgs = activeMessagesByRoom(n);
+      if (isReception) {
+        return (
+          <div className="space-y-2 rounded-md border border-amber-400/60 bg-amber-50 dark:bg-amber-950/40 p-3">
+            <p className="text-xs font-semibold uppercase tracking-wide text-amber-700 dark:text-amber-300">
+              Leave a message for housekeeping
+            </p>
+            {msgs.length > 0 && (
+              <ul className="space-y-1">
+                {msgs.map((m) => (
+                  <li key={m.id} className="flex items-start gap-2 text-sm bg-background/70 rounded p-2">
+                    <span className="flex-1 break-words whitespace-pre-wrap">{m.message}</span>
+                    <Button
+                      type="button"
+                      variant="ghost"
+                      size="sm"
+                      className="h-7 px-2 text-xs"
+                      onClick={() => deleteRoomMessage(m.id)}
+                      aria-label="Delete message"
+                    >
+                      <X className="h-3 w-3" />
+                    </Button>
+                  </li>
+                ))}
+              </ul>
+            )}
+            <div className="flex gap-2">
+              <Input
+                value={newMessageText}
+                onChange={(e) => setNewMessageText(e.target.value)}
+                placeholder="Type a message…"
+                onKeyDown={(e) => {
+                  if (e.key === "Enter" && !e.shiftKey) {
+                    e.preventDefault();
+                    submitRoomMessage(n);
+                  }
+                }}
+              />
+              <Button type="button" onClick={() => submitRoomMessage(n)} disabled={!newMessageText.trim()}>
+                Send
+              </Button>
+            </div>
+          </div>
+        );
+      }
+      if (msgs.length === 0) return null;
+      return (
+        <div className="space-y-2 rounded-md border border-amber-400/60 bg-amber-50 dark:bg-amber-950/40 p-3">
+          <p className="text-xs font-semibold uppercase tracking-wide text-amber-700 dark:text-amber-300">
+            Reception message{msgs.length > 1 ? "s" : ""}
+          </p>
+          <ul className="space-y-1">
+            {msgs.map((m) => (
+              <li key={m.id} className="flex items-start gap-2 text-sm bg-background/70 rounded p-2">
+                <div className="flex-1 min-w-0">
+                  <p className="break-words whitespace-pre-wrap">{m.message}</p>
+                  {m.created_by_username && (
+                    <p className="text-[10px] text-muted-foreground mt-0.5">
+                      from {m.created_by_username}
+                    </p>
+                  )}
+                </div>
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  className="h-7 text-xs"
+                  onClick={() => dismissRoomMessage(m.id)}
+                >
+                  Dismiss
+                </Button>
+              </li>
+            ))}
+          </ul>
+        </div>
+      );
+    })()}
 
     {!isReception && (
       <div className="flex flex-row gap-2">
@@ -1564,21 +1718,32 @@ useEffect(() => {
  const isOpen = openRoom === n;
   if (isReception) {
     nodes.push(
-      <div
+        <button
         key={`r-${n}`}
+          type="button"
+          onClick={() => openOrToggle(n)}
         className={cn(
-          "rounded-md border text-xs sm:text-sm font-medium transition-colors tabular-nums flex items-center justify-center cursor-default aspect-square",
+            "relative rounded-md border text-xs sm:text-sm font-medium transition-colors tabular-nums flex items-center justify-center aspect-square",
+            openRoom === n && "ring-2 ring-ring border-transparent bg-accent",
           done && "line-through",
         )}
         style={
-          done
+            openRoom === n
+              ? undefined
+              : done
             ? { backgroundColor: theme === "dark" ? "#14532d" : "#dcfce7", color: theme === "dark" ? "#86efac" : "#166534", borderColor: "transparent" }
             : { backgroundColor: theme === "dark" ? "#7f1d1d" : "#fee2e2", color: theme === "dark" ? "#fca5a5" : "#991b1b", borderColor: theme === "dark" ? "#991b1b" : "#fca5a5" }
         }
         aria-label={`Room ${n}${done ? " done" : ""}`}
       >
         {n}
-      </div>,
+          {hasActiveMessage(n) && (
+            <span
+              aria-label="Message"
+              className="absolute top-0.5 right-0.5 h-2 w-2 rounded-full bg-amber-500 ring-2 ring-background"
+            />
+          )}
+        </button>,
     );
   } else {
     nodes.push(
@@ -1587,7 +1752,7 @@ useEffect(() => {
         type="button"
         onClick={() => openOrToggle(n)}
         className={cn(
-          "rounded-md border text-xs sm:text-sm font-medium transition-colors tabular-nums aspect-square",
+            "relative rounded-md border text-xs sm:text-sm font-medium transition-colors tabular-nums aspect-square",
           isOpen && "ring-2 ring-ring border-transparent bg-accent",
         )}
         style={
@@ -1602,6 +1767,12 @@ useEffect(() => {
         aria-label={`Room ${n}${done ? " done" : ""}`}
       >
         {n}
+          {hasActiveMessage(n) && (
+            <span
+              aria-label="Message"
+              className="absolute top-0.5 right-0.5 h-2 w-2 rounded-full bg-amber-500 ring-2 ring-background"
+            />
+          )}
       </button>,
     );
   }
@@ -1619,7 +1790,7 @@ useEffect(() => {
  </section>
  </div>
 
- <Dialog open={openRoom !== null} onOpenChange={(o) => { if (!o) setOpenRoom(null); }}>
+ <Dialog open={openRoom !== null} onOpenChange={(o) => { if (!o) { setOpenRoom(null); setNewMessageText(""); } }}>
   <DialogContent className="max-w-2xl w-[calc(100vw-1.5rem)] sm:w-full p-4 sm:p-6 max-h-[90vh] overflow-y-auto top-4 translate-y-0 sm:top-8">
    <DialogHeader>
     <DialogTitle>Room {openRoom}</DialogTitle>
