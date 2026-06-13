@@ -1801,24 +1801,24 @@ useEffect(() => {
     );
   }
   }
- nodes.push(
-   <button
-     key="r-rejects"
-     type="button"
-     onClick={() => setRejectsOpen(true)}
-     className={cn(
-       "relative rounded-md border text-[10px] sm:text-xs font-medium transition-colors flex items-center justify-center aspect-square px-1 text-center leading-tight",
-     )}
-     style={{
-       backgroundColor: theme === "dark" ? "#78350f" : "#fef3c7",
-       color: theme === "dark" ? "#fcd34d" : "#92400e",
-       borderColor: theme === "dark" ? "#92400e" : "#fcd34d",
-     }}
-     aria-label="Open Rejects"
-   >
-     Rejects
-   </button>,
- );
+  nodes.push(
+    <button
+      key="r-rejects"
+      type="button"
+      onClick={() => setRejectsOpen(true)}
+      className={cn(
+        "relative rounded-md border text-[10px] sm:text-xs font-medium transition-colors flex items-center justify-center aspect-[4/1] sm:aspect-square px-1 text-center leading-tight col-span-4 sm:col-span-1",
+      )}
+      style={{
+        backgroundColor: theme === "dark" ? "#78350f" : "#fef3c7",
+        color: theme === "dark" ? "#fcd34d" : "#92400e",
+        borderColor: theme === "dark" ? "#92400e" : "#fcd34d",
+      }}
+      aria-label="Open Rejects"
+    >
+      Rejects
+    </button>,
+  );
  return nodes;
  })()}
  </div>
