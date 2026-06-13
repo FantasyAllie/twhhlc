@@ -1089,15 +1089,26 @@ useEffect(() => {
                     </p>
                   )}
                 </div>
-                <Button
-                  type="button"
-                  variant="outline"
-                  size="sm"
-                  className="h-7 text-xs"
-                  onClick={() => dismissRoomMessage(m.id)}
-                >
-                  Dismiss
-                </Button>
+                <div className="flex flex-col gap-1 shrink-0">
+                  <Button
+                    type="button"
+                    variant="default"
+                    size="sm"
+                    className="h-7 text-xs"
+                    onClick={() => confirmRoomMessage(m)}
+                  >
+                    Confirm
+                  </Button>
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="sm"
+                    className="h-7 text-xs"
+                    onClick={() => dismissRoomMessage(m.id)}
+                  >
+                    Dismiss
+                  </Button>
+                </div>
               </li>
             ))}
           </ul>
