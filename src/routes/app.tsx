@@ -345,6 +345,22 @@ useEffect(() => {
     qc.invalidateQueries({ queryKey: ["room_messages"] });
   };
 
+  const confirmRoomMessage = async (m: RoomMessage) => {
+    const who = authUser?.username ?? "Housekeeping";
+    const ack = `✓ Received & actioned by ${who}: ${m.message}`;
+    const { error } = await supabase.from("room_messages" as never).insert({
+      room_number: m.room_number,
+      message: ack,
+      created_by_username: who,
+    } as never);
+    if (error) {
+      toast.error(error.message);
+      return;
+    }
+    await dismissRoomMessage(m.id);
+    toast.success("Confirmation sent to reception");
+  };
+
   const deleteRoomMessage = async (id: string) => {
     qc.setQueryData<RoomMessage[]>(["room_messages"], (old) =>
       old?.filter((m) => m.id !== id) ?? [],
