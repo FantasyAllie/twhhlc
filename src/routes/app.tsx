@@ -953,6 +953,86 @@ useEffect(() => {
      <span className="text-sm font-medium">{categoryLabel(cat)}</span>
    </div>
 
+    {/* Reception messages */}
+    {(() => {
+      const msgs = activeMessagesByRoom(n);
+      if (isReception) {
+        return (
+          <div className="space-y-2 rounded-md border border-amber-400/60 bg-amber-50 dark:bg-amber-950/40 p-3">
+            <p className="text-xs font-semibold uppercase tracking-wide text-amber-700 dark:text-amber-300">
+              Leave a message for housekeeping
+            </p>
+            {msgs.length > 0 && (
+              <ul className="space-y-1">
+                {msgs.map((m) => (
+                  <li key={m.id} className="flex items-start gap-2 text-sm bg-background/70 rounded p-2">
+                    <span className="flex-1 break-words whitespace-pre-wrap">{m.message}</span>
+                    <Button
+                      type="button"
+                      variant="ghost"
+                      size="sm"
+                      className="h-7 px-2 text-xs"
+                      onClick={() => deleteRoomMessage(m.id)}
+                      aria-label="Delete message"
+                    >
+                      <X className="h-3 w-3" />
+                    </Button>
+                  </li>
+                ))}
+              </ul>
+            )}
+            <div className="flex gap-2">
+              <Input
+                value={newMessageText}
+                onChange={(e) => setNewMessageText(e.target.value)}
+                placeholder="Type a message…"
+                onKeyDown={(e) => {
+                  if (e.key === "Enter" && !e.shiftKey) {
+                    e.preventDefault();
+                    submitRoomMessage(n);
+                  }
+                }}
+              />
+              <Button type="button" onClick={() => submitRoomMessage(n)} disabled={!newMessageText.trim()}>
+                Send
+              </Button>
+            </div>
+          </div>
+        );
+      }
+      if (msgs.length === 0) return null;
+      return (
+        <div className="space-y-2 rounded-md border border-amber-400/60 bg-amber-50 dark:bg-amber-950/40 p-3">
+          <p className="text-xs font-semibold uppercase tracking-wide text-amber-700 dark:text-amber-300">
+            Reception message{msgs.length > 1 ? "s" : ""}
+          </p>
+          <ul className="space-y-1">
+            {msgs.map((m) => (
+              <li key={m.id} className="flex items-start gap-2 text-sm bg-background/70 rounded p-2">
+                <div className="flex-1 min-w-0">
+                  <p className="break-words whitespace-pre-wrap">{m.message}</p>
+                  {m.created_by_username && (
+                    <p className="text-[10px] text-muted-foreground mt-0.5">
+                      from {m.created_by_username}
+                    </p>
+                  )}
+                </div>
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  className="h-7 text-xs"
+                  onClick={() => dismissRoomMessage(m.id)}
+                >
+                  Dismiss
+                </Button>
+              </li>
+            ))}
+          </ul>
+        </div>
+      );
+    })()}
+
     {!isReception && (
       <div className="flex flex-row gap-2">
         <button
