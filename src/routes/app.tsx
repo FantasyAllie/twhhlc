@@ -109,6 +109,15 @@ function AppPage() {
   // Realtime: push room status changes to all signed-in clients (esp. reception)
   useEffect(() => {
     if (!authUser) return;
+    const notifyEnabled = authUser.role !== "reception";
+    if (
+      notifyEnabled &&
+      typeof window !== "undefined" &&
+      "Notification" in window &&
+      Notification.permission === "default"
+    ) {
+      Notification.requestPermission().catch(() => {});
+    }
     const channel = supabase
       .channel("rooms-realtime")
       .on(
@@ -121,8 +130,32 @@ function AppPage() {
       .on(
         "postgres_changes",
         { event: "*", schema: "public", table: "room_messages" },
-        () => {
+        (payload) => {
           qc.invalidateQueries({ queryKey: ["room_messages"] });
+          if (!notifyEnabled) return;
+          if (payload.eventType !== "INSERT") return;
+          const row = payload.new as {
+            room_number?: number;
+            message?: string;
+            created_by_username?: string;
+            dismissed?: boolean;
+          };
+          if (!row || row.dismissed) return;
+          const title = `Reception – Room ${row.room_number ?? "?"}`;
+          const body = `${row.created_by_username ?? "Reception"}: ${row.message ?? ""}`;
+          toast(title, { description: row.message ?? "" });
+          try {
+            if (
+              typeof window !== "undefined" &&
+              "Notification" in window &&
+              Notification.permission === "granted" &&
+              document.visibilityState !== "visible"
+            ) {
+              new Notification(title, { body, tag: `room-msg-${row.room_number}` });
+            }
+          } catch {
+            /* ignore */
+          }
         },
       )
       .subscribe();
