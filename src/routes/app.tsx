@@ -1418,7 +1418,8 @@ useEffect(() => {
  <DialogHeader>
  <DialogTitle>Linen List</DialogTitle>
  <DialogDescription>
-  Pick which rooms each item should show up in.
+   Manage the shared list of linen items. Pick which items appear in each
+   room from that room's "Edit defaults" button.
  </DialogDescription>
  </DialogHeader>
   <div className="space-y-3">
