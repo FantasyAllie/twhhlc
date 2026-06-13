@@ -1807,7 +1807,7 @@ useEffect(() => {
       type="button"
       onClick={() => setRejectsOpen(true)}
       className={cn(
-        "relative rounded-md border text-[10px] sm:text-xs font-medium transition-colors flex items-center justify-center aspect-square sm:aspect-square px-1 text-center leading-tight col-span-4 sm:col-span-1",
+        "relative rounded-md border text-[10px] sm:text-xs font-medium transition-colors flex items-center justify-center aspect-[4/1] sm:aspect-square px-1 text-center leading-tight col-span-4 sm:col-span-1",
       )}
       style={{
         backgroundColor: theme === "dark" ? "#78350f" : "#fef3c7",
