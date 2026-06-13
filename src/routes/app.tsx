@@ -1268,8 +1268,8 @@ useEffect(() => {
             {isReception ? (
               <>
                 <h1 className="text-xl sm:text-2xl font-semibold tracking-tight">Three Ways House Hotel HouseKeeping</h1>
-                <p className="text-xs text-muted-foreground mt-1">
-                  This checker shows when Housekeeping have finished with a room and the room is ready for a customer. Green means room is ready, Red means room is not ready, or has not been serviced
+                <p className="text-xs text-muted-foreground mt-1 whitespace-pre-line">
+                  This checker shows when Housekeeping have finished with a room and the room is ready for a customer. Click on a room to send a message to housekeeping.{"\n\n"}Green means room is ready.{"\n"}Red means room is not ready, or has not been serviced
                 </p>
               </>
             ) : (
