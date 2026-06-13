@@ -118,6 +118,13 @@ function AppPage() {
           qc.invalidateQueries({ queryKey: ["rooms"] });
         },
       )
+      .on(
+        "postgres_changes",
+        { event: "*", schema: "public", table: "room_messages" },
+        () => {
+          qc.invalidateQueries({ queryKey: ["room_messages"] });
+        },
+      )
       .subscribe();
     return () => {
       supabase.removeChannel(channel);
