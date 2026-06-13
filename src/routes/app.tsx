@@ -1184,6 +1184,10 @@ useEffect(() => {
     </>
     )}
 
+  </div>
+  );
+ };
+
  return (
  <main className="min-h-screen bg-background">
  <div className="max-w-2xl mx-auto px-4 py-6 sm:py-10 space-y-8 sm:space-y-10">
