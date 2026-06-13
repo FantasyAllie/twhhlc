@@ -257,6 +257,18 @@ useEffect(() => {
     },
   });
 
+  const messagesQ = useQuery({
+    queryKey: ["room_messages"],
+    queryFn: async (): Promise<RoomMessage[]> => {
+      const { data, error } = await supabase
+        .from("room_messages" as never)
+        .select("id,room_number,message,created_by_username,dismissed,created_at")
+        .order("created_at", { ascending: false });
+      if (error) throw error;
+      return (data ?? []) as RoomMessage[];
+    },
+  });
+
  const template = templateQ.data ?? [];
  const extras = extrasQ.data ?? [];
  const counts = countsQ.data ?? [];
@@ -264,6 +276,53 @@ useEffect(() => {
   const assignments = assignmentsQ.data ?? [];
   const snapshots = snapshotsQ.data ?? [];
   const rejects = (rejectsQ.data ?? []) as RejectCount[];
+  const roomMessages = (messagesQ.data ?? []) as RoomMessage[];
+  const activeMessagesByRoom = (n: number) =>
+    roomMessages.filter((m) => m.room_number === n && !m.dismissed);
+  const hasActiveMessage = (n: number) => activeMessagesByRoom(n).length > 0;
+
+  const [newMessageText, setNewMessageText] = useState("");
+
+  const submitRoomMessage = async (roomNumber: number) => {
+    const text = newMessageText.trim();
+    if (!text) return;
+    const { error } = await supabase.from("room_messages" as never).insert({
+      room_number: roomNumber,
+      message: text,
+      created_by_username: authUser?.username ?? null,
+    } as never);
+    if (error) {
+      toast.error(error.message);
+      return;
+    }
+    setNewMessageText("");
+    qc.invalidateQueries({ queryKey: ["room_messages"] });
+    toast.success("Message sent");
+  };
+
+  const dismissRoomMessage = async (id: string) => {
+    qc.setQueryData<RoomMessage[]>(["room_messages"], (old) =>
+      old?.map((m) => (m.id === id ? { ...m, dismissed: true } : m)) ?? [],
+    );
+    const { error } = await supabase
+      .from("room_messages" as never)
+      .update({ dismissed: true, updated_at: new Date().toISOString() } as never)
+      .eq("id", id);
+    if (error) toast.error(error.message);
+    qc.invalidateQueries({ queryKey: ["room_messages"] });
+  };
+
+  const deleteRoomMessage = async (id: string) => {
+    qc.setQueryData<RoomMessage[]>(["room_messages"], (old) =>
+      old?.filter((m) => m.id !== id) ?? [],
+    );
+    const { error } = await supabase
+      .from("room_messages" as never)
+      .delete()
+      .eq("id", id);
+    if (error) toast.error(error.message);
+    qc.invalidateQueries({ queryKey: ["room_messages"] });
+  };
 
   const getRejectCount = (templateItemId: string) =>
     rejects.find((r) => r.template_item_id === templateItemId)?.count ?? 0;
