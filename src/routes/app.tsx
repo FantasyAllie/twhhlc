@@ -1638,21 +1638,32 @@ useEffect(() => {
  const isOpen = openRoom === n;
   if (isReception) {
     nodes.push(
-      <div
+        <button
         key={`r-${n}`}
+          type="button"
+          onClick={() => openOrToggle(n)}
         className={cn(
-          "rounded-md border text-xs sm:text-sm font-medium transition-colors tabular-nums flex items-center justify-center cursor-default aspect-square",
+            "relative rounded-md border text-xs sm:text-sm font-medium transition-colors tabular-nums flex items-center justify-center aspect-square",
+            openRoom === n && "ring-2 ring-ring border-transparent bg-accent",
           done && "line-through",
         )}
         style={
-          done
+            openRoom === n
+              ? undefined
+              : done
             ? { backgroundColor: theme === "dark" ? "#14532d" : "#dcfce7", color: theme === "dark" ? "#86efac" : "#166534", borderColor: "transparent" }
             : { backgroundColor: theme === "dark" ? "#7f1d1d" : "#fee2e2", color: theme === "dark" ? "#fca5a5" : "#991b1b", borderColor: theme === "dark" ? "#991b1b" : "#fca5a5" }
         }
         aria-label={`Room ${n}${done ? " done" : ""}`}
       >
         {n}
-      </div>,
+          {hasActiveMessage(n) && (
+            <span
+              aria-label="Message"
+              className="absolute top-0.5 right-0.5 h-2 w-2 rounded-full bg-amber-500 ring-2 ring-background"
+            />
+          )}
+        </button>,
     );
   } else {
     nodes.push(
@@ -1661,7 +1672,7 @@ useEffect(() => {
         type="button"
         onClick={() => openOrToggle(n)}
         className={cn(
-          "rounded-md border text-xs sm:text-sm font-medium transition-colors tabular-nums aspect-square",
+            "relative rounded-md border text-xs sm:text-sm font-medium transition-colors tabular-nums aspect-square",
           isOpen && "ring-2 ring-ring border-transparent bg-accent",
         )}
         style={
@@ -1676,6 +1687,12 @@ useEffect(() => {
         aria-label={`Room ${n}${done ? " done" : ""}`}
       >
         {n}
+          {hasActiveMessage(n) && (
+            <span
+              aria-label="Message"
+              className="absolute top-0.5 right-0.5 h-2 w-2 rounded-full bg-amber-500 ring-2 ring-background"
+            />
+          )}
       </button>,
     );
   }
