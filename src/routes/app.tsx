@@ -1064,121 +1064,125 @@ useEffect(() => {
       </div>
     )}
 
-  {visibleTemplate.length === 0 && roomExtras.length === 0 ? (
-  <p className="text-sm text-muted-foreground">
-  No items yet. Add linen list items from the menu, or add an extra below.
-  </p>
-  ) : (
-  <ul className="space-y-1">
-  {visibleTemplate.map((item) => {
-  const count = getCount(n, "template", item.id);
-  return (
-   <li
-     key={`t-${item.id}`}
+    {isReception ? null : (
+    <>
+    {visibleTemplate.length === 0 && roomExtras.length === 0 ? (
+    <p className="text-sm text-muted-foreground">
+    No items yet. Add linen list items from the menu, or add an extra below.
+    </p>
+    ) : (
+    <ul className="space-y-1">
+    {visibleTemplate.map((item) => {
+    const count = getCount(n, "template", item.id);
+    return (
+     <li
+       key={`t-${item.id}`}
+        className="flex items-center gap-3 py-2 px-2 rounded-md border"
+        style={colorStyle(item.color)}
+     >
+        <span
+          className="flex-1 min-w-0 break-words"
+          style={item.color ? { color: theme === "dark" ? "#f8fafc" : "#0f172a" } : undefined}
+        >{item.name}</span>
+     <div className="flex items-center gap-1 shrink-0">
+    {item.default_count > 0 && (
+    <Button
+    variant="outline"
+    size="sm"
+    className="h-8 text-xs mr-1"
+    onClick={() => updateCount(n, "template", item.id, item.default_count)}
+    >
+    + All
+    </Button>
+    )}
+    <Button
+    variant="outline"
+    size="icon"
+    className="h-8 w-8"
+    onClick={() => updateCount(n, "template", item.id, -1)}
+    disabled={count === 0}
+    aria-label={`Decrease ${item.name}`}
+    >
+    <Minus className="h-4 w-4" />
+    </Button>
+    <span
+      className="w-8 text-center tabular-nums font-medium"
+      style={item.color ? { color: theme === "dark" ? "#f8fafc" : "#0f172a" } : undefined}
+    >{count}</span>
+    <Button
+    variant="outline"
+    size="icon"
+    className="h-8 w-8"
+    onClick={() => updateCount(n, "template", item.id, 1)}
+    aria-label={`Increase ${item.name}`}
+    >
+    <Plus className="h-4 w-4" />
+    </Button>
+    </div>
+    </li>
+    );
+    })}
+   {roomExtras.map((item) => {
+   const count = getCount(n, "extra", item.id);
+   return (
+    <li
+      key={`e-${item.id}`}
       className="flex items-center gap-3 py-2 px-2 rounded-md border"
-      style={colorStyle(item.color)}
-   >
-      <span
-        className="flex-1 min-w-0 break-words"
-        style={item.color ? { color: theme === "dark" ? "#f8fafc" : "#0f172a" } : undefined}
-      >{item.name}</span>
+    >
+     <span className="flex-1 min-w-0 break-words">
+   {item.name}
+   <span className="ml-2 text-xs text-muted-foreground">
+   extra
+   </span>
+   </span>
    <div className="flex items-center gap-1 shrink-0">
-  {item.default_count > 0 && (
-  <Button
-  variant="outline"
-  size="sm"
-  className="h-8 text-xs mr-1"
-  onClick={() => updateCount(n, "template", item.id, item.default_count)}
-  >
-  + All
-  </Button>
-  )}
-  <Button
-  variant="outline"
-  size="icon"
-  className="h-8 w-8"
-  onClick={() => updateCount(n, "template", item.id, -1)}
-  disabled={count === 0}
-  aria-label={`Decrease ${item.name}`}
-  >
-  <Minus className="h-4 w-4" />
-  </Button>
-  <span
-    className="w-8 text-center tabular-nums font-medium"
-    style={item.color ? { color: theme === "dark" ? "#f8fafc" : "#0f172a" } : undefined}
-  >{count}</span>
-  <Button
-  variant="outline"
-  size="icon"
-  className="h-8 w-8"
-  onClick={() => updateCount(n, "template", item.id, 1)}
-  aria-label={`Increase ${item.name}`}
-  >
-  <Plus className="h-4 w-4" />
-  </Button>
-  </div>
-  </li>
-  );
-  })}
- {roomExtras.map((item) => {
- const count = getCount(n, "extra", item.id);
- return (
-  <li
-    key={`e-${item.id}`}
-    className="flex items-center gap-3 py-2 px-2 rounded-md border"
-  >
-   <span className="flex-1 min-w-0 break-words">
- {item.name}
- <span className="ml-2 text-xs text-muted-foreground">
- extra
- </span>
- </span>
- <div className="flex items-center gap-1 shrink-0">
- <Button
- variant="outline"
- size="icon"
- className="h-8 w-8"
- onClick={() => updateCount(n, "extra", item.id, -1)}
- disabled={count === 0}
- aria-label={`Decrease ${item.name}`}
- >
- <Minus className="h-4 w-4" />
- </Button>
- <span className="w-8 text-center tabular-nums font-medium">{count}</span>
- <Button
- variant="outline"
- size="icon"
- className="h-8 w-8"
- onClick={() => updateCount(n, "extra", item.id, 1)}
- aria-label={`Increase ${item.name}`}
- >
- <Plus className="h-4 w-4" />
- </Button>
- <Button
- variant="ghost"
- size="icon"
- className="h-8 w-8 text-muted-foreground hover:text-destructive"
- onClick={() => deleteExtra(item.id)}
- aria-label={`Delete ${item.name}`}
- >
- <X className="h-4 w-4" />
- </Button>
- </div>
- </li>
- );
- })}
- </ul>
- )}
+   <Button
+   variant="outline"
+   size="icon"
+   className="h-8 w-8"
+   onClick={() => updateCount(n, "extra", item.id, -1)}
+   disabled={count === 0}
+   aria-label={`Decrease ${item.name}`}
+   >
+   <Minus className="h-4 w-4" />
+   </Button>
+   <span className="w-8 text-center tabular-nums font-medium">{count}</span>
+   <Button
+   variant="outline"
+   size="icon"
+   className="h-8 w-8"
+   onClick={() => updateCount(n, "extra", item.id, 1)}
+   aria-label={`Increase ${item.name}`}
+   >
+   <Plus className="h-4 w-4" />
+   </Button>
+   <Button
+   variant="ghost"
+   size="icon"
+   className="h-8 w-8 text-muted-foreground hover:text-destructive"
+   onClick={() => deleteExtra(item.id)}
+   aria-label={`Delete ${item.name}`}
+   >
+   <X className="h-4 w-4" />
+   </Button>
+   </div>
+   </li>
+   );
+   })}
+   </ul>
+   )}
 
 
-  <Button
-    type="button"
-    variant="ghost"
-    className="w-full h-10 text-muted-foreground hover:text-destructive"
-    onClick={() => resetRoomCounts(n)}
-  >
-    Reset Tally
-  </Button>
+    <Button
+      type="button"
+      variant="ghost"
+      className="w-full h-10 text-muted-foreground hover:text-destructive"
+      onClick={() => resetRoomCounts(n)}
+    >
+      Reset Tally
+    </Button>
+    </>
+    )}
 
   </div>
   );
