@@ -999,8 +999,7 @@ useEffect(() => {
   };
   return (
   <div className="border rounded-md p-4 space-y-4 bg-muted/30">
-    <div className="flex items-center justify-between gap-2">
-      <span className="text-sm font-medium">{categoryLabel(cat)}</span>
+    <div className="flex items-center justify-end gap-2">
       {!isReception && (
         <Popover>
           <PopoverTrigger asChild>
@@ -1863,16 +1862,16 @@ useEffect(() => {
  </div>
 
  <Dialog open={openRoom !== null} onOpenChange={(o) => { if (!o) { setOpenRoom(null); setNewMessageText(""); } }}>
-  <DialogContent className="max-w-2xl w-[calc(100vw-1.5rem)] sm:w-full p-4 sm:p-6 pt-14 max-h-[90vh] overflow-y-auto top-4 translate-y-0 sm:top-8 [&>button]:hidden">
-   <DialogClose
-     aria-label="Close"
-     className="absolute right-2 top-2 z-10 inline-flex h-11 w-11 items-center justify-center rounded-md bg-background border shadow-sm hover:bg-accent focus:outline-none focus:ring-2 focus:ring-ring"
-   >
-     <X className="h-6 w-6" />
-   </DialogClose>
-   <DialogHeader>
-    <DialogTitle>Room {openRoom}</DialogTitle>
-   </DialogHeader>
+  <DialogContent className="max-w-2xl w-[calc(100vw-1.5rem)] sm:w-full p-4 sm:p-6 pt-10 max-h-[90vh] overflow-y-auto top-4 translate-y-0 sm:top-8 [&>button]:hidden">
+    <DialogClose
+      aria-label="Close"
+      className="absolute right-2 top-2 z-10 inline-flex h-11 w-11 items-center justify-center rounded-md bg-background border shadow-sm hover:bg-accent focus:outline-none focus:ring-2 focus:ring-ring"
+    >
+      <X className="h-6 w-6" />
+    </DialogClose>
+    <DialogHeader className="space-y-0">
+      <DialogTitle>Room {openRoom} — {categoryLabel(roomCategory(openRoom ?? 0))}</DialogTitle>
+    </DialogHeader>
    {openRoom !== null && renderRoomPanel(openRoom)}
    <div className="pt-2">
      <DialogClose asChild>
