@@ -28,6 +28,7 @@ import {
  DialogHeader,
  DialogTitle,
  DialogDescription,
+  DialogClose,
 } from "@/components/ui/dialog";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Checkbox } from "@/components/ui/checkbox";
@@ -1862,11 +1863,22 @@ useEffect(() => {
  </div>
 
  <Dialog open={openRoom !== null} onOpenChange={(o) => { if (!o) { setOpenRoom(null); setNewMessageText(""); } }}>
-  <DialogContent className="max-w-2xl w-[calc(100vw-1.5rem)] sm:w-full p-4 sm:p-6 max-h-[90vh] overflow-y-auto top-4 translate-y-0 sm:top-8">
+  <DialogContent className="max-w-2xl w-[calc(100vw-1.5rem)] sm:w-full p-4 sm:p-6 pt-14 max-h-[90vh] overflow-y-auto top-4 translate-y-0 sm:top-8 [&>button]:hidden">
+   <DialogClose
+     aria-label="Close"
+     className="absolute right-2 top-2 z-10 inline-flex h-11 w-11 items-center justify-center rounded-md bg-background border shadow-sm hover:bg-accent focus:outline-none focus:ring-2 focus:ring-ring"
+   >
+     <X className="h-6 w-6" />
+   </DialogClose>
    <DialogHeader>
     <DialogTitle>Room {openRoom}</DialogTitle>
    </DialogHeader>
    {openRoom !== null && renderRoomPanel(openRoom)}
+   <div className="pt-2">
+     <DialogClose asChild>
+       <Button variant="outline" className="w-full h-11">Close</Button>
+     </DialogClose>
+   </div>
   </DialogContent>
  </Dialog>
 
