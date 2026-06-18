@@ -1001,43 +1001,54 @@ useEffect(() => {
   <div className="border rounded-md p-4 space-y-4 bg-muted/30">
     <div className="flex items-center justify-end gap-2">
       {!isReception && (
-        <Popover>
-          <PopoverTrigger asChild>
-            <Button variant="outline" size="sm" className="h-8 text-xs" disabled={linenLocked}>
-              Edit defaults
-            </Button>
-          </PopoverTrigger>
-          <PopoverContent align="end" className="w-64 p-2">
-            <p className="px-2 pb-2 text-xs text-muted-foreground">
-              Linen items shown by default in Room {n}.
-            </p>
-            <div
-              className="max-h-64 overflow-y-auto overscroll-contain space-y-1"
-              onWheel={(e) => e.stopPropagation()}
-              onTouchMove={(e) => e.stopPropagation()}
-            >
-              {template.length === 0 ? (
-                <p className="px-2 py-1 text-sm text-muted-foreground">No items yet.</p>
-              ) : (
-                template.map((t) => {
-                  const checked = isAssigned(t.id, n);
-                  return (
-                    <label
-                      key={t.id}
-                      className="flex items-center gap-2 px-2 py-1 rounded hover:bg-accent cursor-pointer text-sm"
-                    >
-                      <Checkbox
-                        checked={checked}
-                        onCheckedChange={() => toggleAssignment(t.id, n)}
-                      />
-                      <span className="flex-1 min-w-0 break-words">{t.name}</span>
-                    </label>
-                  );
-                })
-              )}
-            </div>
-          </PopoverContent>
-        </Popover>
+        <>
+          <Button
+            type="button"
+            variant="outline"
+            size="sm"
+            className="h-8 text-xs"
+            onClick={() => resetRoomCounts(n)}
+          >
+            Reset Tally
+          </Button>
+          <Popover>
+            <PopoverTrigger asChild>
+              <Button variant="outline" size="sm" className="h-8 text-xs" disabled={linenLocked}>
+                Edit defaults
+              </Button>
+            </PopoverTrigger>
+            <PopoverContent align="end" className="w-64 p-2">
+              <p className="px-2 pb-2 text-xs text-muted-foreground">
+                Linen items shown by default in Room {n}.
+              </p>
+              <div
+                className="max-h-64 overflow-y-auto overscroll-contain space-y-1"
+                onWheel={(e) => e.stopPropagation()}
+                onTouchMove={(e) => e.stopPropagation()}
+              >
+                {template.length === 0 ? (
+                  <p className="px-2 py-1 text-sm text-muted-foreground">No items yet.</p>
+                ) : (
+                  template.map((t) => {
+                    const checked = isAssigned(t.id, n);
+                    return (
+                      <label
+                        key={t.id}
+                        className="flex items-center gap-2 px-2 py-1 rounded hover:bg-accent cursor-pointer text-sm"
+                      >
+                        <Checkbox
+                          checked={checked}
+                          onCheckedChange={() => toggleAssignment(t.id, n)}
+                        />
+                        <span className="flex-1 min-w-0 break-words">{t.name}</span>
+                      </label>
+                    );
+                  })
+                )}
+              </div>
+            </PopoverContent>
+          </Popover>
+        </>
       )}
     </div>
 
@@ -1271,15 +1282,6 @@ useEffect(() => {
    </ul>
    )}
 
-
-    <Button
-      type="button"
-      variant="ghost"
-      className="w-full h-10 text-muted-foreground hover:text-destructive"
-      onClick={() => resetRoomCounts(n)}
-    >
-      Reset Tally
-    </Button>
     </>
     )}
 
