@@ -999,21 +999,30 @@ useEffect(() => {
   };
   return (
   <div className="border rounded-md p-4 space-y-4 bg-muted/30">
-    <div className="flex items-center justify-end gap-2">
+    <div className="flex items-center gap-2">
       {!isReception && (
         <>
           <Button
             type="button"
             variant="outline"
             size="sm"
-            className="h-8 text-xs"
+            className="h-8 text-xs flex-1"
+            onClick={() => setOpenRoom(null)}
+          >
+            Close
+          </Button>
+          <Button
+            type="button"
+            variant="outline"
+            size="sm"
+            className="h-8 text-xs flex-1"
             onClick={() => resetRoomCounts(n)}
           >
             Reset Tally
           </Button>
           <Popover>
             <PopoverTrigger asChild>
-              <Button variant="outline" size="sm" className="h-8 text-xs" disabled={linenLocked}>
+              <Button variant="outline" size="sm" className="h-8 text-xs flex-1" disabled={linenLocked}>
                 Edit defaults
               </Button>
             </PopoverTrigger>
@@ -1865,21 +1874,10 @@ useEffect(() => {
 
  <Dialog open={openRoom !== null} onOpenChange={(o) => { if (!o) { if (openRoom !== null) setShowAllLinen(prev => ({ ...prev, [openRoom]: false })); setOpenRoom(null); setNewMessageText(""); } }}>
   <DialogContent className="max-w-2xl w-[calc(100vw-1.5rem)] sm:w-full p-4 sm:p-6 pt-10 max-h-[90vh] overflow-y-auto top-4 translate-y-0 sm:top-8 [&>button]:hidden">
-    <DialogClose
-      aria-label="Close"
-      className="absolute right-2 top-2 z-10 inline-flex h-11 w-11 items-center justify-center rounded-md bg-background border shadow-sm hover:bg-accent focus:outline-none focus:ring-2 focus:ring-ring"
-    >
-      <X className="h-6 w-6" />
-    </DialogClose>
     <DialogHeader className="space-y-0">
       <DialogTitle>Room {openRoom} — {categoryLabel(roomCategory(openRoom ?? 0))}</DialogTitle>
     </DialogHeader>
    {openRoom !== null && renderRoomPanel(openRoom)}
-   <div className="pt-2">
-     <DialogClose asChild>
-       <Button variant="outline" className="w-full h-11">Close</Button>
-     </DialogClose>
-   </div>
   </DialogContent>
  </Dialog>
 
