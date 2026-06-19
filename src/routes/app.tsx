@@ -1886,7 +1886,7 @@ useEffect(() => {
  <DialogHeader>
  <DialogTitle>Export totals</DialogTitle>
  <DialogDescription>
- Totals across all rooms, grouped by item name.
+ Totals across all rooms, grouped by item name. Please only export once. To reprint a previous export, use the History feature
  </DialogDescription>
  </DialogHeader>
  {(() => {
