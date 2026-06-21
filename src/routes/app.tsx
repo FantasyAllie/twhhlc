@@ -1205,36 +1205,30 @@ useEffect(() => {
     const trs = (list: RoomStatusRow[]) =>
       list
         .map(
-          (r, i) =>
-            `<tr class="${i % 2 === 0 ? "even" : "odd"}"><td class="num">${r.room}</td><td>${esc(r.status)}</td><td>${esc(r.bed)}</td></tr>`,
+          (r) =>
+            `<tr><td class="num">${r.room}</td><td>${esc(r.status)}</td><td>${esc(r.bed)}</td></tr>`,
         )
         .join("");
     const tableHead = `<thead><tr><th class="num">Room</th><th>Status</th><th>Set As</th></tr></thead>`;
     win.document.write(`<!doctype html><html><head><title>Room Status Sheet - ${dateStr}</title><style>
-      @page { size: A4 landscape; margin: 12mm; }
-      body{font-family:system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;color:#1f2937;background:#fff;padding:1rem 1.5rem;margin:0;}
-      .sheet{max-width:1100px;margin:0 auto;background:#fff;border-radius:8px;box-shadow:0 4px 20px rgba(0,0,0,0.08);padding:1.5rem 2rem;}
-      h1{font-size:1.75rem;margin:0 0 .25rem;text-align:center;font-weight:700;letter-spacing:-0.02em;}
-      .date{margin:0 0 1.25rem;font-size:.95rem;text-align:center;color:#4b5563;}
-      .grid{display:grid;grid-template-columns:1fr 1fr;gap:1.25rem;}
-      table{width:100%;border-collapse:separate;border-spacing:0;font-size:.9rem;border-radius:8px;overflow:hidden;border:1px solid #d1d5db;}
-      th,td{text-align:center;padding:.55rem .6rem;border-bottom:1px solid #e5e7eb;vertical-align:middle;}
-      th{background:linear-gradient(180deg,#374151,#1f2937);color:#fff;font-weight:600;text-transform:uppercase;font-size:.78rem;letter-spacing:0.04em;}
-      td.num{font-variant-numeric:tabular-nums;width:3.5rem;font-weight:600;color:#111827;}
-      th.num{width:3.5rem;}
-      tbody tr:nth-child(odd){background:#f9fafb;}
-      tbody tr:nth-child(even){background:#ffffff;}
-      tbody tr:last-child td{border-bottom:none;}
-      tbody td{color:#374151;}
-      @media print{body{padding:0;background:#fff;} .sheet{box-shadow:none;padding:0;border-radius:0;}}
+      @page { size: A4 landscape; margin: 8mm; }
+      body{font-family:system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;color:#000;background:#fff;margin:0;padding:4mm;}
+      h1{font-size:1.1rem;margin:0 0 .15rem;text-align:center;font-weight:700;}
+      .date{margin:0 0 .6rem;font-size:.8rem;text-align:center;color:#444;}
+      .grid{display:grid;grid-template-columns:1fr 1fr;gap:.6rem;}
+      table{width:100%;border-collapse:collapse;font-size:.75rem;line-height:1.1;}
+      th,td{text-align:center;padding:.2rem .25rem;border:1px solid #999;vertical-align:middle;}
+      th{background:#444;color:#fff;font-weight:600;}
+      td.num{font-variant-numeric:tabular-nums;width:2.2rem;font-weight:600;}
+      th.num{width:2.2rem;}
+      tbody tr:nth-child(even){background:#f3f4f6;}
+      @media print{body{padding:0;}}
     </style></head><body>
-      <div class="sheet">
-        <h1>Room Status Sheet</h1>
-        <p class="date">${dateStr}</p>
-        <div class="grid">
-          <table>${tableHead}<tbody>${trs(left)}</tbody></table>
-          <table>${tableHead}<tbody>${trs(right)}</tbody></table>
-        </div>
+      <h1>Room Status Sheet</h1>
+      <p class="date">${dateStr}</p>
+      <div class="grid">
+        <table>${tableHead}<tbody>${trs(left)}</tbody></table>
+        <table>${tableHead}<tbody>${trs(right)}</tbody></table>
       </div>
       <script>window.onload=()=>{window.print();}</script>
     </body></html>`);
