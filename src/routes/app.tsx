@@ -959,7 +959,7 @@ useEffect(() => {
   };
 
   const openRejectExport = async () => {
-    const { rows, grand } = computeRejectTotals();
+    const { rows } = computeRejectTotals();
     if (rows.length === 0) {
       setRejectExportOpen(true);
       return;
@@ -973,7 +973,6 @@ useEffect(() => {
       return;
     }
     await proceedExport("rejects");
-    grand; // referenced to satisfy noUnusedLocals if any
   };
 
   const deleteSnapshot = async (id: string) => {
