@@ -2998,12 +2998,73 @@ useEffect(() => {
        <DialogDescription>Saved totals from this export.</DialogDescription>
      </DialogHeader>
      {viewingSnapshot && (
-       <div className="space-y-4">
+        viewingSnapshot.kind === "room_status" ? (
+        <div className="space-y-4">
+          {viewingSnapshot.totals.length === 0 ? (
+            <p className="text-sm text-muted-foreground py-4">No rooms in this snapshot.</p>
+          ) : (
+            <div className="rounded-md border max-h-[60vh] overflow-y-auto">
+              <table className="w-full text-sm">
+                <thead className="bg-muted/50 sticky top-0">
+                  <tr>
+                    <th className="text-left px-3 py-2">Room</th>
+                    <th className="text-left px-3 py-2">Status</th>
+                    <th className="text-left px-3 py-2">Set As</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {(viewingSnapshot.totals as RoomStatusRow[]).map((r) => (
+                    <tr key={r.room} className="border-t">
+                      <td className="px-3 py-1.5 font-mono tabular-nums">{r.room}</td>
+                      <td className="px-3 py-1.5">{r.status}</td>
+                      <td className="px-3 py-1.5">{r.bed}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          )}
+          <div className="flex items-center justify-between text-sm">
+            <span className="text-muted-foreground">
+              {viewingSnapshot.totals.length} room
+              {viewingSnapshot.totals.length === 1 ? "" : "s"}
+            </span>
+          </div>
+          <div className="flex justify-between gap-2">
+            <Button
+              variant="ghost"
+              size="sm"
+              className="text-destructive hover:text-destructive"
+              onClick={async () => {
+                if (!confirm("Delete this snapshot?")) return;
+                const id = viewingSnapshot.id;
+                setViewingSnapshot(null);
+                await deleteSnapshot(id);
+              }}
+            >
+              Delete
+            </Button>
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() =>
+                printRoomStatus(
+                  viewingSnapshot.totals as RoomStatusRow[],
+                  new Date(viewingSnapshot.created_at),
+                )
+              }
+            >
+              Print
+            </Button>
+          </div>
+        </div>
+        ) : (
+        <div className="space-y-4">
          {viewingSnapshot.totals.length === 0 ? (
            <p className="text-sm text-muted-foreground py-4">No items in this snapshot.</p>
          ) : (
            <ul className="divide-y rounded-md border max-h-[60vh] overflow-y-auto">
-             {viewingSnapshot.totals.map((r) => (
+              {(viewingSnapshot.totals as SnapshotRow[]).map((r) => (
                <li
                  key={r.name}
                  className="flex items-center justify-between px-3 py-2 text-sm"
@@ -3041,7 +3102,7 @@ useEffect(() => {
              size="sm"
              onClick={async () => {
                try {
-                 const text = viewingSnapshot.totals
+                  const text = (viewingSnapshot.totals as SnapshotRow[])
                    .map((r) => `${r.name}: ${r.count}`)
                    .join("\n");
                  await navigator.clipboard.writeText(text);
@@ -3058,10 +3119,10 @@ useEffect(() => {
             size="sm"
             onClick={() =>
               printTotals(
-                viewingSnapshot.totals,
+                viewingSnapshot.totals as SnapshotRow[],
                 viewingSnapshot.grand_total,
                 new Date(viewingSnapshot.created_at),
-                                viewingSnapshot.kind,
+                viewingSnapshot.kind === "rejects" ? "rejects" : "totals",
               )
             }
           >
@@ -3070,6 +3131,7 @@ useEffect(() => {
           </div>
          </div>
        </div>
+        )
      )}
    </DialogContent>
  </Dialog>
