@@ -49,8 +49,14 @@ export const Route = createFileRoute("/app")({
 type Category = string;
 type RoomType = { id: string; user_id: string; value: Category; label: string; created_at: string; updated_at: string };
 
-const categoryLabel = (c: Category | null | undefined, types: RoomType[]) =>
-  types.find((x) => x.value === c)?.label ?? "Uncategorised";
+const parseCats = (c: string | null | undefined): Category[] =>
+  (c ?? "").split(",").map((s) => s.trim()).filter(Boolean);
+
+const categoryLabel = (c: Category | null | undefined, types: RoomType[]) => {
+  const vals = parseCats(c);
+  if (vals.length === 0) return "Uncategorised";
+  return vals.map((v) => types.find((t) => t.value === v)?.label ?? v).join(" / ");
+};
 
 const valueFromLabel = (label: string): Category =>
   label.toLowerCase().trim().replace(/\s+/g, "_").replace(/[^a-z0-9_]/g, "");
@@ -1073,7 +1079,12 @@ useEffect(() => {
   };
 
  // --- Room category ---
- const setRoomCategory = async (roomNumber: number, category: Category) => {
+ const toggleRoomCategory = async (roomNumber: number, value: Category) => {
+ const current = parseCats(rooms.find((r) => r.room_number === roomNumber)?.category);
+ const next = current.includes(value)
+   ? current.filter((v) => v !== value)
+   : [...current, value];
+ const category = next.join(",") || null;
  qc.setQueryData<Room[]>(["rooms"], (old) => {
  const list = old ? [...old] : [];
  const idx = list.findIndex((r) => r.room_number === roomNumber);
@@ -1171,7 +1182,7 @@ useEffect(() => {
   const deleteRoomType = async (id: string) => {
     const rt = roomTypes.find((r) => r.id === id);
     if (!rt) return;
-    const inRooms = rooms.some((r) => r.category === rt.value);
+    const inRooms = rooms.some((r) => parseCats(r.category).includes(rt.value));
     const inTemplates = template.some((t) => t.category === rt.value);
     if (inRooms || inTemplates) {
       toast.error("Cannot remove a room type that is in use");
@@ -2165,14 +2176,14 @@ useEffect(() => {
                       Room type
                     </DropdownMenuLabel>
                     {roomTypes.map((c) => {
-                      const selected = r.category === c.value;
+                      const selected = parseCats(r.category).includes(c.value);
                       return (
                         <DropdownMenuItem
                           key={c.value}
                           className="justify-between"
                           onSelect={(e) => {
                             e.preventDefault();
-                            setRoomCategory(r.room_number, c.value);
+                            toggleRoomCategory(r.room_number, c.value);
                           }}
                         >
                           <span>{c.label}</span>
