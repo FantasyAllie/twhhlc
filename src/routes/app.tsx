@@ -1397,6 +1397,10 @@ useEffect(() => {
         <Hash className="h-4 w-4 mr-2" />
         Manage Rooms
       </DropdownMenuItem>
+      <DropdownMenuItem onSelect={() => setRejectsOpen(true)}>
+        <Ban className="h-4 w-4 mr-2" />
+        Rejects
+      </DropdownMenuItem>
       <DropdownMenuSub>
         <DropdownMenuSubTrigger>
           <History className="h-4 w-4 mr-2" />
