@@ -2998,6 +2998,67 @@ useEffect(() => {
  </DialogContent>
  </Dialog>
 
+ <Dialog open={roomStatusExportOpen} onOpenChange={setRoomStatusExportOpen}>
+   <DialogContent className="max-w-3xl w-[calc(100vw-1.5rem)] sm:w-full p-4 sm:p-6">
+     <DialogHeader>
+       <DialogTitle>Room Status Sheet</DialogTitle>
+       <DialogDescription>
+         Current Room Status and Bed Set As selections across all rooms.
+       </DialogDescription>
+     </DialogHeader>
+     {(() => {
+       const { rows } = computeRoomStatus();
+       if (rows.length === 0) {
+         return (
+           <p className="text-sm text-muted-foreground py-4">
+             No rooms configured yet.
+           </p>
+         );
+       }
+       const half = Math.ceil(rows.length / 2);
+       const left = rows.slice(0, half);
+       const right = rows.slice(half);
+       const renderTable = (list: RoomStatusRow[]) => (
+         <table className="w-full text-sm border-collapse">
+           <thead className="bg-muted/50">
+             <tr>
+               <th className="text-left px-2 py-1 border">Room</th>
+               <th className="text-left px-2 py-1 border">Status</th>
+               <th className="text-left px-2 py-1 border">Set As</th>
+             </tr>
+           </thead>
+           <tbody>
+             {list.map((r) => (
+               <tr key={r.room}>
+                 <td className="px-2 py-1 border font-mono tabular-nums">{r.room}</td>
+                 <td className="px-2 py-1 border">{r.status}</td>
+                 <td className="px-2 py-1 border">{r.bed}</td>
+               </tr>
+             ))}
+           </tbody>
+         </table>
+       );
+       return (
+         <div className="space-y-4">
+           <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 max-h-[60vh] overflow-y-auto">
+             {renderTable(left)}
+             {renderTable(right)}
+           </div>
+           <div className="flex justify-end gap-2">
+             <Button
+               variant="outline"
+               size="sm"
+               onClick={() => printRoomStatus(rows, new Date())}
+             >
+               Print
+             </Button>
+           </div>
+         </div>
+       );
+     })()}
+   </DialogContent>
+ </Dialog>
+
  <Dialog open={!!viewingSnapshot} onOpenChange={(o) => !o && setViewingSnapshot(null)}>
    <DialogContent className="max-w-md w-[calc(100vw-1.5rem)] sm:w-full p-4 sm:p-6">
      <DialogHeader>
