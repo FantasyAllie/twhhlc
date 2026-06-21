@@ -1652,7 +1652,19 @@ useEffect(() => {
             {receptionBeds.length === 0 && (
               <DropdownMenuItem disabled>No bed types</DropdownMenuItem>
             )}
-            {receptionBeds.map((b) => {
+            {(() => {
+              const norm = (s: string) => s.toLowerCase().replace(/[^a-z0-9]/g, "");
+              const room = rooms.find((r) => r.room_number === n);
+              const cats = parseCats(room?.category).map(norm);
+              const hasSuperKing = cats.includes("superking");
+              const hasDouble = cats.includes("double");
+              return receptionBeds.filter((b) => {
+                const nb = norm(b.label);
+                if (hasSuperKing && nb === "double") return false;
+                if (hasDouble && (nb === "superking" || nb === "twin")) return false;
+                return true;
+              });
+            })().map((b) => {
               const room = rooms.find((r) => r.room_number === n);
               const currentBed = room?.reception_bed_id ?? null;
               const selected = currentBed === b.id;
