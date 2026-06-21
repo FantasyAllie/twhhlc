@@ -2091,7 +2091,7 @@ useEffect(() => {
         type="button"
         onClick={() => openOrToggle(n)}
         className={cn(
-            "relative rounded-md border text-xs sm:text-sm font-medium transition-colors tabular-nums aspect-square",
+            "relative rounded-md border text-xs sm:text-sm font-medium transition-colors tabular-nums aspect-square overflow-hidden",
           isOpen && "ring-2 ring-ring border-transparent bg-accent",
         )}
         style={
@@ -2114,12 +2114,13 @@ useEffect(() => {
           )}
           {receptionDoneSet.has(n) && (
             <svg
-              className="absolute bottom-0 right-0 h-6 w-6 fill-yellow-500"
+              className="absolute bottom-0 right-0 h-6 w-6 fill-yellow-500 stroke-yellow-600"
               viewBox="0 0 100 100"
               preserveAspectRatio="none"
+              strokeWidth="8"
               aria-hidden="true"
             >
-              <polygon points="100,0 100,100 0,100" />
+              <path d="M 100,0 L 100,75 A 25,25 0 0 1 75,100 L 0,100 Z" />
             </svg>
           )}
       </button>,
