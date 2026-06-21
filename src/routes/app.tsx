@@ -1182,7 +1182,7 @@ useEffect(() => {
   const deleteRoomType = async (id: string) => {
     const rt = roomTypes.find((r) => r.id === id);
     if (!rt) return;
-    const inRooms = rooms.some((r) => r.category === rt.value);
+    const inRooms = rooms.some((r) => parseCats(r.category).includes(rt.value));
     const inTemplates = template.some((t) => t.category === rt.value);
     if (inRooms || inTemplates) {
       toast.error("Cannot remove a room type that is in use");
