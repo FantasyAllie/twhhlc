@@ -1243,7 +1243,7 @@ useEffect(() => {
     }
     const { error } = await supabase
       .from("room_features" as never)
-      .insert({ value, label: clean } as never);
+      .insert({ value, label: clean, user_id: authUser?.id } as never);
     if (error) {
       toast.error(error.message);
       return;
@@ -1286,7 +1286,7 @@ useEffect(() => {
     } else {
       const { error } = await supabase
         .from("room_feature_rooms" as never)
-        .insert({ feature_id: featureId, room_number: roomNumber } as never);
+        .insert({ feature_id: featureId, room_number: roomNumber, user_id: authUser?.id } as never);
       if (error) toast.error(error.message);
     }
     qc.invalidateQueries({ queryKey: ["room_feature_rooms"] });
@@ -2174,9 +2174,10 @@ useEffect(() => {
           appear in the grid, share the Linen List, and support Room Types.
           Rejects always stays at the end.
         </DialogDescription>
+        <div className="mt-2 flex w-full gap-2">
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
-            <Button variant="outline" size="sm" className="mt-2 w-fit">
+            <Button variant="outline" size="sm" className="flex-1 min-w-0">
               <Bed className="h-4 w-4 mr-2" />
               Room Type
             </Button>
@@ -2221,10 +2222,9 @@ useEffect(() => {
             </DropdownMenuItem>
           </DropdownMenuContent>
         </DropdownMenu>
-        <div className="mt-2 flex flex-wrap gap-2">
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
-              <Button variant="outline" size="sm" className="w-fit">
+              <Button variant="outline" size="sm" className="flex-1 min-w-0">
                 <List className="h-4 w-4 mr-2" />
                 Room Features
               </Button>
