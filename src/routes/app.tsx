@@ -12,15 +12,16 @@ import { setSession } from "@/lib/auth-client";
 import { useServerFn } from "@tanstack/react-start";
 import { updateMyPassword, updateMyUsername } from "@/lib/auth.functions";
 import {
- DropdownMenu,
- DropdownMenuContent,
- DropdownMenuItem,
+  DropdownMenu,
+  DropdownMenuCheckboxItem,
+  DropdownMenuContent,
+  DropdownMenuItem,
   DropdownMenuLabel,
- DropdownMenuSeparator,
+  DropdownMenuSeparator,
   DropdownMenuSub,
   DropdownMenuSubContent,
   DropdownMenuSubTrigger,
- DropdownMenuTrigger,
+  DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import {
  Dialog,
@@ -1409,8 +1410,8 @@ useEffect(() => {
         >
           Extra linen
         </button>
-        <Popover>
-          <PopoverTrigger asChild>
+        <DropdownMenu>
+          <DropdownMenuTrigger asChild>
             <Button
               variant="outline"
               size="icon"
@@ -1420,38 +1421,36 @@ useEffect(() => {
             >
               <Pencil className="h-4 w-4" />
             </Button>
-          </PopoverTrigger>
-          <PopoverContent align="end" className="w-64 p-2">
-            <p className="px-2 pb-2 text-xs text-muted-foreground">
-              Linen items shown by default in Room {n}.
-            </p>
-            <div
-              className="max-h-64 overflow-y-auto overscroll-contain space-y-1"
-              onWheel={(e) => e.stopPropagation()}
-              onTouchMove={(e) => e.stopPropagation()}
-            >
-              {template.length === 0 ? (
-                <p className="px-2 py-1 text-sm text-muted-foreground">No items yet.</p>
-              ) : (
-                template.map((t) => {
-                  const checked = isAssigned(t.id, n);
-                  return (
-                    <label
-                      key={t.id}
-                      className="flex items-center gap-2 px-2 py-1 rounded hover:bg-accent cursor-pointer text-sm"
-                    >
-                      <Checkbox
-                        checked={checked}
-                        onCheckedChange={() => toggleAssignment(t.id, n)}
-                      />
-                      <span className="flex-1 min-w-0 break-words">{t.name}</span>
-                    </label>
-                  );
-                })
-              )}
-            </div>
-          </PopoverContent>
-        </Popover>
+          </DropdownMenuTrigger>
+          <DropdownMenuContent align="end" className="w-64">
+            {template.length === 0 ? (
+              <DropdownMenuItem disabled>No items yet.</DropdownMenuItem>
+            ) : (
+              template.map((t) => {
+                const checked = isAssigned(t.id, n);
+                return (
+                  <DropdownMenuItem
+                    key={t.id}
+                    className="justify-between"
+                    onSelect={(e) => {
+                      e.preventDefault();
+                      toggleAssignment(t.id, n);
+                    }}
+                  >
+                    <span>{t.name}</span>
+                    <span className="flex items-center gap-2 border-l border-border pl-2">
+                      {checked ? (
+                        <Check className="h-4 w-4" />
+                      ) : (
+                        <span className="inline-block h-4 w-4" />
+                      )}
+                    </span>
+                  </DropdownMenuItem>
+                );
+              })
+            )}
+          </DropdownMenuContent>
+        </DropdownMenu>
       </div>
     )}
 
