@@ -46,13 +46,14 @@ export const Route = createFileRoute("/app")({
   component: AppPage,
 });
 
-type Category = "double" | "super_king";
-const CATEGORIES: { value: Category; label: string }[] = [
- { value: "double", label: "Double" },
- { value: "super_king", label: "Super King" },
-];
-const categoryLabel = (c: Category | null | undefined) =>
- CATEGORIES.find((x) => x.value === c)?.label ?? "Uncategorised";
+type Category = string;
+type RoomType = { id: string; user_id: string; value: Category; label: string; created_at: string; updated_at: string };
+
+const categoryLabel = (c: Category | null | undefined, types: RoomType[]) =>
+  types.find((x) => x.value === c)?.label ?? "Uncategorised";
+
+const valueFromLabel = (label: string): Category =>
+  label.toLowerCase().trim().replace(/\s+/g, "_").replace(/[^a-z0-9_]/g, "");
 
 const COLOR_SWATCHES: Record<"green" | "yellow" | "red" | "blue", { bg: string; darkBg: string; border: string; solid: string; label: string }> = {
   green:  { bg: "#dcfce7", darkBg: "#14532d", border: "#86efac", solid: "#22c55e", label: "Green" },
@@ -180,11 +181,11 @@ useEffect(() => {
   if (typeof window === "undefined") return;
   window.localStorage.setItem("linen-locked", linenLocked ? "1" : "0");
 }, [linenLocked]);
- const [categoriesOpen, setCategoriesOpen] = useState(false);
- const [newTemplateName, setNewTemplateName] = useState("");
- const [newTemplateCategory, setNewTemplateCategory] = useState<Category>("double");
- const [editingItemId, setEditingItemId] = useState<string | null>(null);
- const [editingItemName, setEditingItemName] = useState("");
+  const [newTemplateName, setNewTemplateName] = useState("");
+  const [editingItemId, setEditingItemId] = useState<string | null>(null);
+  const [editingItemName, setEditingItemName] = useState("");
+  const [addRoomTypeOpen, setAddRoomTypeOpen] = useState(false);
+  const [newRoomTypeLabel, setNewRoomTypeLabel] = useState("");
  
 
  const [exportOpen, setExportOpen] = useState(false);
@@ -257,17 +258,29 @@ useEffect(() => {
  },
  });
 
- const roomsQ = useQuery({
- queryKey: ["rooms"],
- queryFn: async (): Promise<Room[]> => {
- const { data, error } = await supabase
- .from("rooms")
+  const roomsQ = useQuery({
+    queryKey: ["rooms"],
+    queryFn: async (): Promise<Room[]> => {
+      const { data, error } = await supabase
+        .from("rooms")
         .select("id,room_number,done,done_reception,category,default_status")
- .order("room_number", { ascending: true });
- if (error) throw error;
- return (data ?? []) as Room[];
- },
- });
+        .order("room_number", { ascending: true });
+      if (error) throw error;
+      return (data ?? []) as Room[];
+    },
+  });
+
+  const roomTypesQ = useQuery({
+    queryKey: ["room_types"],
+    queryFn: async (): Promise<RoomType[]> => {
+      const { data, error } = await supabase
+        .from("room_types")
+        .select("id,user_id,value,label,created_at,updated_at")
+        .order("created_at", { ascending: true });
+      if (error) throw error;
+      return (data ?? []) as RoomType[];
+    },
+  });
 
   const assignmentsQ = useQuery({
     queryKey: ["template_item_rooms"],
@@ -316,10 +329,11 @@ useEffect(() => {
     },
   });
 
- const template = templateQ.data ?? [];
- const extras = extrasQ.data ?? [];
- const counts = countsQ.data ?? [];
- const rooms = roomsQ.data ?? [];
+  const template = templateQ.data ?? [];
+  const extras = extrasQ.data ?? [];
+  const counts = countsQ.data ?? [];
+  const rooms = roomsQ.data ?? [];
+  const roomTypes = roomTypesQ.data ?? [];
   const assignments = assignmentsQ.data ?? [];
   const snapshots = snapshotsQ.data ?? [];
   const rejects = (rejectsQ.data ?? []) as RejectCount[];
@@ -536,21 +550,21 @@ useEffect(() => {
  )?.count ?? 0;
 
  // --- Template item mutations ---
- const addTemplateItem = async (e: React.FormEvent) => {
- e.preventDefault();
- const name = newTemplateName.trim();
- if (!name) return;
- const category = newTemplateCategory;
- const maxPos = template
- .filter((t) => t.category === category)
- .reduce((m, t) => Math.max(m, t.position), 0);
- setNewTemplateName("");
- const { error } = await supabase
- .from("template_items")
- .insert({ name, category, position: maxPos + 1 });
- if (error) toast.error(error.message);
- qc.invalidateQueries({ queryKey: ["template_items"] });
- };
+  const addTemplateItem = async (e: React.FormEvent) => {
+    e.preventDefault();
+    const name = newTemplateName.trim();
+    if (!name) return;
+    const category = roomTypes[0]?.value ?? "double";
+    const maxPos = template
+      .filter((t) => t.category === category)
+      .reduce((m, t) => Math.max(m, t.position), 0);
+    setNewTemplateName("");
+    const { error } = await supabase
+      .from("template_items")
+      .insert({ name, category, position: maxPos + 1 });
+    if (error) toast.error(error.message);
+    qc.invalidateQueries({ queryKey: ["template_items"] });
+  };
 
  const deleteTemplateItem = async (id: string) => {
  qc.setQueryData<TemplateItem[]>(["template_items"], (old) =>
@@ -1112,11 +1126,66 @@ useEffect(() => {
        default_status: status,
        updated_at: new Date().toISOString(),
      } as never,
-     { onConflict: "user_id,room_number" },
-   );
-   if (error) toast.error(error.message);
-   qc.invalidateQueries({ queryKey: ["rooms"] });
- };
+      { onConflict: "user_id,room_number" },
+    );
+    if (error) toast.error(error.message);
+    qc.invalidateQueries({ queryKey: ["rooms"] });
+  };
+
+  // --- Room type management ---
+  const addRoomType = async (label: string) => {
+    const clean = label.trim();
+    if (!clean) return;
+    const value = valueFromLabel(clean);
+    if (!value) {
+      toast.error("Invalid room type name");
+      return;
+    }
+    if (roomTypes.some((rt) => rt.value === value)) {
+      toast.error("Room type already exists");
+      return;
+    }
+    qc.setQueryData<RoomType[]>(["room_types"], (old) => [
+      ...(old ?? []),
+      {
+        id: `temp-${value}`,
+        user_id: authUser?.id ?? "",
+        value,
+        label: clean,
+        created_at: new Date().toISOString(),
+        updated_at: new Date().toISOString(),
+      },
+    ]);
+    const { error } = await supabase.from("room_types").insert({ value, label: clean } as never);
+    if (error) {
+      toast.error(error.message);
+      qc.invalidateQueries({ queryKey: ["room_types"] });
+      return;
+    }
+    setAddRoomTypeOpen(false);
+    setNewRoomTypeLabel("");
+    qc.invalidateQueries({ queryKey: ["room_types"] });
+    toast.success("Room type added");
+  };
+
+  const deleteRoomType = async (id: string) => {
+    const rt = roomTypes.find((r) => r.id === id);
+    if (!rt) return;
+    const inRooms = rooms.some((r) => r.category === rt.value);
+    const inTemplates = template.some((t) => t.category === rt.value);
+    if (inRooms || inTemplates) {
+      toast.error("Cannot remove a room type that is in use");
+      return;
+    }
+    qc.setQueryData<RoomType[]>(["room_types"], (old) =>
+      old?.filter((r) => r.id !== id) ?? [],
+    );
+    const { error } = await supabase.from("room_types").delete().eq("id", id);
+    if (error) {
+      toast.error(error.message);
+      qc.invalidateQueries({ queryKey: ["room_types"] });
+    }
+  };
 
  const renderRoomPanel = (n: number) => {
  const roomExtras = extras.filter((e) => e.room_number === n);
@@ -1858,43 +1927,46 @@ useEffect(() => {
  </DialogContent>
  </Dialog>
 
- {/* Room type dialog */}
- <Dialog open={categoriesOpen} onOpenChange={setCategoriesOpen}>
-<DialogContent className="max-w-lg w-[calc(100vw-1.5rem)] sm:w-full p-4 sm:p-6">
- <DialogHeader>
-               <DialogTitle>Room Type</DialogTitle>
-               <DialogDescription>
-                 Assign a type to each room so you know what it is when counting.
- </DialogDescription>
- </DialogHeader>
- <div className="max-h-[60vh] overflow-y-auto -mx-4 sm:-mx-6 px-4 sm:px-6">
- <ul className="divide-y">
- {rooms.map((r) => r.room_number).map((n) => {
- const cat = roomCategory(n);
- return (
- <li key={n} className="flex items-center gap-3 py-2">
- <span className="w-12 text-sm font-medium tabular-nums">Room {n}</span>
- <div className="flex-1 flex flex-wrap gap-1 justify-end">
- {CATEGORIES.map((c) => (
- <Button
- key={c.value}
- type="button"
- size="sm"
- variant={cat === c.value ? "default" : "outline"}
- className="h-7 text-xs"
- onClick={() => setRoomCategory(n, c.value)}
- >
- {c.label}
- </Button>
- ))}
- </div>
- </li>
- );
- })}
- </ul>
- </div>
- </DialogContent>
- </Dialog>
+  {/* Add room type dialog */}
+  <Dialog open={addRoomTypeOpen} onOpenChange={setAddRoomTypeOpen}>
+    <DialogContent className="max-w-sm w-[calc(100vw-1.5rem)] sm:w-full p-4 sm:p-6">
+      <DialogHeader>
+        <DialogTitle>Add Room Type</DialogTitle>
+        <DialogDescription>
+          Enter a name for the new room type.
+        </DialogDescription>
+      </DialogHeader>
+      <form
+        onSubmit={(e) => {
+          e.preventDefault();
+          addRoomType(newRoomTypeLabel);
+        }}
+        className="space-y-3"
+      >
+        <Input
+          placeholder="e.g. Twin"
+          value={newRoomTypeLabel}
+          onChange={(e) => setNewRoomTypeLabel(e.target.value)}
+          autoFocus
+        />
+        <div className="flex justify-end gap-2">
+          <Button
+            type="button"
+            variant="ghost"
+            onClick={() => {
+              setAddRoomTypeOpen(false);
+              setNewRoomTypeLabel("");
+            }}
+          >
+            Cancel
+          </Button>
+          <Button type="submit" disabled={!newRoomTypeLabel.trim()}>
+            Add
+          </Button>
+        </div>
+      </form>
+    </DialogContent>
+  </Dialog>
 
  {/* Rejects dialog */}
  <Dialog open={rejectsOpen} onOpenChange={setRejectsOpen}>
@@ -1976,18 +2048,53 @@ useEffect(() => {
           appear in the grid, share the Linen List, and support Room Types.
           Rejects always stays at the end.
         </DialogDescription>
-        <Button
-          variant="outline"
-          size="sm"
-          className="mt-2 w-fit"
-          onClick={() => {
-            setManageRoomsOpen(false);
-            setCategoriesOpen(true);
-          }}
-        >
-          <Bed className="h-4 w-4 mr-2" />
-          Room Type
-        </Button>
+        <DropdownMenu>
+          <DropdownMenuTrigger asChild>
+            <Button variant="outline" size="sm" className="mt-2 w-fit">
+              <Bed className="h-4 w-4 mr-2" />
+              Room Type
+            </Button>
+          </DropdownMenuTrigger>
+          <DropdownMenuContent align="start" className="min-w-[10rem]">
+            <DropdownMenuLabel className="text-[10px] uppercase tracking-wide text-muted-foreground">
+              Room types
+            </DropdownMenuLabel>
+            {roomTypes.length === 0 && (
+              <DropdownMenuItem disabled>No room types</DropdownMenuItem>
+            )}
+            {roomTypes.map((rt) => (
+              <DropdownMenuItem
+                key={rt.id}
+                className="flex items-center justify-between pr-2"
+                onSelect={(e) => e.preventDefault()}
+              >
+                <span>{rt.label}</span>
+                <button
+                  type="button"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    e.preventDefault();
+                    deleteRoomType(rt.id);
+                  }}
+                  className="ml-2 inline-flex h-6 w-6 items-center justify-center rounded text-muted-foreground hover:bg-accent hover:text-destructive"
+                  aria-label={`Remove ${rt.label}`}
+                >
+                  <X className="h-3.5 w-3.5" />
+                </button>
+              </DropdownMenuItem>
+            ))}
+            <DropdownMenuSeparator />
+            <DropdownMenuItem
+              onSelect={(e) => {
+                e.preventDefault();
+                setAddRoomTypeOpen(true);
+              }}
+            >
+              <Plus className="h-4 w-4 mr-2" />
+              Add room type
+            </DropdownMenuItem>
+          </DropdownMenuContent>
+        </DropdownMenu>
       </DialogHeader>
       <div className="space-y-3">
         <div className="flex items-end gap-2">
@@ -2057,7 +2164,7 @@ useEffect(() => {
                     <DropdownMenuLabel className="text-[10px] uppercase tracking-wide text-muted-foreground">
                       Room type
                     </DropdownMenuLabel>
-                    {CATEGORIES.map((c) => {
+                    {roomTypes.map((c) => {
                       const selected = r.category === c.value;
                       return (
                         <DropdownMenuItem
@@ -2231,7 +2338,7 @@ useEffect(() => {
  <Dialog open={openRoom !== null} onOpenChange={(o) => { if (!o) { if (openRoom !== null) setShowAllLinen(prev => ({ ...prev, [openRoom]: false })); setOpenRoom(null); setNewMessageText(""); } }}>
   <DialogContent className="max-w-2xl w-[calc(100vw-1.5rem)] sm:w-full p-4 sm:p-6 pt-10 max-h-[90vh] overflow-y-auto top-4 translate-y-0 sm:top-8 [&>button]:hidden">
     <DialogHeader className="space-y-0">
-      <DialogTitle>Room {openRoom} — {categoryLabel(roomCategory(openRoom ?? 0))}</DialogTitle>
+      <DialogTitle>Room {openRoom} — {categoryLabel(roomCategory(openRoom ?? 0), roomTypes)}</DialogTitle>
     </DialogHeader>
    {openRoom !== null && renderRoomPanel(openRoom)}
   </DialogContent>
