@@ -192,6 +192,9 @@ useEffect(() => {
   const [rejectsOpen, setRejectsOpen] = useState(false);
   const [rejectExportOpen, setRejectExportOpen] = useState(false);
   const [manageRoomsOpen, setManageRoomsOpen] = useState(false);
+  const [confirmOverwrite, setConfirmOverwrite] = useState<
+    { kind: "totals" | "rejects" } | null
+  >(null);
   const [newRoomNumber, setNewRoomNumber] = useState<string>("");
 
  // Track responsive column count so we can insert the open-room panel
