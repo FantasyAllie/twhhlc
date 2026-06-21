@@ -1156,7 +1156,7 @@ useEffect(() => {
         updated_at: new Date().toISOString(),
       },
     ]);
-    const { error } = await supabase.from("room_types").insert({ value, label: clean });
+    const { error } = await supabase.from("room_types").insert({ value, label: clean } as never);
     if (error) {
       toast.error(error.message);
       qc.invalidateQueries({ queryKey: ["room_types"] });
