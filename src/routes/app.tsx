@@ -1873,9 +1873,21 @@ useEffect(() => {
           </div>
  <div className="flex items-center gap-2">
    {!isReception && (
-     <Button variant="outline" size="sm" onClick={openExport}>
-       Export
-     </Button>
+     <DropdownMenu>
+       <DropdownMenuTrigger asChild>
+         <Button variant="outline" size="sm">Export</Button>
+       </DropdownMenuTrigger>
+       <DropdownMenuContent align="end">
+         <DropdownMenuItem onSelect={() => { openExport(); }}>
+           <List className="h-4 w-4 mr-2" />
+           Linen totals
+         </DropdownMenuItem>
+         <DropdownMenuItem onSelect={() => { openRoomStatusExport(); }}>
+           <ClipboardList className="h-4 w-4 mr-2" />
+           Room status
+         </DropdownMenuItem>
+       </DropdownMenuContent>
+     </DropdownMenu>
    )}
  <DropdownMenu>
  <DropdownMenuTrigger asChild>
