@@ -550,21 +550,21 @@ useEffect(() => {
  )?.count ?? 0;
 
  // --- Template item mutations ---
- const addTemplateItem = async (e: React.FormEvent) => {
- e.preventDefault();
- const name = newTemplateName.trim();
- if (!name) return;
- const category = newTemplateCategory;
- const maxPos = template
- .filter((t) => t.category === category)
- .reduce((m, t) => Math.max(m, t.position), 0);
- setNewTemplateName("");
- const { error } = await supabase
- .from("template_items")
- .insert({ name, category, position: maxPos + 1 });
- if (error) toast.error(error.message);
- qc.invalidateQueries({ queryKey: ["template_items"] });
- };
+  const addTemplateItem = async (e: React.FormEvent) => {
+    e.preventDefault();
+    const name = newTemplateName.trim();
+    if (!name) return;
+    const category = roomTypes[0]?.value ?? "double";
+    const maxPos = template
+      .filter((t) => t.category === category)
+      .reduce((m, t) => Math.max(m, t.position), 0);
+    setNewTemplateName("");
+    const { error } = await supabase
+      .from("template_items")
+      .insert({ name, category, position: maxPos + 1 });
+    if (error) toast.error(error.message);
+    qc.invalidateQueries({ queryKey: ["template_items"] });
+  };
 
  const deleteTemplateItem = async (id: string) => {
  qc.setQueryData<TemplateItem[]>(["template_items"], (old) =>
