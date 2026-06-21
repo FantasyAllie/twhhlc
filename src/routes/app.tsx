@@ -293,6 +293,29 @@ useEffect(() => {
     },
   });
 
+  const roomFeaturesQ = useQuery({
+    queryKey: ["room_features"],
+    queryFn: async (): Promise<RoomFeature[]> => {
+      const { data, error } = await supabase
+        .from("room_features" as never)
+        .select("id,user_id,value,label,created_at,updated_at")
+        .order("created_at", { ascending: true });
+      if (error) throw error;
+      return (data ?? []) as RoomFeature[];
+    },
+  });
+
+  const roomFeatureAssignmentsQ = useQuery({
+    queryKey: ["room_feature_rooms"],
+    queryFn: async (): Promise<RoomFeatureAssignment[]> => {
+      const { data, error } = await supabase
+        .from("room_feature_rooms" as never)
+        .select("id,feature_id,room_number");
+      if (error) throw error;
+      return (data ?? []) as RoomFeatureAssignment[];
+    },
+  });
+
   const assignmentsQ = useQuery({
     queryKey: ["template_item_rooms"],
     queryFn: async (): Promise<TemplateItemRoom[]> => {
