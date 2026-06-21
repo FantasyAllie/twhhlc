@@ -1063,6 +1063,43 @@ useEffect(() => {
     await proceedExport("rejects");
   };
 
+  const computeRoomStatus = (): {
+    rows: RoomStatusRow[];
+    grand: number;
+  } => {
+    const statusLabel = (id: string | null | undefined) =>
+      id ? receptionStatuses.find((s) => s.id === id)?.label ?? "" : "";
+    const bedLabel = (id: string | null | undefined) =>
+      id ? receptionBeds.find((b) => b.id === id)?.label ?? "" : "";
+    const rows: RoomStatusRow[] = [...rooms]
+      .sort((a, b) => a.room_number - b.room_number)
+      .map((r) => ({
+        room: r.room_number,
+        status: statusLabel(r.reception_status_id ?? r.default_status),
+        bed: bedLabel(r.reception_bed_id),
+      }));
+    return { rows, grand: rows.length };
+  };
+
+  const openRoomStatusExport = async () => {
+    const { rows } = computeRoomStatus();
+    if (rows.length === 0) {
+      setRoomStatusExportOpen(true);
+      return;
+    }
+    const today = new Date().toDateString();
+    const todays = snapshots.filter(
+      (s) =>
+        s.kind === "room_status" &&
+        new Date(s.created_at).toDateString() === today,
+    );
+    if (todays.length > 0) {
+      setConfirmOverwrite({ kind: "room_status" });
+      return;
+    }
+    await proceedExport("room_status");
+  };
+
   const deleteSnapshot = async (id: string) => {
     qc.setQueryData<ExportSnapshot[]>(["export_snapshots"], (old) =>
       old?.filter((s) => s.id !== id) ?? [],
