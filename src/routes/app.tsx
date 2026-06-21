@@ -1661,7 +1661,7 @@ useEffect(() => {
               return receptionBeds.filter((b) => {
                 const nb = norm(b.label);
                 if (hasSuperKing && nb === "double") return false;
-                if (hasDouble && (nb === "superking" || nb === "twin")) return false;
+                if (hasDouble && (nb === "king" || nb === "twin")) return false;
                 return true;
               });
             })().map((b) => {
