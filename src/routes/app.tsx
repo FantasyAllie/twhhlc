@@ -1193,6 +1193,44 @@ useEffect(() => {
     qc.invalidateQueries({ queryKey: ["rooms"] });
   };
 
+  const setRoomReceptionField = async (
+    roomNumber: number,
+    field: "reception_status_id" | "reception_bed_id",
+    value: string | null,
+  ) => {
+    qc.setQueryData<Room[]>(["rooms"], (old) => {
+      const list = old ? [...old] : [];
+      const idx = list.findIndex((r) => r.room_number === roomNumber);
+      if (idx >= 0) list[idx] = { ...list[idx], [field]: value };
+      else
+        list.push({
+          id: `temp-${roomNumber}`,
+          room_number: roomNumber,
+          done: false,
+          done_reception: false,
+          category: null,
+          default_status: null,
+          reception_status_id: field === "reception_status_id" ? value : null,
+          reception_bed_id: field === "reception_bed_id" ? value : null,
+        });
+      return list;
+    });
+    const { error } = await supabase.from("rooms").upsert(
+      {
+        room_number: roomNumber,
+        [field]: value,
+        updated_at: new Date().toISOString(),
+      } as never,
+      { onConflict: "user_id,room_number" },
+    );
+    if (error) toast.error(error.message);
+    qc.invalidateQueries({ queryKey: ["rooms"] });
+  };
+  const setRoomReceptionStatus = (n: number, v: string | null) =>
+    setRoomReceptionField(n, "reception_status_id", v);
+  const setRoomReceptionBed = (n: number, v: string | null) =>
+    setRoomReceptionField(n, "reception_bed_id", v);
+
   // --- Room type management ---
   const addRoomType = async (label: string) => {
     const clean = label.trim();
