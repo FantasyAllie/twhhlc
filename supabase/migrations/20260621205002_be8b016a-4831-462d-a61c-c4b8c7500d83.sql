@@ -1,0 +1,1 @@
+ALTER TABLE public.rooms DROP CONSTRAINT IF EXISTS rooms_default_status_check;
