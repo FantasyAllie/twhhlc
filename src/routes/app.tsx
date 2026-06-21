@@ -49,6 +49,8 @@ export const Route = createFileRoute("/app")({
 
 type Category = string;
 type RoomType = { id: string; user_id: string; value: Category; label: string; created_at: string; updated_at: string };
+type RoomFeature = { id: string; user_id: string; value: string; label: string; created_at: string; updated_at: string };
+type RoomFeatureAssignment = { id: string; feature_id: string; room_number: number };
 
 const parseCats = (c: string | null | undefined): Category[] =>
   (c ?? "").split(",").map((s) => s.trim()).filter(Boolean);
@@ -193,6 +195,8 @@ useEffect(() => {
   const [editingItemName, setEditingItemName] = useState("");
   const [addRoomTypeOpen, setAddRoomTypeOpen] = useState(false);
   const [newRoomTypeLabel, setNewRoomTypeLabel] = useState("");
+  const [addRoomFeatureOpen, setAddRoomFeatureOpen] = useState(false);
+  const [newRoomFeatureLabel, setNewRoomFeatureLabel] = useState("");
  
 
  const [exportOpen, setExportOpen] = useState(false);
@@ -289,6 +293,29 @@ useEffect(() => {
     },
   });
 
+  const roomFeaturesQ = useQuery({
+    queryKey: ["room_features"],
+    queryFn: async (): Promise<RoomFeature[]> => {
+      const { data, error } = await supabase
+        .from("room_features" as never)
+        .select("id,user_id,value,label,created_at,updated_at")
+        .order("created_at", { ascending: true });
+      if (error) throw error;
+      return (data ?? []) as RoomFeature[];
+    },
+  });
+
+  const roomFeatureAssignmentsQ = useQuery({
+    queryKey: ["room_feature_rooms"],
+    queryFn: async (): Promise<RoomFeatureAssignment[]> => {
+      const { data, error } = await supabase
+        .from("room_feature_rooms" as never)
+        .select("id,feature_id,room_number");
+      if (error) throw error;
+      return (data ?? []) as RoomFeatureAssignment[];
+    },
+  });
+
   const assignmentsQ = useQuery({
     queryKey: ["template_item_rooms"],
     queryFn: async (): Promise<TemplateItemRoom[]> => {
@@ -341,6 +368,8 @@ useEffect(() => {
   const counts = countsQ.data ?? [];
   const rooms = roomsQ.data ?? [];
   const roomTypes = roomTypesQ.data ?? [];
+  const roomFeatures = roomFeaturesQ.data ?? [];
+  const roomFeatureAssignments = roomFeatureAssignmentsQ.data ?? [];
   const assignments = assignmentsQ.data ?? [];
   const snapshots = snapshotsQ.data ?? [];
   const rejects = (rejectsQ.data ?? []) as RejectCount[];
@@ -1199,6 +1228,70 @@ useEffect(() => {
     }
   };
 
+  // --- Room feature management ---
+  const addRoomFeature = async (label: string) => {
+    const clean = label.trim();
+    if (!clean) return;
+    const value = valueFromLabel(clean);
+    if (!value) {
+      toast.error("Invalid feature name");
+      return;
+    }
+    if (roomFeatures.some((f) => f.value === value)) {
+      toast.error("Feature already exists");
+      return;
+    }
+    const { error } = await supabase
+      .from("room_features" as never)
+      .insert({ value, label: clean } as never);
+    if (error) {
+      toast.error(error.message);
+      return;
+    }
+    setAddRoomFeatureOpen(false);
+    setNewRoomFeatureLabel("");
+    qc.invalidateQueries({ queryKey: ["room_features"] });
+    toast.success("Feature added");
+  };
+
+  const deleteRoomFeature = async (id: string) => {
+    const inUse = roomFeatureAssignments.some((a) => a.feature_id === id);
+    if (inUse) {
+      toast.error("Cannot remove a feature that is in use");
+      return;
+    }
+    qc.setQueryData<RoomFeature[]>(["room_features"], (old) =>
+      old?.filter((f) => f.id !== id) ?? [],
+    );
+    const { error } = await supabase.from("room_features" as never).delete().eq("id", id);
+    if (error) {
+      toast.error(error.message);
+      qc.invalidateQueries({ queryKey: ["room_features"] });
+    }
+  };
+
+  const toggleRoomFeature = async (roomNumber: number, featureId: string) => {
+    const existing = roomFeatureAssignments.find(
+      (a) => a.feature_id === featureId && a.room_number === roomNumber,
+    );
+    if (existing) {
+      qc.setQueryData<RoomFeatureAssignment[]>(["room_feature_rooms"], (old) =>
+        old?.filter((a) => a.id !== existing.id) ?? [],
+      );
+      const { error } = await supabase
+        .from("room_feature_rooms" as never)
+        .delete()
+        .eq("id", existing.id);
+      if (error) toast.error(error.message);
+    } else {
+      const { error } = await supabase
+        .from("room_feature_rooms" as never)
+        .insert({ feature_id: featureId, room_number: roomNumber } as never);
+      if (error) toast.error(error.message);
+    }
+    qc.invalidateQueries({ queryKey: ["room_feature_rooms"] });
+  };
+
  const renderRoomPanel = (n: number) => {
  const roomExtras = extras.filter((e) => e.room_number === n);
    const showAll = !!showAllLinen[n];
@@ -1960,6 +2053,47 @@ useEffect(() => {
     </DialogContent>
   </Dialog>
 
+  {/* Add room feature dialog */}
+  <Dialog open={addRoomFeatureOpen} onOpenChange={setAddRoomFeatureOpen}>
+    <DialogContent className="max-w-sm w-[calc(100vw-1.5rem)] sm:w-full p-4 sm:p-6">
+      <DialogHeader>
+        <DialogTitle>Add Room Feature</DialogTitle>
+        <DialogDescription>
+          Enter a name for the new room feature.
+        </DialogDescription>
+      </DialogHeader>
+      <form
+        onSubmit={(e) => {
+          e.preventDefault();
+          addRoomFeature(newRoomFeatureLabel);
+        }}
+        className="space-y-3"
+      >
+        <Input
+          placeholder="e.g. Balcony"
+          value={newRoomFeatureLabel}
+          onChange={(e) => setNewRoomFeatureLabel(e.target.value)}
+          autoFocus
+        />
+        <div className="flex justify-end gap-2">
+          <Button
+            type="button"
+            variant="ghost"
+            onClick={() => {
+              setAddRoomFeatureOpen(false);
+              setNewRoomFeatureLabel("");
+            }}
+          >
+            Cancel
+          </Button>
+          <Button type="submit" disabled={!newRoomFeatureLabel.trim()}>
+            Add
+          </Button>
+        </div>
+      </form>
+    </DialogContent>
+  </Dialog>
+
  {/* Rejects dialog */}
  <Dialog open={rejectsOpen} onOpenChange={setRejectsOpen}>
    <DialogContent className="max-w-md w-[calc(100vw-1.5rem)] sm:w-full p-4 sm:p-6">
@@ -2087,6 +2221,55 @@ useEffect(() => {
             </DropdownMenuItem>
           </DropdownMenuContent>
         </DropdownMenu>
+        <div className="mt-2 flex flex-wrap gap-2">
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button variant="outline" size="sm" className="w-fit">
+                <List className="h-4 w-4 mr-2" />
+                Room Features
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="start" className="min-w-[10rem]">
+              <DropdownMenuLabel className="text-[10px] uppercase tracking-wide text-muted-foreground">
+                Room features
+              </DropdownMenuLabel>
+              {roomFeatures.length === 0 && (
+                <DropdownMenuItem disabled>No features</DropdownMenuItem>
+              )}
+              {roomFeatures.map((f) => (
+                <DropdownMenuItem
+                  key={f.id}
+                  className="flex items-center justify-between pr-2"
+                  onSelect={(e) => e.preventDefault()}
+                >
+                  <span>{f.label}</span>
+                  <button
+                    type="button"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      e.preventDefault();
+                      deleteRoomFeature(f.id);
+                    }}
+                    className="ml-2 inline-flex h-6 w-6 items-center justify-center rounded text-muted-foreground hover:bg-accent hover:text-destructive"
+                    aria-label={`Remove ${f.label}`}
+                  >
+                    <X className="h-3.5 w-3.5" />
+                  </button>
+                </DropdownMenuItem>
+              ))}
+              <DropdownMenuSeparator />
+              <DropdownMenuItem
+                onSelect={(e) => {
+                  e.preventDefault();
+                  setAddRoomFeatureOpen(true);
+                }}
+              >
+                <Plus className="h-4 w-4 mr-2" />
+                Add feature
+              </DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
+        </div>
       </DialogHeader>
       <div className="space-y-3">
         <div className="flex items-end gap-2">
@@ -2201,6 +2384,38 @@ useEffect(() => {
                         )}
                       </span>
                     </DropdownMenuItem>
+                    {roomFeatures.length > 0 && (
+                      <>
+                        <DropdownMenuSeparator />
+                        <DropdownMenuLabel className="text-[10px] uppercase tracking-wide text-muted-foreground">
+                          Room features
+                        </DropdownMenuLabel>
+                        {roomFeatures.map((f) => {
+                          const selected = roomFeatureAssignments.some(
+                            (a) => a.feature_id === f.id && a.room_number === r.room_number,
+                          );
+                          return (
+                            <DropdownMenuItem
+                              key={f.id}
+                              className="justify-between"
+                              onSelect={(e) => {
+                                e.preventDefault();
+                                toggleRoomFeature(r.room_number, f.id);
+                              }}
+                            >
+                              <span>{f.label}</span>
+                              <span className="flex items-center gap-2 border-l border-border pl-2">
+                                {selected ? (
+                                  <Check className="h-4 w-4" />
+                                ) : (
+                                  <span className="inline-block h-4 w-4" />
+                                )}
+                              </span>
+                            </DropdownMenuItem>
+                          );
+                        })}
+                      </>
+                    )}
                   </DropdownMenuContent>
                 </DropdownMenu>
                 <Button

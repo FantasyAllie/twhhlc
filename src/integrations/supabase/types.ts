@@ -116,6 +116,65 @@ export type Database = {
         }
         Relationships: []
       }
+      room_feature_rooms: {
+        Row: {
+          created_at: string
+          feature_id: string
+          id: string
+          room_number: number
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          feature_id: string
+          id?: string
+          room_number: number
+          user_id?: string
+        }
+        Update: {
+          created_at?: string
+          feature_id?: string
+          id?: string
+          room_number?: number
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "room_feature_rooms_feature_id_fkey"
+            columns: ["feature_id"]
+            isOneToOne: false
+            referencedRelation: "room_features"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      room_features: {
+        Row: {
+          created_at: string
+          id: string
+          label: string
+          updated_at: string
+          user_id: string
+          value: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          label: string
+          updated_at?: string
+          user_id?: string
+          value: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          label?: string
+          updated_at?: string
+          user_id?: string
+          value?: string
+        }
+        Relationships: []
+      }
       room_item_counts: {
         Row: {
           count: number
