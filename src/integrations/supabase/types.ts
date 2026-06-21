@@ -193,7 +193,7 @@ export type Database = {
           id?: string
           label: string
           updated_at?: string
-          user_id: string
+          user_id?: string
           value: string
         }
         Update: {
