@@ -1238,7 +1238,7 @@ useEffect(() => {
           <Popover>
             <PopoverTrigger asChild>
               <Button variant="outline" size="sm" className="h-8 text-xs flex-1" disabled={linenLocked} aria-label="Edit defaults">
-                ✏️
+                <Pencil className="h-4 w-4" />
               </Button>
             </PopoverTrigger>
             <PopoverContent align="end" className="w-64 p-2">
