@@ -4,7 +4,7 @@ import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Minus, Plus, X, Menu, ArrowUp, ArrowDown, Pencil, Check, Trash2, Lock, Unlock, Sun, Moon, List, Bed, Ban, History, Users, User, LogOut, Hash } from "lucide-react";
+import { Minus, Plus, X, Menu, ArrowUp, ArrowDown, Pencil, Check, Trash2, Lock, Unlock, Sun, Moon, List, Bed, Ban, History, Users, User, LogOut, Hash, ConciergeBell } from "lucide-react";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
 import { getToken, getStoredUser, clearSession } from "@/lib/auth-client";
@@ -51,6 +51,7 @@ type Category = string;
 type RoomType = { id: string; user_id: string; value: Category; label: string; created_at: string; updated_at: string };
 type RoomFeature = { id: string; user_id: string; value: string; label: string; created_at: string; updated_at: string };
 type RoomFeatureAssignment = { id: string; feature_id: string; room_number: number };
+type ReceptionItem = { id: string; user_id: string; kind: "status" | "bed"; label: string; created_at: string; updated_at: string };
 
 const parseCats = (c: string | null | undefined): Category[] =>
   (c ?? "").split(",").map((s) => s.trim()).filter(Boolean);
@@ -197,6 +198,8 @@ useEffect(() => {
   const [newRoomTypeLabel, setNewRoomTypeLabel] = useState("");
   const [addRoomFeatureOpen, setAddRoomFeatureOpen] = useState(false);
   const [newRoomFeatureLabel, setNewRoomFeatureLabel] = useState("");
+  const [addReceptionItemKind, setAddReceptionItemKind] = useState<"status" | "bed" | null>(null);
+  const [newReceptionItemLabel, setNewReceptionItemLabel] = useState("");
  
 
  const [exportOpen, setExportOpen] = useState(false);
@@ -316,6 +319,18 @@ useEffect(() => {
     },
   });
 
+  const receptionItemsQ = useQuery({
+    queryKey: ["reception_items"],
+    queryFn: async (): Promise<ReceptionItem[]> => {
+      const { data, error } = await supabase
+        .from("reception_items" as never)
+        .select("id,user_id,kind,label,created_at,updated_at")
+        .order("created_at", { ascending: true });
+      if (error) throw error;
+      return (data ?? []) as ReceptionItem[];
+    },
+  });
+
   const assignmentsQ = useQuery({
     queryKey: ["template_item_rooms"],
     queryFn: async (): Promise<TemplateItemRoom[]> => {
@@ -370,6 +385,9 @@ useEffect(() => {
   const roomTypes = roomTypesQ.data ?? [];
   const roomFeatures = roomFeaturesQ.data ?? [];
   const roomFeatureAssignments = roomFeatureAssignmentsQ.data ?? [];
+  const receptionItems = (receptionItemsQ.data ?? []) as ReceptionItem[];
+  const receptionStatuses = receptionItems.filter((i) => i.kind === "status");
+  const receptionBeds = receptionItems.filter((i) => i.kind === "bed");
   const assignments = assignmentsQ.data ?? [];
   const snapshots = snapshotsQ.data ?? [];
   const rejects = (rejectsQ.data ?? []) as RejectCount[];
@@ -1292,6 +1310,38 @@ useEffect(() => {
     qc.invalidateQueries({ queryKey: ["room_feature_rooms"] });
   };
 
+  // --- Reception items management ---
+  const addReceptionItem = async (kind: "status" | "bed", label: string) => {
+    const clean = label.trim();
+    if (!clean) return;
+    if (receptionItems.some((i) => i.kind === kind && i.label.toLowerCase() === clean.toLowerCase())) {
+      toast.error("Entry already exists");
+      return;
+    }
+    const { error } = await supabase
+      .from("reception_items" as never)
+      .insert({ kind, label: clean, user_id: authUser?.id } as never);
+    if (error) {
+      toast.error(error.message);
+      return;
+    }
+    setAddReceptionItemKind(null);
+    setNewReceptionItemLabel("");
+    qc.invalidateQueries({ queryKey: ["reception_items"] });
+    toast.success("Entry added");
+  };
+
+  const deleteReceptionItem = async (id: string) => {
+    qc.setQueryData<ReceptionItem[]>(["reception_items"], (old) =>
+      old?.filter((i) => i.id !== id) ?? [],
+    );
+    const { error } = await supabase.from("reception_items" as never).delete().eq("id", id);
+    if (error) {
+      toast.error(error.message);
+      qc.invalidateQueries({ queryKey: ["reception_items"] });
+    }
+  };
+
  const renderRoomPanel = (n: number) => {
  const roomExtras = extras.filter((e) => e.room_number === n);
    const showAll = !!showAllLinen[n];
@@ -2054,6 +2104,62 @@ useEffect(() => {
   </Dialog>
 
   {/* Add room feature dialog */}
+  {/* Add reception item dialog */}
+  <Dialog
+    open={addReceptionItemKind !== null}
+    onOpenChange={(o) => {
+      if (!o) {
+        setAddReceptionItemKind(null);
+        setNewReceptionItemLabel("");
+      }
+    }}
+  >
+    <DialogContent className="max-w-sm w-[calc(100vw-1.5rem)] sm:w-full p-4 sm:p-6">
+      <DialogHeader>
+        <DialogTitle>
+          {addReceptionItemKind === "bed" ? "Add Bed Type" : "Add Room Status"}
+        </DialogTitle>
+        <DialogDescription>
+          {addReceptionItemKind === "bed"
+            ? "Enter a name for the new bed type."
+            : "Enter a name for the new room status."}
+        </DialogDescription>
+      </DialogHeader>
+      <form
+        onSubmit={(e) => {
+          e.preventDefault();
+          if (addReceptionItemKind) {
+            addReceptionItem(addReceptionItemKind, newReceptionItemLabel);
+          }
+        }}
+        className="space-y-3"
+      >
+        <Input
+          placeholder={addReceptionItemKind === "bed" ? "e.g. King" : "e.g. Arrival"}
+          value={newReceptionItemLabel}
+          onChange={(e) => setNewReceptionItemLabel(e.target.value)}
+          autoFocus
+        />
+        <div className="flex justify-end gap-2">
+          <Button
+            type="button"
+            variant="ghost"
+            onClick={() => {
+              setAddReceptionItemKind(null);
+              setNewReceptionItemLabel("");
+            }}
+          >
+            Cancel
+          </Button>
+          <Button type="submit" disabled={!newReceptionItemLabel.trim()}>
+            Add
+          </Button>
+        </div>
+      </form>
+    </DialogContent>
+  </Dialog>
+
+  {/* Add room feature dialog */}
   <Dialog open={addRoomFeatureOpen} onOpenChange={setAddRoomFeatureOpen}>
     <DialogContent className="max-w-sm w-[calc(100vw-1.5rem)] sm:w-full p-4 sm:p-6">
       <DialogHeader>
@@ -2266,6 +2372,91 @@ useEffect(() => {
               >
                 <Plus className="h-4 w-4 mr-2" />
                 Add feature
+              </DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
+        </div>
+        <div className="mt-2 flex w-full gap-2">
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button variant="outline" size="sm" className="flex-1 min-w-0">
+                <ConciergeBell className="h-4 w-4 mr-2" />
+                Reception
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="start" className="min-w-[12rem]">
+              <DropdownMenuLabel className="text-[10px] uppercase tracking-wide text-muted-foreground">
+                Room Status
+              </DropdownMenuLabel>
+              {receptionStatuses.length === 0 && (
+                <DropdownMenuItem disabled>No statuses</DropdownMenuItem>
+              )}
+              {receptionStatuses.map((s) => (
+                <DropdownMenuItem
+                  key={s.id}
+                  className="flex items-center justify-between pr-2"
+                  onSelect={(e) => e.preventDefault()}
+                >
+                  <span>{s.label}</span>
+                  <button
+                    type="button"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      e.preventDefault();
+                      deleteReceptionItem(s.id);
+                    }}
+                    className="ml-2 inline-flex h-6 w-6 items-center justify-center rounded text-muted-foreground hover:bg-accent hover:text-destructive"
+                    aria-label={`Remove ${s.label}`}
+                  >
+                    <X className="h-3.5 w-3.5" />
+                  </button>
+                </DropdownMenuItem>
+              ))}
+              <DropdownMenuItem
+                onSelect={(e) => {
+                  e.preventDefault();
+                  setAddReceptionItemKind("status");
+                }}
+              >
+                <Plus className="h-4 w-4 mr-2" />
+                Add status
+              </DropdownMenuItem>
+              <DropdownMenuSeparator />
+              <DropdownMenuLabel className="text-[10px] uppercase tracking-wide text-muted-foreground">
+                Bed set as
+              </DropdownMenuLabel>
+              {receptionBeds.length === 0 && (
+                <DropdownMenuItem disabled>No bed types</DropdownMenuItem>
+              )}
+              {receptionBeds.map((b) => (
+                <DropdownMenuItem
+                  key={b.id}
+                  className="flex items-center justify-between pr-2"
+                  onSelect={(e) => e.preventDefault()}
+                >
+                  <span>{b.label}</span>
+                  <button
+                    type="button"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      e.preventDefault();
+                      deleteReceptionItem(b.id);
+                    }}
+                    className="ml-2 inline-flex h-6 w-6 items-center justify-center rounded text-muted-foreground hover:bg-accent hover:text-destructive"
+                    aria-label={`Remove ${b.label}`}
+                  >
+                    <X className="h-3.5 w-3.5" />
+                  </button>
+                </DropdownMenuItem>
+              ))}
+              <DropdownMenuItem
+                onSelect={(e) => {
+                  e.preventDefault();
+                  setAddReceptionItemKind("bed");
+                }}
+              >
+                <Plus className="h-4 w-4 mr-2" />
+                Add bed type
               </DropdownMenuItem>
             </DropdownMenuContent>
           </DropdownMenu>
