@@ -209,13 +209,12 @@ useEffect(() => {
   const [rejectExportOpen, setRejectExportOpen] = useState(false);
   const [manageRoomsOpen, setManageRoomsOpen] = useState(false);
   const [confirmOverwrite, setConfirmOverwrite] = useState<
-    { kind: "totals" | "rejects" } | null
+    { kind: "totals" | "rejects" | "room_status" } | null
   >(null);
   const [newRoomNumber, setNewRoomNumber] = useState<string>("");
 
-  // Per-room reception dropdown state (occupancy + bed type). Local-only.
-  const [roomOccupancy, setRoomOccupancy] = useState<Record<number, string | null>>({});
-  const [roomBedType, setRoomBedType] = useState<Record<number, string | null>>({});
+  // Per-room reception selections are now persisted on the rooms table;
+  // read/write helpers below.
 
  // Track responsive column count so we can insert the open-room panel
  // right after the row containing the clicked room.
@@ -274,7 +273,7 @@ useEffect(() => {
     queryFn: async (): Promise<Room[]> => {
       const { data, error } = await supabase
         .from("rooms")
-        .select("id,room_number,done,done_reception,category,default_status")
+        .select("id,room_number,done,done_reception,category,default_status,reception_status_id,reception_bed_id")
         .order("room_number", { ascending: true });
       if (error) throw error;
       return (data ?? []) as Room[];
