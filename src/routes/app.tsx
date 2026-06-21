@@ -49,8 +49,14 @@ export const Route = createFileRoute("/app")({
 type Category = string;
 type RoomType = { id: string; user_id: string; value: Category; label: string; created_at: string; updated_at: string };
 
-const categoryLabel = (c: Category | null | undefined, types: RoomType[]) =>
-  types.find((x) => x.value === c)?.label ?? "Uncategorised";
+const parseCats = (c: string | null | undefined): Category[] =>
+  (c ?? "").split(",").map((s) => s.trim()).filter(Boolean);
+
+const categoryLabel = (c: Category | null | undefined, types: RoomType[]) => {
+  const vals = parseCats(c);
+  if (vals.length === 0) return "Uncategorised";
+  return vals.map((v) => types.find((t) => t.value === v)?.label ?? v).join(" / ");
+};
 
 const valueFromLabel = (label: string): Category =>
   label.toLowerCase().trim().replace(/\s+/g, "_").replace(/[^a-z0-9_]/g, "");
