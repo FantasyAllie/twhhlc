@@ -2347,7 +2347,7 @@ useEffect(() => {
  </div>
 
  <Dialog open={openRoom !== null} onOpenChange={(o) => { if (!o) { if (openRoom !== null) setShowAllLinen(prev => ({ ...prev, [openRoom]: false })); setOpenRoom(null); setNewMessageText(""); } }}>
-  <DialogContent className="max-w-2xl w-[calc(100vw-1.5rem)] sm:w-full p-4 sm:p-6 pt-10 max-h-[90vh] overflow-y-auto top-4 translate-y-0 sm:top-8 [&>button]:hidden">
+   <DialogContent className="max-w-2xl p-4 sm:p-6">
     <DialogHeader className="space-y-0">
       <DialogTitle>Room {openRoom} — {categoryLabel(roomCategory(openRoom ?? 0), roomTypes)}</DialogTitle>
     </DialogHeader>
