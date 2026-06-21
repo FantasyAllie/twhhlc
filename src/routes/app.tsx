@@ -1310,6 +1310,38 @@ useEffect(() => {
     qc.invalidateQueries({ queryKey: ["room_feature_rooms"] });
   };
 
+  // --- Reception items management ---
+  const addReceptionItem = async (kind: "status" | "bed", label: string) => {
+    const clean = label.trim();
+    if (!clean) return;
+    if (receptionItems.some((i) => i.kind === kind && i.label.toLowerCase() === clean.toLowerCase())) {
+      toast.error("Entry already exists");
+      return;
+    }
+    const { error } = await supabase
+      .from("reception_items" as never)
+      .insert({ kind, label: clean, user_id: authUser?.id } as never);
+    if (error) {
+      toast.error(error.message);
+      return;
+    }
+    setAddReceptionItemKind(null);
+    setNewReceptionItemLabel("");
+    qc.invalidateQueries({ queryKey: ["reception_items"] });
+    toast.success("Entry added");
+  };
+
+  const deleteReceptionItem = async (id: string) => {
+    qc.setQueryData<ReceptionItem[]>(["reception_items"], (old) =>
+      old?.filter((i) => i.id !== id) ?? [],
+    );
+    const { error } = await supabase.from("reception_items" as never).delete().eq("id", id);
+    if (error) {
+      toast.error(error.message);
+      qc.invalidateQueries({ queryKey: ["reception_items"] });
+    }
+  };
+
  const renderRoomPanel = (n: number) => {
  const roomExtras = extras.filter((e) => e.room_number === n);
    const showAll = !!showAllLinen[n];
