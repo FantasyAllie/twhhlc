@@ -319,6 +319,18 @@ useEffect(() => {
     },
   });
 
+  const receptionItemsQ = useQuery({
+    queryKey: ["reception_items"],
+    queryFn: async (): Promise<ReceptionItem[]> => {
+      const { data, error } = await supabase
+        .from("reception_items" as never)
+        .select("id,user_id,kind,label,created_at,updated_at")
+        .order("created_at", { ascending: true });
+      if (error) throw error;
+      return (data ?? []) as ReceptionItem[];
+    },
+  });
+
   const assignmentsQ = useQuery({
     queryKey: ["template_item_rooms"],
     queryFn: async (): Promise<TemplateItemRoom[]> => {
@@ -373,6 +385,9 @@ useEffect(() => {
   const roomTypes = roomTypesQ.data ?? [];
   const roomFeatures = roomFeaturesQ.data ?? [];
   const roomFeatureAssignments = roomFeatureAssignmentsQ.data ?? [];
+  const receptionItems = (receptionItemsQ.data ?? []) as ReceptionItem[];
+  const receptionStatuses = receptionItems.filter((i) => i.kind === "status");
+  const receptionBeds = receptionItems.filter((i) => i.kind === "bed");
   const assignments = assignmentsQ.data ?? [];
   const snapshots = snapshotsQ.data ?? [];
   const rejects = (rejectsQ.data ?? []) as RejectCount[];
