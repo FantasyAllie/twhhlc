@@ -4,7 +4,7 @@ import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Minus, Plus, X, Menu, ArrowUp, ArrowDown, Pencil, Check, Trash2, Lock, Unlock, Sun, Moon, List, Bed, Ban, History, Users, User, LogOut, Hash, ConciergeBell } from "lucide-react";
+import { Minus, Plus, X, Menu, ArrowUp, ArrowDown, Pencil, Check, Trash2, Lock, Unlock, Sun, Moon, List, Bed, Ban, History, Users, User, LogOut, Hash, ConciergeBell, ClipboardList } from "lucide-react";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
 import { getToken, getStoredUser, clearSession } from "@/lib/auth-client";
@@ -82,15 +82,16 @@ type RoomCount = {
  item_id: string;
  count: number;
 };
-type Room = { id: string; room_number: number; done: boolean; done_reception: boolean; category: Category | null; default_status: string | null };
+type Room = { id: string; room_number: number; done: boolean; done_reception: boolean; category: Category | null; default_status: string | null; reception_status_id: string | null; reception_bed_id: string | null };
 type TemplateItemRoom = { id: string; template_item_id: string; room_number: number };
 type SnapshotRow = { name: string; count: number };
+type RoomStatusRow = { room: number; status: string; bed: string };
 type ExportSnapshot = {
   id: string;
   created_at: string;
-  totals: SnapshotRow[];
+  totals: SnapshotRow[] | RoomStatusRow[];
   grand_total: number;
-  kind?: "totals" | "rejects";
+  kind?: "totals" | "rejects" | "room_status";
 };
 type RejectCount = { id: string; template_item_id: string; count: number };
 type RoomMessage = {
@@ -206,15 +207,15 @@ useEffect(() => {
   const [viewingSnapshot, setViewingSnapshot] = useState<ExportSnapshot | null>(null);
   const [rejectsOpen, setRejectsOpen] = useState(false);
   const [rejectExportOpen, setRejectExportOpen] = useState(false);
+  const [roomStatusExportOpen, setRoomStatusExportOpen] = useState(false);
   const [manageRoomsOpen, setManageRoomsOpen] = useState(false);
   const [confirmOverwrite, setConfirmOverwrite] = useState<
-    { kind: "totals" | "rejects" } | null
+    { kind: "totals" | "rejects" | "room_status" } | null
   >(null);
   const [newRoomNumber, setNewRoomNumber] = useState<string>("");
 
-  // Per-room reception dropdown state (occupancy + bed type). Local-only.
-  const [roomOccupancy, setRoomOccupancy] = useState<Record<number, string | null>>({});
-  const [roomBedType, setRoomBedType] = useState<Record<number, string | null>>({});
+  // Per-room reception selections are now persisted on the rooms table;
+  // read/write helpers below.
 
  // Track responsive column count so we can insert the open-room panel
  // right after the row containing the clicked room.
@@ -273,7 +274,7 @@ useEffect(() => {
     queryFn: async (): Promise<Room[]> => {
       const { data, error } = await supabase
         .from("rooms")
-        .select("id,room_number,done,done_reception,category,default_status")
+        .select("id,room_number,done,done_reception,category,default_status,reception_status_id,reception_bed_id")
         .order("room_number", { ascending: true });
       if (error) throw error;
       return (data ?? []) as Room[];
@@ -512,6 +513,8 @@ useEffect(() => {
           done_reception: next,
           default_status: null,
           category: null,
+          reception_status_id: null,
+          reception_bed_id: null,
         });
       return list;
     });
@@ -775,7 +778,7 @@ useEffect(() => {
   const list = old ? [...old] : [];
   const idx = list.findIndex((r) => r.room_number === roomNumber);
   if (idx >= 0) list[idx] = { ...list[idx], done: true };
-  else list.push({ id: `temp-${roomNumber}`, room_number: roomNumber, done: true, done_reception: false, category: null, default_status: null });
+  else list.push({ id: `temp-${roomNumber}`, room_number: roomNumber, done: true, done_reception: false, category: null, default_status: null, reception_status_id: null, reception_bed_id: null });
   return list;
   });
   const { error: roomErr } = await supabase.from("rooms").upsert(
@@ -876,7 +879,7 @@ useEffect(() => {
     }
     qc.setQueryData<Room[]>(["rooms"], (old) => {
       const list = old ? [...old] : [];
-      list.push({ id: `temp-${n}`, room_number: n, done: false, done_reception: false, category: null, default_status: null });
+      list.push({ id: `temp-${n}`, room_number: n, done: false, done_reception: false, category: null, default_status: null, reception_status_id: null, reception_bed_id: null });
       list.sort((a, b) => a.room_number - b.room_number);
       return list;
     });
@@ -935,7 +938,9 @@ useEffect(() => {
     return { rows, grand };
   };
 
-  const pruneSnapshots = async (kind: "totals" | "rejects") => {
+  const pruneSnapshots = async (
+    kind: "totals" | "rejects" | "room_status",
+  ) => {
     const { data } = await supabase
       .from("export_snapshots")
       .select("id,created_at")
@@ -977,12 +982,21 @@ useEffect(() => {
     await proceedExport("totals");
   };
 
-  const proceedExport = async (kind: "totals" | "rejects") => {
-    const { rows, grand } =
-      kind === "totals" ? computeTotals() : computeRejectTotals();
+  const proceedExport = async (
+    kind: "totals" | "rejects" | "room_status",
+  ) => {
+    const computed =
+      kind === "totals"
+        ? computeTotals()
+        : kind === "rejects"
+        ? computeRejectTotals()
+        : computeRoomStatus();
+    const rows = computed.rows as SnapshotRow[] | RoomStatusRow[];
+    const grand = computed.grand;
     if (rows.length === 0) {
       if (kind === "totals") setExportOpen(true);
-      else setRejectExportOpen(true);
+      else if (kind === "rejects") setRejectExportOpen(true);
+      else setRoomStatusExportOpen(true);
       return;
     }
     const today = new Date().toDateString();
@@ -1004,7 +1018,8 @@ useEffect(() => {
       }
     }
     if (kind === "totals") setExportOpen(true);
-    else setRejectExportOpen(true);
+    else if (kind === "rejects") setRejectExportOpen(true);
+    else setRoomStatusExportOpen(true);
     const { error } = await supabase
       .from("export_snapshots")
       .insert({ totals: rows, grand_total: grand, kind } as never);
@@ -1046,6 +1061,43 @@ useEffect(() => {
       return;
     }
     await proceedExport("rejects");
+  };
+
+  const computeRoomStatus = (): {
+    rows: RoomStatusRow[];
+    grand: number;
+  } => {
+    const statusLabel = (id: string | null | undefined) =>
+      id ? receptionStatuses.find((s) => s.id === id)?.label ?? "" : "";
+    const bedLabel = (id: string | null | undefined) =>
+      id ? receptionBeds.find((b) => b.id === id)?.label ?? "" : "";
+    const rows: RoomStatusRow[] = [...rooms]
+      .sort((a, b) => a.room_number - b.room_number)
+      .map((r) => ({
+        room: r.room_number,
+        status: statusLabel(r.reception_status_id ?? r.default_status),
+        bed: bedLabel(r.reception_bed_id),
+      }));
+    return { rows, grand: rows.length };
+  };
+
+  const openRoomStatusExport = async () => {
+    const { rows } = computeRoomStatus();
+    if (rows.length === 0) {
+      setRoomStatusExportOpen(true);
+      return;
+    }
+    const today = new Date().toDateString();
+    const todays = snapshots.filter(
+      (s) =>
+        s.kind === "room_status" &&
+        new Date(s.created_at).toDateString() === today,
+    );
+    if (todays.length > 0) {
+      setConfirmOverwrite({ kind: "room_status" });
+      return;
+    }
+    await proceedExport("room_status");
   };
 
   const deleteSnapshot = async (id: string) => {
@@ -1122,6 +1174,52 @@ useEffect(() => {
     win.document.close();
   };
 
+  const printRoomStatus = (rows: RoomStatusRow[], when: Date) => {
+    const dateStr = when.toLocaleDateString(undefined, {
+      year: "numeric",
+      month: "long",
+      day: "numeric",
+    });
+    const win = window.open("", "_blank");
+    if (!win) {
+      toast.error("Pop-up blocked");
+      return;
+    }
+    const esc = (s: string) =>
+      s.replace(/[<>&]/g, (ch) => ({ "<": "&lt;", ">": "&gt;", "&": "&amp;" }[ch]!));
+    const half = Math.ceil(rows.length / 2);
+    const left = rows.slice(0, half);
+    const right = rows.slice(half);
+    const trs = (list: RoomStatusRow[]) =>
+      list
+        .map(
+          (r) =>
+            `<tr><td class="num">${r.room}</td><td>${esc(r.status)}</td><td>${esc(r.bed)}</td></tr>`,
+        )
+        .join("");
+    const tableHead = `<thead><tr><th>Room</th><th>Status</th><th>Set As</th></tr></thead>`;
+    win.document.write(`<!doctype html><html><head><title>Room Status Sheet - ${dateStr}</title><style>
+      body{font-family:system-ui,-apple-system,sans-serif;color:#000;background:#fff;padding:1.5rem;max-width:900px;margin:0 auto;}
+      h1{font-size:1.5rem;margin:0 0 .25rem;text-align:center;text-decoration:underline;}
+      .date{margin:0 0 1.25rem;font-size:.95rem;text-align:center;}
+      .grid{display:grid;grid-template-columns:1fr 1fr;gap:1rem;}
+      table{width:100%;border-collapse:collapse;font-size:.95rem;}
+      th,td{text-align:left;padding:.35rem .5rem;border:1px solid #444;}
+      th.num,td.num{text-align:center;font-variant-numeric:tabular-nums;width:3rem;}
+      th{background:#eee;}
+      @media print{body{padding:0;}}
+    </style></head><body>
+      <h1>Room Status Sheet</h1>
+      <p class="date">${dateStr}</p>
+      <div class="grid">
+        <table>${tableHead}<tbody>${trs(left)}</tbody></table>
+        <table>${tableHead}<tbody>${trs(right)}</tbody></table>
+      </div>
+      <script>window.onload=()=>{window.print();}</script>
+    </body></html>`);
+    win.document.close();
+  };
+
  // --- Room category ---
  const toggleRoomCategory = async (roomNumber: number, value: Category) => {
  const current = parseCats(rooms.find((r) => r.room_number === roomNumber)?.category);
@@ -1141,6 +1239,8 @@ useEffect(() => {
  done_reception: false,
  category,
   default_status: null,
+  reception_status_id: null,
+  reception_bed_id: null,
  });
  return list;
  });
@@ -1172,6 +1272,8 @@ useEffect(() => {
          done_reception: false,
          category: null,
          default_status: status,
+          reception_status_id: null,
+          reception_bed_id: null,
        });
      return list;
    });
@@ -1186,6 +1288,44 @@ useEffect(() => {
     if (error) toast.error(error.message);
     qc.invalidateQueries({ queryKey: ["rooms"] });
   };
+
+  const setRoomReceptionField = async (
+    roomNumber: number,
+    field: "reception_status_id" | "reception_bed_id",
+    value: string | null,
+  ) => {
+    qc.setQueryData<Room[]>(["rooms"], (old) => {
+      const list = old ? [...old] : [];
+      const idx = list.findIndex((r) => r.room_number === roomNumber);
+      if (idx >= 0) list[idx] = { ...list[idx], [field]: value };
+      else
+        list.push({
+          id: `temp-${roomNumber}`,
+          room_number: roomNumber,
+          done: false,
+          done_reception: false,
+          category: null,
+          default_status: null,
+          reception_status_id: field === "reception_status_id" ? value : null,
+          reception_bed_id: field === "reception_bed_id" ? value : null,
+        });
+      return list;
+    });
+    const { error } = await supabase.from("rooms").upsert(
+      {
+        room_number: roomNumber,
+        [field]: value,
+        updated_at: new Date().toISOString(),
+      } as never,
+      { onConflict: "user_id,room_number" },
+    );
+    if (error) toast.error(error.message);
+    qc.invalidateQueries({ queryKey: ["rooms"] });
+  };
+  const setRoomReceptionStatus = (n: number, v: string | null) =>
+    setRoomReceptionField(n, "reception_status_id", v);
+  const setRoomReceptionBed = (n: number, v: string | null) =>
+    setRoomReceptionField(n, "reception_bed_id", v);
 
   // --- Room type management ---
   const addRoomType = async (label: string) => {
@@ -1484,10 +1624,9 @@ useEffect(() => {
               <DropdownMenuItem disabled>No statuses</DropdownMenuItem>
             )}
             {receptionStatuses.map((s) => {
+              const room = rooms.find((r) => r.room_number === n);
               const occ =
-                roomOccupancy[n] !== undefined
-                  ? roomOccupancy[n]
-                  : rooms.find((r) => r.room_number === n)?.default_status ?? null;
+                room?.reception_status_id ?? room?.default_status ?? null;
               const selected = occ === s.id;
               return (
                 <DropdownMenuItem
@@ -1495,10 +1634,7 @@ useEffect(() => {
                   className="justify-between"
                   onSelect={(e) => {
                     e.preventDefault();
-                    setRoomOccupancy((prev) => ({
-                      ...prev,
-                      [n]: occ === s.id ? null : s.id,
-                    }));
+                    setRoomReceptionStatus(n, occ === s.id ? null : s.id);
                   }}
                 >
                   <span>{s.label}</span>
@@ -1517,17 +1653,16 @@ useEffect(() => {
               <DropdownMenuItem disabled>No bed types</DropdownMenuItem>
             )}
             {receptionBeds.map((b) => {
-              const selected = roomBedType[n] === b.id;
+              const room = rooms.find((r) => r.room_number === n);
+              const currentBed = room?.reception_bed_id ?? null;
+              const selected = currentBed === b.id;
               return (
                 <DropdownMenuItem
                   key={b.id}
                   className="justify-between"
                   onSelect={(e) => {
                     e.preventDefault();
-                    setRoomBedType((prev) => ({
-                      ...prev,
-                      [n]: prev[n] === b.id ? null : b.id,
-                    }));
+                    setRoomReceptionBed(n, currentBed === b.id ? null : b.id);
                   }}
                 >
                   <span>{b.label}</span>
@@ -1738,9 +1873,21 @@ useEffect(() => {
           </div>
  <div className="flex items-center gap-2">
    {!isReception && (
-     <Button variant="outline" size="sm" onClick={openExport}>
-       Export
-     </Button>
+     <DropdownMenu>
+       <DropdownMenuTrigger asChild>
+         <Button variant="outline" size="sm">Export</Button>
+       </DropdownMenuTrigger>
+       <DropdownMenuContent align="end">
+         <DropdownMenuItem onSelect={() => { openExport(); }}>
+           <List className="h-4 w-4 mr-2" />
+           Linen totals
+         </DropdownMenuItem>
+         <DropdownMenuItem onSelect={() => { openRoomStatusExport(); }}>
+           <ClipboardList className="h-4 w-4 mr-2" />
+           Room status
+         </DropdownMenuItem>
+       </DropdownMenuContent>
+     </DropdownMenu>
    )}
  <DropdownMenu>
  <DropdownMenuTrigger asChild>
@@ -1807,6 +1954,11 @@ useEffect(() => {
                       {s.kind === "rejects" && (
                         <span className="ml-2 text-xs uppercase tracking-wide text-muted-foreground">
                           Rejects
+                        </span>
+                      )}
+                      {s.kind === "room_status" && (
+                        <span className="ml-2 text-xs uppercase tracking-wide text-muted-foreground">
+                          Room status
                         </span>
                       )}
                       <span className="ml-2 text-xs text-muted-foreground">
@@ -2846,6 +2998,67 @@ useEffect(() => {
  </DialogContent>
  </Dialog>
 
+ <Dialog open={roomStatusExportOpen} onOpenChange={setRoomStatusExportOpen}>
+   <DialogContent className="max-w-3xl w-[calc(100vw-1.5rem)] sm:w-full p-4 sm:p-6">
+     <DialogHeader>
+       <DialogTitle>Room Status Sheet</DialogTitle>
+       <DialogDescription>
+         Current Room Status and Bed Set As selections across all rooms.
+       </DialogDescription>
+     </DialogHeader>
+     {(() => {
+       const { rows } = computeRoomStatus();
+       if (rows.length === 0) {
+         return (
+           <p className="text-sm text-muted-foreground py-4">
+             No rooms configured yet.
+           </p>
+         );
+       }
+       const half = Math.ceil(rows.length / 2);
+       const left = rows.slice(0, half);
+       const right = rows.slice(half);
+       const renderTable = (list: RoomStatusRow[]) => (
+         <table className="w-full text-sm border-collapse">
+           <thead className="bg-muted/50">
+             <tr>
+               <th className="text-left px-2 py-1 border">Room</th>
+               <th className="text-left px-2 py-1 border">Status</th>
+               <th className="text-left px-2 py-1 border">Set As</th>
+             </tr>
+           </thead>
+           <tbody>
+             {list.map((r) => (
+               <tr key={r.room}>
+                 <td className="px-2 py-1 border font-mono tabular-nums">{r.room}</td>
+                 <td className="px-2 py-1 border">{r.status}</td>
+                 <td className="px-2 py-1 border">{r.bed}</td>
+               </tr>
+             ))}
+           </tbody>
+         </table>
+       );
+       return (
+         <div className="space-y-4">
+           <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 max-h-[60vh] overflow-y-auto">
+             {renderTable(left)}
+             {renderTable(right)}
+           </div>
+           <div className="flex justify-end gap-2">
+             <Button
+               variant="outline"
+               size="sm"
+               onClick={() => printRoomStatus(rows, new Date())}
+             >
+               Print
+             </Button>
+           </div>
+         </div>
+       );
+     })()}
+   </DialogContent>
+ </Dialog>
+
  <Dialog open={!!viewingSnapshot} onOpenChange={(o) => !o && setViewingSnapshot(null)}>
    <DialogContent className="max-w-md w-[calc(100vw-1.5rem)] sm:w-full p-4 sm:p-6">
      <DialogHeader>
@@ -2863,12 +3076,73 @@ useEffect(() => {
        <DialogDescription>Saved totals from this export.</DialogDescription>
      </DialogHeader>
      {viewingSnapshot && (
-       <div className="space-y-4">
+        viewingSnapshot.kind === "room_status" ? (
+        <div className="space-y-4">
+          {viewingSnapshot.totals.length === 0 ? (
+            <p className="text-sm text-muted-foreground py-4">No rooms in this snapshot.</p>
+          ) : (
+            <div className="rounded-md border max-h-[60vh] overflow-y-auto">
+              <table className="w-full text-sm">
+                <thead className="bg-muted/50 sticky top-0">
+                  <tr>
+                    <th className="text-left px-3 py-2">Room</th>
+                    <th className="text-left px-3 py-2">Status</th>
+                    <th className="text-left px-3 py-2">Set As</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {(viewingSnapshot.totals as RoomStatusRow[]).map((r) => (
+                    <tr key={r.room} className="border-t">
+                      <td className="px-3 py-1.5 font-mono tabular-nums">{r.room}</td>
+                      <td className="px-3 py-1.5">{r.status}</td>
+                      <td className="px-3 py-1.5">{r.bed}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          )}
+          <div className="flex items-center justify-between text-sm">
+            <span className="text-muted-foreground">
+              {viewingSnapshot.totals.length} room
+              {viewingSnapshot.totals.length === 1 ? "" : "s"}
+            </span>
+          </div>
+          <div className="flex justify-between gap-2">
+            <Button
+              variant="ghost"
+              size="sm"
+              className="text-destructive hover:text-destructive"
+              onClick={async () => {
+                if (!confirm("Delete this snapshot?")) return;
+                const id = viewingSnapshot.id;
+                setViewingSnapshot(null);
+                await deleteSnapshot(id);
+              }}
+            >
+              Delete
+            </Button>
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() =>
+                printRoomStatus(
+                  viewingSnapshot.totals as RoomStatusRow[],
+                  new Date(viewingSnapshot.created_at),
+                )
+              }
+            >
+              Print
+            </Button>
+          </div>
+        </div>
+        ) : (
+        <div className="space-y-4">
          {viewingSnapshot.totals.length === 0 ? (
            <p className="text-sm text-muted-foreground py-4">No items in this snapshot.</p>
          ) : (
            <ul className="divide-y rounded-md border max-h-[60vh] overflow-y-auto">
-             {viewingSnapshot.totals.map((r) => (
+              {(viewingSnapshot.totals as SnapshotRow[]).map((r) => (
                <li
                  key={r.name}
                  className="flex items-center justify-between px-3 py-2 text-sm"
@@ -2906,7 +3180,7 @@ useEffect(() => {
              size="sm"
              onClick={async () => {
                try {
-                 const text = viewingSnapshot.totals
+                  const text = (viewingSnapshot.totals as SnapshotRow[])
                    .map((r) => `${r.name}: ${r.count}`)
                    .join("\n");
                  await navigator.clipboard.writeText(text);
@@ -2923,10 +3197,10 @@ useEffect(() => {
             size="sm"
             onClick={() =>
               printTotals(
-                viewingSnapshot.totals,
+                viewingSnapshot.totals as SnapshotRow[],
                 viewingSnapshot.grand_total,
                 new Date(viewingSnapshot.created_at),
-                                viewingSnapshot.kind,
+                viewingSnapshot.kind === "rejects" ? "rejects" : "totals",
               )
             }
           >
@@ -2935,6 +3209,7 @@ useEffect(() => {
           </div>
          </div>
        </div>
+        )
      )}
    </DialogContent>
  </Dialog>
@@ -3017,6 +3292,8 @@ useEffect(() => {
         <DialogDescription>
           {confirmOverwrite?.kind === "rejects"
             ? "A rejects export already exists for today. Continuing will overwrite today's last history item. Please use the history feature to print previous exports. Would you like to continue with your export?"
+            : confirmOverwrite?.kind === "room_status"
+            ? "A room status export already exists for today. Continuing will overwrite today's last history item. Please use the history feature to print previous exports. Would you like to continue with your export?"
             : "A linen export already exists for today. Continuing will overwrite today's last history item. Please use the history feature to print previous exports. Would you like to continue with your export?"}
         </DialogDescription>
       </DialogHeader>
