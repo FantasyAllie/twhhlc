@@ -1490,10 +1490,9 @@ useEffect(() => {
               <DropdownMenuItem disabled>No statuses</DropdownMenuItem>
             )}
             {receptionStatuses.map((s) => {
+              const room = rooms.find((r) => r.room_number === n);
               const occ =
-                roomOccupancy[n] !== undefined
-                  ? roomOccupancy[n]
-                  : rooms.find((r) => r.room_number === n)?.default_status ?? null;
+                room?.reception_status_id ?? room?.default_status ?? null;
               const selected = occ === s.id;
               return (
                 <DropdownMenuItem
@@ -1501,10 +1500,7 @@ useEffect(() => {
                   className="justify-between"
                   onSelect={(e) => {
                     e.preventDefault();
-                    setRoomOccupancy((prev) => ({
-                      ...prev,
-                      [n]: occ === s.id ? null : s.id,
-                    }));
+                    setRoomReceptionStatus(n, occ === s.id ? null : s.id);
                   }}
                 >
                   <span>{s.label}</span>
@@ -1523,17 +1519,16 @@ useEffect(() => {
               <DropdownMenuItem disabled>No bed types</DropdownMenuItem>
             )}
             {receptionBeds.map((b) => {
-              const selected = roomBedType[n] === b.id;
+              const room = rooms.find((r) => r.room_number === n);
+              const currentBed = room?.reception_bed_id ?? null;
+              const selected = currentBed === b.id;
               return (
                 <DropdownMenuItem
                   key={b.id}
                   className="justify-between"
                   onSelect={(e) => {
                     e.preventDefault();
-                    setRoomBedType((prev) => ({
-                      ...prev,
-                      [n]: prev[n] === b.id ? null : b.id,
-                    }));
+                    setRoomReceptionBed(n, currentBed === b.id ? null : b.id);
                   }}
                 >
                   <span>{b.label}</span>
