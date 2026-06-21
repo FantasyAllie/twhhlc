@@ -1597,6 +1597,32 @@ useEffect(() => {
       );
     })()}
 
+    {isReception && (() => {
+      const assigned = roomFeatures.filter((f) =>
+        roomFeatureAssignments.some(
+          (a) => a.feature_id === f.id && a.room_number === n,
+        ),
+      );
+      if (assigned.length === 0) return null;
+      return (
+        <div className="space-y-2 rounded-md border bg-background p-3">
+          <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+            Room features
+          </p>
+          <ul className="flex flex-wrap gap-1.5">
+            {assigned.map((f) => (
+              <li
+                key={f.id}
+                className="inline-flex items-center rounded-md border bg-muted px-2 py-1 text-xs font-medium"
+              >
+                {f.label}
+              </li>
+            ))}
+          </ul>
+        </div>
+      );
+    })()}
+
     {!isReception && (
       <div className="flex flex-row gap-2">
         <DropdownMenu>
