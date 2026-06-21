@@ -4,7 +4,7 @@ import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Minus, Plus, X, Menu, ArrowUp, ArrowDown, Pencil, Check, Trash2, Lock, Unlock, Sun, Moon, List, Bed, Ban, History, Users, User, LogOut, Hash } from "lucide-react";
+import { Minus, Plus, X, Menu, ArrowUp, ArrowDown, Pencil, Check, Trash2, Lock, Unlock, Sun, Moon, List, Bed, Ban, History, Users, User, LogOut, Hash, ConciergeBell } from "lucide-react";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
 import { getToken, getStoredUser, clearSession } from "@/lib/auth-client";
@@ -51,6 +51,7 @@ type Category = string;
 type RoomType = { id: string; user_id: string; value: Category; label: string; created_at: string; updated_at: string };
 type RoomFeature = { id: string; user_id: string; value: string; label: string; created_at: string; updated_at: string };
 type RoomFeatureAssignment = { id: string; feature_id: string; room_number: number };
+type ReceptionItem = { id: string; user_id: string; kind: "status" | "bed"; label: string; created_at: string; updated_at: string };
 
 const parseCats = (c: string | null | undefined): Category[] =>
   (c ?? "").split(",").map((s) => s.trim()).filter(Boolean);
