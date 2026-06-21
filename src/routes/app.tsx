@@ -888,7 +888,7 @@ useEffect(() => {
   };
 
   const openExport = async () => {
-    const { rows, grand } = computeTotals();
+    const { rows } = computeTotals();
     if (rows.length === 0) {
       setExportOpen(true);
       return;
