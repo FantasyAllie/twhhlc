@@ -1205,8 +1205,8 @@ useEffect(() => {
     const trs = (list: RoomStatusRow[]) =>
       list
         .map(
-          (r, i) =>
-            `<tr class="${i % 2 === 0 ? "even" : "odd"}"><td class="num">${r.room}</td><td>${esc(r.status)}</td><td>${esc(r.bed)}</td></tr>`,
+          (r) =>
+            `<tr><td class="num">${r.room}</td><td>${esc(r.status)}</td><td>${esc(r.bed)}</td></tr>`,
         )
         .join("");
     const tableHead = `<thead><tr><th class="num">Room</th><th>Status</th><th>Set As</th></tr></thead>`;
