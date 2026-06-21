@@ -1807,10 +1807,97 @@ useEffect(() => {
    </DialogContent>
  </Dialog>
 
+  {/* Manage Rooms dialog */}
+  <Dialog open={manageRoomsOpen} onOpenChange={setManageRoomsOpen}>
+    <DialogContent className="max-w-md w-[calc(100vw-1.5rem)] sm:w-full p-4 sm:p-6">
+      <DialogHeader>
+        <DialogTitle>Manage Rooms</DialogTitle>
+        <DialogDescription>
+          Add or remove rooms. New rooms work like every other room — they
+          appear in the grid, share the Linen List, and support Room Types.
+          Rejects always stays at the end.
+        </DialogDescription>
+      </DialogHeader>
+      <div className="space-y-3">
+        <div className="flex items-end gap-2">
+          <div className="flex-1">
+            <label className="text-xs text-muted-foreground">Room number</label>
+            <Input
+              type="number"
+              inputMode="numeric"
+              min={1}
+              max={999}
+              value={newRoomNumber}
+              placeholder={String(
+                (() => {
+                  const used = new Set(rooms.map((r) => r.room_number));
+                  let n = 1;
+                  while (used.has(n)) n++;
+                  return n;
+                })(),
+              )}
+              onChange={(e) => setNewRoomNumber(e.target.value)}
+              onKeyDown={(e) => {
+                if (e.key === "Enter") {
+                  const used = new Set(rooms.map((r) => r.room_number));
+                  let suggested = 1;
+                  while (used.has(suggested)) suggested++;
+                  const n = newRoomNumber.trim() === "" ? suggested : Number(newRoomNumber);
+                  addRoom(n);
+                  setNewRoomNumber("");
+                }
+              }}
+            />
+          </div>
+          <Button
+            onClick={() => {
+              const used = new Set(rooms.map((r) => r.room_number));
+              let suggested = 1;
+              while (used.has(suggested)) suggested++;
+              const n = newRoomNumber.trim() === "" ? suggested : Number(newRoomNumber);
+              addRoom(n);
+              setNewRoomNumber("");
+            }}
+          >
+            <Plus className="h-4 w-4 mr-1" />
+            Add
+          </Button>
+        </div>
+        <div className="text-xs text-muted-foreground">
+          {rooms.length} room{rooms.length === 1 ? "" : "s"} total
+        </div>
+        <ul className="divide-y rounded-md border max-h-[50vh] overflow-y-auto">
+          {rooms
+            .slice()
+            .sort((a, b) => a.room_number - b.room_number)
+            .map((r) => (
+              <li key={r.id} className="flex items-center gap-3 px-3 py-2">
+                <span className="flex-1 text-sm font-medium tabular-nums">
+                  Room {r.room_number}
+                </span>
+                {r.category && (
+                  <span className="text-xs text-muted-foreground capitalize">
+                    {r.category}
+                  </span>
+                )}
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  className="h-8 w-8 text-destructive hover:text-destructive"
+                  onClick={() => removeRoom(r.room_number)}
+                  aria-label={`Remove Room ${r.room_number}`}
+                >
+                  <Trash2 className="h-4 w-4" />
+                </Button>
+              </li>
+            ))}
+        </ul>
+      </div>
+    </DialogContent>
+  </Dialog>
+
  {/* Rooms */}
  <section className="space-y-4">
-
-{/* placeholder removed to keep diff clean */}
  <div className="flex items-baseline justify-between">
  <h2 className="text-sm font-medium text-muted-foreground uppercase tracking-wide">
  Rooms
