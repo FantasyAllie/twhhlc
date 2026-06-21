@@ -885,9 +885,34 @@ useEffect(() => {
   };
 
   const openExport = async () => {
-    setExportOpen(true);
     const { rows, grand } = computeTotals();
-    if (rows.length === 0) return;
+    if (rows.length === 0) {
+      setExportOpen(true);
+      return;
+    }
+    const today = new Date().toDateString();
+    const todays = snapshots.filter(
+      (s) => s.kind === "totals" && new Date(s.created_at).toDateString() === today,
+    );
+    if (todays.length > 0) {
+      const ok = confirm(
+        "A linen export already exists for today. Continuing will overwrite today's last history item. Continue?",
+      );
+      if (!ok) return;
+      const ids = todays.map((s) => s.id);
+      qc.setQueryData<ExportSnapshot[]>(["export_snapshots"], (old) =>
+        old?.filter((s) => !ids.includes(s.id)) ?? [],
+      );
+      const { error: delErr } = await supabase
+        .from("export_snapshots")
+        .delete()
+        .in("id", ids);
+      if (delErr) {
+        toast.error(delErr.message);
+        return;
+      }
+    }
+    setExportOpen(true);
     const { error } = await supabase
       .from("export_snapshots")
       .insert({ totals: rows, grand_total: grand, kind: "totals" } as never);
@@ -915,9 +940,34 @@ useEffect(() => {
   };
 
   const openRejectExport = async () => {
-    setRejectExportOpen(true);
     const { rows, grand } = computeRejectTotals();
-    if (rows.length === 0) return;
+    if (rows.length === 0) {
+      setRejectExportOpen(true);
+      return;
+    }
+    const today = new Date().toDateString();
+    const todays = snapshots.filter(
+      (s) => s.kind === "rejects" && new Date(s.created_at).toDateString() === today,
+    );
+    if (todays.length > 0) {
+      const ok = confirm(
+        "A rejects export already exists for today. Continuing will overwrite today's last history item. Continue?",
+      );
+      if (!ok) return;
+      const ids = todays.map((s) => s.id);
+      qc.setQueryData<ExportSnapshot[]>(["export_snapshots"], (old) =>
+        old?.filter((s) => !ids.includes(s.id)) ?? [],
+      );
+      const { error: delErr } = await supabase
+        .from("export_snapshots")
+        .delete()
+        .in("id", ids);
+      if (delErr) {
+        toast.error(delErr.message);
+        return;
+      }
+    }
+    setRejectExportOpen(true);
     const { error } = await supabase
       .from("export_snapshots")
       .insert({ totals: rows, grand_total: grand, kind: "rejects" } as never);
@@ -1396,6 +1446,10 @@ useEffect(() => {
       <DropdownMenuItem onSelect={() => setManageRoomsOpen(true)}>
         <Hash className="h-4 w-4 mr-2" />
         Manage Rooms
+      </DropdownMenuItem>
+      <DropdownMenuItem onSelect={() => setRejectsOpen(true)}>
+        <Ban className="h-4 w-4 mr-2" />
+        Rejects
       </DropdownMenuItem>
       <DropdownMenuSub>
         <DropdownMenuSubTrigger>
@@ -1982,26 +2036,6 @@ useEffect(() => {
       </button>,
     );
   }
-  }
-  if (!isReception) {
-    nodes.push(
-      <button
-        key="r-rejects"
-        type="button"
-        onClick={() => setRejectsOpen(true)}
-        className={cn(
-          "relative rounded-md border text-[10px] sm:text-xs font-medium transition-colors flex items-center justify-center aspect-[8/1] sm:aspect-square px-1 text-center leading-tight col-span-4 sm:col-span-1",
-        )}
-        style={{
-          backgroundColor: theme === "dark" ? "#78350f" : "#fef3c7",
-          color: theme === "dark" ? "#fcd34d" : "#92400e",
-          borderColor: theme === "dark" ? "#92400e" : "#fcd34d",
-        }}
-        aria-label="Open Rejects"
-      >
-        Rejects
-      </button>,
-    );
   }
  return nodes;
  })()}
