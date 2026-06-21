@@ -1209,19 +1209,16 @@ useEffect(() => {
             `<tr><td class="num">${r.room}</td><td>${esc(r.status)}</td><td>${esc(r.bed)}</td></tr>`,
         )
         .join("");
-    const tableHead = `<thead><tr><th class="num">Room</th><th>Status</th><th>Set As</th></tr></thead>`;
+    const tableHead = `<thead><tr><th>Room</th><th>Status</th><th>Set As</th></tr></thead>`;
     win.document.write(`<!doctype html><html><head><title>Room Status Sheet - ${dateStr}</title><style>
-      @page { size: A4 landscape; margin: 8mm; }
-      body{font-family:system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;color:#000;background:#fff;margin:0;padding:4mm;}
-      h1{font-size:1.1rem;margin:0 0 .15rem;text-align:center;font-weight:700;}
-      .date{margin:0 0 .6rem;font-size:.8rem;text-align:center;color:#444;}
-      .grid{display:grid;grid-template-columns:1fr 1fr;gap:.6rem;}
-      table{width:100%;border-collapse:collapse;font-size:.75rem;line-height:1.1;}
-      th,td{text-align:center;padding:.2rem .25rem;border:1px solid #999;vertical-align:middle;}
-      th{background:#444;color:#fff;font-weight:600;}
-      td.num{font-variant-numeric:tabular-nums;width:2.2rem;font-weight:600;}
-      th.num{width:2.2rem;}
-      tbody tr:nth-child(even){background:#f3f4f6;}
+      body{font-family:system-ui,-apple-system,sans-serif;color:#000;background:#fff;padding:1.5rem;max-width:900px;margin:0 auto;}
+      h1{font-size:1.5rem;margin:0 0 .25rem;text-align:center;text-decoration:underline;}
+      .date{margin:0 0 1.25rem;font-size:.95rem;text-align:center;}
+      .grid{display:grid;grid-template-columns:1fr 1fr;gap:1rem;}
+      table{width:100%;border-collapse:collapse;font-size:.95rem;}
+      th,td{text-align:left;padding:.35rem .5rem;border:1px solid #444;}
+      th.num,td.num{text-align:center;font-variant-numeric:tabular-nums;width:3rem;}
+      th{background:#eee;}
       @media print{body{padding:0;}}
     </style></head><body>
       <h1>Room Status Sheet</h1>
