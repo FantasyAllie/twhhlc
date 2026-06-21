@@ -1542,20 +1542,16 @@ useEffect(() => {
  </Button>
  </DropdownMenuTrigger>
  <DropdownMenuContent align="end">
-  {!isReception && (
-    <>
-      <DropdownMenuItem onSelect={() => setTemplateOpen(true)}>
-        <List className="h-4 w-4 mr-2" />
-        Linen List
-      </DropdownMenuItem>
-      <DropdownMenuItem onSelect={() => setCategoriesOpen(true)}>
-        <Bed className="h-4 w-4 mr-2" />
-        Room Type
-      </DropdownMenuItem>
-      <DropdownMenuItem onSelect={() => setManageRoomsOpen(true)}>
-        <Hash className="h-4 w-4 mr-2" />
-        Manage Rooms
-      </DropdownMenuItem>
+   {!isReception && (
+     <>
+       <DropdownMenuItem onSelect={() => setTemplateOpen(true)}>
+         <List className="h-4 w-4 mr-2" />
+         Linen List
+       </DropdownMenuItem>
+       <DropdownMenuItem onSelect={() => setManageRoomsOpen(true)}>
+         <Hash className="h-4 w-4 mr-2" />
+         Manage Rooms
+       </DropdownMenuItem>
       <DropdownMenuItem onSelect={() => setRejectsOpen(true)}>
         <Ban className="h-4 w-4 mr-2" />
         Rejects
@@ -1980,6 +1976,18 @@ useEffect(() => {
           appear in the grid, share the Linen List, and support Room Types.
           Rejects always stays at the end.
         </DialogDescription>
+        <Button
+          variant="outline"
+          size="sm"
+          className="mt-2 w-fit"
+          onClick={() => {
+            setManageRoomsOpen(false);
+            setCategoriesOpen(true);
+          }}
+        >
+          <Bed className="h-4 w-4 mr-2" />
+          Room Type
+        </Button>
       </DialogHeader>
       <div className="space-y-3">
         <div className="flex items-end gap-2">
