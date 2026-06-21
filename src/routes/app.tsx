@@ -71,7 +71,7 @@ type RoomCount = {
  item_id: string;
  count: number;
 };
-type Room = { id: string; room_number: number; done: boolean; done_reception: boolean; category: Category | null };
+type Room = { id: string; room_number: number; done: boolean; done_reception: boolean; category: Category | null; default_status: "staff" | null };
 type TemplateItemRoom = { id: string; template_item_id: string; room_number: number };
 type SnapshotRow = { name: string; count: number };
 type ExportSnapshot = {
@@ -262,7 +262,7 @@ useEffect(() => {
  queryFn: async (): Promise<Room[]> => {
  const { data, error } = await supabase
  .from("rooms")
-        .select("id,room_number,done,done_reception,category")
+        .select("id,room_number,done,done_reception,category,default_status")
  .order("room_number", { ascending: true });
  if (error) throw error;
  return (data ?? []) as Room[];
@@ -446,6 +446,7 @@ useEffect(() => {
           room_number: roomNumber,
           done: false,
           done_reception: next,
+          default_status: null,
           category: null,
         });
       return list;
@@ -710,7 +711,7 @@ useEffect(() => {
   const list = old ? [...old] : [];
   const idx = list.findIndex((r) => r.room_number === roomNumber);
   if (idx >= 0) list[idx] = { ...list[idx], done: true };
-  else list.push({ id: `temp-${roomNumber}`, room_number: roomNumber, done: true, done_reception: false, category: null });
+  else list.push({ id: `temp-${roomNumber}`, room_number: roomNumber, done: true, done_reception: false, category: null, default_status: null });
   return list;
   });
   const { error: roomErr } = await supabase.from("rooms").upsert(
@@ -811,7 +812,7 @@ useEffect(() => {
     }
     qc.setQueryData<Room[]>(["rooms"], (old) => {
       const list = old ? [...old] : [];
-      list.push({ id: `temp-${n}`, room_number: n, done: false, done_reception: false, category: null });
+      list.push({ id: `temp-${n}`, room_number: n, done: false, done_reception: false, category: null, default_status: null });
       list.sort((a, b) => a.room_number - b.room_number);
       return list;
     });
@@ -1070,6 +1071,7 @@ useEffect(() => {
  done: false,
  done_reception: false,
  category,
+  default_status: null,
  });
  return list;
  });
@@ -1087,6 +1089,34 @@ useEffect(() => {
 
  const roomCategory = (n: number): Category | null =>
  rooms.find((r) => r.room_number === n)?.category ?? null;
+
+ const setRoomDefaultStatus = async (roomNumber: number, status: "staff" | null) => {
+   qc.setQueryData<Room[]>(["rooms"], (old) => {
+     const list = old ? [...old] : [];
+     const idx = list.findIndex((r) => r.room_number === roomNumber);
+     if (idx >= 0) list[idx] = { ...list[idx], default_status: status };
+     else
+       list.push({
+         id: `temp-${roomNumber}`,
+         room_number: roomNumber,
+         done: false,
+         done_reception: false,
+         category: null,
+         default_status: status,
+       });
+     return list;
+   });
+   const { error } = await supabase.from("rooms").upsert(
+     {
+       room_number: roomNumber,
+       default_status: status,
+       updated_at: new Date().toISOString(),
+     } as never,
+     { onConflict: "user_id,room_number" },
+   );
+   if (error) toast.error(error.message);
+   qc.invalidateQueries({ queryKey: ["rooms"] });
+ };
 
  const renderRoomPanel = (n: number) => {
  const roomExtras = extras.filter((e) => e.room_number === n);
@@ -2008,11 +2038,64 @@ useEffect(() => {
                 <span className="flex-1 text-sm font-medium tabular-nums">
                   Room {r.room_number}
                 </span>
-                {r.category && (
-                  <span className="text-xs text-muted-foreground capitalize">
-                    {r.category}
-                  </span>
-                )}
+                <DropdownMenu>
+                  <DropdownMenuTrigger asChild>
+                    <Button variant="outline" size="sm" className="h-8">
+                      <Pencil className="h-3.5 w-3.5 mr-1" />
+                      Edit
+                    </Button>
+                  </DropdownMenuTrigger>
+                  <DropdownMenuContent align="end" className="min-w-fit">
+                    <DropdownMenuLabel className="text-[10px] uppercase tracking-wide text-muted-foreground">
+                      Room type
+                    </DropdownMenuLabel>
+                    {CATEGORIES.map((c) => {
+                      const selected = r.category === c.value;
+                      return (
+                        <DropdownMenuItem
+                          key={c.value}
+                          className="justify-between"
+                          onSelect={(e) => {
+                            e.preventDefault();
+                            setRoomCategory(r.room_number, c.value);
+                          }}
+                        >
+                          <span>{c.label}</span>
+                          <span className="flex items-center gap-2 border-l border-border pl-2">
+                            {selected ? (
+                              <Check className="h-4 w-4" />
+                            ) : (
+                              <span className="inline-block h-4 w-4" />
+                            )}
+                          </span>
+                        </DropdownMenuItem>
+                      );
+                    })}
+                    <DropdownMenuSeparator />
+                    <DropdownMenuLabel className="text-[10px] uppercase tracking-wide text-muted-foreground">
+                      Default status
+                    </DropdownMenuLabel>
+                    <DropdownMenuItem
+                      className="justify-between"
+                      onSelect={(e) => {
+                        e.preventDefault();
+                        setRoomDefaultStatus(
+                          r.room_number,
+                          r.default_status === "staff" ? null : "staff",
+                        );
+                      }}
+                    >
+                      <span>STAFF</span>
+                      <span className="flex items-center gap-2 border-l border-border pl-2">
+                        {r.default_status === "staff" ? (
+                          <Check className="h-4 w-4" />
+                        ) : (
+                          <span className="inline-block h-4 w-4" />
+                        )}
+                      </span>
+                    </DropdownMenuItem>
+                  </DropdownMenuContent>
+                </DropdownMenu>
                 <Button
                   variant="ghost"
                   size="icon"
