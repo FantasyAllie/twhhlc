@@ -2104,10 +2104,6 @@ useEffect(() => {
   </Dialog>
 
   {/* Add room feature dialog */}
-  <Dialog open={addRoomFeatureOpen} onOpenChange={setAddRoomFeatureOpen}>
-    {null}
-  </Dialog>
-
   {/* Add reception item dialog */}
   <Dialog
     open={addReceptionItemKind !== null}
@@ -2163,8 +2159,8 @@ useEffect(() => {
     </DialogContent>
   </Dialog>
 
-  {/* placeholder removed */}
-  <Dialog open={false} onOpenChange={() => {}}>
+  {/* Add room feature dialog */}
+  <Dialog open={addRoomFeatureOpen} onOpenChange={setAddRoomFeatureOpen}>
     <DialogContent className="max-w-sm w-[calc(100vw-1.5rem)] sm:w-full p-4 sm:p-6">
       <DialogHeader>
         <DialogTitle>Add Room Feature</DialogTitle>
