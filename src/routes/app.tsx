@@ -789,6 +789,55 @@ useEffect(() => {
  };
 
   // --- Export totals + snapshots ---
+  const addRoom = async (n: number) => {
+    if (!Number.isFinite(n) || n < 1 || n > 999) {
+      toast.error("Room number must be between 1 and 999.");
+      return;
+    }
+    if (rooms.some((r) => r.room_number === n)) {
+      toast.error(`Room ${n} already exists.`);
+      return;
+    }
+    qc.setQueryData<Room[]>(["rooms"], (old) => {
+      const list = old ? [...old] : [];
+      list.push({ id: `temp-${n}`, room_number: n, done: false, done_reception: false, category: null });
+      list.sort((a, b) => a.room_number - b.room_number);
+      return list;
+    });
+    const { error } = await supabase.from("rooms").upsert(
+      { room_number: n, done: false, done_reception: false, updated_at: new Date().toISOString() },
+      { onConflict: "user_id,room_number" },
+    );
+    if (error) {
+      toast.error(error.message);
+    } else {
+      toast.success(`Room ${n} added.`);
+    }
+    qc.invalidateQueries({ queryKey: ["rooms"] });
+  };
+
+  const removeRoom = async (n: number) => {
+    if (!confirm(`Remove Room ${n}? This will delete its counts, linen assignments, and messages.`)) return;
+    qc.setQueryData<Room[]>(["rooms"], (old) => old?.filter((r) => r.room_number !== n) ?? []);
+    qc.setQueryData<RoomCount[]>(["room_counts"], (old) => old?.filter((c) => c.room_number !== n) ?? []);
+    qc.setQueryData<TemplateItemRoom[]>(["template_item_rooms"], (old) => old?.filter((a) => a.room_number !== n) ?? []);
+    const results = await Promise.all([
+      supabase.from("room_item_counts").delete().eq("room_number", n),
+      supabase.from("template_item_rooms").delete().eq("room_number", n),
+      supabase.from("room_extra_items").delete().eq("room_number", n),
+      supabase.from("room_messages" as never).delete().eq("room_number", n),
+      supabase.from("rooms").delete().eq("room_number", n),
+    ]);
+    for (const r of results) {
+      if (r.error) toast.error(r.error.message);
+    }
+    qc.invalidateQueries({ queryKey: ["rooms"] });
+    qc.invalidateQueries({ queryKey: ["room_counts"] });
+    qc.invalidateQueries({ queryKey: ["template_item_rooms"] });
+    qc.invalidateQueries({ queryKey: ["room_extras"] });
+    qc.invalidateQueries({ queryKey: ["room_messages"] });
+  };
+
   const computeTotals = (): { rows: SnapshotRow[]; grand: number } => {
     const totals = new Map<string, number>();
     const nameFor = (c: RoomCount) => {
