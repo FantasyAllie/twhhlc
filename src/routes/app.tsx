@@ -181,11 +181,11 @@ useEffect(() => {
   if (typeof window === "undefined") return;
   window.localStorage.setItem("linen-locked", linenLocked ? "1" : "0");
 }, [linenLocked]);
- const [categoriesOpen, setCategoriesOpen] = useState(false);
- const [newTemplateName, setNewTemplateName] = useState("");
- const [newTemplateCategory, setNewTemplateCategory] = useState<Category>("double");
- const [editingItemId, setEditingItemId] = useState<string | null>(null);
- const [editingItemName, setEditingItemName] = useState("");
+  const [newTemplateName, setNewTemplateName] = useState("");
+  const [editingItemId, setEditingItemId] = useState<string | null>(null);
+  const [editingItemName, setEditingItemName] = useState("");
+  const [addRoomTypeOpen, setAddRoomTypeOpen] = useState(false);
+  const [newRoomTypeLabel, setNewRoomTypeLabel] = useState("");
  
 
  const [exportOpen, setExportOpen] = useState(false);
