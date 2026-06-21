@@ -71,7 +71,7 @@ type RoomCount = {
  item_id: string;
  count: number;
 };
-type Room = { id: string; room_number: number; done: boolean; done_reception: boolean; category: Category | null };
+type Room = { id: string; room_number: number; done: boolean; done_reception: boolean; category: Category | null; default_status: "staff" | null };
 type TemplateItemRoom = { id: string; template_item_id: string; room_number: number };
 type SnapshotRow = { name: string; count: number };
 type ExportSnapshot = {
@@ -262,7 +262,7 @@ useEffect(() => {
  queryFn: async (): Promise<Room[]> => {
  const { data, error } = await supabase
  .from("rooms")
-        .select("id,room_number,done,done_reception,category")
+        .select("id,room_number,done,done_reception,category,default_status")
  .order("room_number", { ascending: true });
  if (error) throw error;
  return (data ?? []) as Room[];
