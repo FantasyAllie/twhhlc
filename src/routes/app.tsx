@@ -1484,7 +1484,11 @@ useEffect(() => {
               <DropdownMenuItem disabled>No statuses</DropdownMenuItem>
             )}
             {receptionStatuses.map((s) => {
-              const selected = roomOccupancy[n] === s.id;
+              const occ =
+                roomOccupancy[n] !== undefined
+                  ? roomOccupancy[n]
+                  : rooms.find((r) => r.room_number === n)?.default_status ?? null;
+              const selected = occ === s.id;
               return (
                 <DropdownMenuItem
                   key={s.id}
@@ -1493,7 +1497,7 @@ useEffect(() => {
                     e.preventDefault();
                     setRoomOccupancy((prev) => ({
                       ...prev,
-                      [n]: prev[n] === s.id ? null : s.id,
+                      [n]: occ === s.id ? null : s.id,
                     }));
                   }}
                 >
