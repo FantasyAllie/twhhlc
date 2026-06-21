@@ -446,6 +446,7 @@ useEffect(() => {
           room_number: roomNumber,
           done: false,
           done_reception: next,
+          default_status: null,
           category: null,
         });
       return list;
@@ -710,7 +711,7 @@ useEffect(() => {
   const list = old ? [...old] : [];
   const idx = list.findIndex((r) => r.room_number === roomNumber);
   if (idx >= 0) list[idx] = { ...list[idx], done: true };
-  else list.push({ id: `temp-${roomNumber}`, room_number: roomNumber, done: true, done_reception: false, category: null });
+  else list.push({ id: `temp-${roomNumber}`, room_number: roomNumber, done: true, done_reception: false, category: null, default_status: null });
   return list;
   });
   const { error: roomErr } = await supabase.from("rooms").upsert(
@@ -811,7 +812,7 @@ useEffect(() => {
     }
     qc.setQueryData<Room[]>(["rooms"], (old) => {
       const list = old ? [...old] : [];
-      list.push({ id: `temp-${n}`, room_number: n, done: false, done_reception: false, category: null });
+      list.push({ id: `temp-${n}`, room_number: n, done: false, done_reception: false, category: null, default_status: null });
       list.sort((a, b) => a.room_number - b.room_number);
       return list;
     });
@@ -1070,6 +1071,7 @@ useEffect(() => {
  done: false,
  done_reception: false,
  category,
+  default_status: null,
  });
  return list;
  });
