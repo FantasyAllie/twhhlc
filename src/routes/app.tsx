@@ -1964,7 +1964,7 @@ useEffect(() => {
           <History className="h-4 w-4 mr-2" />
           History
         </DropdownMenuSubTrigger>
-    <DropdownMenuSubContent className="max-h-80 overflow-y-auto">
+    <DropdownMenuSubContent className="max-h-[70vh] min-w-[16rem] overflow-y-auto">
       {snapshots.length === 0 ? (
         <DropdownMenuLabel className="text-xs font-normal text-muted-foreground">
           No exports yet
