@@ -4,7 +4,7 @@ import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Minus, Plus, X, Menu, ArrowUp, ArrowDown, Pencil, Check, Trash2, Lock, Unlock, Sun, Moon, List, Bed, Ban, History, Users, User, LogOut } from "lucide-react";
+import { Minus, Plus, X, Menu, ArrowUp, ArrowDown, Pencil, Check, Trash2, Lock, Unlock, Sun, Moon, List, Bed, Ban, History, Users, User, LogOut, Hash } from "lucide-react";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
 import { getToken, getStoredUser, clearSession } from "@/lib/auth-client";
@@ -191,6 +191,8 @@ useEffect(() => {
   const [viewingSnapshot, setViewingSnapshot] = useState<ExportSnapshot | null>(null);
   const [rejectsOpen, setRejectsOpen] = useState(false);
   const [rejectExportOpen, setRejectExportOpen] = useState(false);
+  const [manageRoomsOpen, setManageRoomsOpen] = useState(false);
+  const [newRoomNumber, setNewRoomNumber] = useState<string>("");
 
  // Track responsive column count so we can insert the open-room panel
  // right after the row containing the clicked room.
