@@ -1079,7 +1079,12 @@ useEffect(() => {
   };
 
  // --- Room category ---
- const setRoomCategory = async (roomNumber: number, category: Category) => {
+ const toggleRoomCategory = async (roomNumber: number, value: Category) => {
+ const current = parseCats(rooms.find((r) => r.room_number === roomNumber)?.category);
+ const next = current.includes(value)
+   ? current.filter((v) => v !== value)
+   : [...current, value];
+ const category = next.join(",") || null;
  qc.setQueryData<Room[]>(["rooms"], (old) => {
  const list = old ? [...old] : [];
  const idx = list.findIndex((r) => r.room_number === roomNumber);
