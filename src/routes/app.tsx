@@ -198,6 +198,8 @@ useEffect(() => {
   const [newRoomTypeLabel, setNewRoomTypeLabel] = useState("");
   const [addRoomFeatureOpen, setAddRoomFeatureOpen] = useState(false);
   const [newRoomFeatureLabel, setNewRoomFeatureLabel] = useState("");
+  const [addReceptionItemKind, setAddReceptionItemKind] = useState<"status" | "bed" | null>(null);
+  const [newReceptionItemLabel, setNewReceptionItemLabel] = useState("");
  
 
  const [exportOpen, setExportOpen] = useState(false);
