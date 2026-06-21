@@ -1273,7 +1273,7 @@ useEffect(() => {
               Reception
             </button>
           </DropdownMenuTrigger>
-          <DropdownMenuContent align="start" className="w-56">
+          <DropdownMenuContent align="start" className="min-w-fit">
             <DropdownMenuItem
               className="justify-between"
               onSelect={(e) => {
