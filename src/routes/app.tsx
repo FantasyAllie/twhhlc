@@ -898,10 +898,25 @@ useEffect(() => {
       (s) => s.kind === "totals" && new Date(s.created_at).toDateString() === today,
     );
     if (todays.length > 0) {
-      const ok = confirm(
-        "A linen export already exists for today. Continuing will overwrite today's last history item. Continue?",
-      );
-      if (!ok) return;
+      setConfirmOverwrite({ kind: "totals" });
+      return;
+    }
+    await proceedExport("totals");
+  };
+
+  const proceedExport = async (kind: "totals" | "rejects") => {
+    const { rows, grand } =
+      kind === "totals" ? computeTotals() : computeRejectTotals();
+    if (rows.length === 0) {
+      if (kind === "totals") setExportOpen(true);
+      else setRejectExportOpen(true);
+      return;
+    }
+    const today = new Date().toDateString();
+    const todays = snapshots.filter(
+      (s) => s.kind === kind && new Date(s.created_at).toDateString() === today,
+    );
+    if (todays.length > 0) {
       const ids = todays.map((s) => s.id);
       qc.setQueryData<ExportSnapshot[]>(["export_snapshots"], (old) =>
         old?.filter((s) => !ids.includes(s.id)) ?? [],
@@ -915,15 +930,16 @@ useEffect(() => {
         return;
       }
     }
-    setExportOpen(true);
+    if (kind === "totals") setExportOpen(true);
+    else setRejectExportOpen(true);
     const { error } = await supabase
       .from("export_snapshots")
-      .insert({ totals: rows, grand_total: grand, kind: "totals" } as never);
+      .insert({ totals: rows, grand_total: grand, kind } as never);
     if (error) {
       toast.error(error.message);
       return;
     }
-    await pruneSnapshots("totals");
+    await pruneSnapshots(kind);
     qc.invalidateQueries({ queryKey: ["export_snapshots"] });
   };
 
