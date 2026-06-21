@@ -1079,8 +1079,10 @@ useEffect(() => {
     rows: RoomStatusRow[];
     grand: number;
   } => {
-    const statusLabel = (id: string | null | undefined) =>
-      id ? receptionStatuses.find((s) => s.id === id)?.label ?? "" : "";
+    const statusLabel = (id: string | null | undefined) => {
+      const label = id ? receptionStatuses.find((s) => s.id === id)?.label ?? "" : "";
+      return label === "Out of Service" ? "Room out of Service" : label;
+    };
     const bedLabel = (id: string | null | undefined) =>
       id ? receptionBeds.find((b) => b.id === id)?.label ?? "" : "";
     const rows: RoomStatusRow[] = [...rooms]
