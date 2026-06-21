@@ -851,21 +851,32 @@ useEffect(() => {
     }
   };
 
- const resetAll = async () => {
- if (!confirm("Reset done state and counts for all rooms?")) return;
- qc.setQueryData<Room[]>(["rooms"], (old) =>
- old?.map((r) => ({ ...r, done: false, done_reception: false })) ?? [],
- );
- qc.setQueryData<RoomCount[]>(["room_counts"], () => []);
- const [r1, r2] = await Promise.all([
- supabase.from("rooms").update({ done: false, done_reception: false }).neq("room_number", -1),
- supabase.from("room_item_counts").delete().neq("room_number", -1),
- ]);
- if (r1.error) toast.error(r1.error.message);
- if (r2.error) toast.error(r2.error.message);
- qc.invalidateQueries({ queryKey: ["rooms"] });
- qc.invalidateQueries({ queryKey: ["room_counts"] });
- };
+  const resetAll = async () => {
+    if (!confirm("Reset done state, counts, and reception selections for all rooms?")) return;
+    qc.setQueryData<Room[]>(["rooms"], (old) =>
+      old?.map((r) => ({
+        ...r,
+        done: false,
+        done_reception: false,
+        reception_status_id: null,
+        reception_bed_id: null,
+      })) ?? [],
+    );
+    qc.setQueryData<RoomCount[]>(["room_counts"], () => []);
+    const [r1, r2] = await Promise.all([
+      supabase.from("rooms").update({
+        done: false,
+        done_reception: false,
+        reception_status_id: null,
+        reception_bed_id: null,
+      }).neq("room_number", -1),
+      supabase.from("room_item_counts").delete().neq("room_number", -1),
+    ]);
+    if (r1.error) toast.error(r1.error.message);
+    if (r2.error) toast.error(r2.error.message);
+    qc.invalidateQueries({ queryKey: ["rooms"] });
+    qc.invalidateQueries({ queryKey: ["room_counts"] });
+  };
 
   // --- Export totals + snapshots ---
   const addRoom = async (n: number) => {
