@@ -2048,18 +2048,53 @@ useEffect(() => {
           appear in the grid, share the Linen List, and support Room Types.
           Rejects always stays at the end.
         </DialogDescription>
-        <Button
-          variant="outline"
-          size="sm"
-          className="mt-2 w-fit"
-          onClick={() => {
-            setManageRoomsOpen(false);
-            setCategoriesOpen(true);
-          }}
-        >
-          <Bed className="h-4 w-4 mr-2" />
-          Room Type
-        </Button>
+        <DropdownMenu>
+          <DropdownMenuTrigger asChild>
+            <Button variant="outline" size="sm" className="mt-2 w-fit">
+              <Bed className="h-4 w-4 mr-2" />
+              Room Type
+            </Button>
+          </DropdownMenuTrigger>
+          <DropdownMenuContent align="start" className="min-w-[10rem]">
+            <DropdownMenuLabel className="text-[10px] uppercase tracking-wide text-muted-foreground">
+              Room types
+            </DropdownMenuLabel>
+            {roomTypes.length === 0 && (
+              <DropdownMenuItem disabled>No room types</DropdownMenuItem>
+            )}
+            {roomTypes.map((rt) => (
+              <DropdownMenuItem
+                key={rt.id}
+                className="flex items-center justify-between pr-2"
+                onSelect={(e) => e.preventDefault()}
+              >
+                <span>{rt.label}</span>
+                <button
+                  type="button"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    e.preventDefault();
+                    deleteRoomType(rt.id);
+                  }}
+                  className="ml-2 inline-flex h-6 w-6 items-center justify-center rounded text-muted-foreground hover:bg-accent hover:text-destructive"
+                  aria-label={`Remove ${rt.label}`}
+                >
+                  <X className="h-3.5 w-3.5" />
+                </button>
+              </DropdownMenuItem>
+            ))}
+            <DropdownMenuSeparator />
+            <DropdownMenuItem
+              onSelect={(e) => {
+                e.preventDefault();
+                setAddRoomTypeOpen(true);
+              }}
+            >
+              <Plus className="h-4 w-4 mr-2" />
+              Add room type
+            </DropdownMenuItem>
+          </DropdownMenuContent>
+        </DropdownMenu>
       </DialogHeader>
       <div className="space-y-3">
         <div className="flex items-end gap-2">
