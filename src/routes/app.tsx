@@ -192,6 +192,9 @@ useEffect(() => {
   const [rejectsOpen, setRejectsOpen] = useState(false);
   const [rejectExportOpen, setRejectExportOpen] = useState(false);
   const [manageRoomsOpen, setManageRoomsOpen] = useState(false);
+  const [confirmOverwrite, setConfirmOverwrite] = useState<
+    { kind: "totals" | "rejects" } | null
+  >(null);
   const [newRoomNumber, setNewRoomNumber] = useState<string>("");
 
  // Track responsive column count so we can insert the open-room panel
@@ -885,7 +888,7 @@ useEffect(() => {
   };
 
   const openExport = async () => {
-    const { rows, grand } = computeTotals();
+    const { rows } = computeTotals();
     if (rows.length === 0) {
       setExportOpen(true);
       return;
@@ -895,10 +898,25 @@ useEffect(() => {
       (s) => s.kind === "totals" && new Date(s.created_at).toDateString() === today,
     );
     if (todays.length > 0) {
-      const ok = confirm(
-        "A linen export already exists for today. Continuing will overwrite today's last history item. Continue?",
-      );
-      if (!ok) return;
+      setConfirmOverwrite({ kind: "totals" });
+      return;
+    }
+    await proceedExport("totals");
+  };
+
+  const proceedExport = async (kind: "totals" | "rejects") => {
+    const { rows, grand } =
+      kind === "totals" ? computeTotals() : computeRejectTotals();
+    if (rows.length === 0) {
+      if (kind === "totals") setExportOpen(true);
+      else setRejectExportOpen(true);
+      return;
+    }
+    const today = new Date().toDateString();
+    const todays = snapshots.filter(
+      (s) => s.kind === kind && new Date(s.created_at).toDateString() === today,
+    );
+    if (todays.length > 0) {
       const ids = todays.map((s) => s.id);
       qc.setQueryData<ExportSnapshot[]>(["export_snapshots"], (old) =>
         old?.filter((s) => !ids.includes(s.id)) ?? [],
@@ -912,15 +930,16 @@ useEffect(() => {
         return;
       }
     }
-    setExportOpen(true);
+    if (kind === "totals") setExportOpen(true);
+    else setRejectExportOpen(true);
     const { error } = await supabase
       .from("export_snapshots")
-      .insert({ totals: rows, grand_total: grand, kind: "totals" } as never);
+      .insert({ totals: rows, grand_total: grand, kind } as never);
     if (error) {
       toast.error(error.message);
       return;
     }
-    await pruneSnapshots("totals");
+    await pruneSnapshots(kind);
     qc.invalidateQueries({ queryKey: ["export_snapshots"] });
   };
 
@@ -940,7 +959,7 @@ useEffect(() => {
   };
 
   const openRejectExport = async () => {
-    const { rows, grand } = computeRejectTotals();
+    const { rows } = computeRejectTotals();
     if (rows.length === 0) {
       setRejectExportOpen(true);
       return;
@@ -950,33 +969,10 @@ useEffect(() => {
       (s) => s.kind === "rejects" && new Date(s.created_at).toDateString() === today,
     );
     if (todays.length > 0) {
-      const ok = confirm(
-        "A rejects export already exists for today. Continuing will overwrite today's last history item. Continue?",
-      );
-      if (!ok) return;
-      const ids = todays.map((s) => s.id);
-      qc.setQueryData<ExportSnapshot[]>(["export_snapshots"], (old) =>
-        old?.filter((s) => !ids.includes(s.id)) ?? [],
-      );
-      const { error: delErr } = await supabase
-        .from("export_snapshots")
-        .delete()
-        .in("id", ids);
-      if (delErr) {
-        toast.error(delErr.message);
-        return;
-      }
-    }
-    setRejectExportOpen(true);
-    const { error } = await supabase
-      .from("export_snapshots")
-      .insert({ totals: rows, grand_total: grand, kind: "rejects" } as never);
-    if (error) {
-      toast.error(error.message);
+      setConfirmOverwrite({ kind: "rejects" });
       return;
     }
-    await pruneSnapshots("rejects");
-    qc.invalidateQueries({ queryKey: ["export_snapshots"] });
+    await proceedExport("rejects");
   };
 
   const deleteSnapshot = async (id: string) => {
@@ -2312,6 +2308,35 @@ useEffect(() => {
      })()}
    </DialogContent>
  </Dialog>
+  <Dialog
+    open={confirmOverwrite !== null}
+    onOpenChange={(o) => { if (!o) setConfirmOverwrite(null); }}
+  >
+    <DialogContent className="max-w-md w-[calc(100vw-1.5rem)] sm:w-full p-4 sm:p-6">
+      <DialogHeader>
+        <DialogTitle>Overwrite today's export?</DialogTitle>
+        <DialogDescription>
+          {confirmOverwrite?.kind === "rejects"
+            ? "A rejects export already exists for today. Continuing will overwrite today's last history item. Please use the history feature to print previous exports. Would you like to continue with your export?"
+            : "A linen export already exists for today. Continuing will overwrite today's last history item. Please use the history feature to print previous exports. Would you like to continue with your export?"}
+        </DialogDescription>
+      </DialogHeader>
+      <div className="flex justify-end gap-2 pt-2">
+        <Button variant="outline" onClick={() => setConfirmOverwrite(null)}>
+          No
+        </Button>
+        <Button
+          onClick={async () => {
+            const kind = confirmOverwrite?.kind;
+            setConfirmOverwrite(null);
+            if (kind) await proceedExport(kind);
+          }}
+        >
+          Yes
+        </Button>
+      </div>
+    </DialogContent>
+  </Dialog>
   <AccountDialog
     open={accountOpen}
     onOpenChange={setAccountOpen}
