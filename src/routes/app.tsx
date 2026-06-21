@@ -2164,7 +2164,7 @@ useEffect(() => {
                     <DropdownMenuLabel className="text-[10px] uppercase tracking-wide text-muted-foreground">
                       Room type
                     </DropdownMenuLabel>
-                    {CATEGORIES.map((c) => {
+                    {roomTypes.map((c) => {
                       const selected = r.category === c.value;
                       return (
                         <DropdownMenuItem
