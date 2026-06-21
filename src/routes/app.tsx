@@ -207,6 +207,7 @@ useEffect(() => {
   const [viewingSnapshot, setViewingSnapshot] = useState<ExportSnapshot | null>(null);
   const [rejectsOpen, setRejectsOpen] = useState(false);
   const [rejectExportOpen, setRejectExportOpen] = useState(false);
+  const [roomStatusExportOpen, setRoomStatusExportOpen] = useState(false);
   const [manageRoomsOpen, setManageRoomsOpen] = useState(false);
   const [confirmOverwrite, setConfirmOverwrite] = useState<
     { kind: "totals" | "rejects" | "room_status" } | null
