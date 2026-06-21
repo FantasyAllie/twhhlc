@@ -1393,6 +1393,10 @@ useEffect(() => {
         <Bed className="h-4 w-4 mr-2" />
         Room Type
       </DropdownMenuItem>
+      <DropdownMenuItem onSelect={() => setManageRoomsOpen(true)}>
+        <Hash className="h-4 w-4 mr-2" />
+        Manage Rooms
+      </DropdownMenuItem>
       <DropdownMenuSub>
         <DropdownMenuSubTrigger>
           <History className="h-4 w-4 mr-2" />
