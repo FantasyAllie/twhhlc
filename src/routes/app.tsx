@@ -2343,6 +2343,38 @@ useEffect(() => {
                         )}
                       </span>
                     </DropdownMenuItem>
+                    {roomFeatures.length > 0 && (
+                      <>
+                        <DropdownMenuSeparator />
+                        <DropdownMenuLabel className="text-[10px] uppercase tracking-wide text-muted-foreground">
+                          Room features
+                        </DropdownMenuLabel>
+                        {roomFeatures.map((f) => {
+                          const selected = roomFeatureAssignments.some(
+                            (a) => a.feature_id === f.id && a.room_number === r.room_number,
+                          );
+                          return (
+                            <DropdownMenuItem
+                              key={f.id}
+                              className="justify-between"
+                              onSelect={(e) => {
+                                e.preventDefault();
+                                toggleRoomFeature(r.room_number, f.id);
+                              }}
+                            >
+                              <span>{f.label}</span>
+                              <span className="flex items-center gap-2 border-l border-border pl-2">
+                                {selected ? (
+                                  <Check className="h-4 w-4" />
+                                ) : (
+                                  <span className="inline-block h-4 w-4" />
+                                )}
+                              </span>
+                            </DropdownMenuItem>
+                          );
+                        })}
+                      </>
+                    )}
                   </DropdownMenuContent>
                 </DropdownMenu>
                 <Button
