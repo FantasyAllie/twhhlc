@@ -937,7 +937,9 @@ useEffect(() => {
     return { rows, grand };
   };
 
-  const pruneSnapshots = async (kind: "totals" | "rejects") => {
+  const pruneSnapshots = async (
+    kind: "totals" | "rejects" | "room_status",
+  ) => {
     const { data } = await supabase
       .from("export_snapshots")
       .select("id,created_at")
