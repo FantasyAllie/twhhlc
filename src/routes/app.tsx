@@ -1809,6 +1809,8 @@ useEffect(() => {
 
  {/* Rooms */}
  <section className="space-y-4">
+
+{/* placeholder removed to keep diff clean */}
  <div className="flex items-baseline justify-between">
  <h2 className="text-sm font-medium text-muted-foreground uppercase tracking-wide">
  Rooms
