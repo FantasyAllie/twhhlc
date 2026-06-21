@@ -299,6 +299,8 @@ export type Database = {
           done: boolean
           done_reception: boolean
           id: string
+          reception_bed_id: string | null
+          reception_status_id: string | null
           room_number: number
           updated_at: string
           user_id: string
@@ -309,6 +311,8 @@ export type Database = {
           done?: boolean
           done_reception?: boolean
           id?: string
+          reception_bed_id?: string | null
+          reception_status_id?: string | null
           room_number: number
           updated_at?: string
           user_id?: string
@@ -319,6 +323,8 @@ export type Database = {
           done?: boolean
           done_reception?: boolean
           id?: string
+          reception_bed_id?: string | null
+          reception_status_id?: string | null
           room_number?: number
           updated_at?: string
           user_id?: string
