@@ -1237,8 +1237,8 @@ useEffect(() => {
           </Button>
           <Popover>
             <PopoverTrigger asChild>
-              <Button variant="outline" size="sm" className="h-8 text-xs flex-1" disabled={linenLocked}>
-                Edit defaults
+              <Button variant="outline" size="sm" className="h-8 text-xs flex-1" disabled={linenLocked} aria-label="Edit defaults">
+                ✏️
               </Button>
             </PopoverTrigger>
             <PopoverContent align="end" className="w-64 p-2">
