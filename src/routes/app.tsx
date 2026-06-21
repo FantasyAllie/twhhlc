@@ -1243,7 +1243,7 @@ useEffect(() => {
     }
     const { error } = await supabase
       .from("room_features" as never)
-      .insert({ value, label: clean } as never);
+      .insert({ value, label: clean, user_id: authUser?.id } as never);
     if (error) {
       toast.error(error.message);
       return;
@@ -1286,7 +1286,7 @@ useEffect(() => {
     } else {
       const { error } = await supabase
         .from("room_feature_rooms" as never)
-        .insert({ feature_id: featureId, room_number: roomNumber } as never);
+        .insert({ feature_id: featureId, room_number: roomNumber, user_id: authUser?.id } as never);
       if (error) toast.error(error.message);
     }
     qc.invalidateQueries({ queryKey: ["room_feature_rooms"] });
