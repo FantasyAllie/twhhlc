@@ -213,12 +213,8 @@ useEffect(() => {
   const [newRoomNumber, setNewRoomNumber] = useState<string>("");
 
   // Per-room reception dropdown state (occupancy + bed type). Local-only.
-  const [roomOccupancy, setRoomOccupancy] = useState<
-    Record<number, "stay" | "arrival" | "ros" | "staff" | null>
-  >({});
-  const [roomBedType, setRoomBedType] = useState<
-    Record<number, "double" | "twin" | "king" | null>
-  >({});
+  const [roomOccupancy, setRoomOccupancy] = useState<Record<number, string | null>>({});
+  const [roomBedType, setRoomBedType] = useState<Record<number, string | null>>({});
 
  // Track responsive column count so we can insert the open-room panel
  // right after the row containing the clicked room.
