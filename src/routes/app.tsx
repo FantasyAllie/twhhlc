@@ -1922,7 +1922,7 @@ useEffect(() => {
             )}
           </div>
  <div className="flex items-center gap-2">
-   {!isReception && (
+    {isAdmin && (
      <DropdownMenu>
        <DropdownMenuTrigger asChild>
          <Button variant="outline" size="sm">Export</Button>
@@ -1946,7 +1946,7 @@ useEffect(() => {
  </Button>
  </DropdownMenuTrigger>
  <DropdownMenuContent align="end">
-   {!isReception && (
+    {isAdmin && (
      <>
        <DropdownMenuItem onSelect={() => setTemplateOpen(true)}>
          <List className="h-4 w-4 mr-2" />
@@ -2049,7 +2049,7 @@ useEffect(() => {
       </DropdownMenuSub>
     </>
   )}
-  {!isReception && <DropdownMenuSeparator />}
+  {isAdmin && <DropdownMenuSeparator />}
   <DropdownMenuItem onSelect={(e) => { e.preventDefault(); toggleTheme(); }}>
     {theme === "dark" ? <Sun className="h-4 w-4 mr-2" /> : <Moon className="h-4 w-4 mr-2" />}
     {theme === "dark" ? "Light mode" : "Dark mode"}
