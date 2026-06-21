@@ -2875,12 +2875,13 @@ useEffect(() => {
         <button
         key={`r-${n}`}
           type="button"
+          disabled={isStaffRoom}
           onClick={() => openOrToggle(n)}
         className={cn(
             "relative rounded-md border text-xs sm:text-sm font-medium transition-colors tabular-nums flex items-center justify-center aspect-square",
-            openRoom === n && "ring-2 ring-ring border-transparent bg-accent",
+            openRoom === n && !isStaffRoom && "ring-2 ring-ring border-transparent bg-accent",
             done && !isStaffRoom && "line-through",
-            isStaffRoom && "bg-muted text-muted-foreground border-muted-foreground/20 opacity-60 cursor-default"
+            isStaffRoom && "bg-muted text-muted-foreground border-muted-foreground/20 opacity-60"
         )}
         style={
             openRoom === n || isStaffRoom
@@ -2892,7 +2893,7 @@ useEffect(() => {
         aria-label={`Room ${n}${done ? " done" : ""}${isStaffRoom ? " staff" : ""}`}
       >
         {n}
-          {hasActiveMessage(n) && (
+          {hasActiveMessage(n) && !isStaffRoom && (
             <span
               aria-label="Message"
               className="absolute top-0.5 right-0.5 h-2 w-2 rounded-full bg-amber-500 ring-2 ring-background"
