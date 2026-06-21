@@ -82,7 +82,7 @@ type RoomCount = {
  item_id: string;
  count: number;
 };
-type Room = { id: string; room_number: number; done: boolean; done_reception: boolean; category: Category | null; default_status: "staff" | null };
+type Room = { id: string; room_number: number; done: boolean; done_reception: boolean; category: Category | null; default_status: string | null };
 type TemplateItemRoom = { id: string; template_item_id: string; room_number: number };
 type SnapshotRow = { name: string; count: number };
 type ExportSnapshot = {
@@ -1159,7 +1159,7 @@ useEffect(() => {
  const roomCategory = (n: number): Category | null =>
  rooms.find((r) => r.room_number === n)?.category ?? null;
 
- const setRoomDefaultStatus = async (roomNumber: number, status: "staff" | null) => {
+ const setRoomDefaultStatus = async (roomNumber: number, status: string | null) => {
    qc.setQueryData<Room[]>(["rooms"], (old) => {
      const list = old ? [...old] : [];
      const idx = list.findIndex((r) => r.room_number === roomNumber);
@@ -2556,25 +2556,34 @@ useEffect(() => {
                     <DropdownMenuLabel className="text-[10px] uppercase tracking-wide text-muted-foreground">
                       Default status
                     </DropdownMenuLabel>
-                    <DropdownMenuItem
-                      className="justify-between"
-                      onSelect={(e) => {
-                        e.preventDefault();
-                        setRoomDefaultStatus(
-                          r.room_number,
-                          r.default_status === "staff" ? null : "staff",
-                        );
-                      }}
-                    >
-                      <span>STAFF</span>
-                      <span className="flex items-center gap-2 border-l border-border pl-2">
-                        {r.default_status === "staff" ? (
-                          <Check className="h-4 w-4" />
-                        ) : (
-                          <span className="inline-block h-4 w-4" />
-                        )}
-                      </span>
-                    </DropdownMenuItem>
+                    {receptionStatuses.length === 0 && (
+                      <DropdownMenuItem disabled>No statuses</DropdownMenuItem>
+                    )}
+                    {receptionStatuses.map((s) => {
+                      const selected = r.default_status === s.id;
+                      return (
+                        <DropdownMenuItem
+                          key={s.id}
+                          className="justify-between"
+                          onSelect={(e) => {
+                            e.preventDefault();
+                            setRoomDefaultStatus(
+                              r.room_number,
+                              selected ? null : s.id,
+                            );
+                          }}
+                        >
+                          <span>{s.label}</span>
+                          <span className="flex items-center gap-2 border-l border-border pl-2">
+                            {selected ? (
+                              <Check className="h-4 w-4" />
+                            ) : (
+                              <span className="inline-block h-4 w-4" />
+                            )}
+                          </span>
+                        </DropdownMenuItem>
+                      );
+                    })}
                     {roomFeatures.length > 0 && (
                       <>
                         <DropdownMenuSeparator />
