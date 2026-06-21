@@ -2176,14 +2176,14 @@ useEffect(() => {
                       Room type
                     </DropdownMenuLabel>
                     {roomTypes.map((c) => {
-                      const selected = r.category === c.value;
+                      const selected = parseCats(r.category).includes(c.value);
                       return (
                         <DropdownMenuItem
                           key={c.value}
                           className="justify-between"
                           onSelect={(e) => {
                             e.preventDefault();
-                            setRoomCategory(r.room_number, c.value);
+                            toggleRoomCategory(r.room_number, c.value);
                           }}
                         >
                           <span>{c.label}</span>
