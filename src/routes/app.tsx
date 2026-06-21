@@ -2113,15 +2113,12 @@ useEffect(() => {
             />
           )}
           {receptionDoneSet.has(n) && (
-            <svg
-              className="absolute bottom-0 right-0 h-6 w-6 fill-yellow-500 stroke-yellow-600"
-              viewBox="0 0 100 100"
-              preserveAspectRatio="none"
-              strokeWidth="8"
-              aria-hidden="true"
+            <span
+              aria-label="Reception done"
+              className="absolute bottom-1 right-1 flex h-5 w-5 items-center justify-center rounded-full bg-yellow-500 text-background ring-2 ring-background"
             >
-              <path d="M 100,0 L 100,75 A 25,25 0 0 1 75,100 L 0,100 Z" />
-            </svg>
+              <Check className="h-3 w-3" />
+            </span>
           )}
       </button>,
     );
