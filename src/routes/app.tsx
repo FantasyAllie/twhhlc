@@ -197,6 +197,14 @@ useEffect(() => {
   >(null);
   const [newRoomNumber, setNewRoomNumber] = useState<string>("");
 
+  // Per-room reception dropdown state (occupancy + bed type). Local-only.
+  const [roomOccupancy, setRoomOccupancy] = useState<
+    Record<number, "stay" | "arrival" | "ros" | "staff" | null>
+  >({});
+  const [roomBedType, setRoomBedType] = useState<
+    Record<number, "double" | "twin" | "king" | null>
+  >({});
+
  // Track responsive column count so we can insert the open-room panel
  // right after the row containing the clicked room.
  const [cols, setCols] = useState(10);
@@ -1251,18 +1259,84 @@ useEffect(() => {
 
     {!isReception && (
       <div className="flex flex-row gap-2">
-        <button
-          type="button"
-          onClick={() => toggleReceptionDone(n)}
-          className={cn(
-            "flex items-center justify-center gap-1.5 rounded-md border px-2 sm:px-3 py-2 flex-1 text-xs sm:text-sm font-medium transition-colors cursor-pointer",
-            receptionDoneSet.has(n)
-              ? "border-primary bg-primary/10 text-primary"
-              : "border bg-card hover:bg-muted"
-          )}
-        >
-          {receptionDoneSet.has(n) ? "Mark not done (Reception)" : "Mark done (Reception)"}
-        </button>
+        <DropdownMenu>
+          <DropdownMenuTrigger asChild>
+            <button
+              type="button"
+              className={cn(
+                "flex items-center justify-center gap-1.5 rounded-md border px-2 sm:px-3 py-2 flex-1 text-xs sm:text-sm font-medium transition-colors cursor-pointer",
+                receptionDoneSet.has(n)
+                  ? "border-primary bg-primary/10 text-primary"
+                  : "border bg-card hover:bg-muted"
+              )}
+            >
+              Reception
+            </button>
+          </DropdownMenuTrigger>
+          <DropdownMenuContent align="start" className="w-56">
+            <DropdownMenuItem
+              onSelect={(e) => {
+                e.preventDefault();
+                toggleReceptionDone(n);
+              }}
+            >
+              {receptionDoneSet.has(n) ? (
+                <Check className="mr-2 h-4 w-4" />
+              ) : (
+                <span className="mr-2 inline-block h-4 w-4" />
+              )}
+              {receptionDoneSet.has(n) ? "Mark not done" : "Mark done"}
+            </DropdownMenuItem>
+            <DropdownMenuSeparator />
+            {(["stay", "arrival", "ros", "staff"] as const).map((v) => {
+              const label = v === "ros" || v === "staff" ? v.toUpperCase() : v[0].toUpperCase() + v.slice(1);
+              const selected = roomOccupancy[n] === v;
+              return (
+                <DropdownMenuItem
+                  key={v}
+                  onSelect={(e) => {
+                    e.preventDefault();
+                    setRoomOccupancy((prev) => ({
+                      ...prev,
+                      [n]: prev[n] === v ? null : v,
+                    }));
+                  }}
+                >
+                  {selected ? (
+                    <Check className="mr-2 h-4 w-4" />
+                  ) : (
+                    <span className="mr-2 inline-block h-4 w-4" />
+                  )}
+                  {label}
+                </DropdownMenuItem>
+              );
+            })}
+            <DropdownMenuSeparator />
+            {(["double", "twin", "king"] as const).map((v) => {
+              const label = v[0].toUpperCase() + v.slice(1);
+              const selected = roomBedType[n] === v;
+              return (
+                <DropdownMenuItem
+                  key={v}
+                  onSelect={(e) => {
+                    e.preventDefault();
+                    setRoomBedType((prev) => ({
+                      ...prev,
+                      [n]: prev[n] === v ? null : v,
+                    }));
+                  }}
+                >
+                  {selected ? (
+                    <Check className="mr-2 h-4 w-4" />
+                  ) : (
+                    <span className="mr-2 inline-block h-4 w-4" />
+                  )}
+                  {label}
+                </DropdownMenuItem>
+              );
+            })}
+          </DropdownMenuContent>
+        </DropdownMenu>
         <button
           type="button"
           onClick={() =>
