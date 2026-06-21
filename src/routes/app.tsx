@@ -1275,19 +1275,19 @@ useEffect(() => {
           </DropdownMenuTrigger>
           <DropdownMenuContent align="start" className="w-56">
             <DropdownMenuItem
-              className="justify-center"
+              className="justify-between"
               onSelect={(e) => {
                 e.preventDefault();
                 toggleReceptionDone(n);
               }}
             >
-              <span className="inline-flex items-center gap-2">
+              <span>Done</span>
+              <span className="flex items-center gap-2 border-l border-border pl-2">
                 {receptionDoneSet.has(n) ? (
                   <Check className="h-4 w-4" />
                 ) : (
                   <span className="inline-block h-4 w-4" />
                 )}
-                {receptionDoneSet.has(n) ? "Mark not done" : "Mark done"}
               </span>
             </DropdownMenuItem>
             <DropdownMenuSeparator />
@@ -1297,7 +1297,7 @@ useEffect(() => {
               return (
                 <DropdownMenuItem
                   key={v}
-                  className="justify-center"
+                  className="justify-between"
                   onSelect={(e) => {
                     e.preventDefault();
                     setRoomOccupancy((prev) => ({
@@ -1306,13 +1306,13 @@ useEffect(() => {
                     }));
                   }}
                 >
-                  <span className="inline-flex items-center gap-2">
+                  <span>{label}</span>
+                  <span className="flex items-center gap-2 border-l border-border pl-2">
                     {selected ? (
                       <Check className="h-4 w-4" />
                     ) : (
                       <span className="inline-block h-4 w-4" />
                     )}
-                    {label}
                   </span>
                 </DropdownMenuItem>
               );
@@ -1324,7 +1324,7 @@ useEffect(() => {
               return (
                 <DropdownMenuItem
                   key={v}
-                  className="justify-center"
+                  className="justify-between"
                   onSelect={(e) => {
                     e.preventDefault();
                     setRoomBedType((prev) => ({
@@ -1333,13 +1333,13 @@ useEffect(() => {
                     }));
                   }}
                 >
-                  <span className="inline-flex items-center gap-2">
+                  <span>{label}</span>
+                  <span className="flex items-center gap-2 border-l border-border pl-2">
                     {selected ? (
                       <Check className="h-4 w-4" />
                     ) : (
                       <span className="inline-block h-4 w-4" />
                     )}
-                    {label}
                   </span>
                 </DropdownMenuItem>
               );
