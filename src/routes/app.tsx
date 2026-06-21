@@ -979,12 +979,21 @@ useEffect(() => {
     await proceedExport("totals");
   };
 
-  const proceedExport = async (kind: "totals" | "rejects") => {
-    const { rows, grand } =
-      kind === "totals" ? computeTotals() : computeRejectTotals();
+  const proceedExport = async (
+    kind: "totals" | "rejects" | "room_status",
+  ) => {
+    const computed =
+      kind === "totals"
+        ? computeTotals()
+        : kind === "rejects"
+        ? computeRejectTotals()
+        : computeRoomStatus();
+    const rows = computed.rows as SnapshotRow[] | RoomStatusRow[];
+    const grand = computed.grand;
     if (rows.length === 0) {
       if (kind === "totals") setExportOpen(true);
-      else setRejectExportOpen(true);
+      else if (kind === "rejects") setRejectExportOpen(true);
+      else setRoomStatusExportOpen(true);
       return;
     }
     const today = new Date().toDateString();
@@ -1006,7 +1015,8 @@ useEffect(() => {
       }
     }
     if (kind === "totals") setExportOpen(true);
-    else setRejectExportOpen(true);
+    else if (kind === "rejects") setRejectExportOpen(true);
+    else setRoomStatusExportOpen(true);
     const { error } = await supabase
       .from("export_snapshots")
       .insert({ totals: rows, grand_total: grand, kind } as never);
