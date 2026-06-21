@@ -4,7 +4,7 @@ import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Minus, Plus, X, Menu, ArrowUp, ArrowDown, Pencil, Check, Trash2, Lock, Unlock, Sun, Moon, List, Bed, Ban, History, Users, User, LogOut, Hash, ConciergeBell, ClipboardList } from "lucide-react";
+import { Minus, Plus, X, Menu, ArrowUp, ArrowDown, Pencil, Check, Trash2, Lock, Unlock, Sun, Moon, List, Bed, Ban, History, Users, User, LogOut, Hash, ConciergeBell, ClipboardList, Printer } from "lucide-react";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
 import { getToken, getStoredUser, clearSession } from "@/lib/auth-client";
@@ -1939,6 +1939,23 @@ useEffect(() => {
        </DropdownMenuContent>
      </DropdownMenu>
    )}
+    {isReception && (
+      <Button
+        variant="outline"
+        size="sm"
+        onClick={() => {
+          const { rows } = computeRoomStatus();
+          if (rows.length === 0) {
+            toast.error("No rooms to print");
+            return;
+          }
+          printRoomStatus(rows, new Date());
+        }}
+      >
+        <Printer className="h-4 w-4 mr-2" />
+        Print
+      </Button>
+    )}
  <DropdownMenu>
  <DropdownMenuTrigger asChild>
  <Button variant="ghost" size="sm" className="" aria-label="Menu">
