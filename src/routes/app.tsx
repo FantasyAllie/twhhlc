@@ -1228,6 +1228,70 @@ useEffect(() => {
     }
   };
 
+  // --- Room feature management ---
+  const addRoomFeature = async (label: string) => {
+    const clean = label.trim();
+    if (!clean) return;
+    const value = valueFromLabel(clean);
+    if (!value) {
+      toast.error("Invalid feature name");
+      return;
+    }
+    if (roomFeatures.some((f) => f.value === value)) {
+      toast.error("Feature already exists");
+      return;
+    }
+    const { error } = await supabase
+      .from("room_features" as never)
+      .insert({ value, label: clean } as never);
+    if (error) {
+      toast.error(error.message);
+      return;
+    }
+    setAddRoomFeatureOpen(false);
+    setNewRoomFeatureLabel("");
+    qc.invalidateQueries({ queryKey: ["room_features"] });
+    toast.success("Feature added");
+  };
+
+  const deleteRoomFeature = async (id: string) => {
+    const inUse = roomFeatureAssignments.some((a) => a.feature_id === id);
+    if (inUse) {
+      toast.error("Cannot remove a feature that is in use");
+      return;
+    }
+    qc.setQueryData<RoomFeature[]>(["room_features"], (old) =>
+      old?.filter((f) => f.id !== id) ?? [],
+    );
+    const { error } = await supabase.from("room_features" as never).delete().eq("id", id);
+    if (error) {
+      toast.error(error.message);
+      qc.invalidateQueries({ queryKey: ["room_features"] });
+    }
+  };
+
+  const toggleRoomFeature = async (roomNumber: number, featureId: string) => {
+    const existing = roomFeatureAssignments.find(
+      (a) => a.feature_id === featureId && a.room_number === roomNumber,
+    );
+    if (existing) {
+      qc.setQueryData<RoomFeatureAssignment[]>(["room_feature_rooms"], (old) =>
+        old?.filter((a) => a.id !== existing.id) ?? [],
+      );
+      const { error } = await supabase
+        .from("room_feature_rooms" as never)
+        .delete()
+        .eq("id", existing.id);
+      if (error) toast.error(error.message);
+    } else {
+      const { error } = await supabase
+        .from("room_feature_rooms" as never)
+        .insert({ feature_id: featureId, room_number: roomNumber } as never);
+      if (error) toast.error(error.message);
+    }
+    qc.invalidateQueries({ queryKey: ["room_feature_rooms"] });
+  };
+
  const renderRoomPanel = (n: number) => {
  const roomExtras = extras.filter((e) => e.room_number === n);
    const showAll = !!showAllLinen[n];
