@@ -182,6 +182,7 @@ export type Database = {
       rooms: {
         Row: {
           category: string | null
+          default_status: string | null
           done: boolean
           done_reception: boolean
           id: string
@@ -191,6 +192,7 @@ export type Database = {
         }
         Insert: {
           category?: string | null
+          default_status?: string | null
           done?: boolean
           done_reception?: boolean
           id?: string
@@ -200,6 +202,7 @@ export type Database = {
         }
         Update: {
           category?: string | null
+          default_status?: string | null
           done?: boolean
           done_reception?: boolean
           id?: string

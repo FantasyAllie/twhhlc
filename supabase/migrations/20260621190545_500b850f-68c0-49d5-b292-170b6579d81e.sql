@@ -1,0 +1,1 @@
+ALTER TABLE public.rooms ADD COLUMN IF NOT EXISTS default_status text CHECK (default_status IN ('staff'));
