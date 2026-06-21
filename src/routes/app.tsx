@@ -2308,6 +2308,35 @@ useEffect(() => {
      })()}
    </DialogContent>
  </Dialog>
+  <Dialog
+    open={confirmOverwrite !== null}
+    onOpenChange={(o) => { if (!o) setConfirmOverwrite(null); }}
+  >
+    <DialogContent className="max-w-md w-[calc(100vw-1.5rem)] sm:w-full p-4 sm:p-6">
+      <DialogHeader>
+        <DialogTitle>Overwrite today's export?</DialogTitle>
+        <DialogDescription>
+          {confirmOverwrite?.kind === "rejects"
+            ? "A rejects export already exists for today. Continuing will overwrite today's last history item. Please use the history feature to print previous exports. Would you like to continue with your export?"
+            : "A linen export already exists for today. Continuing will overwrite today's last history item. Please use the history feature to print previous exports. Would you like to continue with your export?"}
+        </DialogDescription>
+      </DialogHeader>
+      <div className="flex justify-end gap-2 pt-2">
+        <Button variant="outline" onClick={() => setConfirmOverwrite(null)}>
+          No
+        </Button>
+        <Button
+          onClick={async () => {
+            const kind = confirmOverwrite?.kind;
+            setConfirmOverwrite(null);
+            if (kind) await proceedExport(kind);
+          }}
+        >
+          Yes
+        </Button>
+      </div>
+    </DialogContent>
+  </Dialog>
   <AccountDialog
     open={accountOpen}
     onOpenChange={setAccountOpen}
