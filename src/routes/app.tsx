@@ -82,7 +82,7 @@ type RoomCount = {
  item_id: string;
  count: number;
 };
-type Room = { id: string; room_number: number; done: boolean; done_reception: boolean; category: Category | null; default_status: "staff" | null };
+type Room = { id: string; room_number: number; done: boolean; done_reception: boolean; category: Category | null; default_status: string | null };
 type TemplateItemRoom = { id: string; template_item_id: string; room_number: number };
 type SnapshotRow = { name: string; count: number };
 type ExportSnapshot = {
@@ -1159,7 +1159,7 @@ useEffect(() => {
  const roomCategory = (n: number): Category | null =>
  rooms.find((r) => r.room_number === n)?.category ?? null;
 
- const setRoomDefaultStatus = async (roomNumber: number, status: "staff" | null) => {
+ const setRoomDefaultStatus = async (roomNumber: number, status: string | null) => {
    qc.setQueryData<Room[]>(["rooms"], (old) => {
      const list = old ? [...old] : [];
      const idx = list.findIndex((r) => r.room_number === roomNumber);
