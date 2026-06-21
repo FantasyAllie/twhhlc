@@ -1956,6 +1956,11 @@ useEffect(() => {
                           Rejects
                         </span>
                       )}
+                      {s.kind === "room_status" && (
+                        <span className="ml-2 text-xs uppercase tracking-wide text-muted-foreground">
+                          Room status
+                        </span>
+                      )}
                       <span className="ml-2 text-xs text-muted-foreground">
                         ({s.grand_total})
                       </span>
