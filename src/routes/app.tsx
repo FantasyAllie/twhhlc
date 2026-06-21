@@ -2320,6 +2320,91 @@ useEffect(() => {
             </DropdownMenuContent>
           </DropdownMenu>
         </div>
+        <div className="mt-2 flex w-full gap-2">
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button variant="outline" size="sm" className="flex-1 min-w-0">
+                <ConciergeBell className="h-4 w-4 mr-2" />
+                Reception
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="start" className="min-w-[12rem]">
+              <DropdownMenuLabel className="text-[10px] uppercase tracking-wide text-muted-foreground">
+                Room Status
+              </DropdownMenuLabel>
+              {receptionStatuses.length === 0 && (
+                <DropdownMenuItem disabled>No statuses</DropdownMenuItem>
+              )}
+              {receptionStatuses.map((s) => (
+                <DropdownMenuItem
+                  key={s.id}
+                  className="flex items-center justify-between pr-2"
+                  onSelect={(e) => e.preventDefault()}
+                >
+                  <span>{s.label}</span>
+                  <button
+                    type="button"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      e.preventDefault();
+                      deleteReceptionItem(s.id);
+                    }}
+                    className="ml-2 inline-flex h-6 w-6 items-center justify-center rounded text-muted-foreground hover:bg-accent hover:text-destructive"
+                    aria-label={`Remove ${s.label}`}
+                  >
+                    <X className="h-3.5 w-3.5" />
+                  </button>
+                </DropdownMenuItem>
+              ))}
+              <DropdownMenuItem
+                onSelect={(e) => {
+                  e.preventDefault();
+                  setAddReceptionItemKind("status");
+                }}
+              >
+                <Plus className="h-4 w-4 mr-2" />
+                Add status
+              </DropdownMenuItem>
+              <DropdownMenuSeparator />
+              <DropdownMenuLabel className="text-[10px] uppercase tracking-wide text-muted-foreground">
+                Bed set as
+              </DropdownMenuLabel>
+              {receptionBeds.length === 0 && (
+                <DropdownMenuItem disabled>No bed types</DropdownMenuItem>
+              )}
+              {receptionBeds.map((b) => (
+                <DropdownMenuItem
+                  key={b.id}
+                  className="flex items-center justify-between pr-2"
+                  onSelect={(e) => e.preventDefault()}
+                >
+                  <span>{b.label}</span>
+                  <button
+                    type="button"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      e.preventDefault();
+                      deleteReceptionItem(b.id);
+                    }}
+                    className="ml-2 inline-flex h-6 w-6 items-center justify-center rounded text-muted-foreground hover:bg-accent hover:text-destructive"
+                    aria-label={`Remove ${b.label}`}
+                  >
+                    <X className="h-3.5 w-3.5" />
+                  </button>
+                </DropdownMenuItem>
+              ))}
+              <DropdownMenuItem
+                onSelect={(e) => {
+                  e.preventDefault();
+                  setAddReceptionItemKind("bed");
+                }}
+              >
+                <Plus className="h-4 w-4 mr-2" />
+                Add bed type
+              </DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
+        </div>
       </DialogHeader>
       <div className="space-y-3">
         <div className="flex items-end gap-2">
