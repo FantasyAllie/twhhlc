@@ -329,10 +329,11 @@ useEffect(() => {
     },
   });
 
- const template = templateQ.data ?? [];
- const extras = extrasQ.data ?? [];
- const counts = countsQ.data ?? [];
- const rooms = roomsQ.data ?? [];
+  const template = templateQ.data ?? [];
+  const extras = extrasQ.data ?? [];
+  const counts = countsQ.data ?? [];
+  const rooms = roomsQ.data ?? [];
+  const roomTypes = roomTypesQ.data ?? [];
   const assignments = assignmentsQ.data ?? [];
   const snapshots = snapshotsQ.data ?? [];
   const rejects = (rejectsQ.data ?? []) as RejectCount[];
