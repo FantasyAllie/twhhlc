@@ -4,7 +4,7 @@ import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Minus, Plus, X, Menu, ArrowUp, ArrowDown, Pencil, Check, Trash2, Lock, Unlock, Sun, Moon, List, Bed, Ban, History, Users, User, LogOut } from "lucide-react";
+import { Minus, Plus, X, Menu, ArrowUp, ArrowDown, Pencil, Check, Trash2, Lock, Unlock, Sun, Moon, List, Bed, Ban, History, Users, User, LogOut, Hash } from "lucide-react";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
 import { getToken, getStoredUser, clearSession } from "@/lib/auth-client";
@@ -191,6 +191,8 @@ useEffect(() => {
   const [viewingSnapshot, setViewingSnapshot] = useState<ExportSnapshot | null>(null);
   const [rejectsOpen, setRejectsOpen] = useState(false);
   const [rejectExportOpen, setRejectExportOpen] = useState(false);
+  const [manageRoomsOpen, setManageRoomsOpen] = useState(false);
+  const [newRoomNumber, setNewRoomNumber] = useState<string>("");
 
  // Track responsive column count so we can insert the open-room panel
  // right after the row containing the clicked room.
@@ -787,6 +789,55 @@ useEffect(() => {
  };
 
   // --- Export totals + snapshots ---
+  const addRoom = async (n: number) => {
+    if (!Number.isFinite(n) || n < 1 || n > 999) {
+      toast.error("Room number must be between 1 and 999.");
+      return;
+    }
+    if (rooms.some((r) => r.room_number === n)) {
+      toast.error(`Room ${n} already exists.`);
+      return;
+    }
+    qc.setQueryData<Room[]>(["rooms"], (old) => {
+      const list = old ? [...old] : [];
+      list.push({ id: `temp-${n}`, room_number: n, done: false, done_reception: false, category: null });
+      list.sort((a, b) => a.room_number - b.room_number);
+      return list;
+    });
+    const { error } = await supabase.from("rooms").upsert(
+      { room_number: n, done: false, done_reception: false, updated_at: new Date().toISOString() },
+      { onConflict: "user_id,room_number" },
+    );
+    if (error) {
+      toast.error(error.message);
+    } else {
+      toast.success(`Room ${n} added.`);
+    }
+    qc.invalidateQueries({ queryKey: ["rooms"] });
+  };
+
+  const removeRoom = async (n: number) => {
+    if (!confirm(`Remove Room ${n}? This will delete its counts, linen assignments, and messages.`)) return;
+    qc.setQueryData<Room[]>(["rooms"], (old) => old?.filter((r) => r.room_number !== n) ?? []);
+    qc.setQueryData<RoomCount[]>(["room_counts"], (old) => old?.filter((c) => c.room_number !== n) ?? []);
+    qc.setQueryData<TemplateItemRoom[]>(["template_item_rooms"], (old) => old?.filter((a) => a.room_number !== n) ?? []);
+    const results = await Promise.all([
+      supabase.from("room_item_counts").delete().eq("room_number", n),
+      supabase.from("template_item_rooms").delete().eq("room_number", n),
+      supabase.from("room_extra_items").delete().eq("room_number", n),
+      supabase.from("room_messages" as never).delete().eq("room_number", n),
+      supabase.from("rooms").delete().eq("room_number", n),
+    ]);
+    for (const r of results) {
+      if (r.error) toast.error(r.error.message);
+    }
+    qc.invalidateQueries({ queryKey: ["rooms"] });
+    qc.invalidateQueries({ queryKey: ["room_counts"] });
+    qc.invalidateQueries({ queryKey: ["template_item_rooms"] });
+    qc.invalidateQueries({ queryKey: ["room_extras"] });
+    qc.invalidateQueries({ queryKey: ["room_messages"] });
+  };
+
   const computeTotals = (): { rows: SnapshotRow[]; grand: number } => {
     const totals = new Map<string, number>();
     const nameFor = (c: RoomCount) => {
@@ -1342,6 +1393,10 @@ useEffect(() => {
         <Bed className="h-4 w-4 mr-2" />
         Room Type
       </DropdownMenuItem>
+      <DropdownMenuItem onSelect={() => setManageRoomsOpen(true)}>
+        <Hash className="h-4 w-4 mr-2" />
+        Manage Rooms
+      </DropdownMenuItem>
       <DropdownMenuSub>
         <DropdownMenuSubTrigger>
           <History className="h-4 w-4 mr-2" />
@@ -1751,6 +1806,95 @@ useEffect(() => {
      )}
    </DialogContent>
  </Dialog>
+
+  {/* Manage Rooms dialog */}
+  <Dialog open={manageRoomsOpen} onOpenChange={setManageRoomsOpen}>
+    <DialogContent className="max-w-md w-[calc(100vw-1.5rem)] sm:w-full p-4 sm:p-6">
+      <DialogHeader>
+        <DialogTitle>Manage Rooms</DialogTitle>
+        <DialogDescription>
+          Add or remove rooms. New rooms work like every other room — they
+          appear in the grid, share the Linen List, and support Room Types.
+          Rejects always stays at the end.
+        </DialogDescription>
+      </DialogHeader>
+      <div className="space-y-3">
+        <div className="flex items-end gap-2">
+          <div className="flex-1">
+            <label className="text-xs text-muted-foreground">Room number</label>
+            <Input
+              type="number"
+              inputMode="numeric"
+              min={1}
+              max={999}
+              value={newRoomNumber}
+              placeholder={String(
+                (() => {
+                  const used = new Set(rooms.map((r) => r.room_number));
+                  let n = 1;
+                  while (used.has(n)) n++;
+                  return n;
+                })(),
+              )}
+              onChange={(e) => setNewRoomNumber(e.target.value)}
+              onKeyDown={(e) => {
+                if (e.key === "Enter") {
+                  const used = new Set(rooms.map((r) => r.room_number));
+                  let suggested = 1;
+                  while (used.has(suggested)) suggested++;
+                  const n = newRoomNumber.trim() === "" ? suggested : Number(newRoomNumber);
+                  addRoom(n);
+                  setNewRoomNumber("");
+                }
+              }}
+            />
+          </div>
+          <Button
+            onClick={() => {
+              const used = new Set(rooms.map((r) => r.room_number));
+              let suggested = 1;
+              while (used.has(suggested)) suggested++;
+              const n = newRoomNumber.trim() === "" ? suggested : Number(newRoomNumber);
+              addRoom(n);
+              setNewRoomNumber("");
+            }}
+          >
+            <Plus className="h-4 w-4 mr-1" />
+            Add
+          </Button>
+        </div>
+        <div className="text-xs text-muted-foreground">
+          {rooms.length} room{rooms.length === 1 ? "" : "s"} total
+        </div>
+        <ul className="divide-y rounded-md border max-h-[50vh] overflow-y-auto">
+          {rooms
+            .slice()
+            .sort((a, b) => a.room_number - b.room_number)
+            .map((r) => (
+              <li key={r.id} className="flex items-center gap-3 px-3 py-2">
+                <span className="flex-1 text-sm font-medium tabular-nums">
+                  Room {r.room_number}
+                </span>
+                {r.category && (
+                  <span className="text-xs text-muted-foreground capitalize">
+                    {r.category}
+                  </span>
+                )}
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  className="h-8 w-8 text-destructive hover:text-destructive"
+                  onClick={() => removeRoom(r.room_number)}
+                  aria-label={`Remove Room ${r.room_number}`}
+                >
+                  <Trash2 className="h-4 w-4" />
+                </Button>
+              </li>
+            ))}
+        </ul>
+      </div>
+    </DialogContent>
+  </Dialog>
 
  {/* Rooms */}
  <section className="space-y-4">
