@@ -1927,43 +1927,46 @@ useEffect(() => {
  </DialogContent>
  </Dialog>
 
- {/* Room type dialog */}
- <Dialog open={categoriesOpen} onOpenChange={setCategoriesOpen}>
-<DialogContent className="max-w-lg w-[calc(100vw-1.5rem)] sm:w-full p-4 sm:p-6">
- <DialogHeader>
-               <DialogTitle>Room Type</DialogTitle>
-               <DialogDescription>
-                 Assign a type to each room so you know what it is when counting.
- </DialogDescription>
- </DialogHeader>
- <div className="max-h-[60vh] overflow-y-auto -mx-4 sm:-mx-6 px-4 sm:px-6">
- <ul className="divide-y">
- {rooms.map((r) => r.room_number).map((n) => {
- const cat = roomCategory(n);
- return (
- <li key={n} className="flex items-center gap-3 py-2">
- <span className="w-12 text-sm font-medium tabular-nums">Room {n}</span>
- <div className="flex-1 flex flex-wrap gap-1 justify-end">
- {CATEGORIES.map((c) => (
- <Button
- key={c.value}
- type="button"
- size="sm"
- variant={cat === c.value ? "default" : "outline"}
- className="h-7 text-xs"
- onClick={() => setRoomCategory(n, c.value)}
- >
- {c.label}
- </Button>
- ))}
- </div>
- </li>
- );
- })}
- </ul>
- </div>
- </DialogContent>
- </Dialog>
+  {/* Add room type dialog */}
+  <Dialog open={addRoomTypeOpen} onOpenChange={setAddRoomTypeOpen}>
+    <DialogContent className="max-w-sm w-[calc(100vw-1.5rem)] sm:w-full p-4 sm:p-6">
+      <DialogHeader>
+        <DialogTitle>Add Room Type</DialogTitle>
+        <DialogDescription>
+          Enter a name for the new room type.
+        </DialogDescription>
+      </DialogHeader>
+      <form
+        onSubmit={(e) => {
+          e.preventDefault();
+          addRoomType(newRoomTypeLabel);
+        }}
+        className="space-y-3"
+      >
+        <Input
+          placeholder="e.g. Twin"
+          value={newRoomTypeLabel}
+          onChange={(e) => setNewRoomTypeLabel(e.target.value)}
+          autoFocus
+        />
+        <div className="flex justify-end gap-2">
+          <Button
+            type="button"
+            variant="ghost"
+            onClick={() => {
+              setAddRoomTypeOpen(false);
+              setNewRoomTypeLabel("");
+            }}
+          >
+            Cancel
+          </Button>
+          <Button type="submit" disabled={!newRoomTypeLabel.trim()}>
+            Add
+          </Button>
+        </div>
+      </form>
+    </DialogContent>
+  </Dialog>
 
  {/* Rejects dialog */}
  <Dialog open={rejectsOpen} onOpenChange={setRejectsOpen}>
