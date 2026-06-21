@@ -46,13 +46,14 @@ export const Route = createFileRoute("/app")({
   component: AppPage,
 });
 
-type Category = "double" | "super_king";
-const CATEGORIES: { value: Category; label: string }[] = [
- { value: "double", label: "Double" },
- { value: "super_king", label: "Super King" },
-];
-const categoryLabel = (c: Category | null | undefined) =>
- CATEGORIES.find((x) => x.value === c)?.label ?? "Uncategorised";
+type Category = string;
+type RoomType = { id: string; user_id: string; value: Category; label: string; created_at: string; updated_at: string };
+
+const categoryLabel = (c: Category | null | undefined, types: RoomType[]) =>
+  types.find((x) => x.value === c)?.label ?? "Uncategorised";
+
+const valueFromLabel = (label: string): Category =>
+  label.toLowerCase().trim().replace(/\s+/g, "_").replace(/[^a-z0-9_]/g, "");
 
 const COLOR_SWATCHES: Record<"green" | "yellow" | "red" | "blue", { bg: string; darkBg: string; border: string; solid: string; label: string }> = {
   green:  { bg: "#dcfce7", darkBg: "#14532d", border: "#86efac", solid: "#22c55e", label: "Green" },
