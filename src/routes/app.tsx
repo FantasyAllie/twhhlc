@@ -2112,6 +2112,16 @@ useEffect(() => {
               className="absolute top-0.5 right-0.5 h-2 w-2 rounded-full bg-amber-500 ring-2 ring-background"
             />
           )}
+          {receptionDoneSet.has(n) && (
+            <svg
+              className="absolute bottom-0 right-0 h-6 w-6 fill-yellow-500"
+              viewBox="0 0 100 100"
+              preserveAspectRatio="none"
+              aria-hidden="true"
+            >
+              <polygon points="100,0 100,100 0,100" />
+            </svg>
+          )}
       </button>,
     );
   }
