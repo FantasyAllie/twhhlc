@@ -1275,17 +1275,20 @@ useEffect(() => {
           </DropdownMenuTrigger>
           <DropdownMenuContent align="start" className="w-56">
             <DropdownMenuItem
+              className="justify-center"
               onSelect={(e) => {
                 e.preventDefault();
                 toggleReceptionDone(n);
               }}
             >
-              {receptionDoneSet.has(n) ? (
-                <Check className="mr-2 h-4 w-4" />
-              ) : (
-                <span className="mr-2 inline-block h-4 w-4" />
-              )}
-              {receptionDoneSet.has(n) ? "Mark not done" : "Mark done"}
+              <span className="inline-flex items-center gap-2">
+                {receptionDoneSet.has(n) ? (
+                  <Check className="h-4 w-4" />
+                ) : (
+                  <span className="inline-block h-4 w-4" />
+                )}
+                {receptionDoneSet.has(n) ? "Mark not done" : "Mark done"}
+              </span>
             </DropdownMenuItem>
             <DropdownMenuSeparator />
             {(["stay", "arrival", "ros", "staff"] as const).map((v) => {
@@ -1294,6 +1297,7 @@ useEffect(() => {
               return (
                 <DropdownMenuItem
                   key={v}
+                  className="justify-center"
                   onSelect={(e) => {
                     e.preventDefault();
                     setRoomOccupancy((prev) => ({
@@ -1302,12 +1306,14 @@ useEffect(() => {
                     }));
                   }}
                 >
-                  {selected ? (
-                    <Check className="mr-2 h-4 w-4" />
-                  ) : (
-                    <span className="mr-2 inline-block h-4 w-4" />
-                  )}
-                  {label}
+                  <span className="inline-flex items-center gap-2">
+                    {selected ? (
+                      <Check className="h-4 w-4" />
+                    ) : (
+                      <span className="inline-block h-4 w-4" />
+                    )}
+                    {label}
+                  </span>
                 </DropdownMenuItem>
               );
             })}
@@ -1318,6 +1324,7 @@ useEffect(() => {
               return (
                 <DropdownMenuItem
                   key={v}
+                  className="justify-center"
                   onSelect={(e) => {
                     e.preventDefault();
                     setRoomBedType((prev) => ({
@@ -1326,12 +1333,14 @@ useEffect(() => {
                     }));
                   }}
                 >
-                  {selected ? (
-                    <Check className="mr-2 h-4 w-4" />
-                  ) : (
-                    <span className="mr-2 inline-block h-4 w-4" />
-                  )}
-                  {label}
+                  <span className="inline-flex items-center gap-2">
+                    {selected ? (
+                      <Check className="h-4 w-4" />
+                    ) : (
+                      <span className="inline-block h-4 w-4" />
+                    )}
+                    {label}
+                  </span>
                 </DropdownMenuItem>
               );
             })}
