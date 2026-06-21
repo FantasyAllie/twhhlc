@@ -12,15 +12,16 @@ import { setSession } from "@/lib/auth-client";
 import { useServerFn } from "@tanstack/react-start";
 import { updateMyPassword, updateMyUsername } from "@/lib/auth.functions";
 import {
- DropdownMenu,
- DropdownMenuContent,
- DropdownMenuItem,
+  DropdownMenu,
+  DropdownMenuCheckboxItem,
+  DropdownMenuContent,
+  DropdownMenuItem,
   DropdownMenuLabel,
- DropdownMenuSeparator,
+  DropdownMenuSeparator,
   DropdownMenuSub,
   DropdownMenuSubContent,
   DropdownMenuSubTrigger,
- DropdownMenuTrigger,
+  DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import {
  Dialog,
