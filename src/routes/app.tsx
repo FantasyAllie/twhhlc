@@ -1484,22 +1484,24 @@ useEffect(() => {
               </span>
             </DropdownMenuItem>
             <DropdownMenuSeparator />
-            {(["stay", "arrival", "ros", "staff"] as const).map((v) => {
-              const label = v === "ros" || v === "staff" ? v.toUpperCase() : v[0].toUpperCase() + v.slice(1);
-              const selected = roomOccupancy[n] === v;
+            {receptionStatuses.length === 0 && (
+              <DropdownMenuItem disabled>No statuses</DropdownMenuItem>
+            )}
+            {receptionStatuses.map((s) => {
+              const selected = roomOccupancy[n] === s.id;
               return (
                 <DropdownMenuItem
-                  key={v}
+                  key={s.id}
                   className="justify-between"
                   onSelect={(e) => {
                     e.preventDefault();
                     setRoomOccupancy((prev) => ({
                       ...prev,
-                      [n]: prev[n] === v ? null : v,
+                      [n]: prev[n] === s.id ? null : s.id,
                     }));
                   }}
                 >
-                  <span>{label}</span>
+                  <span>{s.label}</span>
                   <span className="flex items-center gap-2 border-l border-border pl-2">
                     {selected ? (
                       <Check className="h-4 w-4" />
@@ -1511,22 +1513,24 @@ useEffect(() => {
               );
             })}
             <DropdownMenuSeparator />
-            {(["double", "twin", "king"] as const).map((v) => {
-              const label = v[0].toUpperCase() + v.slice(1);
-              const selected = roomBedType[n] === v;
+            {receptionBeds.length === 0 && (
+              <DropdownMenuItem disabled>No bed types</DropdownMenuItem>
+            )}
+            {receptionBeds.map((b) => {
+              const selected = roomBedType[n] === b.id;
               return (
                 <DropdownMenuItem
-                  key={v}
+                  key={b.id}
                   className="justify-between"
                   onSelect={(e) => {
                     e.preventDefault();
                     setRoomBedType((prev) => ({
                       ...prev,
-                      [n]: prev[n] === v ? null : v,
+                      [n]: prev[n] === b.id ? null : b.id,
                     }));
                   }}
                 >
-                  <span>{label}</span>
+                  <span>{b.label}</span>
                   <span className="flex items-center gap-2 border-l border-border pl-2">
                     {selected ? (
                       <Check className="h-4 w-4" />
