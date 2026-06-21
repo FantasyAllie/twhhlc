@@ -2105,6 +2105,66 @@ useEffect(() => {
 
   {/* Add room feature dialog */}
   <Dialog open={addRoomFeatureOpen} onOpenChange={setAddRoomFeatureOpen}>
+    {null}
+  </Dialog>
+
+  {/* Add reception item dialog */}
+  <Dialog
+    open={addReceptionItemKind !== null}
+    onOpenChange={(o) => {
+      if (!o) {
+        setAddReceptionItemKind(null);
+        setNewReceptionItemLabel("");
+      }
+    }}
+  >
+    <DialogContent className="max-w-sm w-[calc(100vw-1.5rem)] sm:w-full p-4 sm:p-6">
+      <DialogHeader>
+        <DialogTitle>
+          {addReceptionItemKind === "bed" ? "Add Bed Type" : "Add Room Status"}
+        </DialogTitle>
+        <DialogDescription>
+          {addReceptionItemKind === "bed"
+            ? "Enter a name for the new bed type."
+            : "Enter a name for the new room status."}
+        </DialogDescription>
+      </DialogHeader>
+      <form
+        onSubmit={(e) => {
+          e.preventDefault();
+          if (addReceptionItemKind) {
+            addReceptionItem(addReceptionItemKind, newReceptionItemLabel);
+          }
+        }}
+        className="space-y-3"
+      >
+        <Input
+          placeholder={addReceptionItemKind === "bed" ? "e.g. King" : "e.g. Arrival"}
+          value={newReceptionItemLabel}
+          onChange={(e) => setNewReceptionItemLabel(e.target.value)}
+          autoFocus
+        />
+        <div className="flex justify-end gap-2">
+          <Button
+            type="button"
+            variant="ghost"
+            onClick={() => {
+              setAddReceptionItemKind(null);
+              setNewReceptionItemLabel("");
+            }}
+          >
+            Cancel
+          </Button>
+          <Button type="submit" disabled={!newReceptionItemLabel.trim()}>
+            Add
+          </Button>
+        </div>
+      </form>
+    </DialogContent>
+  </Dialog>
+
+  {/* placeholder removed */}
+  <Dialog open={false} onOpenChange={() => {}}>
     <DialogContent className="max-w-sm w-[calc(100vw-1.5rem)] sm:w-full p-4 sm:p-6">
       <DialogHeader>
         <DialogTitle>Add Room Feature</DialogTitle>
