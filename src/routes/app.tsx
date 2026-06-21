@@ -1090,6 +1090,34 @@ useEffect(() => {
  const roomCategory = (n: number): Category | null =>
  rooms.find((r) => r.room_number === n)?.category ?? null;
 
+ const setRoomDefaultStatus = async (roomNumber: number, status: "staff" | null) => {
+   qc.setQueryData<Room[]>(["rooms"], (old) => {
+     const list = old ? [...old] : [];
+     const idx = list.findIndex((r) => r.room_number === roomNumber);
+     if (idx >= 0) list[idx] = { ...list[idx], default_status: status };
+     else
+       list.push({
+         id: `temp-${roomNumber}`,
+         room_number: roomNumber,
+         done: false,
+         done_reception: false,
+         category: null,
+         default_status: status,
+       });
+     return list;
+   });
+   const { error } = await supabase.from("rooms").upsert(
+     {
+       room_number: roomNumber,
+       default_status: status,
+       updated_at: new Date().toISOString(),
+     } as never,
+     { onConflict: "user_id,room_number" },
+   );
+   if (error) toast.error(error.message);
+   qc.invalidateQueries({ queryKey: ["rooms"] });
+ };
+
  const renderRoomPanel = (n: number) => {
  const roomExtras = extras.filter((e) => e.room_number === n);
    const showAll = !!showAllLinen[n];
