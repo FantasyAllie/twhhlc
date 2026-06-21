@@ -2889,7 +2889,7 @@ useEffect(() => {
     const staffStatusId = receptionStatuses.find(
       (s) => s.label.toLowerCase() === "staff",
     )?.id;
-    const isStaffRoom = room?.default_status === staffStatusId;
+    const isStaffRoom = (room?.reception_status_id ?? room?.default_status) === staffStatusId;
     nodes.push(
         <button
         key={`r-${n}`}
