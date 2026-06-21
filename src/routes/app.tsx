@@ -1745,10 +1745,10 @@ useEffect(() => {
 <DialogContent className="max-w-2xl w-[calc(100vw-1.5rem)] sm:w-full p-4 sm:p-6">
  <DialogHeader>
  <DialogTitle>Linen List</DialogTitle>
- <DialogDescription>
-   Manage the shared list of linen items. Pick which items appear in each
-   room from that room's "Edit defaults" button.
- </DialogDescription>
+  <DialogDescription>
+    Manage the shared list of linen items. Pick which items appear in each
+    room from that room's ✏️ button.
+  </DialogDescription>
  </DialogHeader>
   <div className="space-y-3">
     <div className="flex justify-end">
