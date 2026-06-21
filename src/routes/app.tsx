@@ -1216,7 +1216,7 @@ useEffect(() => {
       .date{margin:0 0 1.25rem;font-size:.95rem;text-align:center;}
       .grid{display:grid;grid-template-columns:1fr 1fr;gap:1rem;}
       table{width:100%;border-collapse:collapse;font-size:.95rem;}
-      th,td{text-align:left;padding:.35rem .5rem;border:1px solid #444;}
+      th,td{text-align:center;padding:.35rem .5rem;border:1px solid #444;}
       th.num,td.num{text-align:center;font-variant-numeric:tabular-nums;width:3rem;}
       th{background:#eee;}
       @media print{body{padding:0;}}
