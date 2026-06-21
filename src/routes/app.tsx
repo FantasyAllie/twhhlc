@@ -1126,11 +1126,66 @@ useEffect(() => {
        default_status: status,
        updated_at: new Date().toISOString(),
      } as never,
-     { onConflict: "user_id,room_number" },
-   );
-   if (error) toast.error(error.message);
-   qc.invalidateQueries({ queryKey: ["rooms"] });
- };
+      { onConflict: "user_id,room_number" },
+    );
+    if (error) toast.error(error.message);
+    qc.invalidateQueries({ queryKey: ["rooms"] });
+  };
+
+  // --- Room type management ---
+  const addRoomType = async (label: string) => {
+    const clean = label.trim();
+    if (!clean) return;
+    const value = valueFromLabel(clean);
+    if (!value) {
+      toast.error("Invalid room type name");
+      return;
+    }
+    if (roomTypes.some((rt) => rt.value === value)) {
+      toast.error("Room type already exists");
+      return;
+    }
+    qc.setQueryData<RoomType[]>(["room_types"], (old) => [
+      ...(old ?? []),
+      {
+        id: `temp-${value}`,
+        user_id: authUser?.id ?? "",
+        value,
+        label: clean,
+        created_at: new Date().toISOString(),
+        updated_at: new Date().toISOString(),
+      },
+    ]);
+    const { error } = await supabase.from("room_types").insert({ value, label: clean });
+    if (error) {
+      toast.error(error.message);
+      qc.invalidateQueries({ queryKey: ["room_types"] });
+      return;
+    }
+    setAddRoomTypeOpen(false);
+    setNewRoomTypeLabel("");
+    qc.invalidateQueries({ queryKey: ["room_types"] });
+    toast.success("Room type added");
+  };
+
+  const deleteRoomType = async (id: string) => {
+    const rt = roomTypes.find((r) => r.id === id);
+    if (!rt) return;
+    const inRooms = rooms.some((r) => r.category === rt.value);
+    const inTemplates = template.some((t) => t.category === rt.value);
+    if (inRooms || inTemplates) {
+      toast.error("Cannot remove a room type that is in use");
+      return;
+    }
+    qc.setQueryData<RoomType[]>(["room_types"], (old) =>
+      old?.filter((r) => r.id !== id) ?? [],
+    );
+    const { error } = await supabase.from("room_types").delete().eq("id", id);
+    if (error) {
+      toast.error(error.message);
+      qc.invalidateQueries({ queryKey: ["room_types"] });
+    }
+  };
 
  const renderRoomPanel = (n: number) => {
  const roomExtras = extras.filter((e) => e.room_number === n);
