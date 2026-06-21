@@ -1,0 +1,2 @@
+ALTER TABLE public.room_types DROP CONSTRAINT IF EXISTS room_types_user_id_fkey;
+ALTER TABLE public.room_types ALTER COLUMN user_id SET DEFAULT '00000000-0000-0000-0000-000000000000'::uuid;
