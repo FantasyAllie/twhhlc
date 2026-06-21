@@ -2053,6 +2053,47 @@ useEffect(() => {
     </DialogContent>
   </Dialog>
 
+  {/* Add room feature dialog */}
+  <Dialog open={addRoomFeatureOpen} onOpenChange={setAddRoomFeatureOpen}>
+    <DialogContent className="max-w-sm w-[calc(100vw-1.5rem)] sm:w-full p-4 sm:p-6">
+      <DialogHeader>
+        <DialogTitle>Add Room Feature</DialogTitle>
+        <DialogDescription>
+          Enter a name for the new room feature.
+        </DialogDescription>
+      </DialogHeader>
+      <form
+        onSubmit={(e) => {
+          e.preventDefault();
+          addRoomFeature(newRoomFeatureLabel);
+        }}
+        className="space-y-3"
+      >
+        <Input
+          placeholder="e.g. Balcony"
+          value={newRoomFeatureLabel}
+          onChange={(e) => setNewRoomFeatureLabel(e.target.value)}
+          autoFocus
+        />
+        <div className="flex justify-end gap-2">
+          <Button
+            type="button"
+            variant="ghost"
+            onClick={() => {
+              setAddRoomFeatureOpen(false);
+              setNewRoomFeatureLabel("");
+            }}
+          >
+            Cancel
+          </Button>
+          <Button type="submit" disabled={!newRoomFeatureLabel.trim()}>
+            Add
+          </Button>
+        </div>
+      </form>
+    </DialogContent>
+  </Dialog>
+
  {/* Rejects dialog */}
  <Dialog open={rejectsOpen} onOpenChange={setRejectsOpen}>
    <DialogContent className="max-w-md w-[calc(100vw-1.5rem)] sm:w-full p-4 sm:p-6">
