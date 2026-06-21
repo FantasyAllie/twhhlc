@@ -1453,10 +1453,10 @@ useEffect(() => {
             <button
               type="button"
               className={cn(
-                "flex items-center justify-center gap-1.5 rounded-md border px-2 sm:px-3 py-2 flex-1 text-xs sm:text-sm font-medium transition-colors cursor-pointer",
+                "flex items-center justify-center gap-1.5 rounded-md border bg-background px-2 sm:px-3 py-2 flex-1 text-sm font-medium cursor-pointer transition-colors hover:bg-accent",
                 receptionDoneSet.has(n)
                   ? "border-primary bg-primary/10 text-primary"
-                  : "border bg-card hover:bg-muted"
+                  : ""
               )}
             >
               Reception
@@ -1549,25 +1549,24 @@ useEffect(() => {
             setShowAllLinen((prev) => ({ ...prev, [n]: !prev[n] }))
           }
           className={cn(
-            "flex items-center justify-center gap-1.5 rounded-md border px-2 sm:px-3 py-2 flex-1 text-xs sm:text-sm font-medium transition-colors cursor-pointer",
+            "flex items-center justify-center gap-1.5 rounded-md border bg-background px-2 sm:px-3 py-2 flex-1 text-sm font-medium cursor-pointer transition-colors hover:bg-accent",
             showAll
               ? "border-primary bg-primary/10 text-primary"
-              : "border bg-card hover:bg-muted"
+              : ""
           )}
         >
           Extra linen
         </button>
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
-            <Button
-              variant="outline"
-              size="icon"
-              className="h-8 w-8 shrink-0"
+            <button
+              type="button"
+              className="inline-flex items-center justify-center h-10 w-10 shrink-0 rounded-md border bg-background text-sm font-medium cursor-pointer transition-colors hover:bg-accent disabled:opacity-50 disabled:cursor-not-allowed"
               disabled={linenLocked}
               aria-label="Edit defaults"
             >
               <Pencil className="h-4 w-4" />
-            </Button>
+            </button>
           </DropdownMenuTrigger>
           <DropdownMenuContent align="end" className="w-64">
             {template.length === 0 ? (
