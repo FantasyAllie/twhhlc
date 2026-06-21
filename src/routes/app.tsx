@@ -258,17 +258,29 @@ useEffect(() => {
  },
  });
 
- const roomsQ = useQuery({
- queryKey: ["rooms"],
- queryFn: async (): Promise<Room[]> => {
- const { data, error } = await supabase
- .from("rooms")
+  const roomsQ = useQuery({
+    queryKey: ["rooms"],
+    queryFn: async (): Promise<Room[]> => {
+      const { data, error } = await supabase
+        .from("rooms")
         .select("id,room_number,done,done_reception,category,default_status")
- .order("room_number", { ascending: true });
- if (error) throw error;
- return (data ?? []) as Room[];
- },
- });
+        .order("room_number", { ascending: true });
+      if (error) throw error;
+      return (data ?? []) as Room[];
+    },
+  });
+
+  const roomTypesQ = useQuery({
+    queryKey: ["room_types"],
+    queryFn: async (): Promise<RoomType[]> => {
+      const { data, error } = await supabase
+        .from("room_types")
+        .select("id,user_id,value,label,created_at,updated_at")
+        .order("created_at", { ascending: true });
+      if (error) throw error;
+      return (data ?? []) as RoomType[];
+    },
+  });
 
   const assignmentsQ = useQuery({
     queryKey: ["template_item_rooms"],
