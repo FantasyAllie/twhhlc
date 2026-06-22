@@ -2869,7 +2869,48 @@ useEffect(() => {
  <h2 className="text-sm font-medium text-muted-foreground uppercase tracking-wide">
  Rooms
  </h2>
-  {!isReception && (
+   {isReception && roomFeatures.length > 0 && (
+     <DropdownMenu>
+       <DropdownMenuTrigger asChild>
+         <Button variant="outline" size="sm" className="h-7 gap-1.5 text-xs">
+           <Filter className="h-3.5 w-3.5" />
+           {receptionFeatureFilter.length === 0
+             ? "Filter features"
+             : `${receptionFeatureFilter.length} feature${receptionFeatureFilter.length === 1 ? "" : "s"}`}
+         </Button>
+       </DropdownMenuTrigger>
+       <DropdownMenuContent align="end" className="max-h-[60vh] overflow-y-auto">
+         <DropdownMenuLabel className="text-xs">Show rooms with</DropdownMenuLabel>
+         <DropdownMenuSeparator />
+         {[...roomFeatures]
+           .sort((a, b) => a.label.localeCompare(b.label))
+           .map((f) => (
+             <DropdownMenuCheckboxItem
+               key={f.id}
+               checked={receptionFeatureFilter.includes(f.id)}
+               onCheckedChange={(checked) => {
+                 setReceptionFeatureFilter((prev) =>
+                   checked ? [...prev, f.id] : prev.filter((id) => id !== f.id),
+                 );
+               }}
+               onSelect={(e) => e.preventDefault()}
+             >
+               {f.label}
+             </DropdownMenuCheckboxItem>
+           ))}
+         {receptionFeatureFilter.length > 0 && (
+           <>
+             <DropdownMenuSeparator />
+             <DropdownMenuItem onSelect={() => setReceptionFeatureFilter([])}>
+               <X className="h-4 w-4 mr-2" />
+               Clear filters
+             </DropdownMenuItem>
+           </>
+         )}
+       </DropdownMenuContent>
+     </DropdownMenu>
+   )}
+   {!isReception && (
     <button
       type="button"
       onClick={resetAll}
