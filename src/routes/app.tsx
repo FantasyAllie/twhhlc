@@ -1628,108 +1628,110 @@ useEffect(() => {
 
     {!isReception && (
       <div className="flex flex-row gap-2">
-        <DropdownMenu>
-          <DropdownMenuTrigger asChild>
-            <button
-              type="button"
-              className={cn(
-                "flex items-center justify-center gap-1.5 rounded-md border bg-background px-2 sm:px-3 py-2 flex-1 text-sm font-medium cursor-pointer transition-colors hover:bg-accent",
-                receptionDoneSet.has(n)
-                  ? "border-primary bg-primary/10 text-primary"
-                  : ""
-              )}
-            >
-              Reception
-            </button>
-          </DropdownMenuTrigger>
-          <DropdownMenuContent align="start" className="min-w-fit">
-            <DropdownMenuItem
-              className="justify-between"
-              onSelect={(e) => {
-                e.preventDefault();
-                toggleReceptionDone(n);
-              }}
-            >
-              <span>Done</span>
-              <span className="flex items-center gap-2 border-l border-border pl-2">
-                {receptionDoneSet.has(n) ? (
-                  <Check className="h-4 w-4" />
-                ) : (
-                  <span className="inline-block h-4 w-4" />
+        {isAdmin && (
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <button
+                type="button"
+                className={cn(
+                  "flex items-center justify-center gap-1.5 rounded-md border bg-background px-2 sm:px-3 py-2 flex-1 text-sm font-medium cursor-pointer transition-colors hover:bg-accent",
+                  receptionDoneSet.has(n)
+                    ? "border-primary bg-primary/10 text-primary"
+                    : ""
                 )}
-              </span>
-            </DropdownMenuItem>
-            <DropdownMenuSeparator />
-            {receptionStatuses.length === 0 && (
-              <DropdownMenuItem disabled>No statuses</DropdownMenuItem>
-            )}
-            {receptionStatuses.map((s) => {
-              const room = rooms.find((r) => r.room_number === n);
-              const occ =
-                room?.reception_status_id ?? room?.default_status ?? null;
-              const selected = occ === s.id;
-              return (
-                <DropdownMenuItem
-                  key={s.id}
-                  className="justify-between"
-                  onSelect={(e) => {
-                    e.preventDefault();
-                    setRoomReceptionStatus(n, occ === s.id ? null : s.id);
-                  }}
-                >
-                  <span>{s.label}</span>
-                  <span className="flex items-center gap-2 border-l border-border pl-2">
-                    {selected ? (
-                      <Check className="h-4 w-4" />
-                    ) : (
-                      <span className="inline-block h-4 w-4" />
-                    )}
-                  </span>
-                </DropdownMenuItem>
-              );
-            })}
-            <DropdownMenuSeparator />
-            {receptionBeds.length === 0 && (
-              <DropdownMenuItem disabled>No bed types</DropdownMenuItem>
-            )}
-            {(() => {
-              const norm = (s: string) => s.toLowerCase().replace(/[^a-z0-9]/g, "");
-              const room = rooms.find((r) => r.room_number === n);
-              const cats = parseCats(room?.category).map(norm);
-              const hasSuperKing = cats.includes("superking");
-              const hasDouble = cats.includes("double");
-              return receptionBeds.filter((b) => {
-                const nb = norm(b.label);
-                if (hasSuperKing && nb === "double") return false;
-                if (hasDouble && (nb === "king" || nb === "twin")) return false;
-                return true;
-              });
-            })().map((b) => {
-              const room = rooms.find((r) => r.room_number === n);
-              const currentBed = room?.reception_bed_id ?? null;
-              const selected = currentBed === b.id;
-              return (
-                <DropdownMenuItem
-                  key={b.id}
-                  className="justify-between"
-                  onSelect={(e) => {
-                    e.preventDefault();
-                    setRoomReceptionBed(n, currentBed === b.id ? null : b.id);
-                  }}
-                >
-                  <span>{b.label}</span>
-                  <span className="flex items-center gap-2 border-l border-border pl-2">
-                    {selected ? (
-                      <Check className="h-4 w-4" />
-                    ) : (
-                      <span className="inline-block h-4 w-4" />
-                    )}
-                  </span>
-                </DropdownMenuItem>
-              );
-            })}
-          </DropdownMenuContent>
-        </DropdownMenu>
+              >
+                Reception
+              </button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="start" className="min-w-fit">
+              <DropdownMenuItem
+                className="justify-between"
+                onSelect={(e) => {
+                  e.preventDefault();
+                  toggleReceptionDone(n);
+                }}
+              >
+                <span>Done</span>
+                <span className="flex items-center gap-2 border-l border-border pl-2">
+                  {receptionDoneSet.has(n) ? (
+                    <Check className="h-4 w-4" />
+                  ) : (
+                    <span className="inline-block h-4 w-4" />
+                  )}
+                </span>
+              </DropdownMenuItem>
+              <DropdownMenuSeparator />
+              {receptionStatuses.length === 0 && (
+                <DropdownMenuItem disabled>No statuses</DropdownMenuItem>
+              )}
+              {receptionStatuses.map((s) => {
+                const room = rooms.find((r) => r.room_number === n);
+                const occ =
+                  room?.reception_status_id ?? room?.default_status ?? null;
+                const selected = occ === s.id;
+                return (
+                  <DropdownMenuItem
+                    key={s.id}
+                    className="justify-between"
+                    onSelect={(e) => {
+                      e.preventDefault();
+                      setRoomReceptionStatus(n, occ === s.id ? null : s.id);
+                    }}
+                  >
+                    <span>{s.label}</span>
+                    <span className="flex items-center gap-2 border-l border-border pl-2">
+                      {selected ? (
+                        <Check className="h-4 w-4" />
+                      ) : (
+                        <span className="inline-block h-4 w-4" />
+                      )}
+                    </span>
+                  </DropdownMenuItem>
+                );
+              })}
+              <DropdownMenuSeparator />
+              {receptionBeds.length === 0 && (
+                <DropdownMenuItem disabled>No bed types</DropdownMenuItem>
+              )}
+              {(() => {
+                const norm = (s: string) => s.toLowerCase().replace(/[^a-z0-9]/g, "");
+                const room = rooms.find((r) => r.room_number === n);
+                const cats = parseCats(room?.category).map(norm);
+                const hasSuperKing = cats.includes("superking");
+                const hasDouble = cats.includes("double");
+                return receptionBeds.filter((b) => {
+                  const nb = norm(b.label);
+                  if (hasSuperKing && nb === "double") return false;
+                  if (hasDouble && (nb === "king" || nb === "twin")) return false;
+                  return true;
+                });
+              })().map((b) => {
+                const room = rooms.find((r) => r.room_number === n);
+                const currentBed = room?.reception_bed_id ?? null;
+                const selected = currentBed === b.id;
+                return (
+                  <DropdownMenuItem
+                    key={b.id}
+                    className="justify-between"
+                    onSelect={(e) => {
+                      e.preventDefault();
+                      setRoomReceptionBed(n, currentBed === b.id ? null : b.id);
+                    }}
+                  >
+                    <span>{b.label}</span>
+                    <span className="flex items-center gap-2 border-l border-border pl-2">
+                      {selected ? (
+                        <Check className="h-4 w-4" />
+                      ) : (
+                        <span className="inline-block h-4 w-4" />
+                      )}
+                    </span>
+                  </DropdownMenuItem>
+                );
+              })}
+            </DropdownMenuContent>
+          </DropdownMenu>
+        )}
         <button
           type="button"
           onClick={() =>
@@ -1744,46 +1746,48 @@ useEffect(() => {
         >
           Extra linen
         </button>
-        <DropdownMenu>
-          <DropdownMenuTrigger asChild>
-            <button
-              type="button"
-              className="inline-flex items-center justify-center h-10 w-10 shrink-0 rounded-md border bg-background text-sm font-medium cursor-pointer transition-colors hover:bg-accent disabled:opacity-50 disabled:cursor-not-allowed"
-              disabled={linenLocked}
-              aria-label="Edit defaults"
-            >
-              <Pencil className="h-4 w-4" />
-            </button>
-          </DropdownMenuTrigger>
-          <DropdownMenuContent align="end" className="w-64">
-            {template.length === 0 ? (
-              <DropdownMenuItem disabled>No items yet.</DropdownMenuItem>
-            ) : (
-              template.map((t) => {
-                const checked = isAssigned(t.id, n);
-                return (
-                  <DropdownMenuItem
-                    key={t.id}
-                    className="justify-between"
-                    onSelect={(e) => {
-                      e.preventDefault();
-                      toggleAssignment(t.id, n);
-                    }}
-                  >
-                    <span>{t.name}</span>
-                    <span className="flex items-center gap-2 border-l border-border pl-2">
-                      {checked ? (
-                        <Check className="h-4 w-4" />
-                      ) : (
-                        <span className="inline-block h-4 w-4" />
-                      )}
-                    </span>
-                  </DropdownMenuItem>
-                );
-              })
-            )}
-          </DropdownMenuContent>
-        </DropdownMenu>
+        {isAdmin && (
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <button
+                type="button"
+                className="inline-flex items-center justify-center h-10 w-10 shrink-0 rounded-md border bg-background text-sm font-medium cursor-pointer transition-colors hover:bg-accent disabled:opacity-50 disabled:cursor-not-allowed"
+                disabled={linenLocked}
+                aria-label="Edit defaults"
+              >
+                <Pencil className="h-4 w-4" />
+              </button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end" className="w-64">
+              {template.length === 0 ? (
+                <DropdownMenuItem disabled>No items yet.</DropdownMenuItem>
+              ) : (
+                template.map((t) => {
+                  const checked = isAssigned(t.id, n);
+                  return (
+                    <DropdownMenuItem
+                      key={t.id}
+                      className="justify-between"
+                      onSelect={(e) => {
+                        e.preventDefault();
+                        toggleAssignment(t.id, n);
+                      }}
+                    >
+                      <span>{t.name}</span>
+                      <span className="flex items-center gap-2 border-l border-border pl-2">
+                        {checked ? (
+                          <Check className="h-4 w-4" />
+                        ) : (
+                          <span className="inline-block h-4 w-4" />
+                        )}
+                      </span>
+                    </DropdownMenuItem>
+                  );
+                })
+              )}
+            </DropdownMenuContent>
+          </DropdownMenu>
+        )}
       </div>
     )}
 
