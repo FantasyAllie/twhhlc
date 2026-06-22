@@ -2884,9 +2884,16 @@ useEffect(() => {
  <div className="grid grid-cols-4 sm:grid-cols-8 md:grid-cols-10 gap-2">
  {(() => {
   const allRooms = rooms.map((r) => r.room_number);
- const nodes: React.ReactNode[] = [];
-  for (let i = 0; i < allRooms.length; i++) {
-  const n = allRooms[i];
+  const visibleRooms = (isReception && receptionFeatureFilter.length > 0)
+    ? allRooms.filter((n) =>
+        receptionFeatureFilter.every((fid) =>
+          roomFeatureAssignments.some((a) => a.feature_id === fid && a.room_number === n),
+        ),
+      )
+    : allRooms;
+  const nodes: React.ReactNode[] = [];
+   for (let i = 0; i < visibleRooms.length; i++) {
+   const n = visibleRooms[i];
  const done = doneSet.has(n);
  const isOpen = openRoom === n;
   if (isReception) {
