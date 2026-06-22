@@ -4,7 +4,7 @@ import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Minus, Plus, X, Menu, ArrowUp, ArrowDown, Pencil, Check, Trash2, Lock, Unlock, Sun, Moon, List, Bed, Ban, History, Users, User, LogOut, Hash, ConciergeBell, ClipboardList, Printer } from "lucide-react";
+import { Minus, Plus, X, Menu, ArrowUp, ArrowDown, Pencil, Check, Trash2, Lock, Unlock, Sun, Moon, List, Bed, Ban, History, Users, User, LogOut, Hash, ConciergeBell, ClipboardList, Printer, Filter } from "lucide-react";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
 import { getToken, getStoredUser, clearSession } from "@/lib/auth-client";
@@ -201,6 +201,7 @@ useEffect(() => {
   const [newRoomFeatureLabel, setNewRoomFeatureLabel] = useState("");
   const [addReceptionItemKind, setAddReceptionItemKind] = useState<"status" | "bed" | null>(null);
   const [newReceptionItemLabel, setNewReceptionItemLabel] = useState("");
+  const [receptionFeatureFilter, setReceptionFeatureFilter] = useState<string[]>([]);
  
 
  const [exportOpen, setExportOpen] = useState(false);
@@ -2868,7 +2869,48 @@ useEffect(() => {
  <h2 className="text-sm font-medium text-muted-foreground uppercase tracking-wide">
  Rooms
  </h2>
-  {!isReception && (
+   {isReception && roomFeatures.length > 0 && (
+     <DropdownMenu>
+       <DropdownMenuTrigger asChild>
+         <Button variant="outline" size="sm" className="h-7 gap-1.5 text-xs">
+           <Filter className="h-3.5 w-3.5" />
+           {receptionFeatureFilter.length === 0
+             ? "Filter features"
+             : `${receptionFeatureFilter.length} feature${receptionFeatureFilter.length === 1 ? "" : "s"}`}
+         </Button>
+       </DropdownMenuTrigger>
+       <DropdownMenuContent align="end" className="max-h-[60vh] overflow-y-auto">
+         <DropdownMenuLabel className="text-xs">Show rooms with</DropdownMenuLabel>
+         <DropdownMenuSeparator />
+         {[...roomFeatures]
+           .sort((a, b) => a.label.localeCompare(b.label))
+           .map((f) => (
+             <DropdownMenuCheckboxItem
+               key={f.id}
+               checked={receptionFeatureFilter.includes(f.id)}
+               onCheckedChange={(checked) => {
+                 setReceptionFeatureFilter((prev) =>
+                   checked ? [...prev, f.id] : prev.filter((id) => id !== f.id),
+                 );
+               }}
+               onSelect={(e) => e.preventDefault()}
+             >
+               {f.label}
+             </DropdownMenuCheckboxItem>
+           ))}
+         {receptionFeatureFilter.length > 0 && (
+           <>
+             <DropdownMenuSeparator />
+             <DropdownMenuItem onSelect={() => setReceptionFeatureFilter([])}>
+               <X className="h-4 w-4 mr-2" />
+               Clear filters
+             </DropdownMenuItem>
+           </>
+         )}
+       </DropdownMenuContent>
+     </DropdownMenu>
+   )}
+   {!isReception && (
     <button
       type="button"
       onClick={resetAll}
@@ -2883,9 +2925,16 @@ useEffect(() => {
  <div className="grid grid-cols-4 sm:grid-cols-8 md:grid-cols-10 gap-2">
  {(() => {
   const allRooms = rooms.map((r) => r.room_number);
- const nodes: React.ReactNode[] = [];
-  for (let i = 0; i < allRooms.length; i++) {
-  const n = allRooms[i];
+  const visibleRooms = (isReception && receptionFeatureFilter.length > 0)
+    ? allRooms.filter((n) =>
+        receptionFeatureFilter.every((fid) =>
+          roomFeatureAssignments.some((a) => a.feature_id === fid && a.room_number === n),
+        ),
+      )
+    : allRooms;
+  const nodes: React.ReactNode[] = [];
+   for (let i = 0; i < visibleRooms.length; i++) {
+   const n = visibleRooms[i];
  const done = doneSet.has(n);
  const isOpen = openRoom === n;
   if (isReception) {
