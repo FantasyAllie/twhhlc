@@ -1768,26 +1768,34 @@ useEffect(() => {
                 const cats = parseCats(room?.category).map(norm);
                 const hasSuperKing = cats.includes("superking");
                 const hasDouble = cats.includes("double");
+                const onlyDouble = hasDouble && !hasSuperKing;
                 return receptionBeds.filter((b) => {
                   const nb = norm(b.label);
+                  if (onlyDouble) return nb === "double";
                   if (hasSuperKing && nb === "double") return false;
                   if (hasDouble && (nb === "king" || nb === "twin")) return false;
                   return true;
                 });
               })().map((b) => {
                 const room = rooms.find((r) => r.room_number === n);
+                const norm = (s: string) => s.toLowerCase().replace(/[^a-z0-9]/g, "");
+                const cats = parseCats(room?.category).map(norm);
+                const lockedDouble =
+                  cats.includes("double") && !cats.includes("superking") && norm(b.label) === "double";
                 const currentBed = room?.reception_bed_id ?? null;
-                const selected = currentBed === b.id;
+                const selected = currentBed === b.id || lockedDouble;
                 return (
                   <DropdownMenuItem
                     key={b.id}
                     className="justify-between"
                     onSelect={(e) => {
                       e.preventDefault();
+                      if (lockedDouble) return;
                       setRoomReceptionBed(n, currentBed === b.id ? null : b.id);
                     }}
+                    disabled={lockedDouble && selected}
                   >
-                    <span>{b.label}</span>
+                    <span>{b.label}{lockedDouble ? " (default)" : ""}</span>
                     <span className="flex items-center gap-2 border-l border-border pl-2">
                       {selected ? (
                         <Check className="h-4 w-4" />
