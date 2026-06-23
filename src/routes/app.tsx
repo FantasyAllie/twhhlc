@@ -1344,6 +1344,72 @@ useEffect(() => {
   const setRoomReceptionBed = (n: number, v: string | null) =>
     setRoomReceptionField(n, "reception_bed_id", v);
 
+  const setRoomHousekeepingNote = async (roomNumber: number, value: string) => {
+    const clean = value.trim();
+    const next = clean.length === 0 ? null : clean;
+    qc.setQueryData<Room[]>(["rooms"], (old) => {
+      const list = old ? [...old] : [];
+      const idx = list.findIndex((r) => r.room_number === roomNumber);
+      if (idx >= 0) list[idx] = { ...list[idx], housekeeping_note: next };
+      else
+        list.push({
+          id: `temp-${roomNumber}`,
+          room_number: roomNumber,
+          done: false,
+          done_reception: false,
+          category: null,
+          default_status: null,
+          reception_status_id: null,
+          reception_bed_id: null,
+          housekeeping_note: next,
+          needs_maintenance: false,
+        });
+      return list;
+    });
+    const { error } = await supabase.from("rooms").upsert(
+      {
+        room_number: roomNumber,
+        housekeeping_note: next,
+        updated_at: new Date().toISOString(),
+      } as never,
+      { onConflict: "user_id,room_number" },
+    );
+    if (error) toast.error(error.message);
+    qc.invalidateQueries({ queryKey: ["rooms"] });
+  };
+
+  const setRoomNeedsMaintenance = async (roomNumber: number, value: boolean) => {
+    qc.setQueryData<Room[]>(["rooms"], (old) => {
+      const list = old ? [...old] : [];
+      const idx = list.findIndex((r) => r.room_number === roomNumber);
+      if (idx >= 0) list[idx] = { ...list[idx], needs_maintenance: value };
+      else
+        list.push({
+          id: `temp-${roomNumber}`,
+          room_number: roomNumber,
+          done: false,
+          done_reception: false,
+          category: null,
+          default_status: null,
+          reception_status_id: null,
+          reception_bed_id: null,
+          housekeeping_note: null,
+          needs_maintenance: value,
+        });
+      return list;
+    });
+    const { error } = await supabase.from("rooms").upsert(
+      {
+        room_number: roomNumber,
+        needs_maintenance: value,
+        updated_at: new Date().toISOString(),
+      } as never,
+      { onConflict: "user_id,room_number" },
+    );
+    if (error) toast.error(error.message);
+    qc.invalidateQueries({ queryKey: ["rooms"] });
+  };
+
   // --- Room type management ---
   const addRoomType = async (label: string) => {
     const clean = label.trim();
