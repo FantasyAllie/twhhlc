@@ -398,6 +398,23 @@ useEffect(() => {
 
   const [newMessageText, setNewMessageText] = useState("");
 
+  // Auto-assign the Double bed type to Double rooms so exports/status reflect the
+  // fixed bed configuration without Reception having to click anything.
+  useEffect(() => {
+    const norm = (s: string) => s.toLowerCase().replace(/[^a-z0-9]/g, "");
+    const doubleBed = receptionBeds.find((b) => norm(b.label) === "double");
+    if (!doubleBed) return;
+    const targets = rooms.filter((r) => {
+      const cats = parseCats(r.category).map(norm);
+      return cats.includes("double") && !cats.includes("superking") && r.reception_bed_id !== doubleBed.id;
+    });
+    if (targets.length === 0) return;
+    for (const r of targets) {
+      void setRoomReceptionBed(r.room_number, doubleBed.id);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [rooms, receptionBeds]);
+
   const submitRoomMessage = async (roomNumber: number) => {
     const text = newMessageText.trim();
     if (!text) return;
