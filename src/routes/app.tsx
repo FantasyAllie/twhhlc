@@ -2962,47 +2962,83 @@ useEffect(() => {
  <h2 className="text-sm font-medium text-muted-foreground uppercase tracking-wide">
  Rooms
  </h2>
-   {isReception && roomFeatures.length > 0 && (
-     <DropdownMenu>
-       <DropdownMenuTrigger asChild>
-         <Button variant="outline" size="sm" className="h-7 gap-1.5 text-xs">
-           <Filter className="h-3.5 w-3.5" />
-           {receptionFeatureFilter.length === 0
-             ? "Filter features"
-             : `${receptionFeatureFilter.length} feature${receptionFeatureFilter.length === 1 ? "" : "s"}`}
-         </Button>
-       </DropdownMenuTrigger>
-       <DropdownMenuContent align="end" className="max-h-[60vh] overflow-y-auto">
-         <DropdownMenuLabel className="text-xs">Show rooms with</DropdownMenuLabel>
-         <DropdownMenuSeparator />
-         {[...roomFeatures]
-           .sort((a, b) => a.label.localeCompare(b.label))
-           .map((f) => (
-             <DropdownMenuCheckboxItem
-               key={f.id}
-               checked={receptionFeatureFilter.includes(f.id)}
-               onCheckedChange={(checked) => {
-                 setReceptionFeatureFilter((prev) =>
-                   checked ? [...prev, f.id] : prev.filter((id) => id !== f.id),
-                 );
-               }}
-               onSelect={(e) => e.preventDefault()}
-             >
-               {f.label}
-             </DropdownMenuCheckboxItem>
-           ))}
-         {receptionFeatureFilter.length > 0 && (
-           <>
-             <DropdownMenuSeparator />
-             <DropdownMenuItem onSelect={() => setReceptionFeatureFilter([])}>
-               <X className="h-4 w-4 mr-2" />
-               Clear filters
-             </DropdownMenuItem>
-           </>
-         )}
-       </DropdownMenuContent>
-     </DropdownMenu>
-   )}
+    {isReception && (roomFeatures.length > 0 || receptionStatuses.length > 0) && (() => {
+      const totalSelected = receptionFeatureFilter.length + receptionStatusFilter.length;
+      return (
+        <DropdownMenu>
+          <DropdownMenuTrigger asChild>
+            <Button variant="outline" size="sm" className="h-7 gap-1.5 text-xs">
+              <Filter className="h-3.5 w-3.5" />
+              {totalSelected === 0 ? "Filters" : `Filters · ${totalSelected}`}
+            </Button>
+          </DropdownMenuTrigger>
+          <DropdownMenuContent align="end" className="max-h-[70vh] overflow-y-auto w-56">
+            {receptionStatuses.length > 0 && (
+              <>
+                <DropdownMenuLabel className="text-xs">Status</DropdownMenuLabel>
+                <DropdownMenuSeparator />
+                {[...receptionStatuses]
+                  .sort((a, b) => a.label.localeCompare(b.label))
+                  .map((s) => {
+                    const display = s.label === "Out of Service" ? "Room out of Service" : s.label;
+                    return (
+                      <DropdownMenuCheckboxItem
+                        key={s.id}
+                        checked={receptionStatusFilter.includes(s.id)}
+                        onCheckedChange={(checked) => {
+                          setReceptionStatusFilter((prev) =>
+                            checked ? [...prev, s.id] : prev.filter((id) => id !== s.id),
+                          );
+                        }}
+                        onSelect={(e) => e.preventDefault()}
+                      >
+                        {display}
+                      </DropdownMenuCheckboxItem>
+                    );
+                  })}
+              </>
+            )}
+            {roomFeatures.length > 0 && (
+              <>
+                {receptionStatuses.length > 0 && <DropdownMenuSeparator />}
+                <DropdownMenuLabel className="text-xs">Features</DropdownMenuLabel>
+                <DropdownMenuSeparator />
+                {[...roomFeatures]
+                  .sort((a, b) => a.label.localeCompare(b.label))
+                  .map((f) => (
+                    <DropdownMenuCheckboxItem
+                      key={f.id}
+                      checked={receptionFeatureFilter.includes(f.id)}
+                      onCheckedChange={(checked) => {
+                        setReceptionFeatureFilter((prev) =>
+                          checked ? [...prev, f.id] : prev.filter((id) => id !== f.id),
+                        );
+                      }}
+                      onSelect={(e) => e.preventDefault()}
+                    >
+                      {f.label}
+                    </DropdownMenuCheckboxItem>
+                  ))}
+              </>
+            )}
+            {totalSelected > 0 && (
+              <>
+                <DropdownMenuSeparator />
+                <DropdownMenuItem
+                  onSelect={() => {
+                    setReceptionFeatureFilter([]);
+                    setReceptionStatusFilter([]);
+                  }}
+                >
+                  <X className="h-4 w-4 mr-2" />
+                  Clear filters
+                </DropdownMenuItem>
+              </>
+            )}
+          </DropdownMenuContent>
+        </DropdownMenu>
+      );
+    })()}
    {!isReception && (
     <button
       type="button"
