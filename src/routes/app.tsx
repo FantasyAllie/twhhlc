@@ -4,7 +4,7 @@ import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Minus, Plus, X, Menu, ArrowUp, ArrowDown, Pencil, Check, Trash2, Lock, Unlock, Sun, Moon, List, Bed, Ban, History, Users, User, LogOut, Hash, ConciergeBell, ClipboardList, Printer, Filter } from "lucide-react";
+import { Minus, Plus, X, Menu, ArrowUp, ArrowDown, Pencil, Check, Trash2, Lock, Unlock, Sun, Moon, List, Bed, Ban, History, Users, User, LogOut, Hash, ConciergeBell, ClipboardList, Printer, Filter, Wrench, StickyNote } from "lucide-react";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
 import { getToken, getStoredUser, clearSession } from "@/lib/auth-client";
@@ -82,10 +82,10 @@ type RoomCount = {
  item_id: string;
  count: number;
 };
-type Room = { id: string; room_number: number; done: boolean; done_reception: boolean; category: Category | null; default_status: string | null; reception_status_id: string | null; reception_bed_id: string | null };
+type Room = { id: string; room_number: number; done: boolean; done_reception: boolean; category: Category | null; default_status: string | null; reception_status_id: string | null; reception_bed_id: string | null; housekeeping_note: string | null; needs_maintenance: boolean };
 type TemplateItemRoom = { id: string; template_item_id: string; room_number: number };
 type SnapshotRow = { name: string; count: number };
-type RoomStatusRow = { room: number; status: string; bed: string };
+type RoomStatusRow = { room: number; status: string; bed: string; maintenance?: boolean };
 type ExportSnapshot = {
   id: string;
   created_at: string;
@@ -202,6 +202,8 @@ useEffect(() => {
   const [addReceptionItemKind, setAddReceptionItemKind] = useState<"status" | "bed" | null>(null);
   const [newReceptionItemLabel, setNewReceptionItemLabel] = useState("");
   const [receptionFeatureFilter, setReceptionFeatureFilter] = useState<string[]>([]);
+  const [receptionStatusFilter, setReceptionStatusFilter] = useState<string[]>([]);
+  const [noteDraft, setNoteDraft] = useState<Record<number, string>>({});
  
 
  const [exportOpen, setExportOpen] = useState(false);
@@ -275,7 +277,7 @@ useEffect(() => {
     queryFn: async (): Promise<Room[]> => {
       const { data, error } = await supabase
         .from("rooms")
-        .select("id,room_number,done,done_reception,category,default_status,reception_status_id,reception_bed_id")
+        .select("id,room_number,done,done_reception,category,default_status,reception_status_id,reception_bed_id,housekeeping_note,needs_maintenance")
         .order("room_number", { ascending: true });
       if (error) throw error;
       return (data ?? []) as Room[];
@@ -395,6 +397,23 @@ useEffect(() => {
   const hasActiveMessage = (n: number) => activeMessagesByRoom(n).length > 0;
 
   const [newMessageText, setNewMessageText] = useState("");
+
+  // Auto-assign the Double bed type to Double rooms so exports/status reflect the
+  // fixed bed configuration without Reception having to click anything.
+  useEffect(() => {
+    const norm = (s: string) => s.toLowerCase().replace(/[^a-z0-9]/g, "");
+    const doubleBed = receptionBeds.find((b) => norm(b.label) === "double");
+    if (!doubleBed) return;
+    const targets = rooms.filter((r) => {
+      const cats = parseCats(r.category).map(norm);
+      return cats.includes("double") && !cats.includes("superking") && r.reception_bed_id !== doubleBed.id;
+    });
+    if (targets.length === 0) return;
+    for (const r of targets) {
+      void setRoomReceptionBed(r.room_number, doubleBed.id);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [rooms, receptionBeds]);
 
   const submitRoomMessage = async (roomNumber: number) => {
     const text = newMessageText.trim();
@@ -516,7 +535,7 @@ useEffect(() => {
           default_status: null,
           category: null,
           reception_status_id: null,
-          reception_bed_id: null,
+          reception_bed_id: null, housekeeping_note: null, needs_maintenance: false,
         });
       return list;
     });
@@ -780,7 +799,7 @@ useEffect(() => {
   const list = old ? [...old] : [];
   const idx = list.findIndex((r) => r.room_number === roomNumber);
   if (idx >= 0) list[idx] = { ...list[idx], done: true };
-  else list.push({ id: `temp-${roomNumber}`, room_number: roomNumber, done: true, done_reception: false, category: null, default_status: null, reception_status_id: null, reception_bed_id: null });
+  else list.push({ id: `temp-${roomNumber}`, room_number: roomNumber, done: true, done_reception: false, category: null, default_status: null, reception_status_id: null, reception_bed_id: null, housekeeping_note: null, needs_maintenance: false });
   return list;
   });
   const { error: roomErr } = await supabase.from("rooms").upsert(
@@ -861,7 +880,7 @@ useEffect(() => {
         done: false,
         done_reception: false,
         reception_status_id: null,
-        reception_bed_id: null,
+        reception_bed_id: null, housekeeping_note: null, needs_maintenance: false,
       })) ?? [],
     );
     qc.setQueryData<RoomCount[]>(["room_counts"], () => []);
@@ -870,7 +889,7 @@ useEffect(() => {
         done: false,
         done_reception: false,
         reception_status_id: null,
-        reception_bed_id: null,
+        reception_bed_id: null, housekeeping_note: null, needs_maintenance: false,
       }).neq("room_number", -1),
       supabase.from("room_item_counts").delete().neq("room_number", -1),
     ]);
@@ -892,7 +911,7 @@ useEffect(() => {
     }
     qc.setQueryData<Room[]>(["rooms"], (old) => {
       const list = old ? [...old] : [];
-      list.push({ id: `temp-${n}`, room_number: n, done: false, done_reception: false, category: null, default_status: null, reception_status_id: null, reception_bed_id: null });
+      list.push({ id: `temp-${n}`, room_number: n, done: false, done_reception: false, category: null, default_status: null, reception_status_id: null, reception_bed_id: null, housekeeping_note: null, needs_maintenance: false });
       list.sort((a, b) => a.room_number - b.room_number);
       return list;
     });
@@ -1092,6 +1111,7 @@ useEffect(() => {
         room: r.room_number,
         status: statusLabel(r.reception_status_id ?? r.default_status),
         bed: bedLabel(r.reception_bed_id),
+        maintenance: !!r.needs_maintenance,
       }));
     return { rows, grand: rows.length };
   };
@@ -1209,10 +1229,10 @@ useEffect(() => {
       list
         .map(
           (r) =>
-            `<tr><td class="num">${r.room}</td><td>${esc(r.status)}</td><td>${esc(r.bed)}</td></tr>`,
+            `<tr><td class="num">${r.room}</td><td>${esc(r.status)}</td><td>${esc(r.bed)}</td><td class="num">${r.maintenance ? "🔧" : ""}</td></tr>`,
         )
         .join("");
-    const tableHead = `<thead><tr><th>Room</th><th>Status</th><th>Set As</th></tr></thead>`;
+    const tableHead = `<thead><tr><th>Room</th><th>Status</th><th>Set As</th><th>Maint.</th></tr></thead>`;
     win.document.write(`<!doctype html><html><head><title>Room Status Sheet - ${dateStr}</title><style>
       body{font-family:system-ui,-apple-system,sans-serif;color:#000;background:#fff;padding:1.5rem;max-width:900px;margin:0 auto;}
       h1{font-size:1.5rem;margin:0 0 .25rem;text-align:center;text-decoration:underline;}
@@ -1255,7 +1275,7 @@ useEffect(() => {
  category,
   default_status: null,
   reception_status_id: null,
-  reception_bed_id: null,
+  reception_bed_id: null, housekeeping_note: null, needs_maintenance: false,
  });
  return list;
  });
@@ -1288,7 +1308,7 @@ useEffect(() => {
          category: null,
          default_status: status,
           reception_status_id: null,
-          reception_bed_id: null,
+          reception_bed_id: null, housekeeping_note: null, needs_maintenance: false,
        });
      return list;
    });
@@ -1322,7 +1342,7 @@ useEffect(() => {
           category: null,
           default_status: null,
           reception_status_id: field === "reception_status_id" ? value : null,
-          reception_bed_id: field === "reception_bed_id" ? value : null,
+          reception_bed_id: field === "reception_bed_id" ? value : null, housekeeping_note: null, needs_maintenance: false,
         });
       return list;
     });
@@ -1341,6 +1361,72 @@ useEffect(() => {
     setRoomReceptionField(n, "reception_status_id", v);
   const setRoomReceptionBed = (n: number, v: string | null) =>
     setRoomReceptionField(n, "reception_bed_id", v);
+
+  const setRoomHousekeepingNote = async (roomNumber: number, value: string) => {
+    const clean = value.trim();
+    const next = clean.length === 0 ? null : clean;
+    qc.setQueryData<Room[]>(["rooms"], (old) => {
+      const list = old ? [...old] : [];
+      const idx = list.findIndex((r) => r.room_number === roomNumber);
+      if (idx >= 0) list[idx] = { ...list[idx], housekeeping_note: next };
+      else
+        list.push({
+          id: `temp-${roomNumber}`,
+          room_number: roomNumber,
+          done: false,
+          done_reception: false,
+          category: null,
+          default_status: null,
+          reception_status_id: null,
+          reception_bed_id: null,
+          housekeeping_note: next,
+          needs_maintenance: false,
+        });
+      return list;
+    });
+    const { error } = await supabase.from("rooms").upsert(
+      {
+        room_number: roomNumber,
+        housekeeping_note: next,
+        updated_at: new Date().toISOString(),
+      } as never,
+      { onConflict: "user_id,room_number" },
+    );
+    if (error) toast.error(error.message);
+    qc.invalidateQueries({ queryKey: ["rooms"] });
+  };
+
+  const setRoomNeedsMaintenance = async (roomNumber: number, value: boolean) => {
+    qc.setQueryData<Room[]>(["rooms"], (old) => {
+      const list = old ? [...old] : [];
+      const idx = list.findIndex((r) => r.room_number === roomNumber);
+      if (idx >= 0) list[idx] = { ...list[idx], needs_maintenance: value };
+      else
+        list.push({
+          id: `temp-${roomNumber}`,
+          room_number: roomNumber,
+          done: false,
+          done_reception: false,
+          category: null,
+          default_status: null,
+          reception_status_id: null,
+          reception_bed_id: null,
+          housekeeping_note: null,
+          needs_maintenance: value,
+        });
+      return list;
+    });
+    const { error } = await supabase.from("rooms").upsert(
+      {
+        room_number: roomNumber,
+        needs_maintenance: value,
+        updated_at: new Date().toISOString(),
+      } as never,
+      { onConflict: "user_id,room_number" },
+    );
+    if (error) toast.error(error.message);
+    qc.invalidateQueries({ queryKey: ["rooms"] });
+  };
 
   // --- Room type management ---
   const addRoomType = async (label: string) => {
@@ -1601,6 +1687,87 @@ useEffect(() => {
       );
     })()}
 
+    {(() => {
+      const room = rooms.find((r) => r.room_number === n);
+      const note = room?.housekeeping_note ?? null;
+      const maintenance = !!room?.needs_maintenance;
+      if (isReception) {
+        if (!note && !maintenance) return null;
+        return (
+          <div className="space-y-2">
+            {maintenance && (
+              <div className="flex items-center gap-2 rounded-md border border-amber-500/60 bg-amber-50 dark:bg-amber-950/40 p-3 text-sm">
+                <Wrench className="h-4 w-4 text-amber-600 dark:text-amber-400 shrink-0" />
+                <span className="font-medium text-amber-800 dark:text-amber-200">
+                  Maintenance requested by Housekeeping
+                </span>
+              </div>
+            )}
+            {note && (
+              <div className="space-y-1 rounded-md border bg-background p-3">
+                <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground flex items-center gap-1.5">
+                  <StickyNote className="h-3.5 w-3.5" />
+                  Note from Housekeeping
+                </p>
+                <p className="text-sm whitespace-pre-wrap break-words">{note}</p>
+              </div>
+            )}
+          </div>
+        );
+      }
+      const draft = noteDraft[n] ?? note ?? "";
+      const dirty = draft !== (note ?? "");
+      return (
+        <div className="space-y-2 rounded-md border bg-background p-3">
+          <div className="flex items-center justify-between gap-2">
+            <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+              For Reception
+            </p>
+            <label className="flex items-center gap-2 text-xs font-medium">
+              <Wrench className={cn("h-3.5 w-3.5", maintenance ? "text-amber-600 dark:text-amber-400" : "text-muted-foreground")} />
+              Needs maintenance
+              <Switch
+                checked={maintenance}
+                onCheckedChange={(v) => setRoomNeedsMaintenance(n, v)}
+              />
+            </label>
+          </div>
+          <textarea
+            value={draft}
+            onChange={(e) => setNoteDraft((p) => ({ ...p, [n]: e.target.value }))}
+            placeholder="Note for Reception (e.g. fan broken, no hot water)…"
+            rows={2}
+            className="w-full rounded-md border bg-background px-2 py-1.5 text-sm resize-none focus:outline-none focus:ring-2 focus:ring-ring"
+          />
+          <div className="flex justify-end gap-2">
+            {note && (
+              <Button
+                type="button"
+                variant="ghost"
+                size="sm"
+                className="h-7 text-xs"
+                onClick={() => {
+                  setNoteDraft((p) => ({ ...p, [n]: "" }));
+                  setRoomHousekeepingNote(n, "");
+                }}
+              >
+                Clear
+              </Button>
+            )}
+            <Button
+              type="button"
+              size="sm"
+              className="h-7 text-xs"
+              disabled={!dirty}
+              onClick={() => setRoomHousekeepingNote(n, draft)}
+            >
+              Save note
+            </Button>
+          </div>
+        </div>
+      );
+    })()}
+
     {isReception && (() => {
       const assigned = roomFeatures.filter((f) =>
         roomFeatureAssignments.some(
@@ -1700,26 +1867,34 @@ useEffect(() => {
                 const cats = parseCats(room?.category).map(norm);
                 const hasSuperKing = cats.includes("superking");
                 const hasDouble = cats.includes("double");
+                const onlyDouble = hasDouble && !hasSuperKing;
                 return receptionBeds.filter((b) => {
                   const nb = norm(b.label);
+                  if (onlyDouble) return nb === "double";
                   if (hasSuperKing && nb === "double") return false;
                   if (hasDouble && (nb === "king" || nb === "twin")) return false;
                   return true;
                 });
               })().map((b) => {
                 const room = rooms.find((r) => r.room_number === n);
+                const norm = (s: string) => s.toLowerCase().replace(/[^a-z0-9]/g, "");
+                const cats = parseCats(room?.category).map(norm);
+                const lockedDouble =
+                  cats.includes("double") && !cats.includes("superking") && norm(b.label) === "double";
                 const currentBed = room?.reception_bed_id ?? null;
-                const selected = currentBed === b.id;
+                const selected = currentBed === b.id || lockedDouble;
                 return (
                   <DropdownMenuItem
                     key={b.id}
                     className="justify-between"
                     onSelect={(e) => {
                       e.preventDefault();
+                      if (lockedDouble) return;
                       setRoomReceptionBed(n, currentBed === b.id ? null : b.id);
                     }}
+                    disabled={lockedDouble && selected}
                   >
-                    <span>{b.label}</span>
+                    <span>{b.label}{lockedDouble ? " (default)" : ""}</span>
                     <span className="flex items-center gap-2 border-l border-border pl-2">
                       {selected ? (
                         <Check className="h-4 w-4" />
@@ -2869,47 +3044,83 @@ useEffect(() => {
  <h2 className="text-sm font-medium text-muted-foreground uppercase tracking-wide">
  Rooms
  </h2>
-   {isReception && roomFeatures.length > 0 && (
-     <DropdownMenu>
-       <DropdownMenuTrigger asChild>
-         <Button variant="outline" size="sm" className="h-7 gap-1.5 text-xs">
-           <Filter className="h-3.5 w-3.5" />
-           {receptionFeatureFilter.length === 0
-             ? "Filter features"
-             : `${receptionFeatureFilter.length} feature${receptionFeatureFilter.length === 1 ? "" : "s"}`}
-         </Button>
-       </DropdownMenuTrigger>
-       <DropdownMenuContent align="end" className="max-h-[60vh] overflow-y-auto">
-         <DropdownMenuLabel className="text-xs">Show rooms with</DropdownMenuLabel>
-         <DropdownMenuSeparator />
-         {[...roomFeatures]
-           .sort((a, b) => a.label.localeCompare(b.label))
-           .map((f) => (
-             <DropdownMenuCheckboxItem
-               key={f.id}
-               checked={receptionFeatureFilter.includes(f.id)}
-               onCheckedChange={(checked) => {
-                 setReceptionFeatureFilter((prev) =>
-                   checked ? [...prev, f.id] : prev.filter((id) => id !== f.id),
-                 );
-               }}
-               onSelect={(e) => e.preventDefault()}
-             >
-               {f.label}
-             </DropdownMenuCheckboxItem>
-           ))}
-         {receptionFeatureFilter.length > 0 && (
-           <>
-             <DropdownMenuSeparator />
-             <DropdownMenuItem onSelect={() => setReceptionFeatureFilter([])}>
-               <X className="h-4 w-4 mr-2" />
-               Clear filters
-             </DropdownMenuItem>
-           </>
-         )}
-       </DropdownMenuContent>
-     </DropdownMenu>
-   )}
+    {isReception && (roomFeatures.length > 0 || receptionStatuses.length > 0) && (() => {
+      const totalSelected = receptionFeatureFilter.length + receptionStatusFilter.length;
+      return (
+        <DropdownMenu>
+          <DropdownMenuTrigger asChild>
+            <Button variant="outline" size="sm" className="h-7 gap-1.5 text-xs">
+              <Filter className="h-3.5 w-3.5" />
+              {totalSelected === 0 ? "Filters" : `Filters · ${totalSelected}`}
+            </Button>
+          </DropdownMenuTrigger>
+          <DropdownMenuContent align="end" className="max-h-[70vh] overflow-y-auto w-56">
+            {receptionStatuses.length > 0 && (
+              <>
+                <DropdownMenuLabel className="text-xs">Status</DropdownMenuLabel>
+                <DropdownMenuSeparator />
+                {[...receptionStatuses]
+                  .sort((a, b) => a.label.localeCompare(b.label))
+                  .map((s) => {
+                    const display = s.label === "Out of Service" ? "Room out of Service" : s.label;
+                    return (
+                      <DropdownMenuCheckboxItem
+                        key={s.id}
+                        checked={receptionStatusFilter.includes(s.id)}
+                        onCheckedChange={(checked) => {
+                          setReceptionStatusFilter((prev) =>
+                            checked ? [...prev, s.id] : prev.filter((id) => id !== s.id),
+                          );
+                        }}
+                        onSelect={(e) => e.preventDefault()}
+                      >
+                        {display}
+                      </DropdownMenuCheckboxItem>
+                    );
+                  })}
+              </>
+            )}
+            {roomFeatures.length > 0 && (
+              <>
+                {receptionStatuses.length > 0 && <DropdownMenuSeparator />}
+                <DropdownMenuLabel className="text-xs">Features</DropdownMenuLabel>
+                <DropdownMenuSeparator />
+                {[...roomFeatures]
+                  .sort((a, b) => a.label.localeCompare(b.label))
+                  .map((f) => (
+                    <DropdownMenuCheckboxItem
+                      key={f.id}
+                      checked={receptionFeatureFilter.includes(f.id)}
+                      onCheckedChange={(checked) => {
+                        setReceptionFeatureFilter((prev) =>
+                          checked ? [...prev, f.id] : prev.filter((id) => id !== f.id),
+                        );
+                      }}
+                      onSelect={(e) => e.preventDefault()}
+                    >
+                      {f.label}
+                    </DropdownMenuCheckboxItem>
+                  ))}
+              </>
+            )}
+            {totalSelected > 0 && (
+              <>
+                <DropdownMenuSeparator />
+                <DropdownMenuItem
+                  onSelect={() => {
+                    setReceptionFeatureFilter([]);
+                    setReceptionStatusFilter([]);
+                  }}
+                >
+                  <X className="h-4 w-4 mr-2" />
+                  Clear filters
+                </DropdownMenuItem>
+              </>
+            )}
+          </DropdownMenuContent>
+        </DropdownMenu>
+      );
+    })()}
    {!isReception && (
     <button
       type="button"
@@ -2925,12 +3136,17 @@ useEffect(() => {
  <div className="grid grid-cols-4 sm:grid-cols-8 md:grid-cols-10 gap-2">
  {(() => {
   const allRooms = rooms.map((r) => r.room_number);
-  const visibleRooms = (isReception && receptionFeatureFilter.length > 0)
-    ? allRooms.filter((n) =>
-        receptionFeatureFilter.every((fid) =>
+  const visibleRooms = (isReception && (receptionFeatureFilter.length > 0 || receptionStatusFilter.length > 0))
+    ? allRooms.filter((n) => {
+        const featuresOk = receptionFeatureFilter.every((fid) =>
           roomFeatureAssignments.some((a) => a.feature_id === fid && a.room_number === n),
-        ),
-      )
+        );
+        if (!featuresOk) return false;
+        if (receptionStatusFilter.length === 0) return true;
+        const r = rooms.find((x) => x.room_number === n);
+        const statusId = r?.reception_status_id ?? r?.default_status ?? null;
+        return statusId !== null && receptionStatusFilter.includes(statusId);
+      })
     : allRooms;
   const nodes: React.ReactNode[] = [];
    for (let i = 0; i < visibleRooms.length; i++) {
@@ -2971,9 +3187,16 @@ useEffect(() => {
               className="absolute top-0.5 right-0.5 h-2 w-2 rounded-full bg-amber-500 ring-2 ring-background"
             />
           )}
+          {room?.needs_maintenance && !isStaffRoom && (
+            <Wrench
+              aria-label="Maintenance"
+              className="absolute bottom-0.5 left-0.5 h-3 w-3 text-amber-600 dark:text-amber-400"
+            />
+          )}
         </button>,
     );
   } else {
+    const room = rooms.find((r) => r.room_number === n);
     nodes.push(
       <button
         key={`r-${n}`}
@@ -2999,6 +3222,12 @@ useEffect(() => {
             <span
               aria-label="Message"
               className="absolute top-0.5 right-0.5 h-2 w-2 rounded-full bg-amber-500 ring-2 ring-background"
+            />
+          )}
+          {room?.needs_maintenance && (
+            <Wrench
+              aria-label="Maintenance"
+              className="absolute bottom-0.5 left-0.5 h-3 w-3 text-amber-600 dark:text-amber-400"
             />
           )}
           {receptionDoneSet.has(n) && (

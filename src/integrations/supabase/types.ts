@@ -298,7 +298,9 @@ export type Database = {
           default_status: string | null
           done: boolean
           done_reception: boolean
+          housekeeping_note: string | null
           id: string
+          needs_maintenance: boolean
           reception_bed_id: string | null
           reception_status_id: string | null
           room_number: number
@@ -310,7 +312,9 @@ export type Database = {
           default_status?: string | null
           done?: boolean
           done_reception?: boolean
+          housekeeping_note?: string | null
           id?: string
+          needs_maintenance?: boolean
           reception_bed_id?: string | null
           reception_status_id?: string | null
           room_number: number
@@ -322,7 +326,9 @@ export type Database = {
           default_status?: string | null
           done?: boolean
           done_reception?: boolean
+          housekeeping_note?: string | null
           id?: string
+          needs_maintenance?: boolean
           reception_bed_id?: string | null
           reception_status_id?: string | null
           room_number?: number
