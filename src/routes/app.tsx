@@ -1111,6 +1111,7 @@ useEffect(() => {
         room: r.room_number,
         status: statusLabel(r.reception_status_id ?? r.default_status),
         bed: bedLabel(r.reception_bed_id),
+        maintenance: !!r.needs_maintenance,
       }));
     return { rows, grand: rows.length };
   };
