@@ -1686,6 +1686,87 @@ useEffect(() => {
       );
     })()}
 
+    {(() => {
+      const room = rooms.find((r) => r.room_number === n);
+      const note = room?.housekeeping_note ?? null;
+      const maintenance = !!room?.needs_maintenance;
+      if (isReception) {
+        if (!note && !maintenance) return null;
+        return (
+          <div className="space-y-2">
+            {maintenance && (
+              <div className="flex items-center gap-2 rounded-md border border-amber-500/60 bg-amber-50 dark:bg-amber-950/40 p-3 text-sm">
+                <Wrench className="h-4 w-4 text-amber-600 dark:text-amber-400 shrink-0" />
+                <span className="font-medium text-amber-800 dark:text-amber-200">
+                  Maintenance requested by Housekeeping
+                </span>
+              </div>
+            )}
+            {note && (
+              <div className="space-y-1 rounded-md border bg-background p-3">
+                <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground flex items-center gap-1.5">
+                  <StickyNote className="h-3.5 w-3.5" />
+                  Note from Housekeeping
+                </p>
+                <p className="text-sm whitespace-pre-wrap break-words">{note}</p>
+              </div>
+            )}
+          </div>
+        );
+      }
+      const draft = noteDraft[n] ?? note ?? "";
+      const dirty = draft !== (note ?? "");
+      return (
+        <div className="space-y-2 rounded-md border bg-background p-3">
+          <div className="flex items-center justify-between gap-2">
+            <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+              For Reception
+            </p>
+            <label className="flex items-center gap-2 text-xs font-medium">
+              <Wrench className={cn("h-3.5 w-3.5", maintenance ? "text-amber-600 dark:text-amber-400" : "text-muted-foreground")} />
+              Needs maintenance
+              <Switch
+                checked={maintenance}
+                onCheckedChange={(v) => setRoomNeedsMaintenance(n, v)}
+              />
+            </label>
+          </div>
+          <textarea
+            value={draft}
+            onChange={(e) => setNoteDraft((p) => ({ ...p, [n]: e.target.value }))}
+            placeholder="Note for Reception (e.g. fan broken, no hot water)…"
+            rows={2}
+            className="w-full rounded-md border bg-background px-2 py-1.5 text-sm resize-none focus:outline-none focus:ring-2 focus:ring-ring"
+          />
+          <div className="flex justify-end gap-2">
+            {note && (
+              <Button
+                type="button"
+                variant="ghost"
+                size="sm"
+                className="h-7 text-xs"
+                onClick={() => {
+                  setNoteDraft((p) => ({ ...p, [n]: "" }));
+                  setRoomHousekeepingNote(n, "");
+                }}
+              >
+                Clear
+              </Button>
+            )}
+            <Button
+              type="button"
+              size="sm"
+              className="h-7 text-xs"
+              disabled={!dirty}
+              onClick={() => setRoomHousekeepingNote(n, draft)}
+            >
+              Save note
+            </Button>
+          </div>
+        </div>
+      );
+    })()}
+
     {isReception && (() => {
       const assigned = roomFeatures.filter((f) =>
         roomFeatureAssignments.some(
