@@ -3187,9 +3187,16 @@ useEffect(() => {
               className="absolute top-0.5 right-0.5 h-2 w-2 rounded-full bg-amber-500 ring-2 ring-background"
             />
           )}
+          {room?.needs_maintenance && !isStaffRoom && (
+            <Wrench
+              aria-label="Maintenance"
+              className="absolute bottom-0.5 left-0.5 h-3 w-3 text-amber-600 dark:text-amber-400"
+            />
+          )}
         </button>,
     );
   } else {
+    const room = rooms.find((r) => r.room_number === n);
     nodes.push(
       <button
         key={`r-${n}`}
@@ -3215,6 +3222,12 @@ useEffect(() => {
             <span
               aria-label="Message"
               className="absolute top-0.5 right-0.5 h-2 w-2 rounded-full bg-amber-500 ring-2 ring-background"
+            />
+          )}
+          {room?.needs_maintenance && (
+            <Wrench
+              aria-label="Maintenance"
+              className="absolute bottom-0.5 left-0.5 h-3 w-3 text-amber-600 dark:text-amber-400"
             />
           )}
           {receptionDoneSet.has(n) && (
