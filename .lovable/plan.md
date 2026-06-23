@@ -1,47 +1,57 @@
-## Goal
 
-Add a new **Room Status** export (alongside Totals and Rejects) that produces a two-column sheet matching the uploaded PDF: Room | Status | Set As. The Status column reflects each room's Reception → Room Status selection; the Set As column reflects Reception → Bed Set As. Selections are persisted to the database so they survive refresh and are shared across devices/users.
+## 1. Lock bed type to Double for Double rooms
 
-## Changes
+In the Reception dropdown bed-type list (`src/routes/app.tsx` ~L1697-1732):
 
-### 1. Persist per-room Reception selections (database)
+- If the room's `category` is `"double"` (and not also super king), hide every other bed option and force the Double item to render as selected and non-toggleable (clicking it does nothing).
+- When such a room is saved, ensure `reception_bed_id` is set to the Double bed id automatically on first interaction with the room (so exports/filters reflect it without Reception clicking anything).
+- The existing filter already strips `king`/`twin` for Double rooms; extend the same block to also strip everything except `double`.
 
-Add two nullable columns to `public.rooms`:
-- `reception_status_id uuid` — references the selected `reception_items` row (kind = 'status')
-- `reception_bed_id uuid` — references the selected `reception_items` row (kind = 'bed')
+No schema change needed.
 
-Both nullable, no FK cascade required (resolve label by lookup; if a reception item is deleted, the room's value just becomes orphaned and shows as blank — acceptable for an MVP).
+## 2. Helpful info Housekeeping → Reception
 
-### 2. Wire UI state to the database
+Two additions, both shown inside the Reception room panel (read-only for Reception, editable by Housekeeping/Admin):
 
-In `src/routes/app.tsx`:
-- Replace the local `roomOccupancy` and `roomBedType` `useState` with values derived from `rooms` (`reception_status_id`, `reception_bed_id`), with optimistic updates via TanStack Query like other `rooms` mutations.
-- When user selects/deselects a status or bed in the per-room Reception dropdown, `UPDATE rooms` for that row and invalidate.
-- Keep the existing "default_status falls back when no per-room status set" behavior: effective status = `reception_status_id ?? default_status`.
+### a) Housekeeping note (free text, per room)
+- New column `rooms.housekeeping_note text` (nullable).
+- Housekeeping/Admin: small "Note" button on each room card → dialog with textarea → saves to `rooms.housekeeping_note`. Clearing the field removes the note.
+- Reception: if a note is present, render it in the room panel as a callout block ("Note from Housekeeping: …"). No edit controls.
+- Note is cleared automatically when the room is marked Done by Housekeeping? → No, keep it sticky; Housekeeping clears it manually so info isn't lost between cleans.
 
-### 3. New "Room Status" export
+### b) Maintenance flag (boolean, distinct from Room out of Service)
+- New column `rooms.needs_maintenance boolean not null default false`.
+- Housekeeping/Admin: toggle in the existing Edit/room actions menu ("Needs maintenance").
+- Reception: when true, room tile shows a wrench icon + amber accent; room panel shows a "Maintenance requested" banner. Room remains usable (unlike Room out of Service).
+- Included as a column in the Reception export.
 
-Extend the existing `export_snapshots` flow:
-- Add `kind = 'room_status'` to the allowed kinds (no schema change — `kind` is text).
-- New `SnapshotRow` shape stored in the existing `totals` jsonb column: `{ room: number, status: string, bed: string }[]`. Existing Totals/Rejects snapshots are unaffected.
-- Add a `computeRoomStatus()` function: iterate `rooms` sorted by `room_number`, resolve labels from `receptionItems`, output rows (include rooms with blank status/bed).
-- Add `openRoomStatusExport()` / `proceedExport('room_status')` mirroring the same-day overwrite confirmation used by Totals/Rejects.
-- Add menu entry "Room Status" in the export menu, alongside Totals and Rejects.
+Both fields are loaded with the existing rooms query (no extra round trips). RLS: same policy as existing `rooms` columns.
 
-### 4. Room Status snapshot view
+## 3. Expand Reception filter with status multi-select
 
-New dialog (or extend existing snapshot viewer) that renders rows in a two-column layout matching the PDF:
-- Header: "Room Status Sheet" + the snapshot date
-- Two side-by-side tables (left half = first half of rooms, right half = second half), each with columns: Room | Status | Set As
-- Print-friendly styling so the user can use browser print → save as PDF.
+Current filter (`receptionFeatureFilter`) only handles features. Extend the same dropdown:
 
-### 5. History list
-
-Room Status snapshots appear in the existing snapshots list filtered by `kind = 'room_status'`, with the same daily pruning rules (keep last 6 per day).
+- Add `receptionStatusFilter: string[]` state (status ids from `receptionItems` where `kind === "status"`).
+- Restructure the dropdown content into two labelled sections inside one popover:
+  - **Status** — checkbox list of all reception statuses + a synthetic "Room out of Service" entry (so Reception can isolate OOS rooms).
+  - **Features** — existing checkbox list.
+- Trigger label updates to show combined count, e.g. `Filters · 2`.
+- Filtering rule (AND across groups, AND within each group, matching the existing feature behaviour):
+  ```
+  visibleRooms = allRooms.filter(n => {
+    const r = rooms.find(x => x.room_number === n);
+    const statusId = r?.reception_status_id ?? r?.default_status ?? null;
+    const statusOk = statusFilter.length === 0
+      || statusFilter.includes(statusId ?? "__none__");
+    const featuresOk = featureFilter.every(fid =>
+      assignments.some(a => a.feature_id === fid && a.room_number === n));
+    return statusOk && featuresOk;
+  })
+  ```
+- "Clear filters" clears both status and feature selections.
 
 ## Technical notes
 
-- Migration adds the two columns and an UPDATE policy is already covered by the existing `rooms` policy scoped to `auth.uid()`.
-- Type updates in `src/integrations/supabase/types.ts` happen automatically after the migration runs.
-- The `Room` TS type and all places that build a `Room` (default rows, optimistic inserts) need `reception_status_id: null, reception_bed_id: null` added.
-- No new dependencies; reuse existing `Dialog`, `Table`, and snapshot infrastructure.
+- Single migration adds `housekeeping_note` and `needs_maintenance` to `public.rooms`; no new tables, existing RLS/grants cover them.
+- All UI work stays in `src/routes/app.tsx`; the rooms select on ~L278 gains the two new columns and the `Room` type is updated accordingly.
+- Locked-Double behaviour is presentation-only plus a one-time write of `reception_bed_id` so exports remain accurate.
