@@ -202,6 +202,8 @@ useEffect(() => {
   const [addReceptionItemKind, setAddReceptionItemKind] = useState<"status" | "bed" | null>(null);
   const [newReceptionItemLabel, setNewReceptionItemLabel] = useState("");
   const [receptionFeatureFilter, setReceptionFeatureFilter] = useState<string[]>([]);
+  const [receptionStatusFilter, setReceptionStatusFilter] = useState<string[]>([]);
+  const [noteDraft, setNoteDraft] = useState<Record<number, string>>({});
  
 
  const [exportOpen, setExportOpen] = useState(false);
