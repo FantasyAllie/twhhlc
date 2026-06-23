@@ -275,7 +275,7 @@ useEffect(() => {
     queryFn: async (): Promise<Room[]> => {
       const { data, error } = await supabase
         .from("rooms")
-        .select("id,room_number,done,done_reception,category,default_status,reception_status_id,reception_bed_id")
+        .select("id,room_number,done,done_reception,category,default_status,reception_status_id,reception_bed_id,housekeeping_note,needs_maintenance")
         .order("room_number", { ascending: true });
       if (error) throw error;
       return (data ?? []) as Room[];
