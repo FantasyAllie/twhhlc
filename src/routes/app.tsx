@@ -3054,12 +3054,17 @@ useEffect(() => {
  <div className="grid grid-cols-4 sm:grid-cols-8 md:grid-cols-10 gap-2">
  {(() => {
   const allRooms = rooms.map((r) => r.room_number);
-  const visibleRooms = (isReception && receptionFeatureFilter.length > 0)
-    ? allRooms.filter((n) =>
-        receptionFeatureFilter.every((fid) =>
+  const visibleRooms = (isReception && (receptionFeatureFilter.length > 0 || receptionStatusFilter.length > 0))
+    ? allRooms.filter((n) => {
+        const featuresOk = receptionFeatureFilter.every((fid) =>
           roomFeatureAssignments.some((a) => a.feature_id === fid && a.room_number === n),
-        ),
-      )
+        );
+        if (!featuresOk) return false;
+        if (receptionStatusFilter.length === 0) return true;
+        const r = rooms.find((x) => x.room_number === n);
+        const statusId = r?.reception_status_id ?? r?.default_status ?? null;
+        return statusId !== null && receptionStatusFilter.includes(statusId);
+      })
     : allRooms;
   const nodes: React.ReactNode[] = [];
    for (let i = 0; i < visibleRooms.length; i++) {
