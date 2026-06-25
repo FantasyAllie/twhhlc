@@ -204,6 +204,7 @@ useEffect(() => {
   const [receptionFeatureFilter, setReceptionFeatureFilter] = useState<string[]>([]);
   const [receptionStatusFilter, setReceptionStatusFilter] = useState<string[]>([]);
   const [noteDraft, setNoteDraft] = useState<Record<number, string>>({});
+  const [notesDialogRoom, setNotesDialogRoom] = useState<number | null>(null);
  
 
  const [exportOpen, setExportOpen] = useState(false);
@@ -1746,15 +1747,17 @@ useEffect(() => {
                 </span>
               </div>
             )}
-            {note && (
-              <div className="space-y-1 rounded-md border bg-background p-3">
-                <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground flex items-center gap-1.5">
-                  <StickyNote className="h-3.5 w-3.5" />
-                  Note from Housekeeping
-                </p>
-                <p className="text-sm whitespace-pre-wrap break-words">{note}</p>
-              </div>
-            )}
+            <Button
+              type="button"
+              variant="outline"
+              size="sm"
+              className="w-full justify-start gap-2"
+              onClick={() => setNotesDialogRoom(n)}
+            >
+              <StickyNote className="h-4 w-4" />
+              Notes
+              {note && <span className="ml-auto h-2 w-2 rounded-full bg-primary" />}
+            </Button>
           </div>
         );
       }
@@ -2518,6 +2521,25 @@ useEffect(() => {
     )}
   </div>
  </DialogContent>
+ </Dialog>
+
+ <Dialog open={notesDialogRoom !== null} onOpenChange={(o) => { if (!o) setNotesDialogRoom(null); }}>
+   <DialogContent className="max-w-md p-4 sm:p-6">
+     <DialogHeader>
+       <DialogTitle className="flex items-center gap-2">
+         <StickyNote className="h-4 w-4" />
+         Notes — Room {notesDialogRoom}
+       </DialogTitle>
+       <DialogDescription>Note from Housekeeping</DialogDescription>
+     </DialogHeader>
+     {(() => {
+       const note = rooms.find((r) => r.room_number === notesDialogRoom)?.housekeeping_note ?? null;
+       if (!note) {
+         return <p className="text-sm text-muted-foreground">No notes from Housekeeping.</p>;
+       }
+       return <p className="text-sm whitespace-pre-wrap break-words">{note}</p>;
+     })()}
+   </DialogContent>
  </Dialog>
 
   {/* Add room type dialog */}
