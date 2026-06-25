@@ -2800,6 +2800,107 @@ useEffect(() => {
    </SheetContent>
  </Sheet>
 
+  {/* Edit room sheet (Admin) */}
+  <Sheet open={editRoomSheetNumber !== null} onOpenChange={(o) => { if (!o) setEditRoomSheetNumber(null); }}>
+    <SheetContent side="right" className="w-auto max-w-[90vw] min-w-[18rem] sm:max-w-md overflow-y-auto p-4 sm:p-6">
+      {editRoomSheetNumber !== null && (() => {
+        const n = editRoomSheetNumber;
+        const r = rooms.find((x) => x.room_number === n);
+        if (!r) return null;
+        const cats = parseCats(r.category);
+        return (
+          <>
+            <SheetHeader className="text-left">
+              <SheetTitle className="flex items-center gap-2">
+                <Pencil className="h-4 w-4" />
+                Edit Room {n}
+              </SheetTitle>
+              <SheetDescription>Set room type, default status and features</SheetDescription>
+            </SheetHeader>
+            <div className="mt-4 space-y-5">
+              <div className="space-y-2">
+                <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">Room type</p>
+                <div className="space-y-1.5">
+                  {roomTypes.length === 0 && (
+                    <p className="text-sm text-muted-foreground">No room types yet.</p>
+                  )}
+                  {roomTypes.map((c) => {
+                    const selected = cats.includes(c.value);
+                    return (
+                      <button
+                        key={c.value}
+                        type="button"
+                        onClick={() => toggleRoomCategory(n, c.value)}
+                        className={cn(
+                          "w-full flex items-center justify-between gap-3 rounded-md border bg-background px-3 min-h-12 text-sm font-medium transition-colors hover:bg-accent",
+                          selected && "border-primary bg-primary/10 text-primary",
+                        )}
+                      >
+                        <span className="text-left">{c.label}</span>
+                        {selected ? <Check className="h-5 w-5" /> : <span className="h-5 w-5" />}
+                      </button>
+                    );
+                  })}
+                </div>
+              </div>
+              <div className="space-y-2">
+                <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">Default status</p>
+                <div className="space-y-1.5">
+                  {receptionStatuses.length === 0 && (
+                    <p className="text-sm text-muted-foreground">No statuses yet.</p>
+                  )}
+                  {receptionStatuses.map((s) => {
+                    const selected = r.default_status === s.id;
+                    return (
+                      <button
+                        key={s.id}
+                        type="button"
+                        onClick={() => setRoomDefaultStatus(n, selected ? null : s.id)}
+                        className={cn(
+                          "w-full flex items-center justify-between gap-3 rounded-md border bg-background px-3 min-h-12 text-sm font-medium transition-colors hover:bg-accent",
+                          selected && "border-primary bg-primary/10 text-primary",
+                        )}
+                      >
+                        <span className="text-left">{s.label}</span>
+                        {selected ? <Check className="h-5 w-5" /> : <span className="h-5 w-5" />}
+                      </button>
+                    );
+                  })}
+                </div>
+              </div>
+              {roomFeatures.length > 0 && (
+                <div className="space-y-2">
+                  <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">Room features</p>
+                  <div className="space-y-1.5">
+                    {roomFeatures.map((f) => {
+                      const selected = roomFeatureAssignments.some(
+                        (a) => a.feature_id === f.id && a.room_number === n,
+                      );
+                      return (
+                        <button
+                          key={f.id}
+                          type="button"
+                          onClick={() => toggleRoomFeature(n, f.id)}
+                          className={cn(
+                            "w-full flex items-center justify-between gap-3 rounded-md border bg-background px-3 min-h-12 text-sm font-medium transition-colors hover:bg-accent",
+                            selected && "border-primary bg-primary/10 text-primary",
+                          )}
+                        >
+                          <span className="text-left">{f.label}</span>
+                          {selected ? <Check className="h-5 w-5" /> : <span className="h-5 w-5" />}
+                        </button>
+                      );
+                    })}
+                  </div>
+                </div>
+              )}
+            </div>
+          </>
+        );
+      })()}
+    </SheetContent>
+  </Sheet>
+
   {/* Add room type dialog */}
   <Dialog open={addRoomTypeOpen} onOpenChange={setAddRoomTypeOpen}>
     <DialogContent className="max-w-sm w-[calc(100vw-1.5rem)] sm:w-full p-4 sm:p-6">
