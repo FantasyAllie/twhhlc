@@ -478,6 +478,7 @@ useEffect(() => {
     setNewMessageText("");
     qc.invalidateQueries({ queryKey: ["room_messages"] });
     toast.success("Message sent");
+    fireRoomNotification("message", roomNumber, text);
   };
 
   const dismissRoomMessage = async (id: string) => {
