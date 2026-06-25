@@ -1725,9 +1725,19 @@ useEffect(() => {
       const note = room?.housekeeping_note ?? null;
       const maintenance = !!room?.needs_maintenance;
       if (isReception) {
-        if (!note && !maintenance) return null;
+        const vacated = !!room?.guest_vacated;
         return (
           <div className="space-y-2">
+            <div className="flex items-center justify-between gap-2 rounded-md border bg-background p-3">
+              <span className="flex items-center gap-2 text-sm font-medium">
+                <DoorOpen className={cn("h-4 w-4", vacated ? "text-emerald-600 dark:text-emerald-400" : "text-muted-foreground")} />
+                Guest has vacated room
+              </span>
+              <Switch
+                checked={vacated}
+                onCheckedChange={(v) => setRoomGuestVacated(n, v)}
+              />
+            </div>
             {maintenance && (
               <div className="flex items-center gap-2 rounded-md border border-amber-500/60 bg-amber-50 dark:bg-amber-950/40 p-3 text-sm">
                 <Wrench className="h-4 w-4 text-amber-600 dark:text-amber-400 shrink-0" />
