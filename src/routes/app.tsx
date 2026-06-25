@@ -34,6 +34,13 @@ import {
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Switch } from "@/components/ui/switch";
+import {
+  Sheet,
+  SheetContent,
+  SheetHeader,
+  SheetTitle,
+  SheetDescription,
+} from "@/components/ui/sheet";
 import { useTheme } from "@/components/theme-provider";
 
 export const Route = createFileRoute("/app")({
@@ -204,7 +211,9 @@ useEffect(() => {
   const [receptionFeatureFilter, setReceptionFeatureFilter] = useState<string[]>([]);
   const [receptionStatusFilter, setReceptionStatusFilter] = useState<string[]>([]);
   const [noteDraft, setNoteDraft] = useState<Record<number, string>>({});
-  const [notesDialogRoom, setNotesDialogRoom] = useState<number | null>(null);
+  const [notesSheetRoom, setNotesSheetRoom] = useState<number | null>(null);
+  const [receptionSheetRoom, setReceptionSheetRoom] = useState<number | null>(null);
+  const [editDefaultsSheetRoom, setEditDefaultsSheetRoom] = useState<number | null>(null);
  
 
  const [exportOpen, setExportOpen] = useState(false);
@@ -1633,195 +1642,36 @@ useEffect(() => {
     {/* Reception messages */}
     {(() => {
       const msgs = activeMessagesByRoom(n);
-      if (isReception) {
-        return (
-          <div className="space-y-2 rounded-md border border-amber-400/60 bg-amber-50 dark:bg-amber-950/40 p-3">
-            <p className="text-xs font-semibold uppercase tracking-wide text-amber-700 dark:text-amber-300">
-              Leave a message for housekeeping
-            </p>
-            {msgs.length > 0 && (
-              <ul className="space-y-1">
-                {msgs.map((m) => (
-                  <li key={m.id} className="flex items-start gap-2 text-sm bg-background/70 rounded p-2">
-                    <span className="flex-1 break-words whitespace-pre-wrap">{m.message}</span>
-                    <Button
-                      type="button"
-                      variant="ghost"
-                      size="sm"
-                      className="h-7 px-2 text-xs"
-                      onClick={() => deleteRoomMessage(m.id)}
-                      aria-label="Delete message"
-                    >
-                      <X className="h-3 w-3" />
-                    </Button>
-                  </li>
-                ))}
-              </ul>
-            )}
-            <div className="flex gap-2">
-              <Input
-                value={newMessageText}
-                onChange={(e) => setNewMessageText(e.target.value)}
-                placeholder="Type a message…"
-                onKeyDown={(e) => {
-                  if (e.key === "Enter" && !e.shiftKey) {
-                    e.preventDefault();
-                    submitRoomMessage(n);
-                  }
-                }}
-              />
-              <Button type="button" onClick={() => submitRoomMessage(n)} disabled={!newMessageText.trim()}>
-                Send
-              </Button>
-            </div>
-          </div>
-        );
-      }
-      if (msgs.length === 0) return null;
-      return (
-        <div className="space-y-2 rounded-md border border-amber-400/60 bg-amber-50 dark:bg-amber-950/40 p-3">
-          <p className="text-xs font-semibold uppercase tracking-wide text-amber-700 dark:text-amber-300">
-            Reception message{msgs.length > 1 ? "s" : ""}
-          </p>
-          <ul className="space-y-1">
-            {msgs.map((m) => (
-              <li key={m.id} className="flex items-start gap-2 text-sm bg-background/70 rounded p-2">
-                <div className="flex-1 min-w-0">
-                  <p className="break-words whitespace-pre-wrap">{m.message}</p>
-                  {m.created_by_username && (
-                    <p className="text-[10px] text-muted-foreground mt-0.5">
-                      from {m.created_by_username}
-                    </p>
-                  )}
-                </div>
-                <div className="flex flex-col gap-1 shrink-0">
-                  <Button
-                    type="button"
-                    variant="default"
-                    size="sm"
-                    className="h-7 text-xs"
-                    onClick={() => confirmRoomMessage(m)}
-                  >
-                    Confirm
-                  </Button>
-                  <Button
-                    type="button"
-                    variant="outline"
-                    size="sm"
-                    className="h-7 text-xs"
-                    onClick={() => dismissRoomMessage(m.id)}
-                  >
-                    Dismiss
-                  </Button>
-                </div>
-              </li>
-            ))}
-          </ul>
-        </div>
-      );
-    })()}
-
-    {(() => {
       const room = rooms.find((r) => r.room_number === n);
       const note = room?.housekeeping_note ?? null;
       const maintenance = !!room?.needs_maintenance;
-      if (isReception) {
-        const vacated = !!room?.guest_vacated;
-        return (
-          <div className="space-y-2">
-            <div className="flex items-center justify-between gap-2 rounded-md border bg-background p-3">
-              <span className="flex items-center gap-2 text-sm font-medium">
-                <DoorOpen className={cn("h-4 w-4", vacated ? "text-emerald-600 dark:text-emerald-400" : "text-muted-foreground")} />
-                Guest has vacated room
-              </span>
-              <Switch
-                checked={vacated}
-                onCheckedChange={(v) => setRoomGuestVacated(n, v)}
-              />
-            </div>
-            {maintenance && (
-              <div className="flex items-center gap-2 rounded-md border border-amber-500/60 bg-amber-50 dark:bg-amber-950/40 p-3 text-sm">
-                <Wrench className="h-4 w-4 text-amber-600 dark:text-amber-400 shrink-0" />
-                <span className="font-medium text-amber-800 dark:text-amber-200">
-                  Maintenance requested by Housekeeping
-                </span>
-              </div>
-            )}
-            <Button
-              type="button"
-              variant="outline"
-              size="sm"
-              className="w-full justify-start gap-2"
-              onClick={() => setNotesDialogRoom(n)}
-            >
-              <StickyNote className="h-4 w-4" />
-              Notes
-              {note && <span className="ml-auto h-2 w-2 rounded-full bg-primary" />}
-            </Button>
-          </div>
-        );
-      }
-      const draft = noteDraft[n] ?? note ?? "";
-      const dirty = draft !== (note ?? "");
       const vacated = !!room?.guest_vacated;
+      const hasMsg = msgs.length > 0;
+      const hasNote = !!note;
       return (
-        <div className="space-y-2">
-          {vacated && (
-            <div className="flex items-center gap-2 rounded-md border border-emerald-500/60 bg-emerald-50 dark:bg-emerald-950/40 p-3 text-sm">
-              <DoorOpen className="h-4 w-4 text-emerald-600 dark:text-emerald-400 shrink-0" />
-              <span className="font-medium text-emerald-800 dark:text-emerald-200">
-                Guest has vacated — marked by Reception
-              </span>
-            </div>
-          )}
-          <div className="space-y-2 rounded-md border bg-background p-3">
-          <div className="flex items-center justify-between gap-2">
-            <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
-              For Reception
-            </p>
-            <label className="flex items-center gap-2 text-xs font-medium">
-              <Wrench className={cn("h-3.5 w-3.5", maintenance ? "text-amber-600 dark:text-amber-400" : "text-muted-foreground")} />
-              Needs maintenance
-              <Switch
-                checked={maintenance}
-                onCheckedChange={(v) => setRoomNeedsMaintenance(n, v)}
-              />
-            </label>
-          </div>
-          <textarea
-            value={draft}
-            onChange={(e) => setNoteDraft((p) => ({ ...p, [n]: e.target.value }))}
-            placeholder="Note for Reception (e.g. fan broken, no hot water)…"
-            rows={2}
-            className="w-full rounded-md border bg-background px-2 py-1.5 text-sm resize-none focus:outline-none focus:ring-2 focus:ring-ring"
-          />
-          <div className="flex justify-end gap-2">
-            {note && (
-              <Button
-                type="button"
-                variant="ghost"
-                size="sm"
-                className="h-7 text-xs"
-                onClick={() => {
-                  setNoteDraft((p) => ({ ...p, [n]: "" }));
-                  setRoomHousekeepingNote(n, "");
-                }}
-              >
-                Clear
-              </Button>
+        <Button
+          type="button"
+          variant="outline"
+          className="w-full justify-start gap-2 h-11"
+          onClick={() => setNotesSheetRoom(n)}
+        >
+          <StickyNote className="h-4 w-4" />
+          <span>Notes</span>
+          <span className="ml-auto flex items-center gap-1.5">
+            {hasMsg && (
+              <span aria-label="Message" className="h-2 w-2 rounded-full bg-amber-500" />
             )}
-            <Button
-              type="button"
-              size="sm"
-              className="h-7 text-xs"
-              disabled={!dirty}
-              onClick={() => setRoomHousekeepingNote(n, draft)}
-            >
-              Save note
-            </Button>
-          </div>
-          </div>
-        </div>
+            {hasNote && (
+              <span aria-label="Note" className="h-2 w-2 rounded-full bg-primary" />
+            )}
+            {maintenance && (
+              <Wrench aria-label="Maintenance" className="h-3.5 w-3.5 text-amber-600 dark:text-amber-400" />
+            )}
+            {vacated && (
+              <DoorOpen aria-label="Vacated" className="h-3.5 w-3.5 text-emerald-600 dark:text-emerald-400" />
+            )}
+          </span>
+        </Button>
       );
     })()}
 
@@ -1854,116 +1704,18 @@ useEffect(() => {
     {!isReception && (
       <div className="flex flex-row gap-2">
         {isAdmin && (
-          <DropdownMenu>
-            <DropdownMenuTrigger asChild>
-              <button
-                type="button"
-                className={cn(
-                  "flex items-center justify-center gap-1.5 rounded-md border bg-background px-2 sm:px-3 py-2 flex-1 text-sm font-medium cursor-pointer transition-colors hover:bg-accent",
-                  receptionDoneSet.has(n)
-                    ? "border-primary bg-primary/10 text-primary"
-                    : ""
-                )}
-              >
-                Reception
-              </button>
-            </DropdownMenuTrigger>
-            <DropdownMenuContent align="start" className="min-w-fit">
-              <DropdownMenuItem
-                className="justify-between"
-                onSelect={(e) => {
-                  e.preventDefault();
-                  toggleReceptionDone(n);
-                }}
-              >
-                <span>Done</span>
-                <span className="flex items-center gap-2 border-l border-border pl-2">
-                  {receptionDoneSet.has(n) ? (
-                    <Check className="h-4 w-4" />
-                  ) : (
-                    <span className="inline-block h-4 w-4" />
-                  )}
-                </span>
-              </DropdownMenuItem>
-              <DropdownMenuSeparator />
-              {receptionStatuses.length === 0 && (
-                <DropdownMenuItem disabled>No statuses</DropdownMenuItem>
-              )}
-              {receptionStatuses.map((s) => {
-                const room = rooms.find((r) => r.room_number === n);
-                const occ =
-                  room?.reception_status_id ?? room?.default_status ?? null;
-                const selected = occ === s.id;
-                return (
-                  <DropdownMenuItem
-                    key={s.id}
-                    className="justify-between"
-                    onSelect={(e) => {
-                      e.preventDefault();
-                      setRoomReceptionStatus(n, occ === s.id ? null : s.id);
-                    }}
-                  >
-                    <span>{s.label}</span>
-                    <span className="flex items-center gap-2 border-l border-border pl-2">
-                      {selected ? (
-                        <Check className="h-4 w-4" />
-                      ) : (
-                        <span className="inline-block h-4 w-4" />
-                      )}
-                    </span>
-                  </DropdownMenuItem>
-                );
-              })}
-              <DropdownMenuSeparator />
-              {receptionBeds.length === 0 && (
-                <DropdownMenuItem disabled>No bed types</DropdownMenuItem>
-              )}
-              {(() => {
-                const norm = (s: string) => s.toLowerCase().replace(/[^a-z0-9]/g, "");
-                const room = rooms.find((r) => r.room_number === n);
-                const cats = parseCats(room?.category).map(norm);
-                const hasSuperKing = cats.includes("superking");
-                const hasDouble = cats.includes("double");
-                const onlyDouble = hasDouble && !hasSuperKing;
-                return receptionBeds.filter((b) => {
-                  const nb = norm(b.label);
-                  if (onlyDouble) return nb === "double";
-                  if (hasSuperKing && nb === "double") return false;
-                  if (hasDouble && (nb === "king" || nb === "twin")) return false;
-                  return true;
-                });
-              })().map((b) => {
-                const room = rooms.find((r) => r.room_number === n);
-                const norm = (s: string) => s.toLowerCase().replace(/[^a-z0-9]/g, "");
-                const cats = parseCats(room?.category).map(norm);
-                const lockedDouble =
-                  cats.includes("double") && !cats.includes("superking") && norm(b.label) === "double";
-                const currentBed = room?.reception_bed_id ?? null;
-                const selected = currentBed === b.id || lockedDouble;
-                return (
-                  <DropdownMenuItem
-                    key={b.id}
-                    className="justify-between"
-                    onSelect={(e) => {
-                      e.preventDefault();
-                      if (lockedDouble) return;
-                      setRoomReceptionBed(n, currentBed === b.id ? null : b.id);
-                    }}
-                    disabled={lockedDouble && selected}
-                  >
-                    <span>{b.label}{lockedDouble ? " (default)" : ""}</span>
-                    <span className="flex items-center gap-2 border-l border-border pl-2">
-                      {selected ? (
-                        <Check className="h-4 w-4" />
-                      ) : (
-                        <span className="inline-block h-4 w-4" />
-                      )}
-                    </span>
-                  </DropdownMenuItem>
-                );
-              })}
-            </DropdownMenuContent>
-          </DropdownMenu>
+          <button
+            type="button"
+            onClick={() => setReceptionSheetRoom(n)}
+            className={cn(
+              "flex items-center justify-center gap-1.5 rounded-md border bg-background px-2 sm:px-3 h-11 flex-1 text-sm font-medium cursor-pointer transition-colors hover:bg-accent",
+              receptionDoneSet.has(n)
+                ? "border-primary bg-primary/10 text-primary"
+                : ""
+            )}
+          >
+            Reception
+          </button>
         )}
         <button
           type="button"
@@ -1971,7 +1723,7 @@ useEffect(() => {
             setShowAllLinen((prev) => ({ ...prev, [n]: !prev[n] }))
           }
           className={cn(
-            "flex items-center justify-center gap-1.5 rounded-md border bg-background px-2 sm:px-3 py-2 flex-1 text-sm font-medium cursor-pointer transition-colors hover:bg-accent",
+            "flex items-center justify-center gap-1.5 rounded-md border bg-background px-2 sm:px-3 h-11 flex-1 text-sm font-medium cursor-pointer transition-colors hover:bg-accent",
             showAll
               ? "border-primary bg-primary/10 text-primary"
               : ""
@@ -1980,46 +1732,15 @@ useEffect(() => {
           Extra linen
         </button>
         {isAdmin && (
-          <DropdownMenu>
-            <DropdownMenuTrigger asChild>
-              <button
-                type="button"
-                className="inline-flex items-center justify-center h-10 w-10 shrink-0 rounded-md border bg-background text-sm font-medium cursor-pointer transition-colors hover:bg-accent disabled:opacity-50 disabled:cursor-not-allowed"
-                disabled={linenLocked}
-                aria-label="Edit defaults"
-              >
-                <Pencil className="h-4 w-4" />
-              </button>
-            </DropdownMenuTrigger>
-            <DropdownMenuContent align="end" className="w-64">
-              {template.length === 0 ? (
-                <DropdownMenuItem disabled>No items yet.</DropdownMenuItem>
-              ) : (
-                template.map((t) => {
-                  const checked = isAssigned(t.id, n);
-                  return (
-                    <DropdownMenuItem
-                      key={t.id}
-                      className="justify-between"
-                      onSelect={(e) => {
-                        e.preventDefault();
-                        toggleAssignment(t.id, n);
-                      }}
-                    >
-                      <span>{t.name}</span>
-                      <span className="flex items-center gap-2 border-l border-border pl-2">
-                        {checked ? (
-                          <Check className="h-4 w-4" />
-                        ) : (
-                          <span className="inline-block h-4 w-4" />
-                        )}
-                      </span>
-                    </DropdownMenuItem>
-                  );
-                })
-              )}
-            </DropdownMenuContent>
-          </DropdownMenu>
+          <button
+            type="button"
+            onClick={() => setEditDefaultsSheetRoom(n)}
+            className="inline-flex items-center justify-center h-11 w-11 shrink-0 rounded-md border bg-background text-sm font-medium cursor-pointer transition-colors hover:bg-accent disabled:opacity-50 disabled:cursor-not-allowed"
+            disabled={linenLocked}
+            aria-label="Edit defaults"
+          >
+            <Pencil className="h-4 w-4" />
+          </button>
         )}
       </div>
     )}
@@ -2049,7 +1770,7 @@ useEffect(() => {
     <Button
     variant="outline"
     size="sm"
-    className="h-8 text-xs mr-1"
+    className="h-10 sm:h-8 text-xs mr-1"
     onClick={() => updateCount(n, "template", item.id, item.default_count)}
     >
     + All
@@ -2058,7 +1779,7 @@ useEffect(() => {
     <Button
     variant="outline"
     size="icon"
-    className="h-8 w-8"
+    className="h-10 w-10 sm:h-8 sm:w-8"
     onClick={() => updateCount(n, "template", item.id, -1)}
     disabled={count === 0}
     aria-label={`Decrease ${item.name}`}
@@ -2066,13 +1787,13 @@ useEffect(() => {
     <Minus className="h-4 w-4" />
     </Button>
     <span
-      className="w-8 text-center tabular-nums font-medium"
+      className="w-10 sm:w-8 text-center tabular-nums font-medium"
       style={item.color ? { color: theme === "dark" ? "#f8fafc" : "#0f172a" } : undefined}
     >{count}</span>
     <Button
     variant="outline"
     size="icon"
-    className="h-8 w-8"
+    className="h-10 w-10 sm:h-8 sm:w-8"
     onClick={() => updateCount(n, "template", item.id, 1)}
     aria-label={`Increase ${item.name}`}
     >
@@ -2099,18 +1820,18 @@ useEffect(() => {
    <Button
    variant="outline"
    size="icon"
-   className="h-8 w-8"
+   className="h-10 w-10 sm:h-8 sm:w-8"
    onClick={() => updateCount(n, "extra", item.id, -1)}
    disabled={count === 0}
    aria-label={`Decrease ${item.name}`}
    >
    <Minus className="h-4 w-4" />
    </Button>
-   <span className="w-8 text-center tabular-nums font-medium">{count}</span>
+   <span className="w-10 sm:w-8 text-center tabular-nums font-medium">{count}</span>
    <Button
    variant="outline"
    size="icon"
-   className="h-8 w-8"
+   className="h-10 w-10 sm:h-8 sm:w-8"
    onClick={() => updateCount(n, "extra", item.id, 1)}
    aria-label={`Increase ${item.name}`}
    >
@@ -2119,7 +1840,7 @@ useEffect(() => {
    <Button
    variant="ghost"
    size="icon"
-   className="h-8 w-8 text-muted-foreground hover:text-destructive"
+   className="h-10 w-10 sm:h-8 sm:w-8 text-muted-foreground hover:text-destructive"
    onClick={() => deleteExtra(item.id)}
    aria-label={`Delete ${item.name}`}
    >
@@ -2523,24 +2244,355 @@ useEffect(() => {
  </DialogContent>
  </Dialog>
 
- <Dialog open={notesDialogRoom !== null} onOpenChange={(o) => { if (!o) setNotesDialogRoom(null); }}>
-   <DialogContent className="max-w-md p-4 sm:p-6">
-     <DialogHeader>
-       <DialogTitle className="flex items-center gap-2">
-         <StickyNote className="h-4 w-4" />
-         Notes — Room {notesDialogRoom}
-       </DialogTitle>
-       <DialogDescription>Note from Housekeeping</DialogDescription>
-     </DialogHeader>
-     {(() => {
-       const note = rooms.find((r) => r.room_number === notesDialogRoom)?.housekeeping_note ?? null;
-       if (!note) {
-         return <p className="text-sm text-muted-foreground">No notes from Housekeeping.</p>;
-       }
-       return <p className="text-sm whitespace-pre-wrap break-words">{note}</p>;
+ {/* Notes sheet (User/Admin + Reception) */}
+ <Sheet open={notesSheetRoom !== null} onOpenChange={(o) => { if (!o) setNotesSheetRoom(null); }}>
+   <SheetContent side="bottom" className="max-h-[85vh] overflow-y-auto rounded-t-2xl p-4 sm:p-6">
+     {notesSheetRoom !== null && (() => {
+       const n = notesSheetRoom;
+       const room = rooms.find((r) => r.room_number === n);
+       const note = room?.housekeeping_note ?? null;
+       const maintenance = !!room?.needs_maintenance;
+       const vacated = !!room?.guest_vacated;
+       const msgs = activeMessagesByRoom(n);
+       return (
+         <>
+           <SheetHeader className="text-left">
+             <SheetTitle className="flex items-center gap-2">
+               <StickyNote className="h-4 w-4" />
+               Notes — Room {n}
+             </SheetTitle>
+             <SheetDescription>Shared between Housekeeping and Reception</SheetDescription>
+           </SheetHeader>
+           <div className="mt-4 space-y-3">
+             {isReception ? (
+               <>
+                 <div className="flex items-center justify-between gap-2 rounded-md border bg-background p-3">
+                   <span className="flex items-center gap-2 text-sm font-medium">
+                     <DoorOpen className={cn("h-4 w-4", vacated ? "text-emerald-600 dark:text-emerald-400" : "text-muted-foreground")} />
+                     Guest has vacated room
+                   </span>
+                   <Switch checked={vacated} onCheckedChange={(v) => setRoomGuestVacated(n, v)} />
+                 </div>
+                 {maintenance && (
+                   <div className="flex items-center gap-2 rounded-md border border-amber-500/60 bg-amber-50 dark:bg-amber-950/40 p-3 text-sm">
+                     <Wrench className="h-4 w-4 text-amber-600 dark:text-amber-400 shrink-0" />
+                     <span className="font-medium text-amber-800 dark:text-amber-200">
+                       Maintenance requested by Housekeeping
+                     </span>
+                   </div>
+                 )}
+                 <div className="rounded-md border bg-background p-3">
+                   <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground mb-1">
+                     From Housekeeping
+                   </p>
+                   {note ? (
+                     <p className="text-sm whitespace-pre-wrap break-words">{note}</p>
+                   ) : (
+                     <p className="text-sm text-muted-foreground">No notes from Housekeeping.</p>
+                   )}
+                 </div>
+                 <div className="space-y-2 rounded-md border border-amber-400/60 bg-amber-50 dark:bg-amber-950/40 p-3">
+                   <p className="text-xs font-semibold uppercase tracking-wide text-amber-700 dark:text-amber-300">
+                     Leave a message for housekeeping
+                   </p>
+                   {msgs.length > 0 && (
+                     <ul className="space-y-1">
+                       {msgs.map((m) => (
+                         <li key={m.id} className="flex items-start gap-2 text-sm bg-background/70 rounded p-2">
+                           <span className="flex-1 break-words whitespace-pre-wrap">{m.message}</span>
+                           <Button
+                             type="button"
+                             variant="ghost"
+                             size="sm"
+                             className="h-7 px-2 text-xs"
+                             onClick={() => deleteRoomMessage(m.id)}
+                             aria-label="Delete message"
+                           >
+                             <X className="h-3 w-3" />
+                           </Button>
+                         </li>
+                       ))}
+                     </ul>
+                   )}
+                   <div className="flex gap-2">
+                     <Input
+                       value={newMessageText}
+                       onChange={(e) => setNewMessageText(e.target.value)}
+                       placeholder="Type a message…"
+                       onKeyDown={(e) => {
+                         if (e.key === "Enter" && !e.shiftKey) {
+                           e.preventDefault();
+                           submitRoomMessage(n);
+                         }
+                       }}
+                     />
+                     <Button type="button" onClick={() => submitRoomMessage(n)} disabled={!newMessageText.trim()}>
+                       Send
+                     </Button>
+                   </div>
+                 </div>
+               </>
+             ) : (
+               <>
+                 {vacated && (
+                   <div className="flex items-center gap-2 rounded-md border border-emerald-500/60 bg-emerald-50 dark:bg-emerald-950/40 p-3 text-sm">
+                     <DoorOpen className="h-4 w-4 text-emerald-600 dark:text-emerald-400 shrink-0" />
+                     <span className="font-medium text-emerald-800 dark:text-emerald-200">
+                       Guest has vacated — marked by Reception
+                     </span>
+                   </div>
+                 )}
+                 {msgs.length > 0 && (
+                   <div className="space-y-2 rounded-md border border-amber-400/60 bg-amber-50 dark:bg-amber-950/40 p-3">
+                     <p className="text-xs font-semibold uppercase tracking-wide text-amber-700 dark:text-amber-300">
+                       Reception message{msgs.length > 1 ? "s" : ""}
+                     </p>
+                     <ul className="space-y-1">
+                       {msgs.map((m) => (
+                         <li key={m.id} className="flex items-start gap-2 text-sm bg-background/70 rounded p-2">
+                           <div className="flex-1 min-w-0">
+                             <p className="break-words whitespace-pre-wrap">{m.message}</p>
+                             {m.created_by_username && (
+                               <p className="text-[10px] text-muted-foreground mt-0.5">
+                                 from {m.created_by_username}
+                               </p>
+                             )}
+                           </div>
+                           <div className="flex flex-col gap-1 shrink-0">
+                             <Button
+                               type="button"
+                               variant="default"
+                               size="sm"
+                               className="h-7 text-xs"
+                               onClick={() => confirmRoomMessage(m)}
+                             >
+                               Confirm
+                             </Button>
+                             <Button
+                               type="button"
+                               variant="outline"
+                               size="sm"
+                               className="h-7 text-xs"
+                               onClick={() => dismissRoomMessage(m.id)}
+                             >
+                               Dismiss
+                             </Button>
+                           </div>
+                         </li>
+                       ))}
+                     </ul>
+                   </div>
+                 )}
+                 <div className="space-y-2 rounded-md border bg-background p-3">
+                   <div className="flex items-center justify-between gap-2">
+                     <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+                       For Reception
+                     </p>
+                     <label className="flex items-center gap-2 text-xs font-medium">
+                       <Wrench className={cn("h-3.5 w-3.5", maintenance ? "text-amber-600 dark:text-amber-400" : "text-muted-foreground")} />
+                       Needs maintenance
+                       <Switch
+                         checked={maintenance}
+                         onCheckedChange={(v) => setRoomNeedsMaintenance(n, v)}
+                       />
+                     </label>
+                   </div>
+                   {(() => {
+                     const draft = noteDraft[n] ?? note ?? "";
+                     const dirty = draft !== (note ?? "");
+                     return (
+                       <>
+                         <textarea
+                           value={draft}
+                           onChange={(e) => setNoteDraft((p) => ({ ...p, [n]: e.target.value }))}
+                           placeholder="Note for Reception (e.g. fan broken, no hot water)…"
+                           rows={3}
+                           className="w-full rounded-md border bg-background px-2 py-1.5 text-sm resize-none focus:outline-none focus:ring-2 focus:ring-ring"
+                         />
+                         <div className="flex justify-end gap-2">
+                           {note && (
+                             <Button
+                               type="button"
+                               variant="ghost"
+                               size="sm"
+                               className="h-8 text-xs"
+                               onClick={() => {
+                                 setNoteDraft((p) => ({ ...p, [n]: "" }));
+                                 setRoomHousekeepingNote(n, "");
+                               }}
+                             >
+                               Clear
+                             </Button>
+                           )}
+                           <Button
+                             type="button"
+                             size="sm"
+                             className="h-8 text-xs"
+                             disabled={!dirty}
+                             onClick={() => setRoomHousekeepingNote(n, draft)}
+                           >
+                             Save note
+                           </Button>
+                         </div>
+                       </>
+                     );
+                   })()}
+                 </div>
+               </>
+             )}
+           </div>
+         </>
+       );
      })()}
-   </DialogContent>
- </Dialog>
+   </SheetContent>
+ </Sheet>
+
+ {/* Reception sheet (Admin/User): Done + Status + Bed */}
+ <Sheet open={receptionSheetRoom !== null} onOpenChange={(o) => { if (!o) setReceptionSheetRoom(null); }}>
+   <SheetContent side="bottom" className="max-h-[85vh] overflow-y-auto rounded-t-2xl p-4 sm:p-6">
+     {receptionSheetRoom !== null && (() => {
+       const n = receptionSheetRoom;
+       const room = rooms.find((r) => r.room_number === n);
+       const occ = room?.reception_status_id ?? room?.default_status ?? null;
+       const norm = (s: string) => s.toLowerCase().replace(/[^a-z0-9]/g, "");
+       const cats = parseCats(room?.category).map(norm);
+       const hasSuperKing = cats.includes("superking");
+       const hasDouble = cats.includes("double");
+       const onlyDouble = hasDouble && !hasSuperKing;
+       const filteredBeds = receptionBeds.filter((b) => {
+         const nb = norm(b.label);
+         if (onlyDouble) return nb === "double";
+         if (hasSuperKing && nb === "double") return false;
+         if (hasDouble && (nb === "king" || nb === "twin")) return false;
+         return true;
+       });
+       const currentBed = room?.reception_bed_id ?? null;
+       const Row = ({
+         label,
+         selected,
+         disabled,
+         onClick,
+       }: { label: React.ReactNode; selected: boolean; disabled?: boolean; onClick: () => void }) => (
+         <button
+           type="button"
+           disabled={disabled}
+           onClick={onClick}
+           className={cn(
+             "w-full flex items-center justify-between gap-3 rounded-md border bg-background px-3 min-h-12 text-sm font-medium transition-colors hover:bg-accent disabled:opacity-60 disabled:cursor-not-allowed",
+             selected && "border-primary bg-primary/10 text-primary",
+           )}
+         >
+           <span className="text-left">{label}</span>
+           {selected ? <Check className="h-5 w-5" /> : <span className="h-5 w-5" />}
+         </button>
+       );
+       return (
+         <>
+           <SheetHeader className="text-left">
+             <SheetTitle className="flex items-center gap-2">
+               <ConciergeBell className="h-4 w-4" />
+               Reception — Room {n}
+             </SheetTitle>
+             <SheetDescription>Mark status and bed configuration</SheetDescription>
+           </SheetHeader>
+           <div className="mt-4 space-y-4">
+             <div className="space-y-2">
+               <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">Done</p>
+               <Row
+                 label="Reception done"
+                 selected={receptionDoneSet.has(n)}
+                 onClick={() => toggleReceptionDone(n)}
+               />
+             </div>
+             <div className="space-y-2">
+               <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">Status</p>
+               {receptionStatuses.length === 0 && (
+                 <p className="text-sm text-muted-foreground">No statuses</p>
+               )}
+               <div className="space-y-1.5">
+                 {receptionStatuses.map((s) => (
+                   <Row
+                     key={s.id}
+                     label={s.label}
+                     selected={occ === s.id}
+                     onClick={() => setRoomReceptionStatus(n, occ === s.id ? null : s.id)}
+                   />
+                 ))}
+               </div>
+             </div>
+             <div className="space-y-2">
+               <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">Bed</p>
+               {filteredBeds.length === 0 && (
+                 <p className="text-sm text-muted-foreground">No bed types</p>
+               )}
+               <div className="space-y-1.5">
+                 {filteredBeds.map((b) => {
+                   const lockedDouble = onlyDouble && norm(b.label) === "double";
+                   const selected = currentBed === b.id || lockedDouble;
+                   return (
+                     <Row
+                       key={b.id}
+                       label={<>{b.label}{lockedDouble ? " (default)" : ""}</>}
+                       selected={selected}
+                       disabled={lockedDouble && selected}
+                       onClick={() => {
+                         if (lockedDouble) return;
+                         setRoomReceptionBed(n, currentBed === b.id ? null : b.id);
+                       }}
+                     />
+                   );
+                 })}
+               </div>
+             </div>
+           </div>
+         </>
+       );
+     })()}
+   </SheetContent>
+ </Sheet>
+
+ {/* Edit defaults sheet (Admin): which template items appear in this room */}
+ <Sheet open={editDefaultsSheetRoom !== null} onOpenChange={(o) => { if (!o) setEditDefaultsSheetRoom(null); }}>
+   <SheetContent side="bottom" className="max-h-[85vh] overflow-y-auto rounded-t-2xl p-4 sm:p-6">
+     {editDefaultsSheetRoom !== null && (() => {
+       const n = editDefaultsSheetRoom;
+       return (
+         <>
+           <SheetHeader className="text-left">
+             <SheetTitle className="flex items-center gap-2">
+               <Pencil className="h-4 w-4" />
+               Edit defaults — Room {n}
+             </SheetTitle>
+             <SheetDescription>Choose which linen items appear by default</SheetDescription>
+           </SheetHeader>
+           <div className="mt-4 space-y-1.5">
+             {template.length === 0 ? (
+               <p className="text-sm text-muted-foreground">No items yet.</p>
+             ) : (
+               template.map((t) => {
+                 const checked = isAssigned(t.id, n);
+                 return (
+                   <button
+                     key={t.id}
+                     type="button"
+                     onClick={() => toggleAssignment(t.id, n)}
+                     className={cn(
+                       "w-full flex items-center justify-between gap-3 rounded-md border bg-background px-3 min-h-12 text-sm font-medium transition-colors hover:bg-accent",
+                       checked && "border-primary bg-primary/10 text-primary",
+                     )}
+                   >
+                     <span className="text-left">{t.name}</span>
+                     {checked ? <Check className="h-5 w-5" /> : <span className="h-5 w-5" />}
+                   </button>
+                 );
+               })
+             )}
+           </div>
+         </>
+       );
+     })()}
+   </SheetContent>
+ </Sheet>
 
   {/* Add room type dialog */}
   <Dialog open={addRoomTypeOpen} onOpenChange={setAddRoomTypeOpen}>
@@ -3270,10 +3322,12 @@ useEffect(() => {
             />
           )}
           {room?.guest_vacated && !isStaffRoom && (
-            <DoorOpen
+            <span
               aria-label="Guest vacated"
-              className="absolute top-0.5 left-0.5 h-3 w-3 text-emerald-600 dark:text-emerald-400"
-            />
+              className="absolute top-0.5 left-0.5 rounded-sm bg-emerald-600 px-1 py-px text-[8px] font-bold leading-none tracking-wide text-white shadow-sm dark:bg-emerald-500 dark:text-emerald-950"
+            >
+              OUT
+            </span>
           )}
         </button>,
     );
@@ -3313,17 +3367,19 @@ useEffect(() => {
             />
           )}
           {room?.guest_vacated && (
-            <DoorOpen
+            <span
               aria-label="Guest vacated"
-              className="absolute top-0.5 left-0.5 h-3 w-3 text-emerald-600 dark:text-emerald-400"
-            />
+              className="absolute top-0.5 left-0.5 rounded-sm bg-emerald-600 px-1 py-px text-[8px] font-bold leading-none tracking-wide text-white shadow-sm dark:bg-emerald-500 dark:text-emerald-950"
+            >
+              OUT
+            </span>
           )}
           {receptionDoneSet.has(n) && (
             <span
               aria-label="Reception done"
-              className="absolute bottom-1 right-1 flex h-5 w-5 items-center justify-center rounded-full bg-yellow-500 text-background ring-2 ring-background"
+                className="absolute bottom-0.5 right-0.5 flex h-3.5 w-3.5 items-center justify-center rounded-full bg-yellow-500 text-background ring-1 ring-background"
             >
-              <Check className="h-3 w-3" />
+                <Check className="h-2.5 w-2.5" />
             </span>
           )}
       </button>,
