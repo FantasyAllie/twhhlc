@@ -3236,6 +3236,12 @@ useEffect(() => {
               className="absolute bottom-0.5 left-0.5 h-3 w-3 text-amber-600 dark:text-amber-400"
             />
           )}
+          {room?.guest_vacated && !isStaffRoom && (
+            <DoorOpen
+              aria-label="Guest vacated"
+              className="absolute top-0.5 left-0.5 h-3 w-3 text-emerald-600 dark:text-emerald-400"
+            />
+          )}
         </button>,
     );
   } else {
@@ -3271,6 +3277,12 @@ useEffect(() => {
             <Wrench
               aria-label="Maintenance"
               className="absolute bottom-0.5 left-0.5 h-3 w-3 text-amber-600 dark:text-amber-400"
+            />
+          )}
+          {room?.guest_vacated && (
+            <DoorOpen
+              aria-label="Guest vacated"
+              className="absolute top-0.5 left-0.5 h-3 w-3 text-emerald-600 dark:text-emerald-400"
             />
           )}
           {receptionDoneSet.has(n) && (
