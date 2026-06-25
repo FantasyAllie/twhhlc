@@ -236,6 +236,18 @@ useEffect(() => {
   const [editDefaultsSheetRoom, setEditDefaultsSheetRoom] = useState<number | null>(null);
   const [editRoomSheetNumber, setEditRoomSheetNumber] = useState<number | null>(null);
   const [menuSheetOpen, setMenuSheetOpen] = useState(false);
+  const [notificationsSheetOpen, setNotificationsSheetOpen] = useState(false);
+
+  // Fire-and-forget push fan-out; never blocks the UI.
+  const fireRoomNotification = (
+    kind: "message" | "checkout" | "done",
+    roomNumber: number,
+    messageText?: string,
+  ) => {
+    const token = getToken();
+    if (!token) return;
+    void notifyRoomEvent({ data: { token, kind, roomNumber, messageText } }).catch(() => {});
+  };
   const [historySheetOpen, setHistorySheetOpen] = useState(false);
   const [roomTypesSheetOpen, setRoomTypesSheetOpen] = useState(false);
   const [roomFeaturesSheetOpen, setRoomFeaturesSheetOpen] = useState(false);
