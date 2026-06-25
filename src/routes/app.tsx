@@ -2523,6 +2523,25 @@ useEffect(() => {
  </DialogContent>
  </Dialog>
 
+ <Dialog open={notesDialogRoom !== null} onOpenChange={(o) => { if (!o) setNotesDialogRoom(null); }}>
+   <DialogContent className="max-w-md p-4 sm:p-6">
+     <DialogHeader>
+       <DialogTitle className="flex items-center gap-2">
+         <StickyNote className="h-4 w-4" />
+         Notes — Room {notesDialogRoom}
+       </DialogTitle>
+       <DialogDescription>Note from Housekeeping</DialogDescription>
+     </DialogHeader>
+     {(() => {
+       const note = rooms.find((r) => r.room_number === notesDialogRoom)?.housekeeping_note ?? null;
+       if (!note) {
+         return <p className="text-sm text-muted-foreground">No notes from Housekeeping.</p>;
+       }
+       return <p className="text-sm whitespace-pre-wrap break-words">{note}</p>;
+     })()}
+   </DialogContent>
+ </Dialog>
+
   {/* Add room type dialog */}
   <Dialog open={addRoomTypeOpen} onOpenChange={setAddRoomTypeOpen}>
     <DialogContent className="max-w-sm w-[calc(100vw-1.5rem)] sm:w-full p-4 sm:p-6">
