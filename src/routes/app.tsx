@@ -1524,6 +1524,7 @@ useEffect(() => {
     );
     if (error) toast.error(error.message);
     qc.invalidateQueries({ queryKey: ["rooms"] });
+    if (value) fireRoomNotification("checkout", roomNumber);
   };
 
   // --- Room type management ---
