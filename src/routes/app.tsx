@@ -1698,7 +1698,29 @@ useEffect(() => {
                 From Housekeeping
               </p>
               {note ? (
-                <p className="text-sm whitespace-pre-wrap break-words">{note}</p>
+                <>
+                  <p className="text-sm whitespace-pre-wrap break-words">{note}</p>
+                  <div className="mt-2 flex justify-end gap-2">
+                    <Button
+                      type="button"
+                      variant="default"
+                      size="sm"
+                      className="h-7 text-xs"
+                      onClick={() => confirmHousekeepingNote(n, note)}
+                    >
+                      Confirm
+                    </Button>
+                    <Button
+                      type="button"
+                      variant="outline"
+                      size="sm"
+                      className="h-7 text-xs"
+                      onClick={() => setRoomHousekeepingNote(n, "")}
+                    >
+                      Dismiss
+                    </Button>
+                  </div>
+                </>
               ) : (
                 <p className="text-sm text-muted-foreground">No notes from Housekeeping.</p>
               )}
