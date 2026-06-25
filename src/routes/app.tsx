@@ -2587,6 +2587,13 @@ useEffect(() => {
 
  {/* Edit defaults sheet (Admin): which template items appear in this room */}
 {/* App menu sheet (burger) */}
+{authUser && (
+  <NotificationsSheet
+    open={notificationsSheetOpen}
+    onOpenChange={setNotificationsSheetOpen}
+    userRole={authUser.role}
+  />
+)}
 <Sheet open={menuSheetOpen} onOpenChange={setMenuSheetOpen}>
   <SheetContent side="right" className="w-auto max-w-[90vw] min-w-[18rem] sm:max-w-md overflow-y-auto p-4 sm:p-6">
     <SheetHeader className="text-left">
