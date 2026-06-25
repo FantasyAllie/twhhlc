@@ -3092,105 +3092,15 @@ useEffect(() => {
                 <span className="flex-1 text-sm font-medium tabular-nums">
                   Room {r.room_number}
                 </span>
-                <DropdownMenu>
-                  <DropdownMenuTrigger asChild>
-                    <Button variant="outline" size="sm" className="h-8">
-                      <Pencil className="h-3.5 w-3.5 mr-1" />
-                      Edit
-                    </Button>
-                  </DropdownMenuTrigger>
-                  <DropdownMenuContent align="end" className="min-w-fit">
-                    <DropdownMenuLabel className="text-[10px] uppercase tracking-wide text-muted-foreground">
-                      Room type
-                    </DropdownMenuLabel>
-                    {roomTypes.map((c) => {
-                      const selected = parseCats(r.category).includes(c.value);
-                      return (
-                        <DropdownMenuItem
-                          key={c.value}
-                          className="justify-between"
-                          onSelect={(e) => {
-                            e.preventDefault();
-                            toggleRoomCategory(r.room_number, c.value);
-                          }}
-                        >
-                          <span>{c.label}</span>
-                          <span className="flex items-center gap-2 border-l border-border pl-2">
-                            {selected ? (
-                              <Check className="h-4 w-4" />
-                            ) : (
-                              <span className="inline-block h-4 w-4" />
-                            )}
-                          </span>
-                        </DropdownMenuItem>
-                      );
-                    })}
-                    <DropdownMenuSeparator />
-                    <DropdownMenuLabel className="text-[10px] uppercase tracking-wide text-muted-foreground">
-                      Default status
-                    </DropdownMenuLabel>
-                    {receptionStatuses.length === 0 && (
-                      <DropdownMenuItem disabled>No statuses</DropdownMenuItem>
-                    )}
-                    {receptionStatuses.map((s) => {
-                      const selected = r.default_status === s.id;
-                      return (
-                        <DropdownMenuItem
-                          key={s.id}
-                          className="justify-between"
-                          onSelect={(e) => {
-                            e.preventDefault();
-                            setRoomDefaultStatus(
-                              r.room_number,
-                              selected ? null : s.id,
-                            );
-                          }}
-                        >
-                          <span>{s.label}</span>
-                          <span className="flex items-center gap-2 border-l border-border pl-2">
-                            {selected ? (
-                              <Check className="h-4 w-4" />
-                            ) : (
-                              <span className="inline-block h-4 w-4" />
-                            )}
-                          </span>
-                        </DropdownMenuItem>
-                      );
-                    })}
-                    {roomFeatures.length > 0 && (
-                      <>
-                        <DropdownMenuSeparator />
-                        <DropdownMenuLabel className="text-[10px] uppercase tracking-wide text-muted-foreground">
-                          Room features
-                        </DropdownMenuLabel>
-                        {roomFeatures.map((f) => {
-                          const selected = roomFeatureAssignments.some(
-                            (a) => a.feature_id === f.id && a.room_number === r.room_number,
-                          );
-                          return (
-                            <DropdownMenuItem
-                              key={f.id}
-                              className="justify-between"
-                              onSelect={(e) => {
-                                e.preventDefault();
-                                toggleRoomFeature(r.room_number, f.id);
-                              }}
-                            >
-                              <span>{f.label}</span>
-                              <span className="flex items-center gap-2 border-l border-border pl-2">
-                                {selected ? (
-                                  <Check className="h-4 w-4" />
-                                ) : (
-                                  <span className="inline-block h-4 w-4" />
-                                )}
-                              </span>
-                            </DropdownMenuItem>
-                          );
-                        })}
-                      </>
-                    )}
-                  </DropdownMenuContent>
-                </DropdownMenu>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  className="h-8"
+                  onClick={() => setEditRoomSheetNumber(r.room_number)}
+                >
+                  <Pencil className="h-3.5 w-3.5 mr-1" />
+                  Edit
+                </Button>
                 <Button
                   variant="ghost"
                   size="icon"
