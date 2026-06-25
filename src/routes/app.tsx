@@ -163,7 +163,12 @@ function AppPage() {
           if (!row || row.dismissed) return;
           const title = `Reception – Room ${row.room_number ?? "?"}`;
           const body = `${row.created_by_username ?? "Reception"}: ${row.message ?? ""}`;
-          toast(title, { description: row.message ?? "" });
+          toast(title, {
+            description: row.message ?? "",
+            duration: Infinity,
+            closeButton: true,
+            cancel: { label: "Dismiss", onClick: () => {} },
+          });
           try {
             if (
               typeof window !== "undefined" &&
