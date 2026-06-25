@@ -3436,9 +3436,9 @@ useEffect(() => {
         aria-label={`Room ${n}${done ? " done" : ""}${isStaffRoom ? " staff" : ""}`}
       >
         {n}
-          {hasActiveMessage(n) && !isStaffRoom && (
+          {(hasActiveMessage(n) || !!room?.housekeeping_note) && !isStaffRoom && (
             <span
-              aria-label="Message"
+              aria-label="Housekeeping note"
               className="absolute top-0.5 right-0.5 h-2 w-2 rounded-full bg-amber-500 ring-2 ring-background"
             />
           )}
