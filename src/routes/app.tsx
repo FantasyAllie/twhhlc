@@ -1770,7 +1770,7 @@ useEffect(() => {
     <Button
     variant="outline"
     size="sm"
-    className="h-8 text-xs mr-1"
+    className="h-10 sm:h-8 text-xs mr-1"
     onClick={() => updateCount(n, "template", item.id, item.default_count)}
     >
     + All
@@ -1779,7 +1779,7 @@ useEffect(() => {
     <Button
     variant="outline"
     size="icon"
-    className="h-8 w-8"
+    className="h-10 w-10 sm:h-8 sm:w-8"
     onClick={() => updateCount(n, "template", item.id, -1)}
     disabled={count === 0}
     aria-label={`Decrease ${item.name}`}
@@ -1787,13 +1787,13 @@ useEffect(() => {
     <Minus className="h-4 w-4" />
     </Button>
     <span
-      className="w-8 text-center tabular-nums font-medium"
+      className="w-10 sm:w-8 text-center tabular-nums font-medium"
       style={item.color ? { color: theme === "dark" ? "#f8fafc" : "#0f172a" } : undefined}
     >{count}</span>
     <Button
     variant="outline"
     size="icon"
-    className="h-8 w-8"
+    className="h-10 w-10 sm:h-8 sm:w-8"
     onClick={() => updateCount(n, "template", item.id, 1)}
     aria-label={`Increase ${item.name}`}
     >
@@ -1820,18 +1820,18 @@ useEffect(() => {
    <Button
    variant="outline"
    size="icon"
-   className="h-8 w-8"
+   className="h-10 w-10 sm:h-8 sm:w-8"
    onClick={() => updateCount(n, "extra", item.id, -1)}
    disabled={count === 0}
    aria-label={`Decrease ${item.name}`}
    >
    <Minus className="h-4 w-4" />
    </Button>
-   <span className="w-8 text-center tabular-nums font-medium">{count}</span>
+   <span className="w-10 sm:w-8 text-center tabular-nums font-medium">{count}</span>
    <Button
    variant="outline"
    size="icon"
-   className="h-8 w-8"
+   className="h-10 w-10 sm:h-8 sm:w-8"
    onClick={() => updateCount(n, "extra", item.id, 1)}
    aria-label={`Increase ${item.name}`}
    >
@@ -1840,7 +1840,7 @@ useEffect(() => {
    <Button
    variant="ghost"
    size="icon"
-   className="h-8 w-8 text-muted-foreground hover:text-destructive"
+   className="h-10 w-10 sm:h-8 sm:w-8 text-muted-foreground hover:text-destructive"
    onClick={() => deleteExtra(item.id)}
    aria-label={`Delete ${item.name}`}
    >
