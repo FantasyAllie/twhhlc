@@ -493,6 +493,22 @@ useEffect(() => {
     qc.invalidateQueries({ queryKey: ["room_messages"] });
   };
 
+  const confirmHousekeepingNote = async (roomNumber: number, note: string) => {
+    const who = authUser?.username ?? "Reception";
+    const ack = `✓ Received & actioned by ${who}: ${note}`;
+    const { error } = await supabase.from("room_messages" as never).insert({
+      room_number: roomNumber,
+      message: ack,
+      created_by_username: who,
+    } as never);
+    if (error) {
+      toast.error(error.message);
+      return;
+    }
+    await setRoomHousekeepingNote(roomNumber, "");
+    toast.success("Confirmation sent to housekeeping");
+  };
+
   const getRejectCount = (templateItemId: string) =>
     rejects.find((r) => r.template_item_id === templateItemId)?.count ?? 0;
 
@@ -1682,7 +1698,29 @@ useEffect(() => {
                 From Housekeeping
               </p>
               {note ? (
-                <p className="text-sm whitespace-pre-wrap break-words">{note}</p>
+                <>
+                  <p className="text-sm whitespace-pre-wrap break-words">{note}</p>
+                  <div className="mt-2 flex justify-end gap-2">
+                    <Button
+                      type="button"
+                      variant="default"
+                      size="sm"
+                      className="h-7 text-xs"
+                      onClick={() => confirmHousekeepingNote(n, note)}
+                    >
+                      Confirm
+                    </Button>
+                    <Button
+                      type="button"
+                      variant="outline"
+                      size="sm"
+                      className="h-7 text-xs"
+                      onClick={() => setRoomHousekeepingNote(n, "")}
+                    >
+                      Dismiss
+                    </Button>
+                  </div>
+                </>
               ) : (
                 <p className="text-sm text-muted-foreground">No notes from Housekeeping.</p>
               )}
@@ -2244,7 +2282,29 @@ useEffect(() => {
                      From Housekeeping
                    </p>
                    {note ? (
-                     <p className="text-sm whitespace-pre-wrap break-words">{note}</p>
+                      <>
+                        <p className="text-sm whitespace-pre-wrap break-words">{note}</p>
+                        <div className="mt-2 flex justify-end gap-2">
+                          <Button
+                            type="button"
+                            variant="default"
+                            size="sm"
+                            className="h-7 text-xs"
+                            onClick={() => confirmHousekeepingNote(n, note)}
+                          >
+                            Confirm
+                          </Button>
+                          <Button
+                            type="button"
+                            variant="outline"
+                            size="sm"
+                            className="h-7 text-xs"
+                            onClick={() => setRoomHousekeepingNote(n, "")}
+                          >
+                            Dismiss
+                          </Button>
+                        </div>
+                      </>
                    ) : (
                      <p className="text-sm text-muted-foreground">No notes from Housekeeping.</p>
                    )}
@@ -3436,9 +3496,9 @@ useEffect(() => {
         aria-label={`Room ${n}${done ? " done" : ""}${isStaffRoom ? " staff" : ""}`}
       >
         {n}
-          {hasActiveMessage(n) && !isStaffRoom && (
+          {(hasActiveMessage(n) || !!room?.housekeeping_note) && !isStaffRoom && (
             <span
-              aria-label="Message"
+              aria-label="Housekeeping note"
               className="absolute top-0.5 right-0.5 h-2 w-2 rounded-full bg-amber-500 ring-2 ring-background"
             />
           )}
