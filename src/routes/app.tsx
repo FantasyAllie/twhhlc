@@ -493,6 +493,22 @@ useEffect(() => {
     qc.invalidateQueries({ queryKey: ["room_messages"] });
   };
 
+  const confirmHousekeepingNote = async (roomNumber: number, note: string) => {
+    const who = authUser?.username ?? "Reception";
+    const ack = `✓ Received & actioned by ${who}: ${note}`;
+    const { error } = await supabase.from("room_messages" as never).insert({
+      room_number: roomNumber,
+      message: ack,
+      created_by_username: who,
+    } as never);
+    if (error) {
+      toast.error(error.message);
+      return;
+    }
+    await setRoomHousekeepingNote(roomNumber, "");
+    toast.success("Confirmation sent to housekeeping");
+  };
+
   const getRejectCount = (templateItemId: string) =>
     rejects.find((r) => r.template_item_id === templateItemId)?.count ?? 0;
 
