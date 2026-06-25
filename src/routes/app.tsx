@@ -131,7 +131,7 @@ function AppPage() {
   // Realtime: push room status changes to all signed-in clients (esp. reception)
   useEffect(() => {
     if (!authUser) return;
-    const notifyEnabled = authUser.role !== "reception";
+    const notifyEnabled = (viewAsRole ?? authUser.role) !== "reception";
     if (
       notifyEnabled &&
       typeof window !== "undefined" &&
