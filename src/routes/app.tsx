@@ -2227,7 +2227,7 @@ useEffect(() => {
                  <div className="flex items-center justify-between gap-2 rounded-md border bg-background p-3">
                    <span className="flex items-center gap-2 text-sm font-medium">
                      <DoorOpen className={cn("h-4 w-4", vacated ? "text-emerald-600 dark:text-emerald-400" : "text-muted-foreground")} />
-                     Guest has vacated room
+                     Guest has checked out
                    </span>
                    <Switch checked={vacated} onCheckedChange={(v) => setRoomGuestVacated(n, v)} />
                  </div>
