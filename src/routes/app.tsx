@@ -1760,8 +1760,18 @@ useEffect(() => {
       }
       const draft = noteDraft[n] ?? note ?? "";
       const dirty = draft !== (note ?? "");
+      const vacated = !!room?.guest_vacated;
       return (
-        <div className="space-y-2 rounded-md border bg-background p-3">
+        <div className="space-y-2">
+          {vacated && (
+            <div className="flex items-center gap-2 rounded-md border border-emerald-500/60 bg-emerald-50 dark:bg-emerald-950/40 p-3 text-sm">
+              <DoorOpen className="h-4 w-4 text-emerald-600 dark:text-emerald-400 shrink-0" />
+              <span className="font-medium text-emerald-800 dark:text-emerald-200">
+                Guest has vacated — marked by Reception
+              </span>
+            </div>
+          )}
+          <div className="space-y-2 rounded-md border bg-background p-3">
           <div className="flex items-center justify-between gap-2">
             <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
               For Reception
@@ -1806,6 +1816,7 @@ useEffect(() => {
             >
               Save note
             </Button>
+          </div>
           </div>
         </div>
       );
