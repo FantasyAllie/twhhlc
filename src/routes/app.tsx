@@ -4070,6 +4070,9 @@ useEffect(() => {
     onOpenChange={setAccountOpen}
     currentUsername={authUser?.username ?? ""}
     onUsernameChanged={(u) => setAuthUser((prev) => prev ? { ...prev, username: u } : prev)}
+    canViewAs={realIsAdmin}
+    viewAsRole={viewAsRole}
+    onViewAsRoleChange={(r) => setViewAsRole(r)}
   />
  </main>
  );
