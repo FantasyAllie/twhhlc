@@ -204,6 +204,7 @@ useEffect(() => {
   const [receptionFeatureFilter, setReceptionFeatureFilter] = useState<string[]>([]);
   const [receptionStatusFilter, setReceptionStatusFilter] = useState<string[]>([]);
   const [noteDraft, setNoteDraft] = useState<Record<number, string>>({});
+  const [notesDialogRoom, setNotesDialogRoom] = useState<number | null>(null);
  
 
  const [exportOpen, setExportOpen] = useState(false);
