@@ -4172,6 +4172,38 @@ function AccountDialog({
           </DialogDescription>
         </DialogHeader>
         <div className="space-y-6">
+          {canViewAs && (
+            <div className="space-y-2">
+              <h3 className="text-sm font-semibold">View as</h3>
+              <p className="text-xs text-muted-foreground">
+                Temporarily experience the app as another role. Your account stays admin.
+              </p>
+              <div className="space-y-1.5">
+                {(["admin", "user", "reception"] as const).map((r) => {
+                  const active = (viewAsRole ?? "admin") === r;
+                  const label = r === "user" ? "Housekeeping" : r === "reception" ? "Reception" : "Admin (your role)";
+                  return (
+                    <button
+                      key={r}
+                      type="button"
+                      onClick={() => {
+                        onViewAsRoleChange(r === "admin" ? null : r);
+                        onOpenChange(false);
+                      }}
+                      className={cn(
+                        "w-full flex items-center gap-3 rounded-md border px-3 min-h-11 text-sm font-medium transition-colors hover:bg-accent",
+                        active ? "bg-accent border-primary" : "bg-background",
+                      )}
+                    >
+                      <span className="text-left flex-1">{label}</span>
+                      {active && <Check className="h-4 w-4 shrink-0 text-primary" />}
+                    </button>
+                  );
+                })}
+              </div>
+            </div>
+          )}
+          {canViewAs && <div className="border-t" />}
           <form onSubmit={saveUsername} className="space-y-2">
             <h3 className="text-sm font-semibold">Change username</h3>
             <div className="space-y-1">
