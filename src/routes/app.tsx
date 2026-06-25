@@ -189,7 +189,7 @@ function AppPage() {
     return () => {
       supabase.removeChannel(channel);
     };
-  }, [authUser, qc]);
+  }, [authUser, qc, viewAsRole]);
   const signOut = () => {
     clearSession();
     navigate({ to: "/login", replace: true });
