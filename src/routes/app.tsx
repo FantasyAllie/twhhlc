@@ -535,7 +535,7 @@ useEffect(() => {
           default_status: null,
           category: null,
           reception_status_id: null,
-          reception_bed_id: null, housekeeping_note: null, needs_maintenance: false,
+          reception_bed_id: null, housekeeping_note: null, needs_maintenance: false, guest_vacated: false,
         });
       return list;
     });
@@ -799,7 +799,7 @@ useEffect(() => {
   const list = old ? [...old] : [];
   const idx = list.findIndex((r) => r.room_number === roomNumber);
   if (idx >= 0) list[idx] = { ...list[idx], done: true };
-  else list.push({ id: `temp-${roomNumber}`, room_number: roomNumber, done: true, done_reception: false, category: null, default_status: null, reception_status_id: null, reception_bed_id: null, housekeeping_note: null, needs_maintenance: false });
+  else list.push({ id: `temp-${roomNumber}`, room_number: roomNumber, done: true, done_reception: false, category: null, default_status: null, reception_status_id: null, reception_bed_id: null, housekeeping_note: null, needs_maintenance: false, guest_vacated: false });
   return list;
   });
   const { error: roomErr } = await supabase.from("rooms").upsert(
@@ -880,7 +880,7 @@ useEffect(() => {
         done: false,
         done_reception: false,
         reception_status_id: null,
-        reception_bed_id: null, housekeeping_note: null, needs_maintenance: false,
+        reception_bed_id: null, housekeeping_note: null, needs_maintenance: false, guest_vacated: false,
       })) ?? [],
     );
     qc.setQueryData<RoomCount[]>(["room_counts"], () => []);
@@ -889,7 +889,7 @@ useEffect(() => {
         done: false,
         done_reception: false,
         reception_status_id: null,
-        reception_bed_id: null, housekeeping_note: null, needs_maintenance: false,
+        reception_bed_id: null, housekeeping_note: null, needs_maintenance: false, guest_vacated: false,
       }).neq("room_number", -1),
       supabase.from("room_item_counts").delete().neq("room_number", -1),
     ]);
@@ -911,7 +911,7 @@ useEffect(() => {
     }
     qc.setQueryData<Room[]>(["rooms"], (old) => {
       const list = old ? [...old] : [];
-      list.push({ id: `temp-${n}`, room_number: n, done: false, done_reception: false, category: null, default_status: null, reception_status_id: null, reception_bed_id: null, housekeeping_note: null, needs_maintenance: false });
+      list.push({ id: `temp-${n}`, room_number: n, done: false, done_reception: false, category: null, default_status: null, reception_status_id: null, reception_bed_id: null, housekeeping_note: null, needs_maintenance: false, guest_vacated: false });
       list.sort((a, b) => a.room_number - b.room_number);
       return list;
     });
@@ -1275,7 +1275,7 @@ useEffect(() => {
  category,
   default_status: null,
   reception_status_id: null,
-  reception_bed_id: null, housekeeping_note: null, needs_maintenance: false,
+  reception_bed_id: null, housekeeping_note: null, needs_maintenance: false, guest_vacated: false,
  });
  return list;
  });
@@ -1308,7 +1308,7 @@ useEffect(() => {
          category: null,
          default_status: status,
           reception_status_id: null,
-          reception_bed_id: null, housekeeping_note: null, needs_maintenance: false,
+          reception_bed_id: null, housekeeping_note: null, needs_maintenance: false, guest_vacated: false,
        });
      return list;
    });
@@ -1342,7 +1342,7 @@ useEffect(() => {
           category: null,
           default_status: null,
           reception_status_id: field === "reception_status_id" ? value : null,
-          reception_bed_id: field === "reception_bed_id" ? value : null, housekeeping_note: null, needs_maintenance: false,
+          reception_bed_id: field === "reception_bed_id" ? value : null, housekeeping_note: null, needs_maintenance: false, guest_vacated: false,
         });
       return list;
     });
@@ -1380,7 +1380,7 @@ useEffect(() => {
           reception_status_id: null,
           reception_bed_id: null,
           housekeeping_note: next,
-          needs_maintenance: false,
+          needs_maintenance: false, guest_vacated: false,
         });
       return list;
     });
@@ -1412,14 +1412,14 @@ useEffect(() => {
           reception_status_id: null,
           reception_bed_id: null,
           housekeeping_note: null,
-          needs_maintenance: value,
+          needs_maintenance: value, guest_vacated: false,
         });
       return list;
     });
     const { error } = await supabase.from("rooms").upsert(
       {
         room_number: roomNumber,
-        needs_maintenance: value,
+        needs_maintenance: value, guest_vacated: false,
         updated_at: new Date().toISOString(),
       } as never,
       { onConflict: "user_id,room_number" },
