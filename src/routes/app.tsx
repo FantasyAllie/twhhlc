@@ -3322,10 +3322,12 @@ useEffect(() => {
             />
           )}
           {room?.guest_vacated && !isStaffRoom && (
-            <DoorOpen
+            <span
               aria-label="Guest vacated"
-              className="absolute top-0.5 left-0.5 h-3 w-3 text-emerald-600 dark:text-emerald-400"
-            />
+              className="absolute top-0.5 left-0.5 rounded-sm bg-emerald-600 px-1 py-px text-[8px] font-bold leading-none tracking-wide text-white shadow-sm dark:bg-emerald-500 dark:text-emerald-950"
+            >
+              OUT
+            </span>
           )}
         </button>,
     );
@@ -3365,10 +3367,12 @@ useEffect(() => {
             />
           )}
           {room?.guest_vacated && (
-            <DoorOpen
+            <span
               aria-label="Guest vacated"
-              className="absolute top-0.5 left-0.5 h-3 w-3 text-emerald-600 dark:text-emerald-400"
-            />
+              className="absolute top-0.5 left-0.5 rounded-sm bg-emerald-600 px-1 py-px text-[8px] font-bold leading-none tracking-wide text-white shadow-sm dark:bg-emerald-500 dark:text-emerald-950"
+            >
+              OUT
+            </span>
           )}
           {receptionDoneSet.has(n) && (
             <span
