@@ -2630,7 +2630,7 @@ useEffect(() => {
 
  {/* Room Types sheet (Admin) */}
  <Sheet open={roomTypesSheetOpen} onOpenChange={setRoomTypesSheetOpen}>
-   <SheetContent side="right" className="w-auto max-w-[90vw] min-w-[18rem] sm:max-w-md overflow-y-auto p-4 sm:p-6">
+  <SheetContent side="bottom" className="max-h-[85vh] overflow-y-auto p-4 sm:p-6">
      <SheetHeader className="text-left">
        <SheetTitle className="flex items-center gap-2">
          <Bed className="h-4 w-4" />
@@ -2676,7 +2676,7 @@ useEffect(() => {
 
  {/* Room Features sheet (Admin) */}
  <Sheet open={roomFeaturesSheetOpen} onOpenChange={setRoomFeaturesSheetOpen}>
-   <SheetContent side="right" className="w-auto max-w-[90vw] min-w-[18rem] sm:max-w-md overflow-y-auto p-4 sm:p-6">
+  <SheetContent side="bottom" className="max-h-[85vh] overflow-y-auto p-4 sm:p-6">
      <SheetHeader className="text-left">
        <SheetTitle className="flex items-center gap-2">
          <List className="h-4 w-4" />
@@ -2722,7 +2722,7 @@ useEffect(() => {
 
  {/* Reception items sheet (Admin) */}
  <Sheet open={receptionItemsSheetOpen} onOpenChange={setReceptionItemsSheetOpen}>
-   <SheetContent side="right" className="w-auto max-w-[90vw] min-w-[18rem] sm:max-w-md overflow-y-auto p-4 sm:p-6">
+  <SheetContent side="bottom" className="max-h-[85vh] overflow-y-auto p-4 sm:p-6">
      <SheetHeader className="text-left">
        <SheetTitle className="flex items-center gap-2">
          <ConciergeBell className="h-4 w-4" />
@@ -2801,7 +2801,7 @@ useEffect(() => {
 
   {/* Edit room sheet (Admin) */}
   <Sheet open={editRoomSheetNumber !== null} onOpenChange={(o) => { if (!o) setEditRoomSheetNumber(null); }}>
-    <SheetContent side="right" className="w-auto max-w-[90vw] min-w-[18rem] sm:max-w-md overflow-y-auto p-4 sm:p-6">
+    <SheetContent side="bottom" className="max-h-[85vh] overflow-y-auto p-4 sm:p-6">
       {editRoomSheetNumber !== null && (() => {
         const n = editRoomSheetNumber;
         const r = rooms.find((x) => x.room_number === n);
