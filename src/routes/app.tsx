@@ -1659,6 +1659,77 @@ useEffect(() => {
       const vacated = !!room?.guest_vacated;
       const hasMsg = msgs.length > 0;
       const hasNote = !!note;
+      if (isReception) {
+        return (
+          <div className="space-y-3">
+            <div className="flex items-center justify-between gap-2 rounded-md border bg-background p-3">
+              <span className="flex items-center gap-2 text-sm font-medium">
+                <DoorOpen className={cn("h-4 w-4", vacated ? "text-emerald-600 dark:text-emerald-400" : "text-muted-foreground")} />
+                Guest has vacated room
+              </span>
+              <Switch checked={vacated} onCheckedChange={(v) => setRoomGuestVacated(n, v)} />
+            </div>
+            {maintenance && (
+              <div className="flex items-center gap-2 rounded-md border border-amber-500/60 bg-amber-50 dark:bg-amber-950/40 p-3 text-sm">
+                <Wrench className="h-4 w-4 text-amber-600 dark:text-amber-400 shrink-0" />
+                <span className="font-medium text-amber-800 dark:text-amber-200">
+                  Maintenance requested by Housekeeping
+                </span>
+              </div>
+            )}
+            <div className="rounded-md border bg-background p-3">
+              <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground mb-1">
+                From Housekeeping
+              </p>
+              {note ? (
+                <p className="text-sm whitespace-pre-wrap break-words">{note}</p>
+              ) : (
+                <p className="text-sm text-muted-foreground">No notes from Housekeeping.</p>
+              )}
+            </div>
+            <div className="space-y-2 rounded-md border border-amber-400/60 bg-amber-50 dark:bg-amber-950/40 p-3">
+              <p className="text-xs font-semibold uppercase tracking-wide text-amber-700 dark:text-amber-300">
+                Leave a message for housekeeping
+              </p>
+              {hasMsg && (
+                <ul className="space-y-1">
+                  {msgs.map((m) => (
+                    <li key={m.id} className="flex items-start gap-2 text-sm bg-background/70 rounded p-2">
+                      <span className="flex-1 break-words whitespace-pre-wrap">{m.message}</span>
+                      <Button
+                        type="button"
+                        variant="ghost"
+                        size="sm"
+                        className="h-7 px-2 text-xs"
+                        onClick={() => deleteRoomMessage(m.id)}
+                        aria-label="Delete message"
+                      >
+                        <X className="h-3 w-3" />
+                      </Button>
+                    </li>
+                  ))}
+                </ul>
+              )}
+              <div className="flex gap-2">
+                <Input
+                  value={newMessageText}
+                  onChange={(e) => setNewMessageText(e.target.value)}
+                  placeholder="Type a message…"
+                  onKeyDown={(e) => {
+                    if (e.key === "Enter" && !e.shiftKey) {
+                      e.preventDefault();
+                      submitRoomMessage(n);
+                    }
+                  }}
+                />
+                <Button type="button" onClick={() => submitRoomMessage(n)} disabled={!newMessageText.trim()}>
+                  Send
+                </Button>
+              </div>
+            </div>
+          </div>
+        );
+      }
       return (
         <Button
           type="button"
