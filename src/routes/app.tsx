@@ -4,7 +4,7 @@ import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Minus, Plus, X, Menu, ArrowUp, ArrowDown, Pencil, Check, Trash2, Lock, Unlock, Sun, Moon, List, Bed, Ban, History, Users, User, LogOut, Hash, ConciergeBell, ClipboardList, Printer, Filter, Wrench, StickyNote, DoorOpen, Bell } from "lucide-react";
+import { Minus, Plus, X, Menu, ArrowUp, ArrowDown, Pencil, Check, Trash2, Lock, Unlock, Sun, Moon, List, Bed, Ban, History, Users, User, LogOut, Hash, ConciergeBell, ClipboardList, Printer, Filter, Wrench, StickyNote, DoorOpen, Bell, Eye, EyeOff } from "lucide-react";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
 import { getToken, getStoredUser, clearSession } from "@/lib/auth-client";
@@ -117,6 +117,13 @@ function AppPage() {
   const navigate = useNavigate();
   const { theme, toggleTheme } = useTheme();
   const [authUser, setAuthUser] = useState(() => getStoredUser());
+  // Admin "view as" overlay — see definition further below for full context.
+  type ViewRole = "admin" | "user" | "reception";
+  const [viewAsRole, setViewAsRole] = useState<ViewRole | null>(() => {
+    if (typeof window === "undefined") return null;
+    const v = window.localStorage.getItem("tw_view_as_role");
+    return v === "user" || v === "reception" || v === "admin" ? v : null;
+  });
   useEffect(() => {
     if (!getToken() || !getStoredUser()) {
       navigate({ to: "/login", replace: true });
@@ -131,7 +138,7 @@ function AppPage() {
   // Realtime: push room status changes to all signed-in clients (esp. reception)
   useEffect(() => {
     if (!authUser) return;
-    const notifyEnabled = authUser.role !== "reception";
+    const notifyEnabled = (viewAsRole ?? authUser.role) !== "reception";
     if (
       notifyEnabled &&
       typeof window !== "undefined" &&
@@ -189,7 +196,7 @@ function AppPage() {
     return () => {
       supabase.removeChannel(channel);
     };
-  }, [authUser, qc]);
+  }, [authUser, qc, viewAsRole]);
   const signOut = () => {
     clearSession();
     navigate({ to: "/login", replace: true });
@@ -224,6 +231,18 @@ useEffect(() => {
   const [editRoomSheetNumber, setEditRoomSheetNumber] = useState<number | null>(null);
   const [menuSheetOpen, setMenuSheetOpen] = useState(false);
   const [notificationsSheetOpen, setNotificationsSheetOpen] = useState(false);
+  // Admin "view as" overlay — lets admins temporarily experience the app as
+  // another role. Does NOT change the auth token; backend still treats them
+  // as admin. Only affects UI gating and visible affordances.
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    if (viewAsRole) window.localStorage.setItem("tw_view_as_role", viewAsRole);
+    else window.localStorage.removeItem("tw_view_as_role");
+  }, [viewAsRole]);
+  // Clear overlay if the signed-in user is no longer an admin.
+  useEffect(() => {
+    if (authUser && authUser.role !== "admin" && viewAsRole) setViewAsRole(null);
+  }, [authUser, viewAsRole]);
 
   // Fire-and-forget push fan-out; never blocks the UI.
   const fireRoomNotification = (
@@ -560,8 +579,12 @@ useEffect(() => {
     if (error) toast.error(error.message);
     qc.invalidateQueries({ queryKey: ["reject_counts"] });
   };
-  const isReception = authUser?.role === "reception";
-  const isAdmin = authUser?.role === "admin";
+   const realRole = authUser?.role;
+   const realIsAdmin = realRole === "admin";
+   const effectiveRole: ViewRole | undefined =
+     realIsAdmin && viewAsRole ? viewAsRole : realRole;
+   const isReception = effectiveRole === "reception";
+   const isAdmin = effectiveRole === "admin";
   const doneSet = new Set(
     rooms
       .filter((r) => (isReception ? r.done_reception : r.done))
@@ -2058,6 +2081,21 @@ useEffect(() => {
  </Button>
  </div>
  </header>
+  {realIsAdmin && viewAsRole && (
+    <div className="bg-amber-500/15 border-b border-amber-500/40 text-amber-900 dark:text-amber-200 px-3 py-1.5 text-xs flex items-center justify-between gap-2">
+      <span className="flex items-center gap-2">
+        <Eye className="h-3.5 w-3.5" />
+        Viewing as <span className="font-semibold capitalize">{viewAsRole === "user" ? "housekeeping" : viewAsRole}</span>
+      </span>
+      <button
+        type="button"
+        onClick={() => setViewAsRole(null)}
+        className="underline underline-offset-2 hover:no-underline font-medium"
+      >
+        Exit
+      </button>
+    </div>
+  )}
 
  {/* Linen list dialog */}
  <Dialog open={templateOpen} onOpenChange={setTemplateOpen}>
@@ -2627,6 +2665,40 @@ useEffect(() => {
       const close = () => setMenuSheetOpen(false);
       return (
         <div className="mt-4 space-y-4">
+          {realIsAdmin && (
+            <div className="space-y-2">
+              <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">View as</p>
+              {viewAsRole && (
+                <p className="text-xs text-muted-foreground">
+                  Currently viewing as <span className="font-semibold capitalize">{viewAsRole}</span>. Your account is still admin.
+                </p>
+              )}
+              <div className="space-y-1.5">
+                {(["admin", "user", "reception"] as const).map((r) => {
+                  const active = (viewAsRole ?? "admin") === r;
+                  const label = r === "user" ? "Housekeeping" : r === "reception" ? "Reception" : "Admin (your role)";
+                  return (
+                    <button
+                      key={r}
+                      type="button"
+                      onClick={() => {
+                        setViewAsRole(r === "admin" ? null : r);
+                        close();
+                      }}
+                      className={cn(
+                        "w-full flex items-center gap-3 rounded-md border px-3 min-h-12 text-sm font-medium transition-colors hover:bg-accent",
+                        active ? "bg-accent border-primary" : "bg-background",
+                      )}
+                    >
+                      {r === "admin" ? <EyeOff className="h-4 w-4 shrink-0" /> : <Eye className="h-4 w-4 shrink-0" />}
+                      <span className="text-left flex-1">{label}</span>
+                      {active && <Check className="h-4 w-4 shrink-0 text-primary" />}
+                    </button>
+                  );
+                })}
+              </div>
+            </div>
+          )}
           {isAdmin && (
             <div className="space-y-2">
               <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">Manage</p>
@@ -2649,7 +2721,7 @@ useEffect(() => {
           <div className="space-y-2">
             <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">Account</p>
             <div className="space-y-1.5">
-              {authUser?.role === "admin" && (
+              {isAdmin && (
                 <Row icon={Users} label="Users" onClick={() => { close(); void navigate({ to: "/users" }); }} />
               )}
               <Row icon={Bell} label="Notifications" onClick={() => { close(); setNotificationsSheetOpen(true); }} />
