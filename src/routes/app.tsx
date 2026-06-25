@@ -216,6 +216,9 @@ useEffect(() => {
   const [editDefaultsSheetRoom, setEditDefaultsSheetRoom] = useState<number | null>(null);
   const [menuSheetOpen, setMenuSheetOpen] = useState(false);
   const [historySheetOpen, setHistorySheetOpen] = useState(false);
+  const [roomTypesSheetOpen, setRoomTypesSheetOpen] = useState(false);
+  const [roomFeaturesSheetOpen, setRoomFeaturesSheetOpen] = useState(false);
+  const [receptionItemsSheetOpen, setReceptionItemsSheetOpen] = useState(false);
  
 
  const [exportOpen, setExportOpen] = useState(false);
