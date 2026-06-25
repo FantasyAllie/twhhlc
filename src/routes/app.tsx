@@ -214,6 +214,7 @@ useEffect(() => {
   const [notesSheetRoom, setNotesSheetRoom] = useState<number | null>(null);
   const [receptionSheetRoom, setReceptionSheetRoom] = useState<number | null>(null);
   const [editDefaultsSheetRoom, setEditDefaultsSheetRoom] = useState<number | null>(null);
+  const [editRoomSheetNumber, setEditRoomSheetNumber] = useState<number | null>(null);
   const [menuSheetOpen, setMenuSheetOpen] = useState(false);
   const [historySheetOpen, setHistorySheetOpen] = useState(false);
   const [roomTypesSheetOpen, setRoomTypesSheetOpen] = useState(false);
@@ -2799,6 +2800,107 @@ useEffect(() => {
    </SheetContent>
  </Sheet>
 
+  {/* Edit room sheet (Admin) */}
+  <Sheet open={editRoomSheetNumber !== null} onOpenChange={(o) => { if (!o) setEditRoomSheetNumber(null); }}>
+    <SheetContent side="right" className="w-auto max-w-[90vw] min-w-[18rem] sm:max-w-md overflow-y-auto p-4 sm:p-6">
+      {editRoomSheetNumber !== null && (() => {
+        const n = editRoomSheetNumber;
+        const r = rooms.find((x) => x.room_number === n);
+        if (!r) return null;
+        const cats = parseCats(r.category);
+        return (
+          <>
+            <SheetHeader className="text-left">
+              <SheetTitle className="flex items-center gap-2">
+                <Pencil className="h-4 w-4" />
+                Edit Room {n}
+              </SheetTitle>
+              <SheetDescription>Set room type, default status and features</SheetDescription>
+            </SheetHeader>
+            <div className="mt-4 space-y-5">
+              <div className="space-y-2">
+                <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">Room type</p>
+                <div className="space-y-1.5">
+                  {roomTypes.length === 0 && (
+                    <p className="text-sm text-muted-foreground">No room types yet.</p>
+                  )}
+                  {roomTypes.map((c) => {
+                    const selected = cats.includes(c.value);
+                    return (
+                      <button
+                        key={c.value}
+                        type="button"
+                        onClick={() => toggleRoomCategory(n, c.value)}
+                        className={cn(
+                          "w-full flex items-center justify-between gap-3 rounded-md border bg-background px-3 min-h-12 text-sm font-medium transition-colors hover:bg-accent",
+                          selected && "border-primary bg-primary/10 text-primary",
+                        )}
+                      >
+                        <span className="text-left">{c.label}</span>
+                        {selected ? <Check className="h-5 w-5" /> : <span className="h-5 w-5" />}
+                      </button>
+                    );
+                  })}
+                </div>
+              </div>
+              <div className="space-y-2">
+                <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">Default status</p>
+                <div className="space-y-1.5">
+                  {receptionStatuses.length === 0 && (
+                    <p className="text-sm text-muted-foreground">No statuses yet.</p>
+                  )}
+                  {receptionStatuses.map((s) => {
+                    const selected = r.default_status === s.id;
+                    return (
+                      <button
+                        key={s.id}
+                        type="button"
+                        onClick={() => setRoomDefaultStatus(n, selected ? null : s.id)}
+                        className={cn(
+                          "w-full flex items-center justify-between gap-3 rounded-md border bg-background px-3 min-h-12 text-sm font-medium transition-colors hover:bg-accent",
+                          selected && "border-primary bg-primary/10 text-primary",
+                        )}
+                      >
+                        <span className="text-left">{s.label}</span>
+                        {selected ? <Check className="h-5 w-5" /> : <span className="h-5 w-5" />}
+                      </button>
+                    );
+                  })}
+                </div>
+              </div>
+              {roomFeatures.length > 0 && (
+                <div className="space-y-2">
+                  <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">Room features</p>
+                  <div className="space-y-1.5">
+                    {roomFeatures.map((f) => {
+                      const selected = roomFeatureAssignments.some(
+                        (a) => a.feature_id === f.id && a.room_number === n,
+                      );
+                      return (
+                        <button
+                          key={f.id}
+                          type="button"
+                          onClick={() => toggleRoomFeature(n, f.id)}
+                          className={cn(
+                            "w-full flex items-center justify-between gap-3 rounded-md border bg-background px-3 min-h-12 text-sm font-medium transition-colors hover:bg-accent",
+                            selected && "border-primary bg-primary/10 text-primary",
+                          )}
+                        >
+                          <span className="text-left">{f.label}</span>
+                          {selected ? <Check className="h-5 w-5" /> : <span className="h-5 w-5" />}
+                        </button>
+                      );
+                    })}
+                  </div>
+                </div>
+              )}
+            </div>
+          </>
+        );
+      })()}
+    </SheetContent>
+  </Sheet>
+
   {/* Add room type dialog */}
   <Dialog open={addRoomTypeOpen} onOpenChange={setAddRoomTypeOpen}>
     <DialogContent className="max-w-sm w-[calc(100vw-1.5rem)] sm:w-full p-4 sm:p-6">
@@ -3091,105 +3193,15 @@ useEffect(() => {
                 <span className="flex-1 text-sm font-medium tabular-nums">
                   Room {r.room_number}
                 </span>
-                <DropdownMenu>
-                  <DropdownMenuTrigger asChild>
-                    <Button variant="outline" size="sm" className="h-8">
-                      <Pencil className="h-3.5 w-3.5 mr-1" />
-                      Edit
-                    </Button>
-                  </DropdownMenuTrigger>
-                  <DropdownMenuContent align="end" className="min-w-fit">
-                    <DropdownMenuLabel className="text-[10px] uppercase tracking-wide text-muted-foreground">
-                      Room type
-                    </DropdownMenuLabel>
-                    {roomTypes.map((c) => {
-                      const selected = parseCats(r.category).includes(c.value);
-                      return (
-                        <DropdownMenuItem
-                          key={c.value}
-                          className="justify-between"
-                          onSelect={(e) => {
-                            e.preventDefault();
-                            toggleRoomCategory(r.room_number, c.value);
-                          }}
-                        >
-                          <span>{c.label}</span>
-                          <span className="flex items-center gap-2 border-l border-border pl-2">
-                            {selected ? (
-                              <Check className="h-4 w-4" />
-                            ) : (
-                              <span className="inline-block h-4 w-4" />
-                            )}
-                          </span>
-                        </DropdownMenuItem>
-                      );
-                    })}
-                    <DropdownMenuSeparator />
-                    <DropdownMenuLabel className="text-[10px] uppercase tracking-wide text-muted-foreground">
-                      Default status
-                    </DropdownMenuLabel>
-                    {receptionStatuses.length === 0 && (
-                      <DropdownMenuItem disabled>No statuses</DropdownMenuItem>
-                    )}
-                    {receptionStatuses.map((s) => {
-                      const selected = r.default_status === s.id;
-                      return (
-                        <DropdownMenuItem
-                          key={s.id}
-                          className="justify-between"
-                          onSelect={(e) => {
-                            e.preventDefault();
-                            setRoomDefaultStatus(
-                              r.room_number,
-                              selected ? null : s.id,
-                            );
-                          }}
-                        >
-                          <span>{s.label}</span>
-                          <span className="flex items-center gap-2 border-l border-border pl-2">
-                            {selected ? (
-                              <Check className="h-4 w-4" />
-                            ) : (
-                              <span className="inline-block h-4 w-4" />
-                            )}
-                          </span>
-                        </DropdownMenuItem>
-                      );
-                    })}
-                    {roomFeatures.length > 0 && (
-                      <>
-                        <DropdownMenuSeparator />
-                        <DropdownMenuLabel className="text-[10px] uppercase tracking-wide text-muted-foreground">
-                          Room features
-                        </DropdownMenuLabel>
-                        {roomFeatures.map((f) => {
-                          const selected = roomFeatureAssignments.some(
-                            (a) => a.feature_id === f.id && a.room_number === r.room_number,
-                          );
-                          return (
-                            <DropdownMenuItem
-                              key={f.id}
-                              className="justify-between"
-                              onSelect={(e) => {
-                                e.preventDefault();
-                                toggleRoomFeature(r.room_number, f.id);
-                              }}
-                            >
-                              <span>{f.label}</span>
-                              <span className="flex items-center gap-2 border-l border-border pl-2">
-                                {selected ? (
-                                  <Check className="h-4 w-4" />
-                                ) : (
-                                  <span className="inline-block h-4 w-4" />
-                                )}
-                              </span>
-                            </DropdownMenuItem>
-                          );
-                        })}
-                      </>
-                    )}
-                  </DropdownMenuContent>
-                </DropdownMenu>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  className="h-8"
+                  onClick={() => setEditRoomSheetNumber(r.room_number)}
+                >
+                  <Pencil className="h-3.5 w-3.5 mr-1" />
+                  Edit
+                </Button>
                 <Button
                   variant="ghost"
                   size="icon"
