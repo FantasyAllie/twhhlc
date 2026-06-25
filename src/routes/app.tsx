@@ -224,6 +224,24 @@ useEffect(() => {
   const [editRoomSheetNumber, setEditRoomSheetNumber] = useState<number | null>(null);
   const [menuSheetOpen, setMenuSheetOpen] = useState(false);
   const [notificationsSheetOpen, setNotificationsSheetOpen] = useState(false);
+  // Admin "view as" overlay — lets admins temporarily experience the app as
+  // another role. Does NOT change the auth token; backend still treats them
+  // as admin. Only affects UI gating and visible affordances.
+  type ViewRole = "admin" | "user" | "reception";
+  const [viewAsRole, setViewAsRole] = useState<ViewRole | null>(() => {
+    if (typeof window === "undefined") return null;
+    const v = window.localStorage.getItem("tw_view_as_role");
+    return v === "user" || v === "reception" || v === "admin" ? v : null;
+  });
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    if (viewAsRole) window.localStorage.setItem("tw_view_as_role", viewAsRole);
+    else window.localStorage.removeItem("tw_view_as_role");
+  }, [viewAsRole]);
+  // Clear overlay if the signed-in user is no longer an admin.
+  useEffect(() => {
+    if (authUser && authUser.role !== "admin" && viewAsRole) setViewAsRole(null);
+  }, [authUser, viewAsRole]);
 
   // Fire-and-forget push fan-out; never blocks the UI.
   const fireRoomNotification = (
