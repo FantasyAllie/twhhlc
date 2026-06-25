@@ -117,6 +117,13 @@ function AppPage() {
   const navigate = useNavigate();
   const { theme, toggleTheme } = useTheme();
   const [authUser, setAuthUser] = useState(() => getStoredUser());
+  // Admin "view as" overlay — see definition further below for full context.
+  type ViewRole = "admin" | "user" | "reception";
+  const [viewAsRole, setViewAsRole] = useState<ViewRole | null>(() => {
+    if (typeof window === "undefined") return null;
+    const v = window.localStorage.getItem("tw_view_as_role");
+    return v === "user" || v === "reception" || v === "admin" ? v : null;
+  });
   useEffect(() => {
     if (!getToken() || !getStoredUser()) {
       navigate({ to: "/login", replace: true });
