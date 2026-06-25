@@ -54,7 +54,7 @@ async function hkdf(
   info: BufferSource,
   length: number,
 ): Promise<Uint8Array> {
-  const key = await crypto.subtle.importKey("raw", ikm, "HKDF", false, ["deriveBits"]);
+  const key = await crypto.subtle.importKey("raw", ikm as ArrayBuffer, "HKDF", false, ["deriveBits"]);
   const bits = await crypto.subtle.deriveBits(
     { name: "HKDF", hash: "SHA-256", salt: salt as ArrayBuffer, info: info as ArrayBuffer },
     key,
@@ -110,20 +110,41 @@ async function encryptPayload(
   // PRK_key = HKDF-Extract(salt=authSecret, ikm=ecdhSecret)
   // IKM = HKDF-Expand(PRK_key, info="WebPush: info\0"||userPub||serverPub, L=32)
   const keyInfo = concat(enc.encode("WebPush: info\0"), userPublicKeyRaw, ephPubRaw);
-  const ikm = await hkdf(ecdhSecret, userAuthSecret, keyInfo, 32);
+  const ikm = await hkdf(
+    ecdhSecret as unknown as BufferSource,
+    userAuthSecret as unknown as BufferSource,
+    keyInfo as unknown as BufferSource,
+    32,
+  );
 
   const salt = crypto.getRandomValues(new Uint8Array(16));
-  const cek = await hkdf(ikm, salt, enc.encode("Content-Encoding: aes128gcm\0"), 16);
-  const nonce = await hkdf(ikm, salt, enc.encode("Content-Encoding: nonce\0"), 12);
+  const cek = await hkdf(
+    ikm as unknown as BufferSource,
+    salt as unknown as BufferSource,
+    enc.encode("Content-Encoding: aes128gcm\0") as unknown as BufferSource,
+    16,
+  );
+  const nonce = await hkdf(
+    ikm as unknown as BufferSource,
+    salt as unknown as BufferSource,
+    enc.encode("Content-Encoding: nonce\0") as unknown as BufferSource,
+    12,
+  );
 
   // Plaintext with padding delimiter (single record, no extra padding).
   const padded = concat(payload, new Uint8Array([0x02]));
 
-  const aesKey = await crypto.subtle.importKey("raw", cek, { name: "AES-GCM" }, false, ["encrypt"]);
+  const aesKey = await crypto.subtle.importKey(
+    "raw",
+    cek as unknown as ArrayBuffer,
+    { name: "AES-GCM" },
+    false,
+    ["encrypt"],
+  );
   const ctBuf = await crypto.subtle.encrypt(
-    { name: "AES-GCM", iv: nonce as BufferSource },
+    { name: "AES-GCM", iv: nonce as unknown as ArrayBuffer },
     aesKey,
-    padded as BufferSource,
+    padded as unknown as ArrayBuffer,
   );
   const ct = new Uint8Array(ctBuf);
 
@@ -172,7 +193,7 @@ async function signVapidJwt(
     await crypto.subtle.sign(
       { name: "ECDSA", hash: "SHA-256" },
       priv,
-      enc.encode(signingInput),
+      enc.encode(signingInput) as unknown as ArrayBuffer,
     ),
   );
   return `${signingInput}.${bytesToB64url(sig)}`;
