@@ -1,0 +1,1 @@
+ALTER TABLE public.rooms ADD COLUMN IF NOT EXISTS guest_vacated boolean NOT NULL DEFAULT false;
