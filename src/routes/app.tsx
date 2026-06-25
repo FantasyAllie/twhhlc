@@ -2658,6 +2658,7 @@ useEffect(() => {
               {authUser?.role === "admin" && (
                 <Row icon={Users} label="Users" onClick={() => { close(); void navigate({ to: "/users" }); }} />
               )}
+              <Row icon={Bell} label="Notifications" onClick={() => { close(); setNotificationsSheetOpen(true); }} />
               <Row icon={User} label="Account" onClick={() => { close(); setAccountOpen(true); }} />
               <Row icon={LogOut} label="Sign out" destructive onClick={() => { close(); void signOut(); }} />
             </div>
