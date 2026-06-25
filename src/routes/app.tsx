@@ -2487,7 +2487,7 @@ useEffect(() => {
             <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">Account</p>
             <div className="space-y-1.5">
               {authUser?.role === "admin" && (
-                <Row icon={Users} label="Users" onClick={() => { close(); void router.navigate({ to: "/users" }); }} />
+                <Row icon={Users} label="Users" onClick={() => { close(); void navigate({ to: "/users" }); }} />
               )}
               <Row icon={User} label="Account" onClick={() => { close(); setAccountOpen(true); }} />
               <Row icon={LogOut} label="Sign out" destructive onClick={() => { close(); void signOut(); }} />
