@@ -2379,7 +2379,6 @@ useEffect(() => {
            </SheetHeader>
            <div className="mt-4 space-y-4">
              <div className="space-y-2">
-               <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">Done</p>
                <Row
                  label="Mark as Done"
                  selected={receptionDoneSet.has(n)}
