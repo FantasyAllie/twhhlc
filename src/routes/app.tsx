@@ -2432,7 +2432,7 @@ useEffect(() => {
  {/* Edit defaults sheet (Admin): which template items appear in this room */}
 {/* App menu sheet (burger) */}
 <Sheet open={menuSheetOpen} onOpenChange={setMenuSheetOpen}>
-  <SheetContent side="bottom" className="max-h-[85vh] overflow-y-auto p-4 sm:p-6">
+  <SheetContent side="right" className="w-auto max-w-[90vw] min-w-[18rem] sm:max-w-md overflow-y-auto p-4 sm:p-6">
     <SheetHeader className="text-left">
       <SheetTitle className="flex items-center gap-2">
         <Menu className="h-4 w-4" />
@@ -2501,7 +2501,7 @@ useEffect(() => {
 
 {/* History sheet (Admin) */}
 <Sheet open={historySheetOpen} onOpenChange={setHistorySheetOpen}>
-  <SheetContent side="bottom" className="max-h-[85vh] overflow-y-auto p-4 sm:p-6">
+  <SheetContent side="right" className="w-auto max-w-[90vw] min-w-[18rem] sm:max-w-md overflow-y-auto p-4 sm:p-6">
     <SheetHeader className="text-left">
       <SheetTitle className="flex items-center gap-2">
         <History className="h-4 w-4" />
