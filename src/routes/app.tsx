@@ -4,11 +4,13 @@ import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Minus, Plus, X, Menu, ArrowUp, ArrowDown, Pencil, Check, Trash2, Lock, Unlock, Sun, Moon, List, Bed, Ban, History, Users, User, LogOut, Hash, ConciergeBell, ClipboardList, Printer, Filter, Wrench, StickyNote, DoorOpen } from "lucide-react";
+import { Minus, Plus, X, Menu, ArrowUp, ArrowDown, Pencil, Check, Trash2, Lock, Unlock, Sun, Moon, List, Bed, Ban, History, Users, User, LogOut, Hash, ConciergeBell, ClipboardList, Printer, Filter, Wrench, StickyNote, DoorOpen, Bell } from "lucide-react";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
 import { getToken, getStoredUser, clearSession } from "@/lib/auth-client";
 import { setSession } from "@/lib/auth-client";
+import { notifyRoomEvent } from "@/lib/push.functions";
+import { NotificationsSheet } from "@/components/notifications-sheet";
 import { useServerFn } from "@tanstack/react-start";
 import { updateMyPassword, updateMyUsername } from "@/lib/auth.functions";
 import {
@@ -221,6 +223,18 @@ useEffect(() => {
   const [editDefaultsSheetRoom, setEditDefaultsSheetRoom] = useState<number | null>(null);
   const [editRoomSheetNumber, setEditRoomSheetNumber] = useState<number | null>(null);
   const [menuSheetOpen, setMenuSheetOpen] = useState(false);
+  const [notificationsSheetOpen, setNotificationsSheetOpen] = useState(false);
+
+  // Fire-and-forget push fan-out; never blocks the UI.
+  const fireRoomNotification = (
+    kind: "message" | "checkout" | "done",
+    roomNumber: number,
+    messageText?: string,
+  ) => {
+    const token = getToken();
+    if (!token) return;
+    void notifyRoomEvent({ data: { token, kind, roomNumber, messageText } }).catch(() => {});
+  };
   const [historySheetOpen, setHistorySheetOpen] = useState(false);
   const [roomTypesSheetOpen, setRoomTypesSheetOpen] = useState(false);
   const [roomFeaturesSheetOpen, setRoomFeaturesSheetOpen] = useState(false);
@@ -451,6 +465,7 @@ useEffect(() => {
     setNewMessageText("");
     qc.invalidateQueries({ queryKey: ["room_messages"] });
     toast.success("Message sent");
+    fireRoomNotification("message", roomNumber, text);
   };
 
   const dismissRoomMessage = async (id: string) => {
@@ -845,6 +860,7 @@ useEffect(() => {
   );
   if (roomErr) toast.error(roomErr.message);
   qc.invalidateQueries({ queryKey: ["rooms"] });
+   fireRoomNotification("done", roomNumber);
   }
   }
 
@@ -1496,6 +1512,7 @@ useEffect(() => {
     );
     if (error) toast.error(error.message);
     qc.invalidateQueries({ queryKey: ["rooms"] });
+    if (value) fireRoomNotification("checkout", roomNumber);
   };
 
   // --- Room type management ---
@@ -2570,6 +2587,13 @@ useEffect(() => {
 
  {/* Edit defaults sheet (Admin): which template items appear in this room */}
 {/* App menu sheet (burger) */}
+{authUser && (
+  <NotificationsSheet
+    open={notificationsSheetOpen}
+    onOpenChange={setNotificationsSheetOpen}
+    userRole={authUser.role}
+  />
+)}
 <Sheet open={menuSheetOpen} onOpenChange={setMenuSheetOpen}>
   <SheetContent side="right" className="w-auto max-w-[90vw] min-w-[18rem] sm:max-w-md overflow-y-auto p-4 sm:p-6">
     <SheetHeader className="text-left">
@@ -2628,6 +2652,7 @@ useEffect(() => {
               {authUser?.role === "admin" && (
                 <Row icon={Users} label="Users" onClick={() => { close(); void navigate({ to: "/users" }); }} />
               )}
+              <Row icon={Bell} label="Notifications" onClick={() => { close(); setNotificationsSheetOpen(true); }} />
               <Row icon={User} label="Account" onClick={() => { close(); setAccountOpen(true); }} />
               <Row icon={LogOut} label="Sign out" destructive onClick={() => { close(); void signOut(); }} />
             </div>
