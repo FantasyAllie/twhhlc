@@ -1229,10 +1229,10 @@ useEffect(() => {
       list
         .map(
           (r) =>
-            `<tr><td class="num">${r.room}</td><td>${esc(r.status)}</td><td>${esc(r.bed)}</td><td class="num">${r.maintenance ? "🔧" : ""}</td></tr>`,
+            `<tr><td class="num">${r.room}</td><td>${esc(r.status)}</td><td>${esc(r.bed)}</td></tr>`,
         )
         .join("");
-    const tableHead = `<thead><tr><th>Room</th><th>Status</th><th>Set As</th><th>Maint.</th></tr></thead>`;
+    const tableHead = `<thead><tr><th>Room</th><th>Status</th><th>Set As</th></tr></thead>`;
     win.document.write(`<!doctype html><html><head><title>Room Status Sheet - ${dateStr}</title><style>
       body{font-family:system-ui,-apple-system,sans-serif;color:#000;background:#fff;padding:1.5rem;max-width:900px;margin:0 auto;}
       h1{font-size:1.5rem;margin:0 0 .25rem;text-align:center;text-decoration:underline;}
