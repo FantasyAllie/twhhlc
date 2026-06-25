@@ -214,6 +214,8 @@ useEffect(() => {
   const [notesSheetRoom, setNotesSheetRoom] = useState<number | null>(null);
   const [receptionSheetRoom, setReceptionSheetRoom] = useState<number | null>(null);
   const [editDefaultsSheetRoom, setEditDefaultsSheetRoom] = useState<number | null>(null);
+  const [menuSheetOpen, setMenuSheetOpen] = useState(false);
+  const [historySheetOpen, setHistorySheetOpen] = useState(false);
  
 
  const [exportOpen, setExportOpen] = useState(false);
@@ -1916,133 +1918,9 @@ useEffect(() => {
         Print
       </Button>
     )}
- <DropdownMenu>
- <DropdownMenuTrigger asChild>
- <Button variant="ghost" size="sm" className="" aria-label="Menu">
- <Menu className="h-4 w-4" />
+ <Button variant="ghost" size="sm" aria-label="Menu" onClick={() => setMenuSheetOpen(true)}>
+   <Menu className="h-4 w-4" />
  </Button>
- </DropdownMenuTrigger>
- <DropdownMenuContent align="end">
-    {isAdmin && (
-     <>
-       <DropdownMenuItem onSelect={() => setTemplateOpen(true)}>
-         <List className="h-4 w-4 mr-2" />
-         Linen List
-       </DropdownMenuItem>
-       <DropdownMenuItem onSelect={() => setManageRoomsOpen(true)}>
-         <Hash className="h-4 w-4 mr-2" />
-         Manage Rooms
-       </DropdownMenuItem>
-      <DropdownMenuItem onSelect={() => setRejectsOpen(true)}>
-        <Ban className="h-4 w-4 mr-2" />
-        Rejects
-      </DropdownMenuItem>
-      <DropdownMenuSub>
-        <DropdownMenuSubTrigger>
-          <History className="h-4 w-4 mr-2" />
-          History
-        </DropdownMenuSubTrigger>
-    <DropdownMenuSubContent className="max-h-[70vh] min-w-[16rem] overflow-y-auto data-[side=left]:translate-x-32">
-      {snapshots.length === 0 ? (
-        <DropdownMenuLabel className="text-xs font-normal text-muted-foreground">
-          No exports yet
-        </DropdownMenuLabel>
-      ) : (
-        (() => {
-          const groups = new Map<string, typeof snapshots>();
-          for (const s of snapshots) {
-            const key = new Date(s.created_at).toDateString();
-            const list = groups.get(key) ?? [];
-            if (list.length < 6) list.push(s);
-            groups.set(key, list);
-          }
-          const days = Array.from(groups.entries()).slice(0, 6);
-          return days.map(([day, items], idx) => (
-            <div key={day}>
-              {idx > 0 && <DropdownMenuSeparator />}
-              <DropdownMenuLabel className="text-xs font-semibold text-muted-foreground">
-                {new Date(items[0].created_at).toLocaleDateString(undefined, {
-                  weekday: "short",
-                  month: "short",
-                  day: "numeric",
-                })}
-              </DropdownMenuLabel>
-              {items.map((s) => (
-                <div key={s.id} className="flex items-center">
-                  <DropdownMenuItem
-                    className="flex-1"
-                    onSelect={() => setViewingSnapshot(s)}
-                  >
-                    <span className="flex items-center">
-                      {new Date(s.created_at).toLocaleTimeString(undefined, {
-                        hour: "numeric",
-                        minute: "2-digit",
-                      })}
-                      {s.kind === "rejects" && (
-                        <span className="ml-2 text-xs uppercase tracking-wide text-muted-foreground">
-                          Rejects
-                        </span>
-                      )}
-                      {s.kind === "room_status" && (
-                        <span className="ml-2 text-xs uppercase tracking-wide text-muted-foreground">
-                          Room status
-                        </span>
-                      )}
-                      <span className="ml-2 text-xs text-muted-foreground">
-                        ({s.grand_total})
-                      </span>
-                    </span>
-                  </DropdownMenuItem>
-                  <button
-                    className="mr-2 p-1 rounded-sm text-muted-foreground hover:text-destructive hover:bg-accent"
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      e.preventDefault();
-                      removeSnapshot(s.id);
-                    }}
-                    aria-label="Delete history item"
-                  >
-                    <X className="h-3 w-3" />
-                  </button>
-                </div>
-              ))}
-            </div>
-          ));
-        })()
-      )}
-      {snapshots.length > 0 && (
-        <>
-          <DropdownMenuSeparator />
-          <DropdownMenuItem
-            onSelect={clearAllSnapshots}
-            className="text-destructive focus:text-destructive"
-          >
-            <Trash2 className="h-4 w-4 mr-2" />
-            Clear history
-          </DropdownMenuItem>
-        </>
-      )}
-    </DropdownMenuSubContent>
-      </DropdownMenuSub>
-    </>
-  )}
-  {isAdmin && <DropdownMenuSeparator />}
-  <DropdownMenuItem onSelect={(e) => { e.preventDefault(); toggleTheme(); }}>
-    {theme === "dark" ? <Sun className="h-4 w-4 mr-2" /> : <Moon className="h-4 w-4 mr-2" />}
-    {theme === "dark" ? "Light mode" : "Dark mode"}
-  </DropdownMenuItem>
-  <DropdownMenuLabel className="text-xs font-normal text-muted-foreground">
-    {authUser ? `Signed in as ${authUser.username}` : ""}
-  </DropdownMenuLabel>
-  {authUser?.role === "admin" && (
-    <DropdownMenuItem asChild>
-      <Link to="/users"><Users className="h-4 w-4 mr-2" />Users</Link>
-    </DropdownMenuItem>
-  )}
-  <DropdownMenuItem onSelect={() => setAccountOpen(true)}><User className="h-4 w-4 mr-2" />Account</DropdownMenuItem>
-  <DropdownMenuItem onSelect={signOut}><LogOut className="h-4 w-4 mr-2" />Sign out</DropdownMenuItem>
- </DropdownMenuContent>
- </DropdownMenu>
  </div>
  </header>
 
@@ -2552,6 +2430,159 @@ useEffect(() => {
  </Sheet>
 
  {/* Edit defaults sheet (Admin): which template items appear in this room */}
+{/* App menu sheet (burger) */}
+<Sheet open={menuSheetOpen} onOpenChange={setMenuSheetOpen}>
+  <SheetContent side="bottom" className="max-h-[85vh] overflow-y-auto p-4 sm:p-6">
+    <SheetHeader className="text-left">
+      <SheetTitle className="flex items-center gap-2">
+        <Menu className="h-4 w-4" />
+        Menu
+      </SheetTitle>
+      {authUser && (
+        <SheetDescription>Signed in as {authUser.username}</SheetDescription>
+      )}
+    </SheetHeader>
+    {(() => {
+      const Row = ({
+        icon: Icon,
+        label,
+        onClick,
+        destructive,
+      }: { icon: React.ComponentType<{ className?: string }>; label: React.ReactNode; onClick: () => void; destructive?: boolean }) => (
+        <button
+          type="button"
+          onClick={onClick}
+          className={cn(
+            "w-full flex items-center gap-3 rounded-md border bg-background px-3 min-h-12 text-sm font-medium transition-colors hover:bg-accent",
+            destructive && "text-destructive hover:text-destructive",
+          )}
+        >
+          <Icon className="h-4 w-4 shrink-0" />
+          <span className="text-left flex-1">{label}</span>
+        </button>
+      );
+      const close = () => setMenuSheetOpen(false);
+      return (
+        <div className="mt-4 space-y-4">
+          {isAdmin && (
+            <div className="space-y-2">
+              <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">Manage</p>
+              <div className="space-y-1.5">
+                <Row icon={List} label="Linen List" onClick={() => { close(); setTemplateOpen(true); }} />
+                <Row icon={Hash} label="Manage Rooms" onClick={() => { close(); setManageRoomsOpen(true); }} />
+                <Row icon={Ban} label="Rejects" onClick={() => { close(); setRejectsOpen(true); }} />
+                <Row icon={History} label="History" onClick={() => { close(); setHistorySheetOpen(true); }} />
+              </div>
+            </div>
+          )}
+          <div className="space-y-2">
+            <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">Appearance</p>
+            <Row
+              icon={theme === "dark" ? Sun : Moon}
+              label={theme === "dark" ? "Light mode" : "Dark mode"}
+              onClick={() => toggleTheme()}
+            />
+          </div>
+          <div className="space-y-2">
+            <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">Account</p>
+            <div className="space-y-1.5">
+              {authUser?.role === "admin" && (
+                <Row icon={Users} label="Users" onClick={() => { close(); void navigate({ to: "/users" }); }} />
+              )}
+              <Row icon={User} label="Account" onClick={() => { close(); setAccountOpen(true); }} />
+              <Row icon={LogOut} label="Sign out" destructive onClick={() => { close(); void signOut(); }} />
+            </div>
+          </div>
+        </div>
+      );
+    })()}
+  </SheetContent>
+</Sheet>
+
+{/* History sheet (Admin) */}
+<Sheet open={historySheetOpen} onOpenChange={setHistorySheetOpen}>
+  <SheetContent side="bottom" className="max-h-[85vh] overflow-y-auto p-4 sm:p-6">
+    <SheetHeader className="text-left">
+      <SheetTitle className="flex items-center gap-2">
+        <History className="h-4 w-4" />
+        History
+      </SheetTitle>
+      <SheetDescription>Recent exports</SheetDescription>
+    </SheetHeader>
+    <div className="mt-4 space-y-3">
+      {snapshots.length === 0 ? (
+        <p className="text-sm text-muted-foreground">No exports yet.</p>
+      ) : (
+        (() => {
+          const groups = new Map<string, typeof snapshots>();
+          for (const s of snapshots) {
+            const key = new Date(s.created_at).toDateString();
+            const list = groups.get(key) ?? [];
+            if (list.length < 6) list.push(s);
+            groups.set(key, list);
+          }
+          const days = Array.from(groups.entries()).slice(0, 6);
+          return days.map(([day, items]) => (
+            <div key={day} className="space-y-1.5">
+              <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+                {new Date(items[0].created_at).toLocaleDateString(undefined, {
+                  weekday: "short",
+                  month: "short",
+                  day: "numeric",
+                })}
+              </p>
+              {items.map((s) => (
+                <div
+                  key={s.id}
+                  className="flex items-center gap-2 rounded-md border bg-background min-h-12 pl-3 pr-1.5"
+                >
+                  <button
+                    type="button"
+                    className="flex-1 flex items-center gap-2 text-left text-sm py-2"
+                    onClick={() => { setHistorySheetOpen(false); setViewingSnapshot(s); }}
+                  >
+                    <span>
+                      {new Date(s.created_at).toLocaleTimeString(undefined, { hour: "numeric", minute: "2-digit" })}
+                    </span>
+                    {s.kind === "rejects" && (
+                      <span className="text-xs uppercase tracking-wide text-muted-foreground">Rejects</span>
+                    )}
+                    {s.kind === "room_status" && (
+                      <span className="text-xs uppercase tracking-wide text-muted-foreground">Room status</span>
+                    )}
+                    <span className="text-xs text-muted-foreground">({s.grand_total})</span>
+                  </button>
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    size="icon"
+                    className="h-9 w-9 text-muted-foreground hover:text-destructive"
+                    onClick={() => removeSnapshot(s.id)}
+                    aria-label="Delete history item"
+                  >
+                    <X className="h-4 w-4" />
+                  </Button>
+                </div>
+              ))}
+            </div>
+          ));
+        })()
+      )}
+      {snapshots.length > 0 && (
+        <Button
+          type="button"
+          variant="outline"
+          className="w-full text-destructive hover:text-destructive"
+          onClick={() => clearAllSnapshots()}
+        >
+          <Trash2 className="h-4 w-4 mr-2" />
+          Clear history
+        </Button>
+      )}
+    </div>
+  </SheetContent>
+</Sheet>
+
  <Sheet open={editDefaultsSheetRoom !== null} onOpenChange={(o) => { if (!o) setEditDefaultsSheetRoom(null); }}>
    <SheetContent side="bottom" className="max-h-[85vh] overflow-y-auto rounded-t-2xl p-4 sm:p-6">
      {editDefaultsSheetRoom !== null && (() => {
