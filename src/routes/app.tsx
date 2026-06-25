@@ -2381,7 +2381,7 @@ useEffect(() => {
              <div className="space-y-2">
                <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">Done</p>
                <Row
-                 label="Reception done"
+                 label="Mark as Done"
                  selected={receptionDoneSet.has(n)}
                  onClick={() => toggleReceptionDone(n)}
                />
