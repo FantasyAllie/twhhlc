@@ -1747,15 +1747,17 @@ useEffect(() => {
                 </span>
               </div>
             )}
-            {note && (
-              <div className="space-y-1 rounded-md border bg-background p-3">
-                <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground flex items-center gap-1.5">
-                  <StickyNote className="h-3.5 w-3.5" />
-                  Note from Housekeeping
-                </p>
-                <p className="text-sm whitespace-pre-wrap break-words">{note}</p>
-              </div>
-            )}
+            <Button
+              type="button"
+              variant="outline"
+              size="sm"
+              className="w-full justify-start gap-2"
+              onClick={() => setNotesDialogRoom(n)}
+            >
+              <StickyNote className="h-4 w-4" />
+              Notes
+              {note && <span className="ml-auto h-2 w-2 rounded-full bg-primary" />}
+            </Button>
           </div>
         );
       }
