@@ -578,8 +578,12 @@ useEffect(() => {
     if (error) toast.error(error.message);
     qc.invalidateQueries({ queryKey: ["reject_counts"] });
   };
-  const isReception = authUser?.role === "reception";
-  const isAdmin = authUser?.role === "admin";
+   const realRole = authUser?.role;
+   const realIsAdmin = realRole === "admin";
+   const effectiveRole: ViewRole | undefined =
+     realIsAdmin && viewAsRole ? viewAsRole : realRole;
+   const isReception = effectiveRole === "reception";
+   const isAdmin = effectiveRole === "admin";
   const doneSet = new Set(
     rooms
       .filter((r) => (isReception ? r.done_reception : r.done))
