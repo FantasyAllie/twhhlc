@@ -4083,11 +4083,17 @@ function AccountDialog({
   onOpenChange,
   currentUsername,
   onUsernameChanged,
+  canViewAs,
+  viewAsRole,
+  onViewAsRoleChange,
 }: {
   open: boolean;
   onOpenChange: (o: boolean) => void;
   currentUsername: string;
   onUsernameChanged: (u: string) => void;
+  canViewAs: boolean;
+  viewAsRole: "admin" | "user" | "reception" | null;
+  onViewAsRoleChange: (r: "admin" | "user" | "reception" | null) => void;
 }) {
   const pwFn = useServerFn(updateMyPassword);
   const unFn = useServerFn(updateMyUsername);
