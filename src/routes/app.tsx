@@ -2665,40 +2665,6 @@ useEffect(() => {
       const close = () => setMenuSheetOpen(false);
       return (
         <div className="mt-4 space-y-4">
-          {realIsAdmin && (
-            <div className="space-y-2">
-              <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">View as</p>
-              {viewAsRole && (
-                <p className="text-xs text-muted-foreground">
-                  Currently viewing as <span className="font-semibold capitalize">{viewAsRole}</span>. Your account is still admin.
-                </p>
-              )}
-              <div className="space-y-1.5">
-                {(["admin", "user", "reception"] as const).map((r) => {
-                  const active = (viewAsRole ?? "admin") === r;
-                  const label = r === "user" ? "Housekeeping" : r === "reception" ? "Reception" : "Admin (your role)";
-                  return (
-                    <button
-                      key={r}
-                      type="button"
-                      onClick={() => {
-                        setViewAsRole(r === "admin" ? null : r);
-                        close();
-                      }}
-                      className={cn(
-                        "w-full flex items-center gap-3 rounded-md border px-3 min-h-12 text-sm font-medium transition-colors hover:bg-accent",
-                        active ? "bg-accent border-primary" : "bg-background",
-                      )}
-                    >
-                      {r === "admin" ? <EyeOff className="h-4 w-4 shrink-0" /> : <Eye className="h-4 w-4 shrink-0" />}
-                      <span className="text-left flex-1">{label}</span>
-                      {active && <Check className="h-4 w-4 shrink-0 text-primary" />}
-                    </button>
-                  );
-                })}
-              </div>
-            </div>
-          )}
           {isAdmin && (
             <div className="space-y-2">
               <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">Manage</p>
@@ -4104,6 +4070,9 @@ useEffect(() => {
     onOpenChange={setAccountOpen}
     currentUsername={authUser?.username ?? ""}
     onUsernameChanged={(u) => setAuthUser((prev) => prev ? { ...prev, username: u } : prev)}
+    canViewAs={realIsAdmin}
+    viewAsRole={viewAsRole}
+    onViewAsRoleChange={(r) => setViewAsRole(r)}
   />
  </main>
  );
@@ -4114,11 +4083,17 @@ function AccountDialog({
   onOpenChange,
   currentUsername,
   onUsernameChanged,
+  canViewAs,
+  viewAsRole,
+  onViewAsRoleChange,
 }: {
   open: boolean;
   onOpenChange: (o: boolean) => void;
   currentUsername: string;
   onUsernameChanged: (u: string) => void;
+  canViewAs: boolean;
+  viewAsRole: "admin" | "user" | "reception" | null;
+  onViewAsRoleChange: (r: "admin" | "user" | "reception" | null) => void;
 }) {
   const pwFn = useServerFn(updateMyPassword);
   const unFn = useServerFn(updateMyUsername);
@@ -4197,6 +4172,38 @@ function AccountDialog({
           </DialogDescription>
         </DialogHeader>
         <div className="space-y-6">
+          {canViewAs && (
+            <div className="space-y-2">
+              <h3 className="text-sm font-semibold">View as</h3>
+              <p className="text-xs text-muted-foreground">
+                Temporarily experience the app as another role. Your account stays admin.
+              </p>
+              <div className="space-y-1.5">
+                {(["admin", "user", "reception"] as const).map((r) => {
+                  const active = (viewAsRole ?? "admin") === r;
+                  const label = r === "user" ? "Housekeeping" : r === "reception" ? "Reception" : "Admin (your role)";
+                  return (
+                    <button
+                      key={r}
+                      type="button"
+                      onClick={() => {
+                        onViewAsRoleChange(r === "admin" ? null : r);
+                        onOpenChange(false);
+                      }}
+                      className={cn(
+                        "w-full flex items-center gap-3 rounded-md border px-3 min-h-11 text-sm font-medium transition-colors hover:bg-accent",
+                        active ? "bg-accent border-primary" : "bg-background",
+                      )}
+                    >
+                      <span className="text-left flex-1">{label}</span>
+                      {active && <Check className="h-4 w-4 shrink-0 text-primary" />}
+                    </button>
+                  );
+                })}
+              </div>
+            </div>
+          )}
+          {canViewAs && <div className="border-t" />}
           <form onSubmit={saveUsername} className="space-y-2">
             <h3 className="text-sm font-semibold">Change username</h3>
             <div className="space-y-1">
