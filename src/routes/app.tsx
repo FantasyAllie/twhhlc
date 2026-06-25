@@ -2504,10 +2504,6 @@ useEffect(() => {
 
 {/* History sheet (Admin) */}
 <Sheet open={historySheetOpen} onOpenChange={setHistorySheetOpen}>
-  {null}
-</Sheet>
-
-{null}
   <SheetContent side="right" className="w-auto max-w-[90vw] min-w-[18rem] sm:max-w-md overflow-y-auto p-4 sm:p-6">
     <SheetHeader className="text-left">
       <SheetTitle className="flex items-center gap-2">
