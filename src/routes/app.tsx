@@ -2081,6 +2081,21 @@ useEffect(() => {
  </Button>
  </div>
  </header>
+  {realIsAdmin && viewAsRole && (
+    <div className="bg-amber-500/15 border-b border-amber-500/40 text-amber-900 dark:text-amber-200 px-3 py-1.5 text-xs flex items-center justify-between gap-2">
+      <span className="flex items-center gap-2">
+        <Eye className="h-3.5 w-3.5" />
+        Viewing as <span className="font-semibold capitalize">{viewAsRole === "user" ? "housekeeping" : viewAsRole}</span>
+      </span>
+      <button
+        type="button"
+        onClick={() => setViewAsRole(null)}
+        className="underline underline-offset-2 hover:no-underline font-medium"
+      >
+        Exit
+      </button>
+    </div>
+  )}
 
  {/* Linen list dialog */}
  <Dialog open={templateOpen} onOpenChange={setTemplateOpen}>
