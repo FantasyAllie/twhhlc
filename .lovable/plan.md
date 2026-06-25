@@ -1,58 +1,82 @@
-# Clean up the main room viewer (Admin & User)
+# Push notifications for installed PWA
 
-Focus: make the linen counter and the Reception dropdown the easiest things to reach on mobile. Move secondary UI behind slide‑over sheets (Android‑style), collapse the notes panel, and shrink the grid indicators so the gold tick stops dominating.
+Add Web Push (VAPID) notifications so signed-in users can opt in and receive alerts for room messages, check-outs, and rooms marked done — on Android Chrome, desktop browsers, and iOS 16.4+ when the app is installed to the Home Screen.
 
-All work is in `src/routes/app.tsx`. No schema or business‑logic changes.
+## What users will see
 
-## 1. Reception controls → bottom slide‑over sheets
+- A **"Enable notifications"** toggle in the user menu/header (only shown when the browser supports push). First tap requests browser permission and registers the device.
+- A short hint on iOS Safari explaining: "Install to Home Screen first, then enable notifications" (since iOS only supports push for installed PWAs).
+- A small "Test notification" button right under the toggle so users can confirm it works.
+- System notifications that tap-through to `/app` and the relevant room when clicked.
 
-Today the Reception button is a `DropdownMenu` that lists Done + every status + every bed type in one popup, and the Admin "edit defaults" pencil is another dropdown. On mobile these are small, scroll inside, and dim nothing.
+## Events that trigger a notification
 
-Replace both with shadcn `Sheet` (`side="bottom"`) so they slide up from the bottom and dim the rest of the screen.
+1. **New room message** — sent to all opted-in users whose role is the opposite of the sender (housekeeping ↔ reception). Title: `Room {n} — Message from {sender}`, body: the message text.
+2. **Guest checked out** — when reception flips `guest_vacated` to true. Sent to all opted-in housekeeping users. Title: `Room {n} — Guest checked out`.
+3. **Room marked done** — when housekeeping flips `done` to true. Sent to all opted-in reception users. Title: `Room {n} — Marked done`.
 
-- New **Reception sheet** opened from the existing "Reception" button:
-  - Big touch targets (min ~48 px row height), three labelled sections: **Done**, **Status**, **Bed**.
-  - Each option is a full‑width row with the current check on the right (same selection logic as today, including the Double‑lock rule).
-  - Tap outside / swipe down / drag handle closes.
-- New **Edit defaults sheet** opened from the Admin pencil, same pattern, listing template items as toggle rows.
-- Keep the "Extra linen" toggle as a plain inline button (it's a single tap, no menu needed).
+Self-notifications are suppressed (the user who triggered the event does not get pinged).
 
-## 2. Notes block → collapsible button at the top
+## Technical details
 
-The "For Reception" / "Leave a message for housekeeping" / vacated / maintenance block currently always renders above the linen list and pushes the counter down.
+### VAPID keys
+- Generate a VAPID key pair once and store:
+  - `VAPID_PUBLIC_KEY` — also exposed as `VITE_VAPID_PUBLIC_KEY` for the client
+  - `VAPID_PRIVATE_KEY` — server-only
+  - `VAPID_SUBJECT` — `mailto:` contact (asked from user, or default to a placeholder)
 
-Collapse it into a single **Notes** button row at the top of the open room panel:
+### Database
+New migration adds:
 
-- One button labelled **Notes** with small status dots (amber if there's a housekeeping note or active message, emerald if guest vacated, wrench if maintenance) so state is visible without expanding.
-- Tapping opens a bottom Sheet containing the existing content unchanged:
-  - User/Admin view: the For‑Reception textarea + needs‑maintenance switch + vacated banner.
-  - Reception view: vacated switch, maintenance banner, housekeeping note, and the housekeeping‑message composer/list.
-- The Reception "Notes" dialog added previously is folded into this same sheet so there's one entry point, not two.
+- `push_subscriptions` table — one row per device/browser per user
+  - `id uuid pk`, `user_id uuid` (auth.users), `endpoint text unique`, `p256dh text`, `auth text`, `user_agent text`, `created_at`, `last_used_at`
+  - RLS: users can select/insert/update/delete only their own rows; service_role full access
+  - Standard GRANTs
 
-Result: the linen list sits directly under the room header on first paint.
+- `notification_preferences` table — per-user opt-in toggle
+  - `user_id uuid pk`, `messages_enabled bool default true`, `checkout_enabled bool default true`, `done_enabled bool default true`
+  - RLS owner-only; standard GRANTs
 
-## 3. Linen counter polish (no behaviour change)
+### Service worker
+Add `public/sw.js` (kept tiny — push + notificationclick only, not an app-shell cache). Registered from a guarded wrapper that refuses to register in Lovable preview/dev/iframe contexts (per PWA skill rules). Manifest already exists; no offline caching added.
 
-- Bump the `+` / `−` / count buttons up to a consistent ~44 px tap target on mobile (`h-11 w-11` on `< sm`, current size on `sm:`).
-- Keep the linen rows visually unchanged otherwise — colour swatches, lock state, extras section, totals all stay.
+### Server functions (`src/lib/push.functions.ts`)
+- `subscribeToPush({ endpoint, p256dh, auth, userAgent })` — upserts into `push_subscriptions` for the current user.
+- `unsubscribeFromPush({ endpoint })` — removes the row.
+- `getNotificationPreferences()` / `setNotificationPreferences({...})`.
+- `sendTestNotification()` — sends a push to the caller's own subscriptions.
 
-## 4. Room grid indicators
+All use `requireSupabaseAuth`. Sending pushes uses the `web-push` npm package (Worker-compatible build) signed with the VAPID keys; failed/expired endpoints (404/410) are pruned automatically.
 
-The yellow Reception‑done circle (`bg-yellow-500`, `h-5 w-5`, `ring-2`) sits on top of the room number and visually dominates. The new Reception‑vacated indicator currently uses the same emerald `DoorOpen` icon as in the open panel, which can be confused with the gold tick at a glance.
+### Fan-out on events
+A single `notifyRoomEvent` server function called by the three existing client mutations after the optimistic Supabase write succeeds:
 
-- Shrink the Reception‑done badge to `h-3.5 w-3.5` with a thinner ring, kept gold, bottom‑right.
-- Replace the vacated indicator on the grid with a clearly distinct mark: a small **emerald pill containing "OUT"** (or a filled `DoorOpen` on an emerald square) anchored top‑left. Different shape (rect vs circle), different colour family, different corner — so it never reads as "the gold tick".
-- Maintenance wrench and message dot stay as they are.
+- After `submitRoomMessage` — `kind: "message"`, payload `{ room_number, message, sender_username, sender_role }`.
+- After `setRoomGuestVacated(n, true)` — `kind: "checkout"`.
+- After `setDone(n, true)` (housekeeping side) — `kind: "done"`.
 
-## 5. Out of scope
+The server function:
+1. Looks up app_users with the target role (opposite of sender) who have the matching preference enabled.
+2. Loads their `push_subscriptions`.
+3. Sends one web-push request per subscription with `{ title, body, url: "/app?room=" + n, tag: "room-" + n }`.
+4. Excludes the originating user.
 
-- No DB / RLS / migration changes.
-- No changes to the printable Room Status Sheet, Reception filters, or Users page.
-- No change to which roles can do what.
+The trigger lives client-side (post-mutation) rather than as a DB trigger, because Supabase pg-net + edge functions for fan-out adds complexity we don't need at this scale.
 
-## Technical notes
+### UI additions
+- New `NotificationsToggle` component rendered in the existing user dropdown / settings sheet in `src/routes/app.tsx`.
+- Detects support: `"serviceWorker" in navigator && "PushManager" in window && "Notification" in window`.
+- On iOS Safari not installed: shows the install-first hint instead of the toggle.
+- Persists the current device's subscription state by checking the active `PushSubscription` on mount.
 
-- Uses existing `@/components/ui/sheet` (shadcn). If not yet present, add via `bunx shadcn@latest add sheet`.
-- All selection handlers (`toggleReceptionDone`, `setRoomReceptionStatus`, `setRoomReceptionBed`, `toggleAssignment`, `setRoomHousekeepingNote`, `setRoomNeedsMaintenance`, `setRoomGuestVacated`, `submitRoomMessage`, etc.) are reused unchanged — only the container changes from `DropdownMenu` / inline block to `Sheet`.
-- The existing `notesDialogRoom` state is replaced/extended by a single `notesSheetRoom` state; the standalone Dialog added in the previous turn is removed.
-- Double‑bed lock logic in the bed list is preserved verbatim.
+## Out of scope (won't be done unless you ask)
+
+- Offline / app-shell caching (notifications only need a tiny SW; full offline is a separate, larger change per PWA skill).
+- Native iOS/Android apps via Capacitor.
+- Email/SMS fallback when a user has no push subscriptions.
+- Quiet hours / per-room mute.
+- Notification history list inside the app.
+
+## What I'll need from you to ship
+
+Just a contact email for the VAPID `subject` (any address — used by push services to contact the sender if there's an abuse issue). I'll generate the VAPID keys automatically and store them as secrets.
