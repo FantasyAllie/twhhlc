@@ -234,12 +234,6 @@ useEffect(() => {
   // Admin "view as" overlay — lets admins temporarily experience the app as
   // another role. Does NOT change the auth token; backend still treats them
   // as admin. Only affects UI gating and visible affordances.
-  type ViewRole = "admin" | "user" | "reception";
-  const [viewAsRole, setViewAsRole] = useState<ViewRole | null>(() => {
-    if (typeof window === "undefined") return null;
-    const v = window.localStorage.getItem("tw_view_as_role");
-    return v === "user" || v === "reception" || v === "admin" ? v : null;
-  });
   useEffect(() => {
     if (typeof window === "undefined") return;
     if (viewAsRole) window.localStorage.setItem("tw_view_as_role", viewAsRole);
