@@ -3428,7 +3428,7 @@ useEffect(() => {
           )}
           {receptionDoneSet.has(n) && (
             <span
-              aria-label="Reception done"
+              aria-label="Mark as Done"
                 className="absolute bottom-0.5 right-0.5 flex h-3.5 w-3.5 items-center justify-center rounded-full bg-yellow-500 text-background ring-1 ring-background"
             >
                 <Check className="h-2.5 w-2.5" />
