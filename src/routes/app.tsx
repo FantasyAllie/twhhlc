@@ -2628,6 +2628,177 @@ useEffect(() => {
    </SheetContent>
  </Sheet>
 
+ {/* Room Types sheet (Admin) */}
+ <Sheet open={roomTypesSheetOpen} onOpenChange={setRoomTypesSheetOpen}>
+   <SheetContent side="right" className="w-auto max-w-[90vw] min-w-[18rem] sm:max-w-md overflow-y-auto p-4 sm:p-6">
+     <SheetHeader className="text-left">
+       <SheetTitle className="flex items-center gap-2">
+         <Bed className="h-4 w-4" />
+         Room types
+       </SheetTitle>
+       <SheetDescription>Manage the list of room types</SheetDescription>
+     </SheetHeader>
+     <div className="mt-4 space-y-1.5">
+       {roomTypes.length === 0 ? (
+         <p className="text-sm text-muted-foreground">No room types yet.</p>
+       ) : (
+         roomTypes.map((rt) => (
+           <div
+             key={rt.id}
+             className="flex items-center gap-2 rounded-md border bg-background min-h-12 pl-3 pr-1.5"
+           >
+             <span className="flex-1 text-sm font-medium">{rt.label}</span>
+             <Button
+               type="button"
+               variant="ghost"
+               size="icon"
+               className="h-9 w-9 text-muted-foreground hover:text-destructive"
+               onClick={() => deleteRoomType(rt.id)}
+               aria-label={`Remove ${rt.label}`}
+             >
+               <X className="h-4 w-4" />
+             </Button>
+           </div>
+         ))
+       )}
+       <Button
+         type="button"
+         variant="outline"
+         className="w-full mt-2"
+         onClick={() => setAddRoomTypeOpen(true)}
+       >
+         <Plus className="h-4 w-4 mr-2" />
+         Add room type
+       </Button>
+     </div>
+   </SheetContent>
+ </Sheet>
+
+ {/* Room Features sheet (Admin) */}
+ <Sheet open={roomFeaturesSheetOpen} onOpenChange={setRoomFeaturesSheetOpen}>
+   <SheetContent side="right" className="w-auto max-w-[90vw] min-w-[18rem] sm:max-w-md overflow-y-auto p-4 sm:p-6">
+     <SheetHeader className="text-left">
+       <SheetTitle className="flex items-center gap-2">
+         <List className="h-4 w-4" />
+         Room features
+       </SheetTitle>
+       <SheetDescription>Manage the list of room features</SheetDescription>
+     </SheetHeader>
+     <div className="mt-4 space-y-1.5">
+       {roomFeatures.length === 0 ? (
+         <p className="text-sm text-muted-foreground">No features yet.</p>
+       ) : (
+         roomFeatures.map((f) => (
+           <div
+             key={f.id}
+             className="flex items-center gap-2 rounded-md border bg-background min-h-12 pl-3 pr-1.5"
+           >
+             <span className="flex-1 text-sm font-medium">{f.label}</span>
+             <Button
+               type="button"
+               variant="ghost"
+               size="icon"
+               className="h-9 w-9 text-muted-foreground hover:text-destructive"
+               onClick={() => deleteRoomFeature(f.id)}
+               aria-label={`Remove ${f.label}`}
+             >
+               <X className="h-4 w-4" />
+             </Button>
+           </div>
+         ))
+       )}
+       <Button
+         type="button"
+         variant="outline"
+         className="w-full mt-2"
+         onClick={() => setAddRoomFeatureOpen(true)}
+       >
+         <Plus className="h-4 w-4 mr-2" />
+         Add feature
+       </Button>
+     </div>
+   </SheetContent>
+ </Sheet>
+
+ {/* Reception items sheet (Admin) */}
+ <Sheet open={receptionItemsSheetOpen} onOpenChange={setReceptionItemsSheetOpen}>
+   <SheetContent side="right" className="w-auto max-w-[90vw] min-w-[18rem] sm:max-w-md overflow-y-auto p-4 sm:p-6">
+     <SheetHeader className="text-left">
+       <SheetTitle className="flex items-center gap-2">
+         <ConciergeBell className="h-4 w-4" />
+         Reception
+       </SheetTitle>
+       <SheetDescription>Manage room statuses and bed types</SheetDescription>
+     </SheetHeader>
+     <div className="mt-4 space-y-5">
+       <div className="space-y-2">
+         <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">Room status</p>
+         <div className="space-y-1.5">
+           {receptionStatuses.length === 0 && (
+             <p className="text-sm text-muted-foreground">No statuses yet.</p>
+           )}
+           {receptionStatuses.map((s) => (
+             <div key={s.id} className="flex items-center gap-2 rounded-md border bg-background min-h-12 pl-3 pr-1.5">
+               <span className="flex-1 text-sm font-medium">{s.label}</span>
+               <Button
+                 type="button"
+                 variant="ghost"
+                 size="icon"
+                 className="h-9 w-9 text-muted-foreground hover:text-destructive"
+                 onClick={() => deleteReceptionItem(s.id)}
+                 aria-label={`Remove ${s.label}`}
+               >
+                 <X className="h-4 w-4" />
+               </Button>
+             </div>
+           ))}
+           <Button
+             type="button"
+             variant="outline"
+             className="w-full"
+             onClick={() => setAddReceptionItemKind("status")}
+           >
+             <Plus className="h-4 w-4 mr-2" />
+             Add status
+           </Button>
+         </div>
+       </div>
+       <div className="space-y-2">
+         <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">Bed set as</p>
+         <div className="space-y-1.5">
+           {receptionBeds.length === 0 && (
+             <p className="text-sm text-muted-foreground">No bed types yet.</p>
+           )}
+           {receptionBeds.map((b) => (
+             <div key={b.id} className="flex items-center gap-2 rounded-md border bg-background min-h-12 pl-3 pr-1.5">
+               <span className="flex-1 text-sm font-medium">{b.label}</span>
+               <Button
+                 type="button"
+                 variant="ghost"
+                 size="icon"
+                 className="h-9 w-9 text-muted-foreground hover:text-destructive"
+                 onClick={() => deleteReceptionItem(b.id)}
+                 aria-label={`Remove ${b.label}`}
+               >
+                 <X className="h-4 w-4" />
+               </Button>
+             </div>
+           ))}
+           <Button
+             type="button"
+             variant="outline"
+             className="w-full"
+             onClick={() => setAddReceptionItemKind("bed")}
+           >
+             <Plus className="h-4 w-4 mr-2" />
+             Add bed type
+           </Button>
+         </div>
+       </div>
+     </div>
+   </SheetContent>
+ </Sheet>
+
   {/* Add room type dialog */}
   <Dialog open={addRoomTypeOpen} onOpenChange={setAddRoomTypeOpen}>
     <DialogContent className="max-w-sm w-[calc(100vw-1.5rem)] sm:w-full p-4 sm:p-6">
