@@ -2675,7 +2675,7 @@ useEffect(() => {
     <SheetHeader className="text-left">
       <SheetTitle className="flex items-center gap-2">
         <Menu className="h-4 w-4" />
-        Menu
+        Settings
       </SheetTitle>
       {authUser && (
         <SheetDescription>Signed in as {authUser.username}</SheetDescription>
