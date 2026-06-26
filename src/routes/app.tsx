@@ -12,6 +12,7 @@ import { setSession } from "@/lib/auth-client";
 import { notifyRoomEvent } from "@/lib/push.functions";
 import { NotificationsSheet } from "@/components/notifications-sheet";
 import { UsersDialog } from "@/components/users-dialog";
+import { QuickReceptionSheet } from "@/components/quick-reception-sheet";
 import { useServerFn } from "@tanstack/react-start";
 import { updateMyPassword, updateMyUsername } from "@/lib/auth.functions";
 import {
@@ -278,6 +279,7 @@ useEffect(() => {
   const [noteDraft, setNoteDraft] = useState<Record<number, string>>({});
   const [notesSheetRoom, setNotesSheetRoom] = useState<number | null>(null);
   const [receptionSheetRoom, setReceptionSheetRoom] = useState<number | null>(null);
+  const [quickReceptionOpen, setQuickReceptionOpen] = useState(false);
   const [editDefaultsSheetRoom, setEditDefaultsSheetRoom] = useState<number | null>(null);
   const [editRoomSheetNumber, setEditRoomSheetNumber] = useState<number | null>(null);
   const [menuSheetOpen, setMenuSheetOpen] = useState(false);
@@ -2653,6 +2655,20 @@ useEffect(() => {
              </SheetTitle>
              <SheetDescription>Mark status and bed configuration</SheetDescription>
            </SheetHeader>
+            <div className="mt-2">
+              <Button
+                type="button"
+                size="sm"
+                variant="outline"
+                className="w-full"
+                onClick={() => {
+                  setReceptionSheetRoom(null);
+                  setQuickReceptionOpen(true);
+                }}
+              >
+                Edit all rooms
+              </Button>
+            </div>
            <div className="mt-4 space-y-4">
              <div className="space-y-2">
                <Row
