@@ -1757,7 +1757,8 @@ useEffect(() => {
     return { backgroundColor: theme === "dark" ? c.darkBg : c.bg, borderLeft: `4px solid ${c.border}` };
   };
   return (
-  <div className="border rounded-md p-4 space-y-4 bg-muted/30">
+  <div className="border rounded-md bg-muted/30 flex flex-col min-h-0 flex-1 overflow-hidden">
+    <div className="p-4 space-y-4 shrink-0">
 
     {/* Reception messages */}
     {(() => {
@@ -1957,9 +1958,10 @@ useEffect(() => {
         )}
       </div>
     )}
+    </div>
 
     {isReception ? null : (
-    <>
+    <div className="flex-1 min-h-0 overflow-y-auto px-4 pb-4 space-y-4">
     {visibleTemplate.length === 0 && roomExtras.length === 0 ? (
     <p className="text-sm text-muted-foreground">
     No items yet. Add linen list items from the menu, or add an extra below.
@@ -2066,7 +2068,7 @@ useEffect(() => {
    </ul>
    )}
 
-    </>
+    </div>
     )}
 
   </div>
