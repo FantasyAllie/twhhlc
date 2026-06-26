@@ -933,7 +933,6 @@ useEffect(() => {
   );
   if (roomErr) toast.error(roomErr.message);
   qc.invalidateQueries({ queryKey: ["rooms"] });
-   fireRoomNotification("done", roomNumber);
   }
   }
 
