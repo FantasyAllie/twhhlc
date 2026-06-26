@@ -42,6 +42,7 @@ import {
   SheetHeader,
   SheetTitle,
   SheetDescription,
+  SheetTrigger,
 } from "@/components/ui/sheet";
 import { useTheme } from "@/components/theme-provider";
 
