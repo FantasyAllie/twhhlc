@@ -213,7 +213,7 @@ export function NotificationsSheet({
                   onChange={(v) => void updatePref({ checkout_enabled: v })}
                 />
               )}
-              {userRole === "admin" && (
+              {userRole !== "user" && (
                 <PrefRow
                   label="A room is marked done by housekeeping"
                   checked={prefs.done_enabled}
