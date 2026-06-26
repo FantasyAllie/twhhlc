@@ -141,4 +141,18 @@
     background-color: var(--color-background);
     color: var(--color-foreground);
   }
+
+  /*
+   * Prevent iOS Safari from zooming the page when a form control is focused.
+   * Mobile Safari only zooms when the control's computed font-size is < 16px,
+   * so we enforce 16px on small viewports. Desktop keeps the design system
+   * sizes via the min-width media query.
+   */
+  @media (max-width: 640px) {
+    input,
+    textarea,
+    select {
+      font-size: 16px;
+    }
+  }
 }
