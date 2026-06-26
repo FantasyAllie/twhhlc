@@ -4201,6 +4201,21 @@ useEffect(() => {
     onViewAsRoleChange={(r) => setViewAsRole(r)}
   />
   <UsersDialog open={usersOpen} onOpenChange={setUsersOpen} />
+  <QuickReceptionSheet
+    open={quickReceptionOpen}
+    onOpenChange={setQuickReceptionOpen}
+    rooms={rooms.map((r) => ({
+      room_number: r.room_number,
+      category: r.category,
+      reception_status_id: r.reception_status_id,
+      reception_bed_id: r.reception_bed_id,
+      default_status: r.default_status,
+    }))}
+    statuses={receptionStatuses.map((s) => ({ id: s.id, label: s.label }))}
+    beds={receptionBeds.map((b) => ({ id: b.id, label: b.label }))}
+    onChangeStatus={setRoomReceptionStatus}
+    onChangeBed={setRoomReceptionBed}
+  />
  </main>
  );
 }
