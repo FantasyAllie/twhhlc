@@ -995,14 +995,13 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
   };
 
   const resetAll = async () => {
-    if (!confirm("Reset done state, counts, and reception selections for all rooms?")) return;
+    if (!confirm("Reset done state and counts for all rooms?")) return;
     qc.setQueryData<Room[]>(["rooms"], (old) =>
       old?.map((r) => ({
         ...r,
         done: false,
         done_reception: false,
-        reception_status_id: null,
-        reception_bed_id: null, housekeeping_note: null, needs_maintenance: false, guest_vacated: false,
+        housekeeping_note: null, needs_maintenance: false, guest_vacated: false,
       })) ?? [],
     );
     qc.setQueryData<RoomCount[]>(["room_counts"], () => []);
@@ -1010,8 +1009,7 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
       supabase.from("rooms").update({
         done: false,
         done_reception: false,
-        reception_status_id: null,
-        reception_bed_id: null, housekeeping_note: null, needs_maintenance: false, guest_vacated: false,
+        housekeeping_note: null, needs_maintenance: false, guest_vacated: false,
       }).neq("room_number", -1),
       supabase.from("room_item_counts").delete().neq("room_number", -1),
     ]);
@@ -1019,6 +1017,23 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
     if (r2.error) toast.error(r2.error.message);
     qc.invalidateQueries({ queryKey: ["rooms"] });
     qc.invalidateQueries({ queryKey: ["room_counts"] });
+  };
+
+  const resetReceptionAll = async () => {
+    if (!confirm("Reset reception status and bed selections for all rooms?")) return;
+    qc.setQueryData<Room[]>(["rooms"], (old) =>
+      old?.map((r) => ({
+        ...r,
+        reception_status_id: null,
+        reception_bed_id: null,
+      })) ?? [],
+    );
+    const { error } = await supabase
+      .from("rooms")
+      .update({ reception_status_id: null, reception_bed_id: null })
+      .neq("room_number", -1);
+    if (error) toast.error(error.message);
+    qc.invalidateQueries({ queryKey: ["rooms"] });
   };
 
   // --- Export totals + snapshots ---
@@ -4265,6 +4280,7 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
     beds={receptionBeds.map((b) => ({ id: b.id, label: b.label }))}
     onChangeStatus={setRoomReceptionStatus}
     onChangeBed={setRoomReceptionBed}
+    onResetAll={resetReceptionAll}
   />
  </main>
  );
