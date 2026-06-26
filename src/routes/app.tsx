@@ -669,6 +669,7 @@ useEffect(() => {
     );
     if (error) toast.error(error.message);
     qc.invalidateQueries({ queryKey: ["rooms"] });
+    if (next) fireRoomNotification("done", roomNumber);
   };
 
   const isAssigned = (templateItemId: string, roomNumber: number) =>
