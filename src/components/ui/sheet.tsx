@@ -60,7 +60,23 @@ const SheetContent = React.forwardRef<
 >(({ side = "right", className, children, ...props }, ref) => (
   <SheetPortal>
     <SheetOverlay />
-    <SheetPrimitive.Content ref={ref} className={cn(sheetVariants({ side }), className)} {...props}>
+    <SheetPrimitive.Content
+      ref={ref}
+      className={cn(
+        sheetVariants({ side }),
+        className,
+        // Respect device safe areas (notch, home indicator, curved corners)
+        // Appended last so twMerge keeps these padding overrides on top of any
+        // p-* / pb-* utilities passed via className.
+        side === "bottom" &&
+          "pb-[max(1.25rem,calc(env(safe-area-inset-bottom)+0.75rem))] lg:pb-6",
+        side === "top" &&
+          "pt-[max(1.25rem,calc(env(safe-area-inset-top)+0.75rem))] lg:pt-6",
+        side === "left" && "pl-[max(1rem,env(safe-area-inset-left))]",
+        side === "right" && "pr-[max(1rem,env(safe-area-inset-right))]",
+      )}
+      {...props}
+    >
       <SheetPrimitive.Close className="absolute right-4 top-4 rounded-sm opacity-70 ring-offset-background cursor-pointer transition-opacity hover:opacity-100 focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 disabled:pointer-events-none data-[state=open]:bg-secondary">
         <X className="h-4 w-4" />
         <span className="sr-only">Close</span>
