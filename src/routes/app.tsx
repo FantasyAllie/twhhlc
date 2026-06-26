@@ -2875,7 +2875,7 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
               {items.map((s) => (
                 <div
                   key={s.id}
-                  className="flex items-center gap-2 rounded-md border bg-background min-h-12 pl-3 pr-1.5"
+                  className="flex items-center gap-2 rounded-full border bg-background min-h-12 pl-4 pr-1.5"
                 >
                   <button
                     type="button"
@@ -2983,7 +2983,7 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
          roomTypes.map((rt) => (
            <div
              key={rt.id}
-             className="flex items-center gap-2 rounded-md border bg-background min-h-12 pl-3 pr-1.5"
+             className="flex items-center gap-2 rounded-full border bg-background min-h-12 pl-4 pr-1.5"
            >
              <span className="flex-1 text-sm font-medium">{rt.label}</span>
              <Button
@@ -3029,7 +3029,7 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
          roomFeatures.map((f) => (
            <div
              key={f.id}
-             className="flex items-center gap-2 rounded-md border bg-background min-h-12 pl-3 pr-1.5"
+             className="flex items-center gap-2 rounded-full border bg-background min-h-12 pl-4 pr-1.5"
            >
              <span className="flex-1 text-sm font-medium">{f.label}</span>
              <Button
@@ -3076,7 +3076,7 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
              <p className="text-sm text-muted-foreground">No statuses yet.</p>
            )}
            {receptionStatuses.map((s) => (
-             <div key={s.id} className="flex items-center gap-2 rounded-md border bg-background min-h-12 pl-3 pr-1.5">
+             <div key={s.id} className="flex items-center gap-2 rounded-full border bg-background min-h-12 pl-4 pr-1.5">
                <span className="flex-1 text-sm font-medium">{s.label}</span>
                <Button
                  type="button"
@@ -3108,7 +3108,7 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
              <p className="text-sm text-muted-foreground">No bed types yet.</p>
            )}
            {receptionBeds.map((b) => (
-             <div key={b.id} className="flex items-center gap-2 rounded-md border bg-background min-h-12 pl-3 pr-1.5">
+             <div key={b.id} className="flex items-center gap-2 rounded-full border bg-background min-h-12 pl-4 pr-1.5">
                <span className="flex-1 text-sm font-medium">{b.label}</span>
                <Button
                  type="button"
