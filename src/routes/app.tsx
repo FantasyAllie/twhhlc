@@ -4280,6 +4280,7 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
     beds={receptionBeds.map((b) => ({ id: b.id, label: b.label }))}
     onChangeStatus={setRoomReceptionStatus}
     onChangeBed={setRoomReceptionBed}
+    onResetAll={resetReceptionAll}
   />
  </main>
  );
