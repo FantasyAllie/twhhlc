@@ -3464,76 +3464,45 @@ useEffect(() => {
           appear in the grid, share the Linen List, and support Room Types.
           Rejects always stays at the end.
         </DialogDescription>
-        <div className="mt-2 flex w-full gap-2">
-          <Button variant="outline" size="sm" className="flex-1 min-w-0" onClick={() => setRoomTypesSheetOpen(true)}>
-            <Bed className="h-4 w-4 mr-2" />
-            Room Type
+        <div className="mt-2 grid w-full grid-cols-4 gap-2">
+          <Button variant="outline" size="sm" className="min-w-0 px-1" onClick={() => setRoomTypesSheetOpen(true)}>
+            <Bed className="h-4 w-4 sm:mr-1.5" />
+            <span className="hidden sm:inline">Room Type</span>
           </Button>
-          <Button variant="outline" size="sm" className="flex-1 min-w-0" onClick={() => setRoomFeaturesSheetOpen(true)}>
-            <List className="h-4 w-4 mr-2" />
-            Room Features
+          <Button variant="outline" size="sm" className="min-w-0 px-1" onClick={() => setRoomFeaturesSheetOpen(true)}>
+            <List className="h-4 w-4 sm:mr-1.5" />
+            <span className="hidden sm:inline">Features</span>
           </Button>
-        </div>
-        <div className="mt-2 flex w-full gap-2">
-          <Button variant="outline" size="sm" className="flex-1 min-w-0" onClick={() => setReceptionItemsSheetOpen(true)}>
-            <ConciergeBell className="h-4 w-4 mr-2" />
-            Reception
+          <Button variant="outline" size="sm" className="min-w-0 px-1" onClick={() => setReceptionItemsSheetOpen(true)}>
+            <ConciergeBell className="h-4 w-4 sm:mr-1.5" />
+            <span className="hidden sm:inline">Reception</span>
           </Button>
-        </div>
-      </DialogHeader>
-      <div className="space-y-3">
-        <div className="flex items-end gap-2">
-          <div className="flex-1">
-            <label className="text-xs text-muted-foreground">Room number</label>
-            <Input
-              type="number"
-              inputMode="numeric"
-              min={1}
-              max={999}
-              value={newRoomNumber}
-              placeholder={String(
-                (() => {
-                  const used = new Set(rooms.map((r) => r.room_number));
-                  let n = 1;
-                  while (used.has(n)) n++;
-                  return n;
-                })(),
-              )}
-              onChange={(e) => setNewRoomNumber(e.target.value)}
-              onKeyDown={(e) => {
-                if (e.key === "Enter") {
-                  const used = new Set(rooms.map((r) => r.room_number));
-                  let suggested = 1;
-                  while (used.has(suggested)) suggested++;
-                  const n = newRoomNumber.trim() === "" ? suggested : Number(newRoomNumber);
-                  addRoom(n);
-                  setNewRoomNumber("");
-                }
-              }}
-            />
-          </div>
           <Button
+            variant="outline"
+            size="sm"
+            className="min-w-0 px-1"
             onClick={() => {
               const used = new Set(rooms.map((r) => r.room_number));
               let suggested = 1;
               while (used.has(suggested)) suggested++;
-              const n = newRoomNumber.trim() === "" ? suggested : Number(newRoomNumber);
-              addRoom(n);
-              setNewRoomNumber("");
+              setNewRoomNumber(String(suggested));
+              setAddRoomConfirmOpen(true);
             }}
           >
-            <Plus className="h-4 w-4 mr-1" />
-            Add
+            <Plus className="h-4 w-4 sm:mr-1.5" />
+            <span className="hidden sm:inline">Add</span>
           </Button>
         </div>
+      </DialogHeader>
+      <div className="space-y-3">
         <div className="text-xs text-muted-foreground">
           {rooms.length} room{rooms.length === 1 ? "" : "s"} total
         </div>
         <ul className="divide-y rounded-md border max-h-[50vh] overflow-y-auto">
           {rooms
             .slice()
-            .sort((a, b) => a.room_number - b.room_number)
-            .map((r) => (
+            .sort((a, b) => (a.sort_order ?? a.room_number) - (b.sort_order ?? b.room_number))
+            .map((r, idx, arr) => (
               <li key={r.id} className="flex items-center gap-3 px-3 py-2">
                 <span className="flex-1 text-sm font-medium tabular-nums">
                   Room {r.room_number}
@@ -3556,9 +3525,80 @@ useEffect(() => {
                 >
                   <Trash2 className="h-4 w-4" />
                 </Button>
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  className="h-8 w-8"
+                  disabled={idx === 0}
+                  onClick={() => moveRoom(r.room_number, -1)}
+                  aria-label={`Move Room ${r.room_number} up`}
+                >
+                  <ArrowUp className="h-4 w-4" />
+                </Button>
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  className="h-8 w-8"
+                  disabled={idx === arr.length - 1}
+                  onClick={() => moveRoom(r.room_number, 1)}
+                  aria-label={`Move Room ${r.room_number} down`}
+                >
+                  <ArrowDown className="h-4 w-4" />
+                </Button>
               </li>
             ))}
         </ul>
+      </div>
+    </DialogContent>
+  </Dialog>
+
+  <Dialog open={addRoomConfirmOpen} onOpenChange={setAddRoomConfirmOpen}>
+    <DialogContent className="max-w-sm w-[calc(100vw-1.5rem)] sm:w-full p-4 sm:p-6">
+      <DialogHeader>
+        <DialogTitle>Add room</DialogTitle>
+        <DialogDescription>
+          Enter a room number. The new room is added to the bottom of the list.
+        </DialogDescription>
+      </DialogHeader>
+      <div className="space-y-3">
+        <div>
+          <label className="text-xs text-muted-foreground">Room number</label>
+          <Input
+            type="number"
+            inputMode="numeric"
+            min={1}
+            max={999}
+            autoFocus
+            value={newRoomNumber}
+            onChange={(e) => setNewRoomNumber(e.target.value)}
+            onKeyDown={(e) => {
+              if (e.key === "Enter") {
+                const n = Number(newRoomNumber);
+                if (Number.isFinite(n)) {
+                  addRoom(n);
+                  setNewRoomNumber("");
+                  setAddRoomConfirmOpen(false);
+                }
+              }
+            }}
+          />
+        </div>
+        <Button
+          className="w-full"
+          onClick={() => {
+            const n = Number(newRoomNumber);
+            if (!Number.isFinite(n)) {
+              toast.error("Enter a valid room number.");
+              return;
+            }
+            addRoom(n);
+            setNewRoomNumber("");
+            setAddRoomConfirmOpen(false);
+          }}
+        >
+          <Check className="h-4 w-4 mr-1" />
+          Confirm
+        </Button>
       </div>
     </DialogContent>
   </Dialog>
