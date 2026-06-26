@@ -378,6 +378,7 @@ export type Database = {
           reception_bed_id: string | null
           reception_status_id: string | null
           room_number: number
+          sort_order: number
           updated_at: string
           user_id: string
         }
@@ -393,6 +394,7 @@ export type Database = {
           reception_bed_id?: string | null
           reception_status_id?: string | null
           room_number: number
+          sort_order?: number
           updated_at?: string
           user_id?: string
         }
@@ -408,6 +410,7 @@ export type Database = {
           reception_bed_id?: string | null
           reception_status_id?: string | null
           room_number?: number
+          sort_order?: number
           updated_at?: string
           user_id?: string
         }

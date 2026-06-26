@@ -94,7 +94,7 @@ type RoomCount = {
  item_id: string;
  count: number;
 };
-type Room = { id: string; room_number: number; done: boolean; done_reception: boolean; category: Category | null; default_status: string | null; reception_status_id: string | null; reception_bed_id: string | null; housekeeping_note: string | null; needs_maintenance: boolean; guest_vacated: boolean };
+type Room = { id: string; room_number: number; sort_order?: number; done: boolean; done_reception: boolean; category: Category | null; default_status: string | null; reception_status_id: string | null; reception_bed_id: string | null; housekeeping_note: string | null; needs_maintenance: boolean; guest_vacated: boolean };
 type TemplateItemRoom = { id: string; template_item_id: string; room_number: number };
 type SnapshotRow = { name: string; count: number };
 type RoomStatusRow = { room: number; status: string; bed: string; maintenance?: boolean };
@@ -323,6 +323,7 @@ useEffect(() => {
     { kind: "totals" | "rejects" | "room_status" } | null
   >(null);
   const [newRoomNumber, setNewRoomNumber] = useState<string>("");
+  const [addRoomConfirmOpen, setAddRoomConfirmOpen] = useState(false);
 
   // Per-room reception selections are now persisted on the rooms table;
   // read/write helpers below.
@@ -384,8 +385,8 @@ useEffect(() => {
     queryFn: async (): Promise<Room[]> => {
       const { data, error } = await supabase
         .from("rooms")
-        .select("id,room_number,done,done_reception,category,default_status,reception_status_id,reception_bed_id,housekeeping_note,needs_maintenance,guest_vacated")
-        .order("room_number", { ascending: true });
+        .select("id,room_number,sort_order,done,done_reception,category,default_status,reception_status_id,reception_bed_id,housekeeping_note,needs_maintenance,guest_vacated")
+        .order("sort_order", { ascending: true });
       if (error) throw error;
       return (data ?? []) as Room[];
     },
@@ -1038,14 +1039,15 @@ useEffect(() => {
       toast.error(`Room ${n} already exists.`);
       return;
     }
+    const nextSort = (rooms.reduce((m, r) => Math.max(m, r.sort_order ?? r.room_number), 0)) + 1;
     qc.setQueryData<Room[]>(["rooms"], (old) => {
       const list = old ? [...old] : [];
-      list.push({ id: `temp-${n}`, room_number: n, done: false, done_reception: false, category: null, default_status: null, reception_status_id: null, reception_bed_id: null, housekeeping_note: null, needs_maintenance: false, guest_vacated: false });
-      list.sort((a, b) => a.room_number - b.room_number);
+      list.push({ id: `temp-${n}`, room_number: n, sort_order: nextSort, done: false, done_reception: false, category: null, default_status: null, reception_status_id: null, reception_bed_id: null, housekeeping_note: null, needs_maintenance: false, guest_vacated: false });
+      list.sort((a, b) => (a.sort_order ?? a.room_number) - (b.sort_order ?? b.room_number));
       return list;
     });
     const { error } = await supabase.from("rooms").upsert(
-      { room_number: n, done: false, done_reception: false, updated_at: new Date().toISOString() },
+      { room_number: n, sort_order: nextSort, done: false, done_reception: false, updated_at: new Date().toISOString() },
       { onConflict: "user_id,room_number" },
     );
     if (error) {
@@ -1076,6 +1078,40 @@ useEffect(() => {
     qc.invalidateQueries({ queryKey: ["template_item_rooms"] });
     qc.invalidateQueries({ queryKey: ["room_extras"] });
     qc.invalidateQueries({ queryKey: ["room_messages"] });
+  };
+
+  const moveRoom = async (roomNumber: number, direction: -1 | 1) => {
+    const sorted = [...rooms].sort(
+      (a, b) => (a.sort_order ?? a.room_number) - (b.sort_order ?? b.room_number),
+    );
+    const idx = sorted.findIndex((r) => r.room_number === roomNumber);
+    if (idx < 0) return;
+    const swapIdx = idx + direction;
+    if (swapIdx < 0 || swapIdx >= sorted.length) return;
+    const a = sorted[idx];
+    const b = sorted[swapIdx];
+    const aSort = a.sort_order ?? a.room_number;
+    const bSort = b.sort_order ?? b.room_number;
+    qc.setQueryData<Room[]>(["rooms"], (old) => {
+      if (!old) return old;
+      return old
+        .map((r) =>
+          r.room_number === a.room_number
+            ? { ...r, sort_order: bSort }
+            : r.room_number === b.room_number
+              ? { ...r, sort_order: aSort }
+              : r,
+        )
+        .sort((x, y) => (x.sort_order ?? x.room_number) - (y.sort_order ?? y.room_number));
+    });
+    const results = await Promise.all([
+      supabase.from("rooms").update({ sort_order: bSort }).eq("room_number", a.room_number),
+      supabase.from("rooms").update({ sort_order: aSort }).eq("room_number", b.room_number),
+    ]);
+    for (const r of results) {
+      if (r.error) toast.error(r.error.message);
+    }
+    qc.invalidateQueries({ queryKey: ["rooms"] });
   };
 
   const computeTotals = (): { rows: SnapshotRow[]; grand: number } => {
@@ -3428,76 +3464,45 @@ useEffect(() => {
           appear in the grid, share the Linen List, and support Room Types.
           Rejects always stays at the end.
         </DialogDescription>
-        <div className="mt-2 flex w-full gap-2">
-          <Button variant="outline" size="sm" className="flex-1 min-w-0" onClick={() => setRoomTypesSheetOpen(true)}>
-            <Bed className="h-4 w-4 mr-2" />
-            Room Type
+        <div className="mt-2 grid w-full grid-cols-4 gap-2">
+          <Button variant="outline" size="sm" className="min-w-0 px-1" onClick={() => setRoomTypesSheetOpen(true)}>
+            <Bed className="h-4 w-4 sm:mr-1.5" />
+            <span className="hidden sm:inline">Room Type</span>
           </Button>
-          <Button variant="outline" size="sm" className="flex-1 min-w-0" onClick={() => setRoomFeaturesSheetOpen(true)}>
-            <List className="h-4 w-4 mr-2" />
-            Room Features
+          <Button variant="outline" size="sm" className="min-w-0 px-1" onClick={() => setRoomFeaturesSheetOpen(true)}>
+            <List className="h-4 w-4 sm:mr-1.5" />
+            <span className="hidden sm:inline">Features</span>
           </Button>
-        </div>
-        <div className="mt-2 flex w-full gap-2">
-          <Button variant="outline" size="sm" className="flex-1 min-w-0" onClick={() => setReceptionItemsSheetOpen(true)}>
-            <ConciergeBell className="h-4 w-4 mr-2" />
-            Reception
+          <Button variant="outline" size="sm" className="min-w-0 px-1" onClick={() => setReceptionItemsSheetOpen(true)}>
+            <ConciergeBell className="h-4 w-4 sm:mr-1.5" />
+            <span className="hidden sm:inline">Reception</span>
           </Button>
-        </div>
-      </DialogHeader>
-      <div className="space-y-3">
-        <div className="flex items-end gap-2">
-          <div className="flex-1">
-            <label className="text-xs text-muted-foreground">Room number</label>
-            <Input
-              type="number"
-              inputMode="numeric"
-              min={1}
-              max={999}
-              value={newRoomNumber}
-              placeholder={String(
-                (() => {
-                  const used = new Set(rooms.map((r) => r.room_number));
-                  let n = 1;
-                  while (used.has(n)) n++;
-                  return n;
-                })(),
-              )}
-              onChange={(e) => setNewRoomNumber(e.target.value)}
-              onKeyDown={(e) => {
-                if (e.key === "Enter") {
-                  const used = new Set(rooms.map((r) => r.room_number));
-                  let suggested = 1;
-                  while (used.has(suggested)) suggested++;
-                  const n = newRoomNumber.trim() === "" ? suggested : Number(newRoomNumber);
-                  addRoom(n);
-                  setNewRoomNumber("");
-                }
-              }}
-            />
-          </div>
           <Button
+            variant="outline"
+            size="sm"
+            className="min-w-0 px-1"
             onClick={() => {
               const used = new Set(rooms.map((r) => r.room_number));
               let suggested = 1;
               while (used.has(suggested)) suggested++;
-              const n = newRoomNumber.trim() === "" ? suggested : Number(newRoomNumber);
-              addRoom(n);
-              setNewRoomNumber("");
+              setNewRoomNumber(String(suggested));
+              setAddRoomConfirmOpen(true);
             }}
           >
-            <Plus className="h-4 w-4 mr-1" />
-            Add
+            <Plus className="h-4 w-4 sm:mr-1.5" />
+            <span className="hidden sm:inline">Add</span>
           </Button>
         </div>
+      </DialogHeader>
+      <div className="space-y-3">
         <div className="text-xs text-muted-foreground">
           {rooms.length} room{rooms.length === 1 ? "" : "s"} total
         </div>
         <ul className="divide-y rounded-md border max-h-[50vh] overflow-y-auto">
           {rooms
             .slice()
-            .sort((a, b) => a.room_number - b.room_number)
-            .map((r) => (
+            .sort((a, b) => (a.sort_order ?? a.room_number) - (b.sort_order ?? b.room_number))
+            .map((r, idx, arr) => (
               <li key={r.id} className="flex items-center gap-3 px-3 py-2">
                 <span className="flex-1 text-sm font-medium tabular-nums">
                   Room {r.room_number}
@@ -3520,9 +3525,80 @@ useEffect(() => {
                 >
                   <Trash2 className="h-4 w-4" />
                 </Button>
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  className="h-8 w-8"
+                  disabled={idx === 0}
+                  onClick={() => moveRoom(r.room_number, -1)}
+                  aria-label={`Move Room ${r.room_number} up`}
+                >
+                  <ArrowUp className="h-4 w-4" />
+                </Button>
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  className="h-8 w-8"
+                  disabled={idx === arr.length - 1}
+                  onClick={() => moveRoom(r.room_number, 1)}
+                  aria-label={`Move Room ${r.room_number} down`}
+                >
+                  <ArrowDown className="h-4 w-4" />
+                </Button>
               </li>
             ))}
         </ul>
+      </div>
+    </DialogContent>
+  </Dialog>
+
+  <Dialog open={addRoomConfirmOpen} onOpenChange={setAddRoomConfirmOpen}>
+    <DialogContent className="max-w-sm w-[calc(100vw-1.5rem)] sm:w-full p-4 sm:p-6">
+      <DialogHeader>
+        <DialogTitle>Add room</DialogTitle>
+        <DialogDescription>
+          Enter a room number. The new room is added to the bottom of the list.
+        </DialogDescription>
+      </DialogHeader>
+      <div className="space-y-3">
+        <div>
+          <label className="text-xs text-muted-foreground">Room number</label>
+          <Input
+            type="number"
+            inputMode="numeric"
+            min={1}
+            max={999}
+            autoFocus
+            value={newRoomNumber}
+            onChange={(e) => setNewRoomNumber(e.target.value)}
+            onKeyDown={(e) => {
+              if (e.key === "Enter") {
+                const n = Number(newRoomNumber);
+                if (Number.isFinite(n)) {
+                  addRoom(n);
+                  setNewRoomNumber("");
+                  setAddRoomConfirmOpen(false);
+                }
+              }
+            }}
+          />
+        </div>
+        <Button
+          className="w-full"
+          onClick={() => {
+            const n = Number(newRoomNumber);
+            if (!Number.isFinite(n)) {
+              toast.error("Enter a valid room number.");
+              return;
+            }
+            addRoom(n);
+            setNewRoomNumber("");
+            setAddRoomConfirmOpen(false);
+          }}
+        >
+          <Check className="h-4 w-4 mr-1" />
+          Confirm
+        </Button>
       </div>
     </DialogContent>
   </Dialog>
