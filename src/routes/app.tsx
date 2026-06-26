@@ -2777,6 +2777,14 @@ useEffect(() => {
               </div>
             </div>
           )}
+          {(isAdmin || isReception) && (
+            <div className="space-y-2">
+              <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">Reception</p>
+              <div className="space-y-1.5">
+                <Row icon={ConciergeBell} label="Quick reception setup" onClick={() => { close(); setQuickReceptionOpen(true); }} />
+              </div>
+            </div>
+          )}
           <div className="space-y-2">
             <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">Appearance</p>
             <Row
