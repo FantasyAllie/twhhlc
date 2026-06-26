@@ -67,9 +67,8 @@ const DialogHeader = ({ className, ...props }: React.HTMLAttributes<HTMLDivEleme
   <div
     className={cn(
       // Pin title / description to the top of the dialog so they stay visible
-      // while body content scrolls underneath. Right padding leaves room for
-      // the absolute Close chip.
-      "sticky top-0 z-20 bg-background pb-4 pr-10",
+      // while body content scrolls underneath.
+      "sticky top-0 z-20 bg-background pb-4",
       "flex flex-col space-y-3 text-left",
       className,
     )}
@@ -92,7 +91,7 @@ const DialogTitle = React.forwardRef<
 >(({ className, ...props }, ref) => (
   <DialogPrimitive.Title
     ref={ref}
-    className={cn("text-lg font-semibold leading-none tracking-tight", className)}
+    className={cn("pr-16 text-lg font-semibold leading-none tracking-tight", className)}
     {...props}
   />
 ));

@@ -92,9 +92,8 @@ const SheetHeader = ({ className, ...props }: React.HTMLAttributes<HTMLDivElemen
     className={cn(
       // Pin the title / description / close button to the top of the sheet
       // so they stay visible while the body content scrolls underneath.
-      // bg-background keeps scrolled content from showing through, and the
-      // right padding leaves room for the absolute close (X) button.
-      "sticky top-0 z-20 bg-background pb-4 pr-10",
+      // bg-background keeps scrolled content from showing through.
+      "sticky top-0 z-20 bg-background pb-4",
       "flex flex-col space-y-3 text-center sm:text-left",
       className,
     )}
@@ -117,7 +116,7 @@ const SheetTitle = React.forwardRef<
 >(({ className, ...props }, ref) => (
   <SheetPrimitive.Title
     ref={ref}
-    className={cn("text-lg font-semibold text-foreground", className)}
+    className={cn("pr-16 text-lg font-semibold text-foreground", className)}
     {...props}
   />
 ));
