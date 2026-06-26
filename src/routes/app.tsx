@@ -323,6 +323,7 @@ useEffect(() => {
     { kind: "totals" | "rejects" | "room_status" } | null
   >(null);
   const [newRoomNumber, setNewRoomNumber] = useState<string>("");
+  const [addRoomConfirmOpen, setAddRoomConfirmOpen] = useState(false);
 
   // Per-room reception selections are now persisted on the rooms table;
   // read/write helpers below.
