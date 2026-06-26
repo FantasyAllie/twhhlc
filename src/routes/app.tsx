@@ -2820,7 +2820,7 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
 
 {/* History sheet (Admin) */}
 <Sheet open={historySheetOpen} onOpenChange={setHistorySheetOpen}>
-  <SheetContent side="right" className="w-auto max-w-[90vw] min-w-[18rem] sm:max-w-md overflow-y-auto p-4 sm:p-6">
+   <SheetContent side="bottom" className="max-h-[90vh] overflow-hidden rounded-t-2xl p-4 sm:p-6">
     <SheetHeader className="text-left">
       <SheetTitle className="flex items-center gap-2">
         <History className="h-4 w-4" />
@@ -2828,7 +2828,7 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
       </SheetTitle>
       <SheetDescription>Recent exports</SheetDescription>
     </SheetHeader>
-    <div className="mt-4 space-y-3">
+    <div className="flex-1 min-h-0 overflow-y-auto space-y-3">
       {snapshots.length === 0 ? (
         <p className="text-sm text-muted-foreground">No exports yet.</p>
       ) : (
