@@ -2661,20 +2661,22 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
              </SheetTitle>
              <SheetDescription>Mark status and bed configuration</SheetDescription>
            </SheetHeader>
-            <div className="mt-2">
-              <Button
-                type="button"
-                size="sm"
-                variant="outline"
-                className="w-full"
-                onClick={() => {
-                  setReceptionSheetRoom(null);
-                  setQuickReceptionOpen(true);
-                }}
-              >
-                Edit all rooms
-              </Button>
-            </div>
+             {isAdmin && (
+               <div className="mt-2">
+                 <Button
+                   type="button"
+                   size="sm"
+                   variant="outline"
+                   className="w-full"
+                   onClick={() => {
+                     setReceptionSheetRoom(null);
+                     setQuickReceptionOpen(true);
+                   }}
+                 >
+                   Edit all rooms
+                 </Button>
+               </div>
+             )}
            <div className="mt-4 space-y-4">
              <div className="space-y-2">
                <Row
@@ -2783,11 +2785,11 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
               </div>
             </div>
           )}
-          {(isAdmin || isReception) && (
+          {isAdmin && (
             <div className="space-y-2">
               <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">Reception</p>
               <div className="space-y-1.5">
-                <Row icon={ConciergeBell} label="Quick reception setup" onClick={() => { close(); setQuickReceptionOpen(true); }} />
+                <Row icon={ConciergeBell} label="Quick Room Status Setup" onClick={() => { close(); setQuickReceptionOpen(true); }} />
               </div>
             </div>
           )}

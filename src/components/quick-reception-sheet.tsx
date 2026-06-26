@@ -96,7 +96,7 @@ export function QuickReceptionSheet({
         <SheetHeader className="text-left">
           <SheetTitle className="flex items-center gap-2">
             <ConciergeBell className="h-4 w-4" />
-            Quick reception setup
+            Quick Room Status Setup
           </SheetTitle>
           <SheetDescription>
             Tap a chip to set the status or bed for any room. Tap the selected
