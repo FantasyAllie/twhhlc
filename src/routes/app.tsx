@@ -11,6 +11,7 @@ import { getToken, getStoredUser, clearSession } from "@/lib/auth-client";
 import { setSession } from "@/lib/auth-client";
 import { notifyRoomEvent } from "@/lib/push.functions";
 import { NotificationsSheet } from "@/components/notifications-sheet";
+import { UsersDialog } from "@/components/users-dialog";
 import { useServerFn } from "@tanstack/react-start";
 import { updateMyPassword, updateMyUsername } from "@/lib/auth.functions";
 import {
@@ -248,6 +249,7 @@ function AppPage() {
     navigate({ to: "/login", replace: true });
   };
   const [accountOpen, setAccountOpen] = useState(false);
+  const [usersOpen, setUsersOpen] = useState(false);
  const [openRoom, setOpenRoom] = useState<number | null>(null);
  const [templateOpen, setTemplateOpen] = useState(false);
 const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
@@ -2771,7 +2773,7 @@ useEffect(() => {
             <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">Account</p>
             <div className="space-y-1.5">
               {isAdmin && (
-                <Row icon={Users} label="Users" onClick={() => { close(); void navigate({ to: "/users" }); }} />
+                <Row icon={Users} label="Users" onClick={() => { close(); setUsersOpen(true); }} />
               )}
               <Row icon={Bell} label="Notifications" onClick={() => { close(); setNotificationsSheetOpen(true); }} />
               <Row icon={User} label="Account" onClick={() => { close(); setAccountOpen(true); }} />
@@ -4174,6 +4176,7 @@ useEffect(() => {
     viewAsRole={viewAsRole}
     onViewAsRoleChange={(r) => setViewAsRole(r)}
   />
+  <UsersDialog open={usersOpen} onOpenChange={setUsersOpen} />
  </main>
  );
 }
