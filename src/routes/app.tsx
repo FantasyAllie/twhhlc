@@ -2181,8 +2181,11 @@ useEffect(() => {
               />
               <span className="flex-1 min-w-0 break-words text-sm">{item.name}</span>
               <div className="flex items-center gap-1 shrink-0">
-                <Popover>
-                  <PopoverTrigger asChild>
+                <Sheet
+                  open={editItemSheetId === item.id}
+                  onOpenChange={(o) => setEditItemSheetId(o ? item.id : null)}
+                >
+                  <SheetTrigger asChild>
                     <Button
                       variant="ghost"
                       size="icon"
@@ -2192,8 +2195,13 @@ useEffect(() => {
                     >
                       <Pencil className="h-4 w-4" />
                     </Button>
-                  </PopoverTrigger>
-                  <PopoverContent align="end" className="w-64 p-3 space-y-3">
+                  </SheetTrigger>
+                  <SheetContent side="bottom" className="max-h-[85vh] overflow-y-auto rounded-t-2xl p-4 sm:p-6">
+                    <SheetHeader className="text-left">
+                      <SheetTitle>Edit item</SheetTitle>
+                      <SheetDescription>{item.name}</SheetDescription>
+                    </SheetHeader>
+                    <div className="mt-4 space-y-4">
                     <div className="space-y-1">
                       <label className="text-xs font-medium text-muted-foreground">Name</label>
                       <form
@@ -2201,7 +2209,7 @@ useEffect(() => {
                           e.preventDefault();
                           renameTemplateItem(item.id, editingItemName);
                         }}
-                        className="flex items-center gap-1"
+                        className="flex items-center gap-2"
                       >
                         <Input
                           autoFocus
@@ -2214,16 +2222,16 @@ useEffect(() => {
                           onBlur={() => {
                             if (editingItemId === item.id) renameTemplateItem(item.id, editingItemName);
                           }}
-                          className="h-8 flex-1"
+                          className="h-11 flex-1"
                         />
                         <Button
                           type="submit"
                           variant="ghost"
                           size="icon"
-                          className="h-8 w-8 text-muted-foreground"
+                          className="h-11 w-11 text-muted-foreground"
                           aria-label="Save name"
                         >
-                          <Check className="h-4 w-4" />
+                          <Check className="h-5 w-5" />
                         </Button>
                       </form>
                     </div>
@@ -2234,12 +2242,12 @@ useEffect(() => {
                         min={0}
                         value={item.default_count}
                         onChange={(e) => setTemplateDefault(item.id, Number(e.target.value))}
-                        className="h-8 w-20"
+                        className="h-11 w-24"
                       />
                     </div>
                     <div className="space-y-1">
                       <label className="text-xs font-medium text-muted-foreground">Colour</label>
-                      <div className="flex items-center gap-1.5">
+                      <div className="flex items-center gap-2 flex-wrap">
                         {(Object.keys(COLOR_SWATCHES) as ItemColor[]).map((key) => (
                           <button
                             key={key}
@@ -2248,7 +2256,7 @@ useEffect(() => {
                             aria-label={COLOR_SWATCHES[key].label}
                             title={COLOR_SWATCHES[key].label}
                             className={cn(
-                              "h-6 w-6 rounded-full border-2 transition",
+                              "h-9 w-9 rounded-full border-2 transition",
                               item.color === key ? "ring-2 ring-offset-1 ring-foreground" : "",
                             )}
                             style={{ backgroundColor: COLOR_SWATCHES[key].solid, borderColor: COLOR_SWATCHES[key].solid }}
@@ -2260,41 +2268,42 @@ useEffect(() => {
                           aria-label="No colour"
                           title="No colour"
                           className={cn(
-                            "h-6 w-6 rounded-full border-2 flex items-center justify-center bg-background",
+                            "h-9 w-9 rounded-full border-2 flex items-center justify-center bg-background",
                             item.color === null ? "ring-2 ring-offset-1 ring-foreground" : "",
                           )}
                         >
-                          <X className="h-3 w-3 text-muted-foreground" />
+                          <X className="h-4 w-4 text-muted-foreground" />
                         </button>
                       </div>
                     </div>
-                    <div className="flex items-center justify-between pt-1 border-t">
-                      <span className="text-xs text-muted-foreground">Reorder</span>
-                      <div className="flex items-center gap-1">
+                    <div className="flex items-center justify-between pt-3 border-t">
+                      <span className="text-sm text-muted-foreground">Reorder</span>
+                      <div className="flex items-center gap-2">
                         <Button
-                          variant="ghost"
+                          variant="outline"
                           size="icon"
-                          className="h-8 w-8 text-muted-foreground"
+                          className="h-11 w-11"
                           onClick={() => moveTemplateItem(item.id, -1)}
                           disabled={idx === 0}
                           aria-label="Move up"
                         >
-                          <ArrowUp className="h-4 w-4" />
+                          <ArrowUp className="h-5 w-5" />
                         </Button>
                         <Button
-                          variant="ghost"
+                          variant="outline"
                           size="icon"
-                          className="h-8 w-8 text-muted-foreground"
+                          className="h-11 w-11"
                           onClick={() => moveTemplateItem(item.id, 1)}
                           disabled={idx === template.length - 1}
                           aria-label="Move down"
                         >
-                          <ArrowDown className="h-4 w-4" />
+                          <ArrowDown className="h-5 w-5" />
                         </Button>
                       </div>
                     </div>
-                  </PopoverContent>
-                </Popover>
+                    </div>
+                  </SheetContent>
+                </Sheet>
                 <Button
                   variant="ghost"
                   size="icon"
