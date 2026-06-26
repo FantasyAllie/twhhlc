@@ -37,7 +37,7 @@ const sheetVariants = cva(
       side: {
         top: "inset-x-0 top-0 border-b rounded-b-2xl data-[state=closed]:slide-out-to-top data-[state=open]:slide-in-from-top",
         bottom:
-          "inset-x-0 bottom-0 border-t rounded-t-2xl data-[state=closed]:slide-out-to-bottom data-[state=open]:slide-in-from-bottom lg:inset-x-auto lg:bottom-auto lg:top-1/2 lg:left-1/2 lg:w-[calc(100vw-2rem)] lg:max-w-2xl lg:-translate-x-1/2 lg:-translate-y-1/2 lg:rounded-2xl lg:border lg:max-h-[85vh]",
+          "inset-x-0 left-0 right-0 bottom-0 w-full max-w-none border-t rounded-t-2xl data-[state=closed]:slide-out-to-bottom data-[state=open]:slide-in-from-bottom lg:inset-x-auto lg:bottom-auto lg:top-1/2 lg:left-1/2 lg:w-[calc(100vw-2rem)] lg:max-w-2xl lg:-translate-x-1/2 lg:-translate-y-1/2 lg:rounded-2xl lg:border lg:max-h-[85vh]",
         left: "inset-y-0 left-0 h-full w-3/4 border-r rounded-r-2xl data-[state=closed]:slide-out-to-left data-[state=open]:slide-in-from-left sm:max-w-sm lg:inset-auto lg:top-1/2 lg:left-1/2 lg:h-auto lg:max-h-[85vh] lg:w-[calc(100vw-2rem)] lg:max-w-2xl lg:-translate-x-1/2 lg:-translate-y-1/2 lg:rounded-2xl lg:border",
         right:
           "inset-y-0 right-0 h-full w-3/4 border-l rounded-l-2xl data-[state=closed]:slide-out-to-right data-[state=open]:slide-in-from-right sm:max-w-sm lg:inset-auto lg:top-1/2 lg:left-1/2 lg:h-auto lg:max-h-[85vh] lg:w-[calc(100vw-2rem)] lg:max-w-2xl lg:-translate-x-1/2 lg:-translate-y-1/2 lg:rounded-2xl lg:border",
@@ -94,8 +94,8 @@ const SheetHeader = ({ className, ...props }: React.HTMLAttributes<HTMLDivElemen
       // so they stay visible while the body content scrolls underneath.
       // bg-background keeps scrolled content from showing through, and the
       // right padding leaves room for the absolute close (X) button.
-      "sticky top-0 z-20 bg-background pb-3 pr-10",
-      "flex flex-col space-y-2 text-center sm:text-left",
+      "sticky top-0 z-20 bg-background pb-4 pr-10",
+      "flex flex-col space-y-3 text-center sm:text-left",
       className,
     )}
     {...props}
@@ -129,7 +129,7 @@ const SheetDescription = React.forwardRef<
 >(({ className, ...props }, ref) => (
   <SheetPrimitive.Description
     ref={ref}
-    className={cn("text-sm text-muted-foreground", className)}
+    className={cn("text-sm leading-relaxed text-muted-foreground", className)}
     {...props}
   />
 ));
