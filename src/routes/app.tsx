@@ -1039,14 +1039,15 @@ useEffect(() => {
       toast.error(`Room ${n} already exists.`);
       return;
     }
+    const nextSort = (rooms.reduce((m, r) => Math.max(m, r.sort_order ?? r.room_number), 0)) + 1;
     qc.setQueryData<Room[]>(["rooms"], (old) => {
       const list = old ? [...old] : [];
-      list.push({ id: `temp-${n}`, room_number: n, done: false, done_reception: false, category: null, default_status: null, reception_status_id: null, reception_bed_id: null, housekeeping_note: null, needs_maintenance: false, guest_vacated: false });
-      list.sort((a, b) => a.room_number - b.room_number);
+      list.push({ id: `temp-${n}`, room_number: n, sort_order: nextSort, done: false, done_reception: false, category: null, default_status: null, reception_status_id: null, reception_bed_id: null, housekeeping_note: null, needs_maintenance: false, guest_vacated: false });
+      list.sort((a, b) => (a.sort_order ?? a.room_number) - (b.sort_order ?? b.room_number));
       return list;
     });
     const { error } = await supabase.from("rooms").upsert(
-      { room_number: n, done: false, done_reception: false, updated_at: new Date().toISOString() },
+      { room_number: n, sort_order: nextSort, done: false, done_reception: false, updated_at: new Date().toISOString() },
       { onConflict: "user_id,room_number" },
     );
     if (error) {
@@ -1077,6 +1078,40 @@ useEffect(() => {
     qc.invalidateQueries({ queryKey: ["template_item_rooms"] });
     qc.invalidateQueries({ queryKey: ["room_extras"] });
     qc.invalidateQueries({ queryKey: ["room_messages"] });
+  };
+
+  const moveRoom = async (roomNumber: number, direction: -1 | 1) => {
+    const sorted = [...rooms].sort(
+      (a, b) => (a.sort_order ?? a.room_number) - (b.sort_order ?? b.room_number),
+    );
+    const idx = sorted.findIndex((r) => r.room_number === roomNumber);
+    if (idx < 0) return;
+    const swapIdx = idx + direction;
+    if (swapIdx < 0 || swapIdx >= sorted.length) return;
+    const a = sorted[idx];
+    const b = sorted[swapIdx];
+    const aSort = a.sort_order ?? a.room_number;
+    const bSort = b.sort_order ?? b.room_number;
+    qc.setQueryData<Room[]>(["rooms"], (old) => {
+      if (!old) return old;
+      return old
+        .map((r) =>
+          r.room_number === a.room_number
+            ? { ...r, sort_order: bSort }
+            : r.room_number === b.room_number
+              ? { ...r, sort_order: aSort }
+              : r,
+        )
+        .sort((x, y) => (x.sort_order ?? x.room_number) - (y.sort_order ?? y.room_number));
+    });
+    const results = await Promise.all([
+      supabase.from("rooms").update({ sort_order: bSort }).eq("room_number", a.room_number),
+      supabase.from("rooms").update({ sort_order: aSort }).eq("room_number", b.room_number),
+    ]);
+    for (const r of results) {
+      if (r.error) toast.error(r.error.message);
+    }
+    qc.invalidateQueries({ queryKey: ["rooms"] });
   };
 
   const computeTotals = (): { rows: SnapshotRow[]; grand: number } => {
