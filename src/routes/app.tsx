@@ -2339,7 +2339,10 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
                               "h-9 w-9 rounded-full border-2 transition",
                               item.color === key ? "ring-2 ring-offset-1 ring-foreground" : "",
                             )}
-                            style={{ backgroundColor: COLOR_SWATCHES[key].solid, borderColor: COLOR_SWATCHES[key].solid }}
+                            style={{
+                              backgroundColor: theme === "dark" ? COLOR_SWATCHES[key].darkBg : COLOR_SWATCHES[key].bg,
+                              borderColor: COLOR_SWATCHES[key].border,
+                            }}
                           />
                         ))}
                         <button
