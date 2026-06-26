@@ -69,7 +69,7 @@ const DialogHeader = ({ className, ...props }: React.HTMLAttributes<HTMLDivEleme
       // Pin title / description to the top of the dialog so they stay visible
       // while body content scrolls underneath. Right padding leaves room for
       // the absolute Close chip.
-      "sticky top-0 z-20 bg-background pb-3 pr-20",
+      "sticky top-0 z-20 bg-background pb-3 pr-10",
       "flex flex-col space-y-1.5 text-left",
       className,
     )}
