@@ -58,12 +58,12 @@ function Chip({
       disabled={disabled}
       onClick={onClick}
       className={cn(
-        "inline-flex items-center gap-1.5 rounded-full border bg-background px-3 min-h-9 text-xs font-medium transition-colors hover:bg-accent disabled:opacity-60 disabled:cursor-not-allowed",
+        "w-full inline-flex items-center justify-center gap-1.5 rounded-full border bg-background px-3 min-h-9 text-xs font-medium transition-colors hover:bg-accent disabled:opacity-60 disabled:cursor-not-allowed",
         selected && "border-primary bg-primary/10 text-primary",
       )}
     >
       {selected && <Check className="h-3.5 w-3.5" />}
-      <span>{label}</span>
+      <span className="truncate">{label}</span>
     </button>
   );
 }
@@ -125,7 +125,7 @@ export function QuickReceptionSheet({
                     <div className="w-14 shrink-0 text-[10px] font-semibold uppercase tracking-wide text-muted-foreground pt-1.5">
                       Status
                     </div>
-                    <div className="flex flex-wrap gap-1.5">
+                    <div className="grid grid-cols-2 gap-1.5 flex-1 min-w-0">
                       {statuses.map((s) => {
                         const selected = currentStatus === s.id;
                         return (
@@ -148,7 +148,7 @@ export function QuickReceptionSheet({
                     <div className="w-14 shrink-0 text-[10px] font-semibold uppercase tracking-wide text-muted-foreground pt-1.5">
                       Bed
                     </div>
-                    <div className="flex flex-wrap gap-1.5">
+                    <div className="grid grid-cols-2 gap-1.5 flex-1 min-w-0">
                       {filtered.map((b) => {
                         const lockedDouble =
                           onlyDouble && norm(b.label) === "double";
