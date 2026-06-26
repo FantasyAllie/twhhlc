@@ -2339,7 +2339,10 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
                               "h-9 w-9 rounded-full border-2 transition",
                               item.color === key ? "ring-2 ring-offset-1 ring-foreground" : "",
                             )}
-                            style={{ backgroundColor: COLOR_SWATCHES[key].solid, borderColor: COLOR_SWATCHES[key].solid }}
+                            style={{
+                              backgroundColor: theme === "dark" ? COLOR_SWATCHES[key].darkBg : COLOR_SWATCHES[key].bg,
+                              borderColor: COLOR_SWATCHES[key].border,
+                            }}
                           />
                         ))}
                         <button
@@ -3450,22 +3453,22 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
           Rejects always stays at the end.
         </DialogDescription>
         <div className="mt-4 grid w-full grid-cols-2 gap-3">
-          <Button variant="outline" size="sm" className="min-w-0 justify-center gap-1.5 px-2" onClick={() => setRoomTypesSheetOpen(true)}>
+          <Button variant="outline" size="sm" className="min-w-0 justify-center gap-1.5 px-3 rounded-full" onClick={() => setRoomTypesSheetOpen(true)}>
             <Bed className="h-4 w-4 shrink-0" />
             <span className="truncate">Room Type</span>
           </Button>
-          <Button variant="outline" size="sm" className="min-w-0 justify-center gap-1.5 px-2" onClick={() => setRoomFeaturesSheetOpen(true)}>
+          <Button variant="outline" size="sm" className="min-w-0 justify-center gap-1.5 px-3 rounded-full" onClick={() => setRoomFeaturesSheetOpen(true)}>
             <List className="h-4 w-4 shrink-0" />
             <span className="truncate">Features</span>
           </Button>
-          <Button variant="outline" size="sm" className="min-w-0 justify-center gap-1.5 px-2" onClick={() => setReceptionItemsSheetOpen(true)}>
+          <Button variant="outline" size="sm" className="min-w-0 justify-center gap-1.5 px-3 rounded-full" onClick={() => setReceptionItemsSheetOpen(true)}>
             <ConciergeBell className="h-4 w-4 shrink-0" />
             <span className="truncate">Reception</span>
           </Button>
           <Button
             variant="outline"
             size="sm"
-            className="min-w-0 justify-center gap-1.5 px-2"
+            className="min-w-0 justify-center gap-1.5 px-3 rounded-full"
             onClick={() => {
               const used = new Set(rooms.map((r) => r.room_number));
               let suggested = 1;
