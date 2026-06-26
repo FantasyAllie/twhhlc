@@ -3775,14 +3775,14 @@ useEffect(() => {
  </section>
  </div>
 
- <Dialog open={openRoom !== null} onOpenChange={(o) => { if (!o) { if (openRoom !== null) setShowAllLinen(prev => ({ ...prev, [openRoom]: false })); setOpenRoom(null); setNewMessageText(""); } }}>
-   <DialogContent className="max-w-2xl p-4 sm:p-6">
-    <DialogHeader className="space-y-0">
-      <DialogTitle>Room {openRoom} — {categoryLabel(roomCategory(openRoom ?? 0), roomTypes)}</DialogTitle>
-    </DialogHeader>
-   {openRoom !== null && renderRoomPanel(openRoom)}
-  </DialogContent>
- </Dialog>
+ <Sheet open={openRoom !== null} onOpenChange={(o) => { if (!o) { if (openRoom !== null) setShowAllLinen(prev => ({ ...prev, [openRoom]: false })); setOpenRoom(null); setNewMessageText(""); } }}>
+   <SheetContent side="bottom" className="max-h-[90vh] overflow-y-auto rounded-t-2xl p-4 sm:p-6">
+     <SheetHeader className="text-left space-y-0">
+       <SheetTitle>Room {openRoom} — {categoryLabel(roomCategory(openRoom ?? 0), roomTypes)}</SheetTitle>
+     </SheetHeader>
+     {openRoom !== null && renderRoomPanel(openRoom)}
+   </SheetContent>
+ </Sheet>
 
  <Dialog open={exportOpen} onOpenChange={setExportOpen}>
 <DialogContent className="max-w-md w-[calc(100vw-1.5rem)] sm:w-full p-4 sm:p-6">
