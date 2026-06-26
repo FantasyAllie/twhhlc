@@ -136,6 +136,51 @@ function AppPage() {
   useEffect(() => {
     document.title = "Three Ways House Hotel Housekeeping";
   }, []);
+  // Mobile keyboard: keep the focused input visible above the on-screen keyboard.
+  // We listen to focus on form controls and use visualViewport to detect when the
+  // keyboard reduces the visible area, then scroll the field into view.
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    const vv = window.visualViewport;
+
+    const isEditable = (el: EventTarget | null): el is HTMLElement => {
+      if (!(el instanceof HTMLElement)) return false;
+      const tag = el.tagName;
+      if (tag === "INPUT") {
+        const type = (el as HTMLInputElement).type;
+        // Skip controls that don't open a keyboard.
+        return !["checkbox", "radio", "range", "color", "file", "button", "submit", "reset"].includes(type);
+      }
+      return tag === "TEXTAREA" || el.isContentEditable;
+    };
+
+    const scrollFocused = () => {
+      const el = document.activeElement;
+      if (!isEditable(el)) return;
+      // Wait one frame so the viewport has resized for the keyboard.
+      requestAnimationFrame(() => {
+        const rect = el.getBoundingClientRect();
+        const visibleBottom = vv ? vv.height + vv.offsetTop : window.innerHeight;
+        const margin = 24;
+        if (rect.bottom > visibleBottom - margin || rect.top < margin) {
+          el.scrollIntoView({ block: "center", behavior: "smooth" });
+        }
+      });
+    };
+
+    const onFocusIn = (e: FocusEvent) => {
+      if (!isEditable(e.target)) return;
+      // Defer to allow the keyboard to start opening.
+      setTimeout(scrollFocused, 250);
+    };
+
+    document.addEventListener("focusin", onFocusIn);
+    vv?.addEventListener("resize", scrollFocused);
+    return () => {
+      document.removeEventListener("focusin", onFocusIn);
+      vv?.removeEventListener("resize", scrollFocused);
+    };
+  }, []);
   // Realtime: push room status changes to all signed-in clients (esp. reception)
   useEffect(() => {
     if (!authUser) return;
