@@ -199,19 +199,21 @@ export function NotificationsSheet({
               Notify me about
             </p>
             <div className="space-y-2">
-              <PrefRow
-                label={userRole === "reception" ? "New message from housekeeping" : "New message from reception"}
-                checked={prefs.messages_enabled}
-                onChange={(v) => void updatePref({ messages_enabled: v })}
-              />
               {userRole !== "reception" && (
+                <PrefRow
+                  label="New message from reception"
+                  checked={prefs.messages_enabled}
+                  onChange={(v) => void updatePref({ messages_enabled: v })}
+                />
+              )}
+              {userRole === "admin" && (
                 <PrefRow
                   label="A room is marked checked out by reception"
                   checked={prefs.checkout_enabled}
                   onChange={(v) => void updatePref({ checkout_enabled: v })}
                 />
               )}
-              {userRole !== "user" && (
+              {userRole === "admin" && (
                 <PrefRow
                   label="A room is marked done by housekeeping"
                   checked={prefs.done_enabled}
