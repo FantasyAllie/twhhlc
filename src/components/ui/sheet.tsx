@@ -31,7 +31,7 @@ const SheetOverlay = React.forwardRef<
 SheetOverlay.displayName = SheetPrimitive.Overlay.displayName;
 
 const sheetVariants = cva(
-  "fixed z-50 gap-4 bg-background p-6 shadow-lg transition ease-in-out data-[state=closed]:duration-300 data-[state=open]:duration-500 data-[state=open]:animate-in data-[state=closed]:animate-out",
+  "fixed z-50 flex flex-col gap-0 bg-background p-6 shadow-lg transition ease-in-out data-[state=closed]:duration-300 data-[state=open]:duration-500 data-[state=open]:animate-in data-[state=closed]:animate-out",
   {
     variants: {
       side: {
@@ -93,7 +93,7 @@ const SheetHeader = ({ className, ...props }: React.HTMLAttributes<HTMLDivElemen
       // Pin the title / description / close button to the top of the sheet
       // so they stay visible while the body content scrolls underneath.
       // bg-background keeps scrolled content from showing through.
-      "sticky top-0 z-20 bg-background pb-4",
+      "sticky top-0 z-20 bg-background pb-3",
       "flex flex-col space-y-3 text-center sm:text-left",
       className,
     )}
