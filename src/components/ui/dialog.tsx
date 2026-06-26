@@ -40,7 +40,7 @@ const DialogContent = React.forwardRef<
       className={cn(
         // Slide-up bottom sheet (mobile) / centered modal (desktop), matching
         // the Sheet component so all popups feel consistent.
-        "fixed z-50 inset-x-0 bottom-0 !w-full !max-w-none flex flex-col gap-4 bg-background p-6 shadow-lg border-t rounded-t-2xl max-h-[90vh] overflow-hidden",
+        "fixed z-50 inset-x-0 bottom-0 left-0 right-0 !w-full !max-w-none flex flex-col gap-4 bg-background p-6 shadow-lg border-t rounded-t-2xl max-h-[90vh] overflow-hidden",
         "pb-[max(1.25rem,calc(env(safe-area-inset-bottom)+0.75rem))] lg:pb-6",
         "transition ease-in-out data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:duration-300 data-[state=open]:duration-500 data-[state=closed]:slide-out-to-bottom data-[state=open]:slide-in-from-bottom",
         "lg:inset-x-auto lg:bottom-auto lg:top-1/2 lg:left-1/2 lg:!w-[calc(100vw-2rem)] lg:!max-w-2xl lg:-translate-x-1/2 lg:-translate-y-1/2 lg:rounded-2xl lg:border lg:max-h-[85vh]",
@@ -55,7 +55,7 @@ const DialogContent = React.forwardRef<
         <X className="h-3.5 w-3.5" />
         <span>Close</span>
       </DialogPrimitive.Close>
-      <div className="flex-1 min-h-0 overflow-y-auto flex flex-col gap-4 -mx-2 px-2">
+      <div className="flex-1 min-h-0 overflow-y-auto flex flex-col gap-4">
         {children}
       </div>
     </DialogPrimitive.Content>
@@ -67,10 +67,9 @@ const DialogHeader = ({ className, ...props }: React.HTMLAttributes<HTMLDivEleme
   <div
     className={cn(
       // Pin title / description to the top of the dialog so they stay visible
-      // while body content scrolls underneath. Right padding leaves room for
-      // the absolute Close chip.
-      "sticky top-0 z-20 bg-background pb-3 pr-10",
-      "flex flex-col space-y-1.5 text-left",
+      // while body content scrolls underneath.
+      "sticky top-0 z-20 bg-background pb-4",
+      "flex flex-col space-y-3 text-left",
       className,
     )}
     {...props}
@@ -92,7 +91,7 @@ const DialogTitle = React.forwardRef<
 >(({ className, ...props }, ref) => (
   <DialogPrimitive.Title
     ref={ref}
-    className={cn("text-lg font-semibold leading-none tracking-tight", className)}
+    className={cn("pr-16 text-lg font-semibold leading-none tracking-tight", className)}
     {...props}
   />
 ));
@@ -104,7 +103,7 @@ const DialogDescription = React.forwardRef<
 >(({ className, ...props }, ref) => (
   <DialogPrimitive.Description
     ref={ref}
-    className={cn("text-sm text-muted-foreground", className)}
+    className={cn("text-sm leading-relaxed text-muted-foreground", className)}
     {...props}
   />
 ));
