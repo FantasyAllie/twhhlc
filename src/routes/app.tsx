@@ -42,6 +42,7 @@ import {
   SheetHeader,
   SheetTitle,
   SheetDescription,
+  SheetTrigger,
 } from "@/components/ui/sheet";
 import { useTheme } from "@/components/theme-provider";
 
@@ -216,6 +217,9 @@ useEffect(() => {
   const [newTemplateName, setNewTemplateName] = useState("");
   const [editingItemId, setEditingItemId] = useState<string | null>(null);
   const [editingItemName, setEditingItemName] = useState("");
+  const [exportSheetOpen, setExportSheetOpen] = useState(false);
+  const [editItemSheetId, setEditItemSheetId] = useState<string | null>(null);
+  const [filtersSheetOpen, setFiltersSheetOpen] = useState(false);
   const [addRoomTypeOpen, setAddRoomTypeOpen] = useState(false);
   const [newRoomTypeLabel, setNewRoomTypeLabel] = useState("");
   const [addRoomFeatureOpen, setAddRoomFeatureOpen] = useState(false);
@@ -2043,21 +2047,37 @@ useEffect(() => {
           </div>
  <div className="flex items-center gap-2">
     {isAdmin && (
-     <DropdownMenu>
-       <DropdownMenuTrigger asChild>
-         <Button variant="outline" size="sm">Export</Button>
-       </DropdownMenuTrigger>
-       <DropdownMenuContent align="end">
-         <DropdownMenuItem onSelect={() => { openExport(); }}>
-           <List className="h-4 w-4 mr-2" />
-           Linen totals
-         </DropdownMenuItem>
-         <DropdownMenuItem onSelect={() => { openRoomStatusExport(); }}>
-           <ClipboardList className="h-4 w-4 mr-2" />
-           Room status
-         </DropdownMenuItem>
-       </DropdownMenuContent>
-     </DropdownMenu>
+      <Sheet open={exportSheetOpen} onOpenChange={setExportSheetOpen}>
+        <SheetTrigger asChild>
+          <Button variant="outline" size="sm">Export</Button>
+        </SheetTrigger>
+        <SheetContent side="bottom" className="max-h-[85vh] overflow-y-auto rounded-t-2xl p-4 sm:p-6">
+          <SheetHeader className="text-left">
+            <SheetTitle>Export</SheetTitle>
+            <SheetDescription>Choose what to export.</SheetDescription>
+          </SheetHeader>
+          <div className="mt-4 grid gap-2">
+            <Button
+              variant="outline"
+              size="lg"
+              className="justify-start h-12"
+              onClick={() => { setExportSheetOpen(false); openExport(); }}
+            >
+              <List className="h-5 w-5 mr-2" />
+              Linen totals
+            </Button>
+            <Button
+              variant="outline"
+              size="lg"
+              className="justify-start h-12"
+              onClick={() => { setExportSheetOpen(false); openRoomStatusExport(); }}
+            >
+              <ClipboardList className="h-5 w-5 mr-2" />
+              Room status
+            </Button>
+          </div>
+        </SheetContent>
+      </Sheet>
    )}
     {isReception && (
       <Button
@@ -2161,8 +2181,11 @@ useEffect(() => {
               />
               <span className="flex-1 min-w-0 break-words text-sm">{item.name}</span>
               <div className="flex items-center gap-1 shrink-0">
-                <Popover>
-                  <PopoverTrigger asChild>
+                <Sheet
+                  open={editItemSheetId === item.id}
+                  onOpenChange={(o) => setEditItemSheetId(o ? item.id : null)}
+                >
+                  <SheetTrigger asChild>
                     <Button
                       variant="ghost"
                       size="icon"
@@ -2172,8 +2195,13 @@ useEffect(() => {
                     >
                       <Pencil className="h-4 w-4" />
                     </Button>
-                  </PopoverTrigger>
-                  <PopoverContent align="end" className="w-64 p-3 space-y-3">
+                  </SheetTrigger>
+                  <SheetContent side="bottom" className="max-h-[85vh] overflow-y-auto rounded-t-2xl p-4 sm:p-6">
+                    <SheetHeader className="text-left">
+                      <SheetTitle>Edit item</SheetTitle>
+                      <SheetDescription>{item.name}</SheetDescription>
+                    </SheetHeader>
+                    <div className="mt-4 space-y-4">
                     <div className="space-y-1">
                       <label className="text-xs font-medium text-muted-foreground">Name</label>
                       <form
@@ -2181,7 +2209,7 @@ useEffect(() => {
                           e.preventDefault();
                           renameTemplateItem(item.id, editingItemName);
                         }}
-                        className="flex items-center gap-1"
+                        className="flex items-center gap-2"
                       >
                         <Input
                           autoFocus
@@ -2194,16 +2222,16 @@ useEffect(() => {
                           onBlur={() => {
                             if (editingItemId === item.id) renameTemplateItem(item.id, editingItemName);
                           }}
-                          className="h-8 flex-1"
+                          className="h-11 flex-1"
                         />
                         <Button
                           type="submit"
                           variant="ghost"
                           size="icon"
-                          className="h-8 w-8 text-muted-foreground"
+                          className="h-11 w-11 text-muted-foreground"
                           aria-label="Save name"
                         >
-                          <Check className="h-4 w-4" />
+                          <Check className="h-5 w-5" />
                         </Button>
                       </form>
                     </div>
@@ -2214,12 +2242,12 @@ useEffect(() => {
                         min={0}
                         value={item.default_count}
                         onChange={(e) => setTemplateDefault(item.id, Number(e.target.value))}
-                        className="h-8 w-20"
+                        className="h-11 w-24"
                       />
                     </div>
                     <div className="space-y-1">
                       <label className="text-xs font-medium text-muted-foreground">Colour</label>
-                      <div className="flex items-center gap-1.5">
+                      <div className="flex items-center gap-2 flex-wrap">
                         {(Object.keys(COLOR_SWATCHES) as ItemColor[]).map((key) => (
                           <button
                             key={key}
@@ -2228,7 +2256,7 @@ useEffect(() => {
                             aria-label={COLOR_SWATCHES[key].label}
                             title={COLOR_SWATCHES[key].label}
                             className={cn(
-                              "h-6 w-6 rounded-full border-2 transition",
+                              "h-9 w-9 rounded-full border-2 transition",
                               item.color === key ? "ring-2 ring-offset-1 ring-foreground" : "",
                             )}
                             style={{ backgroundColor: COLOR_SWATCHES[key].solid, borderColor: COLOR_SWATCHES[key].solid }}
@@ -2240,41 +2268,42 @@ useEffect(() => {
                           aria-label="No colour"
                           title="No colour"
                           className={cn(
-                            "h-6 w-6 rounded-full border-2 flex items-center justify-center bg-background",
+                            "h-9 w-9 rounded-full border-2 flex items-center justify-center bg-background",
                             item.color === null ? "ring-2 ring-offset-1 ring-foreground" : "",
                           )}
                         >
-                          <X className="h-3 w-3 text-muted-foreground" />
+                          <X className="h-4 w-4 text-muted-foreground" />
                         </button>
                       </div>
                     </div>
-                    <div className="flex items-center justify-between pt-1 border-t">
-                      <span className="text-xs text-muted-foreground">Reorder</span>
-                      <div className="flex items-center gap-1">
+                    <div className="flex items-center justify-between pt-3 border-t">
+                      <span className="text-sm text-muted-foreground">Reorder</span>
+                      <div className="flex items-center gap-2">
                         <Button
-                          variant="ghost"
+                          variant="outline"
                           size="icon"
-                          className="h-8 w-8 text-muted-foreground"
+                          className="h-11 w-11"
                           onClick={() => moveTemplateItem(item.id, -1)}
                           disabled={idx === 0}
                           aria-label="Move up"
                         >
-                          <ArrowUp className="h-4 w-4" />
+                          <ArrowUp className="h-5 w-5" />
                         </Button>
                         <Button
-                          variant="ghost"
+                          variant="outline"
                           size="icon"
-                          className="h-8 w-8 text-muted-foreground"
+                          className="h-11 w-11"
                           onClick={() => moveTemplateItem(item.id, 1)}
                           disabled={idx === template.length - 1}
                           aria-label="Move down"
                         >
-                          <ArrowDown className="h-4 w-4" />
+                          <ArrowDown className="h-5 w-5" />
                         </Button>
                       </div>
                     </div>
-                  </PopoverContent>
-                </Popover>
+                    </div>
+                  </SheetContent>
+                </Sheet>
                 <Button
                   variant="ghost"
                   size="icon"
@@ -3425,78 +3454,95 @@ useEffect(() => {
     {isReception && (roomFeatures.length > 0 || receptionStatuses.length > 0) && (() => {
       const totalSelected = receptionFeatureFilter.length + receptionStatusFilter.length;
       return (
-        <DropdownMenu>
-          <DropdownMenuTrigger asChild>
+        <Sheet open={filtersSheetOpen} onOpenChange={setFiltersSheetOpen}>
+          <SheetTrigger asChild>
             <Button variant="outline" size="sm" className="h-7 gap-1.5 text-xs">
               <Filter className="h-3.5 w-3.5" />
               {totalSelected === 0 ? "Filters" : `Filters · ${totalSelected}`}
             </Button>
-          </DropdownMenuTrigger>
-          <DropdownMenuContent align="end" className="max-h-[70vh] overflow-y-auto w-56">
-            {receptionStatuses.length > 0 && (
-              <>
-                <DropdownMenuLabel className="text-xs">Status</DropdownMenuLabel>
-                <DropdownMenuSeparator />
-                {[...receptionStatuses]
-                  .sort((a, b) => a.label.localeCompare(b.label))
-                  .map((s) => {
-                    const display = s.label === "Out of Service" ? "Room out of Service" : s.label;
-                    return (
-                      <DropdownMenuCheckboxItem
-                        key={s.id}
-                        checked={receptionStatusFilter.includes(s.id)}
-                        onCheckedChange={(checked) => {
-                          setReceptionStatusFilter((prev) =>
-                            checked ? [...prev, s.id] : prev.filter((id) => id !== s.id),
-                          );
-                        }}
-                        onSelect={(e) => e.preventDefault()}
-                      >
-                        {display}
-                      </DropdownMenuCheckboxItem>
-                    );
-                  })}
-              </>
-            )}
-            {roomFeatures.length > 0 && (
-              <>
-                {receptionStatuses.length > 0 && <DropdownMenuSeparator />}
-                <DropdownMenuLabel className="text-xs">Features</DropdownMenuLabel>
-                <DropdownMenuSeparator />
-                {[...roomFeatures]
-                  .sort((a, b) => a.label.localeCompare(b.label))
-                  .map((f) => (
-                    <DropdownMenuCheckboxItem
-                      key={f.id}
-                      checked={receptionFeatureFilter.includes(f.id)}
-                      onCheckedChange={(checked) => {
-                        setReceptionFeatureFilter((prev) =>
-                          checked ? [...prev, f.id] : prev.filter((id) => id !== f.id),
+          </SheetTrigger>
+          <SheetContent side="bottom" className="max-h-[85vh] overflow-y-auto rounded-t-2xl p-4 sm:p-6">
+            <SheetHeader className="text-left">
+              <SheetTitle>Filters</SheetTitle>
+              <SheetDescription>
+                {totalSelected === 0 ? "Filter rooms by status and features." : `${totalSelected} active`}
+              </SheetDescription>
+            </SheetHeader>
+            <div className="mt-4 space-y-5">
+              {receptionStatuses.length > 0 && (
+                <div className="space-y-2">
+                  <p className="text-xs font-medium text-muted-foreground uppercase tracking-wide">Status</p>
+                  <div className="grid gap-1">
+                    {[...receptionStatuses]
+                      .sort((a, b) => a.label.localeCompare(b.label))
+                      .map((s) => {
+                        const display = s.label === "Out of Service" ? "Room out of Service" : s.label;
+                        const checked = receptionStatusFilter.includes(s.id);
+                        return (
+                          <label
+                            key={s.id}
+                            className="flex items-center gap-3 py-2.5 px-2 rounded-md hover:bg-muted cursor-pointer"
+                          >
+                            <Checkbox
+                              checked={checked}
+                              onCheckedChange={(c) => {
+                                setReceptionStatusFilter((prev) =>
+                                  c ? [...prev, s.id] : prev.filter((id) => id !== s.id),
+                                );
+                              }}
+                            />
+                            <span className="text-sm flex-1">{display}</span>
+                          </label>
                         );
-                      }}
-                      onSelect={(e) => e.preventDefault()}
-                    >
-                      {f.label}
-                    </DropdownMenuCheckboxItem>
-                  ))}
-              </>
-            )}
-            {totalSelected > 0 && (
-              <>
-                <DropdownMenuSeparator />
-                <DropdownMenuItem
-                  onSelect={() => {
+                      })}
+                  </div>
+                </div>
+              )}
+              {roomFeatures.length > 0 && (
+                <div className="space-y-2">
+                  <p className="text-xs font-medium text-muted-foreground uppercase tracking-wide">Features</p>
+                  <div className="grid gap-1">
+                    {[...roomFeatures]
+                      .sort((a, b) => a.label.localeCompare(b.label))
+                      .map((f) => {
+                        const checked = receptionFeatureFilter.includes(f.id);
+                        return (
+                          <label
+                            key={f.id}
+                            className="flex items-center gap-3 py-2.5 px-2 rounded-md hover:bg-muted cursor-pointer"
+                          >
+                            <Checkbox
+                              checked={checked}
+                              onCheckedChange={(c) => {
+                                setReceptionFeatureFilter((prev) =>
+                                  c ? [...prev, f.id] : prev.filter((id) => id !== f.id),
+                                );
+                              }}
+                            />
+                            <span className="text-sm flex-1">{f.label}</span>
+                          </label>
+                        );
+                      })}
+                  </div>
+                </div>
+              )}
+              {totalSelected > 0 && (
+                <Button
+                  variant="outline"
+                  size="lg"
+                  className="w-full h-12"
+                  onClick={() => {
                     setReceptionFeatureFilter([]);
                     setReceptionStatusFilter([]);
                   }}
                 >
-                  <X className="h-4 w-4 mr-2" />
+                  <X className="h-5 w-5 mr-2" />
                   Clear filters
-                </DropdownMenuItem>
-              </>
-            )}
-          </DropdownMenuContent>
-        </DropdownMenu>
+                </Button>
+              )}
+            </div>
+          </SheetContent>
+        </Sheet>
       );
     })()}
    {!isReception && (
