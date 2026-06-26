@@ -12,6 +12,7 @@ import { setSession } from "@/lib/auth-client";
 import { notifyRoomEvent } from "@/lib/push.functions";
 import { NotificationsSheet } from "@/components/notifications-sheet";
 import { UsersDialog } from "@/components/users-dialog";
+import { QuickReceptionSheet } from "@/components/quick-reception-sheet";
 import { useServerFn } from "@tanstack/react-start";
 import { updateMyPassword, updateMyUsername } from "@/lib/auth.functions";
 import {
@@ -278,6 +279,7 @@ useEffect(() => {
   const [noteDraft, setNoteDraft] = useState<Record<number, string>>({});
   const [notesSheetRoom, setNotesSheetRoom] = useState<number | null>(null);
   const [receptionSheetRoom, setReceptionSheetRoom] = useState<number | null>(null);
+  const [quickReceptionOpen, setQuickReceptionOpen] = useState(false);
   const [editDefaultsSheetRoom, setEditDefaultsSheetRoom] = useState<number | null>(null);
   const [editRoomSheetNumber, setEditRoomSheetNumber] = useState<number | null>(null);
   const [menuSheetOpen, setMenuSheetOpen] = useState(false);
@@ -2653,6 +2655,20 @@ useEffect(() => {
              </SheetTitle>
              <SheetDescription>Mark status and bed configuration</SheetDescription>
            </SheetHeader>
+            <div className="mt-2">
+              <Button
+                type="button"
+                size="sm"
+                variant="outline"
+                className="w-full"
+                onClick={() => {
+                  setReceptionSheetRoom(null);
+                  setQuickReceptionOpen(true);
+                }}
+              >
+                Edit all rooms
+              </Button>
+            </div>
            <div className="mt-4 space-y-4">
              <div className="space-y-2">
                <Row
@@ -2758,6 +2774,14 @@ useEffect(() => {
                 <Row icon={Hash} label="Manage Rooms" onClick={() => { close(); setManageRoomsOpen(true); }} />
                 <Row icon={Ban} label="Rejects" onClick={() => { close(); setRejectsOpen(true); }} />
                 <Row icon={History} label="History" onClick={() => { close(); setHistorySheetOpen(true); }} />
+              </div>
+            </div>
+          )}
+          {(isAdmin || isReception) && (
+            <div className="space-y-2">
+              <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">Reception</p>
+              <div className="space-y-1.5">
+                <Row icon={ConciergeBell} label="Quick reception setup" onClick={() => { close(); setQuickReceptionOpen(true); }} />
               </div>
             </div>
           )}
@@ -4177,6 +4201,21 @@ useEffect(() => {
     onViewAsRoleChange={(r) => setViewAsRole(r)}
   />
   <UsersDialog open={usersOpen} onOpenChange={setUsersOpen} />
+  <QuickReceptionSheet
+    open={quickReceptionOpen}
+    onOpenChange={setQuickReceptionOpen}
+    rooms={rooms.map((r) => ({
+      room_number: r.room_number,
+      category: r.category,
+      reception_status_id: r.reception_status_id,
+      reception_bed_id: r.reception_bed_id,
+      default_status: r.default_status,
+    }))}
+    statuses={receptionStatuses.map((s) => ({ id: s.id, label: s.label }))}
+    beds={receptionBeds.map((b) => ({ id: b.id, label: b.label }))}
+    onChangeStatus={setRoomReceptionStatus}
+    onChangeBed={setRoomReceptionBed}
+  />
  </main>
  );
 }

@@ -1,82 +1,66 @@
-# Push notifications for installed PWA
+## Goal
 
-Add Web Push (VAPID) notifications so signed-in users can opt in and receive alerts for room messages, check-outs, and rooms marked done — on Android Chrome, desktop browsers, and iOS 16.4+ when the app is installed to the Home Screen.
+Make it fast to set the **reception status** and **bed type** for many rooms in one place, without opening each room individually. Today you have to tap a room → open its reception sheet → pick status → pick bed → close → repeat. The new view shows every room at once with one-tap chips.
 
-## What users will see
+## What you'll see
 
-- A **"Enable notifications"** toggle in the user menu/header (only shown when the browser supports push). First tap requests browser permission and registers the device.
-- A short hint on iOS Safari explaining: "Install to Home Screen first, then enable notifications" (since iOS only supports push for installed PWAs).
-- A small "Test notification" button right under the toggle so users can confirm it works.
-- System notifications that tap-through to `/app` and the relevant room when clicked.
+A new full-height sheet titled **"Quick reception setup"**.
 
-## Events that trigger a notification
+Inside it: a single scrolling list, one row per room, sorted by room number.
 
-1. **New room message** — sent to all opted-in users whose role is the opposite of the sender (housekeeping ↔ reception). Title: `Room {n} — Message from {sender}`, body: the message text.
-2. **Guest checked out** — when reception flips `guest_vacated` to true. Sent to all opted-in housekeeping users. Title: `Room {n} — Guest checked out`.
-3. **Room marked done** — when housekeeping flips `done` to true. Sent to all opted-in reception users. Title: `Room {n} — Marked done`.
+Each room row shows:
 
-Self-notifications are suppressed (the user who triggered the event does not get pinged).
+```text
+┌───────────────────────────────────────────────────────────┐
+│ Room 101            (room type label, small, muted)       │
+│                                                           │
+│ Status:  [ Vacant ] [ Occupied ] [ Arrival ] [ Departure ]│
+│ Bed:     [ Single ] [ Double  ] [ Twin    ]               │
+└───────────────────────────────────────────────────────────┘
+```
 
-## Technical details
+- Each chip is a tap target. Tapping a chip selects it; tapping the already-selected chip clears it back to "no override" (same toggle behavior as the current single-room reception sheet).
+- The currently-selected chip is filled (matches the existing `Row selected` visual from the reception sheet, but rendered horizontally as pills).
+- Bed chips are filtered by room category the same way the single-room sheet filters them, including the "double-only" lock (the Double chip is shown pre-selected and disabled for those rooms).
+- No Save button. Each tap writes immediately, with the same optimistic update + Supabase upsert the single-room sheet already uses.
+- No search/filter. Full list, scroll to the room you want.
 
-### VAPID keys
-- Generate a VAPID key pair once and store:
-  - `VAPID_PUBLIC_KEY` — also exposed as `VITE_VAPID_PUBLIC_KEY` for the client
-  - `VAPID_PRIVATE_KEY` — server-only
-  - `VAPID_SUBJECT` — `mailto:` contact (asked from user, or default to a placeholder)
+## Where it opens from
 
-### Database
-New migration adds:
+Two entry points, both opening the same sheet:
 
-- `push_subscriptions` table — one row per device/browser per user
-  - `id uuid pk`, `user_id uuid` (auth.users), `endpoint text unique`, `p256dh text`, `auth text`, `user_agent text`, `created_at`, `last_used_at`
-  - RLS: users can select/insert/update/delete only their own rows; service_role full access
-  - Standard GRANTs
+1. **Settings menu → Manage section** — new row `Quick reception setup` (icon: `ConciergeBell` or `ClipboardList`, matching existing menu icons), placed under "History".
+2. **Inside any room's reception sheet** — a small secondary button at the top right of the sheet header, label `Edit all rooms`. Tapping it closes the single-room sheet and opens the bulk sheet.
 
-- `notification_preferences` table — per-user opt-in toggle
-  - `user_id uuid pk`, `messages_enabled bool default true`, `checkout_enabled bool default true`, `done_enabled bool default true`
-  - RLS owner-only; standard GRANTs
+Both are gated by the same role check the current reception sheet uses (admin or reception — match the existing visibility rules; no new permissions).
 
-### Service worker
-Add `public/sw.js` (kept tiny — push + notificationclick only, not an app-shell cache). Registered from a guarded wrapper that refuses to register in Lovable preview/dev/iframe contexts (per PWA skill rules). Manifest already exists; no offline caching added.
+## How saving works
 
-### Server functions (`src/lib/push.functions.ts`)
-- `subscribeToPush({ endpoint, p256dh, auth, userAgent })` — upserts into `push_subscriptions` for the current user.
-- `unsubscribeFromPush({ endpoint })` — removes the row.
-- `getNotificationPreferences()` / `setNotificationPreferences({...})`.
-- `sendTestNotification()` — sends a push to the caller's own subscriptions.
+- Reuses the existing `setRoomReceptionStatus(n, id)` and `setRoomReceptionBed(n, id)` wrappers (`src/routes/app.tsx` ~1487–1490). Those already do optimistic cache updates and upsert into `rooms` on conflict `user_id,room_number`, then invalidate `["rooms"]`.
+- No new server function, no new table, no new migration. Same write path as the per-room sheet, so realtime/notifications behave identically.
 
-All use `requireSupabaseAuth`. Sending pushes uses the `web-push` npm package (Worker-compatible build) signed with the VAPID keys; failed/expired endpoints (404/410) are pruned automatically.
+## Out of scope
 
-### Fan-out on events
-A single `notifyRoomEvent` server function called by the three existing client mutations after the optimistic Supabase write succeeds:
+- No bulk "apply to all" action (e.g. "set every room to Vacant"). Can be added later if you want it — say the word and I'll fold it in.
+- No grouping by floor/type and no filters (per your answers).
+- No changes to room defaults, room types, linen, or any other room field — only `reception_status_id` and `reception_bed_id`.
 
-- After `submitRoomMessage` — `kind: "message"`, payload `{ room_number, message, sender_username, sender_role }`.
-- After `setRoomGuestVacated(n, true)` — `kind: "checkout"`.
-- After `setDone(n, true)` (housekeeping side) — `kind: "done"`.
+## Technical notes
 
-The server function:
-1. Looks up app_users with the target role (opposite of sender) who have the matching preference enabled.
-2. Loads their `push_subscriptions`.
-3. Sends one web-push request per subscription with `{ title, body, url: "/app?room=" + n, tag: "room-" + n }`.
-4. Excludes the originating user.
+- New component `src/components/quick-reception-sheet.tsx` exporting `QuickReceptionSheet({ open, onOpenChange })`. Self-contained: pulls `rooms`, `reception_items`, and `roomTypes` from the existing React Query keys (`["rooms"]`, `["reception_items"]`, `["room_types"]`) via `useQuery` so it shares cache with the rest of the app and benefits from the same optimistic updates.
+- Reuses the same per-room bed-filtering logic that lives in the reception sheet (extract a small helper `filterBedsForRoom(room, beds, roomTypes)` so both places call the same code instead of duplicating the "only double" rule).
+- Wires in `src/routes/app.tsx`:
+  - Adds `quickReceptionOpen` state.
+  - Adds the "Quick reception setup" row inside the menu's Manage block (`~2756–2762`).
+  - Adds an "Edit all rooms" button to the reception sheet header (`~2660`) that calls `setReceptionSheetRoom(null)` then `setQuickReceptionOpen(true)`.
+  - Renders `<QuickReceptionSheet open={quickReceptionOpen} onOpenChange={setQuickReceptionOpen} />` near the existing dialogs at the bottom of the route.
+- Sheet uses `side="bottom"` with `max-h-[90vh] overflow-y-auto`, matching the existing `exportSheetOpen` / `notificationsSheetOpen` pattern, so it works well on the 390px mobile viewport.
+- Chips are buttons styled with existing token classes (`bg-secondary`, `bg-primary text-primary-foreground` when selected, `opacity-50` when the bed lock applies). No new design tokens, no hardcoded colors.
 
-The trigger lives client-side (post-mutation) rather than as a DB trigger, because Supabase pg-net + edge functions for fan-out adds complexity we don't need at this scale.
+## Acceptance check after build
 
-### UI additions
-- New `NotificationsToggle` component rendered in the existing user dropdown / settings sheet in `src/routes/app.tsx`.
-- Detects support: `"serviceWorker" in navigator && "PushManager" in window && "Notification" in window`.
-- On iOS Safari not installed: shows the install-first hint instead of the toggle.
-- Persists the current device's subscription state by checking the active `PushSubscription` on mount.
-
-## Out of scope (won't be done unless you ask)
-
-- Offline / app-shell caching (notifications only need a tiny SW; full offline is a separate, larger change per PWA skill).
-- Native iOS/Android apps via Capacitor.
-- Email/SMS fallback when a user has no push subscriptions.
-- Quiet hours / per-room mute.
-- Notification history list inside the app.
-
-## What I'll need from you to ship
-
-Just a contact email for the VAPID `subject` (any address — used by push services to contact the sender if there's an abuse issue). I'll generate the VAPID keys automatically and store them as secrets.
+- Open menu → tap **Quick reception setup** → sheet opens listing every room.
+- Tap a Status chip on room 101 → row updates instantly, close sheet, reopen the single-room reception sheet for 101 → same status is shown.
+- Tap the already-selected Status chip → it clears (back to default).
+- Open a single room's reception sheet → tap **Edit all rooms** → bulk sheet opens with the room you just edited reflecting its new value.
+- Double-only rooms show Double pre-selected, chip disabled, no other bed selectable.
