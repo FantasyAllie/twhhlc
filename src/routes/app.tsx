@@ -3454,78 +3454,95 @@ useEffect(() => {
     {isReception && (roomFeatures.length > 0 || receptionStatuses.length > 0) && (() => {
       const totalSelected = receptionFeatureFilter.length + receptionStatusFilter.length;
       return (
-        <DropdownMenu>
-          <DropdownMenuTrigger asChild>
+        <Sheet open={filtersSheetOpen} onOpenChange={setFiltersSheetOpen}>
+          <SheetTrigger asChild>
             <Button variant="outline" size="sm" className="h-7 gap-1.5 text-xs">
               <Filter className="h-3.5 w-3.5" />
               {totalSelected === 0 ? "Filters" : `Filters · ${totalSelected}`}
             </Button>
-          </DropdownMenuTrigger>
-          <DropdownMenuContent align="end" className="max-h-[70vh] overflow-y-auto w-56">
-            {receptionStatuses.length > 0 && (
-              <>
-                <DropdownMenuLabel className="text-xs">Status</DropdownMenuLabel>
-                <DropdownMenuSeparator />
-                {[...receptionStatuses]
-                  .sort((a, b) => a.label.localeCompare(b.label))
-                  .map((s) => {
-                    const display = s.label === "Out of Service" ? "Room out of Service" : s.label;
-                    return (
-                      <DropdownMenuCheckboxItem
-                        key={s.id}
-                        checked={receptionStatusFilter.includes(s.id)}
-                        onCheckedChange={(checked) => {
-                          setReceptionStatusFilter((prev) =>
-                            checked ? [...prev, s.id] : prev.filter((id) => id !== s.id),
-                          );
-                        }}
-                        onSelect={(e) => e.preventDefault()}
-                      >
-                        {display}
-                      </DropdownMenuCheckboxItem>
-                    );
-                  })}
-              </>
-            )}
-            {roomFeatures.length > 0 && (
-              <>
-                {receptionStatuses.length > 0 && <DropdownMenuSeparator />}
-                <DropdownMenuLabel className="text-xs">Features</DropdownMenuLabel>
-                <DropdownMenuSeparator />
-                {[...roomFeatures]
-                  .sort((a, b) => a.label.localeCompare(b.label))
-                  .map((f) => (
-                    <DropdownMenuCheckboxItem
-                      key={f.id}
-                      checked={receptionFeatureFilter.includes(f.id)}
-                      onCheckedChange={(checked) => {
-                        setReceptionFeatureFilter((prev) =>
-                          checked ? [...prev, f.id] : prev.filter((id) => id !== f.id),
+          </SheetTrigger>
+          <SheetContent side="bottom" className="max-h-[85vh] overflow-y-auto rounded-t-2xl p-4 sm:p-6">
+            <SheetHeader className="text-left">
+              <SheetTitle>Filters</SheetTitle>
+              <SheetDescription>
+                {totalSelected === 0 ? "Filter rooms by status and features." : `${totalSelected} active`}
+              </SheetDescription>
+            </SheetHeader>
+            <div className="mt-4 space-y-5">
+              {receptionStatuses.length > 0 && (
+                <div className="space-y-2">
+                  <p className="text-xs font-medium text-muted-foreground uppercase tracking-wide">Status</p>
+                  <div className="grid gap-1">
+                    {[...receptionStatuses]
+                      .sort((a, b) => a.label.localeCompare(b.label))
+                      .map((s) => {
+                        const display = s.label === "Out of Service" ? "Room out of Service" : s.label;
+                        const checked = receptionStatusFilter.includes(s.id);
+                        return (
+                          <label
+                            key={s.id}
+                            className="flex items-center gap-3 py-2.5 px-2 rounded-md hover:bg-muted cursor-pointer"
+                          >
+                            <Checkbox
+                              checked={checked}
+                              onCheckedChange={(c) => {
+                                setReceptionStatusFilter((prev) =>
+                                  c ? [...prev, s.id] : prev.filter((id) => id !== s.id),
+                                );
+                              }}
+                            />
+                            <span className="text-sm flex-1">{display}</span>
+                          </label>
                         );
-                      }}
-                      onSelect={(e) => e.preventDefault()}
-                    >
-                      {f.label}
-                    </DropdownMenuCheckboxItem>
-                  ))}
-              </>
-            )}
-            {totalSelected > 0 && (
-              <>
-                <DropdownMenuSeparator />
-                <DropdownMenuItem
-                  onSelect={() => {
+                      })}
+                  </div>
+                </div>
+              )}
+              {roomFeatures.length > 0 && (
+                <div className="space-y-2">
+                  <p className="text-xs font-medium text-muted-foreground uppercase tracking-wide">Features</p>
+                  <div className="grid gap-1">
+                    {[...roomFeatures]
+                      .sort((a, b) => a.label.localeCompare(b.label))
+                      .map((f) => {
+                        const checked = receptionFeatureFilter.includes(f.id);
+                        return (
+                          <label
+                            key={f.id}
+                            className="flex items-center gap-3 py-2.5 px-2 rounded-md hover:bg-muted cursor-pointer"
+                          >
+                            <Checkbox
+                              checked={checked}
+                              onCheckedChange={(c) => {
+                                setReceptionFeatureFilter((prev) =>
+                                  c ? [...prev, f.id] : prev.filter((id) => id !== f.id),
+                                );
+                              }}
+                            />
+                            <span className="text-sm flex-1">{f.label}</span>
+                          </label>
+                        );
+                      })}
+                  </div>
+                </div>
+              )}
+              {totalSelected > 0 && (
+                <Button
+                  variant="outline"
+                  size="lg"
+                  className="w-full h-12"
+                  onClick={() => {
                     setReceptionFeatureFilter([]);
                     setReceptionStatusFilter([]);
                   }}
                 >
-                  <X className="h-4 w-4 mr-2" />
+                  <X className="h-5 w-5 mr-2" />
                   Clear filters
-                </DropdownMenuItem>
-              </>
-            )}
-          </DropdownMenuContent>
-        </DropdownMenu>
+                </Button>
+              )}
+            </div>
+          </SheetContent>
+        </Sheet>
       );
     })()}
    {!isReception && (
