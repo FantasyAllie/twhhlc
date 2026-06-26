@@ -1,4 +1,4 @@
-import { ConciergeBell, Check } from "lucide-react";
+import { ConciergeBell, Check, RotateCcw } from "lucide-react";
 import { cn } from "@/lib/utils";
 import {
   Sheet,
@@ -76,6 +76,7 @@ export function QuickReceptionSheet({
   beds,
   onChangeStatus,
   onChangeBed,
+  onResetAll,
 }: {
   open: boolean;
   onOpenChange: (o: boolean) => void;
@@ -84,6 +85,7 @@ export function QuickReceptionSheet({
   beds: QuickReceptionItem[];
   onChangeStatus: (roomNumber: number, statusId: string | null) => void;
   onChangeBed: (roomNumber: number, bedId: string | null) => void;
+  onResetAll?: () => void | Promise<void>;
 }) {
   const sorted = [...rooms].sort((a, b) => a.room_number - b.room_number);
 
@@ -103,6 +105,21 @@ export function QuickReceptionSheet({
             chip to clear it. Changes save instantly.
           </SheetDescription>
         </SheetHeader>
+
+        {onResetAll && (
+          <div className="pb-3">
+            <button
+              type="button"
+              onClick={() => void onResetAll()}
+              className={cn(
+                "inline-flex items-center gap-1.5 rounded-full border bg-background px-3 min-h-9 text-xs font-medium transition-colors hover:bg-accent",
+              )}
+            >
+              <RotateCcw className="h-3.5 w-3.5" />
+              <span>Reset all</span>
+            </button>
+          </div>
+        )}
 
         <div className="flex-1 min-h-0 overflow-y-auto divide-y rounded-lg border bg-card">
           {sorted.length === 0 && (
