@@ -91,11 +91,10 @@ const SheetHeader = ({ className, ...props }: React.HTMLAttributes<HTMLDivElemen
   <div
     className={cn(
       // Pin the title / description / close button to the top of the sheet
-      // so it stays visible while the body content scrolls underneath. The
-      // negative horizontal margins + matching padding extend the solid
-      // background to the sheet's edges so scrolled content can't peek out
-      // either side.
-      "sticky top-0 z-20 -mx-4 sm:-mx-6 -mt-4 sm:-mt-6 bg-background px-4 sm:px-6 pt-4 sm:pt-6 pb-3 pr-12",
+      // so they stay visible while the body content scrolls underneath.
+      // bg-background keeps scrolled content from showing through, and the
+      // right padding leaves room for the absolute close (X) button.
+      "sticky top-0 z-20 bg-background pb-3 pr-10",
       "flex flex-col space-y-2 text-center sm:text-left",
       className,
     )}
