@@ -1965,7 +1965,7 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
             type="button"
             onClick={() => setReceptionSheetRoom(n)}
             className={cn(
-              "flex items-center justify-center gap-1.5 rounded-md border bg-background px-2 sm:px-3 h-11 flex-1 text-sm font-medium cursor-pointer transition-colors hover:bg-accent",
+              "flex items-center justify-center gap-1.5 rounded-full border bg-background px-3 sm:px-4 h-11 flex-1 text-sm font-medium cursor-pointer transition-colors hover:bg-accent",
               receptionDoneSet.has(n)
                 ? "border-primary bg-primary/10 text-primary"
                 : ""
@@ -1980,7 +1980,7 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
             setShowAllLinen((prev) => ({ ...prev, [n]: !prev[n] }))
           }
           className={cn(
-            "flex items-center justify-center gap-1.5 rounded-md border bg-background px-2 sm:px-3 h-11 flex-1 text-sm font-medium cursor-pointer transition-colors hover:bg-accent",
+            "flex items-center justify-center gap-1.5 rounded-full border bg-background px-3 sm:px-4 h-11 flex-1 text-sm font-medium cursor-pointer transition-colors hover:bg-accent",
             showAll
               ? "border-primary bg-primary/10 text-primary"
               : ""
@@ -1992,7 +1992,7 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
           <button
             type="button"
             onClick={() => setEditDefaultsSheetRoom(n)}
-            className="inline-flex items-center justify-center h-11 w-11 shrink-0 rounded-md border bg-background text-sm font-medium cursor-pointer transition-colors hover:bg-accent disabled:opacity-50 disabled:cursor-not-allowed"
+            className="inline-flex items-center justify-center h-11 w-11 shrink-0 rounded-full border bg-background text-sm font-medium cursor-pointer transition-colors hover:bg-accent disabled:opacity-50 disabled:cursor-not-allowed"
             aria-label="Edit defaults"
           >
             <Pencil className="h-4 w-4" />
@@ -2666,7 +2666,7 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
            disabled={disabled}
            onClick={onClick}
            className={cn(
-             "w-full flex items-center justify-between gap-3 rounded-md border bg-background px-3 min-h-12 text-sm font-medium transition-colors hover:bg-accent disabled:opacity-60 disabled:cursor-not-allowed",
+             "w-full flex items-center justify-between gap-3 rounded-full border bg-background px-4 min-h-12 text-sm font-medium transition-colors hover:bg-accent disabled:opacity-60 disabled:cursor-not-allowed",
              selected && "border-primary bg-primary/10 text-primary",
            )}
          >
@@ -2785,7 +2785,7 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
           type="button"
           onClick={onClick}
           className={cn(
-            "w-full flex items-center gap-3 rounded-md border bg-background px-3 min-h-12 text-sm font-medium transition-colors hover:bg-accent",
+            "w-full flex items-center gap-3 rounded-full border bg-background px-4 min-h-12 text-sm font-medium transition-colors hover:bg-accent",
             destructive && "text-destructive hover:text-destructive",
           )}
         >
@@ -2949,7 +2949,7 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
                      type="button"
                      onClick={() => toggleAssignment(t.id, n)}
                      className={cn(
-                       "w-full flex items-center justify-between gap-3 rounded-md border bg-background px-3 min-h-12 text-sm font-medium transition-colors hover:bg-accent",
+                       "w-full flex items-center justify-between gap-3 rounded-full border bg-background px-4 min-h-12 text-sm font-medium transition-colors hover:bg-accent",
                        checked && "border-primary bg-primary/10 text-primary",
                      )}
                    >
@@ -3169,7 +3169,7 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
                         type="button"
                         onClick={() => toggleRoomCategory(n, c.value)}
                         className={cn(
-                          "w-full flex items-center justify-between gap-3 rounded-md border bg-background px-3 min-h-12 text-sm font-medium transition-colors hover:bg-accent",
+                          "w-full flex items-center justify-between gap-3 rounded-full border bg-background px-4 min-h-12 text-sm font-medium transition-colors hover:bg-accent",
                           selected && "border-primary bg-primary/10 text-primary",
                         )}
                       >
@@ -3194,7 +3194,7 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
                         type="button"
                         onClick={() => setRoomDefaultStatus(n, selected ? null : s.id)}
                         className={cn(
-                          "w-full flex items-center justify-between gap-3 rounded-md border bg-background px-3 min-h-12 text-sm font-medium transition-colors hover:bg-accent",
+                          "w-full flex items-center justify-between gap-3 rounded-full border bg-background px-4 min-h-12 text-sm font-medium transition-colors hover:bg-accent",
                           selected && "border-primary bg-primary/10 text-primary",
                         )}
                       >
@@ -3219,7 +3219,7 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
                           type="button"
                           onClick={() => toggleRoomFeature(n, f.id)}
                           className={cn(
-                            "w-full flex items-center justify-between gap-3 rounded-md border bg-background px-3 min-h-12 text-sm font-medium transition-colors hover:bg-accent",
+                            "w-full flex items-center justify-between gap-3 rounded-full border bg-background px-4 min-h-12 text-sm font-medium transition-colors hover:bg-accent",
                             selected && "border-primary bg-primary/10 text-primary",
                           )}
                         >
@@ -3631,7 +3631,7 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
                         return (
                           <label
                             key={s.id}
-                            className="flex items-center gap-3 py-2.5 px-2 rounded-md hover:bg-muted cursor-pointer"
+                            className="flex items-center gap-3 py-2.5 px-3 rounded-full hover:bg-muted cursor-pointer"
                           >
                             <Checkbox
                               checked={checked}
@@ -3659,7 +3659,7 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
                         return (
                           <label
                             key={f.id}
-                            className="flex items-center gap-3 py-2.5 px-2 rounded-md hover:bg-muted cursor-pointer"
+                            className="flex items-center gap-3 py-2.5 px-3 rounded-full hover:bg-muted cursor-pointer"
                           >
                             <Checkbox
                               checked={checked}
@@ -4406,7 +4406,7 @@ function AccountDialog({
                         onOpenChange(false);
                       }}
                       className={cn(
-                        "w-full flex items-center gap-3 rounded-md border px-3 min-h-11 text-sm font-medium transition-colors hover:bg-accent",
+                        "w-full flex items-center gap-3 rounded-full border px-4 min-h-11 text-sm font-medium transition-colors hover:bg-accent",
                         active ? "bg-accent border-primary" : "bg-background",
                       )}
                     >
