@@ -2025,8 +2025,17 @@ useEffect(() => {
  };
 
  return (
-<main className="min-h-[100dvh] bg-background pb-[max(1.5rem,env(safe-area-inset-bottom))]">
-<div className="max-w-2xl mx-auto px-[max(1rem,env(safe-area-inset-left))] sm:px-4 py-6 sm:py-10 space-y-8 sm:space-y-10" style={{ paddingRight: "max(1rem, env(safe-area-inset-right))" }}>
+<main
+  className="min-h-[100dvh] bg-background"
+  style={{ paddingBottom: "max(1.5rem, env(safe-area-inset-bottom))" }}
+>
+<div
+  className="max-w-2xl mx-auto py-6 sm:py-10 space-y-8 sm:space-y-10"
+  style={{
+    paddingLeft: "max(1rem, env(safe-area-inset-left))",
+    paddingRight: "max(1rem, env(safe-area-inset-right))",
+  }}
+>
  <header className="flex items-start sm:items-center justify-between gap-3 flex-wrap">
           <div className="min-w-0 flex-1">
             {isReception ? (
