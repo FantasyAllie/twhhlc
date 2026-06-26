@@ -91,7 +91,7 @@ export function QuickReceptionSheet({
     <Sheet open={open} onOpenChange={onOpenChange}>
       <SheetContent
         side="bottom"
-        className="max-h-[90vh] overflow-y-auto rounded-t-2xl p-4 sm:p-6"
+        className="max-h-[90vh] overflow-hidden rounded-t-2xl p-4 sm:p-6"
       >
         <SheetHeader className="text-left">
           <SheetTitle className="flex items-center gap-2">
@@ -104,7 +104,7 @@ export function QuickReceptionSheet({
           </SheetDescription>
         </SheetHeader>
 
-        <div className="mt-4 divide-y rounded-lg border bg-card">
+        <div className="flex-1 min-h-0 overflow-y-auto divide-y rounded-lg border bg-card">
           {sorted.length === 0 && (
             <p className="p-4 text-sm text-muted-foreground">No rooms.</p>
           )}
