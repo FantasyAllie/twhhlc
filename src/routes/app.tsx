@@ -4,7 +4,7 @@ import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Minus, Plus, X, Menu, ArrowUp, ArrowDown, Pencil, Check, Trash2, Lock, Unlock, Sun, Moon, List, Bed, Ban, History, Users, User, LogOut, Hash, ConciergeBell, ClipboardList, Printer, Filter, Wrench, StickyNote, DoorOpen, Bell, Eye, EyeOff } from "lucide-react";
+import { Minus, Plus, X, Menu, ArrowUp, ArrowDown, Pencil, Check, Trash2, Sun, Moon, List, Bed, Ban, History, Users, User, LogOut, Hash, ConciergeBell, ClipboardList, Printer, Filter, Wrench, StickyNote, DoorOpen, Bell, Eye, EyeOff } from "lucide-react";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
 import { getToken, getStoredUser, clearSession } from "@/lib/auth-client";
@@ -254,14 +254,6 @@ function AppPage() {
  const [openRoom, setOpenRoom] = useState<number | null>(null);
  const [templateOpen, setTemplateOpen] = useState(false);
 const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
-const [linenLocked, setLinenLocked] = useState<boolean>(() => {
-  if (typeof window === "undefined") return false;
-  return window.localStorage.getItem("linen-locked") === "1";
-});
-useEffect(() => {
-  if (typeof window === "undefined") return;
-  window.localStorage.setItem("linen-locked", linenLocked ? "1" : "0");
-}, [linenLocked]);
   const [newTemplateName, setNewTemplateName] = useState("");
   const [editingItemId, setEditingItemId] = useState<string | null>(null);
   const [editingItemName, setEditingItemName] = useState("");
@@ -1986,7 +1978,6 @@ useEffect(() => {
             type="button"
             onClick={() => setEditDefaultsSheetRoom(n)}
             className="inline-flex items-center justify-center h-11 w-11 shrink-0 rounded-md border bg-background text-sm font-medium cursor-pointer transition-colors hover:bg-accent disabled:opacity-50 disabled:cursor-not-allowed"
-            disabled={linenLocked}
             aria-label="Edit defaults"
           >
             <Pencil className="h-4 w-4" />
@@ -2223,35 +2214,14 @@ useEffect(() => {
      room from that room's <Pencil className="inline h-3.5 w-3.5 align-[-2px]" /> button.
    </DialogDescription>
  </DialogHeader>
-  <div className="space-y-3">
-    <div className="flex justify-end">
-      <Button
-        type="button"
-        variant={linenLocked ? "default" : "outline"}
-        size="sm"
-        className="h-8 gap-1.5"
-        onClick={() => {
-          setLinenLocked((v) => {
-            const next = !v;
-            toast.success(next ? "Linen list locked" : "Linen list unlocked");
-            return next;
-          });
-        }}
-        aria-pressed={linenLocked}
-        aria-label={linenLocked ? "Unlock linen list" : "Lock linen list"}
-      >
-        {linenLocked ? <Lock className="h-4 w-4" /> : <Unlock className="h-4 w-4" />}
-        {linenLocked ? "Locked" : "Unlocked"}
-      </Button>
-    </div>
+   <div className="space-y-3">
     <form onSubmit={addTemplateItem} className="flex gap-2">
       <Input
         placeholder="Add an item…"
         value={newTemplateName}
         onChange={(e) => setNewTemplateName(e.target.value)}
-        disabled={linenLocked}
       />
-      <Button type="submit" disabled={linenLocked || !newTemplateName.trim()}>
+       <Button type="submit" disabled={!newTemplateName.trim()}>
         Add
       </Button>
     </form>
@@ -2287,7 +2257,6 @@ useEffect(() => {
                       size="icon"
                       className="h-8 w-8 text-muted-foreground"
                       aria-label={`Edit ${item.name}`}
-                      disabled={linenLocked}
                     >
                       <Pencil className="h-4 w-4" />
                     </Button>
@@ -2406,7 +2375,6 @@ useEffect(() => {
                   className="h-8 w-8 text-muted-foreground hover:text-destructive"
                   onClick={() => deleteTemplateItem(item.id)}
                   aria-label={`Delete ${item.name}`}
-                  disabled={linenLocked}
                 >
                   <X className="h-4 w-4" />
                 </Button>
@@ -3464,23 +3432,23 @@ useEffect(() => {
           appear in the grid, share the Linen List, and support Room Types.
           Rejects always stays at the end.
         </DialogDescription>
-        <div className="mt-2 grid w-full grid-cols-4 gap-2">
-          <Button variant="outline" size="sm" className="min-w-0 px-1" onClick={() => setRoomTypesSheetOpen(true)}>
-            <Bed className="h-4 w-4 sm:mr-1.5" />
-            <span className="hidden sm:inline">Room Type</span>
+        <div className="mt-4 grid w-full grid-cols-2 gap-3">
+          <Button variant="outline" size="sm" className="min-w-0 justify-center gap-1.5 px-2" onClick={() => setRoomTypesSheetOpen(true)}>
+            <Bed className="h-4 w-4 shrink-0" />
+            <span className="truncate">Room Type</span>
           </Button>
-          <Button variant="outline" size="sm" className="min-w-0 px-1" onClick={() => setRoomFeaturesSheetOpen(true)}>
-            <List className="h-4 w-4 sm:mr-1.5" />
-            <span className="hidden sm:inline">Features</span>
+          <Button variant="outline" size="sm" className="min-w-0 justify-center gap-1.5 px-2" onClick={() => setRoomFeaturesSheetOpen(true)}>
+            <List className="h-4 w-4 shrink-0" />
+            <span className="truncate">Features</span>
           </Button>
-          <Button variant="outline" size="sm" className="min-w-0 px-1" onClick={() => setReceptionItemsSheetOpen(true)}>
-            <ConciergeBell className="h-4 w-4 sm:mr-1.5" />
-            <span className="hidden sm:inline">Reception</span>
+          <Button variant="outline" size="sm" className="min-w-0 justify-center gap-1.5 px-2" onClick={() => setReceptionItemsSheetOpen(true)}>
+            <ConciergeBell className="h-4 w-4 shrink-0" />
+            <span className="truncate">Reception</span>
           </Button>
           <Button
             variant="outline"
             size="sm"
-            className="min-w-0 px-1"
+            className="min-w-0 justify-center gap-1.5 px-2"
             onClick={() => {
               const used = new Set(rooms.map((r) => r.room_number));
               let suggested = 1;
@@ -3489,8 +3457,8 @@ useEffect(() => {
               setAddRoomConfirmOpen(true);
             }}
           >
-            <Plus className="h-4 w-4 sm:mr-1.5" />
-            <span className="hidden sm:inline">Add</span>
+            <Plus className="h-4 w-4 shrink-0" />
+            <span className="truncate">Add Room</span>
           </Button>
         </div>
       </DialogHeader>
