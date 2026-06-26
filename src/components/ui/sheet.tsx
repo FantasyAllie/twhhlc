@@ -88,7 +88,19 @@ const SheetContent = React.forwardRef<
 SheetContent.displayName = SheetPrimitive.Content.displayName;
 
 const SheetHeader = ({ className, ...props }: React.HTMLAttributes<HTMLDivElement>) => (
-  <div className={cn("flex flex-col space-y-2 text-center sm:text-left", className)} {...props} />
+  <div
+    className={cn(
+      // Pin the title / description / close button to the top of the sheet
+      // so it stays visible while the body content scrolls underneath. The
+      // negative horizontal margins + matching padding extend the solid
+      // background to the sheet's edges so scrolled content can't peek out
+      // either side.
+      "sticky top-0 z-20 -mx-4 sm:-mx-6 -mt-4 sm:-mt-6 bg-background px-4 sm:px-6 pt-4 sm:pt-6 pb-3 pr-12",
+      "flex flex-col space-y-2 text-center sm:text-left",
+      className,
+    )}
+    {...props}
+  />
 );
 SheetHeader.displayName = "SheetHeader";
 
