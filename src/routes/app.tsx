@@ -1757,7 +1757,8 @@ useEffect(() => {
     return { backgroundColor: theme === "dark" ? c.darkBg : c.bg, borderLeft: `4px solid ${c.border}` };
   };
   return (
-  <div className="border rounded-md p-4 space-y-4 bg-muted/30">
+  <div className="border rounded-md bg-muted/30 flex flex-col min-h-0 flex-1 overflow-hidden">
+    <div className="p-4 space-y-4 shrink-0">
 
     {/* Reception messages */}
     {(() => {
@@ -1957,9 +1958,10 @@ useEffect(() => {
         )}
       </div>
     )}
+    </div>
 
     {isReception ? null : (
-    <>
+    <div className="flex-1 min-h-0 overflow-y-auto px-4 pb-4 space-y-4">
     {visibleTemplate.length === 0 && roomExtras.length === 0 ? (
     <p className="text-sm text-muted-foreground">
     No items yet. Add linen list items from the menu, or add an extra below.
@@ -2066,7 +2068,7 @@ useEffect(() => {
    </ul>
    )}
 
-    </>
+    </div>
     )}
 
   </div>
@@ -3776,11 +3778,13 @@ useEffect(() => {
  </div>
 
  <Sheet open={openRoom !== null} onOpenChange={(o) => { if (!o) { if (openRoom !== null) setShowAllLinen(prev => ({ ...prev, [openRoom]: false })); setOpenRoom(null); setNewMessageText(""); } }}>
-   <SheetContent side="bottom" className="max-h-[90vh] overflow-y-auto rounded-t-2xl p-4 sm:p-6">
+   <SheetContent side="bottom" className="h-[90vh] max-h-[90vh] flex flex-col overflow-hidden rounded-t-2xl p-4 sm:p-6">
      <SheetHeader className="text-left space-y-0">
        <SheetTitle>Room {openRoom} — {categoryLabel(roomCategory(openRoom ?? 0), roomTypes)}</SheetTitle>
      </SheetHeader>
-     {openRoom !== null && renderRoomPanel(openRoom)}
+     <div className="flex flex-col flex-1 min-h-0 mt-3">
+       {openRoom !== null && renderRoomPanel(openRoom)}
+     </div>
    </SheetContent>
  </Sheet>
 
