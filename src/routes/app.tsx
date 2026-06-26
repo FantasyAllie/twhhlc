@@ -3778,11 +3778,13 @@ useEffect(() => {
  </div>
 
  <Sheet open={openRoom !== null} onOpenChange={(o) => { if (!o) { if (openRoom !== null) setShowAllLinen(prev => ({ ...prev, [openRoom]: false })); setOpenRoom(null); setNewMessageText(""); } }}>
-   <SheetContent side="bottom" className="max-h-[90vh] overflow-y-auto rounded-t-2xl p-4 sm:p-6">
+   <SheetContent side="bottom" className="h-[90vh] max-h-[90vh] flex flex-col overflow-hidden rounded-t-2xl p-4 sm:p-6">
      <SheetHeader className="text-left space-y-0">
        <SheetTitle>Room {openRoom} — {categoryLabel(roomCategory(openRoom ?? 0), roomTypes)}</SheetTitle>
      </SheetHeader>
-     {openRoom !== null && renderRoomPanel(openRoom)}
+     <div className="flex flex-col flex-1 min-h-0 mt-3">
+       {openRoom !== null && renderRoomPanel(openRoom)}
+     </div>
    </SheetContent>
  </Sheet>
 
