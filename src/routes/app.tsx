@@ -2253,10 +2253,14 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
           return (
             <li key={item.id} className="flex items-center gap-1.5 py-2">
               <span
-                className="h-3 w-3 rounded-full border shrink-0"
+                className="h-3 w-3 rounded-full border-2 shrink-0"
                 style={{
-                  backgroundColor: item.color ? COLOR_SWATCHES[item.color].solid : "transparent",
-                  borderColor: item.color ? COLOR_SWATCHES[item.color].solid : "hsl(var(--border))",
+                  backgroundColor: item.color
+                    ? theme === "dark"
+                      ? COLOR_SWATCHES[item.color].darkBg
+                      : COLOR_SWATCHES[item.color].bg
+                    : "transparent",
+                  borderColor: item.color ? COLOR_SWATCHES[item.color].border : "hsl(var(--border))",
                 }}
                 aria-hidden
               />
