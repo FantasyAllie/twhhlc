@@ -47,7 +47,7 @@ const DialogContent = React.forwardRef<
       </div>
       <DialogPrimitive.Close
         data-dialog-close-bar
-        className="shrink-0 w-full rounded-md border bg-background py-2 text-sm font-medium cursor-pointer hover:bg-accent focus:outline-none focus:ring-2 focus:ring-ring"
+        className="shrink-0 self-end inline-flex items-center justify-center rounded-md border bg-background px-3 h-7 text-xs font-medium text-muted-foreground cursor-pointer transition-colors hover:bg-accent hover:text-foreground focus:outline-none focus:ring-2 focus:ring-ring"
       >
         Close
       </DialogPrimitive.Close>
