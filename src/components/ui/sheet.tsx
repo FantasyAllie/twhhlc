@@ -15,6 +15,13 @@ const SheetClose = SheetPrimitive.Close;
 
 const SheetPortal = SheetPrimitive.Portal;
 
+type SheetDragCtx = {
+  enabled: boolean;
+  contentRef: React.MutableRefObject<HTMLDivElement | null>;
+  closeRef: React.MutableRefObject<HTMLButtonElement | null>;
+};
+const SheetDragContext = React.createContext<SheetDragCtx | null>(null);
+
 const SheetOverlay = React.forwardRef<
   React.ElementRef<typeof SheetPrimitive.Overlay>,
   React.ComponentPropsWithoutRef<typeof SheetPrimitive.Overlay>
@@ -69,77 +76,16 @@ const SheetContent = React.forwardRef<
     [ref],
   );
 
-  const drag = React.useRef<{
-    startY: number;
-    pointerId: number;
-    axisLocked: boolean;
-  } | null>(null);
-
-  const isMobileBottom = side === "bottom";
-
-  const ancestorScrolledDown = (
-    target: EventTarget | null,
-    container: HTMLElement,
-  ) => {
-    let el = target as HTMLElement | null;
-    while (el && el !== container) {
-      const style = window.getComputedStyle(el);
-      const oy = style.overflowY;
-      if ((oy === "auto" || oy === "scroll") && el.scrollHeight > el.clientHeight) {
-        if (el.scrollTop > 0) return true;
-      }
-      el = el.parentElement;
-    }
-    return false;
-  };
-
-  const onPointerDown = (e: React.PointerEvent<HTMLDivElement>) => {
-    if (!isMobileBottom) return;
-    if (e.pointerType !== "touch") return;
-    const node = innerRef.current;
-    if (!node) return;
-    if (ancestorScrolledDown(e.target, node)) return;
-    drag.current = { startY: e.clientY, pointerId: e.pointerId, axisLocked: false };
-  };
-
-  const onPointerMove = (e: React.PointerEvent<HTMLDivElement>) => {
-    const d = drag.current;
-    if (!d || e.pointerId !== d.pointerId) return;
-    const node = innerRef.current;
-    if (!node) return;
-    const dy = e.clientY - d.startY;
-    if (!d.axisLocked) {
-      if (Math.abs(dy) < 6) return;
-      if (dy <= 0) {
-        drag.current = null;
-        return;
-      }
-      d.axisLocked = true;
-      try {
-        (e.currentTarget as HTMLDivElement).setPointerCapture(e.pointerId);
-      } catch {}
-    }
-    const offset = Math.max(0, dy);
-    node.style.transition = "none";
-    node.style.transform = `translateY(${offset}px)`;
-  };
-
-  const endDrag = (e: React.PointerEvent<HTMLDivElement>) => {
-    const d = drag.current;
-    if (!d) return;
-    drag.current = null;
-    const node = innerRef.current;
-    if (!node) return;
-    const dy = Math.max(0, e.clientY - d.startY);
-    const threshold = Math.min(160, node.getBoundingClientRect().height * 0.25);
-    node.style.transition = "";
-    node.style.transform = "";
-    if (dy > threshold) closeRef.current?.click();
-  };
+  const isBottom = side === "bottom";
+  const ctxValue = React.useMemo<SheetDragCtx>(
+    () => ({ enabled: isBottom, contentRef: innerRef, closeRef }),
+    [isBottom],
+  );
 
   return (
     <SheetPortal>
       <SheetOverlay />
+      <SheetDragContext.Provider value={ctxValue}>
       <SheetPrimitive.Content
         ref={setRefs}
         className={cn(
@@ -152,18 +98,8 @@ const SheetContent = React.forwardRef<
           side === "left" && "pl-[max(1rem,env(safe-area-inset-left))]",
           side === "right" && "pr-[max(1rem,env(safe-area-inset-right))]",
         )}
-        onPointerDown={onPointerDown}
-        onPointerMove={onPointerMove}
-        onPointerUp={endDrag}
-        onPointerCancel={endDrag}
         {...props}
       >
-        {isMobileBottom && (
-          <div
-            aria-hidden
-            className="lg:hidden absolute left-1/2 top-2 -translate-x-1/2 h-1.5 w-10 rounded-full bg-muted-foreground/30"
-          />
-        )}
         <SheetPrimitive.Close
           ref={closeRef}
           className="absolute right-4 top-4 z-30 inline-flex items-center justify-center gap-1 rounded-md border bg-background px-2.5 h-7 text-xs font-medium text-muted-foreground cursor-pointer transition-colors hover:bg-accent hover:text-foreground focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 ring-offset-background disabled:pointer-events-none data-[state=open]:bg-secondary"
@@ -173,24 +109,83 @@ const SheetContent = React.forwardRef<
         </SheetPrimitive.Close>
         {children}
       </SheetPrimitive.Content>
+      </SheetDragContext.Provider>
     </SheetPortal>
   );
 });
 SheetContent.displayName = SheetPrimitive.Content.displayName;
 
-const SheetHeader = ({ className, ...props }: React.HTMLAttributes<HTMLDivElement>) => (
-  <div
-    className={cn(
-      // Pin the title / description / close button to the top of the sheet
-      // so they stay visible while the body content scrolls underneath.
-      // bg-background keeps scrolled content from showing through.
-      "sticky top-0 z-20 bg-background pb-3",
-      "flex flex-col space-y-3 text-center sm:text-left",
-      className,
-    )}
-    {...props}
-  />
-);
+const SheetHeader = ({ className, children, ...props }: React.HTMLAttributes<HTMLDivElement>) => {
+  const ctx = React.useContext(SheetDragContext);
+  const drag = React.useRef<{ startY: number; pointerId: number; locked: boolean } | null>(null);
+
+  const onPointerDown = (e: React.PointerEvent<HTMLDivElement>) => {
+    if (!ctx?.enabled) return;
+    // Ignore drags starting from interactive controls in the header.
+    const t = e.target as HTMLElement | null;
+    if (t && t.closest("button, a, input, textarea, select, [role='button']")) return;
+    drag.current = { startY: e.clientY, pointerId: e.pointerId, locked: false };
+  };
+
+  const onPointerMove = (e: React.PointerEvent<HTMLDivElement>) => {
+    const d = drag.current;
+    if (!d || e.pointerId !== d.pointerId) return;
+    const node = ctx?.contentRef.current;
+    if (!node) return;
+    const dy = e.clientY - d.startY;
+    if (!d.locked) {
+      if (Math.abs(dy) < 5) return;
+      if (dy <= 0) {
+        drag.current = null;
+        return;
+      }
+      d.locked = true;
+      try {
+        (e.currentTarget as HTMLDivElement).setPointerCapture(e.pointerId);
+      } catch {}
+    }
+    e.preventDefault();
+    node.style.transition = "none";
+    node.style.transform = `translateY(${Math.max(0, dy)}px)`;
+  };
+
+  const end = (e: React.PointerEvent<HTMLDivElement>) => {
+    const d = drag.current;
+    if (!d) return;
+    drag.current = null;
+    const node = ctx?.contentRef.current;
+    if (!node) return;
+    const dy = Math.max(0, e.clientY - d.startY);
+    const threshold = Math.min(140, node.getBoundingClientRect().height * 0.2);
+    node.style.transition = "";
+    node.style.transform = "";
+    if (dy > threshold) ctx?.closeRef.current?.click();
+  };
+
+  return (
+    <div
+      className={cn(
+        "sticky top-0 z-20 bg-background pb-3",
+        "flex flex-col space-y-3 text-center sm:text-left",
+        ctx?.enabled && "touch-none cursor-grab active:cursor-grabbing select-none",
+        className,
+      )}
+      onPointerDown={onPointerDown}
+      onPointerMove={onPointerMove}
+      onPointerUp={end}
+      onPointerCancel={end}
+      {...props}
+    >
+      {ctx?.enabled && (
+        <div
+          aria-hidden
+          className="mx-auto -mt-2 mb-1 h-1.5 w-10 rounded-full bg-muted-foreground/30"
+        />
+      )}
+      {children}
+    </div>
+  );
+};
 SheetHeader.displayName = "SheetHeader";
 
 const SheetFooter = ({ className, ...props }: React.HTMLAttributes<HTMLDivElement>) => (
