@@ -57,34 +57,125 @@ interface SheetContentProps
 const SheetContent = React.forwardRef<
   React.ElementRef<typeof SheetPrimitive.Content>,
   SheetContentProps
->(({ side = "right", className, children, ...props }, ref) => (
-  <SheetPortal>
-    <SheetOverlay />
-    <SheetPrimitive.Content
-      ref={ref}
-      className={cn(
-        sheetVariants({ side }),
-        className,
-        // Respect device safe areas (notch, home indicator, curved corners)
-        // Appended last so twMerge keeps these padding overrides on top of any
-        // p-* / pb-* utilities passed via className.
-        side === "bottom" &&
-          "pb-[max(1.25rem,calc(env(safe-area-inset-bottom)+0.75rem))] lg:pb-6",
-        side === "top" &&
-          "pt-[max(1.25rem,calc(env(safe-area-inset-top)+0.75rem))] lg:pt-6",
-        side === "left" && "pl-[max(1rem,env(safe-area-inset-left))]",
-        side === "right" && "pr-[max(1rem,env(safe-area-inset-right))]",
-      )}
-      {...props}
-    >
-      <SheetPrimitive.Close className="absolute right-4 top-4 z-30 inline-flex items-center justify-center gap-1 rounded-md border bg-background px-2.5 h-7 text-xs font-medium text-muted-foreground cursor-pointer transition-colors hover:bg-accent hover:text-foreground focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 ring-offset-background disabled:pointer-events-none data-[state=open]:bg-secondary">
-        <X className="h-3.5 w-3.5" />
-        <span>Close</span>
-      </SheetPrimitive.Close>
-      {children}
-    </SheetPrimitive.Content>
-  </SheetPortal>
-));
+>(({ side = "right", className, children, ...props }, ref) => {
+  const innerRef = React.useRef<HTMLDivElement | null>(null);
+  const closeRef = React.useRef<HTMLButtonElement | null>(null);
+  const setRefs = React.useCallback(
+    (node: HTMLDivElement | null) => {
+      innerRef.current = node;
+      if (typeof ref === "function") ref(node);
+      else if (ref) (ref as React.MutableRefObject<HTMLDivElement | null>).current = node;
+    },
+    [ref],
+  );
+
+  const drag = React.useRef<{
+    startY: number;
+    pointerId: number;
+    axisLocked: boolean;
+  } | null>(null);
+
+  const isMobileBottom = side === "bottom";
+
+  const ancestorScrolledDown = (
+    target: EventTarget | null,
+    container: HTMLElement,
+  ) => {
+    let el = target as HTMLElement | null;
+    while (el && el !== container) {
+      const style = window.getComputedStyle(el);
+      const oy = style.overflowY;
+      if ((oy === "auto" || oy === "scroll") && el.scrollHeight > el.clientHeight) {
+        if (el.scrollTop > 0) return true;
+      }
+      el = el.parentElement;
+    }
+    return false;
+  };
+
+  const onPointerDown = (e: React.PointerEvent<HTMLDivElement>) => {
+    if (!isMobileBottom) return;
+    if (e.pointerType !== "touch") return;
+    const node = innerRef.current;
+    if (!node) return;
+    if (ancestorScrolledDown(e.target, node)) return;
+    drag.current = { startY: e.clientY, pointerId: e.pointerId, axisLocked: false };
+  };
+
+  const onPointerMove = (e: React.PointerEvent<HTMLDivElement>) => {
+    const d = drag.current;
+    if (!d || e.pointerId !== d.pointerId) return;
+    const node = innerRef.current;
+    if (!node) return;
+    const dy = e.clientY - d.startY;
+    if (!d.axisLocked) {
+      if (Math.abs(dy) < 6) return;
+      if (dy <= 0) {
+        drag.current = null;
+        return;
+      }
+      d.axisLocked = true;
+      try {
+        (e.currentTarget as HTMLDivElement).setPointerCapture(e.pointerId);
+      } catch {}
+    }
+    const offset = Math.max(0, dy);
+    node.style.transition = "none";
+    node.style.transform = `translateY(${offset}px)`;
+  };
+
+  const endDrag = (e: React.PointerEvent<HTMLDivElement>) => {
+    const d = drag.current;
+    if (!d) return;
+    drag.current = null;
+    const node = innerRef.current;
+    if (!node) return;
+    const dy = Math.max(0, e.clientY - d.startY);
+    const threshold = Math.min(160, node.getBoundingClientRect().height * 0.25);
+    node.style.transition = "";
+    node.style.transform = "";
+    if (dy > threshold) closeRef.current?.click();
+  };
+
+  return (
+    <SheetPortal>
+      <SheetOverlay />
+      <SheetPrimitive.Content
+        ref={setRefs}
+        className={cn(
+          sheetVariants({ side }),
+          className,
+          side === "bottom" &&
+            "pb-[max(1.25rem,calc(env(safe-area-inset-bottom)+0.75rem))] lg:pb-6",
+          side === "top" &&
+            "pt-[max(1.25rem,calc(env(safe-area-inset-top)+0.75rem))] lg:pt-6",
+          side === "left" && "pl-[max(1rem,env(safe-area-inset-left))]",
+          side === "right" && "pr-[max(1rem,env(safe-area-inset-right))]",
+        )}
+        onPointerDown={onPointerDown}
+        onPointerMove={onPointerMove}
+        onPointerUp={endDrag}
+        onPointerCancel={endDrag}
+        {...props}
+      >
+        {isMobileBottom && (
+          <div
+            aria-hidden
+            className="lg:hidden absolute left-1/2 top-2 -translate-x-1/2 h-1.5 w-10 rounded-full bg-muted-foreground/30"
+          />
+        )}
+        <SheetPrimitive.Close
+          ref={closeRef}
+          className="absolute right-4 top-4 z-30 inline-flex items-center justify-center gap-1 rounded-md border bg-background px-2.5 h-7 text-xs font-medium text-muted-foreground cursor-pointer transition-colors hover:bg-accent hover:text-foreground focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 ring-offset-background disabled:pointer-events-none data-[state=open]:bg-secondary"
+        >
+          <X className="h-3.5 w-3.5" />
+          <span>Close</span>
+        </SheetPrimitive.Close>
+        {children}
+      </SheetPrimitive.Content>
+    </SheetPortal>
+  );
+});
 SheetContent.displayName = SheetPrimitive.Content.displayName;
 
 const SheetHeader = ({ className, ...props }: React.HTMLAttributes<HTMLDivElement>) => (
