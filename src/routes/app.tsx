@@ -3846,7 +3846,7 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
  Rooms
  </h2>
     {isReception && (roomFeatures.length > 0 || receptionStatuses.length > 0) && (() => {
-      const totalSelected = receptionFeatureFilter.length + receptionStatusFilter.length;
+       const totalSelected = receptionFeatureFilter.length + receptionStatusFilter.length + (receptionDoneOnlyFilter ? 1 : 0);
       const dndId = receptionStatuses.find((x) => x.label === "DND")?.id ?? null;
       const filterableStatuses = receptionStatuses.filter((s) => s.id !== dndId);
       return (
@@ -3865,6 +3865,16 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
               </p>
             </div>
             <div className="space-y-4">
+              <div className="space-y-2">
+                <p className="text-xs font-medium text-muted-foreground uppercase tracking-wide">Housekeeping</p>
+                <label className="flex items-center gap-2 py-1.5 px-2 rounded-md hover:bg-muted cursor-pointer">
+                  <Checkbox
+                    checked={receptionDoneOnlyFilter}
+                    onCheckedChange={(c) => setReceptionDoneOnlyFilter(!!c)}
+                  />
+                  <span className="text-sm flex-1">Only show rooms marked done</span>
+                </label>
+              </div>
               {filterableStatuses.length > 0 && (
                 <div className="space-y-2">
                   <p className="text-xs font-medium text-muted-foreground uppercase tracking-wide">Status</p>
@@ -3930,6 +3940,7 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
                   onClick={() => {
                     setReceptionFeatureFilter([]);
                     setReceptionStatusFilter([]);
+                    setReceptionDoneOnlyFilter(false);
                   }}
                 >
                   <X className="h-4 w-4 mr-2" />
