@@ -65,6 +65,117 @@ type RoomFeature = { id: string; user_id: string; value: string; label: string; 
 type RoomFeatureAssignment = { id: string; feature_id: string; room_number: number };
 type ReceptionItem = { id: string; user_id: string; kind: "status" | "bed"; label: string; sort_order: number | null; created_at: string; updated_at: string };
 
+function ManageEditableRow({
+  label,
+  canMoveUp,
+  canMoveDown,
+  onMoveUp,
+  onMoveDown,
+  onRename,
+  onDelete,
+}: {
+  label: string;
+  canMoveUp: boolean;
+  canMoveDown: boolean;
+  onMoveUp: () => void;
+  onMoveDown: () => void;
+  onRename: (v: string) => void | Promise<void>;
+  onDelete: () => void | Promise<void>;
+}) {
+  const [editing, setEditing] = React.useState(false);
+  const [draft, setDraft] = React.useState(label);
+  React.useEffect(() => {
+    if (!editing) setDraft(label);
+  }, [label, editing]);
+  const commit = () => {
+    const clean = draft.trim();
+    if (clean && clean !== label) void onRename(clean);
+    setEditing(false);
+  };
+  return (
+    <div className="flex items-center gap-1 rounded-full border bg-background min-h-12 pl-2 pr-1.5">
+      <div className="flex flex-col">
+        <Button
+          type="button"
+          variant="ghost"
+          size="icon"
+          className="h-5 w-7 text-muted-foreground"
+          onClick={onMoveUp}
+          disabled={!canMoveUp}
+          aria-label="Move up"
+        >
+          <ArrowUp className="h-3.5 w-3.5" />
+        </Button>
+        <Button
+          type="button"
+          variant="ghost"
+          size="icon"
+          className="h-5 w-7 text-muted-foreground"
+          onClick={onMoveDown}
+          disabled={!canMoveDown}
+          aria-label="Move down"
+        >
+          <ArrowDown className="h-3.5 w-3.5" />
+        </Button>
+      </div>
+      {editing ? (
+        <input
+          autoFocus
+          value={draft}
+          onChange={(e) => setDraft(e.target.value)}
+          onBlur={commit}
+          onKeyDown={(e) => {
+            if (e.key === "Enter") {
+              e.preventDefault();
+              commit();
+            } else if (e.key === "Escape") {
+              e.preventDefault();
+              setDraft(label);
+              setEditing(false);
+            }
+          }}
+          className="flex-1 min-w-0 bg-transparent text-sm font-medium outline-none px-2 py-1 rounded-md border border-input focus:ring-1 focus:ring-ring"
+        />
+      ) : (
+        <span className="flex-1 text-sm font-medium pl-2 truncate">{label}</span>
+      )}
+      {editing ? (
+        <Button
+          type="button"
+          variant="ghost"
+          size="icon"
+          className="h-9 w-9 text-muted-foreground"
+          onClick={commit}
+          aria-label="Save name"
+        >
+          <Check className="h-4 w-4" />
+        </Button>
+      ) : (
+        <Button
+          type="button"
+          variant="ghost"
+          size="icon"
+          className="h-9 w-9 text-muted-foreground"
+          onClick={() => setEditing(true)}
+          aria-label={`Rename ${label}`}
+        >
+          <Pencil className="h-4 w-4" />
+        </Button>
+      )}
+      <Button
+        type="button"
+        variant="ghost"
+        size="icon"
+        className="h-9 w-9 text-muted-foreground hover:text-destructive"
+        onClick={onDelete}
+        aria-label={`Remove ${label}`}
+      >
+        <X className="h-4 w-4" />
+      </Button>
+    </div>
+  );
+}
+
 const parseCats = (c: string | null | undefined): Category[] =>
   (c ?? "").split(",").map((s) => s.trim()).filter(Boolean);
 
