@@ -3970,8 +3970,8 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
    const visibleRooms = (isReception && (receptionFeatureFilter.length > 0 || receptionStatusFilter.length > 0 || receptionDoneOnlyFilter))
     ? allRooms.filter((n) => {
         if (receptionDoneOnlyFilter) {
-          const r = rooms.find((x) => x.room_number === n);
-          if (!r?.done) return false;
+          const rd = rooms.find((x) => x.room_number === n);
+          if (!rd?.done) return false;
         }
         const featuresOk = receptionFeatureFilter.every((fid) =>
           roomFeatureAssignments.some((a) => a.feature_id === fid && a.room_number === n),
