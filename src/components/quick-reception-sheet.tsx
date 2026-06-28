@@ -143,19 +143,24 @@ export function QuickReceptionSheet({
                       Status
                     </div>
                     <div className="grid grid-cols-2 gap-1.5 flex-1 min-w-0">
-                      {statuses.map((s) => {
-                        const selected = currentStatus === s.id;
+                      {(() => {
+                        const dndId = statuses.find((x) => x.label === "DND")?.id ?? null;
+                        const stayId = statuses.find((x) => x.label === "Stayover")?.id ?? null;
+                        const dndActive = !!dndId && currentStatus === dndId;
+                        return statuses.map((s) => {
+                        const selected = currentStatus === s.id || (dndActive && s.id === stayId);
                         return (
                           <Chip
                             key={s.id}
                             label={s.label}
                             selected={selected}
                             onClick={() =>
-                              onChangeStatus(n, selected ? null : s.id)
+                              onChangeStatus(n, currentStatus === s.id ? null : s.id)
                             }
                           />
                         );
-                      })}
+                        });
+                      })()}
                     </div>
                   </div>
                 )}
