@@ -3800,6 +3800,7 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
     );
   } else {
     const room = rooms.find((r) => r.room_number === n);
+    const isDnd = !!dndStatusId && (room?.reception_status_id ?? room?.default_status) === dndStatusId;
     nodes.push(
       <button
         key={`r-${n}`}
@@ -3820,7 +3821,17 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
         aria-expanded={isOpen}
         aria-label={`Room ${n}${done ? " done" : ""}`}
       >
-        {n}
+        <span className="flex flex-col items-center leading-none">
+          <span>{n}</span>
+          {isDnd && (
+            <span
+              className="mt-0.5 text-[8px] font-bold tracking-wider"
+              style={{ color: theme === "dark" ? "#fecaca" : "#7f1d1d" }}
+            >
+              DND
+            </span>
+          )}
+        </span>
           {hasActiveMessage(n) && (
             <span
               aria-label="Message"
