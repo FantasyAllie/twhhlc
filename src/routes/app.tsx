@@ -1836,9 +1836,11 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
       toast.error("Entry already exists");
       return;
     }
+    const sameKind = receptionItems.filter((i) => i.kind === kind);
+    const nextSort = (sameKind.reduce((m, r) => Math.max(m, r.sort_order ?? 0), 0)) + 1;
     const { error } = await supabase
       .from("reception_items" as never)
-      .insert({ kind, label: clean, user_id: authUser?.id } as never);
+      .insert({ kind, label: clean, sort_order: nextSort, user_id: authUser?.id } as never);
     if (error) {
       toast.error(error.message);
       return;
@@ -1858,6 +1860,45 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
       toast.error(error.message);
       qc.invalidateQueries({ queryKey: ["reception_items"] });
     }
+  };
+
+  const renameReceptionItem = async (id: string, label: string) => {
+    const clean = label.trim();
+    if (!clean) return;
+    qc.setQueryData<ReceptionItem[]>(["reception_items"], (old) =>
+      old?.map((i) => (i.id === id ? { ...i, label: clean } : i)) ?? [],
+    );
+    const { error } = await supabase.from("reception_items" as never).update({ label: clean } as never).eq("id", id);
+    if (error) toast.error(error.message);
+    qc.invalidateQueries({ queryKey: ["reception_items"] });
+  };
+
+  const moveReceptionItem = async (id: string, dir: -1 | 1) => {
+    const item = receptionItems.find((i) => i.id === id);
+    if (!item) return;
+    const sorted = receptionItems
+      .filter((i) => i.kind === item.kind)
+      .slice()
+      .sort((a, b) => (a.sort_order ?? 0) - (b.sort_order ?? 0));
+    const idx = sorted.findIndex((r) => r.id === id);
+    const swapIdx = idx + dir;
+    if (idx < 0 || swapIdx < 0 || swapIdx >= sorted.length) return;
+    const a = sorted[idx];
+    const b = sorted[swapIdx];
+    const aSort = a.sort_order ?? idx + 1;
+    const bSort = b.sort_order ?? swapIdx + 1;
+    qc.setQueryData<ReceptionItem[]>(["reception_items"], (old) =>
+      old?.map((r) =>
+        r.id === a.id ? { ...r, sort_order: bSort } : r.id === b.id ? { ...r, sort_order: aSort } : r,
+      ) ?? [],
+    );
+    const [r1, r2] = await Promise.all([
+      supabase.from("reception_items" as never).update({ sort_order: bSort } as never).eq("id", a.id),
+      supabase.from("reception_items" as never).update({ sort_order: aSort } as never).eq("id", b.id),
+    ]);
+    if (r1.error) toast.error(r1.error.message);
+    if (r2.error) toast.error(r2.error.message);
+    qc.invalidateQueries({ queryKey: ["reception_items"] });
   };
 
  const renderRoomPanel = (n: number) => {
