@@ -1,66 +1,64 @@
 ## Goal
 
-Make it fast to set the **reception status** and **bed type** for many rooms in one place, without opening each room individually. Today you have to tap a room → open its reception sheet → pick status → pick bed → close → repeat. The new view shows every room at once with one-tap chips.
+Restyle the Home Screen room tiles to look like the attached mockup (larger rounded cards with a colored top accent bar, room number in the top-left, a status word underneath, and a small status icon in the top-right), and replace the current 2-state color logic (red = not done, green = done) with a 4-state system driven by housekeeping progress.
 
-## What you'll see
+## New color states (housekeeping view)
 
-A new full-height sheet titled **"Quick reception setup"**.
-
-Inside it: a single scrolling list, one row per room, sorted by room number.
-
-Each room row shows:
+A room is in exactly one of these states:
 
 ```text
-┌───────────────────────────────────────────────────────────┐
-│ Room 101            (room type label, small, muted)       │
-│                                                           │
-│ Status:  [ Vacant ] [ Occupied ] [ Arrival ] [ Departure ]│
-│ Bed:     [ Single ] [ Double  ] [ Twin    ]               │
-└───────────────────────────────────────────────────────────┘
+items counted?  done?   color   label
+─────────────────────────────────────────
+no              no      red     Not started
+yes             no      yellow  In progress
+no              yes     blue    Marked done
+yes             yes     green   Complete
 ```
 
-- Each chip is a tap target. Tapping a chip selects it; tapping the already-selected chip clears it back to "no override" (same toggle behavior as the current single-room reception sheet).
-- The currently-selected chip is filled (matches the existing `Row selected` visual from the reception sheet, but rendered horizontally as pills).
-- Bed chips are filtered by room category the same way the single-room sheet filters them, including the "double-only" lock (the Double chip is shown pre-selected and disabled for those rooms).
-- No Save button. Each tap writes immediately, with the same optimistic update + Supabase upsert the single-room sheet already uses.
-- No search/filter. Full list, scroll to the room you want.
+"Items counted" = the room has at least one row in `room_item_counts` with `count > 0` (template or extra). "Done" = the existing `done` flag (`doneSet`) that the Mark-as-done toggle already controls.
 
-## Where it opens from
+Existing overlays (DND text, OUT badge, maintenance wrench, message/note dot, reception-done check, staff lock, open-room ring, line-through when done) all stay; only the base tile color and shape change.
 
-Two entry points, both opening the same sheet:
+## Reception view
 
-1. **Settings menu → Manage section** — new row `Quick reception setup` (icon: `ConciergeBell` or `ClipboardList`, matching existing menu icons), placed under "History".
-2. **Inside any room's reception sheet** — a small secondary button at the top right of the sheet header, label `Edit all rooms`. Tapping it closes the single-room sheet and opens the bulk sheet.
+Reception's tile colors today already mirror the housekeeping done state. They will adopt the same 4-state palette so a glance at the grid means the same thing for both roles. DND text, OUT badge, staff lock, etc. continue to render on top.
 
-Both are gated by the same role check the current reception sheet uses (admin or reception — match the existing visibility rules; no new permissions).
+## Tile shape
 
-## How saving works
+- Switch tiles from `aspect-square` to a wider rounded card (roughly `aspect-[4/3]` / `min-h-[64px]`) so the room number and the new status label both fit cleanly.
+- Top edge gets a 3px colored accent bar in the state's strong color; card body uses the state's soft background and matching text color.
+- Layout inside the card: room number top-left (larger), status label below it (small, same color family), small state icon top-right (sparkle = complete/done, dot/clock = in progress, alert = not started, check = done-no-items). All overlay badges keep their current corners.
+- Grid column counts stay (`grid-cols-4 sm:grid-cols-8 md:grid-cols-10`) so the page still fits 50 rooms at a glance; only the row height grows slightly.
 
-- Reuses the existing `setRoomReceptionStatus(n, id)` and `setRoomReceptionBed(n, id)` wrappers (`src/routes/app.tsx` ~1487–1490). Those already do optimistic cache updates and upsert into `rooms` on conflict `user_id,room_number`, then invalidate `["rooms"]`.
-- No new server function, no new table, no new migration. Same write path as the per-room sheet, so realtime/notifications behave identically.
+## Token strategy
+
+Add four semantic token pairs to `src/styles.css` so the colors theme correctly and aren't hardcoded in the component:
+
+- `--room-todo` / `--room-todo-fg` (red — not started)
+- `--room-progress` / `--room-progress-fg` (yellow — in progress)
+- `--room-done` / `--room-done-fg` (blue — done, no items)
+- `--room-complete` / `--room-complete-fg` (green — done + items)
+
+Tile renderer picks the pair from a small helper `getRoomState(room, doneSet, countsByRoom)` instead of the current inline `done ? green : red` style block.
+
+## Files touched
+
+- `src/routes/app.tsx` — derive `roomsWithCounts: Set<number>` once from `room_counts`, add the `getRoomState` helper, restyle both the reception and housekeeping `<button>` blocks (lines ~3968–4086), keep all overlays.
+- `src/styles.css` — add the four token pairs in `:root` and `.dark`, mapped into `@theme inline` so `bg-room-todo` etc. work.
+
+No data model, query, or business-logic changes — only presentation and a derived selector over data we already fetch.
 
 ## Out of scope
 
-- No bulk "apply to all" action (e.g. "set every room to Vacant"). Can be added later if you want it — say the word and I'll fold it in.
-- No grouping by floor/type and no filters (per your answers).
-- No changes to room defaults, room types, linen, or any other room field — only `reception_status_id` and `reception_bed_id`.
+- No change to the Mark-as-done flow, counts entry, filters, or any sheet contents.
+- Not copying the mockup's left sidebar, header chips ("Dirty 8 / Cleaning 3 / …"), or the page-level layout — only the tile visual.
+- No change to the "X of Y done" progress text below the grid.
 
-## Technical notes
+## Acceptance check
 
-- New component `src/components/quick-reception-sheet.tsx` exporting `QuickReceptionSheet({ open, onOpenChange })`. Self-contained: pulls `rooms`, `reception_items`, and `roomTypes` from the existing React Query keys (`["rooms"]`, `["reception_items"]`, `["room_types"]`) via `useQuery` so it shares cache with the rest of the app and benefits from the same optimistic updates.
-- Reuses the same per-room bed-filtering logic that lives in the reception sheet (extract a small helper `filterBedsForRoom(room, beds, roomTypes)` so both places call the same code instead of duplicating the "only double" rule).
-- Wires in `src/routes/app.tsx`:
-  - Adds `quickReceptionOpen` state.
-  - Adds the "Quick reception setup" row inside the menu's Manage block (`~2756–2762`).
-  - Adds an "Edit all rooms" button to the reception sheet header (`~2660`) that calls `setReceptionSheetRoom(null)` then `setQuickReceptionOpen(true)`.
-  - Renders `<QuickReceptionSheet open={quickReceptionOpen} onOpenChange={setQuickReceptionOpen} />` near the existing dialogs at the bottom of the route.
-- Sheet uses `side="bottom"` with `max-h-[90vh] overflow-y-auto`, matching the existing `exportSheetOpen` / `notificationsSheetOpen` pattern, so it works well on the 390px mobile viewport.
-- Chips are buttons styled with existing token classes (`bg-secondary`, `bg-primary text-primary-foreground` when selected, `opacity-50` when the bed lock applies). No new design tokens, no hardcoded colors.
-
-## Acceptance check after build
-
-- Open menu → tap **Quick reception setup** → sheet opens listing every room.
-- Tap a Status chip on room 101 → row updates instantly, close sheet, reopen the single-room reception sheet for 101 → same status is shown.
-- Tap the already-selected Status chip → it clears (back to default).
-- Open a single room's reception sheet → tap **Edit all rooms** → bulk sheet opens with the room you just edited reflecting its new value.
-- Double-only rooms show Double pre-selected, chip disabled, no other bed selectable.
+- Fresh room (no counts, not done) → red tile, "Not started".
+- Add 1 to any item → tile turns yellow, "In progress".
+- Mark room as done with no counts → blue tile, "Marked done".
+- Mark done with counts present → green tile, "Complete".
+- Toggling done off returns to red or yellow based on whether counts exist.
+- DND text, OUT badge, maintenance wrench, message dot, staff-lock styling, and the open-room ring all still render on top of the new colors in both housekeeping and reception views.
