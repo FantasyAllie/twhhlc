@@ -59,6 +59,18 @@
   --color-sidebar-accent-foreground: var(--sidebar-accent-foreground);
   --color-sidebar-border: var(--sidebar-border);
   --color-sidebar-ring: var(--sidebar-ring);
+  --color-room-todo: var(--room-todo);
+  --color-room-todo-fg: var(--room-todo-fg);
+  --color-room-todo-accent: var(--room-todo-accent);
+  --color-room-progress: var(--room-progress);
+  --color-room-progress-fg: var(--room-progress-fg);
+  --color-room-progress-accent: var(--room-progress-accent);
+  --color-room-done: var(--room-done);
+  --color-room-done-fg: var(--room-done-fg);
+  --color-room-done-accent: var(--room-done-accent);
+  --color-room-complete: var(--room-complete);
+  --color-room-complete-fg: var(--room-complete-fg);
+  --color-room-complete-accent: var(--room-complete-accent);
 }
 
 :root {
@@ -95,6 +107,18 @@
   --sidebar-accent-foreground: oklch(0.208 0.042 265.755);
   --sidebar-border: oklch(0.929 0.013 255.508);
   --sidebar-ring: oklch(0.704 0.04 256.788);
+  --room-todo: oklch(0.955 0.025 25);
+  --room-todo-fg: oklch(0.45 0.18 27);
+  --room-todo-accent: oklch(0.62 0.22 27);
+  --room-progress: oklch(0.97 0.05 90);
+  --room-progress-fg: oklch(0.5 0.14 70);
+  --room-progress-accent: oklch(0.75 0.17 75);
+  --room-done: oklch(0.95 0.04 240);
+  --room-done-fg: oklch(0.45 0.18 255);
+  --room-done-accent: oklch(0.6 0.2 255);
+  --room-complete: oklch(0.95 0.05 150);
+  --room-complete-fg: oklch(0.42 0.14 150);
+  --room-complete-accent: oklch(0.6 0.18 150);
 }
 
 .dark {
@@ -130,6 +154,18 @@
   --sidebar-accent-foreground: oklch(0.95 0 0);
   --sidebar-border: oklch(1 0 0 / 12%);
   --sidebar-ring: oklch(0.6 0 0);
+  --room-todo: oklch(0.28 0.09 27);
+  --room-todo-fg: oklch(0.85 0.1 25);
+  --room-todo-accent: oklch(0.62 0.2 27);
+  --room-progress: oklch(0.3 0.07 80);
+  --room-progress-fg: oklch(0.88 0.13 90);
+  --room-progress-accent: oklch(0.75 0.17 80);
+  --room-done: oklch(0.28 0.09 255);
+  --room-done-fg: oklch(0.82 0.11 250);
+  --room-done-accent: oklch(0.62 0.2 255);
+  --room-complete: oklch(0.28 0.08 150);
+  --room-complete-fg: oklch(0.85 0.13 150);
+  --room-complete-accent: oklch(0.62 0.18 150);
 }
 
 @layer base {

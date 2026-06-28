@@ -754,6 +754,26 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
   const receptionDoneSet = new Set(
     rooms.filter((r) => r.done_reception).map((r) => r.room_number),
   );
+  const roomsWithCounts = new Set<number>(
+    counts.filter((c) => (c.count ?? 0) > 0).map((c) => c.room_number),
+  );
+  type RoomTileState = "todo" | "progress" | "done" | "complete";
+  const getRoomTileState = (n: number, isDone: boolean): RoomTileState => {
+    const hasCounts = roomsWithCounts.has(n);
+    if (isDone && hasCounts) return "complete";
+    if (isDone) return "done";
+    if (hasCounts) return "progress";
+    return "todo";
+  };
+  const roomStateMeta: Record<
+    RoomTileState,
+    { bg: string; fg: string; accent: string; label: string }
+  > = {
+    todo:     { bg: "var(--room-todo)",     fg: "var(--room-todo-fg)",     accent: "var(--room-todo-accent)",     label: "Not started" },
+    progress: { bg: "var(--room-progress)", fg: "var(--room-progress-fg)", accent: "var(--room-progress-accent)", label: "In progress" },
+    done:     { bg: "var(--room-done)",     fg: "var(--room-done-fg)",     accent: "var(--room-done-accent)",     label: "Marked done" },
+    complete: { bg: "var(--room-complete)", fg: "var(--room-complete-fg)", accent: "var(--room-complete-accent)", label: "Complete" },
+  };
 
   const toggleReceptionDone = async (roomNumber: number) => {
     const current = receptionDoneSet.has(roomNumber);
@@ -3965,6 +3985,8 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
     )?.id;
     const isStaffRoom = (room?.reception_status_id ?? room?.default_status) === staffStatusId;
     const isDnd = !!dndStatusId && (room?.reception_status_id ?? room?.default_status) === dndStatusId;
+     const state = getRoomTileState(n, done);
+     const meta = roomStateMeta[state];
     nodes.push(
         <button
         key={`r-${n}`}
@@ -3972,35 +3994,40 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
           disabled={isStaffRoom}
           onClick={() => openOrToggle(n)}
         className={cn(
-            "relative rounded-md border text-xs sm:text-sm font-medium transition-colors tabular-nums flex items-center justify-center aspect-square",
-            openRoom === n && !isStaffRoom && "ring-2 ring-ring border-transparent bg-accent",
-            done && !isStaffRoom && "line-through",
+             "relative overflow-hidden rounded-lg border text-xs sm:text-sm font-medium transition-colors tabular-nums flex flex-col justify-between aspect-[5/4] p-1.5 pt-2 text-left",
+             openRoom === n && !isStaffRoom && "ring-2 ring-ring border-transparent bg-accent",
             isStaffRoom && "bg-muted text-muted-foreground border-muted-foreground/20 opacity-60"
         )}
         style={
             openRoom === n || isStaffRoom
               ? undefined
-              : done
-            ? { backgroundColor: theme === "dark" ? "#14532d" : "#dcfce7", color: theme === "dark" ? "#86efac" : "#166534", borderColor: "transparent" }
-            : { backgroundColor: theme === "dark" ? "#7f1d1d" : "#fee2e2", color: theme === "dark" ? "#fca5a5" : "#991b1b", borderColor: theme === "dark" ? "#991b1b" : "#fca5a5" }
+               : { backgroundColor: meta.bg, color: meta.fg, borderColor: meta.accent, borderTopWidth: 3 }
         }
-        aria-label={`Room ${n}${done ? " done" : ""}${isStaffRoom ? " staff" : ""}`}
+         aria-label={`Room ${n} ${meta.label}${isStaffRoom ? " staff" : ""}`}
       >
-        <span className="flex flex-col items-center leading-none">
-          <span>{n}</span>
-          {isDnd && !isStaffRoom && (
-            <span
-              className="mt-0.5 text-[8px] font-bold tracking-wider"
-              style={{ color: theme === "dark" ? "#fecaca" : "#7f1d1d" }}
-            >
-              DND
-            </span>
-          )}
-        </span>
+         {!isStaffRoom && (
+           <>
+             <span className="text-sm sm:text-base font-bold leading-none">{n}</span>
+             <span className="text-[9px] sm:text-[10px] font-medium leading-none opacity-90">
+               {meta.label}
+             </span>
+             {isDnd && (
+               <span
+                 className="absolute right-1 top-1 text-[8px] font-bold tracking-wider"
+                 style={{ color: meta.accent }}
+               >
+                 DND
+               </span>
+             )}
+           </>
+         )}
+         {isStaffRoom && (
+           <span className="m-auto">{n}</span>
+         )}
           {(hasActiveMessage(n) || !!room?.housekeeping_note) && !isStaffRoom && (
             <span
               aria-label="Housekeeping note"
-              className="absolute top-0.5 right-0.5 h-2 w-2 rounded-full bg-amber-500 ring-2 ring-background"
+               className="absolute top-1 right-1 h-2 w-2 rounded-full bg-amber-500 ring-2 ring-background"
             />
           )}
           {room?.needs_maintenance && !isStaffRoom && (
@@ -4022,41 +4049,42 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
   } else {
     const room = rooms.find((r) => r.room_number === n);
     const isDnd = !!dndStatusId && (room?.reception_status_id ?? room?.default_status) === dndStatusId;
+     const state = getRoomTileState(n, done);
+     const meta = roomStateMeta[state];
     nodes.push(
       <button
         key={`r-${n}`}
         type="button"
         onClick={() => openOrToggle(n)}
         className={cn(
-            "relative rounded-md border text-xs sm:text-sm font-medium transition-colors tabular-nums aspect-square overflow-hidden",
+             "relative overflow-hidden rounded-lg border text-xs sm:text-sm font-medium transition-colors tabular-nums flex flex-col justify-between aspect-[5/4] p-1.5 pt-2 text-left",
           isOpen && "ring-2 ring-ring border-transparent bg-accent",
         )}
         style={
           isOpen
             ? undefined
-            : done
-              ? { backgroundColor: theme === "dark" ? "#14532d" : "#dcfce7", color: theme === "dark" ? "#86efac" : "#166534", borderColor: "transparent" }
-              : { backgroundColor: theme === "dark" ? "#7f1d1d" : "#fee2e2", color: theme === "dark" ? "#fca5a5" : "#991b1b", borderColor: theme === "dark" ? "#991b1b" : "#fca5a5" }
+             : { backgroundColor: meta.bg, color: meta.fg, borderColor: meta.accent, borderTopWidth: 3 }
         }
         aria-pressed={done}
         aria-expanded={isOpen}
-        aria-label={`Room ${n}${done ? " done" : ""}`}
+         aria-label={`Room ${n} ${meta.label}`}
       >
-        <span className="flex flex-col items-center leading-none">
-          <span>{n}</span>
-          {isDnd && (
-            <span
-              className="mt-0.5 text-[8px] font-bold tracking-wider"
-              style={{ color: theme === "dark" ? "#fecaca" : "#7f1d1d" }}
-            >
-              DND
-            </span>
-          )}
-        </span>
+         <span className="text-sm sm:text-base font-bold leading-none">{n}</span>
+         <span className="text-[9px] sm:text-[10px] font-medium leading-none opacity-90">
+           {meta.label}
+         </span>
+         {isDnd && (
+           <span
+             className="absolute right-1 top-1 text-[8px] font-bold tracking-wider"
+             style={{ color: meta.accent }}
+           >
+             DND
+           </span>
+         )}
           {hasActiveMessage(n) && (
             <span
               aria-label="Message"
-              className="absolute top-0.5 right-0.5 h-2 w-2 rounded-full bg-amber-500 ring-2 ring-background"
+               className="absolute top-1 right-1 h-2 w-2 rounded-full bg-amber-500 ring-2 ring-background"
             />
           )}
           {room?.needs_maintenance && (
