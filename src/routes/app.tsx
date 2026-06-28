@@ -1272,7 +1272,9 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
     grand: number;
   } => {
     const statusLabel = (id: string | null | undefined) => {
-      return id ? receptionStatuses.find((s) => s.id === id)?.label ?? "" : "";
+      if (!id) return "";
+      const lbl = receptionStatuses.find((s) => s.id === id)?.label ?? "";
+      return lbl === "DND" ? "DND/Stay" : lbl;
     };
     const bedLabel = (id: string | null | undefined) =>
       id ? receptionBeds.find((b) => b.id === id)?.label ?? "" : "";
