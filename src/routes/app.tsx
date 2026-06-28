@@ -3845,11 +3845,9 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
  <h2 className="text-sm font-medium text-muted-foreground uppercase tracking-wide">
  Rooms
  </h2>
-    {isReception && (roomFeatures.length > 0 || receptionStatuses.length > 0) && (() => {
-       const totalSelected = receptionFeatureFilter.length + receptionStatusFilter.length + (receptionDoneOnlyFilter ? 1 : 0);
-      const dndId = receptionStatuses.find((x) => x.label === "DND")?.id ?? null;
-      const filterableStatuses = receptionStatuses.filter((s) => s.id !== dndId);
-      return (
+     {isReception && (() => {
+        const totalSelected = receptionFeatureFilter.length + (receptionDoneOnlyFilter ? 1 : 0);
+       return (
         <Popover open={filtersSheetOpen} onOpenChange={setFiltersSheetOpen}>
           <PopoverTrigger asChild>
             <Button variant="outline" size="sm" className="h-7 gap-1.5 text-xs">
@@ -3861,7 +3859,7 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
             <div className="space-y-1 pb-2">
               <p className="text-sm font-semibold">Filters</p>
               <p className="text-xs text-muted-foreground">
-                {totalSelected === 0 ? "Filter rooms by status and features." : `${totalSelected} active`}
+                {totalSelected === 0 ? "Filter rooms by housekeeping and features." : `${totalSelected} active`}
               </p>
             </div>
             <div className="space-y-4">
@@ -3875,35 +3873,6 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
                   <span className="text-sm flex-1">Only show rooms marked done</span>
                 </label>
               </div>
-              {filterableStatuses.length > 0 && (
-                <div className="space-y-2">
-                  <p className="text-xs font-medium text-muted-foreground uppercase tracking-wide">Status</p>
-                  <div className="grid gap-1">
-                    {[...filterableStatuses]
-                      .sort((a, b) => a.label.localeCompare(b.label))
-                      .map((s) => {
-                        const display = s.label === "Out of Service" ? "Room out of Service" : s.label;
-                        const checked = receptionStatusFilter.includes(s.id);
-                        return (
-                          <label
-                            key={s.id}
-                            className="flex items-center gap-2 py-1.5 px-2 rounded-md hover:bg-muted cursor-pointer"
-                          >
-                            <Checkbox
-                              checked={checked}
-                              onCheckedChange={(c) => {
-                                setReceptionStatusFilter((prev) =>
-                                  c ? [...prev, s.id] : prev.filter((id) => id !== s.id),
-                                );
-                              }}
-                            />
-                            <span className="text-sm flex-1">{display}</span>
-                          </label>
-                        );
-                      })}
-                  </div>
-                </div>
-              )}
               {roomFeatures.length > 0 && (
                 <div className="space-y-2">
                   <p className="text-xs font-medium text-muted-foreground uppercase tracking-wide">Features</p>
