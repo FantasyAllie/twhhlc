@@ -754,6 +754,26 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
   const receptionDoneSet = new Set(
     rooms.filter((r) => r.done_reception).map((r) => r.room_number),
   );
+  const roomsWithCounts = new Set<number>(
+    counts.filter((c) => (c.count ?? 0) > 0).map((c) => c.room_number),
+  );
+  type RoomTileState = "todo" | "progress" | "done" | "complete";
+  const getRoomTileState = (n: number, isDone: boolean): RoomTileState => {
+    const hasCounts = roomsWithCounts.has(n);
+    if (isDone && hasCounts) return "complete";
+    if (isDone) return "done";
+    if (hasCounts) return "progress";
+    return "todo";
+  };
+  const roomStateMeta: Record<
+    RoomTileState,
+    { bg: string; fg: string; accent: string; label: string }
+  > = {
+    todo:     { bg: "var(--room-todo)",     fg: "var(--room-todo-fg)",     accent: "var(--room-todo-accent)",     label: "Not started" },
+    progress: { bg: "var(--room-progress)", fg: "var(--room-progress-fg)", accent: "var(--room-progress-accent)", label: "In progress" },
+    done:     { bg: "var(--room-done)",     fg: "var(--room-done-fg)",     accent: "var(--room-done-accent)",     label: "Marked done" },
+    complete: { bg: "var(--room-complete)", fg: "var(--room-complete-fg)", accent: "var(--room-complete-accent)", label: "Complete" },
+  };
 
   const toggleReceptionDone = async (roomNumber: number) => {
     const current = receptionDoneSet.has(roomNumber);
