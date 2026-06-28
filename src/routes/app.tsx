@@ -1663,7 +1663,8 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
         updated_at: new Date().toISOString(),
       },
     ]);
-    const { error } = await supabase.from("room_types").insert({ value, label: clean } as never);
+    const nextSort = (roomTypes.reduce((m, r) => Math.max(m, r.sort_order ?? 0), 0)) + 1;
+    const { error } = await supabase.from("room_types").insert({ value, label: clean, sort_order: nextSort } as never);
     if (error) {
       toast.error(error.message);
       qc.invalidateQueries({ queryKey: ["room_types"] });
@@ -1694,6 +1695,40 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
     }
   };
 
+  const renameRoomType = async (id: string, label: string) => {
+    const clean = label.trim();
+    if (!clean) return;
+    qc.setQueryData<RoomType[]>(["room_types"], (old) =>
+      old?.map((r) => (r.id === id ? { ...r, label: clean } : r)) ?? [],
+    );
+    const { error } = await supabase.from("room_types").update({ label: clean } as never).eq("id", id);
+    if (error) toast.error(error.message);
+    qc.invalidateQueries({ queryKey: ["room_types"] });
+  };
+
+  const moveRoomType = async (id: string, dir: -1 | 1) => {
+    const sorted = [...roomTypes].sort((a, b) => (a.sort_order ?? 0) - (b.sort_order ?? 0));
+    const idx = sorted.findIndex((r) => r.id === id);
+    const swapIdx = idx + dir;
+    if (idx < 0 || swapIdx < 0 || swapIdx >= sorted.length) return;
+    const a = sorted[idx];
+    const b = sorted[swapIdx];
+    const aSort = a.sort_order ?? idx + 1;
+    const bSort = b.sort_order ?? swapIdx + 1;
+    qc.setQueryData<RoomType[]>(["room_types"], (old) =>
+      old?.map((r) =>
+        r.id === a.id ? { ...r, sort_order: bSort } : r.id === b.id ? { ...r, sort_order: aSort } : r,
+      ) ?? [],
+    );
+    const [r1, r2] = await Promise.all([
+      supabase.from("room_types").update({ sort_order: bSort } as never).eq("id", a.id),
+      supabase.from("room_types").update({ sort_order: aSort } as never).eq("id", b.id),
+    ]);
+    if (r1.error) toast.error(r1.error.message);
+    if (r2.error) toast.error(r2.error.message);
+    qc.invalidateQueries({ queryKey: ["room_types"] });
+  };
+
   // --- Room feature management ---
   const addRoomFeature = async (label: string) => {
     const clean = label.trim();
@@ -1707,9 +1742,10 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
       toast.error("Feature already exists");
       return;
     }
+    const nextSort = (roomFeatures.reduce((m, r) => Math.max(m, r.sort_order ?? 0), 0)) + 1;
     const { error } = await supabase
       .from("room_features" as never)
-      .insert({ value, label: clean, user_id: authUser?.id } as never);
+      .insert({ value, label: clean, sort_order: nextSort, user_id: authUser?.id } as never);
     if (error) {
       toast.error(error.message);
       return;
@@ -1734,6 +1770,40 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
       toast.error(error.message);
       qc.invalidateQueries({ queryKey: ["room_features"] });
     }
+  };
+
+  const renameRoomFeature = async (id: string, label: string) => {
+    const clean = label.trim();
+    if (!clean) return;
+    qc.setQueryData<RoomFeature[]>(["room_features"], (old) =>
+      old?.map((f) => (f.id === id ? { ...f, label: clean } : f)) ?? [],
+    );
+    const { error } = await supabase.from("room_features" as never).update({ label: clean } as never).eq("id", id);
+    if (error) toast.error(error.message);
+    qc.invalidateQueries({ queryKey: ["room_features"] });
+  };
+
+  const moveRoomFeature = async (id: string, dir: -1 | 1) => {
+    const sorted = [...roomFeatures].sort((a, b) => (a.sort_order ?? 0) - (b.sort_order ?? 0));
+    const idx = sorted.findIndex((r) => r.id === id);
+    const swapIdx = idx + dir;
+    if (idx < 0 || swapIdx < 0 || swapIdx >= sorted.length) return;
+    const a = sorted[idx];
+    const b = sorted[swapIdx];
+    const aSort = a.sort_order ?? idx + 1;
+    const bSort = b.sort_order ?? swapIdx + 1;
+    qc.setQueryData<RoomFeature[]>(["room_features"], (old) =>
+      old?.map((r) =>
+        r.id === a.id ? { ...r, sort_order: bSort } : r.id === b.id ? { ...r, sort_order: aSort } : r,
+      ) ?? [],
+    );
+    const [r1, r2] = await Promise.all([
+      supabase.from("room_features" as never).update({ sort_order: bSort } as never).eq("id", a.id),
+      supabase.from("room_features" as never).update({ sort_order: aSort } as never).eq("id", b.id),
+    ]);
+    if (r1.error) toast.error(r1.error.message);
+    if (r2.error) toast.error(r2.error.message);
+    qc.invalidateQueries({ queryKey: ["room_features"] });
   };
 
   const toggleRoomFeature = async (roomNumber: number, featureId: string) => {
