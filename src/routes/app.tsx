@@ -3753,27 +3753,29 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
  </h2>
     {isReception && (roomFeatures.length > 0 || receptionStatuses.length > 0) && (() => {
       const totalSelected = receptionFeatureFilter.length + receptionStatusFilter.length;
+      const dndId = receptionStatuses.find((x) => x.label === "DND")?.id ?? null;
+      const filterableStatuses = receptionStatuses.filter((s) => s.id !== dndId);
       return (
-        <Sheet open={filtersSheetOpen} onOpenChange={setFiltersSheetOpen}>
-          <SheetTrigger asChild>
+        <Popover open={filtersSheetOpen} onOpenChange={setFiltersSheetOpen}>
+          <PopoverTrigger asChild>
             <Button variant="outline" size="sm" className="h-7 gap-1.5 text-xs">
               <Filter className="h-3.5 w-3.5" />
               {totalSelected === 0 ? "Filters" : `Filters · ${totalSelected}`}
             </Button>
-          </SheetTrigger>
-          <SheetContent side="bottom" className="max-h-[85vh] overflow-y-auto rounded-t-2xl p-4 sm:p-6">
-            <SheetHeader className="text-left">
-              <SheetTitle>Filters</SheetTitle>
-              <SheetDescription>
+          </PopoverTrigger>
+          <PopoverContent align="end" className="w-72 max-h-[70vh] overflow-y-auto p-3">
+            <div className="space-y-1 pb-2">
+              <p className="text-sm font-semibold">Filters</p>
+              <p className="text-xs text-muted-foreground">
                 {totalSelected === 0 ? "Filter rooms by status and features." : `${totalSelected} active`}
-              </SheetDescription>
-            </SheetHeader>
-            <div className="mt-4 space-y-5">
-              {receptionStatuses.length > 0 && (
+              </p>
+            </div>
+            <div className="space-y-4">
+              {filterableStatuses.length > 0 && (
                 <div className="space-y-2">
                   <p className="text-xs font-medium text-muted-foreground uppercase tracking-wide">Status</p>
                   <div className="grid gap-1">
-                    {[...receptionStatuses]
+                    {[...filterableStatuses]
                       .sort((a, b) => a.label.localeCompare(b.label))
                       .map((s) => {
                         const display = s.label === "Out of Service" ? "Room out of Service" : s.label;
@@ -3781,7 +3783,7 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
                         return (
                           <label
                             key={s.id}
-                            className="flex items-center gap-3 py-2.5 px-3 rounded-full hover:bg-muted cursor-pointer"
+                            className="flex items-center gap-2 py-1.5 px-2 rounded-md hover:bg-muted cursor-pointer"
                           >
                             <Checkbox
                               checked={checked}
@@ -3809,7 +3811,7 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
                         return (
                           <label
                             key={f.id}
-                            className="flex items-center gap-3 py-2.5 px-3 rounded-full hover:bg-muted cursor-pointer"
+                            className="flex items-center gap-2 py-1.5 px-2 rounded-md hover:bg-muted cursor-pointer"
                           >
                             <Checkbox
                               checked={checked}
@@ -3829,20 +3831,20 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
               {totalSelected > 0 && (
                 <Button
                   variant="outline"
-                  size="lg"
-                  className="w-full h-12"
+                  size="sm"
+                  className="w-full"
                   onClick={() => {
                     setReceptionFeatureFilter([]);
                     setReceptionStatusFilter([]);
                   }}
                 >
-                  <X className="h-5 w-5 mr-2" />
+                  <X className="h-4 w-4 mr-2" />
                   Clear filters
                 </Button>
               )}
             </div>
-          </SheetContent>
-        </Sheet>
+          </PopoverContent>
+        </Popover>
       );
     })()}
    {!isReception && (
