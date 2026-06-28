@@ -389,7 +389,8 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
     queryFn: async (): Promise<RoomType[]> => {
       const { data, error } = await supabase
         .from("room_types")
-        .select("id,user_id,value,label,created_at,updated_at")
+        .select("id,user_id,value,label,sort_order,created_at,updated_at")
+        .order("sort_order", { ascending: true, nullsFirst: false })
         .order("created_at", { ascending: true });
       if (error) throw error;
       return (data ?? []) as RoomType[];
@@ -401,7 +402,8 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
     queryFn: async (): Promise<RoomFeature[]> => {
       const { data, error } = await supabase
         .from("room_features" as never)
-        .select("id,user_id,value,label,created_at,updated_at")
+        .select("id,user_id,value,label,sort_order,created_at,updated_at")
+        .order("sort_order", { ascending: true, nullsFirst: false })
         .order("created_at", { ascending: true });
       if (error) throw error;
       return (data ?? []) as RoomFeature[];
@@ -424,7 +426,8 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
     queryFn: async (): Promise<ReceptionItem[]> => {
       const { data, error } = await supabase
         .from("reception_items" as never)
-        .select("id,user_id,kind,label,created_at,updated_at")
+        .select("id,user_id,kind,label,sort_order,created_at,updated_at")
+        .order("sort_order", { ascending: true, nullsFirst: false })
         .order("created_at", { ascending: true });
       if (error) throw error;
       return (data ?? []) as ReceptionItem[];
