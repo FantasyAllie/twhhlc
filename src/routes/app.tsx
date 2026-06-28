@@ -3138,7 +3138,7 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
               canMoveDown={idx < roomTypes.length - 1}
               onMoveUp={() => moveRoomType(rt.id, -1)}
               onMoveDown={() => moveRoomType(rt.id, 1)}
-              onRename={(v) => renameRoomType(rt.id, v)}
+              onRename={(v: string) => renameRoomType(rt.id, v)}
               onDelete={() => deleteRoomType(rt.id)}
             />
           ))
@@ -3178,7 +3178,7 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
               canMoveDown={idx < roomFeatures.length - 1}
               onMoveUp={() => moveRoomFeature(f.id, -1)}
               onMoveDown={() => moveRoomFeature(f.id, 1)}
-              onRename={(v) => renameRoomFeature(f.id, v)}
+              onRename={(v: string) => renameRoomFeature(f.id, v)}
               onDelete={() => deleteRoomFeature(f.id)}
             />
           ))
