@@ -3213,21 +3213,18 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
            {receptionStatuses.length === 0 && (
              <p className="text-sm text-muted-foreground">No statuses yet.</p>
            )}
-           {receptionStatuses.map((s) => (
-             <div key={s.id} className="flex items-center gap-2 rounded-full border bg-background min-h-12 pl-4 pr-1.5">
-               <span className="flex-1 text-sm font-medium">{s.label}</span>
-               <Button
-                 type="button"
-                 variant="ghost"
-                 size="icon"
-                 className="h-9 w-9 text-muted-foreground hover:text-destructive"
-                 onClick={() => deleteReceptionItem(s.id)}
-                 aria-label={`Remove ${s.label}`}
-               >
-                 <X className="h-4 w-4" />
-               </Button>
-             </div>
-           ))}
+            {receptionStatuses.map((s, idx) => (
+              <ManageEditableRow
+                key={s.id}
+                label={s.label}
+                canMoveUp={idx > 0}
+                canMoveDown={idx < receptionStatuses.length - 1}
+                onMoveUp={() => moveReceptionItem(s.id, -1)}
+                onMoveDown={() => moveReceptionItem(s.id, 1)}
+                onRename={(v: string) => renameReceptionItem(s.id, v)}
+                onDelete={() => deleteReceptionItem(s.id)}
+              />
+            ))}
            <Button
              type="button"
              variant="outline"
@@ -3245,21 +3242,18 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
            {receptionBeds.length === 0 && (
              <p className="text-sm text-muted-foreground">No bed types yet.</p>
            )}
-           {receptionBeds.map((b) => (
-             <div key={b.id} className="flex items-center gap-2 rounded-full border bg-background min-h-12 pl-4 pr-1.5">
-               <span className="flex-1 text-sm font-medium">{b.label}</span>
-               <Button
-                 type="button"
-                 variant="ghost"
-                 size="icon"
-                 className="h-9 w-9 text-muted-foreground hover:text-destructive"
-                 onClick={() => deleteReceptionItem(b.id)}
-                 aria-label={`Remove ${b.label}`}
-               >
-                 <X className="h-4 w-4" />
-               </Button>
-             </div>
-           ))}
+            {receptionBeds.map((b, idx) => (
+              <ManageEditableRow
+                key={b.id}
+                label={b.label}
+                canMoveUp={idx > 0}
+                canMoveDown={idx < receptionBeds.length - 1}
+                onMoveUp={() => moveReceptionItem(b.id, -1)}
+                onMoveDown={() => moveReceptionItem(b.id, 1)}
+                onRename={(v: string) => renameReceptionItem(b.id, v)}
+                onDelete={() => deleteReceptionItem(b.id)}
+              />
+            ))}
            <Button
              type="button"
              variant="outline"
