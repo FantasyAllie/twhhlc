@@ -60,10 +60,10 @@ export const Route = createFileRoute("/app")({
 });
 
 type Category = string;
-type RoomType = { id: string; user_id: string; value: Category; label: string; created_at: string; updated_at: string };
-type RoomFeature = { id: string; user_id: string; value: string; label: string; created_at: string; updated_at: string };
+type RoomType = { id: string; user_id: string; value: Category; label: string; sort_order: number | null; created_at: string; updated_at: string };
+type RoomFeature = { id: string; user_id: string; value: string; label: string; sort_order: number | null; created_at: string; updated_at: string };
 type RoomFeatureAssignment = { id: string; feature_id: string; room_number: number };
-type ReceptionItem = { id: string; user_id: string; kind: "status" | "bed"; label: string; created_at: string; updated_at: string };
+type ReceptionItem = { id: string; user_id: string; kind: "status" | "bed"; label: string; sort_order: number | null; created_at: string; updated_at: string };
 
 const parseCats = (c: string | null | undefined): Category[] =>
   (c ?? "").split(",").map((s) => s.trim()).filter(Boolean);
