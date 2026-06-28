@@ -2858,7 +2858,15 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
                           key={s.id}
                           label={s.label}
                           selected={selected}
-                          onClick={() => setRoomReceptionStatus(n, occ === s.id ? null : s.id)}
+                          onClick={() => {
+                            if (occ === s.id) {
+                              // Toggling off: if removing DND, keep Stayover instead of clearing.
+                              const next = s.id === dndId && stayId ? stayId : null;
+                              setRoomReceptionStatus(n, next);
+                            } else {
+                              setRoomReceptionStatus(n, s.id);
+                            }
+                          }}
                         />
                       );
                     });
