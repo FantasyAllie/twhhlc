@@ -3732,6 +3732,7 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
       })
     : allRooms;
   const nodes: React.ReactNode[] = [];
+   const dndStatusId = receptionStatuses.find((s) => s.label === "DND")?.id ?? null;
    for (let i = 0; i < visibleRooms.length; i++) {
    const n = visibleRooms[i];
  const done = doneSet.has(n);
@@ -3742,6 +3743,7 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
       (s) => s.label.toLowerCase() === "staff",
     )?.id;
     const isStaffRoom = (room?.reception_status_id ?? room?.default_status) === staffStatusId;
+    const isDnd = !!dndStatusId && (room?.reception_status_id ?? room?.default_status) === dndStatusId;
     nodes.push(
         <button
         key={`r-${n}`}
@@ -3763,7 +3765,17 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
         }
         aria-label={`Room ${n}${done ? " done" : ""}${isStaffRoom ? " staff" : ""}`}
       >
-        {n}
+        <span className="flex flex-col items-center leading-none">
+          <span>{n}</span>
+          {isDnd && !isStaffRoom && (
+            <span
+              className="mt-0.5 text-[8px] font-bold tracking-wider"
+              style={{ color: theme === "dark" ? "#fecaca" : "#7f1d1d" }}
+            >
+              DND
+            </span>
+          )}
+        </span>
           {(hasActiveMessage(n) || !!room?.housekeeping_note) && !isStaffRoom && (
             <span
               aria-label="Housekeeping note"
@@ -3788,6 +3800,7 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
     );
   } else {
     const room = rooms.find((r) => r.room_number === n);
+    const isDnd = !!dndStatusId && (room?.reception_status_id ?? room?.default_status) === dndStatusId;
     nodes.push(
       <button
         key={`r-${n}`}
@@ -3808,7 +3821,17 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
         aria-expanded={isOpen}
         aria-label={`Room ${n}${done ? " done" : ""}`}
       >
-        {n}
+        <span className="flex flex-col items-center leading-none">
+          <span>{n}</span>
+          {isDnd && (
+            <span
+              className="mt-0.5 text-[8px] font-bold tracking-wider"
+              style={{ color: theme === "dark" ? "#fecaca" : "#7f1d1d" }}
+            >
+              DND
+            </span>
+          )}
+        </span>
           {hasActiveMessage(n) && (
             <span
               aria-label="Message"
