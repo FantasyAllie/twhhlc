@@ -3130,24 +3130,18 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
        {roomTypes.length === 0 ? (
          <p className="text-sm text-muted-foreground">No room types yet.</p>
        ) : (
-         roomTypes.map((rt) => (
-           <div
-             key={rt.id}
-             className="flex items-center gap-2 rounded-full border bg-background min-h-12 pl-4 pr-1.5"
-           >
-             <span className="flex-1 text-sm font-medium">{rt.label}</span>
-             <Button
-               type="button"
-               variant="ghost"
-               size="icon"
-               className="h-9 w-9 text-muted-foreground hover:text-destructive"
-               onClick={() => deleteRoomType(rt.id)}
-               aria-label={`Remove ${rt.label}`}
-             >
-               <X className="h-4 w-4" />
-             </Button>
-           </div>
-         ))
+          roomTypes.map((rt, idx) => (
+            <ManageEditableRow
+              key={rt.id}
+              label={rt.label}
+              canMoveUp={idx > 0}
+              canMoveDown={idx < roomTypes.length - 1}
+              onMoveUp={() => moveRoomType(rt.id, -1)}
+              onMoveDown={() => moveRoomType(rt.id, 1)}
+              onRename={(v) => renameRoomType(rt.id, v)}
+              onDelete={() => deleteRoomType(rt.id)}
+            />
+          ))
        )}
        <Button
          type="button"
@@ -3176,24 +3170,18 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
        {roomFeatures.length === 0 ? (
          <p className="text-sm text-muted-foreground">No features yet.</p>
        ) : (
-         roomFeatures.map((f) => (
-           <div
-             key={f.id}
-             className="flex items-center gap-2 rounded-full border bg-background min-h-12 pl-4 pr-1.5"
-           >
-             <span className="flex-1 text-sm font-medium">{f.label}</span>
-             <Button
-               type="button"
-               variant="ghost"
-               size="icon"
-               className="h-9 w-9 text-muted-foreground hover:text-destructive"
-               onClick={() => deleteRoomFeature(f.id)}
-               aria-label={`Remove ${f.label}`}
-             >
-               <X className="h-4 w-4" />
-             </Button>
-           </div>
-         ))
+          roomFeatures.map((f, idx) => (
+            <ManageEditableRow
+              key={f.id}
+              label={f.label}
+              canMoveUp={idx > 0}
+              canMoveDown={idx < roomFeatures.length - 1}
+              onMoveUp={() => moveRoomFeature(f.id, -1)}
+              onMoveDown={() => moveRoomFeature(f.id, 1)}
+              onRename={(v) => renameRoomFeature(f.id, v)}
+              onDelete={() => deleteRoomFeature(f.id)}
+            />
+          ))
        )}
        <Button
          type="button"
