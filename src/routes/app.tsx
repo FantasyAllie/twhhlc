@@ -2714,14 +2714,22 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
                  <p className="text-sm text-muted-foreground">No statuses</p>
                )}
                <div className="space-y-1.5">
-                 {receptionStatuses.map((s) => (
-                   <Row
-                     key={s.id}
-                     label={s.label}
-                     selected={occ === s.id}
-                     onClick={() => setRoomReceptionStatus(n, occ === s.id ? null : s.id)}
-                   />
-                 ))}
+                  {(() => {
+                    const dndId = receptionStatuses.find((x) => x.label === "DND")?.id ?? null;
+                    const stayId = receptionStatuses.find((x) => x.label === "Stayover")?.id ?? null;
+                    const dndActive = !!dndId && occ === dndId;
+                    return receptionStatuses.map((s) => {
+                      const selected = occ === s.id || (dndActive && s.id === stayId);
+                      return (
+                        <Row
+                          key={s.id}
+                          label={s.label}
+                          selected={selected}
+                          onClick={() => setRoomReceptionStatus(n, occ === s.id ? null : s.id)}
+                        />
+                      );
+                    });
+                  })()}
                </div>
              </div>
              <div className="space-y-2">
