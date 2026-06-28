@@ -1655,6 +1655,7 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
         user_id: authUser?.id ?? "",
         value,
         label: clean,
+        sort_order: ((old ?? []).reduce((m, r) => Math.max(m, r.sort_order ?? 0), 0)) + 1,
         created_at: new Date().toISOString(),
         updated_at: new Date().toISOString(),
       },
