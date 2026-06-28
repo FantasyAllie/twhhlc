@@ -1024,18 +1024,36 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
 
   const resetReceptionAll = async () => {
     if (!confirm("Reset reception status and bed selections for all rooms?")) return;
+    const dndId = receptionStatuses.find((x) => x.label === "DND")?.id ?? null;
+    const stayId = receptionStatuses.find((x) => x.label === "Stayover")?.id ?? null;
     qc.setQueryData<Room[]>(["rooms"], (old) =>
       old?.map((r) => ({
         ...r,
-        reception_status_id: null,
+        reception_status_id:
+          dndId && r.reception_status_id === dndId && stayId ? stayId : null,
         reception_bed_id: null,
       })) ?? [],
     );
+    // Clear everything to null first, then for DND rooms restore Stayover.
     const { error } = await supabase
       .from("rooms")
       .update({ reception_status_id: null, reception_bed_id: null })
-      .neq("room_number", -1);
+      .neq("room_number", -1)
+      .neq("reception_status_id", dndId ?? "00000000-0000-0000-0000-000000000000");
     if (error) toast.error(error.message);
+    if (dndId && stayId) {
+      const { error: e2 } = await supabase
+        .from("rooms")
+        .update({ reception_status_id: stayId, reception_bed_id: null })
+        .eq("reception_status_id", dndId);
+      if (e2) toast.error(e2.message);
+    } else if (dndId) {
+      const { error: e2 } = await supabase
+        .from("rooms")
+        .update({ reception_status_id: null, reception_bed_id: null })
+        .eq("reception_status_id", dndId);
+      if (e2) toast.error(e2.message);
+    }
     qc.invalidateQueries({ queryKey: ["rooms"] });
   };
 
