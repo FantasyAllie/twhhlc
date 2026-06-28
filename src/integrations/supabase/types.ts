@@ -147,6 +147,7 @@ export type Database = {
           id: string
           kind: string
           label: string
+          sort_order: number | null
           updated_at: string
           user_id: string
         }
@@ -155,6 +156,7 @@ export type Database = {
           id?: string
           kind: string
           label: string
+          sort_order?: number | null
           updated_at?: string
           user_id?: string
         }
@@ -163,6 +165,7 @@ export type Database = {
           id?: string
           kind?: string
           label?: string
+          sort_order?: number | null
           updated_at?: string
           user_id?: string
         }
@@ -253,6 +256,7 @@ export type Database = {
           created_at: string
           id: string
           label: string
+          sort_order: number | null
           updated_at: string
           user_id: string
           value: string
@@ -261,6 +265,7 @@ export type Database = {
           created_at?: string
           id?: string
           label: string
+          sort_order?: number | null
           updated_at?: string
           user_id?: string
           value: string
@@ -269,6 +274,7 @@ export type Database = {
           created_at?: string
           id?: string
           label?: string
+          sort_order?: number | null
           updated_at?: string
           user_id?: string
           value?: string
@@ -343,6 +349,7 @@ export type Database = {
           created_at: string
           id: string
           label: string
+          sort_order: number | null
           updated_at: string
           user_id: string
           value: string
@@ -351,6 +358,7 @@ export type Database = {
           created_at?: string
           id?: string
           label: string
+          sort_order?: number | null
           updated_at?: string
           user_id?: string
           value: string
@@ -359,6 +367,7 @@ export type Database = {
           created_at?: string
           id?: string
           label?: string
+          sort_order?: number | null
           updated_at?: string
           user_id?: string
           value?: string

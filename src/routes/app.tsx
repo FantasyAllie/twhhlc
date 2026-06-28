@@ -60,10 +60,121 @@ export const Route = createFileRoute("/app")({
 });
 
 type Category = string;
-type RoomType = { id: string; user_id: string; value: Category; label: string; created_at: string; updated_at: string };
-type RoomFeature = { id: string; user_id: string; value: string; label: string; created_at: string; updated_at: string };
+type RoomType = { id: string; user_id: string; value: Category; label: string; sort_order: number | null; created_at: string; updated_at: string };
+type RoomFeature = { id: string; user_id: string; value: string; label: string; sort_order: number | null; created_at: string; updated_at: string };
 type RoomFeatureAssignment = { id: string; feature_id: string; room_number: number };
-type ReceptionItem = { id: string; user_id: string; kind: "status" | "bed"; label: string; created_at: string; updated_at: string };
+type ReceptionItem = { id: string; user_id: string; kind: "status" | "bed"; label: string; sort_order: number | null; created_at: string; updated_at: string };
+
+function ManageEditableRow({
+  label,
+  canMoveUp,
+  canMoveDown,
+  onMoveUp,
+  onMoveDown,
+  onRename,
+  onDelete,
+}: {
+  label: string;
+  canMoveUp: boolean;
+  canMoveDown: boolean;
+  onMoveUp: () => void;
+  onMoveDown: () => void;
+  onRename: (v: string) => void | Promise<void>;
+  onDelete: () => void | Promise<void>;
+}) {
+  const [editing, setEditing] = useState(false);
+  const [draft, setDraft] = useState(label);
+  useEffect(() => {
+    if (!editing) setDraft(label);
+  }, [label, editing]);
+  const commit = () => {
+    const clean = draft.trim();
+    if (clean && clean !== label) void onRename(clean);
+    setEditing(false);
+  };
+  return (
+    <div className="flex items-center gap-1 rounded-full border bg-background min-h-12 pl-2 pr-1.5">
+      <div className="flex flex-col">
+        <Button
+          type="button"
+          variant="ghost"
+          size="icon"
+          className="h-5 w-7 text-muted-foreground"
+          onClick={onMoveUp}
+          disabled={!canMoveUp}
+          aria-label="Move up"
+        >
+          <ArrowUp className="h-3.5 w-3.5" />
+        </Button>
+        <Button
+          type="button"
+          variant="ghost"
+          size="icon"
+          className="h-5 w-7 text-muted-foreground"
+          onClick={onMoveDown}
+          disabled={!canMoveDown}
+          aria-label="Move down"
+        >
+          <ArrowDown className="h-3.5 w-3.5" />
+        </Button>
+      </div>
+      {editing ? (
+        <input
+          autoFocus
+          value={draft}
+          onChange={(e) => setDraft(e.target.value)}
+          onBlur={commit}
+          onKeyDown={(e) => {
+            if (e.key === "Enter") {
+              e.preventDefault();
+              commit();
+            } else if (e.key === "Escape") {
+              e.preventDefault();
+              setDraft(label);
+              setEditing(false);
+            }
+          }}
+          className="flex-1 min-w-0 bg-transparent text-sm font-medium outline-none px-2 py-1 rounded-md border border-input focus:ring-1 focus:ring-ring"
+        />
+      ) : (
+        <span className="flex-1 text-sm font-medium pl-2 truncate">{label}</span>
+      )}
+      {editing ? (
+        <Button
+          type="button"
+          variant="ghost"
+          size="icon"
+          className="h-9 w-9 text-muted-foreground"
+          onClick={commit}
+          aria-label="Save name"
+        >
+          <Check className="h-4 w-4" />
+        </Button>
+      ) : (
+        <Button
+          type="button"
+          variant="ghost"
+          size="icon"
+          className="h-9 w-9 text-muted-foreground"
+          onClick={() => setEditing(true)}
+          aria-label={`Rename ${label}`}
+        >
+          <Pencil className="h-4 w-4" />
+        </Button>
+      )}
+      <Button
+        type="button"
+        variant="ghost"
+        size="icon"
+        className="h-9 w-9 text-muted-foreground hover:text-destructive"
+        onClick={onDelete}
+        aria-label={`Remove ${label}`}
+      >
+        <X className="h-4 w-4" />
+      </Button>
+    </div>
+  );
+}
 
 const parseCats = (c: string | null | undefined): Category[] =>
   (c ?? "").split(",").map((s) => s.trim()).filter(Boolean);
@@ -389,7 +500,8 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
     queryFn: async (): Promise<RoomType[]> => {
       const { data, error } = await supabase
         .from("room_types")
-        .select("id,user_id,value,label,created_at,updated_at")
+        .select("id,user_id,value,label,sort_order,created_at,updated_at")
+        .order("sort_order", { ascending: true, nullsFirst: false })
         .order("created_at", { ascending: true });
       if (error) throw error;
       return (data ?? []) as RoomType[];
@@ -401,7 +513,8 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
     queryFn: async (): Promise<RoomFeature[]> => {
       const { data, error } = await supabase
         .from("room_features" as never)
-        .select("id,user_id,value,label,created_at,updated_at")
+        .select("id,user_id,value,label,sort_order,created_at,updated_at")
+        .order("sort_order", { ascending: true, nullsFirst: false })
         .order("created_at", { ascending: true });
       if (error) throw error;
       return (data ?? []) as RoomFeature[];
@@ -424,7 +537,8 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
     queryFn: async (): Promise<ReceptionItem[]> => {
       const { data, error } = await supabase
         .from("reception_items" as never)
-        .select("id,user_id,kind,label,created_at,updated_at")
+        .select("id,user_id,kind,label,sort_order,created_at,updated_at")
+        .order("sort_order", { ascending: true, nullsFirst: false })
         .order("created_at", { ascending: true });
       if (error) throw error;
       return (data ?? []) as ReceptionItem[];
@@ -1021,18 +1135,36 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
 
   const resetReceptionAll = async () => {
     if (!confirm("Reset reception status and bed selections for all rooms?")) return;
+    const dndId = receptionStatuses.find((x) => x.label === "DND")?.id ?? null;
+    const stayId = receptionStatuses.find((x) => x.label === "Stayover")?.id ?? null;
     qc.setQueryData<Room[]>(["rooms"], (old) =>
       old?.map((r) => ({
         ...r,
-        reception_status_id: null,
+        reception_status_id:
+          dndId && r.reception_status_id === dndId && stayId ? stayId : null,
         reception_bed_id: null,
       })) ?? [],
     );
+    // Clear everything to null first, then for DND rooms restore Stayover.
     const { error } = await supabase
       .from("rooms")
       .update({ reception_status_id: null, reception_bed_id: null })
-      .neq("room_number", -1);
+      .neq("room_number", -1)
+      .neq("reception_status_id", dndId ?? "00000000-0000-0000-0000-000000000000");
     if (error) toast.error(error.message);
+    if (dndId && stayId) {
+      const { error: e2 } = await supabase
+        .from("rooms")
+        .update({ reception_status_id: stayId, reception_bed_id: null })
+        .eq("reception_status_id", dndId);
+      if (e2) toast.error(e2.message);
+    } else if (dndId) {
+      const { error: e2 } = await supabase
+        .from("rooms")
+        .update({ reception_status_id: null, reception_bed_id: null })
+        .eq("reception_status_id", dndId);
+      if (e2) toast.error(e2.message);
+    }
     qc.invalidateQueries({ queryKey: ["rooms"] });
   };
 
@@ -1655,11 +1787,13 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
         user_id: authUser?.id ?? "",
         value,
         label: clean,
+        sort_order: ((old ?? []).reduce((m, r) => Math.max(m, r.sort_order ?? 0), 0)) + 1,
         created_at: new Date().toISOString(),
         updated_at: new Date().toISOString(),
       },
     ]);
-    const { error } = await supabase.from("room_types").insert({ value, label: clean } as never);
+    const nextSort = (roomTypes.reduce((m, r) => Math.max(m, r.sort_order ?? 0), 0)) + 1;
+    const { error } = await supabase.from("room_types").insert({ value, label: clean, sort_order: nextSort } as never);
     if (error) {
       toast.error(error.message);
       qc.invalidateQueries({ queryKey: ["room_types"] });
@@ -1690,6 +1824,40 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
     }
   };
 
+  const renameRoomType = async (id: string, label: string) => {
+    const clean = label.trim();
+    if (!clean) return;
+    qc.setQueryData<RoomType[]>(["room_types"], (old) =>
+      old?.map((r) => (r.id === id ? { ...r, label: clean } : r)) ?? [],
+    );
+    const { error } = await supabase.from("room_types").update({ label: clean } as never).eq("id", id);
+    if (error) toast.error(error.message);
+    qc.invalidateQueries({ queryKey: ["room_types"] });
+  };
+
+  const moveRoomType = async (id: string, dir: -1 | 1) => {
+    const sorted = [...roomTypes].sort((a, b) => (a.sort_order ?? 0) - (b.sort_order ?? 0));
+    const idx = sorted.findIndex((r) => r.id === id);
+    const swapIdx = idx + dir;
+    if (idx < 0 || swapIdx < 0 || swapIdx >= sorted.length) return;
+    const a = sorted[idx];
+    const b = sorted[swapIdx];
+    const aSort = a.sort_order ?? idx + 1;
+    const bSort = b.sort_order ?? swapIdx + 1;
+    qc.setQueryData<RoomType[]>(["room_types"], (old) =>
+      old?.map((r) =>
+        r.id === a.id ? { ...r, sort_order: bSort } : r.id === b.id ? { ...r, sort_order: aSort } : r,
+      ) ?? [],
+    );
+    const [r1, r2] = await Promise.all([
+      supabase.from("room_types").update({ sort_order: bSort } as never).eq("id", a.id),
+      supabase.from("room_types").update({ sort_order: aSort } as never).eq("id", b.id),
+    ]);
+    if (r1.error) toast.error(r1.error.message);
+    if (r2.error) toast.error(r2.error.message);
+    qc.invalidateQueries({ queryKey: ["room_types"] });
+  };
+
   // --- Room feature management ---
   const addRoomFeature = async (label: string) => {
     const clean = label.trim();
@@ -1703,9 +1871,10 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
       toast.error("Feature already exists");
       return;
     }
+    const nextSort = (roomFeatures.reduce((m, r) => Math.max(m, r.sort_order ?? 0), 0)) + 1;
     const { error } = await supabase
       .from("room_features" as never)
-      .insert({ value, label: clean, user_id: authUser?.id } as never);
+      .insert({ value, label: clean, sort_order: nextSort, user_id: authUser?.id } as never);
     if (error) {
       toast.error(error.message);
       return;
@@ -1730,6 +1899,40 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
       toast.error(error.message);
       qc.invalidateQueries({ queryKey: ["room_features"] });
     }
+  };
+
+  const renameRoomFeature = async (id: string, label: string) => {
+    const clean = label.trim();
+    if (!clean) return;
+    qc.setQueryData<RoomFeature[]>(["room_features"], (old) =>
+      old?.map((f) => (f.id === id ? { ...f, label: clean } : f)) ?? [],
+    );
+    const { error } = await supabase.from("room_features" as never).update({ label: clean } as never).eq("id", id);
+    if (error) toast.error(error.message);
+    qc.invalidateQueries({ queryKey: ["room_features"] });
+  };
+
+  const moveRoomFeature = async (id: string, dir: -1 | 1) => {
+    const sorted = [...roomFeatures].sort((a, b) => (a.sort_order ?? 0) - (b.sort_order ?? 0));
+    const idx = sorted.findIndex((r) => r.id === id);
+    const swapIdx = idx + dir;
+    if (idx < 0 || swapIdx < 0 || swapIdx >= sorted.length) return;
+    const a = sorted[idx];
+    const b = sorted[swapIdx];
+    const aSort = a.sort_order ?? idx + 1;
+    const bSort = b.sort_order ?? swapIdx + 1;
+    qc.setQueryData<RoomFeature[]>(["room_features"], (old) =>
+      old?.map((r) =>
+        r.id === a.id ? { ...r, sort_order: bSort } : r.id === b.id ? { ...r, sort_order: aSort } : r,
+      ) ?? [],
+    );
+    const [r1, r2] = await Promise.all([
+      supabase.from("room_features" as never).update({ sort_order: bSort } as never).eq("id", a.id),
+      supabase.from("room_features" as never).update({ sort_order: aSort } as never).eq("id", b.id),
+    ]);
+    if (r1.error) toast.error(r1.error.message);
+    if (r2.error) toast.error(r2.error.message);
+    qc.invalidateQueries({ queryKey: ["room_features"] });
   };
 
   const toggleRoomFeature = async (roomNumber: number, featureId: string) => {
@@ -1762,9 +1965,11 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
       toast.error("Entry already exists");
       return;
     }
+    const sameKind = receptionItems.filter((i) => i.kind === kind);
+    const nextSort = (sameKind.reduce((m, r) => Math.max(m, r.sort_order ?? 0), 0)) + 1;
     const { error } = await supabase
       .from("reception_items" as never)
-      .insert({ kind, label: clean, user_id: authUser?.id } as never);
+      .insert({ kind, label: clean, sort_order: nextSort, user_id: authUser?.id } as never);
     if (error) {
       toast.error(error.message);
       return;
@@ -1784,6 +1989,45 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
       toast.error(error.message);
       qc.invalidateQueries({ queryKey: ["reception_items"] });
     }
+  };
+
+  const renameReceptionItem = async (id: string, label: string) => {
+    const clean = label.trim();
+    if (!clean) return;
+    qc.setQueryData<ReceptionItem[]>(["reception_items"], (old) =>
+      old?.map((i) => (i.id === id ? { ...i, label: clean } : i)) ?? [],
+    );
+    const { error } = await supabase.from("reception_items" as never).update({ label: clean } as never).eq("id", id);
+    if (error) toast.error(error.message);
+    qc.invalidateQueries({ queryKey: ["reception_items"] });
+  };
+
+  const moveReceptionItem = async (id: string, dir: -1 | 1) => {
+    const item = receptionItems.find((i) => i.id === id);
+    if (!item) return;
+    const sorted = receptionItems
+      .filter((i) => i.kind === item.kind)
+      .slice()
+      .sort((a, b) => (a.sort_order ?? 0) - (b.sort_order ?? 0));
+    const idx = sorted.findIndex((r) => r.id === id);
+    const swapIdx = idx + dir;
+    if (idx < 0 || swapIdx < 0 || swapIdx >= sorted.length) return;
+    const a = sorted[idx];
+    const b = sorted[swapIdx];
+    const aSort = a.sort_order ?? idx + 1;
+    const bSort = b.sort_order ?? swapIdx + 1;
+    qc.setQueryData<ReceptionItem[]>(["reception_items"], (old) =>
+      old?.map((r) =>
+        r.id === a.id ? { ...r, sort_order: bSort } : r.id === b.id ? { ...r, sort_order: aSort } : r,
+      ) ?? [],
+    );
+    const [r1, r2] = await Promise.all([
+      supabase.from("reception_items" as never).update({ sort_order: bSort } as never).eq("id", a.id),
+      supabase.from("reception_items" as never).update({ sort_order: aSort } as never).eq("id", b.id),
+    ]);
+    if (r1.error) toast.error(r1.error.message);
+    if (r2.error) toast.error(r2.error.message);
+    qc.invalidateQueries({ queryKey: ["reception_items"] });
   };
 
  const renderRoomPanel = (n: number) => {
@@ -2725,7 +2969,15 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
                           key={s.id}
                           label={s.label}
                           selected={selected}
-                          onClick={() => setRoomReceptionStatus(n, occ === s.id ? null : s.id)}
+                          onClick={() => {
+                            if (occ === s.id) {
+                              // Toggling off: if removing DND, keep Stayover instead of clearing.
+                              const next = s.id === dndId && stayId ? stayId : null;
+                              setRoomReceptionStatus(n, next);
+                            } else {
+                              setRoomReceptionStatus(n, s.id);
+                            }
+                          }}
                         />
                       );
                     });
@@ -2989,24 +3241,18 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
        {roomTypes.length === 0 ? (
          <p className="text-sm text-muted-foreground">No room types yet.</p>
        ) : (
-         roomTypes.map((rt) => (
-           <div
-             key={rt.id}
-             className="flex items-center gap-2 rounded-full border bg-background min-h-12 pl-4 pr-1.5"
-           >
-             <span className="flex-1 text-sm font-medium">{rt.label}</span>
-             <Button
-               type="button"
-               variant="ghost"
-               size="icon"
-               className="h-9 w-9 text-muted-foreground hover:text-destructive"
-               onClick={() => deleteRoomType(rt.id)}
-               aria-label={`Remove ${rt.label}`}
-             >
-               <X className="h-4 w-4" />
-             </Button>
-           </div>
-         ))
+          roomTypes.map((rt, idx) => (
+            <ManageEditableRow
+              key={rt.id}
+              label={rt.label}
+              canMoveUp={idx > 0}
+              canMoveDown={idx < roomTypes.length - 1}
+              onMoveUp={() => moveRoomType(rt.id, -1)}
+              onMoveDown={() => moveRoomType(rt.id, 1)}
+              onRename={(v: string) => renameRoomType(rt.id, v)}
+              onDelete={() => deleteRoomType(rt.id)}
+            />
+          ))
        )}
        <Button
          type="button"
@@ -3035,24 +3281,18 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
        {roomFeatures.length === 0 ? (
          <p className="text-sm text-muted-foreground">No features yet.</p>
        ) : (
-         roomFeatures.map((f) => (
-           <div
-             key={f.id}
-             className="flex items-center gap-2 rounded-full border bg-background min-h-12 pl-4 pr-1.5"
-           >
-             <span className="flex-1 text-sm font-medium">{f.label}</span>
-             <Button
-               type="button"
-               variant="ghost"
-               size="icon"
-               className="h-9 w-9 text-muted-foreground hover:text-destructive"
-               onClick={() => deleteRoomFeature(f.id)}
-               aria-label={`Remove ${f.label}`}
-             >
-               <X className="h-4 w-4" />
-             </Button>
-           </div>
-         ))
+          roomFeatures.map((f, idx) => (
+            <ManageEditableRow
+              key={f.id}
+              label={f.label}
+              canMoveUp={idx > 0}
+              canMoveDown={idx < roomFeatures.length - 1}
+              onMoveUp={() => moveRoomFeature(f.id, -1)}
+              onMoveDown={() => moveRoomFeature(f.id, 1)}
+              onRename={(v: string) => renameRoomFeature(f.id, v)}
+              onDelete={() => deleteRoomFeature(f.id)}
+            />
+          ))
        )}
        <Button
          type="button"
@@ -3084,21 +3324,18 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
            {receptionStatuses.length === 0 && (
              <p className="text-sm text-muted-foreground">No statuses yet.</p>
            )}
-           {receptionStatuses.map((s) => (
-             <div key={s.id} className="flex items-center gap-2 rounded-full border bg-background min-h-12 pl-4 pr-1.5">
-               <span className="flex-1 text-sm font-medium">{s.label}</span>
-               <Button
-                 type="button"
-                 variant="ghost"
-                 size="icon"
-                 className="h-9 w-9 text-muted-foreground hover:text-destructive"
-                 onClick={() => deleteReceptionItem(s.id)}
-                 aria-label={`Remove ${s.label}`}
-               >
-                 <X className="h-4 w-4" />
-               </Button>
-             </div>
-           ))}
+            {receptionStatuses.map((s, idx) => (
+              <ManageEditableRow
+                key={s.id}
+                label={s.label}
+                canMoveUp={idx > 0}
+                canMoveDown={idx < receptionStatuses.length - 1}
+                onMoveUp={() => moveReceptionItem(s.id, -1)}
+                onMoveDown={() => moveReceptionItem(s.id, 1)}
+                onRename={(v: string) => renameReceptionItem(s.id, v)}
+                onDelete={() => deleteReceptionItem(s.id)}
+              />
+            ))}
            <Button
              type="button"
              variant="outline"
@@ -3116,21 +3353,18 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
            {receptionBeds.length === 0 && (
              <p className="text-sm text-muted-foreground">No bed types yet.</p>
            )}
-           {receptionBeds.map((b) => (
-             <div key={b.id} className="flex items-center gap-2 rounded-full border bg-background min-h-12 pl-4 pr-1.5">
-               <span className="flex-1 text-sm font-medium">{b.label}</span>
-               <Button
-                 type="button"
-                 variant="ghost"
-                 size="icon"
-                 className="h-9 w-9 text-muted-foreground hover:text-destructive"
-                 onClick={() => deleteReceptionItem(b.id)}
-                 aria-label={`Remove ${b.label}`}
-               >
-                 <X className="h-4 w-4" />
-               </Button>
-             </div>
-           ))}
+            {receptionBeds.map((b, idx) => (
+              <ManageEditableRow
+                key={b.id}
+                label={b.label}
+                canMoveUp={idx > 0}
+                canMoveDown={idx < receptionBeds.length - 1}
+                onMoveUp={() => moveReceptionItem(b.id, -1)}
+                onMoveDown={() => moveReceptionItem(b.id, 1)}
+                onRename={(v: string) => renameReceptionItem(b.id, v)}
+                onDelete={() => deleteReceptionItem(b.id)}
+              />
+            ))}
            <Button
              type="button"
              variant="outline"
@@ -3612,27 +3846,29 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
  </h2>
     {isReception && (roomFeatures.length > 0 || receptionStatuses.length > 0) && (() => {
       const totalSelected = receptionFeatureFilter.length + receptionStatusFilter.length;
+      const dndId = receptionStatuses.find((x) => x.label === "DND")?.id ?? null;
+      const filterableStatuses = receptionStatuses.filter((s) => s.id !== dndId);
       return (
-        <Sheet open={filtersSheetOpen} onOpenChange={setFiltersSheetOpen}>
-          <SheetTrigger asChild>
+        <Popover open={filtersSheetOpen} onOpenChange={setFiltersSheetOpen}>
+          <PopoverTrigger asChild>
             <Button variant="outline" size="sm" className="h-7 gap-1.5 text-xs">
               <Filter className="h-3.5 w-3.5" />
               {totalSelected === 0 ? "Filters" : `Filters · ${totalSelected}`}
             </Button>
-          </SheetTrigger>
-          <SheetContent side="bottom" className="max-h-[85vh] overflow-y-auto rounded-t-2xl p-4 sm:p-6">
-            <SheetHeader className="text-left">
-              <SheetTitle>Filters</SheetTitle>
-              <SheetDescription>
+          </PopoverTrigger>
+          <PopoverContent align="end" className="w-72 max-h-[70vh] overflow-y-auto p-3">
+            <div className="space-y-1 pb-2">
+              <p className="text-sm font-semibold">Filters</p>
+              <p className="text-xs text-muted-foreground">
                 {totalSelected === 0 ? "Filter rooms by status and features." : `${totalSelected} active`}
-              </SheetDescription>
-            </SheetHeader>
-            <div className="mt-4 space-y-5">
-              {receptionStatuses.length > 0 && (
+              </p>
+            </div>
+            <div className="space-y-4">
+              {filterableStatuses.length > 0 && (
                 <div className="space-y-2">
                   <p className="text-xs font-medium text-muted-foreground uppercase tracking-wide">Status</p>
                   <div className="grid gap-1">
-                    {[...receptionStatuses]
+                    {[...filterableStatuses]
                       .sort((a, b) => a.label.localeCompare(b.label))
                       .map((s) => {
                         const display = s.label === "Out of Service" ? "Room out of Service" : s.label;
@@ -3640,7 +3876,7 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
                         return (
                           <label
                             key={s.id}
-                            className="flex items-center gap-3 py-2.5 px-3 rounded-full hover:bg-muted cursor-pointer"
+                            className="flex items-center gap-2 py-1.5 px-2 rounded-md hover:bg-muted cursor-pointer"
                           >
                             <Checkbox
                               checked={checked}
@@ -3668,7 +3904,7 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
                         return (
                           <label
                             key={f.id}
-                            className="flex items-center gap-3 py-2.5 px-3 rounded-full hover:bg-muted cursor-pointer"
+                            className="flex items-center gap-2 py-1.5 px-2 rounded-md hover:bg-muted cursor-pointer"
                           >
                             <Checkbox
                               checked={checked}
@@ -3688,20 +3924,20 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
               {totalSelected > 0 && (
                 <Button
                   variant="outline"
-                  size="lg"
-                  className="w-full h-12"
+                  size="sm"
+                  className="w-full"
                   onClick={() => {
                     setReceptionFeatureFilter([]);
                     setReceptionStatusFilter([]);
                   }}
                 >
-                  <X className="h-5 w-5 mr-2" />
+                  <X className="h-4 w-4 mr-2" />
                   Clear filters
                 </Button>
               )}
             </div>
-          </SheetContent>
-        </Sheet>
+          </PopoverContent>
+        </Popover>
       );
     })()}
    {!isReception && (

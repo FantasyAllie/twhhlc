@@ -154,9 +154,14 @@ export function QuickReceptionSheet({
                             key={s.id}
                             label={s.label}
                             selected={selected}
-                            onClick={() =>
-                              onChangeStatus(n, currentStatus === s.id ? null : s.id)
-                            }
+                            onClick={() => {
+                              if (currentStatus === s.id) {
+                                const next = s.id === dndId && stayId ? stayId : null;
+                                onChangeStatus(n, next);
+                              } else {
+                                onChangeStatus(n, s.id);
+                              }
+                            }}
                           />
                         );
                         });
