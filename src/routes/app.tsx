@@ -82,9 +82,9 @@ function ManageEditableRow({
   onRename: (v: string) => void | Promise<void>;
   onDelete: () => void | Promise<void>;
 }) {
-  const [editing, setEditing] = React.useState(false);
-  const [draft, setDraft] = React.useState(label);
-  React.useEffect(() => {
+  const [editing, setEditing] = useState(false);
+  const [draft, setDraft] = useState(label);
+  useEffect(() => {
     if (!editing) setDraft(label);
   }, [label, editing]);
   const commit = () => {
