@@ -4074,14 +4074,6 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
         }
          aria-label={`Room ${n} ${meta.label}${isStaffRoom ? " staff" : ""}`}
       >
-          {isDirty && !isStaffRoom && (
-            <span
-              aria-hidden="true"
-              className="pointer-events-none absolute inset-0 flex items-center justify-center text-6xl md:text-7xl opacity-15 leading-none"
-            >
-              💩
-            </span>
-          )}
          {!isStaffRoom && (
            <>
              <span className="text-sm sm:text-base font-bold leading-none">{n}</span>
