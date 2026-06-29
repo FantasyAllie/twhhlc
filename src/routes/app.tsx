@@ -4074,16 +4074,7 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
         aria-expanded={isOpen}
           aria-label={`Room ${n} ${isStaff ? "staff" : meta.label}`}
       >
-         <span
-           className="text-sm sm:text-base font-bold leading-none"
-           style={
-             receptionDoneSet.has(n)
-               ? { color: "#eab308", WebkitTextStroke: "0.5px #ffffff" }
-               : undefined
-           }
-         >
-           {n}
-         </span>
+         <span className="text-sm sm:text-base font-bold leading-none">{n}</span>
           <span className="text-[9px] sm:text-[10px] font-medium leading-none opacity-90 whitespace-pre-line">
             {isStaff ? "Staff" : meta.label}
           </span>
@@ -4112,6 +4103,14 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
               className="absolute top-0.5 left-0.5 rounded-sm bg-emerald-600 px-1 py-px text-[8px] font-bold leading-none tracking-wide text-white shadow-sm dark:bg-emerald-500 dark:text-emerald-950"
             >
               OUT
+            </span>
+          )}
+          {receptionDoneSet.has(n) && (
+            <span
+              aria-label="Mark as Done"
+                className="absolute bottom-0.5 right-0.5 flex h-3.5 w-3.5 items-center justify-center rounded-full bg-yellow-500 text-background ring-1 ring-background"
+            >
+                <Check className="h-2.5 w-2.5" />
             </span>
           )}
       </button>,
