@@ -13,6 +13,7 @@ import { NotificationsSheet } from "@/components/notifications-sheet";
 import { UsersDialog } from "@/components/users-dialog";
 import { QuickReceptionSheet } from "@/components/quick-reception-sheet";
 import { useServerFn } from "@tanstack/react-start";
+import { useIsMobile } from "@/hooks/use-mobile";
 import {
   DropdownMenu,
   DropdownMenuCheckboxItem,
