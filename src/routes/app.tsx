@@ -2558,7 +2558,7 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
            <DropdownMenuSeparator />
            <DropdownMenuLabel>Reception</DropdownMenuLabel>
            <DropdownMenuItem onClick={() => setQuickReceptionOpen(true)}>
-             <ConciergeBell className="h-4 w-4 mr-2" /> Quick Room Status Setup
+             <ConciergeBell className="h-4 w-4 mr-2" /> Bulk Room Status Setup
            </DropdownMenuItem>
            <DropdownMenuSeparator />
          </>
@@ -3266,7 +3266,7 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
             <div className="space-y-2">
               <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">Reception</p>
               <div className="space-y-1.5">
-                <Row icon={ConciergeBell} label="Quick Room Status Setup" onClick={() => { close(); setQuickReceptionOpen(true); }} />
+                <Row icon={ConciergeBell} label="Bulk Room Status Setup" onClick={() => { close(); setQuickReceptionOpen(true); }} />
               </div>
             </div>
           )}
