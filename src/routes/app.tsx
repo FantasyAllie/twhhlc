@@ -1130,13 +1130,18 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
   };
 
   const resetAll = async () => {
-    if (!confirm("Reset done state and counts for all rooms?")) return;
+    if (!confirm("Reset done state, counts, and quick status setup for all rooms?")) return;
+    const dndId = receptionStatuses.find((x) => x.label === "DND")?.id ?? null;
+    const stayId = receptionStatuses.find((x) => x.label === "Stayover")?.id ?? null;
     qc.setQueryData<Room[]>(["rooms"], (old) =>
       old?.map((r) => ({
         ...r,
         done: false,
         done_reception: false,
         housekeeping_note: null, needs_maintenance: false, guest_vacated: false,
+        reception_status_id:
+          dndId && r.reception_status_id === dndId && stayId ? stayId : null,
+        reception_bed_id: null,
       })) ?? [],
     );
     qc.setQueryData<RoomCount[]>(["room_counts"], () => []);
@@ -1145,11 +1150,20 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
         done: false,
         done_reception: false,
         housekeeping_note: null, needs_maintenance: false, guest_vacated: false,
+        reception_status_id: null,
+        reception_bed_id: null,
       }).neq("room_number", -1),
       supabase.from("room_item_counts").delete().neq("room_number", -1),
     ]);
     if (r1.error) toast.error(r1.error.message);
     if (r2.error) toast.error(r2.error.message);
+    if (dndId && stayId) {
+      const { error: e3 } = await supabase
+        .from("rooms")
+        .update({ reception_status_id: stayId })
+        .eq("reception_status_id", dndId);
+      if (e3) toast.error(e3.message);
+    }
     qc.invalidateQueries({ queryKey: ["rooms"] });
     qc.invalidateQueries({ queryKey: ["room_counts"] });
   };
