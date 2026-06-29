@@ -3996,8 +3996,10 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
     )?.id;
     const isStaffRoom = (room?.reception_status_id ?? room?.default_status) === staffStatusId;
     const isDnd = !!dndStatusId && (room?.reception_status_id ?? room?.default_status) === dndStatusId;
-     const state = getRoomTileState(n, done);
-     const meta = roomStateMeta[state];
+      // Reception only sees red (not done) or green (done by housekeeping/admin).
+      const hkDone = !!room?.done;
+      const state: RoomTileState = hkDone ? "complete" : "todo";
+      const meta = roomStateMeta[state];
     nodes.push(
         <button
         key={`r-${n}`}
