@@ -4051,11 +4051,14 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
      const isDirty = !!dirtyStatusIdGlobal && (room?.reception_status_id ?? room?.default_status) === dirtyStatusIdGlobal;
      const state = getRoomTileState(n, done);
      const baseMeta = roomStateMeta[state];
+     const hasStatus = !!(room?.reception_status_id ?? room?.default_status);
       const meta = isDirty && !isStaffRoom
         ? { bg: "var(--room-dirty)", fg: "var(--room-dirty-fg)", accent: "var(--room-dirty-accent)", label: "Dirty" }
         : (isStayover || isDnd) && !isStaffRoom
           ? { ...roomStateMeta.todo, label: "Stayover" }
-          : baseMeta;
+          : !hasStatus && !isStaffRoom && state === "todo"
+            ? { ...baseMeta, label: "Not started" }
+            : baseMeta;
     nodes.push(
         <button
         key={`r-${n}`}
@@ -4124,11 +4127,14 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
       const baseMeta = state === "done"
         ? { bg: "var(--room-done)", fg: "var(--room-done-fg)", accent: "var(--room-done-accent)", label: "Clean" }
         : roomStateMeta[state];
+     const hasStatus = !!(room?.reception_status_id ?? room?.default_status);
       const meta = isDirty && !isStaff
         ? { bg: "var(--room-dirty)", fg: "var(--room-dirty-fg)", accent: "var(--room-dirty-accent)", label: "Dirty" }
         : (isStayover || isDnd) && !isStaff
           ? { ...roomStateMeta.todo, label: "Stayover" }
-          : baseMeta;
+          : !hasStatus && !isStaff && state === "todo"
+            ? { ...baseMeta, label: "Not started" }
+            : baseMeta;
     nodes.push(
       <button
         key={`r-${n}`}
