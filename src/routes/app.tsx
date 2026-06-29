@@ -4046,7 +4046,7 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
           disabled={isStaffRoom}
           onClick={() => openOrToggle(n)}
         className={cn(
-             "relative overflow-hidden rounded-lg border text-xs sm:text-sm font-medium transition-colors tabular-nums flex flex-col justify-between aspect-[5/4] p-1.5 pt-2 text-left",
+             "relative overflow-hidden rounded-lg border text-xs sm:text-sm md:text-base font-medium transition-colors tabular-nums flex flex-col justify-between aspect-[5/4] p-1.5 md:p-2.5 pt-2 md:pt-3 text-left",
              openRoom === n && !isStaffRoom && "ring-2 ring-ring border-transparent bg-accent",
             isStaffRoom && "bg-muted text-muted-foreground border-muted-foreground/20 opacity-60"
         )}
@@ -4115,7 +4115,7 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
         type="button"
         onClick={() => openOrToggle(n)}
         className={cn(
-             "relative overflow-hidden rounded-lg border text-xs sm:text-sm font-medium transition-colors tabular-nums flex flex-col justify-between aspect-[5/4] p-1.5 pt-2 text-left",
+             "relative overflow-hidden rounded-lg border text-xs sm:text-sm md:text-base font-medium transition-colors tabular-nums flex flex-col justify-between aspect-[5/4] p-1.5 md:p-2.5 pt-2 md:pt-3 text-left",
           isOpen && "ring-2 ring-ring border-transparent bg-accent",
         )}
         style={
