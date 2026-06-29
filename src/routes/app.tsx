@@ -4155,7 +4155,7 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
           isOpen
             ? undefined
             : isStaff
-              ? { backgroundColor: "var(--room-todo)", color: "var(--room-todo-fg)", borderColor: "var(--room-todo-accent)", borderTopWidth: 3 }
+              ? { backgroundColor: "var(--room-staff)", color: "var(--room-staff-fg)", borderColor: "var(--room-staff-accent)", borderTopWidth: 3 }
               : { backgroundColor: meta.bg, color: meta.fg, borderColor: meta.accent, borderTopWidth: 3 }
         }
         aria-pressed={done}
