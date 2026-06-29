@@ -4739,8 +4739,8 @@ function AccountDialog({
   currentUsername: string;
   onUsernameChanged: (u: string) => void;
   canViewAs: boolean;
-  viewAsRole: "admin" | "user" | "reception" | null;
-  onViewAsRoleChange: (r: "admin" | "user" | "reception" | null) => void;
+  viewAsRole: "admin" | "manager" | "user" | "reception" | null;
+  onViewAsRoleChange: (r: "admin" | "manager" | "user" | "reception" | null) => void;
 }) {
   const [username, setUsername] = useState(currentUsername);
   const [unCurrentPw, setUnCurrentPw] = useState("");
