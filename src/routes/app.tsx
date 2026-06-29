@@ -3110,11 +3110,11 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
 
  {/* Edit defaults sheet (Admin): which template items appear in this room */}
 {/* App menu sheet (burger) */}
-{authUser && (
+{authUser && authUser.role !== "pending" && (
   <NotificationsSheet
     open={notificationsSheetOpen}
     onOpenChange={setNotificationsSheetOpen}
-    userRole={authUser.role}
+    userRole={authUser.role as "admin" | "user" | "reception"}
   />
 )}
 <Sheet open={menuSheetOpen} onOpenChange={setMenuSheetOpen}>
