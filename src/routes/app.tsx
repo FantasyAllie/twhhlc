@@ -769,7 +769,7 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
     RoomTileState,
     { bg: string; fg: string; accent: string; label: string }
   > = {
-    todo:     { bg: "var(--room-todo)",     fg: "var(--room-todo-fg)",     accent: "var(--room-todo-accent)",     label: "Not started" },
+    todo:     { bg: "var(--room-todo)",     fg: "var(--room-todo-fg)",     accent: "var(--room-todo-accent)",     label: "Stayover\n" },
     progress: { bg: "var(--room-progress)", fg: "var(--room-progress-fg)", accent: "var(--room-progress-accent)", label: "In progress" },
     done:     { bg: "var(--room-done)",     fg: "var(--room-done-fg)",     accent: "var(--room-done-accent)",     label: "Marked done" },
     complete: { bg: "var(--room-complete)", fg: "var(--room-complete-fg)", accent: "var(--room-complete-accent)", label: "Cleaned & Ready for Guest" },
@@ -4008,9 +4008,9 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
          {!isStaffRoom && (
            <>
              <span className="text-sm sm:text-base font-bold leading-none">{n}</span>
-             <span className="text-[9px] sm:text-[10px] font-medium leading-none opacity-90">
-               {meta.label}
-             </span>
+              <span className="text-[9px] sm:text-[10px] font-medium leading-none opacity-90 whitespace-pre-line">
+                {meta.label}
+              </span>
              {isDnd && (
                <span
                    className="absolute right-1.5 top-2 text-xs sm:text-sm font-bold leading-none"
@@ -4069,9 +4069,9 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
          aria-label={`Room ${n} ${meta.label}`}
       >
          <span className="text-sm sm:text-base font-bold leading-none">{n}</span>
-         <span className="text-[9px] sm:text-[10px] font-medium leading-none opacity-90">
-           {meta.label}
-         </span>
+          <span className="text-[9px] sm:text-[10px] font-medium leading-none opacity-90 whitespace-pre-line">
+            {meta.label}
+          </span>
          {isDnd && (
            <span
                className="absolute right-1.5 top-2 text-xs sm:text-sm font-bold leading-none"
