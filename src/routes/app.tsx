@@ -3995,7 +3995,7 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
  </div>
 
  {/* On-screen interactive accordion */}
- <div className="grid grid-cols-4 sm:grid-cols-8 md:grid-cols-10 gap-2">
+ <div className="grid grid-cols-4 sm:grid-cols-6 md:grid-cols-7 lg:grid-cols-8 xl:grid-cols-10 gap-2 md:gap-3">
  {(() => {
   const allRooms = rooms.map((r) => r.room_number);
    const visibleRooms = (isReception && (receptionFeatureFilter.length > 0 || receptionStatusFilter.length > 0 || receptionDoneOnlyFilter))
