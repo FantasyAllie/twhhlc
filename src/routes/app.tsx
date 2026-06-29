@@ -1145,25 +1145,30 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
       })) ?? [],
     );
     qc.setQueryData<RoomCount[]>(["room_counts"], () => []);
-    const [r1, r2] = await Promise.all([
-      supabase.from("rooms").update({
-        done: false,
-        done_reception: false,
-        housekeeping_note: null, needs_maintenance: false, guest_vacated: false,
-        reception_status_id: null,
-        reception_bed_id: null,
-      }).neq("room_number", -1),
-      supabase.from("room_item_counts").delete().neq("room_number", -1),
-    ]);
+    // Clear non-DND rooms first so we don't wipe DND before restoring to Stayover.
+    const r1 = await supabase.from("rooms").update({
+      done: false,
+      done_reception: false,
+      housekeeping_note: null, needs_maintenance: false, guest_vacated: false,
+      reception_status_id: null,
+      reception_bed_id: null,
+    }).neq("room_number", -1).neq("reception_status_id", dndId ?? "00000000-0000-0000-0000-000000000000");
     if (r1.error) toast.error(r1.error.message);
-    if (r2.error) toast.error(r2.error.message);
-    if (dndId && stayId) {
+    if (dndId) {
       const { error: e3 } = await supabase
         .from("rooms")
-        .update({ reception_status_id: stayId })
+        .update({
+          done: false,
+          done_reception: false,
+          housekeeping_note: null, needs_maintenance: false, guest_vacated: false,
+          reception_status_id: stayId ?? null,
+          reception_bed_id: null,
+        })
         .eq("reception_status_id", dndId);
       if (e3) toast.error(e3.message);
     }
+    const r2 = await supabase.from("room_item_counts").delete().neq("room_number", -1);
+    if (r2.error) toast.error(r2.error.message);
     qc.invalidateQueries({ queryKey: ["rooms"] });
     qc.invalidateQueries({ queryKey: ["room_counts"] });
   };
