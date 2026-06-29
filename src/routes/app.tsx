@@ -3977,6 +3977,9 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
     const staffStatusIdGlobal = receptionStatuses.find(
       (s) => s.label.toLowerCase() === "staff",
     )?.id ?? null;
+    const stayStatusIdGlobal = receptionStatuses.find(
+      (s) => s.label.toLowerCase() === "stayover",
+    )?.id ?? null;
    for (let i = 0; i < visibleRooms.length; i++) {
    const n = visibleRooms[i];
  const done = doneSet.has(n);
