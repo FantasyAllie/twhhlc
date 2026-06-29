@@ -10,6 +10,7 @@ export type AppUserRow = {
   email: string;
   role: AppRole;
   created_at: string;
+  disabled: boolean;
 };
 
 function validateRole(r: string): ApprovedRole {
@@ -52,12 +53,32 @@ export const listUsers = createServerFn({ method: "POST" })
       const cur = roleMap.get(r.user_id);
       if (!cur || priority[r.role] > priority[cur]) roleMap.set(r.user_id, r.role);
     }
+    // Pull ban status from auth.users in one paged listing
+    const disabledMap = new Map<string, boolean>();
+    try {
+      let page = 1;
+      // eslint-disable-next-line no-constant-condition
+      while (true) {
+        const { data, error: lerr } = await supabaseAdmin.auth.admin.listUsers({ page, perPage: 200 });
+        if (lerr) break;
+        const users = data?.users ?? [];
+        for (const u of users) {
+          const bu = (u as { banned_until?: string | null }).banned_until ?? null;
+          disabledMap.set(u.id, !!bu && new Date(bu).getTime() > Date.now());
+        }
+        if (users.length < 200) break;
+        page += 1;
+      }
+    } catch {
+      // best-effort: leave disabledMap empty
+    }
     return ((profiles ?? []) as Array<{ id: string; email: string | null; display_name: string | null; created_at: string }>).map((p) => ({
       id: p.id,
       email: p.email ?? "",
       username: p.display_name || (p.email ?? "").split("@")[0] || "user",
       role: roleMap.get(p.id) ?? "pending",
       created_at: p.created_at,
+      disabled: disabledMap.get(p.id) ?? false,
     }));
   });
 
@@ -132,6 +153,25 @@ export const updateUserPassword = createServerFn({ method: "POST" })
     const { error } = await supabaseAdmin.auth.admin.updateUserById(data.id, {
       password: data.password,
     });
+    if (error) throw new Error(error.message);
+    return { ok: true };
+  });
+
+export const setUserDisabled = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((d: { id: string; disabled: boolean }) => d)
+  .handler(async ({ data, context }) => {
+    await assertAdmin(context);
+    if (context.userId === data.id && data.disabled) {
+      throw new Error("You cannot disable your own account");
+    }
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    // "none" lifts the ban; a long duration disables sign-in and revokes sessions.
+    const ban_duration = data.disabled ? "876000h" : "none";
+    const { error } = await (supabaseAdmin.auth.admin.updateUserById(
+      data.id,
+      { ban_duration } as unknown as Parameters<typeof supabaseAdmin.auth.admin.updateUserById>[1],
+    ));
     if (error) throw new Error(error.message);
     return { ok: true };
   });
