@@ -3989,6 +3989,7 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
     )?.id;
     const isStaffRoom = (room?.reception_status_id ?? room?.default_status) === staffStatusId;
     const isDnd = !!dndStatusId && (room?.reception_status_id ?? room?.default_status) === dndStatusId;
+    const isStayover = !!stayoverStatusId && (room?.reception_status_id ?? room?.default_status) === stayoverStatusId;
      const state = getRoomTileState(n, done);
      const meta = roomStateMeta[state];
     nodes.push(
@@ -4005,6 +4006,8 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
         style={
             openRoom === n || isStaffRoom
               ? undefined
+              : isStayover
+                ? { backgroundColor: "var(--room-todo-accent)", color: "white", borderColor: "var(--room-todo-accent)", borderTopWidth: 3 }
                : { backgroundColor: meta.bg, color: meta.fg, borderColor: meta.accent, borderTopWidth: 3 }
         }
          aria-label={`Room ${n} ${meta.label}${isStaffRoom ? " staff" : ""}`}
@@ -4053,6 +4056,7 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
     const room = rooms.find((r) => r.room_number === n);
     const isDnd = !!dndStatusId && (room?.reception_status_id ?? room?.default_status) === dndStatusId;
     const isStaff = !!staffStatusIdGlobal && (room?.reception_status_id ?? room?.default_status) === staffStatusIdGlobal;
+    const isStayover = !!stayoverStatusId && (room?.reception_status_id ?? room?.default_status) === stayoverStatusId;
      const state = getRoomTileState(n, receptionDoneSet.has(n));
      const meta = roomStateMeta[state];
     nodes.push(
@@ -4069,6 +4073,8 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
             ? undefined
             : isStaff
               ? { backgroundColor: "var(--room-todo)", color: "var(--room-todo-fg)", borderColor: "var(--room-todo-accent)", borderTopWidth: 3 }
+              : isStayover && !isStaff
+                ? { backgroundColor: "var(--room-todo-accent)", color: "white", borderColor: "var(--room-todo-accent)", borderTopWidth: 3 }
               : { backgroundColor: meta.bg, color: meta.fg, borderColor: meta.accent, borderTopWidth: 3 }
         }
         aria-pressed={done}
