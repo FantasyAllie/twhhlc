@@ -107,18 +107,18 @@
   --sidebar-accent-foreground: oklch(0.208 0.042 265.755);
   --sidebar-border: oklch(0.929 0.013 255.508);
   --sidebar-ring: oklch(0.704 0.04 256.788);
-  --room-todo: oklch(0.82 0.13 27);
-  --room-todo-fg: oklch(0.25 0.1 27);
-  --room-todo-accent: oklch(0.55 0.22 27);
-  --room-progress: oklch(0.88 0.16 90);
-  --room-progress-fg: oklch(0.32 0.1 70);
-  --room-progress-accent: oklch(0.7 0.18 75);
-  --room-done: oklch(0.82 0.13 250);
-  --room-done-fg: oklch(0.28 0.12 255);
-  --room-done-accent: oklch(0.55 0.2 255);
-  --room-complete: oklch(0.84 0.16 150);
-  --room-complete-fg: oklch(0.28 0.1 150);
-  --room-complete-accent: oklch(0.55 0.18 150);
+  --room-todo: oklch(0.955 0.025 25);
+  --room-todo-fg: oklch(0.45 0.18 27);
+  --room-todo-accent: oklch(0.62 0.22 27);
+  --room-progress: oklch(0.97 0.05 90);
+  --room-progress-fg: oklch(0.5 0.14 70);
+  --room-progress-accent: oklch(0.75 0.17 75);
+  --room-done: oklch(0.95 0.04 240);
+  --room-done-fg: oklch(0.45 0.18 255);
+  --room-done-accent: oklch(0.6 0.2 255);
+  --room-complete: oklch(0.95 0.05 150);
+  --room-complete-fg: oklch(0.42 0.14 150);
+  --room-complete-accent: oklch(0.6 0.18 150);
 }
 
 .dark {

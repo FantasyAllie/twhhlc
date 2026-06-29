@@ -146,15 +146,9 @@ export function QuickReceptionSheet({
                       {(() => {
                         const dndId = statuses.find((x) => x.label === "DND")?.id ?? null;
                         const stayId = statuses.find((x) => x.label === "Stayover")?.id ?? null;
-                        const dirtyId = statuses.find((x) => x.label === "Dirty")?.id ?? null;
-                        const rosId = statuses.find((x) => x.label === "ROS")?.id ?? null;
                         const dndActive = !!dndId && currentStatus === dndId;
-                        const dirtyActive = !!dirtyId && currentStatus === dirtyId;
                         return statuses.map((s) => {
-                        const selected =
-                          currentStatus === s.id ||
-                          (dndActive && s.id === stayId) ||
-                          (dirtyActive && s.id === rosId);
+                        const selected = currentStatus === s.id || (dndActive && s.id === stayId);
                         return (
                           <Chip
                             key={s.id}
@@ -162,12 +156,7 @@ export function QuickReceptionSheet({
                             selected={selected}
                             onClick={() => {
                               if (currentStatus === s.id) {
-                                const next =
-                                  s.id === dndId && stayId
-                                    ? stayId
-                                    : s.id === dirtyId && rosId
-                                      ? rosId
-                                      : null;
+                                const next = s.id === dndId && stayId ? stayId : null;
                                 onChangeStatus(n, next);
                               } else {
                                 onChangeStatus(n, s.id);
