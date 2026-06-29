@@ -394,9 +394,13 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
     if (viewAsRole) window.localStorage.setItem("tw_view_as_role", viewAsRole);
     else window.localStorage.removeItem("tw_view_as_role");
   }, [viewAsRole]);
-  // Clear overlay if the signed-in user is no longer an admin.
+  // Clear overlay if the signed-in user can't use view-as, or if a manager
+  // somehow has "admin" selected (managers may not impersonate admin).
   useEffect(() => {
-    if (authUser && authUser.role !== "admin" && viewAsRole) setViewAsRole(null);
+    if (!authUser || !viewAsRole) return;
+    const role = authUser.role;
+    if (role !== "admin" && role !== "manager") setViewAsRole(null);
+    else if (role === "manager" && viewAsRole === "admin") setViewAsRole(null);
   }, [authUser, viewAsRole]);
 
   // Fire-and-forget push fan-out; never blocks the UI.
@@ -739,8 +743,13 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
   };
    const realRole = authUser?.role === "pending" ? undefined : (authUser?.role as ViewRole | undefined);
    const realIsAdmin = realRole === "admin";
+   const realIsManager = realRole === "manager";
+   const canViewAs = realIsAdmin || realIsManager;
+   // Managers can view-as housekeeper/reception, but never as admin.
+   const safeViewAs: ViewRole | null =
+     viewAsRole && realIsManager && viewAsRole === "admin" ? null : viewAsRole;
    const effectiveRole: ViewRole | undefined =
-     realIsAdmin && viewAsRole ? viewAsRole : realRole;
+     canViewAs && safeViewAs ? safeViewAs : realRole;
    const isReception = effectiveRole === "reception";
    const isAdmin = effectiveRole === "admin" || effectiveRole === "manager";
   const isHousekeeper = effectiveRole === "user";
@@ -2504,11 +2513,11 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
  </Button>
  </div>
  </header>
-  {realIsAdmin && viewAsRole && (
+   {canViewAs && safeViewAs && (
     <div className="bg-amber-500/15 border-b border-amber-500/40 text-amber-900 dark:text-amber-200 px-3 py-1.5 text-xs flex items-center justify-between gap-2">
       <span className="flex items-center gap-2">
         <Eye className="h-3.5 w-3.5" />
-        Viewing as <span className="font-semibold capitalize">{viewAsRole === "user" ? "housekeeper" : viewAsRole}</span>
+         Viewing as <span className="font-semibold capitalize">{safeViewAs === "user" ? "housekeeper" : safeViewAs}</span>
       </span>
       <button
         type="button"
@@ -4699,9 +4708,14 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
     onOpenChange={setAccountOpen}
     currentUsername={authUser?.username ?? ""}
     onUsernameChanged={(u) => setAuthUser((prev) => prev ? { ...prev, username: u } : prev)}
-    canViewAs={realIsAdmin}
-    viewAsRole={viewAsRole}
-    onViewAsRoleChange={(r) => setViewAsRole(r)}
+   canViewAs={canViewAs}
+   selfRole={realRole === "manager" ? "manager" : "admin"}
+   viewAsRole={safeViewAs}
+   onViewAsRoleChange={(r) => {
+     // Guard: managers may never view as admin.
+     if (realIsManager && r === "admin") return;
+     setViewAsRole(r);
+   }}
   />
   <UsersDialog open={usersOpen} onOpenChange={setUsersOpen} />
   <QuickReceptionSheet
@@ -4730,6 +4744,7 @@ function AccountDialog({
   currentUsername,
   onUsernameChanged,
   canViewAs,
+  selfRole,
   viewAsRole,
   onViewAsRoleChange,
 }: {
@@ -4738,6 +4753,7 @@ function AccountDialog({
   currentUsername: string;
   onUsernameChanged: (u: string) => void;
   canViewAs: boolean;
+  selfRole: "admin" | "manager";
   viewAsRole: "admin" | "manager" | "user" | "reception" | null;
   onViewAsRoleChange: (r: "admin" | "manager" | "user" | "reception" | null) => void;
 }) {
@@ -4840,18 +4856,27 @@ function AccountDialog({
             <div className="space-y-2">
               <h3 className="text-sm font-semibold">View as</h3>
               <p className="text-xs text-muted-foreground">
-                Temporarily experience the app as another role. Your account stays admin.
+                Temporarily experience the app as another role. Your account stays {selfRole === "manager" ? "a manager" : "an admin"}.
               </p>
               <div className="space-y-1.5">
-                {(["admin", "user", "reception"] as const).map((r) => {
-                  const active = (viewAsRole ?? "admin") === r;
-                  const label = r === "user" ? "Housekeeper" : r === "reception" ? "Reception" : "Admin (your role)";
+                {((selfRole === "manager"
+                  ? ["manager", "user", "reception"]
+                  : ["admin", "user", "reception"]) as ReadonlyArray<"admin" | "manager" | "user" | "reception">).map((r) => {
+                  const active = (viewAsRole ?? selfRole) === r;
+                  const label =
+                    r === "user"
+                      ? "Housekeeper"
+                      : r === "reception"
+                      ? "Reception"
+                      : r === "manager"
+                      ? "Manager (your role)"
+                      : "Admin (your role)";
                   return (
                     <button
                       key={r}
                       type="button"
                       onClick={() => {
-                        onViewAsRoleChange(r === "admin" ? null : r);
+                        onViewAsRoleChange(r === selfRole ? null : r);
                         onOpenChange(false);
                       }}
                       className={cn(
