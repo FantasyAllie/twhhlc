@@ -2397,9 +2397,26 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
     </div>
     )}
 
-  </div>
-  );
- };
+   </div>
+   );
+  };
+
+ if (authUser?.role === "pending") {
+   return (
+     <main className="min-h-[100dvh] bg-background flex items-center justify-center p-6">
+       <div className="max-w-sm w-full rounded-lg border bg-card p-6 text-center space-y-3 shadow-sm">
+         <h1 className="text-lg font-semibold">Waiting for approval</h1>
+         <p className="text-sm text-muted-foreground">
+           Your account ({authUser.email}) is waiting for an admin to approve access.
+           You'll be able to use the app as soon as they do.
+         </p>
+         <Button onClick={signOut} variant="outline" size="sm" className="w-full">
+           Sign out
+         </Button>
+       </div>
+     </main>
+   );
+ }
 
  return (
 <main
