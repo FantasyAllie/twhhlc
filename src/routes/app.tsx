@@ -3131,7 +3131,7 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
   <NotificationsSheet
     open={notificationsSheetOpen}
     onOpenChange={setNotificationsSheetOpen}
-    userRole={authUser.role as "admin" | "user" | "reception"}
+    userRole={(authUser.role === "manager" ? "admin" : authUser.role) as "admin" | "user" | "reception"}
   />
 )}
 <Sheet open={menuSheetOpen} onOpenChange={setMenuSheetOpen}>
@@ -3197,7 +3197,7 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
           <div className="space-y-2">
             <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">Account</p>
             <div className="space-y-1.5">
-              {isAdmin && (
+              {realIsAdmin && (
                 <Row icon={Users} label="Users" onClick={() => { close(); setUsersOpen(true); }} />
               )}
               <Row icon={Bell} label="Notifications" onClick={() => { close(); setNotificationsSheetOpen(true); }} />
