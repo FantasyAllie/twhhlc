@@ -4103,10 +4103,12 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
     const isStaff = !!staffStatusIdGlobal && (room?.reception_status_id ?? room?.default_status) === staffStatusIdGlobal;
      const isStayover = !!stayStatusIdGlobal && (room?.reception_status_id ?? room?.default_status) === stayStatusIdGlobal;
      const state = getRoomTileState(n, receptionDoneSet.has(n));
-     const baseMeta = roomStateMeta[state];
-     const meta = (isStayover || isDnd) && !isStaff
-       ? { ...roomStateMeta.todo, label: "Stayover" }
-       : baseMeta;
+      const baseMeta = state === "done"
+        ? { bg: "var(--room-done)", fg: "var(--room-done-fg)", accent: "var(--room-done-accent)", label: "Clean" }
+        : roomStateMeta[state];
+      const meta = (isStayover || isDnd) && !isStaff
+        ? { ...roomStateMeta.todo, label: "Stayover" }
+        : baseMeta;
     nodes.push(
       <button
         key={`r-${n}`}
