@@ -8,13 +8,12 @@ import { Minus, Plus, X, Menu, ArrowUp, ArrowDown, Pencil, Check, Trash2, Sun, M
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
 import { getToken, getStoredUser, clearSession } from "@/lib/auth-client";
-import { setSession } from "@/lib/auth-client";
 import { notifyRoomEvent } from "@/lib/push.functions";
 import { NotificationsSheet } from "@/components/notifications-sheet";
 import { UsersDialog } from "@/components/users-dialog";
 import { QuickReceptionSheet } from "@/components/quick-reception-sheet";
 import { useServerFn } from "@tanstack/react-start";
-import { updateMyPassword, updateMyUsername } from "@/lib/auth.functions";
+import { supabase } from "@/integrations/supabase/client";
 import {
   DropdownMenu,
   DropdownMenuCheckboxItem,
@@ -239,7 +238,7 @@ function AppPage() {
     return v === "user" || v === "reception" || v === "admin" ? v : null;
   });
   useEffect(() => {
-    if (!getToken() || !getStoredUser()) {
+    if (!getStoredUser()) {
       navigate({ to: "/login", replace: true });
     }
     const onChange = () => setAuthUser(getStoredUser());
