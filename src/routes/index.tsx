@@ -1,6 +1,6 @@
 import { useEffect } from "react";
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
-import { getToken } from "@/lib/auth-client";
+import { supabase } from "@/integrations/supabase/client";
 
 export const Route = createFileRoute("/")({
   // SSR has no localStorage; route to the gate on the client.
@@ -11,7 +11,15 @@ export const Route = createFileRoute("/")({
 function IndexRedirect() {
   const navigate = useNavigate();
   useEffect(() => {
-    navigate({ to: getToken() ? "/app" : "/login", replace: true });
+    let cancelled = false;
+    (async () => {
+      const { data } = await supabase.auth.getSession();
+      if (cancelled) return;
+      navigate({ to: data.session ? "/app" : "/login", replace: true });
+    })();
+    return () => {
+      cancelled = true;
+    };
   }, [navigate]);
   return null;
 }

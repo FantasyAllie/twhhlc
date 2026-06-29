@@ -1,59 +1,27 @@
 import { createServerFn } from "@tanstack/react-start";
+import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 
 type Role = "admin" | "user" | "reception";
-type TokenPayload = { sub: string; username: string; role: Role; exp: number };
-
-const enc = new TextEncoder();
-
-function b64urlToBytes(s: string): Uint8Array {
-  s = s.replace(/-/g, "+").replace(/_/g, "/");
-  while (s.length % 4) s += "=";
-  const bin = atob(s);
-  const out = new Uint8Array(bin.length);
-  for (let i = 0; i < bin.length; i++) out[i] = bin.charCodeAt(i);
-  return out;
-}
-function b64urlToString(s: string): string {
-  return new TextDecoder().decode(b64urlToBytes(s));
-}
-
-async function verifyToken(token: string): Promise<TokenPayload | null> {
-  try {
-    const [h, b, s] = token.split(".");
-    if (!h || !b || !s) return null;
-    const secret = process.env.SUPABASE_SERVICE_ROLE_KEY;
-    if (!secret) return null;
-    const key = await crypto.subtle.importKey(
-      "raw",
-      enc.encode(secret) as unknown as ArrayBuffer,
-      { name: "HMAC", hash: "SHA-256" },
-      false,
-      ["verify"],
-    );
-    const ok = await crypto.subtle.verify(
-      "HMAC",
-      key,
-      b64urlToBytes(s) as unknown as ArrayBuffer,
-      enc.encode(`${h}.${b}`) as unknown as ArrayBuffer,
-    );
-    if (!ok) return null;
-    const payload = JSON.parse(b64urlToString(b)) as TokenPayload;
-    if (typeof payload.exp !== "number" || payload.exp * 1000 < Date.now()) return null;
-    return payload;
-  } catch {
-    return null;
-  }
-}
-
-async function requireUser(token: string): Promise<TokenPayload> {
-  const p = await verifyToken(token);
-  if (!p) throw new Error("Not authenticated");
-  return p;
-}
+type AppRole = Role | "pending";
 
 async function getDb() {
   const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
   return supabaseAdmin;
+}
+
+async function getActor(ctx: { supabase: import("@supabase/supabase-js").SupabaseClient; userId: string }) {
+  const db = await getDb();
+  const [{ data: profile }, { data: roleRows }] = await Promise.all([
+    db.from("profiles").select("display_name, email").eq("id", ctx.userId).maybeSingle(),
+    db.from("user_roles").select("role").eq("user_id", ctx.userId),
+  ]);
+  const roles = ((roleRows ?? []) as { role: AppRole }[]).map((r) => r.role);
+  const order: AppRole[] = ["admin", "reception", "user", "pending"];
+  let role: AppRole = "pending";
+  for (const r of order) if (roles.includes(r)) { role = r; break; }
+  const p = profile as { display_name: string | null; email: string | null } | null;
+  const username = p?.display_name || (p?.email ?? "").split("@")[0] || "user";
+  return { id: ctx.userId, username, role };
 }
 
 export const getVapidPublicKey = createServerFn({ method: "GET" }).handler(async () => {
@@ -61,18 +29,18 @@ export const getVapidPublicKey = createServerFn({ method: "GET" }).handler(async
 });
 
 export const subscribeToPush = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
   .inputValidator(
-    (d: { token: string; endpoint: string; p256dh: string; auth: string; userAgent?: string }) => d,
+    (d: { endpoint: string; p256dh: string; auth: string; userAgent?: string }) => d,
   )
-  .handler(async ({ data }) => {
-    const user = await requireUser(data.token);
+  .handler(async ({ data, context }) => {
     if (!data.endpoint || !data.p256dh || !data.auth) throw new Error("Invalid subscription");
     const db = await getDb();
     const { error } = await db
       .from("push_subscriptions" as never)
       .upsert(
         {
-          user_id: user.sub,
+          user_id: context.userId,
           endpoint: data.endpoint,
           p256dh: data.p256dh,
           auth: data.auth,
@@ -86,14 +54,14 @@ export const subscribeToPush = createServerFn({ method: "POST" })
   });
 
 export const unsubscribeFromPush = createServerFn({ method: "POST" })
-  .inputValidator((d: { token: string; endpoint: string }) => d)
-  .handler(async ({ data }) => {
-    const user = await requireUser(data.token);
+  .middleware([requireSupabaseAuth])
+  .inputValidator((d: { endpoint: string }) => d)
+  .handler(async ({ data, context }) => {
     const db = await getDb();
     const { error } = await db
       .from("push_subscriptions" as never)
       .delete()
-      .eq("user_id", user.sub)
+      .eq("user_id", context.userId)
       .eq("endpoint", data.endpoint);
     if (error) throw new Error(error.message);
     return { ok: true };
@@ -112,31 +80,29 @@ const DEFAULT_PREFS: NotificationPrefs = {
 };
 
 export const getNotificationPrefs = createServerFn({ method: "POST" })
-  .inputValidator((d: { token: string }) => d)
-  .handler(async ({ data }): Promise<NotificationPrefs> => {
-    const user = await requireUser(data.token);
+  .middleware([requireSupabaseAuth])
+  .handler(async ({ context }): Promise<NotificationPrefs> => {
     const db = await getDb();
     const { data: row } = await db
       .from("notification_preferences" as never)
       .select("messages_enabled,checkout_enabled,done_enabled")
-      .eq("user_id", user.sub)
+      .eq("user_id", context.userId)
       .maybeSingle();
     return (row as NotificationPrefs | null) ?? DEFAULT_PREFS;
   });
 
 export const setNotificationPrefs = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
   .inputValidator(
     (d: {
-      token: string;
       messages_enabled?: boolean;
       checkout_enabled?: boolean;
       done_enabled?: boolean;
     }) => d,
   )
-  .handler(async ({ data }) => {
-    const user = await requireUser(data.token);
+  .handler(async ({ data, context }) => {
     const db = await getDb();
-    const patch: Record<string, unknown> = { user_id: user.sub };
+    const patch: Record<string, unknown> = { user_id: context.userId };
     if (typeof data.messages_enabled === "boolean") patch.messages_enabled = data.messages_enabled;
     if (typeof data.checkout_enabled === "boolean") patch.checkout_enabled = data.checkout_enabled;
     if (typeof data.done_enabled === "boolean") patch.done_enabled = data.done_enabled;
@@ -193,14 +159,13 @@ async function sendToSubs(
 }
 
 export const sendTestNotification = createServerFn({ method: "POST" })
-  .inputValidator((d: { token: string }) => d)
-  .handler(async ({ data }) => {
-    const user = await requireUser(data.token);
+  .middleware([requireSupabaseAuth])
+  .handler(async ({ context }) => {
     const db = await getDb();
     const { data: rows } = await db
       .from("push_subscriptions" as never)
       .select("id,user_id,endpoint,p256dh,auth")
-      .eq("user_id", user.sub);
+      .eq("user_id", context.userId);
     const subs = (rows ?? []) as SubRow[];
     await sendToSubs(subs, {
       title: "TW Housekeeping — Test notification",
@@ -213,16 +178,17 @@ export const sendTestNotification = createServerFn({ method: "POST" })
 export type RoomEventKind = "message" | "checkout" | "done";
 
 export const notifyRoomEvent = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
   .inputValidator(
     (d: {
-      token: string;
       kind: RoomEventKind;
       roomNumber: number;
       messageText?: string;
     }) => d,
   )
-  .handler(async ({ data }) => {
-    const sender = await requireUser(data.token);
+  .handler(async ({ data, context }) => {
+    const sender = await getActor(context);
+    if (sender.role === "pending") return { ok: true, recipients: 0 };
     const db = await getDb();
 
     // Pick target roles + which preference column to require.
@@ -255,14 +221,16 @@ export const notifyRoomEvent = createServerFn({ method: "POST" })
         throw new Error("Unknown event kind");
     }
 
-    // 1) Find users in target roles, excluding the sender.
+    // 1) Find users in target roles, excluding the sender, from user_roles.
     const { data: usersRows, error: usersErr } = await db
-      .from("app_users")
-      .select("id")
+      .from("user_roles")
+      .select("user_id")
       .in("role", targetRoles)
-      .neq("id", sender.sub);
+      .neq("user_id", sender.id);
     if (usersErr) throw new Error(usersErr.message);
-    const userIds = ((usersRows ?? []) as { id: string }[]).map((r) => r.id);
+    const userIds = Array.from(
+      new Set(((usersRows ?? []) as { user_id: string }[]).map((r) => r.user_id)),
+    );
     if (userIds.length === 0) return { ok: true, recipients: 0 };
 
     // 2) Filter to users whose preference is enabled (or who have no row → default true).

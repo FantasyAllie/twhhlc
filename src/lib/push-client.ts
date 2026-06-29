@@ -107,7 +107,6 @@ export async function enablePushOnThisDevice(): Promise<{ ok: boolean; reason?: 
 
   await subscribeToPush({
     data: {
-      token,
       endpoint,
       p256dh,
       auth,
@@ -130,7 +129,7 @@ export async function disablePushOnThisDevice(): Promise<void> {
     }
     if (token) {
       try {
-        await unsubscribeFromPush({ data: { token, endpoint } });
+        await unsubscribeFromPush({ data: { endpoint } });
       } catch (_e) {
         /* ignore */
       }

@@ -8,13 +8,11 @@ import { Minus, Plus, X, Menu, ArrowUp, ArrowDown, Pencil, Check, Trash2, Sun, M
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
 import { getToken, getStoredUser, clearSession } from "@/lib/auth-client";
-import { setSession } from "@/lib/auth-client";
 import { notifyRoomEvent } from "@/lib/push.functions";
 import { NotificationsSheet } from "@/components/notifications-sheet";
 import { UsersDialog } from "@/components/users-dialog";
 import { QuickReceptionSheet } from "@/components/quick-reception-sheet";
 import { useServerFn } from "@tanstack/react-start";
-import { updateMyPassword, updateMyUsername } from "@/lib/auth.functions";
 import {
   DropdownMenu,
   DropdownMenuCheckboxItem,
@@ -239,7 +237,7 @@ function AppPage() {
     return v === "user" || v === "reception" || v === "admin" ? v : null;
   });
   useEffect(() => {
-    if (!getToken() || !getStoredUser()) {
+    if (!getStoredUser()) {
       navigate({ to: "/login", replace: true });
     }
     const onChange = () => setAuthUser(getStoredUser());
@@ -407,9 +405,8 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
     roomNumber: number,
     messageText?: string,
   ) => {
-    const token = getToken();
-    if (!token) return;
-    void notifyRoomEvent({ data: { token, kind, roomNumber, messageText } }).catch(() => {});
+    if (!getToken()) return;
+    void notifyRoomEvent({ data: { kind, roomNumber, messageText } }).catch(() => {});
   };
   const [historySheetOpen, setHistorySheetOpen] = useState(false);
   const [roomTypesSheetOpen, setRoomTypesSheetOpen] = useState(false);
@@ -740,7 +737,7 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
     if (error) toast.error(error.message);
     qc.invalidateQueries({ queryKey: ["reject_counts"] });
   };
-   const realRole = authUser?.role;
+   const realRole = authUser?.role === "pending" ? undefined : (authUser?.role as ViewRole | undefined);
    const realIsAdmin = realRole === "admin";
    const effectiveRole: ViewRole | undefined =
      realIsAdmin && viewAsRole ? viewAsRole : realRole;
@@ -2400,9 +2397,26 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
     </div>
     )}
 
-  </div>
-  );
- };
+   </div>
+   );
+  };
+
+ if (authUser?.role === "pending") {
+   return (
+     <main className="min-h-[100dvh] bg-background flex items-center justify-center p-6">
+       <div className="max-w-sm w-full rounded-lg border bg-card p-6 text-center space-y-3 shadow-sm">
+         <h1 className="text-lg font-semibold">Waiting for approval</h1>
+         <p className="text-sm text-muted-foreground">
+           Your account ({authUser.email}) is waiting for an admin to approve access.
+           You'll be able to use the app as soon as they do.
+         </p>
+         <Button onClick={signOut} variant="outline" size="sm" className="w-full">
+           Sign out
+         </Button>
+       </div>
+     </main>
+   );
+ }
 
  return (
 <main
@@ -3116,7 +3130,7 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
   <NotificationsSheet
     open={notificationsSheetOpen}
     onOpenChange={setNotificationsSheetOpen}
-    userRole={authUser.role}
+    userRole={authUser.role as "admin" | "user" | "reception"}
   />
 )}
 <Sheet open={menuSheetOpen} onOpenChange={setMenuSheetOpen}>
@@ -4727,8 +4741,6 @@ function AccountDialog({
   viewAsRole: "admin" | "user" | "reception" | null;
   onViewAsRoleChange: (r: "admin" | "user" | "reception" | null) => void;
 }) {
-  const pwFn = useServerFn(updateMyPassword);
-  const unFn = useServerFn(updateMyUsername);
   const [username, setUsername] = useState(currentUsername);
   const [unCurrentPw, setUnCurrentPw] = useState("");
   const [currentPw, setCurrentPw] = useState("");
@@ -4749,23 +4761,37 @@ function AccountDialog({
   async function saveUsername(e: React.FormEvent) {
     e.preventDefault();
     if (busy) return;
-    const token = getToken();
-    if (!token) return;
     if (username.trim() === currentUsername) {
-      toast.info("Username is unchanged");
+      toast.info("Display name is unchanged");
       return;
     }
     setBusy(true);
     try {
-      const res = await unFn({
-        data: { token, currentPassword: unCurrentPw, newUsername: username.trim() },
-      });
-      setSession(res.token, res.user);
-      onUsernameChanged(res.user.username);
-      toast.success("Username updated");
+      const user = getStoredUser();
+      if (!user) throw new Error("Not signed in");
+      // Optionally re-verify current password before updating.
+      if (unCurrentPw) {
+        const { error: signErr } = await supabase.auth.signInWithPassword({
+          email: user.email,
+          password: unCurrentPw,
+        });
+        if (signErr) throw new Error("Current password is incorrect");
+      }
+      const newName = username.trim();
+      const { error: pErr } = await supabase
+        .from("profiles")
+        .update({ display_name: newName })
+        .eq("id", user.id);
+      if (pErr) throw pErr;
+      await supabase.auth.updateUser({ data: { display_name: newName } });
+      // Refresh cached session so the new name appears immediately.
+      const { refreshSession } = await import("@/lib/auth-client");
+      await refreshSession();
+      onUsernameChanged(newName);
+      toast.success("Display name updated");
       setUnCurrentPw("");
     } catch (err) {
-      toast.error(err instanceof Error ? err.message : "Failed to update username");
+      toast.error(err instanceof Error ? err.message : "Failed to update display name");
     } finally {
       setBusy(false);
     }
@@ -4774,15 +4800,21 @@ function AccountDialog({
   async function savePassword(e: React.FormEvent) {
     e.preventDefault();
     if (busy) return;
-    const token = getToken();
-    if (!token) return;
     if (newPw !== confirmPw) {
       toast.error("New passwords do not match");
       return;
     }
     setBusy(true);
     try {
-      await pwFn({ data: { token, currentPassword: currentPw, newPassword: newPw } });
+      const user = getStoredUser();
+      if (!user) throw new Error("Not signed in");
+      const { error: signErr } = await supabase.auth.signInWithPassword({
+        email: user.email,
+        password: currentPw,
+      });
+      if (signErr) throw new Error("Current password is incorrect");
+      const { error } = await supabase.auth.updateUser({ password: newPw });
+      if (error) throw error;
       toast.success("Password updated");
       setCurrentPw("");
       setNewPw("");

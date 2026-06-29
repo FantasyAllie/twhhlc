@@ -9,8 +9,9 @@ import {
   updateUserPassword,
   updateUserRole,
   type AppUserRow,
+  type ApprovedRole,
 } from "@/lib/auth.functions";
-import { getToken, getStoredUser, clearSession } from "@/lib/auth-client";
+import { getStoredUser, clearSession, type SessionUser } from "@/lib/auth-client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import {
@@ -21,9 +22,10 @@ import {
   DialogDescription,
 } from "@/components/ui/dialog";
 import { toast } from "sonner";
-import { ArrowLeft, Trash2, KeyRound } from "lucide-react";
+import { ArrowLeft, Trash2, KeyRound, Check, X } from "lucide-react";
 
 export const Route = createFileRoute("/users")({
+  ssr: false,
   head: () => ({ meta: [{ title: "Users — TW Linen Counter" }] }),
   component: UsersPage,
   errorComponent: ({ error, reset }) => (
@@ -38,8 +40,8 @@ export const Route = createFileRoute("/users")({
 function UsersPage() {
   const navigate = useNavigate();
   const qc = useQueryClient();
-  const [token, setToken] = useState<string | null>(null);
-  const [me, setMe] = useState<ReturnType<typeof getStoredUser>>(null);
+  const [me, setMe] = useState<SessionUser | null>(null);
+  const [ready, setReady] = useState(false);
 
   const listFn = useServerFn(listUsers);
   const createFn = useServerFn(createUser);
@@ -48,29 +50,41 @@ function UsersPage() {
   const roleFn = useServerFn(updateUserRole);
 
   useEffect(() => {
-    const t = getToken();
-    const u = getStoredUser();
-    if (!t || !u) {
-      navigate({ to: "/login" });
-      return;
-    }
-    if (u.role !== "admin") {
-      navigate({ to: "/app" });
-      return;
-    }
-    setToken(t);
-    setMe(u);
+    const tick = () => {
+      const u = getStoredUser();
+      if (!u) {
+        // still loading? wait one more frame, then redirect
+        setTimeout(() => {
+          const u2 = getStoredUser();
+          if (!u2) navigate({ to: "/login", replace: true });
+          else if (u2.role !== "admin") navigate({ to: "/app", replace: true });
+          else { setMe(u2); setReady(true); }
+        }, 100);
+        return;
+      }
+      if (u.role !== "admin") {
+        navigate({ to: "/app", replace: true });
+        return;
+      }
+      setMe(u);
+      setReady(true);
+    };
+    tick();
+    const onChange = () => tick();
+    window.addEventListener("tw-auth-changed", onChange);
+    return () => window.removeEventListener("tw-auth-changed", onChange);
   }, [navigate]);
 
   const usersQ = useQuery({
     queryKey: ["app_users"],
-    enabled: !!token,
-    queryFn: () => listFn({ data: { token: token! } }) as Promise<AppUserRow[]>,
+    enabled: ready,
+    queryFn: () => listFn() as Promise<AppUserRow[]>,
   });
 
-  const [newUsername, setNewUsername] = useState("");
+  const [newEmail, setNewEmail] = useState("");
+  const [newDisplayName, setNewDisplayName] = useState("");
   const [newPassword, setNewPassword] = useState("");
-  const [newRole, setNewRole] = useState<"admin" | "user" | "reception">("user");
+  const [newRole, setNewRole] = useState<ApprovedRole>("user");
   const [busy, setBusy] = useState(false);
 
   const [pwUser, setPwUser] = useState<AppUserRow | null>(null);
@@ -78,12 +92,13 @@ function UsersPage() {
 
   async function onCreate(e: React.FormEvent) {
     e.preventDefault();
-    if (!token || busy) return;
+    if (busy) return;
     setBusy(true);
     try {
-      await createFn({ data: { token, username: newUsername, password: newPassword, role: newRole } });
+      await createFn({ data: { email: newEmail, displayName: newDisplayName || undefined, password: newPassword, role: newRole } });
       toast.success("User created");
-      setNewUsername("");
+      setNewEmail("");
+      setNewDisplayName("");
       setNewPassword("");
       setNewRole("user");
       qc.invalidateQueries({ queryKey: ["app_users"] });
@@ -95,10 +110,9 @@ function UsersPage() {
   }
 
   async function onDelete(u: AppUserRow) {
-    if (!token) return;
     if (!confirm(`Delete account "${u.username}"? This cannot be undone.`)) return;
     try {
-      await deleteFn({ data: { token, id: u.id } });
+      await deleteFn({ data: { id: u.id } });
       toast.success("User deleted");
       qc.invalidateQueries({ queryKey: ["app_users"] });
     } catch (err) {
@@ -106,16 +120,9 @@ function UsersPage() {
     }
   }
 
-  async function onToggleRole(u: AppUserRow) {
-    if (!token) return;
-    const cycle: Record<AppUserRow["role"], AppUserRow["role"]> = {
-      admin: "user",
-      user: "reception",
-      reception: "admin",
-    };
-    const next = cycle[u.role];
+  async function onSetRole(u: AppUserRow, next: ApprovedRole) {
     try {
-      await roleFn({ data: { token, id: u.id, role: next } });
+      await roleFn({ data: { id: u.id, role: next } });
       toast.success(`Role updated to ${next}`);
       qc.invalidateQueries({ queryKey: ["app_users"] });
     } catch (err) {
@@ -123,11 +130,20 @@ function UsersPage() {
     }
   }
 
+  function nextCycleRole(r: AppUserRow["role"]): ApprovedRole {
+    switch (r) {
+      case "admin": return "user";
+      case "user": return "reception";
+      case "reception": return "admin";
+      default: return "user";
+    }
+  }
+
   async function onSavePassword(e: React.FormEvent) {
     e.preventDefault();
-    if (!token || !pwUser) return;
+    if (!pwUser) return;
     try {
-      await pwFn({ data: { token, id: pwUser.id, password: pwValue } });
+      await pwFn({ data: { id: pwUser.id, password: pwValue } });
       toast.success("Password updated");
       setPwUser(null);
       setPwValue("");
@@ -136,12 +152,16 @@ function UsersPage() {
     }
   }
 
-  function signOut() {
-    clearSession();
-    navigate({ to: "/login" });
+  async function signOut() {
+    await clearSession();
+    navigate({ to: "/login", replace: true });
   }
 
-  if (!token || !me) return null;
+  if (!ready || !me) return null;
+
+  const all = usersQ.data ?? [];
+  const pending = all.filter((u) => u.role === "pending");
+  const approved = all.filter((u) => u.role !== "pending");
 
   return (
     <div className="min-h-screen bg-background">
@@ -158,18 +178,52 @@ function UsersPage() {
       </header>
 
       <main className="max-w-3xl mx-auto p-4 space-y-6">
+        {pending.length > 0 && (
+          <section className="rounded-lg border bg-card">
+            <div className="px-4 py-3 border-b text-sm font-semibold">
+              Pending approvals ({pending.length})
+            </div>
+            <ul className="divide-y">
+              {pending.map((u) => (
+                <li key={u.id} className="px-4 py-3 flex items-center justify-between gap-2">
+                  <div className="min-w-0">
+                    <div className="font-medium truncate">{u.username}</div>
+                    <div className="text-xs text-muted-foreground truncate">{u.email}</div>
+                  </div>
+                  <div className="flex items-center gap-1">
+                    <Button size="sm" onClick={() => onSetRole(u, "user")}>
+                      <Check className="h-4 w-4 mr-1" />Approve
+                    </Button>
+                    <Button size="sm" variant="ghost" onClick={() => onSetRole(u, "reception")}>
+                      Reception
+                    </Button>
+                    <Button size="sm" variant="ghost" className="text-destructive hover:text-destructive" onClick={() => onDelete(u)}>
+                      <X className="h-4 w-4" />
+                    </Button>
+                  </div>
+                </li>
+              ))}
+            </ul>
+          </section>
+        )}
+
         <section className="rounded-lg border bg-card p-4">
           <h2 className="text-sm font-semibold mb-3">Add a user</h2>
           <form onSubmit={onCreate} className="grid sm:grid-cols-2 gap-3">
             <div className="space-y-1">
-              <label className="text-xs font-medium">Username</label>
+              <label className="text-xs font-medium">Email</label>
               <Input
-                value={newUsername}
-                onChange={(e) => setNewUsername(e.target.value)}
+                type="email"
+                value={newEmail}
+                onChange={(e) => setNewEmail(e.target.value)}
                 autoCapitalize="none"
                 autoCorrect="off"
                 required
               />
+            </div>
+            <div className="space-y-1">
+              <label className="text-xs font-medium">Display name (optional)</label>
+              <Input value={newDisplayName} onChange={(e) => setNewDisplayName(e.target.value)} />
             </div>
             <div className="space-y-1">
               <label className="text-xs font-medium">Password</label>
@@ -178,6 +232,7 @@ function UsersPage() {
                 value={newPassword}
                 onChange={(e) => setNewPassword(e.target.value)}
                 required
+                minLength={6}
               />
             </div>
             <div className="space-y-1">
@@ -185,7 +240,7 @@ function UsersPage() {
               <select
                 className="w-full h-9 rounded-md border bg-background px-3 text-sm"
                 value={newRole}
-                onChange={(e) => setNewRole(e.target.value as "admin" | "user" | "reception")}
+                onChange={(e) => setNewRole(e.target.value as ApprovedRole)}
               >
                 <option value="user">User</option>
                 <option value="reception">Reception</option>
@@ -201,22 +256,22 @@ function UsersPage() {
         </section>
 
         <section className="rounded-lg border bg-card">
-          <div className="px-4 py-3 border-b text-sm font-semibold">All users</div>
+          <div className="px-4 py-3 border-b text-sm font-semibold">Approved users</div>
           {usersQ.isLoading ? (
             <div className="p-4 text-sm text-muted-foreground">Loading…</div>
           ) : (
             <ul className="divide-y">
-              {(usersQ.data ?? []).map((u) => (
+              {approved.map((u) => (
                 <li key={u.id} className="px-4 py-3 flex items-center justify-between gap-2">
                   <div className="min-w-0">
                     <div className="font-medium truncate">{u.username}</div>
-                    <div className="text-xs text-muted-foreground capitalize">{u.role}{u.id === me.id ? " · you" : ""}</div>
+                    <div className="text-xs text-muted-foreground capitalize truncate">{u.role} · {u.email}{u.id === me.id ? " · you" : ""}</div>
                   </div>
                   <div className="flex items-center gap-1">
                     <Button size="sm" variant="ghost" onClick={() => setPwUser(u)} title="Reset password">
                       <KeyRound className="h-4 w-4" />
                     </Button>
-                    <Button size="sm" variant="ghost" onClick={() => onToggleRole(u)}>
+                    <Button size="sm" variant="ghost" onClick={() => onSetRole(u, nextCycleRole(u.role))}>
                       {u.role === "admin" ? "Make user" : u.role === "user" ? "Make reception" : "Make admin"}
                     </Button>
                     <Button
@@ -232,8 +287,8 @@ function UsersPage() {
                   </div>
                 </li>
               ))}
-              {(usersQ.data ?? []).length === 0 && (
-                <li className="p-4 text-sm text-muted-foreground">No users yet.</li>
+              {approved.length === 0 && (
+                <li className="p-4 text-sm text-muted-foreground">No approved users yet.</li>
               )}
             </ul>
           )}
@@ -255,6 +310,7 @@ function UsersPage() {
               onChange={(e) => setPwValue(e.target.value)}
               placeholder="New password"
               required
+              minLength={6}
               autoFocus
             />
             <div className="flex justify-end gap-2">

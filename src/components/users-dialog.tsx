@@ -8,8 +8,9 @@ import {
   updateUserPassword,
   updateUserRole,
   type AppUserRow,
+  type ApprovedRole,
 } from "@/lib/auth.functions";
-import { getToken, getStoredUser } from "@/lib/auth-client";
+import { getStoredUser } from "@/lib/auth-client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import {
@@ -20,7 +21,7 @@ import {
   DialogDescription,
 } from "@/components/ui/dialog";
 import { toast } from "sonner";
-import { Trash2, KeyRound } from "lucide-react";
+import { Trash2, KeyRound, Check, X } from "lucide-react";
 
 export function UsersDialog({
   open,
@@ -30,7 +31,6 @@ export function UsersDialog({
   onOpenChange: (o: boolean) => void;
 }) {
   const qc = useQueryClient();
-  const token = getToken();
   const me = getStoredUser();
 
   const listFn = useServerFn(listUsers);
@@ -41,13 +41,14 @@ export function UsersDialog({
 
   const usersQ = useQuery({
     queryKey: ["app_users"],
-    enabled: !!token && open,
-    queryFn: () => listFn({ data: { token: token! } }) as Promise<AppUserRow[]>,
+    enabled: open,
+    queryFn: () => listFn() as Promise<AppUserRow[]>,
   });
 
-  const [newUsername, setNewUsername] = useState("");
+  const [newEmail, setNewEmail] = useState("");
+  const [newDisplayName, setNewDisplayName] = useState("");
   const [newPassword, setNewPassword] = useState("");
-  const [newRole, setNewRole] = useState<"admin" | "user" | "reception">("user");
+  const [newRole, setNewRole] = useState<ApprovedRole>("user");
   const [busy, setBusy] = useState(false);
 
   const [pwUser, setPwUser] = useState<AppUserRow | null>(null);
@@ -55,12 +56,20 @@ export function UsersDialog({
 
   async function onCreate(e: React.FormEvent) {
     e.preventDefault();
-    if (!token || busy) return;
+    if (busy) return;
     setBusy(true);
     try {
-      await createFn({ data: { token, username: newUsername, password: newPassword, role: newRole } });
+      await createFn({
+        data: {
+          email: newEmail,
+          displayName: newDisplayName || undefined,
+          password: newPassword,
+          role: newRole,
+        },
+      });
       toast.success("User created");
-      setNewUsername("");
+      setNewEmail("");
+      setNewDisplayName("");
       setNewPassword("");
       setNewRole("user");
       qc.invalidateQueries({ queryKey: ["app_users"] });
@@ -72,10 +81,9 @@ export function UsersDialog({
   }
 
   async function onDelete(u: AppUserRow) {
-    if (!token) return;
     if (!confirm(`Delete account "${u.username}"? This cannot be undone.`)) return;
     try {
-      await deleteFn({ data: { token, id: u.id } });
+      await deleteFn({ data: { id: u.id } });
       toast.success("User deleted");
       qc.invalidateQueries({ queryKey: ["app_users"] });
     } catch (err) {
@@ -83,16 +91,9 @@ export function UsersDialog({
     }
   }
 
-  async function onToggleRole(u: AppUserRow) {
-    if (!token) return;
-    const cycle: Record<AppUserRow["role"], AppUserRow["role"]> = {
-      admin: "user",
-      user: "reception",
-      reception: "admin",
-    };
-    const next = cycle[u.role];
+  async function onSetRole(u: AppUserRow, next: ApprovedRole) {
     try {
-      await roleFn({ data: { token, id: u.id, role: next } });
+      await roleFn({ data: { id: u.id, role: next } });
       toast.success(`Role updated to ${next}`);
       qc.invalidateQueries({ queryKey: ["app_users"] });
     } catch (err) {
@@ -102,14 +103,27 @@ export function UsersDialog({
 
   async function onSavePassword(e: React.FormEvent) {
     e.preventDefault();
-    if (!token || !pwUser) return;
+    if (!pwUser) return;
     try {
-      await pwFn({ data: { token, id: pwUser.id, password: pwValue } });
+      await pwFn({ data: { id: pwUser.id, password: pwValue } });
       toast.success("Password updated");
       setPwUser(null);
       setPwValue("");
     } catch (err) {
       toast.error(err instanceof Error ? err.message : "Failed to update password");
+    }
+  }
+
+  const all = usersQ.data ?? [];
+  const pending = all.filter((u) => u.role === "pending");
+  const approved = all.filter((u) => u.role !== "pending");
+
+  function nextCycleRole(r: AppUserRow["role"]): ApprovedRole {
+    switch (r) {
+      case "admin": return "user";
+      case "user": return "reception";
+      case "reception": return "admin";
+      default: return "user";
     }
   }
 
@@ -119,21 +133,58 @@ export function UsersDialog({
         <DialogContent className="max-w-2xl w-[calc(100vw-1.5rem)] sm:w-full max-h-[85vh] overflow-y-auto p-4 sm:p-6">
           <DialogHeader>
             <DialogTitle>Users</DialogTitle>
-            <DialogDescription>Add, edit roles, reset passwords, or remove user accounts.</DialogDescription>
+            <DialogDescription>Approve new signups, change roles, reset passwords, or remove accounts.</DialogDescription>
           </DialogHeader>
 
           <div className="space-y-6">
+            {pending.length > 0 && (
+              <section className="rounded-lg border bg-card">
+                <div className="px-4 py-3 border-b text-sm font-semibold">
+                  Pending approvals ({pending.length})
+                </div>
+                <ul className="divide-y">
+                  {pending.map((u) => (
+                    <li key={u.id} className="px-4 py-3 flex items-center justify-between gap-2">
+                      <div className="min-w-0">
+                        <div className="font-medium truncate">{u.username}</div>
+                        <div className="text-xs text-muted-foreground truncate">{u.email}</div>
+                      </div>
+                      <div className="flex items-center gap-1">
+                        <Button size="sm" variant="default" onClick={() => onSetRole(u, "user")}>
+                          <Check className="h-4 w-4 mr-1" />Approve as housekeeper
+                        </Button>
+                        <Button size="sm" variant="ghost" onClick={() => onSetRole(u, "reception")}>
+                          Reception
+                        </Button>
+                        <Button size="sm" variant="ghost" className="text-destructive hover:text-destructive" onClick={() => onDelete(u)}>
+                          <X className="h-4 w-4" />
+                        </Button>
+                      </div>
+                    </li>
+                  ))}
+                </ul>
+              </section>
+            )}
+
             <section className="rounded-lg border bg-card p-4">
               <h2 className="text-sm font-semibold mb-3">Add a user</h2>
               <form onSubmit={onCreate} className="grid sm:grid-cols-2 gap-3">
                 <div className="space-y-1">
-                  <label className="text-xs font-medium">Username</label>
+                  <label className="text-xs font-medium">Email</label>
                   <Input
-                    value={newUsername}
-                    onChange={(e) => setNewUsername(e.target.value)}
+                    type="email"
+                    value={newEmail}
+                    onChange={(e) => setNewEmail(e.target.value)}
                     autoCapitalize="none"
                     autoCorrect="off"
                     required
+                  />
+                </div>
+                <div className="space-y-1">
+                  <label className="text-xs font-medium">Display name (optional)</label>
+                  <Input
+                    value={newDisplayName}
+                    onChange={(e) => setNewDisplayName(e.target.value)}
                   />
                 </div>
                 <div className="space-y-1">
@@ -143,6 +194,7 @@ export function UsersDialog({
                     value={newPassword}
                     onChange={(e) => setNewPassword(e.target.value)}
                     required
+                    minLength={6}
                   />
                 </div>
                 <div className="space-y-1">
@@ -150,7 +202,7 @@ export function UsersDialog({
                   <select
                     className="w-full h-9 rounded-md border bg-background px-3 text-sm"
                     value={newRole}
-                    onChange={(e) => setNewRole(e.target.value as "admin" | "user" | "reception")}
+                    onChange={(e) => setNewRole(e.target.value as ApprovedRole)}
                   >
                     <option value="user">Housekeeper</option>
                     <option value="reception">Reception</option>
@@ -166,24 +218,24 @@ export function UsersDialog({
             </section>
 
             <section className="rounded-lg border bg-card">
-              <div className="px-4 py-3 border-b text-sm font-semibold">All users</div>
+              <div className="px-4 py-3 border-b text-sm font-semibold">Approved users</div>
               {usersQ.isLoading ? (
                 <div className="p-4 text-sm text-muted-foreground">Loading…</div>
               ) : (
                 <ul className="divide-y">
-                  {(usersQ.data ?? []).map((u) => (
+                  {approved.map((u) => (
                     <li key={u.id} className="px-4 py-3 flex items-center justify-between gap-2">
                       <div className="min-w-0">
                         <div className="font-medium truncate">{u.username}</div>
-                        <div className="text-xs text-muted-foreground capitalize">
-                          {u.role === "user" ? "Housekeeper" : u.role}{me && u.id === me.id ? " · you" : ""}
+                        <div className="text-xs text-muted-foreground capitalize truncate">
+                          {u.role === "user" ? "Housekeeper" : u.role} · {u.email}{me && u.id === me.id ? " · you" : ""}
                         </div>
                       </div>
                       <div className="flex items-center gap-1">
                         <Button size="sm" variant="ghost" onClick={() => setPwUser(u)} title="Reset password">
                           <KeyRound className="h-4 w-4" />
                         </Button>
-                        <Button size="sm" variant="ghost" onClick={() => onToggleRole(u)}>
+                        <Button size="sm" variant="ghost" onClick={() => onSetRole(u, nextCycleRole(u.role))}>
                           {u.role === "admin" ? "Make housekeeper" : u.role === "user" ? "Make reception" : "Make admin"}
                         </Button>
                         <Button
@@ -199,8 +251,8 @@ export function UsersDialog({
                       </div>
                     </li>
                   ))}
-                  {(usersQ.data ?? []).length === 0 && (
-                    <li className="p-4 text-sm text-muted-foreground">No users yet.</li>
+                  {approved.length === 0 && (
+                    <li className="p-4 text-sm text-muted-foreground">No approved users yet.</li>
                   )}
                 </ul>
               )}
@@ -224,6 +276,7 @@ export function UsersDialog({
               onChange={(e) => setPwValue(e.target.value)}
               placeholder="New password"
               required
+              minLength={6}
               autoFocus
             />
             <div className="flex justify-end gap-2">
