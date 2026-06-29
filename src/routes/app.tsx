@@ -2249,20 +2249,18 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
 
     {!isReception && (
       <div className="flex flex-row gap-2">
-        {isAdmin && (
-          <button
-            type="button"
-            onClick={() => setReceptionSheetRoom(n)}
+        <button
+          type="button"
+          onClick={() => setReceptionSheetRoom(n)}
             className={cn(
               "flex items-center justify-center gap-1.5 rounded-full border bg-background px-3 sm:px-4 h-11 flex-1 text-sm font-medium cursor-pointer transition-colors hover:bg-accent",
               receptionDoneSet.has(n)
                 ? "border-primary bg-primary/10 text-primary"
                 : ""
             )}
-          >
-            Reception
-          </button>
-        )}
+        >
+          Reception
+        </button>
         <button
           type="button"
           onClick={() =>
