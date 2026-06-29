@@ -2987,6 +2987,7 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
                        ["DND", "Stayover"],
                        ["Dirty", "ROS"],
                      ];
+                     const topLabels = ["Arrival", "Clean", "Staff"];
                      const findStatus = (lbl: string) =>
                        receptionStatuses.find(
                          (x) => x.label.toLowerCase() === lbl.toLowerCase(),
@@ -2997,6 +2998,11 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
                        const sb = findStatus(b);
                        if (sa) pairedIds.add(sa.id);
                        if (sb) pairedIds.add(sb.id);
+                     });
+                     const topIds = new Set<string>();
+                     topLabels.forEach((lbl) => {
+                       const s = findStatus(lbl);
+                       if (s) topIds.add(s.id);
                      });
                      const handleClick = (s: { id: string }) => {
                        if (occ === s.id) {
@@ -3018,6 +3024,10 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
                        );
                      };
                      const nodes: React.ReactNode[] = [];
+                     topLabels.forEach((lbl) => {
+                       const s = findStatus(lbl);
+                       if (s) nodes.push(renderRow(s));
+                     });
                      pairLabels.forEach(([a, b]) => {
                        const sa = findStatus(a);
                        const sb = findStatus(b);
@@ -3030,7 +3040,7 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
                        );
                      });
                      receptionStatuses.forEach((s) => {
-                       if (pairedIds.has(s.id)) return;
+                       if (pairedIds.has(s.id) || topIds.has(s.id)) return;
                        nodes.push(renderRow(s));
                      });
                      return nodes;
