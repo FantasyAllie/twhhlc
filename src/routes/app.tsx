@@ -4132,7 +4132,7 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
          <span className="text-sm sm:text-base font-bold leading-none inline-flex items-center gap-1">
            {n}
            {receptionDoneSet.has(n) && (
-             <Check aria-label="Done" className="h-3 w-3" />
+             <Check aria-label="Done" className="h-3 w-3" strokeWidth={4} />
            )}
          </span>
           <span className="text-[9px] sm:text-[10px] font-medium leading-none opacity-90 whitespace-pre-line">
