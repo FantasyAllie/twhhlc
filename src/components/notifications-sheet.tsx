@@ -63,9 +63,8 @@ export function NotificationsSheet({
           if (!cancelled) setSubscribed(!!sub);
         }
         if (typeof Notification !== "undefined") setPermission(Notification.permission);
-        const token = getToken();
-        if (token) {
-          const p = await getNotificationPrefs({ data: { token } });
+        if (getToken()) {
+          const p = await getNotificationPrefs();
           if (!cancelled) setPrefs(p);
         }
       } catch (_e) {
@@ -102,21 +101,19 @@ export function NotificationsSheet({
   const updatePref = async (patch: Partial<NotificationPrefs>) => {
     const next = { ...prefs, ...patch };
     setPrefs(next);
-    const token = getToken();
-    if (!token) return;
+    if (!getToken()) return;
     try {
-      await setNotificationPrefs({ data: { token, ...patch } });
+      await setNotificationPrefs({ data: { ...patch } });
     } catch (e) {
       toast.error(e instanceof Error ? e.message : "Failed to save preference");
     }
   };
 
   const sendTest = async () => {
-    const token = getToken();
-    if (!token) return;
+    if (!getToken()) return;
     setBusy(true);
     try {
-      const res = await sendTestNotification({ data: { token } });
+      const res = await sendTestNotification();
       if (res.sent === 0) toast.error("No subscribed devices for this user.");
       else toast.success(`Test sent to ${res.sent} device${res.sent === 1 ? "" : "s"}.`);
     } catch (e) {
