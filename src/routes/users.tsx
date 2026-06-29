@@ -8,6 +8,7 @@ import {
   deleteUser,
   updateUserPassword,
   updateUserRole,
+  setUserDisabled,
   type AppUserRow,
   type ApprovedRole,
 } from "@/lib/auth.functions";
@@ -22,7 +23,7 @@ import {
   DialogDescription,
 } from "@/components/ui/dialog";
 import { toast } from "sonner";
-import { ArrowLeft, Trash2, Check, X, Pencil } from "lucide-react";
+import { ArrowLeft, Trash2, Check, X, Pencil, Ban, RotateCcw } from "lucide-react";
 
 export const Route = createFileRoute("/users")({
   ssr: false,
@@ -48,6 +49,7 @@ function UsersPage() {
   const deleteFn = useServerFn(deleteUser);
   const pwFn = useServerFn(updateUserPassword);
   const roleFn = useServerFn(updateUserRole);
+  const disableFn = useServerFn(setUserDisabled);
 
   useEffect(() => {
     const tick = () => {
@@ -94,6 +96,7 @@ function UsersPage() {
   const [editRole, setEditRole] = useState<ApprovedRole>("user");
   const [editPw, setEditPw] = useState("");
   const [editBusy, setEditBusy] = useState(false);
+  const [disableBusy, setDisableBusy] = useState(false);
 
   function openEdit(u: AppUserRow) {
     setEditUser(u);
@@ -136,6 +139,23 @@ function UsersPage() {
       closeEdit();
     } catch (err) {
       toast.error(err instanceof Error ? err.message : "Failed to delete user");
+    }
+  }
+
+  async function onToggleDisabled() {
+    if (!editUser || disableBusy) return;
+    const next = !editUser.disabled;
+    if (next && !confirm(`Disable "${editUser.username}"? They will be signed out and unable to log in until re-enabled.`)) return;
+    setDisableBusy(true);
+    try {
+      await disableFn({ data: { id: editUser.id, disabled: next } });
+      toast.success(next ? "Account disabled" : "Account enabled");
+      qc.invalidateQueries({ queryKey: ["app_users"] });
+      setEditUser({ ...editUser, disabled: next });
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : "Failed to update account");
+    } finally {
+      setDisableBusy(false);
     }
   }
 
@@ -305,7 +325,14 @@ function UsersPage() {
               {approved.map((u) => (
                 <li key={u.id} className="px-4 py-3 flex items-center justify-between gap-2">
                   <div className="min-w-0">
-                    <div className="font-medium truncate">{u.username}</div>
+                    <div className="font-medium truncate flex items-center gap-2">
+                      <span className="truncate">{u.username}</span>
+                      {u.disabled && (
+                        <span className="shrink-0 rounded-full bg-destructive/10 text-destructive text-[10px] font-semibold uppercase px-2 py-0.5">
+                          Disabled
+                        </span>
+                      )}
+                    </div>
                     <div className="text-xs text-muted-foreground capitalize truncate">{u.role} · {u.email}{u.id === me.id ? " · you" : ""}</div>
                   </div>
                   <div className="flex items-center gap-1">
@@ -355,7 +382,7 @@ function UsersPage() {
           <DialogHeader>
             <DialogTitle>Edit user</DialogTitle>
             <DialogDescription>
-              Update role or password for <strong>{editUser?.username}</strong>, or delete the account.
+              Update role or password for <strong>{editUser?.username}</strong>, disable sign-in, or delete the account.
             </DialogDescription>
           </DialogHeader>
           {editUser && (
@@ -382,6 +409,32 @@ function UsersPage() {
                   placeholder="Leave blank to keep current"
                   minLength={6}
                 />
+              </div>
+              <div className="rounded-md border p-3 flex items-center justify-between gap-3">
+                <div className="min-w-0">
+                  <div className="text-sm font-medium">
+                    {editUser.disabled ? "Account disabled" : "Account active"}
+                  </div>
+                  <div className="text-xs text-muted-foreground">
+                    {editUser.disabled
+                      ? "User cannot sign in. Their data and role are preserved."
+                      : "Disable to block sign-in without deleting the account."}
+                  </div>
+                </div>
+                <Button
+                  type="button"
+                  variant={editUser.disabled ? "default" : "outline"}
+                  size="sm"
+                  onClick={onToggleDisabled}
+                  disabled={disableBusy || editUser.id === me.id}
+                  title={editUser.id === me.id ? "You cannot disable yourself" : undefined}
+                >
+                  {editUser.disabled ? (
+                    <><RotateCcw className="h-4 w-4 mr-1" />Enable</>
+                  ) : (
+                    <><Ban className="h-4 w-4 mr-1" />Disable</>
+                  )}
+                </Button>
               </div>
               <div className="flex items-center justify-between gap-2 pt-2 border-t">
                 <Button
