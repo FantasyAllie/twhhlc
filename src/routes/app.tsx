@@ -4060,7 +4060,7 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
          {!isStaffRoom && (
            <>
              <span className="text-sm sm:text-base font-bold leading-none">{n}</span>
-              <span className="text-[9px] sm:text-[10px] font-medium leading-none opacity-90 whitespace-pre-line">
+              <span className="text-[9px] sm:text-[10px] md:text-xs font-medium leading-none opacity-90 whitespace-pre-line">
                 {meta.label}
               </span>
              {isDnd && (
@@ -4129,13 +4129,13 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
         aria-expanded={isOpen}
           aria-label={`Room ${n} ${isStaff ? "staff" : meta.label}`}
       >
-         <span className="text-sm sm:text-base font-bold leading-none inline-flex items-center gap-1">
+         <span className="text-sm sm:text-base md:text-xl font-bold leading-none inline-flex items-center gap-1">
            {n}
            {receptionDoneSet.has(n) && (
              <Check aria-label="Done" className="h-3 w-3" strokeWidth={4} />
            )}
          </span>
-          <span className="text-[9px] sm:text-[10px] font-medium leading-none opacity-90 whitespace-pre-line">
+          <span className="text-[9px] sm:text-[10px] md:text-xs font-medium leading-none opacity-90 whitespace-pre-line">
             {isStaff ? "Staff" : meta.label}
           </span>
           {isDnd && !isStaff && (
