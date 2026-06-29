@@ -230,7 +230,7 @@ function AppPage() {
   const { theme, toggleTheme } = useTheme();
   const [authUser, setAuthUser] = useState(() => getStoredUser());
   // Admin "view as" overlay — see definition further below for full context.
-  type ViewRole = "admin" | "user" | "reception";
+ type ViewRole = "admin" | "manager" | "user" | "reception";
   const [viewAsRole, setViewAsRole] = useState<ViewRole | null>(() => {
     if (typeof window === "undefined") return null;
     const v = window.localStorage.getItem("tw_view_as_role");
@@ -739,10 +739,11 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
   };
    const realRole = authUser?.role === "pending" ? undefined : (authUser?.role as ViewRole | undefined);
    const realIsAdmin = realRole === "admin";
+   const realIsManager = realRole === "manager";
    const effectiveRole: ViewRole | undefined =
      realIsAdmin && viewAsRole ? viewAsRole : realRole;
    const isReception = effectiveRole === "reception";
-   const isAdmin = effectiveRole === "admin";
+   const isAdmin = effectiveRole === "admin" || effectiveRole === "manager";
   const isHousekeeper = effectiveRole === "user";
   const doneSet = new Set(
     rooms
