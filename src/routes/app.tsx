@@ -2979,30 +2979,41 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
                  <p className="text-sm text-muted-foreground">No statuses</p>
                )}
                <div className="space-y-1.5">
-                  {(() => {
-                    const dndId = receptionStatuses.find((x) => x.label === "DND")?.id ?? null;
-                    const stayId = receptionStatuses.find((x) => x.label === "Stayover")?.id ?? null;
-                    const dndActive = !!dndId && occ === dndId;
-                    return receptionStatuses.map((s) => {
-                      const selected = occ === s.id || (dndActive && s.id === stayId);
-                      return (
-                        <Row
-                          key={s.id}
-                          label={s.label}
-                          selected={selected}
-                          onClick={() => {
-                            if (occ === s.id) {
-                              // Toggling off: if removing DND, keep Stayover instead of clearing.
-                              const next = s.id === dndId && stayId ? stayId : null;
-                              setRoomReceptionStatus(n, next);
-                            } else {
-                              setRoomReceptionStatus(n, s.id);
-                            }
-                          }}
-                        />
-                      );
-                    });
-                  })()}
+                   {(() => {
+                     const dndId = receptionStatuses.find((x) => x.label === "DND")?.id ?? null;
+                     const stayId = receptionStatuses.find((x) => x.label === "Stayover")?.id ?? null;
+                     const dirtyId = receptionStatuses.find((x) => x.label === "Dirty")?.id ?? null;
+                     const rosId = receptionStatuses.find((x) => x.label === "ROS")?.id ?? null;
+                     const dndActive = !!dndId && occ === dndId;
+                     const dirtyActive = !!dirtyId && occ === dirtyId;
+                     return receptionStatuses.map((s) => {
+                       const selected =
+                         occ === s.id ||
+                         (dndActive && s.id === stayId) ||
+                         (dirtyActive && s.id === rosId);
+                       return (
+                         <Row
+                           key={s.id}
+                           label={s.label}
+                           selected={selected}
+                           onClick={() => {
+                             if (occ === s.id) {
+                               // Toggling off: removing DND keeps Stayover; removing Dirty keeps ROS.
+                               const next =
+                                 s.id === dndId && stayId
+                                   ? stayId
+                                   : s.id === dirtyId && rosId
+                                     ? rosId
+                                     : null;
+                               setRoomReceptionStatus(n, next);
+                             } else {
+                               setRoomReceptionStatus(n, s.id);
+                             }
+                           }}
+                         />
+                       );
+                     });
+                   })()}
                </div>
              </div>
              <div className="space-y-2">
