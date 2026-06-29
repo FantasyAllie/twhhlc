@@ -3991,8 +3991,12 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
     )?.id;
     const isStaffRoom = (room?.reception_status_id ?? room?.default_status) === staffStatusId;
     const isDnd = !!dndStatusId && (room?.reception_status_id ?? room?.default_status) === dndStatusId;
+     const isStayover = !!stayStatusIdGlobal && (room?.reception_status_id ?? room?.default_status) === stayStatusIdGlobal;
      const state = getRoomTileState(n, done);
-     const meta = roomStateMeta[state];
+     const baseMeta = roomStateMeta[state];
+     const meta = (isStayover || isDnd) && !isStaffRoom
+       ? { ...roomStateMeta.todo, label: "Stayover" }
+       : baseMeta;
     nodes.push(
         <button
         key={`r-${n}`}
