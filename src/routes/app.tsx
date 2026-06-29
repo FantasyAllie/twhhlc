@@ -4074,6 +4074,14 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
         }
          aria-label={`Room ${n} ${meta.label}${isStaffRoom ? " staff" : ""}`}
       >
+          {isDirty && !isStaffRoom && (
+            <span
+              aria-hidden="true"
+              className="pointer-events-none absolute inset-0 flex items-center justify-center text-4xl md:text-5xl opacity-25 leading-none"
+            >
+              💩
+            </span>
+          )}
          {!isStaffRoom && (
            <>
              <span className="text-sm sm:text-base font-bold leading-none">{n}</span>
@@ -4149,6 +4157,14 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
         aria-expanded={isOpen}
           aria-label={`Room ${n} ${isStaff ? "staff" : meta.label}`}
       >
+          {isDirty && !isStaff && (
+            <span
+              aria-hidden="true"
+              className="pointer-events-none absolute inset-0 flex items-center justify-center text-4xl md:text-5xl opacity-25 leading-none"
+            >
+              💩
+            </span>
+          )}
          <span className="text-sm sm:text-base md:text-xl font-bold leading-none inline-flex items-center gap-1">
            {n}
            {receptionDoneSet.has(n) && (
