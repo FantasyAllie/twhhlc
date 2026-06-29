@@ -739,7 +739,6 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
   };
    const realRole = authUser?.role === "pending" ? undefined : (authUser?.role as ViewRole | undefined);
    const realIsAdmin = realRole === "admin";
-   const realIsManager = realRole === "manager";
    const effectiveRole: ViewRole | undefined =
      realIsAdmin && viewAsRole ? viewAsRole : realRole;
    const isReception = effectiveRole === "reception";
