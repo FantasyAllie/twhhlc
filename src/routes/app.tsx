@@ -2389,7 +2389,7 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
   style={{ paddingBottom: "max(1.5rem, env(safe-area-inset-bottom))" }}
 >
 <div
-  className="max-w-2xl mx-auto py-6 sm:py-10 space-y-8 sm:space-y-10"
+  className="max-w-2xl md:max-w-5xl lg:max-w-6xl xl:max-w-7xl mx-auto py-6 sm:py-10 space-y-8 sm:space-y-10"
   style={{
     paddingLeft: "max(1rem, env(safe-area-inset-left))",
     paddingRight: "max(1rem, env(safe-area-inset-right))",
@@ -3995,7 +3995,7 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
  </div>
 
  {/* On-screen interactive accordion */}
- <div className="grid grid-cols-4 sm:grid-cols-8 md:grid-cols-10 gap-2">
+ <div className="grid grid-cols-4 sm:grid-cols-6 md:grid-cols-7 lg:grid-cols-8 xl:grid-cols-10 gap-2 md:gap-3">
  {(() => {
   const allRooms = rooms.map((r) => r.room_number);
    const visibleRooms = (isReception && (receptionFeatureFilter.length > 0 || receptionStatusFilter.length > 0 || receptionDoneOnlyFilter))
@@ -4046,7 +4046,7 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
           disabled={isStaffRoom}
           onClick={() => openOrToggle(n)}
         className={cn(
-             "relative overflow-hidden rounded-lg border text-xs sm:text-sm font-medium transition-colors tabular-nums flex flex-col justify-between aspect-[5/4] p-1.5 pt-2 text-left",
+             "relative overflow-hidden rounded-lg border text-xs sm:text-sm md:text-base font-medium transition-colors tabular-nums flex flex-col justify-between aspect-[5/4] p-1.5 md:p-2.5 pt-2 md:pt-3 text-left",
              openRoom === n && !isStaffRoom && "ring-2 ring-ring border-transparent bg-accent",
             isStaffRoom && "bg-muted text-muted-foreground border-muted-foreground/20 opacity-60"
         )}
@@ -4060,7 +4060,7 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
          {!isStaffRoom && (
            <>
              <span className="text-sm sm:text-base font-bold leading-none">{n}</span>
-              <span className="text-[9px] sm:text-[10px] font-medium leading-none opacity-90 whitespace-pre-line">
+              <span className="text-[9px] sm:text-[10px] md:text-xs font-medium leading-none opacity-90 whitespace-pre-line">
                 {meta.label}
               </span>
              {isDnd && (
@@ -4115,7 +4115,7 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
         type="button"
         onClick={() => openOrToggle(n)}
         className={cn(
-             "relative overflow-hidden rounded-lg border text-xs sm:text-sm font-medium transition-colors tabular-nums flex flex-col justify-between aspect-[5/4] p-1.5 pt-2 text-left",
+             "relative overflow-hidden rounded-lg border text-xs sm:text-sm md:text-base font-medium transition-colors tabular-nums flex flex-col justify-between aspect-[5/4] p-1.5 md:p-2.5 pt-2 md:pt-3 text-left",
           isOpen && "ring-2 ring-ring border-transparent bg-accent",
         )}
         style={
@@ -4129,13 +4129,13 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
         aria-expanded={isOpen}
           aria-label={`Room ${n} ${isStaff ? "staff" : meta.label}`}
       >
-         <span className="text-sm sm:text-base font-bold leading-none inline-flex items-center gap-1">
+         <span className="text-sm sm:text-base md:text-xl font-bold leading-none inline-flex items-center gap-1">
            {n}
            {receptionDoneSet.has(n) && (
              <Check aria-label="Done" className="h-3 w-3" strokeWidth={4} />
            )}
          </span>
-          <span className="text-[9px] sm:text-[10px] font-medium leading-none opacity-90 whitespace-pre-line">
+          <span className="text-[9px] sm:text-[10px] md:text-xs font-medium leading-none opacity-90 whitespace-pre-line">
             {isStaff ? "Staff" : meta.label}
           </span>
           {isDnd && !isStaff && (
