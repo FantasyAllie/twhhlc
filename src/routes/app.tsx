@@ -2267,7 +2267,7 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
                 : ""
             )}
         >
-          Reception
+          Status
         </button>
         <button
           type="button"
