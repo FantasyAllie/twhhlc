@@ -2555,8 +2555,6 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
            <DropdownMenuItem onClick={() => setHistorySheetOpen(true)}>
              <History className="h-4 w-4 mr-2" /> History
            </DropdownMenuItem>
-           <DropdownMenuSeparator />
-           <DropdownMenuLabel>Reception</DropdownMenuLabel>
            <DropdownMenuItem onClick={() => setQuickReceptionOpen(true)}>
              <ConciergeBell className="h-4 w-4 mr-2" /> Bulk Room Status Setup
            </DropdownMenuItem>
