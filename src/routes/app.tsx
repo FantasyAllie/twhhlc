@@ -4077,7 +4077,7 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
           {isDirty && !isStaffRoom && (
             <span
               aria-hidden="true"
-              className="pointer-events-none absolute inset-0 flex items-center justify-center text-4xl md:text-5xl opacity-25 leading-none"
+              className="pointer-events-none absolute inset-0 flex items-center justify-center text-6xl md:text-7xl opacity-15 leading-none"
             >
               💩
             </span>
@@ -4160,7 +4160,7 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
           {isDirty && !isStaff && (
             <span
               aria-hidden="true"
-              className="pointer-events-none absolute inset-0 flex items-center justify-center text-4xl md:text-5xl opacity-25 leading-none"
+              className="pointer-events-none absolute inset-0 flex items-center justify-center text-6xl md:text-7xl opacity-15 leading-none"
             >
               💩
             </span>
