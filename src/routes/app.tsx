@@ -2460,7 +2460,7 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
             )}
           </div>
  <div className="flex items-center gap-2">
-    {isAdmin && (
+    {isAdmin && (isMobile ? (
       <Sheet open={exportSheetOpen} onOpenChange={setExportSheetOpen}>
         <SheetTrigger asChild>
           <Button variant="outline" size="sm">Export</Button>
@@ -2492,7 +2492,25 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
           </div>
         </SheetContent>
       </Sheet>
-   )}
+    ) : (
+      <DropdownMenu>
+        <DropdownMenuTrigger asChild>
+          <Button variant="outline" size="sm">Export</Button>
+        </DropdownMenuTrigger>
+        <DropdownMenuContent align="end" className="w-56">
+          <DropdownMenuLabel>Export</DropdownMenuLabel>
+          <DropdownMenuSeparator />
+          <DropdownMenuItem onClick={() => openExport()}>
+            <List className="h-4 w-4 mr-2" />
+            Linen totals
+          </DropdownMenuItem>
+          <DropdownMenuItem onClick={() => openRoomStatusExport()}>
+            <ClipboardList className="h-4 w-4 mr-2" />
+            Room status
+          </DropdownMenuItem>
+        </DropdownMenuContent>
+      </DropdownMenu>
+    ))}
     {isReception && (
       <Button
         variant="outline"
