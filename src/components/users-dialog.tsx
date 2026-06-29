@@ -152,7 +152,7 @@ export function UsersDialog({
                     value={newRole}
                     onChange={(e) => setNewRole(e.target.value as "admin" | "user" | "reception")}
                   >
-                    <option value="user">User</option>
+                    <option value="user">Housekeepr</option>
                     <option value="reception">Reception</option>
                     <option value="admin">Admin</option>
                   </select>
@@ -176,7 +176,7 @@ export function UsersDialog({
                       <div className="min-w-0">
                         <div className="font-medium truncate">{u.username}</div>
                         <div className="text-xs text-muted-foreground capitalize">
-                          {u.role}{me && u.id === me.id ? " · you" : ""}
+                          {u.role === "user" ? "Housekeepr" : u.role}{me && u.id === me.id ? " · you" : ""}
                         </div>
                       </div>
                       <div className="flex items-center gap-1">
@@ -184,7 +184,7 @@ export function UsersDialog({
                           <KeyRound className="h-4 w-4" />
                         </Button>
                         <Button size="sm" variant="ghost" onClick={() => onToggleRole(u)}>
-                          {u.role === "admin" ? "Make user" : u.role === "user" ? "Make reception" : "Make admin"}
+                          {u.role === "admin" ? "Make housekeepr" : u.role === "user" ? "Make reception" : "Make admin"}
                         </Button>
                         <Button
                           size="sm"
