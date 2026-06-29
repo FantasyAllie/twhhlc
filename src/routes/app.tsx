@@ -13,7 +13,6 @@ import { NotificationsSheet } from "@/components/notifications-sheet";
 import { UsersDialog } from "@/components/users-dialog";
 import { QuickReceptionSheet } from "@/components/quick-reception-sheet";
 import { useServerFn } from "@tanstack/react-start";
-import { supabase } from "@/integrations/supabase/client";
 import {
   DropdownMenu,
   DropdownMenuCheckboxItem,
