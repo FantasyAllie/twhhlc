@@ -4744,6 +4744,7 @@ function AccountDialog({
   currentUsername,
   onUsernameChanged,
   canViewAs,
+  selfRole,
   viewAsRole,
   onViewAsRoleChange,
 }: {
@@ -4752,6 +4753,7 @@ function AccountDialog({
   currentUsername: string;
   onUsernameChanged: (u: string) => void;
   canViewAs: boolean;
+  selfRole: "admin" | "manager";
   viewAsRole: "admin" | "manager" | "user" | "reception" | null;
   onViewAsRoleChange: (r: "admin" | "manager" | "user" | "reception" | null) => void;
 }) {
