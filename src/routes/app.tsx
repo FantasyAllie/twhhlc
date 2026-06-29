@@ -739,8 +739,13 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
   };
    const realRole = authUser?.role === "pending" ? undefined : (authUser?.role as ViewRole | undefined);
    const realIsAdmin = realRole === "admin";
+   const realIsManager = realRole === "manager";
+   const canViewAs = realIsAdmin || realIsManager;
+   // Managers can view-as housekeeper/reception, but never as admin.
+   const safeViewAs: ViewRole | null =
+     viewAsRole && realIsManager && viewAsRole === "admin" ? null : viewAsRole;
    const effectiveRole: ViewRole | undefined =
-     realIsAdmin && viewAsRole ? viewAsRole : realRole;
+     canViewAs && safeViewAs ? safeViewAs : realRole;
    const isReception = effectiveRole === "reception";
    const isAdmin = effectiveRole === "admin" || effectiveRole === "manager";
   const isHousekeeper = effectiveRole === "user";
