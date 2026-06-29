@@ -4049,10 +4049,7 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
     const room = rooms.find((r) => r.room_number === n);
     const isDnd = !!dndStatusId && (room?.reception_status_id ?? room?.default_status) === dndStatusId;
      const state = getRoomTileState(n, receptionDoneSet.has(n));
-     const baseMeta = roomStateMeta[state];
-     const meta = isDnd && state === "todo"
-       ? { ...baseMeta, bg: "#f97316", fg: "#ffffff", accent: "#c2410c", label: "Stayover" }
-       : baseMeta;
+     const meta = roomStateMeta[state];
     nodes.push(
       <button
         key={`r-${n}`}
