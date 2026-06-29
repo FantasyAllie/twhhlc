@@ -772,7 +772,7 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
     todo:     { bg: "var(--room-todo)",     fg: "var(--room-todo-fg)",     accent: "var(--room-todo-accent)",     label: "Not started" },
     progress: { bg: "var(--room-progress)", fg: "var(--room-progress-fg)", accent: "var(--room-progress-accent)", label: "In progress" },
     done:     { bg: "var(--room-done)",     fg: "var(--room-done-fg)",     accent: "var(--room-done-accent)",     label: "Marked done" },
-    complete: { bg: "var(--room-complete)", fg: "var(--room-complete-fg)", accent: "var(--room-complete-accent)", label: "Complete" },
+    complete: { bg: "var(--room-complete)", fg: "var(--room-complete-fg)", accent: "var(--room-complete-accent)", label: "Cleaned & Ready for Guest" },
   };
 
   const toggleReceptionDone = async (roomNumber: number) => {
