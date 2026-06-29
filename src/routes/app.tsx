@@ -746,6 +746,7 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
      realIsAdmin && viewAsRole ? viewAsRole : realRole;
    const isReception = effectiveRole === "reception";
    const isAdmin = effectiveRole === "admin";
+  const isHousekeeper = effectiveRole === "user";
   const doneSet = new Set(
     rooms
       .filter((r) => (isReception ? r.done_reception : r.done))
