@@ -2978,32 +2978,64 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
                {receptionStatuses.length === 0 && (
                  <p className="text-sm text-muted-foreground">No statuses</p>
                )}
-               <div className="space-y-1.5">
-                  {(() => {
-                    const dndId = receptionStatuses.find((x) => x.label === "DND")?.id ?? null;
-                    const stayId = receptionStatuses.find((x) => x.label === "Stayover")?.id ?? null;
-                    const dndActive = !!dndId && occ === dndId;
-                    return receptionStatuses.map((s) => {
-                      const selected = occ === s.id || (dndActive && s.id === stayId);
-                      return (
-                        <Row
-                          key={s.id}
-                          label={s.label}
-                          selected={selected}
-                          onClick={() => {
-                            if (occ === s.id) {
-                              // Toggling off: if removing DND, keep Stayover instead of clearing.
-                              const next = s.id === dndId && stayId ? stayId : null;
-                              setRoomReceptionStatus(n, next);
-                            } else {
-                              setRoomReceptionStatus(n, s.id);
-                            }
-                          }}
-                        />
-                      );
-                    });
-                  })()}
-               </div>
+                <div className="space-y-1.5">
+                   {(() => {
+                     const dndId = receptionStatuses.find((x) => x.label === "DND")?.id ?? null;
+                     const stayId = receptionStatuses.find((x) => x.label === "Stayover")?.id ?? null;
+                     const dndActive = !!dndId && occ === dndId;
+                     const pairLabels: [string, string][] = [
+                       ["DND", "Stayover"],
+                       ["Dirty", "ROS"],
+                     ];
+                     const findStatus = (lbl: string) =>
+                       receptionStatuses.find(
+                         (x) => x.label.toLowerCase() === lbl.toLowerCase(),
+                       ) ?? null;
+                     const pairedIds = new Set<string>();
+                     pairLabels.forEach(([a, b]) => {
+                       const sa = findStatus(a);
+                       const sb = findStatus(b);
+                       if (sa) pairedIds.add(sa.id);
+                       if (sb) pairedIds.add(sb.id);
+                     });
+                     const handleClick = (s: { id: string }) => {
+                       if (occ === s.id) {
+                         const next = s.id === dndId && stayId ? stayId : null;
+                         setRoomReceptionStatus(n, next);
+                       } else {
+                         setRoomReceptionStatus(n, s.id);
+                       }
+                     };
+                     const renderRow = (s: { id: string; label: string }) => {
+                       const selected = occ === s.id || (dndActive && s.id === stayId);
+                       return (
+                         <Row
+                           key={s.id}
+                           label={s.label}
+                           selected={selected}
+                           onClick={() => handleClick(s)}
+                         />
+                       );
+                     };
+                     const nodes: React.ReactNode[] = [];
+                     pairLabels.forEach(([a, b]) => {
+                       const sa = findStatus(a);
+                       const sb = findStatus(b);
+                       if (!sa && !sb) return;
+                       nodes.push(
+                         <div key={`pair-${a}-${b}`} className="grid grid-cols-2 gap-1.5">
+                           {sa ? renderRow(sa) : <div />}
+                           {sb ? renderRow(sb) : <div />}
+                         </div>,
+                       );
+                     });
+                     receptionStatuses.forEach((s) => {
+                       if (pairedIds.has(s.id)) return;
+                       nodes.push(renderRow(s));
+                     });
+                     return nodes;
+                   })()}
+                </div>
              </div>
              <div className="space-y-2">
                <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">Bed</p>
