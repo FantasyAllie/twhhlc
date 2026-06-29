@@ -1,64 +1,70 @@
+# Migrate to Supabase Auth + Approval Queue
+
 ## Goal
+Replace the custom `app_users` JWT login with Supabase Auth (email/password +
+Google), keep the existing shared-workspace data intact, and gate every new
+signup behind an admin-approval queue.
 
-Restyle the Home Screen room tiles to look like the attached mockup (larger rounded cards with a colored top accent bar, room number in the top-left, a status word underneath, and a small status icon in the top-right), and replace the current 2-state color logic (red = not done, green = done) with a 4-state system driven by housekeeping progress.
+## Key fact that makes this safe
+All existing rows in `rooms`, `room_item_counts`, `template_items`,
+`room_messages`, etc. already use the shared sentinel
+`user_id = 00000000-0000-0000-0000-000000000000`. There is **no per-user
+data to migrate** — everyone who is approved sees the same workspace as
+today.
 
-## New color states (housekeeping view)
+## Database (one migration)
+1. `app_role` enum: `admin`, `user`, `reception`, `pending`.
+2. `profiles` table (`id` = `auth.users.id`, `email`, `display_name`).
+3. `user_roles` table (`user_id`, `role`) + `has_role()` SECURITY DEFINER fn.
+4. Trigger on `auth.users` insert →
+   - insert profile,
+   - insert role `admin` if email = `fantasyallie@icloud.com` (case-insensitive),
+     otherwise role `pending`.
+5. Rewrite every existing `USING (true)` policy on `rooms`, `room_messages`,
+   `room_item_counts`, `reject_counts`, `template_items`,
+   `template_item_rooms`, `room_extra_items`, `room_features`,
+   `room_feature_rooms`, `room_types`, `reception_items`, `export_snapshots`
+   to:
+   `TO authenticated USING (NOT has_role(auth.uid(),'pending'))`
+   with the same `WITH CHECK` for writes. (Drops anon access — fixes the 13
+   open security findings.)
+6. Revoke the `anon` grants on those tables; keep `authenticated` grants.
+7. Leave `app_users` table in place for now (read-only fallback, no code
+   path touches it after the cutover). Can be dropped later.
 
-A room is in exactly one of these states:
+## Code
+- **Auth client**: use `supabase.auth` directly in the browser + the
+  generated `lovable.auth.signInWithOAuth("google", …)` for Google.
+- **`/login`** → rebuild as `/auth` (sign-in + sign-up tabs, Google button,
+  forgot password link). Show "Account pending approval" message after
+  signup.
+- **`/_authenticated` layout** (managed) already exists in the template —
+  add it, move `/app` and `/users` underneath.
+- **`use-session` hook** replaces the current localStorage token: reads
+  `supabase.auth.getUser()` + `onAuthStateChange`, plus the user's role from
+  `user_roles`. Exposes `{ user, role, isAdmin, isPending }`.
+- **App guard** (`/app`): if `isPending`, render "Waiting for admin
+  approval" screen instead of the app.
+- **Server functions** (`src/lib/auth.functions.ts`): rewrite to use
+  `requireSupabaseAuth` middleware. New surface:
+  - `listUsers` (admin) → joins profiles + roles, returns pending + approved
+  - `approveUser({id, role})` (admin) → sets role on `user_roles`
+  - `updateUserRole`, `deleteUser` (admin) — via Auth Admin API
+  - Drop `login`, `me`, `updateMyPassword`, `updateMyUsername` (Supabase
+    handles these natively).
+- **`/users` page + dialog**: add a "Pending approvals" section at the top;
+  approve = pick role (user/reception/admin); deny = delete the auth user.
+- **Reset password page** `/reset-password`.
+- Enable Google provider via `supabase--configure_social_auth`.
 
-```text
-items counted?  done?   color   label
-─────────────────────────────────────────
-no              no      red     Not started
-yes             no      yellow  In progress
-no              yes     blue    Marked done
-yes             yes     green   Complete
-```
-
-"Items counted" = the room has at least one row in `room_item_counts` with `count > 0` (template or extra). "Done" = the existing `done` flag (`doneSet`) that the Mark-as-done toggle already controls.
-
-Existing overlays (DND text, OUT badge, maintenance wrench, message/note dot, reception-done check, staff lock, open-room ring, line-through when done) all stay; only the base tile color and shape change.
-
-## Reception view
-
-Reception's tile colors today already mirror the housekeeping done state. They will adopt the same 4-state palette so a glance at the grid means the same thing for both roles. DND text, OUT badge, staff lock, etc. continue to render on top.
-
-## Tile shape
-
-- Switch tiles from `aspect-square` to a wider rounded card (roughly `aspect-[4/3]` / `min-h-[64px]`) so the room number and the new status label both fit cleanly.
-- Top edge gets a 3px colored accent bar in the state's strong color; card body uses the state's soft background and matching text color.
-- Layout inside the card: room number top-left (larger), status label below it (small, same color family), small state icon top-right (sparkle = complete/done, dot/clock = in progress, alert = not started, check = done-no-items). All overlay badges keep their current corners.
-- Grid column counts stay (`grid-cols-4 sm:grid-cols-8 md:grid-cols-10`) so the page still fits 50 rooms at a glance; only the row height grows slightly.
-
-## Token strategy
-
-Add four semantic token pairs to `src/styles.css` so the colors theme correctly and aren't hardcoded in the component:
-
-- `--room-todo` / `--room-todo-fg` (red — not started)
-- `--room-progress` / `--room-progress-fg` (yellow — in progress)
-- `--room-done` / `--room-done-fg` (blue — done, no items)
-- `--room-complete` / `--room-complete-fg` (green — done + items)
-
-Tile renderer picks the pair from a small helper `getRoomState(room, doneSet, countsByRoom)` instead of the current inline `done ? green : red` style block.
-
-## Files touched
-
-- `src/routes/app.tsx` — derive `roomsWithCounts: Set<number>` once from `room_counts`, add the `getRoomState` helper, restyle both the reception and housekeeping `<button>` blocks (lines ~3968–4086), keep all overlays.
-- `src/styles.css` — add the four token pairs in `:root` and `.dark`, mapped into `@theme inline` so `bg-room-todo` etc. work.
-
-No data model, query, or business-logic changes — only presentation and a derived selector over data we already fetch.
+## Cutover impact
+- The 6 existing `app_users` accounts (Allie, Marcia, Beckii, AJ, Reception,
+  Shannon) **will stop being able to sign in** — they must each sign up
+  fresh with email/password (or Google). Allie's `fantasyallie@icloud.com`
+  signup auto-promotes to admin so she can approve the others.
+- All their **data is preserved** (shared workspace sentinel).
 
 ## Out of scope
-
-- No change to the Mark-as-done flow, counts entry, filters, or any sheet contents.
-- Not copying the mockup's left sidebar, header chips ("Dirty 8 / Cleaning 3 / …"), or the page-level layout — only the tile visual.
-- No change to the "X of Y done" progress text below the grid.
-
-## Acceptance check
-
-- Fresh room (no counts, not done) → red tile, "Not started".
-- Add 1 to any item → tile turns yellow, "In progress".
-- Mark room as done with no counts → blue tile, "Marked done".
-- Mark done with counts present → green tile, "Complete".
-- Toggling done off returns to red or yellow based on whether counts exist.
-- DND text, OUT badge, maintenance wrench, message dot, staff-lock styling, and the open-room ring all still render on top of the new colors in both housekeeping and reception views.
+- Email domain restriction (any email allowed; admin approval is the gate).
+- Per-user data isolation (intentionally a shared workspace).
+- Dropping the `app_users` table (left for a future cleanup pass).
