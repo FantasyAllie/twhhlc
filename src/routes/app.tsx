@@ -4058,8 +4058,9 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
         ? { bg: "var(--room-dirty)", fg: "var(--room-dirty-fg)", accent: "var(--room-dirty-accent)", label: "Dirty" }
         : (isStayover || isDnd)
           ? { ...roomStateMeta.todo, label: "Stayover" }
-          : !hasStatus && state === "todo"
+          : !hasStatus
             ? { ...baseMeta, label: "Not started" }
+            ? { ...roomStateMeta.todo, label: "Not started" }
             : baseMeta;
     nodes.push(
         <button
@@ -4139,8 +4140,8 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
         ? { bg: "var(--room-dirty)", fg: "var(--room-dirty-fg)", accent: "var(--room-dirty-accent)", label: "Dirty" }
         : (isStayover || isDnd) && !isStaff
           ? { ...roomStateMeta.todo, label: "Stayover" }
-          : !hasStatus && !isStaff && state === "todo"
-            ? { ...baseMeta, label: "Not started" }
+          : !hasStatus && !isStaff
+            ? { ...roomStateMeta.todo, label: "Not started" }
             : baseMeta;
     nodes.push(
       <button
