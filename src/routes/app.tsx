@@ -4052,11 +4052,13 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
      const state = getRoomTileState(n, done);
      const baseMeta = roomStateMeta[state];
      const hasStatus = !!(room?.reception_status_id ?? room?.default_status);
-      const meta = isDirty && !isStaffRoom
+      const meta = isStaffRoom
+        ? { bg: "var(--room-staff)", fg: "var(--room-staff-fg)", accent: "var(--room-staff-accent)", label: "Staff" }
+        : isDirty
         ? { bg: "var(--room-dirty)", fg: "var(--room-dirty-fg)", accent: "var(--room-dirty-accent)", label: "Dirty" }
-        : (isStayover || isDnd) && !isStaffRoom
+        : (isStayover || isDnd)
           ? { ...roomStateMeta.todo, label: "Stayover" }
-          : !hasStatus && !isStaffRoom && state === "todo"
+          : !hasStatus && state === "todo"
             ? { ...baseMeta, label: "Not started" }
             : baseMeta;
     nodes.push(
@@ -4068,10 +4070,10 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
         className={cn(
              "relative overflow-hidden rounded-lg border text-xs sm:text-sm md:text-base font-medium transition-colors tabular-nums flex flex-col justify-between aspect-[5/4] p-1.5 md:p-2.5 pt-2 md:pt-3 text-left",
              openRoom === n && !isStaffRoom && "ring-2 ring-ring border-transparent bg-accent",
-            isStaffRoom && "bg-muted text-muted-foreground border-muted-foreground/20 opacity-60"
+             isStaffRoom && "opacity-90"
         )}
         style={
-            openRoom === n || isStaffRoom
+            openRoom === n
               ? undefined
                : { backgroundColor: meta.bg, color: meta.fg, borderColor: meta.accent, borderTopWidth: 3 }
         }
@@ -4093,7 +4095,12 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
            </>
          )}
          {isStaffRoom && (
-           <span className="m-auto">{n}</span>
+           <>
+             <span className="text-sm sm:text-base font-bold leading-none">{n}</span>
+             <span className="text-[9px] sm:text-[10px] md:text-xs font-medium leading-none opacity-90">
+               Staff
+             </span>
+           </>
          )}
           {(hasActiveMessage(n) || !!room?.housekeeping_note) && !isStaffRoom && (
             <span
@@ -4148,7 +4155,7 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
           isOpen
             ? undefined
             : isStaff
-              ? { backgroundColor: "var(--room-todo)", color: "var(--room-todo-fg)", borderColor: "var(--room-todo-accent)", borderTopWidth: 3 }
+              ? { backgroundColor: "var(--room-staff)", color: "var(--room-staff-fg)", borderColor: "var(--room-staff-accent)", borderTopWidth: 3 }
               : { backgroundColor: meta.bg, color: meta.fg, borderColor: meta.accent, borderTopWidth: 3 }
         }
         aria-pressed={done}
