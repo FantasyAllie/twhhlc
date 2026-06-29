@@ -229,6 +229,7 @@ function AppPage() {
  const qc = useQueryClient();
   const navigate = useNavigate();
   const { theme, toggleTheme } = useTheme();
+  const isMobile = useIsMobile();
   const [authUser, setAuthUser] = useState(() => getStoredUser());
   // Admin "view as" overlay — see definition further below for full context.
  type ViewRole = "admin" | "manager" | "user" | "reception";
