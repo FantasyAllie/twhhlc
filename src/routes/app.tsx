@@ -4049,7 +4049,7 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
   } else {
     const room = rooms.find((r) => r.room_number === n);
     const isDnd = !!dndStatusId && (room?.reception_status_id ?? room?.default_status) === dndStatusId;
-     const state = getRoomTileState(n, done);
+     const state = getRoomTileState(n, receptionDoneSet.has(n));
      const meta = roomStateMeta[state];
     nodes.push(
       <button
