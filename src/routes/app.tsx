@@ -738,7 +738,7 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
     if (error) toast.error(error.message);
     qc.invalidateQueries({ queryKey: ["reject_counts"] });
   };
-   const realRole = authUser?.role;
+   const realRole = authUser?.role === "pending" ? undefined : (authUser?.role as ViewRole | undefined);
    const realIsAdmin = realRole === "admin";
    const effectiveRole: ViewRole | undefined =
      realIsAdmin && viewAsRole ? viewAsRole : realRole;
