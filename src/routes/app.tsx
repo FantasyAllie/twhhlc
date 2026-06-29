@@ -4069,9 +4069,9 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
          aria-label={`Room ${n} ${meta.label}`}
       >
          <span className="text-sm sm:text-base font-bold leading-none">{n}</span>
-         <span className="text-[9px] sm:text-[10px] font-medium leading-none opacity-90">
-           {meta.label}
-         </span>
+          <span className="text-[9px] sm:text-[10px] font-medium leading-none opacity-90 whitespace-pre-line">
+            {meta.label}
+          </span>
          {isDnd && (
            <span
                className="absolute right-1.5 top-2 text-xs sm:text-sm font-bold leading-none"
