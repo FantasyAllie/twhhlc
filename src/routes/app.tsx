@@ -405,9 +405,8 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
     roomNumber: number,
     messageText?: string,
   ) => {
-    const token = getToken();
-    if (!token) return;
-    void notifyRoomEvent({ data: { token, kind, roomNumber, messageText } }).catch(() => {});
+    if (!getToken()) return;
+    void notifyRoomEvent({ data: { kind, roomNumber, messageText } }).catch(() => {});
   };
   const [historySheetOpen, setHistorySheetOpen] = useState(false);
   const [roomTypesSheetOpen, setRoomTypesSheetOpen] = useState(false);
