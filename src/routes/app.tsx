@@ -4010,21 +4010,7 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
       >
          {!isStaffRoom && (
            <>
-          <span
-            className="text-sm sm:text-base font-bold leading-none"
-            style={
-              receptionDoneSet.has(n) && !isStaff
-                ? {
-                    color: "#eab308",
-                    WebkitTextStroke: "0.75px #ffffff",
-                    textShadow:
-                      "-1px -1px 0 #fff, 1px -1px 0 #fff, -1px 1px 0 #fff, 1px 1px 0 #fff",
-                  }
-                : undefined
-            }
-          >
-            {n}
-          </span>
+              <span className="text-sm sm:text-base font-bold leading-none">{n}</span>
               <span className="text-[9px] sm:text-[10px] font-medium leading-none opacity-90 whitespace-pre-line">
                 {meta.label}
               </span>
@@ -4088,7 +4074,21 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
         aria-expanded={isOpen}
           aria-label={`Room ${n} ${isStaff ? "staff" : meta.label}`}
       >
-         <span className="text-sm sm:text-base font-bold leading-none">{n}</span>
+          <span
+            className="text-sm sm:text-base font-bold leading-none"
+            style={
+              receptionDoneSet.has(n) && !isStaff
+                ? {
+                    color: "#eab308",
+                    WebkitTextStroke: "0.75px #ffffff",
+                    textShadow:
+                      "-1px -1px 0 #fff, 1px -1px 0 #fff, -1px 1px 0 #fff, 1px 1px 0 #fff",
+                  }
+                : undefined
+            }
+          >
+            {n}
+          </span>
           <span className="text-[9px] sm:text-[10px] font-medium leading-none opacity-90 whitespace-pre-line">
             {isStaff ? "Staff" : meta.label}
           </span>
