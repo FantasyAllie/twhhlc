@@ -4856,18 +4856,27 @@ function AccountDialog({
             <div className="space-y-2">
               <h3 className="text-sm font-semibold">View as</h3>
               <p className="text-xs text-muted-foreground">
-                Temporarily experience the app as another role. Your account stays admin.
+                Temporarily experience the app as another role. Your account stays {selfRole === "manager" ? "a manager" : "an admin"}.
               </p>
               <div className="space-y-1.5">
-                {(["admin", "user", "reception"] as const).map((r) => {
-                  const active = (viewAsRole ?? "admin") === r;
-                  const label = r === "user" ? "Housekeeper" : r === "reception" ? "Reception" : "Admin (your role)";
+                {((selfRole === "manager"
+                  ? ["manager", "user", "reception"]
+                  : ["admin", "user", "reception"]) as ReadonlyArray<"admin" | "manager" | "user" | "reception">).map((r) => {
+                  const active = (viewAsRole ?? selfRole) === r;
+                  const label =
+                    r === "user"
+                      ? "Housekeeper"
+                      : r === "reception"
+                      ? "Reception"
+                      : r === "manager"
+                      ? "Manager (your role)"
+                      : "Admin (your role)";
                   return (
                     <button
                       key={r}
                       type="button"
                       onClick={() => {
-                        onViewAsRoleChange(r === "admin" ? null : r);
+                        onViewAsRoleChange(r === selfRole ? null : r);
                         onOpenChange(false);
                       }}
                       className={cn(
