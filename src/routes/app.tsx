@@ -13,6 +13,7 @@ import { NotificationsSheet } from "@/components/notifications-sheet";
 import { UsersDialog } from "@/components/users-dialog";
 import { QuickReceptionSheet } from "@/components/quick-reception-sheet";
 import { useServerFn } from "@tanstack/react-start";
+import { useIsMobile } from "@/hooks/use-mobile";
 import {
   DropdownMenu,
   DropdownMenuCheckboxItem,
@@ -228,6 +229,7 @@ function AppPage() {
  const qc = useQueryClient();
   const navigate = useNavigate();
   const { theme, toggleTheme } = useTheme();
+  const isMobile = useIsMobile();
   const [authUser, setAuthUser] = useState(() => getStoredUser());
   // Admin "view as" overlay — see definition further below for full context.
  type ViewRole = "admin" | "manager" | "user" | "reception";
@@ -2458,7 +2460,7 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
             )}
           </div>
  <div className="flex items-center gap-2">
-    {isAdmin && (
+    {isAdmin && (isMobile ? (
       <Sheet open={exportSheetOpen} onOpenChange={setExportSheetOpen}>
         <SheetTrigger asChild>
           <Button variant="outline" size="sm">Export</Button>
@@ -2490,7 +2492,25 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
           </div>
         </SheetContent>
       </Sheet>
-   )}
+    ) : (
+      <DropdownMenu>
+        <DropdownMenuTrigger asChild>
+          <Button variant="outline" size="sm">Export</Button>
+        </DropdownMenuTrigger>
+        <DropdownMenuContent align="end" className="w-56">
+          <DropdownMenuLabel>Export</DropdownMenuLabel>
+          <DropdownMenuSeparator />
+          <DropdownMenuItem onClick={() => openExport()}>
+            <List className="h-4 w-4 mr-2" />
+            Linen totals
+          </DropdownMenuItem>
+          <DropdownMenuItem onClick={() => openRoomStatusExport()}>
+            <ClipboardList className="h-4 w-4 mr-2" />
+            Room status
+          </DropdownMenuItem>
+        </DropdownMenuContent>
+      </DropdownMenu>
+    ))}
     {isReception && (
       <Button
         variant="outline"
@@ -2508,9 +2528,65 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
         Print
       </Button>
     )}
- <Button variant="ghost" size="sm" aria-label="Menu" onClick={() => setMenuSheetOpen(true)}>
-   <Menu className="h-4 w-4" />
- </Button>
+ {isMobile ? (
+   <Button variant="ghost" size="sm" aria-label="Menu" onClick={() => setMenuSheetOpen(true)}>
+     <Menu className="h-4 w-4" />
+   </Button>
+ ) : (
+   <DropdownMenu>
+     <DropdownMenuTrigger asChild>
+       <Button variant="ghost" size="sm" aria-label="Menu">
+         <Menu className="h-4 w-4" />
+       </Button>
+     </DropdownMenuTrigger>
+     <DropdownMenuContent align="end" className="w-64">
+       {isAdmin && (
+         <>
+           <DropdownMenuLabel>Manage</DropdownMenuLabel>
+           <DropdownMenuItem onClick={() => setTemplateOpen(true)}>
+             <List className="h-4 w-4 mr-2" /> Linen List
+           </DropdownMenuItem>
+           <DropdownMenuItem onClick={() => setManageRoomsOpen(true)}>
+             <Hash className="h-4 w-4 mr-2" /> Manage Rooms
+           </DropdownMenuItem>
+           <DropdownMenuItem onClick={() => setRejectsOpen(true)}>
+             <Ban className="h-4 w-4 mr-2" /> Rejects
+           </DropdownMenuItem>
+           <DropdownMenuItem onClick={() => setHistorySheetOpen(true)}>
+             <History className="h-4 w-4 mr-2" /> History
+           </DropdownMenuItem>
+           <DropdownMenuSeparator />
+           <DropdownMenuLabel>Reception</DropdownMenuLabel>
+           <DropdownMenuItem onClick={() => setQuickReceptionOpen(true)}>
+             <ConciergeBell className="h-4 w-4 mr-2" /> Quick Room Status Setup
+           </DropdownMenuItem>
+           <DropdownMenuSeparator />
+         </>
+       )}
+       <DropdownMenuLabel>Appearance</DropdownMenuLabel>
+       <DropdownMenuItem onClick={() => toggleTheme()}>
+         {theme === "dark" ? <Sun className="h-4 w-4 mr-2" /> : <Moon className="h-4 w-4 mr-2" />}
+         {theme === "dark" ? "Light mode" : "Dark mode"}
+       </DropdownMenuItem>
+       <DropdownMenuSeparator />
+       <DropdownMenuLabel>Account</DropdownMenuLabel>
+       {realIsAdmin && (
+         <DropdownMenuItem onClick={() => setUsersOpen(true)}>
+           <Users className="h-4 w-4 mr-2" /> Users
+         </DropdownMenuItem>
+       )}
+       <DropdownMenuItem onClick={() => setNotificationsSheetOpen(true)}>
+         <Bell className="h-4 w-4 mr-2" /> Notifications
+       </DropdownMenuItem>
+       <DropdownMenuItem onClick={() => setAccountOpen(true)}>
+         <User className="h-4 w-4 mr-2" /> Account
+       </DropdownMenuItem>
+       <DropdownMenuItem onClick={() => void signOut()} className="text-destructive focus:text-destructive">
+         <LogOut className="h-4 w-4 mr-2" /> Sign out
+       </DropdownMenuItem>
+     </DropdownMenuContent>
+   </DropdownMenu>
+ )}
  </div>
  </header>
    {canViewAs && safeViewAs && (
