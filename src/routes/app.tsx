@@ -4059,7 +4059,6 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
         : (isStayover || isDnd)
           ? { ...roomStateMeta.todo, label: "Stayover" }
           : !hasStatus
-            ? { ...baseMeta, label: "Not started" }
             ? { ...roomStateMeta.todo, label: "Not started" }
             : baseMeta;
     nodes.push(
