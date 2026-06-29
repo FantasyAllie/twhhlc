@@ -2555,8 +2555,6 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
            <DropdownMenuItem onClick={() => setHistorySheetOpen(true)}>
              <History className="h-4 w-4 mr-2" /> History
            </DropdownMenuItem>
-           <DropdownMenuSeparator />
-           <DropdownMenuLabel>Reception</DropdownMenuLabel>
            <DropdownMenuItem onClick={() => setQuickReceptionOpen(true)}>
              <ConciergeBell className="h-4 w-4 mr-2" /> Bulk Room Status Setup
            </DropdownMenuItem>
@@ -3259,13 +3257,6 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
                 <Row icon={Hash} label="Manage Rooms" onClick={() => { close(); setManageRoomsOpen(true); }} />
                 <Row icon={Ban} label="Rejects" onClick={() => { close(); setRejectsOpen(true); }} />
                 <Row icon={History} label="History" onClick={() => { close(); setHistorySheetOpen(true); }} />
-              </div>
-            </div>
-          )}
-          {isAdmin && (
-            <div className="space-y-2">
-              <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">Reception</p>
-              <div className="space-y-1.5">
                 <Row icon={ConciergeBell} label="Bulk Room Status Setup" onClick={() => { close(); setQuickReceptionOpen(true); }} />
               </div>
             </div>
