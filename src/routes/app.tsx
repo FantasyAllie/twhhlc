@@ -4119,13 +4119,16 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
     const isDnd = !!dndStatusId && (room?.reception_status_id ?? room?.default_status) === dndStatusId;
     const isStaff = !!staffStatusIdGlobal && (room?.reception_status_id ?? room?.default_status) === staffStatusIdGlobal;
      const isStayover = !!stayStatusIdGlobal && (room?.reception_status_id ?? room?.default_status) === stayStatusIdGlobal;
+     const isDirty = !!dirtyStatusIdGlobal && (room?.reception_status_id ?? room?.default_status) === dirtyStatusIdGlobal;
      const state = getRoomTileState(n, receptionDoneSet.has(n));
       const baseMeta = state === "done"
         ? { bg: "var(--room-done)", fg: "var(--room-done-fg)", accent: "var(--room-done-accent)", label: "Clean" }
         : roomStateMeta[state];
-      const meta = (isStayover || isDnd) && !isStaff
-        ? { ...roomStateMeta.todo, label: "Stayover" }
-        : baseMeta;
+      const meta = isDirty && !isStaff
+        ? { bg: "var(--room-dirty)", fg: "var(--room-dirty-fg)", accent: "var(--room-dirty-accent)", label: "Dirty" }
+        : (isStayover || isDnd) && !isStaff
+          ? { ...roomStateMeta.todo, label: "Stayover" }
+          : baseMeta;
     nodes.push(
       <button
         key={`r-${n}`}
