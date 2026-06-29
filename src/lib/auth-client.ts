@@ -1,6 +1,6 @@
 import { supabase } from "@/integrations/supabase/client";
 
-export type AppRole = "admin" | "user" | "reception" | "pending";
+export type AppRole = "admin" | "manager" | "user" | "reception" | "pending";
 export type SessionUser = { id: string; username: string; email: string; role: AppRole };
 
 const USER_CACHE_KEY = "tw_session_user";
@@ -36,7 +36,7 @@ async function fetchRole(userId: string): Promise<AppRole> {
     .select("role")
     .eq("user_id", userId);
   const roles = ((data ?? []) as { role: AppRole }[]).map((r) => r.role);
-  const order: AppRole[] = ["admin", "reception", "user", "pending"];
+  const order: AppRole[] = ["admin", "manager", "reception", "user", "pending"];
   for (const r of order) if (roles.includes(r)) return r;
   return "pending";
 }
