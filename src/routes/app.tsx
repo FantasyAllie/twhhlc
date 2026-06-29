@@ -4013,8 +4013,7 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
              </span>
              {isDnd && (
                <span
-                 className="absolute right-1 top-1 text-[8px] font-bold tracking-wider"
-                 style={{ color: meta.accent }}
+                  className="absolute right-1 top-1 text-sm sm:text-base font-bold leading-none"
                >
                  DND
                </span>
@@ -4075,8 +4074,7 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
          </span>
          {isDnd && (
            <span
-             className="absolute right-1 top-1 text-[8px] font-bold tracking-wider"
-             style={{ color: meta.accent }}
+              className="absolute right-1 top-1 text-sm sm:text-base font-bold leading-none"
            >
              DND
            </span>
