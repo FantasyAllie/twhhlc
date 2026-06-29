@@ -4725,8 +4725,6 @@ function AccountDialog({
   viewAsRole: "admin" | "user" | "reception" | null;
   onViewAsRoleChange: (r: "admin" | "user" | "reception" | null) => void;
 }) {
-  const pwFn = useServerFn(updateMyPassword);
-  const unFn = useServerFn(updateMyUsername);
   const [username, setUsername] = useState(currentUsername);
   const [unCurrentPw, setUnCurrentPw] = useState("");
   const [currentPw, setCurrentPw] = useState("");
@@ -4747,23 +4745,37 @@ function AccountDialog({
   async function saveUsername(e: React.FormEvent) {
     e.preventDefault();
     if (busy) return;
-    const token = getToken();
-    if (!token) return;
     if (username.trim() === currentUsername) {
-      toast.info("Username is unchanged");
+      toast.info("Display name is unchanged");
       return;
     }
     setBusy(true);
     try {
-      const res = await unFn({
-        data: { token, currentPassword: unCurrentPw, newUsername: username.trim() },
-      });
-      setSession(res.token, res.user);
-      onUsernameChanged(res.user.username);
-      toast.success("Username updated");
+      const user = getStoredUser();
+      if (!user) throw new Error("Not signed in");
+      // Optionally re-verify current password before updating.
+      if (unCurrentPw) {
+        const { error: signErr } = await supabase.auth.signInWithPassword({
+          email: user.email,
+          password: unCurrentPw,
+        });
+        if (signErr) throw new Error("Current password is incorrect");
+      }
+      const newName = username.trim();
+      const { error: pErr } = await supabase
+        .from("profiles")
+        .update({ display_name: newName })
+        .eq("id", user.id);
+      if (pErr) throw pErr;
+      await supabase.auth.updateUser({ data: { display_name: newName } });
+      // Refresh cached session so the new name appears immediately.
+      const { refreshSession } = await import("@/lib/auth-client");
+      await refreshSession();
+      onUsernameChanged(newName);
+      toast.success("Display name updated");
       setUnCurrentPw("");
     } catch (err) {
-      toast.error(err instanceof Error ? err.message : "Failed to update username");
+      toast.error(err instanceof Error ? err.message : "Failed to update display name");
     } finally {
       setBusy(false);
     }
@@ -4772,15 +4784,21 @@ function AccountDialog({
   async function savePassword(e: React.FormEvent) {
     e.preventDefault();
     if (busy) return;
-    const token = getToken();
-    if (!token) return;
     if (newPw !== confirmPw) {
       toast.error("New passwords do not match");
       return;
     }
     setBusy(true);
     try {
-      await pwFn({ data: { token, currentPassword: currentPw, newPassword: newPw } });
+      const user = getStoredUser();
+      if (!user) throw new Error("Not signed in");
+      const { error: signErr } = await supabase.auth.signInWithPassword({
+        email: user.email,
+        password: currentPw,
+      });
+      if (signErr) throw new Error("Current password is incorrect");
+      const { error } = await supabase.auth.updateUser({ password: newPw });
+      if (error) throw error;
       toast.success("Password updated");
       setCurrentPw("");
       setNewPw("");
