@@ -11,6 +11,8 @@ import {
 import appCss from "../styles.css?url";
 import { Toaster } from "sonner";
 import { ThemeProvider } from "@/components/theme-provider";
+import { useEffect } from "react";
+import { bootstrapAuth } from "@/lib/auth-client";
 
 function NotFoundComponent() {
   return (
@@ -127,6 +129,10 @@ function RootShell({ children }: { children: React.ReactNode }) {
 
 function RootComponent() {
   const { queryClient } = Route.useRouteContext();
+
+  useEffect(() => {
+    bootstrapAuth();
+  }, []);
 
   return (
     <QueryClientProvider client={queryClient}>
