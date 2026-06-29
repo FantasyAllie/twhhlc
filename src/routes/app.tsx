@@ -2982,7 +2982,10 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
                    {(() => {
                      const dndId = receptionStatuses.find((x) => x.label === "DND")?.id ?? null;
                      const stayId = receptionStatuses.find((x) => x.label === "Stayover")?.id ?? null;
+                      const dirtyId = receptionStatuses.find((x) => x.label === "Dirty")?.id ?? null;
+                      const rosId = receptionStatuses.find((x) => x.label === "ROS")?.id ?? null;
                      const dndActive = !!dndId && occ === dndId;
+                      const dirtyActive = !!dirtyId && occ === dirtyId;
                      const pairLabels: [string, string][] = [
                        ["DND", "Stayover"],
                        ["Dirty", "ROS"],
@@ -3006,14 +3009,22 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
                      });
                      const handleClick = (s: { id: string }) => {
                        if (occ === s.id) {
-                         const next = s.id === dndId && stayId ? stayId : null;
+                          const next =
+                            s.id === dndId && stayId
+                              ? stayId
+                              : s.id === dirtyId && rosId
+                                ? rosId
+                                : null;
                          setRoomReceptionStatus(n, next);
                        } else {
                          setRoomReceptionStatus(n, s.id);
                        }
                      };
                      const renderRow = (s: { id: string; label: string }) => {
-                       const selected = occ === s.id || (dndActive && s.id === stayId);
+                        const selected =
+                          occ === s.id ||
+                          (dndActive && s.id === stayId) ||
+                          (dirtyActive && s.id === rosId);
                        return (
                          <Row
                            key={s.id}
@@ -4022,6 +4033,9 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
     const stayStatusIdGlobal = receptionStatuses.find(
       (s) => s.label.toLowerCase() === "stayover",
     )?.id ?? null;
+    const dirtyStatusIdGlobal = receptionStatuses.find(
+      (s) => s.label.toLowerCase() === "dirty",
+    )?.id ?? null;
    for (let i = 0; i < visibleRooms.length; i++) {
    const n = visibleRooms[i];
  const done = doneSet.has(n);
@@ -4034,11 +4048,14 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
     const isStaffRoom = (room?.reception_status_id ?? room?.default_status) === staffStatusId;
     const isDnd = !!dndStatusId && (room?.reception_status_id ?? room?.default_status) === dndStatusId;
      const isStayover = !!stayStatusIdGlobal && (room?.reception_status_id ?? room?.default_status) === stayStatusIdGlobal;
+     const isDirty = !!dirtyStatusIdGlobal && (room?.reception_status_id ?? room?.default_status) === dirtyStatusIdGlobal;
      const state = getRoomTileState(n, done);
      const baseMeta = roomStateMeta[state];
-     const meta = (isStayover || isDnd) && !isStaffRoom
-       ? { ...roomStateMeta.todo, label: "Stayover" }
-       : baseMeta;
+      const meta = isDirty && !isStaffRoom
+        ? { bg: "var(--room-dirty)", fg: "var(--room-dirty-fg)", accent: "var(--room-dirty-accent)", label: "Dirty" }
+        : (isStayover || isDnd) && !isStaffRoom
+          ? { ...roomStateMeta.todo, label: "Stayover" }
+          : baseMeta;
     nodes.push(
         <button
         key={`r-${n}`}
@@ -4102,13 +4119,16 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
     const isDnd = !!dndStatusId && (room?.reception_status_id ?? room?.default_status) === dndStatusId;
     const isStaff = !!staffStatusIdGlobal && (room?.reception_status_id ?? room?.default_status) === staffStatusIdGlobal;
      const isStayover = !!stayStatusIdGlobal && (room?.reception_status_id ?? room?.default_status) === stayStatusIdGlobal;
+     const isDirty = !!dirtyStatusIdGlobal && (room?.reception_status_id ?? room?.default_status) === dirtyStatusIdGlobal;
      const state = getRoomTileState(n, receptionDoneSet.has(n));
       const baseMeta = state === "done"
         ? { bg: "var(--room-done)", fg: "var(--room-done-fg)", accent: "var(--room-done-accent)", label: "Clean" }
         : roomStateMeta[state];
-      const meta = (isStayover || isDnd) && !isStaff
-        ? { ...roomStateMeta.todo, label: "Stayover" }
-        : baseMeta;
+      const meta = isDirty && !isStaff
+        ? { bg: "var(--room-dirty)", fg: "var(--room-dirty-fg)", accent: "var(--room-dirty-accent)", label: "Dirty" }
+        : (isStayover || isDnd) && !isStaff
+          ? { ...roomStateMeta.todo, label: "Stayover" }
+          : baseMeta;
     nodes.push(
       <button
         key={`r-${n}`}
