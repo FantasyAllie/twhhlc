@@ -4052,6 +4052,7 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
     const isDnd = !!dndStatusId && (room?.reception_status_id ?? room?.default_status) === dndStatusId;
      const isStayover = !!stayStatusIdGlobal && (room?.reception_status_id ?? room?.default_status) === stayStatusIdGlobal;
      const isDirty = !!dirtyStatusIdGlobal && (room?.reception_status_id ?? room?.default_status) === dirtyStatusIdGlobal;
+     const isClean = !!cleanStatusIdGlobal && (room?.reception_status_id ?? room?.default_status) === cleanStatusIdGlobal;
      const state = getRoomTileState(n, done);
      const baseMeta = roomStateMeta[state];
      const hasStatus = !!(room?.reception_status_id ?? room?.default_status);
@@ -4059,6 +4060,8 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
         ? { bg: "var(--room-staff)", fg: "var(--room-staff-fg)", accent: "var(--room-staff-accent)", label: "Staff" }
         : isDirty
         ? { bg: "var(--room-dirty)", fg: "var(--room-dirty-fg)", accent: "var(--room-dirty-accent)", label: "Dirty" }
+         : isClean
+         ? { bg: "var(--room-done)", fg: "var(--room-done-fg)", accent: "var(--room-done-accent)", label: "Clean" }
         : (isStayover || isDnd)
           ? { ...roomStateMeta.todo, label: "Stayover" }
           : !hasStatus
@@ -4133,6 +4136,7 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
     const isStaff = !!staffStatusIdGlobal && (room?.reception_status_id ?? room?.default_status) === staffStatusIdGlobal;
      const isStayover = !!stayStatusIdGlobal && (room?.reception_status_id ?? room?.default_status) === stayStatusIdGlobal;
      const isDirty = !!dirtyStatusIdGlobal && (room?.reception_status_id ?? room?.default_status) === dirtyStatusIdGlobal;
+     const isClean = !!cleanStatusIdGlobal && (room?.reception_status_id ?? room?.default_status) === cleanStatusIdGlobal;
      const state = getRoomTileState(n, receptionDoneSet.has(n));
       const baseMeta = state === "done"
         ? { bg: "var(--room-done)", fg: "var(--room-done-fg)", accent: "var(--room-done-accent)", label: "Clean" }
@@ -4140,6 +4144,8 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
      const hasStatus = !!(room?.reception_status_id ?? room?.default_status);
       const meta = isDirty && !isStaff
         ? { bg: "var(--room-dirty)", fg: "var(--room-dirty-fg)", accent: "var(--room-dirty-accent)", label: "Dirty" }
+        : isClean && !isStaff
+        ? { bg: "var(--room-done)", fg: "var(--room-done-fg)", accent: "var(--room-done-accent)", label: "Clean" }
         : (isStayover || isDnd) && !isStaff
           ? { ...roomStateMeta.todo, label: "Stayover" }
           : !hasStatus && !isStaff
