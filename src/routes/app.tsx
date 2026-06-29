@@ -3974,6 +3974,9 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
     : allRooms;
   const nodes: React.ReactNode[] = [];
    const dndStatusId = receptionStatuses.find((s) => s.label === "DND")?.id ?? null;
+    const staffStatusIdGlobal = receptionStatuses.find(
+      (s) => s.label.toLowerCase() === "staff",
+    )?.id ?? null;
    for (let i = 0; i < visibleRooms.length; i++) {
    const n = visibleRooms[i];
  const done = doneSet.has(n);
@@ -4048,6 +4051,7 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
   } else {
     const room = rooms.find((r) => r.room_number === n);
     const isDnd = !!dndStatusId && (room?.reception_status_id ?? room?.default_status) === dndStatusId;
+    const isStaff = !!staffStatusIdGlobal && (room?.reception_status_id ?? room?.default_status) === staffStatusIdGlobal;
      const state = getRoomTileState(n, receptionDoneSet.has(n));
      const meta = roomStateMeta[state];
     nodes.push(
@@ -4058,21 +4062,22 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
         className={cn(
              "relative overflow-hidden rounded-lg border text-xs sm:text-sm font-medium transition-colors tabular-nums flex flex-col justify-between aspect-[5/4] p-1.5 pt-2 text-left",
           isOpen && "ring-2 ring-ring border-transparent bg-accent",
+          isStaff && !isOpen && "bg-red-600 text-white border-red-700",
         )}
         style={
-          isOpen
+          isOpen || isStaff
             ? undefined
              : { backgroundColor: meta.bg, color: meta.fg, borderColor: meta.accent, borderTopWidth: 3 }
         }
         aria-pressed={done}
         aria-expanded={isOpen}
-         aria-label={`Room ${n} ${meta.label}`}
+          aria-label={`Room ${n} ${isStaff ? "staff" : meta.label}`}
       >
          <span className="text-sm sm:text-base font-bold leading-none">{n}</span>
           <span className="text-[9px] sm:text-[10px] font-medium leading-none opacity-90 whitespace-pre-line">
-            {meta.label}
+            {isStaff ? "Staff" : meta.label}
           </span>
-         {isDnd && (
+          {isDnd && !isStaff && (
            <span
                className="absolute right-1.5 top-2 text-xs sm:text-sm font-bold leading-none"
            >
