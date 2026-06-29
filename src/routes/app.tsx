@@ -2389,7 +2389,7 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
   style={{ paddingBottom: "max(1.5rem, env(safe-area-inset-bottom))" }}
 >
 <div
-  className="max-w-2xl mx-auto py-6 sm:py-10 space-y-8 sm:space-y-10"
+  className="max-w-2xl md:max-w-5xl lg:max-w-6xl xl:max-w-7xl mx-auto py-6 sm:py-10 space-y-8 sm:space-y-10"
   style={{
     paddingLeft: "max(1rem, env(safe-area-inset-left))",
     paddingRight: "max(1rem, env(safe-area-inset-right))",
