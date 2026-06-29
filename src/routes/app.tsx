@@ -770,7 +770,7 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
     { bg: string; fg: string; accent: string; label: string }
   > = {
     todo:     { bg: "var(--room-todo)",     fg: "var(--room-todo-fg)",     accent: "var(--room-todo-accent)",     label: "Stayover\n" },
-    progress: { bg: "var(--room-progress)", fg: "var(--room-progress-fg)", accent: "var(--room-progress-accent)", label: "In progress" },
+    progress: { bg: "var(--room-progress)", fg: "var(--room-progress-fg)", accent: "var(--room-progress-accent)", label: "Cleaning in progress" },
     done:     { bg: "var(--room-complete)", fg: "var(--room-complete-fg)", accent: "var(--room-complete-accent)", label: "Clean" },
     complete: { bg: "var(--room-complete)", fg: "var(--room-complete-fg)", accent: "var(--room-complete-accent)", label: "Cleaned & Ready for Guest" },
   };
