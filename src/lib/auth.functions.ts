@@ -22,11 +22,14 @@ function validatePassword(p: string) {
   }
 }
 
-async function assertAdmin(ctx: { supabase: import("@supabase/supabase-js").SupabaseClient; userId: string }) {
-  const { data, error } = await ctx.supabase.rpc("has_role", {
-    _user_id: ctx.userId,
-    _role: "admin",
-  });
+async function assertAdmin(ctx: { userId: string }) {
+  const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+  const { data, error } = await supabaseAdmin
+    .from("user_roles")
+    .select("user_id")
+    .eq("user_id", ctx.userId)
+    .eq("role", "admin")
+    .maybeSingle();
   if (error || !data) throw new Error("Admin access required");
 }
 
