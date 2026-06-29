@@ -4062,12 +4062,13 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
         className={cn(
              "relative overflow-hidden rounded-lg border text-xs sm:text-sm font-medium transition-colors tabular-nums flex flex-col justify-between aspect-[5/4] p-1.5 pt-2 text-left",
           isOpen && "ring-2 ring-ring border-transparent bg-accent",
-          isStaff && !isOpen && "bg-red-600 text-white border-red-700",
         )}
         style={
-          isOpen || isStaff
+          isOpen
             ? undefined
-             : { backgroundColor: meta.bg, color: meta.fg, borderColor: meta.accent, borderTopWidth: 3 }
+            : isStaff
+              ? { backgroundColor: "var(--room-todo)", color: "var(--room-todo-fg)", borderColor: "var(--room-todo-accent)", borderTopWidth: 3 }
+              : { backgroundColor: meta.bg, color: meta.fg, borderColor: meta.accent, borderTopWidth: 3 }
         }
         aria-pressed={done}
         aria-expanded={isOpen}
