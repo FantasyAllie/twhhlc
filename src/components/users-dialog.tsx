@@ -152,7 +152,7 @@ export function UsersDialog({
                     value={newRole}
                     onChange={(e) => setNewRole(e.target.value as "admin" | "user" | "reception")}
                   >
-                    <option value="user">User</option>
+                    <option value="user">Housekeeper</option>
                     <option value="reception">Reception</option>
                     <option value="admin">Admin</option>
                   </select>
