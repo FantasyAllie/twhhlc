@@ -2982,7 +2982,10 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
                    {(() => {
                      const dndId = receptionStatuses.find((x) => x.label === "DND")?.id ?? null;
                      const stayId = receptionStatuses.find((x) => x.label === "Stayover")?.id ?? null;
+                      const dirtyId = receptionStatuses.find((x) => x.label === "Dirty")?.id ?? null;
+                      const rosId = receptionStatuses.find((x) => x.label === "ROS")?.id ?? null;
                      const dndActive = !!dndId && occ === dndId;
+                      const dirtyActive = !!dirtyId && occ === dirtyId;
                      const pairLabels: [string, string][] = [
                        ["DND", "Stayover"],
                        ["Dirty", "ROS"],
@@ -3006,14 +3009,22 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
                      });
                      const handleClick = (s: { id: string }) => {
                        if (occ === s.id) {
-                         const next = s.id === dndId && stayId ? stayId : null;
+                          const next =
+                            s.id === dndId && stayId
+                              ? stayId
+                              : s.id === dirtyId && rosId
+                                ? rosId
+                                : null;
                          setRoomReceptionStatus(n, next);
                        } else {
                          setRoomReceptionStatus(n, s.id);
                        }
                      };
                      const renderRow = (s: { id: string; label: string }) => {
-                       const selected = occ === s.id || (dndActive && s.id === stayId);
+                        const selected =
+                          occ === s.id ||
+                          (dndActive && s.id === stayId) ||
+                          (dirtyActive && s.id === rosId);
                        return (
                          <Row
                            key={s.id}
