@@ -2191,6 +2191,9 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
           </div>
         );
       }
+      if (isHousekeeper) {
+        return null;
+      }
       return (
         <Button
           type="button"
