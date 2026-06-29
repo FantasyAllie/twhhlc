@@ -21,7 +21,7 @@ import {
   DialogDescription,
 } from "@/components/ui/dialog";
 import { toast } from "sonner";
-import { Trash2, KeyRound, Check, X } from "lucide-react";
+import { Trash2, KeyRound, Check, X, Pencil } from "lucide-react";
 
 export function UsersDialog({
   open,
@@ -53,6 +53,55 @@ export function UsersDialog({
 
   const [pwUser, setPwUser] = useState<AppUserRow | null>(null);
   const [pwValue, setPwValue] = useState("");
+
+  const [editUser, setEditUser] = useState<AppUserRow | null>(null);
+  const [editRole, setEditRole] = useState<ApprovedRole>("user");
+  const [editPw, setEditPw] = useState("");
+  const [editBusy, setEditBusy] = useState(false);
+
+  function openEdit(u: AppUserRow) {
+    setEditUser(u);
+    setEditRole((u.role === "pending" ? "user" : u.role) as ApprovedRole);
+    setEditPw("");
+  }
+  function closeEdit() {
+    setEditUser(null);
+    setEditPw("");
+  }
+
+  async function onSaveEdit(e: React.FormEvent) {
+    e.preventDefault();
+    if (!editUser || editBusy) return;
+    setEditBusy(true);
+    try {
+      if (editRole !== editUser.role) {
+        await roleFn({ data: { id: editUser.id, role: editRole } });
+      }
+      if (editPw.trim().length > 0) {
+        await pwFn({ data: { id: editUser.id, password: editPw } });
+      }
+      toast.success("User updated");
+      qc.invalidateQueries({ queryKey: ["app_users"] });
+      closeEdit();
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : "Failed to update user");
+    } finally {
+      setEditBusy(false);
+    }
+  }
+
+  async function onDeleteFromEdit() {
+    if (!editUser) return;
+    if (!confirm(`Delete account "${editUser.username}"? This cannot be undone.`)) return;
+    try {
+      await deleteFn({ data: { id: editUser.id } });
+      toast.success("User deleted");
+      qc.invalidateQueries({ queryKey: ["app_users"] });
+      closeEdit();
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : "Failed to delete user");
+    }
+  }
 
   async function onCreate(e: React.FormEvent) {
     e.preventDefault();
@@ -117,16 +166,6 @@ export function UsersDialog({
   const all = usersQ.data ?? [];
   const pending = all.filter((u) => u.role === "pending");
   const approved = all.filter((u) => u.role !== "pending");
-
-  function nextCycleRole(r: AppUserRow["role"]): ApprovedRole {
-    switch (r) {
-      case "admin": return "manager";
-      case "manager": return "user";
-      case "user": return "reception";
-      case "reception": return "admin";
-      default: return "user";
-    }
-  }
 
   return (
     <>
@@ -234,21 +273,9 @@ export function UsersDialog({
                         </div>
                       </div>
                       <div className="flex items-center gap-1">
-                        <Button size="sm" variant="ghost" onClick={() => setPwUser(u)} title="Reset password">
-                          <KeyRound className="h-4 w-4" />
-                        </Button>
-                        <Button size="sm" variant="ghost" onClick={() => onSetRole(u, nextCycleRole(u.role))}>
-                          {u.role === "admin" ? "Make manager" : u.role === "manager" ? "Make housekeeper" : u.role === "user" ? "Make reception" : "Make admin"}
-                        </Button>
-                        <Button
-                          size="sm"
-                          variant="ghost"
-                          className="text-destructive hover:text-destructive"
-                          onClick={() => onDelete(u)}
-                          disabled={!!me && u.id === me.id}
-                          title={me && u.id === me.id ? "You cannot delete yourself" : "Delete user"}
-                        >
-                          <Trash2 className="h-4 w-4" />
+                        <Button size="sm" variant="ghost" onClick={() => openEdit(u)} title="Edit user">
+                          <Pencil className="h-4 w-4 mr-1" />
+                          Edit
                         </Button>
                       </div>
                     </li>
@@ -286,6 +313,64 @@ export function UsersDialog({
               <Button type="submit" size="sm">Save</Button>
             </div>
           </form>
+        </DialogContent>
+      </Dialog>
+
+      <Dialog open={!!editUser} onOpenChange={(o) => { if (!o) closeEdit(); }}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Edit user</DialogTitle>
+            <DialogDescription>
+              Update role or password for <strong>{editUser?.username}</strong>, or delete the account.
+            </DialogDescription>
+          </DialogHeader>
+          {editUser && (
+            <form onSubmit={onSaveEdit} className="space-y-4">
+              <div className="space-y-1">
+                <label className="text-xs font-medium">Role</label>
+                <select
+                  className="w-full h-9 rounded-md border bg-background px-3 text-sm"
+                  value={editRole}
+                  onChange={(e) => setEditRole(e.target.value as ApprovedRole)}
+                >
+                  <option value="user">Housekeeper</option>
+                  <option value="reception">Reception</option>
+                  <option value="manager">Manager</option>
+                  <option value="admin">Admin</option>
+                </select>
+              </div>
+              <div className="space-y-1">
+                <label className="text-xs font-medium">New password (optional)</label>
+                <Input
+                  type="text"
+                  value={editPw}
+                  onChange={(e) => setEditPw(e.target.value)}
+                  placeholder="Leave blank to keep current"
+                  minLength={6}
+                />
+              </div>
+              <div className="flex items-center justify-between gap-2 pt-2 border-t">
+                <Button
+                  type="button"
+                  variant="ghost"
+                  size="sm"
+                  className="text-destructive hover:text-destructive"
+                  onClick={onDeleteFromEdit}
+                  disabled={!!me && editUser.id === me.id}
+                  title={me && editUser.id === me.id ? "You cannot delete yourself" : "Delete user"}
+                >
+                  <Trash2 className="h-4 w-4 mr-1" />
+                  Delete account
+                </Button>
+                <div className="flex gap-2">
+                  <Button type="button" variant="ghost" size="sm" onClick={closeEdit}>Cancel</Button>
+                  <Button type="submit" size="sm" disabled={editBusy}>
+                    {editBusy ? "Saving…" : "Save"}
+                  </Button>
+                </div>
+              </div>
+            </form>
+          )}
         </DialogContent>
       </Dialog>
     </>
