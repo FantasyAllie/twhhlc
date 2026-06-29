@@ -4080,9 +4080,8 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
               receptionDoneSet.has(n) && !isStaff
                 ? {
                     color: "#eab308",
-                    WebkitTextStroke: "0.75px #ffffff",
-                    textShadow:
-                      "-1px -1px 0 #fff, 1px -1px 0 #fff, -1px 1px 0 #fff, 1px 1px 0 #fff",
+                    WebkitTextStroke: "2px #ffffff",
+                    paintOrder: "stroke fill",
                   }
                 : undefined
             }
