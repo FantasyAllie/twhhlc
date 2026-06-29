@@ -1,8 +1,8 @@
 import { createServerFn } from "@tanstack/react-start";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 
-export type AppRole = "admin" | "user" | "reception" | "pending";
-export type ApprovedRole = "admin" | "user" | "reception";
+export type AppRole = "admin" | "manager" | "user" | "reception" | "pending";
+export type ApprovedRole = "admin" | "manager" | "user" | "reception";
 export type SessionUser = { id: string; username: string; email: string; role: AppRole };
 export type AppUserRow = {
   id: string;
@@ -13,7 +13,7 @@ export type AppUserRow = {
 };
 
 function validateRole(r: string): ApprovedRole {
-  if (r !== "admin" && r !== "user" && r !== "reception") throw new Error("Invalid role");
+  if (r !== "admin" && r !== "manager" && r !== "user" && r !== "reception") throw new Error("Invalid role");
   return r;
 }
 function validatePassword(p: string) {
@@ -44,7 +44,7 @@ export const listUsers = createServerFn({ method: "POST" })
       .from("user_roles")
       .select("user_id, role");
     const roleMap = new Map<string, AppRole>();
-    const priority: Record<AppRole, number> = { admin: 3, reception: 2, user: 1, pending: 0 };
+    const priority: Record<AppRole, number> = { admin: 4, manager: 3, reception: 2, user: 1, pending: 0 };
     for (const r of (roleRows ?? []) as { user_id: string; role: AppRole }[]) {
       const cur = roleMap.get(r.user_id);
       if (!cur || priority[r.role] > priority[cur]) roleMap.set(r.user_id, r.role);

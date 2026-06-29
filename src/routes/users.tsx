@@ -132,7 +132,8 @@ function UsersPage() {
 
   function nextCycleRole(r: AppUserRow["role"]): ApprovedRole {
     switch (r) {
-      case "admin": return "user";
+      case "admin": return "manager";
+      case "manager": return "user";
       case "user": return "reception";
       case "reception": return "admin";
       default: return "user";
@@ -244,6 +245,7 @@ function UsersPage() {
               >
                 <option value="user">User</option>
                 <option value="reception">Reception</option>
+                <option value="manager">Manager</option>
                 <option value="admin">Admin</option>
               </select>
             </div>
@@ -272,7 +274,7 @@ function UsersPage() {
                       <KeyRound className="h-4 w-4" />
                     </Button>
                     <Button size="sm" variant="ghost" onClick={() => onSetRole(u, nextCycleRole(u.role))}>
-                      {u.role === "admin" ? "Make user" : u.role === "user" ? "Make reception" : "Make admin"}
+                      {u.role === "admin" ? "Make manager" : u.role === "manager" ? "Make user" : u.role === "user" ? "Make reception" : "Make admin"}
                     </Button>
                     <Button
                       size="sm"

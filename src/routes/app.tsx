@@ -230,7 +230,7 @@ function AppPage() {
   const { theme, toggleTheme } = useTheme();
   const [authUser, setAuthUser] = useState(() => getStoredUser());
   // Admin "view as" overlay — see definition further below for full context.
-  type ViewRole = "admin" | "user" | "reception";
+ type ViewRole = "admin" | "manager" | "user" | "reception";
   const [viewAsRole, setViewAsRole] = useState<ViewRole | null>(() => {
     if (typeof window === "undefined") return null;
     const v = window.localStorage.getItem("tw_view_as_role");
@@ -742,7 +742,7 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
    const effectiveRole: ViewRole | undefined =
      realIsAdmin && viewAsRole ? viewAsRole : realRole;
    const isReception = effectiveRole === "reception";
-   const isAdmin = effectiveRole === "admin";
+   const isAdmin = effectiveRole === "admin" || effectiveRole === "manager";
   const isHousekeeper = effectiveRole === "user";
   const doneSet = new Set(
     rooms
@@ -3130,7 +3130,7 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
   <NotificationsSheet
     open={notificationsSheetOpen}
     onOpenChange={setNotificationsSheetOpen}
-    userRole={authUser.role as "admin" | "user" | "reception"}
+    userRole={(authUser.role === "manager" ? "admin" : authUser.role) as "admin" | "user" | "reception"}
   />
 )}
 <Sheet open={menuSheetOpen} onOpenChange={setMenuSheetOpen}>
@@ -3196,7 +3196,7 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
           <div className="space-y-2">
             <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">Account</p>
             <div className="space-y-1.5">
-              {isAdmin && (
+              {realIsAdmin && (
                 <Row icon={Users} label="Users" onClick={() => { close(); setUsersOpen(true); }} />
               )}
               <Row icon={Bell} label="Notifications" onClick={() => { close(); setNotificationsSheetOpen(true); }} />
@@ -4738,8 +4738,8 @@ function AccountDialog({
   currentUsername: string;
   onUsernameChanged: (u: string) => void;
   canViewAs: boolean;
-  viewAsRole: "admin" | "user" | "reception" | null;
-  onViewAsRoleChange: (r: "admin" | "user" | "reception" | null) => void;
+  viewAsRole: "admin" | "manager" | "user" | "reception" | null;
+  onViewAsRoleChange: (r: "admin" | "manager" | "user" | "reception" | null) => void;
 }) {
   const [username, setUsername] = useState(currentUsername);
   const [unCurrentPw, setUnCurrentPw] = useState("");

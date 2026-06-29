@@ -120,7 +120,8 @@ export function UsersDialog({
 
   function nextCycleRole(r: AppUserRow["role"]): ApprovedRole {
     switch (r) {
-      case "admin": return "user";
+      case "admin": return "manager";
+      case "manager": return "user";
       case "user": return "reception";
       case "reception": return "admin";
       default: return "user";
@@ -206,6 +207,7 @@ export function UsersDialog({
                   >
                     <option value="user">Housekeeper</option>
                     <option value="reception">Reception</option>
+                    <option value="manager">Manager</option>
                     <option value="admin">Admin</option>
                   </select>
                 </div>
@@ -236,7 +238,7 @@ export function UsersDialog({
                           <KeyRound className="h-4 w-4" />
                         </Button>
                         <Button size="sm" variant="ghost" onClick={() => onSetRole(u, nextCycleRole(u.role))}>
-                          {u.role === "admin" ? "Make housekeeper" : u.role === "user" ? "Make reception" : "Make admin"}
+                          {u.role === "admin" ? "Make manager" : u.role === "manager" ? "Make housekeeper" : u.role === "user" ? "Make reception" : "Make admin"}
                         </Button>
                         <Button
                           size="sm"
