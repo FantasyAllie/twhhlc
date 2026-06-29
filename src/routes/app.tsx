@@ -2473,7 +2473,7 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
     <div className="bg-amber-500/15 border-b border-amber-500/40 text-amber-900 dark:text-amber-200 px-3 py-1.5 text-xs flex items-center justify-between gap-2">
       <span className="flex items-center gap-2">
         <Eye className="h-3.5 w-3.5" />
-        Viewing as <span className="font-semibold capitalize">{viewAsRole === "user" ? "Housekeepr" : viewAsRole}</span>
+        Viewing as <span className="font-semibold capitalize">{viewAsRole === "user" ? "housekeeping" : viewAsRole}</span>
       </span>
       <button
         type="button"
@@ -4675,7 +4675,7 @@ function AccountDialog({
               <div className="space-y-1.5">
                 {(["admin", "user", "reception"] as const).map((r) => {
                   const active = (viewAsRole ?? "admin") === r;
-                  const label = r === "user" ? "Housekeepr" : r === "reception" ? "Reception" : "Admin (your role)";
+                  const label = r === "user" ? "Housekeeping" : r === "reception" ? "Reception" : "Admin (your role)";
                   return (
                     <button
                       key={r}
