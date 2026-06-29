@@ -3052,8 +3052,8 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
                {filteredBeds.length === 0 && (
                  <p className="text-sm text-muted-foreground">No bed types</p>
                )}
-               <div className="space-y-1.5">
-                 {filteredBeds.map((b) => {
+                <div className="grid grid-cols-2 gap-1.5">
+                  {filteredBeds.map((b) => {
                    const lockedDouble = onlyDouble && norm(b.label) === "double";
                    const selected = currentBed === b.id || lockedDouble;
                    return (
