@@ -128,6 +128,8 @@ const SheetHeader = ({ className, children, ...props }: React.HTMLAttributes<HTM
 
   const onPointerDown = (e: React.PointerEvent<HTMLDivElement>) => {
     if (!ctx?.enabled) return;
+    // Desktop uses the close button; no drag-to-dismiss.
+    if (typeof window !== "undefined" && window.matchMedia("(min-width: 1024px)").matches) return;
     // Ignore drags starting from interactive controls in the header.
     const t = e.target as HTMLElement | null;
     if (t && t.closest("button, a, input, textarea, select, [role='button']")) return;
@@ -174,7 +176,7 @@ const SheetHeader = ({ className, children, ...props }: React.HTMLAttributes<HTM
       className={cn(
         "sticky top-0 z-20 bg-background pb-3",
         "flex flex-col space-y-3 text-center sm:text-left",
-        ctx?.enabled && "touch-none cursor-grab active:cursor-grabbing select-none",
+        ctx?.enabled && "max-lg:touch-none max-lg:cursor-grab max-lg:active:cursor-grabbing max-lg:select-none",
         className,
       )}
       onPointerDown={onPointerDown}
@@ -186,7 +188,7 @@ const SheetHeader = ({ className, children, ...props }: React.HTMLAttributes<HTM
       {ctx?.enabled && (
         <div
           aria-hidden
-          className="mx-auto -mt-2 mb-1 h-1.5 w-10 rounded-full bg-muted-foreground/30"
+          className="mx-auto -mt-2 mb-1 h-1.5 w-10 rounded-full bg-muted-foreground/30 lg:hidden"
         />
       )}
       {children}
