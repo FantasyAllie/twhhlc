@@ -4319,6 +4319,11 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
              <Check aria-label="Done" className="h-3 w-3" strokeWidth={4} />
            )}
          </span>
+          {!isStaff && (state === "done" || state === "complete") && !room?.reception_bed_id && (
+            <span className="text-[8px] sm:text-[9px] md:text-[10px] font-medium leading-none opacity-90">
+              Bed not selected
+            </span>
+          )}
           <span className="text-[9px] sm:text-[10px] md:text-xs font-medium leading-none opacity-90 whitespace-pre-line">
             {isStaff ? "Staff" : meta.label}
           </span>
