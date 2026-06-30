@@ -4177,7 +4177,9 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
         : isDirty
         ? { bg: "var(--room-dirty)", fg: "var(--room-dirty-fg)", accent: "var(--room-dirty-accent)", label: "Dirty" }
          : isClean
-         ? { bg: "var(--room-done)", fg: "var(--room-done-fg)", accent: "var(--room-done-accent)", label: "Clean" }
+          ? ((state === "done" || state === "complete")
+              ? { bg: "var(--room-complete)", fg: "var(--room-complete-fg)", accent: "var(--room-complete-accent)", label: "Clean" }
+              : { bg: "var(--room-done)", fg: "var(--room-done-fg)", accent: "var(--room-done-accent)", label: "Clean" })
         : (isStayover || isDnd)
           ? { ...roomStateMeta.todo, label: "Stayover" }
            : isArrival && (state === "done" || state === "complete") && hasLinenCount
