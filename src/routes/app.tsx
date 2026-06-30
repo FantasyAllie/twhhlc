@@ -204,7 +204,7 @@ type RoomCount = {
  item_id: string;
  count: number;
 };
-type Room = { id: string; room_number: number; sort_order?: number; done: boolean; done_reception: boolean; category: Category | null; default_status: string | null; reception_status_id: string | null; reception_bed_id: string | null; housekeeping_note: string | null; needs_maintenance: boolean; guest_vacated: boolean };
+type Room = { id: string; room_number: number; sort_order?: number; done: boolean; done_reception: boolean; category: Category | null; default_status: string | null; reception_status_id: string | null; reception_status_secondary_id?: string | null; reception_bed_id: string | null; housekeeping_note: string | null; needs_maintenance: boolean; guest_vacated: boolean };
 type TemplateItemRoom = { id: string; template_item_id: string; room_number: number };
 type SnapshotRow = { name: string; count: number };
 type RoomStatusRow = { room: number; status: string; bed: string; maintenance?: boolean };
@@ -492,7 +492,7 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
     queryFn: async (): Promise<Room[]> => {
       const { data, error } = await supabase
         .from("rooms")
-        .select("id,room_number,sort_order,done,done_reception,category,default_status,reception_status_id,reception_bed_id,housekeeping_note,needs_maintenance,guest_vacated")
+        .select("id,room_number,sort_order,done,done_reception,category,default_status,reception_status_id,reception_status_secondary_id,reception_bed_id,housekeeping_note,needs_maintenance,guest_vacated")
         .order("sort_order", { ascending: true });
       if (error) throw error;
       return (data ?? []) as Room[];
@@ -1160,8 +1160,9 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
       done_reception: false,
       housekeeping_note: null, needs_maintenance: false, guest_vacated: false,
       reception_status_id: null,
+      reception_status_secondary_id: null,
       reception_bed_id: null,
-    }).neq("room_number", -1).neq("reception_status_id", dndId ?? "00000000-0000-0000-0000-000000000000");
+    } as never).neq("room_number", -1).neq("reception_status_id", dndId ?? "00000000-0000-0000-0000-000000000000");
     if (r1.error) toast.error(r1.error.message);
     if (dndId) {
       const { error: e3 } = await supabase
@@ -1171,8 +1172,9 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
           done_reception: false,
           housekeeping_note: null, needs_maintenance: false, guest_vacated: false,
           reception_status_id: stayId ?? null,
+          reception_status_secondary_id: null,
           reception_bed_id: null,
-        })
+        } as never)
         .eq("reception_status_id", dndId);
       if (e3) toast.error(e3.message);
     }
@@ -1197,20 +1199,20 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
     // Clear everything to null first, then for DND rooms restore Stayover.
     const { error } = await supabase
       .from("rooms")
-      .update({ reception_status_id: null, reception_bed_id: null })
+      .update({ reception_status_id: null, reception_status_secondary_id: null, reception_bed_id: null } as never)
       .neq("room_number", -1)
       .neq("reception_status_id", dndId ?? "00000000-0000-0000-0000-000000000000");
     if (error) toast.error(error.message);
     if (dndId && stayId) {
       const { error: e2 } = await supabase
         .from("rooms")
-        .update({ reception_status_id: stayId, reception_bed_id: null })
+        .update({ reception_status_id: stayId, reception_status_secondary_id: null, reception_bed_id: null } as never)
         .eq("reception_status_id", dndId);
       if (e2) toast.error(e2.message);
     } else if (dndId) {
       const { error: e2 } = await supabase
         .from("rooms")
-        .update({ reception_status_id: null, reception_bed_id: null })
+        .update({ reception_status_id: null, reception_status_secondary_id: null, reception_bed_id: null } as never)
         .eq("reception_status_id", dndId);
       if (e2) toast.error(e2.message);
     }
@@ -1715,6 +1717,36 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
     setRoomReceptionField(n, "reception_status_id", v);
   const setRoomReceptionBed = (n: number, v: string | null) =>
     setRoomReceptionField(n, "reception_bed_id", v);
+
+  const setRoomReceptionStatuses = async (
+    roomNumber: number,
+    primary: string | null,
+    secondary: string | null,
+  ) => {
+    qc.setQueryData<Room[]>(["rooms"], (old) => {
+      const list = old ? [...old] : [];
+      const idx = list.findIndex((r) => r.room_number === roomNumber);
+      if (idx >= 0) {
+        list[idx] = {
+          ...list[idx],
+          reception_status_id: primary,
+          reception_status_secondary_id: secondary,
+        };
+      }
+      return list;
+    });
+    const { error } = await supabase.from("rooms").upsert(
+      {
+        room_number: roomNumber,
+        reception_status_id: primary,
+        reception_status_secondary_id: secondary,
+        updated_at: new Date().toISOString(),
+      } as never,
+      { onConflict: "user_id,room_number" },
+    );
+    if (error) toast.error(error.message);
+    qc.invalidateQueries({ queryKey: ["rooms"] });
+  };
 
   const setRoomHousekeepingNote = async (roomNumber: number, value: string) => {
     const clean = value.trim();
@@ -3025,7 +3057,8 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
      {receptionSheetRoom !== null && (() => {
        const n = receptionSheetRoom;
        const room = rooms.find((r) => r.room_number === n);
-       const occ = room?.reception_status_id ?? room?.default_status ?? null;
+        const occ = room?.reception_status_id ?? room?.default_status ?? null;
+        const occSecondary = room?.reception_status_secondary_id ?? null;
        const norm = (s: string) => s.toLowerCase().replace(/[^a-z0-9]/g, "");
        const cats = parseCats(room?.category).map(norm);
        const hasSuperKing = cats.includes("superking");
@@ -3102,6 +3135,9 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
                      const stayId = receptionStatuses.find((x) => x.label === "Stayover")?.id ?? null;
                       const dirtyId = receptionStatuses.find((x) => x.label === "Dirty")?.id ?? null;
                       const rosId = receptionStatuses.find((x) => x.label === "ROS")?.id ?? null;
+                       const arrivalId = receptionStatuses.find((x) => x.label === "Arrival")?.id ?? null;
+                       const departureId = receptionStatuses.find((x) => x.label === "Departure")?.id ?? null;
+                       const staffId = receptionStatuses.find((x) => x.label === "Staff")?.id ?? null;
                      const dndActive = !!dndId && occ === dndId;
                       const dirtyActive = !!dirtyId && occ === dirtyId;
                      const pairLabels: [string, string][] = [
@@ -3126,24 +3162,56 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
                        const s = findStatus(lbl);
                        if (s) topIds.add(s.id);
                      });
-                     const handleClick = (s: { id: string }) => {
-                       if (occ === s.id) {
+                      const handleClick = (s: { id: string }) => {
+                        // Staff <-> ROS coupling
+                        if (staffId && s.id === staffId) {
+                          if (occ === staffId) {
+                            setRoomReceptionStatuses(n, null, null);
+                          } else {
+                            setRoomReceptionStatuses(n, staffId, rosId ?? null);
+                          }
+                          return;
+                        }
+                        // While Staff is active, lock ROS (only Staff toggles it)
+                        if (staffId && occ === staffId && rosId && s.id === rosId) {
+                          return;
+                        }
+                        // Arrival + Departure can coexist (primary + secondary)
+                        if (s.id === arrivalId || s.id === departureId) {
+                          const other = s.id === arrivalId ? departureId : arrivalId;
+                          if (occ === s.id) {
+                            setRoomReceptionStatuses(n, occSecondary ?? null, null);
+                          } else if (occSecondary === s.id) {
+                            setRoomReceptionStatuses(n, occ, null);
+                          } else if (occ === other) {
+                            setRoomReceptionStatuses(n, other, s.id);
+                          } else if (occSecondary === other) {
+                            setRoomReceptionStatuses(n, s.id, other);
+                          } else {
+                            setRoomReceptionStatuses(n, s.id, null);
+                          }
+                          return;
+                        }
+                        // Default single-select behaviour for other statuses
+                        if (occ === s.id) {
                           const next =
                             s.id === dndId && stayId
                               ? stayId
                               : s.id === dirtyId && rosId
                                 ? rosId
                                 : null;
-                         setRoomReceptionStatus(n, next);
-                       } else {
-                         setRoomReceptionStatus(n, s.id);
-                       }
-                     };
-                     const renderRow = (s: { id: string; label: string }) => {
-                        const selected =
-                          occ === s.id ||
-                          (dndActive && s.id === stayId) ||
-                          (dirtyActive && s.id === rosId);
+                          setRoomReceptionStatuses(n, next, null);
+                        } else {
+                          setRoomReceptionStatuses(n, s.id, null);
+                        }
+                      };
+                      const renderRow = (s: { id: string; label: string }) => {
+                         const selected =
+                           occ === s.id ||
+                           occSecondary === s.id ||
+                           (dndActive && s.id === stayId) ||
+                           (dirtyActive && s.id === rosId) ||
+                           (!!staffId && occ === staffId && !!rosId && s.id === rosId);
                        return (
                          <Row
                            key={s.id}
