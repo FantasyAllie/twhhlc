@@ -59,12 +59,14 @@ const sheetVariants = cva(
 interface SheetContentProps
   extends
     React.ComponentPropsWithoutRef<typeof SheetPrimitive.Content>,
-    VariantProps<typeof sheetVariants> {}
+    VariantProps<typeof sheetVariants> {
+  disableDragDismiss?: boolean;
+}
 
 const SheetContent = React.forwardRef<
   React.ElementRef<typeof SheetPrimitive.Content>,
   SheetContentProps
->(({ side = "right", className, children, ...props }, ref) => {
+>(({ side = "right", className, children, disableDragDismiss, ...props }, ref) => {
   const innerRef = React.useRef<HTMLDivElement | null>(null);
   const closeRef = React.useRef<HTMLButtonElement | null>(null);
   const setRefs = React.useCallback(
@@ -79,7 +81,7 @@ const SheetContent = React.forwardRef<
   // Drag-to-dismiss is enabled on mobile for every side except the burger
   // (left) menu. Desktop disables drag entirely via a runtime width check
   // inside the header pointer handlers.
-  const isDraggable = side !== "left";
+  const isDraggable = side !== "left" && !disableDragDismiss;
   const ctxValue = React.useMemo<SheetDragCtx>(
     () => ({ enabled: isDraggable, contentRef: innerRef, closeRef }),
     [isDraggable],
