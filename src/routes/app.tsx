@@ -4182,8 +4182,8 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
               : { bg: "var(--room-done)", fg: "var(--room-done-fg)", accent: "var(--room-done-accent)", label: "Clean" })
         : (isStayover || isDnd)
           ? { ...roomStateMeta.todo, label: "Stayover" }
-           : isArrival && (state === "done" || state === "complete") && hasLinenCount
-             ? { bg: "var(--room-complete)", fg: "var(--room-complete-fg)", accent: "var(--room-complete-accent)", label: "Clean" }
+            : isArrival && (state === "done" || state === "complete") && hasLinenCount
+              ? { bg: "var(--room-complete)", fg: "var(--room-complete-fg)", accent: "var(--room-complete-accent)", label: "Cleaned & Ready for Guests" }
            : isArrival && (state === "done" || state === "complete")
              ? { bg: "var(--room-done)", fg: "var(--room-done-fg)", accent: "var(--room-done-accent)", label: "Clean" }
            : isArrival && state === "todo"
@@ -4277,7 +4277,7 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
         : (isStayover || isDnd) && !isStaff
           ? { ...roomStateMeta.todo, label: "Stayover" }
           : isArrival && !isStaff && (state === "done" || state === "complete") && hasLinenCount
-            ? { bg: "var(--room-complete)", fg: "var(--room-complete-fg)", accent: "var(--room-complete-accent)", label: "Clean" }
+            ? { bg: "var(--room-complete)", fg: "var(--room-complete-fg)", accent: "var(--room-complete-accent)", label: "Cleaned & Ready for Guests" }
           : isArrival && !isStaff && (state === "done" || state === "complete")
             ? { bg: "var(--room-done)", fg: "var(--room-done-fg)", accent: "var(--room-done-accent)", label: "Clean" }
           : isArrival && !isStaff && state === "todo"
