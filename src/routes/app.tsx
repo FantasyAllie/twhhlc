@@ -4978,6 +4978,36 @@ function AccountDialog({
     }
   }
 
+  async function saveEmail(e: React.FormEvent) {
+    e.preventDefault();
+    if (busy) return;
+    const next = newEmail.trim();
+    if (!next) { toast.error("Enter a new email"); return; }
+    setBusy(true);
+    try {
+      const user = getStoredUser();
+      if (!user) throw new Error("Not signed in");
+      if (next.toLowerCase() === user.email.toLowerCase()) {
+        toast.info("That's already your email");
+        return;
+      }
+      const { error: signErr } = await supabase.auth.signInWithPassword({
+        email: user.email,
+        password: emailCurrentPw,
+      });
+      if (signErr) throw new Error("Current password is incorrect");
+      const { error } = await supabase.auth.updateUser({ email: next });
+      if (error) throw error;
+      toast.success("Check your new email to confirm the change");
+      setNewEmail("");
+      setEmailCurrentPw("");
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : "Failed to update email");
+    } finally {
+      setBusy(false);
+    }
+  }
+
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent>
