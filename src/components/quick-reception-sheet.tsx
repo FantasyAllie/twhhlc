@@ -152,7 +152,7 @@ export function QuickReceptionSheet({
                         return (
                           <Chip
                             key={s.id}
-                            label={s.label}
+                            label={s.label === "Clean" ? "Cleaned & Ready for Quest\n" : s.label}
                             selected={selected}
                             onClick={() => {
                               if (currentStatus === s.id) {
