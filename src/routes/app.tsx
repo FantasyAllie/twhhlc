@@ -1718,6 +1718,36 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
   const setRoomReceptionBed = (n: number, v: string | null) =>
     setRoomReceptionField(n, "reception_bed_id", v);
 
+  const setRoomReceptionStatuses = async (
+    roomNumber: number,
+    primary: string | null,
+    secondary: string | null,
+  ) => {
+    qc.setQueryData<Room[]>(["rooms"], (old) => {
+      const list = old ? [...old] : [];
+      const idx = list.findIndex((r) => r.room_number === roomNumber);
+      if (idx >= 0) {
+        list[idx] = {
+          ...list[idx],
+          reception_status_id: primary,
+          reception_status_secondary_id: secondary,
+        };
+      }
+      return list;
+    });
+    const { error } = await supabase.from("rooms").upsert(
+      {
+        room_number: roomNumber,
+        reception_status_id: primary,
+        reception_status_secondary_id: secondary,
+        updated_at: new Date().toISOString(),
+      } as never,
+      { onConflict: "user_id,room_number" },
+    );
+    if (error) toast.error(error.message);
+    qc.invalidateQueries({ queryKey: ["rooms"] });
+  };
+
   const setRoomHousekeepingNote = async (roomNumber: number, value: string) => {
     const clean = value.trim();
     const next = clean.length === 0 ? null : clean;
