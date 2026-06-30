@@ -4895,6 +4895,8 @@ function AccountDialog({
   const [newPw, setNewPw] = useState("");
   const [confirmPw, setConfirmPw] = useState("");
   const [busy, setBusy] = useState(false);
+  const [newEmail, setNewEmail] = useState("");
+  const [emailCurrentPw, setEmailCurrentPw] = useState("");
 
   useEffect(() => {
     if (open) {
@@ -4903,6 +4905,8 @@ function AccountDialog({
       setCurrentPw("");
       setNewPw("");
       setConfirmPw("");
+      setNewEmail("");
+      setEmailCurrentPw("");
     }
   }, [open, currentUsername]);
 
