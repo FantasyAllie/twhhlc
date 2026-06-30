@@ -3162,8 +3162,6 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
                        const s = findStatus(lbl);
                        if (s) topIds.add(s.id);
                      });
-                      const isArrDep = (id: string | null) =>
-                        !!id && (id === arrivalId || id === departureId);
                       const handleClick = (s: { id: string }) => {
                         // Staff <-> ROS coupling
                         if (staffId && s.id === staffId) {
