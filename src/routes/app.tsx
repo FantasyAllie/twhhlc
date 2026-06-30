@@ -2529,6 +2529,17 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
         Print
       </Button>
     )}
+    {isReception && (
+      <Button
+        variant="outline"
+        size="sm"
+        onClick={() => setReceptionHelpOpen(true)}
+        aria-label="Help"
+      >
+        <HelpCircle className="h-4 w-4 mr-2" />
+        Help
+      </Button>
+    )}
  {isMobile ? (
    <Button variant="ghost" size="sm" aria-label="Menu" onClick={() => setMenuSheetOpen(true)}>
      <Menu className="h-4 w-4" />
