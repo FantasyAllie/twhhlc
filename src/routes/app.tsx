@@ -3135,6 +3135,9 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
                      const stayId = receptionStatuses.find((x) => x.label === "Stayover")?.id ?? null;
                       const dirtyId = receptionStatuses.find((x) => x.label === "Dirty")?.id ?? null;
                       const rosId = receptionStatuses.find((x) => x.label === "ROS")?.id ?? null;
+                       const arrivalId = receptionStatuses.find((x) => x.label === "Arrival")?.id ?? null;
+                       const departureId = receptionStatuses.find((x) => x.label === "Departure")?.id ?? null;
+                       const staffId = receptionStatuses.find((x) => x.label === "Staff")?.id ?? null;
                      const dndActive = !!dndId && occ === dndId;
                       const dirtyActive = !!dirtyId && occ === dirtyId;
                      const pairLabels: [string, string][] = [
@@ -3159,24 +3162,58 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
                        const s = findStatus(lbl);
                        if (s) topIds.add(s.id);
                      });
-                     const handleClick = (s: { id: string }) => {
-                       if (occ === s.id) {
+                      const isArrDep = (id: string | null) =>
+                        !!id && (id === arrivalId || id === departureId);
+                      const handleClick = (s: { id: string }) => {
+                        // Staff <-> ROS coupling
+                        if (staffId && s.id === staffId) {
+                          if (occ === staffId) {
+                            setRoomReceptionStatuses(n, null, null);
+                          } else {
+                            setRoomReceptionStatuses(n, staffId, rosId ?? null);
+                          }
+                          return;
+                        }
+                        // While Staff is active, lock ROS (only Staff toggles it)
+                        if (staffId && occ === staffId && rosId && s.id === rosId) {
+                          return;
+                        }
+                        // Arrival + Departure can coexist (primary + secondary)
+                        if (s.id === arrivalId || s.id === departureId) {
+                          const other = s.id === arrivalId ? departureId : arrivalId;
+                          if (occ === s.id) {
+                            setRoomReceptionStatuses(n, occSecondary ?? null, null);
+                          } else if (occSecondary === s.id) {
+                            setRoomReceptionStatuses(n, occ, null);
+                          } else if (occ === other) {
+                            setRoomReceptionStatuses(n, other, s.id);
+                          } else if (occSecondary === other) {
+                            setRoomReceptionStatuses(n, s.id, other);
+                          } else {
+                            setRoomReceptionStatuses(n, s.id, null);
+                          }
+                          return;
+                        }
+                        // Default single-select behaviour for other statuses
+                        if (occ === s.id) {
                           const next =
                             s.id === dndId && stayId
                               ? stayId
                               : s.id === dirtyId && rosId
                                 ? rosId
                                 : null;
-                         setRoomReceptionStatus(n, next);
-                       } else {
-                         setRoomReceptionStatus(n, s.id);
-                       }
-                     };
-                     const renderRow = (s: { id: string; label: string }) => {
-                        const selected =
-                          occ === s.id ||
-                          (dndActive && s.id === stayId) ||
-                          (dirtyActive && s.id === rosId);
+                          setRoomReceptionStatuses(n, next, null);
+                        } else {
+                          setRoomReceptionStatuses(n, s.id, null);
+                        }
+                      };
+                      const renderRow = (s: { id: string; label: string }) => {
+                         const selected =
+                           occ === s.id ||
+                           occSecondary === s.id ||
+                           (dndActive && s.id === stayId) ||
+                           (dirtyActive && s.id === rosId) ||
+                           (!!staffId && occ === staffId && !!rosId && s.id === rosId);
                        return (
                          <Row
                            key={s.id}
