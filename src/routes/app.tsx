@@ -4212,11 +4212,6 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
          {!isStaffRoom && (
            <>
              <span className="text-sm sm:text-base font-bold leading-none">{n}</span>
-              {(state === "done" || state === "complete") && !room?.reception_bed_id && (
-                <span className="text-[8px] sm:text-[9px] md:text-[10px] font-medium leading-tight opacity-80 mt-0.5">
-                  Bed not selected
-                </span>
-              )}
               <span className="text-[9px] sm:text-[10px] md:text-xs font-medium leading-none opacity-90 whitespace-pre-line">
                 {meta.label}
               </span>
