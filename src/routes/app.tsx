@@ -5084,6 +5084,35 @@ function AccountDialog({
             </div>
           </form>
           <div className="border-t" />
+          <form onSubmit={saveEmail} className="space-y-2">
+            <h3 className="text-sm font-semibold">Change email address</h3>
+            <p className="text-xs text-muted-foreground">
+              We'll send a confirmation link to the new address. The change takes effect once confirmed.
+            </p>
+            <div className="space-y-1">
+              <label className="text-xs font-medium">New email</label>
+              <Input
+                type="email"
+                value={newEmail}
+                onChange={(e) => setNewEmail(e.target.value)}
+                autoCapitalize="none"
+                autoCorrect="off"
+              />
+            </div>
+            <div className="space-y-1">
+              <label className="text-xs font-medium">Current password</label>
+              <Input
+                type="password"
+                value={emailCurrentPw}
+                onChange={(e) => setEmailCurrentPw(e.target.value)}
+                autoComplete="current-password"
+              />
+            </div>
+            <div className="flex justify-end">
+              <Button type="submit" size="sm" disabled={busy}>Save email</Button>
+            </div>
+          </form>
+          <div className="border-t" />
           <form onSubmit={savePassword} className="space-y-2">
             <h3 className="text-sm font-semibold">Change password</h3>
             <div className="space-y-1">
