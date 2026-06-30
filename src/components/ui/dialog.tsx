@@ -14,6 +14,12 @@ const DialogPortal = DialogPrimitive.Portal;
 
 const DialogClose = DialogPrimitive.Close;
 
+type DialogDragCtx = {
+  contentRef: React.MutableRefObject<HTMLDivElement | null>;
+  closeRef: React.MutableRefObject<HTMLButtonElement | null>;
+};
+const DialogDragContext = React.createContext<DialogDragCtx | null>(null);
+
 const DialogOverlay = React.forwardRef<
   React.ElementRef<typeof DialogPrimitive.Overlay>,
   React.ComponentPropsWithoutRef<typeof DialogPrimitive.Overlay>
@@ -32,11 +38,24 @@ DialogOverlay.displayName = DialogPrimitive.Overlay.displayName;
 const DialogContent = React.forwardRef<
   React.ElementRef<typeof DialogPrimitive.Content>,
   React.ComponentPropsWithoutRef<typeof DialogPrimitive.Content>
->(({ className, children, ...props }, ref) => (
+>(({ className, children, ...props }, ref) => {
+  const innerRef = React.useRef<HTMLDivElement | null>(null);
+  const closeRef = React.useRef<HTMLButtonElement | null>(null);
+  const setRefs = React.useCallback(
+    (node: HTMLDivElement | null) => {
+      innerRef.current = node;
+      if (typeof ref === "function") ref(node);
+      else if (ref) (ref as React.MutableRefObject<HTMLDivElement | null>).current = node;
+    },
+    [ref],
+  );
+  const ctx = React.useMemo<DialogDragCtx>(() => ({ contentRef: innerRef, closeRef }), []);
+  return (
   <DialogPortal>
     <DialogOverlay />
+    <DialogDragContext.Provider value={ctx}>
     <DialogPrimitive.Content
-      ref={ref}
+      ref={setRefs}
       className={cn(
         // Slide-up bottom sheet (mobile) / centered modal (desktop), matching
         // the Sheet component so all popups feel consistent.
@@ -49,8 +68,9 @@ const DialogContent = React.forwardRef<
       {...props}
     >
       <DialogPrimitive.Close
+        ref={closeRef}
         data-dialog-close-bar
-        className="absolute right-4 top-4 z-30 inline-flex items-center justify-center gap-1 rounded-md border bg-background px-2.5 h-7 text-xs font-medium text-muted-foreground cursor-pointer transition-colors hover:bg-accent hover:text-foreground focus:outline-none focus:ring-2 focus:ring-ring"
+        className="absolute right-4 top-4 z-30 max-lg:hidden lg:inline-flex items-center justify-center gap-1 rounded-md border bg-background px-2.5 h-7 text-xs font-medium text-muted-foreground cursor-pointer transition-colors hover:bg-accent hover:text-foreground focus:outline-none focus:ring-2 focus:ring-ring"
       >
         <X className="h-3.5 w-3.5" />
         <span>Close</span>
@@ -59,22 +79,73 @@ const DialogContent = React.forwardRef<
         {children}
       </div>
     </DialogPrimitive.Content>
+    </DialogDragContext.Provider>
   </DialogPortal>
-));
+);
+});
 DialogContent.displayName = DialogPrimitive.Content.displayName;
 
-const DialogHeader = ({ className, ...props }: React.HTMLAttributes<HTMLDivElement>) => (
-  <div
-    className={cn(
-      // Pin title / description to the top of the dialog so they stay visible
-      // while body content scrolls underneath.
-      "sticky top-0 z-20 bg-background pb-3",
-      "flex flex-col space-y-3 text-left",
-      className,
-    )}
-    {...props}
-  />
-);
+const DialogHeader = ({ className, children, ...props }: React.HTMLAttributes<HTMLDivElement>) => {
+  const ctx = React.useContext(DialogDragContext);
+  const drag = React.useRef<{ startY: number; pointerId: number; locked: boolean } | null>(null);
+
+  const onPointerDown = (e: React.PointerEvent<HTMLDivElement>) => {
+    if (!ctx) return;
+    if (typeof window !== "undefined" && window.matchMedia("(min-width: 1024px)").matches) return;
+    const t = e.target as HTMLElement | null;
+    if (t && t.closest("button, a, input, textarea, select, [role='button']")) return;
+    drag.current = { startY: e.clientY, pointerId: e.pointerId, locked: false };
+  };
+  const onPointerMove = (e: React.PointerEvent<HTMLDivElement>) => {
+    const d = drag.current;
+    if (!d || e.pointerId !== d.pointerId) return;
+    const node = ctx?.contentRef.current;
+    if (!node) return;
+    const dy = e.clientY - d.startY;
+    if (!d.locked) {
+      if (Math.abs(dy) < 5) return;
+      if (dy <= 0) { drag.current = null; return; }
+      d.locked = true;
+      try { (e.currentTarget as HTMLDivElement).setPointerCapture(e.pointerId); } catch {}
+    }
+    e.preventDefault();
+    node.style.transition = "none";
+    node.style.transform = `translateY(${Math.max(0, dy)}px)`;
+  };
+  const end = (e: React.PointerEvent<HTMLDivElement>) => {
+    const d = drag.current;
+    if (!d) return;
+    drag.current = null;
+    const node = ctx?.contentRef.current;
+    if (!node) return;
+    const dy = Math.max(0, e.clientY - d.startY);
+    const threshold = Math.min(140, node.getBoundingClientRect().height * 0.2);
+    node.style.transition = "";
+    node.style.transform = "";
+    if (dy > threshold) ctx?.closeRef.current?.click();
+  };
+  return (
+    <div
+      className={cn(
+        "sticky top-0 z-20 bg-background pb-3",
+        "flex flex-col space-y-3 text-left",
+        "max-lg:touch-none max-lg:cursor-grab max-lg:active:cursor-grabbing max-lg:select-none",
+        className,
+      )}
+      onPointerDown={onPointerDown}
+      onPointerMove={onPointerMove}
+      onPointerUp={end}
+      onPointerCancel={end}
+      {...props}
+    >
+      <div
+        aria-hidden
+        className="mx-auto -mt-2 mb-1 h-1.5 w-10 rounded-full bg-muted-foreground/30 lg:hidden"
+      />
+      {children}
+    </div>
+  );
+};
 DialogHeader.displayName = "DialogHeader";
 
 const DialogFooter = ({ className, ...props }: React.HTMLAttributes<HTMLDivElement>) => (
