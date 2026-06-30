@@ -3146,7 +3146,7 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
                        return (
                          <Row
                            key={s.id}
-                           label={s.label}
+                            label={s.label === "Clean" ? "Cleaned & Ready for Quest\n" : s.label}
                            selected={selected}
                            onClick={() => handleClick(s)}
                          />
