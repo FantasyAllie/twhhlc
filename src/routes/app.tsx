@@ -4,7 +4,7 @@ import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Minus, Plus, X, Menu, ArrowUp, ArrowDown, Pencil, Check, Trash2, Sun, Moon, List, Bed, Ban, History, Users, User, LogOut, Hash, ConciergeBell, ClipboardList, Printer, Filter, Wrench, StickyNote, DoorOpen, Bell, Eye, EyeOff } from "lucide-react";
+import { Minus, Plus, X, Menu, ArrowUp, ArrowDown, Pencil, Check, Trash2, Sun, Moon, List, Bed, Ban, History, Users, User, LogOut, Hash, ConciergeBell, ClipboardList, Printer, Filter, Wrench, StickyNote, DoorOpen, Bell, Eye, EyeOff, HelpCircle } from "lucide-react";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
 import { getToken, getStoredUser, clearSession } from "@/lib/auth-client";
@@ -426,6 +426,7 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
   const [rejectExportOpen, setRejectExportOpen] = useState(false);
   const [roomStatusExportOpen, setRoomStatusExportOpen] = useState(false);
   const [manageRoomsOpen, setManageRoomsOpen] = useState(false);
+  const [receptionHelpOpen, setReceptionHelpOpen] = useState(false);
   const [confirmOverwrite, setConfirmOverwrite] = useState<
     { kind: "totals" | "rejects" | "room_status" } | null
   >(null);
@@ -2528,6 +2529,17 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
         Print
       </Button>
     )}
+    {isReception && (
+      <Button
+        variant="outline"
+        size="sm"
+        onClick={() => setReceptionHelpOpen(true)}
+        aria-label="Help"
+      >
+        <HelpCircle className="h-4 w-4 mr-2" />
+        Help
+      </Button>
+    )}
  {isMobile ? (
    <Button variant="ghost" size="sm" aria-label="Menu" onClick={() => setMenuSheetOpen(true)}>
      <Menu className="h-4 w-4" />
@@ -3217,7 +3229,7 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
   />
 )}
 <Sheet open={menuSheetOpen} onOpenChange={setMenuSheetOpen}>
-  <SheetContent side="right" className="w-auto max-w-[90vw] min-w-[18rem] sm:max-w-md overflow-y-auto p-4 sm:p-6">
+  <SheetContent side="right" disableDragDismiss className="w-auto max-w-[90vw] min-w-[18rem] sm:max-w-md overflow-y-auto p-4 sm:p-6">
     <SheetHeader className="text-left">
       <SheetTitle className="flex items-center gap-2">
         <Menu className="h-4 w-4" />
@@ -3803,6 +3815,48 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
       </form>
     </DialogContent>
   </Dialog>
+
+ {/* Reception color legend help dialog */}
+ <Dialog open={receptionHelpOpen} onOpenChange={setReceptionHelpOpen}>
+   <DialogContent className="max-w-md w-[calc(100vw-1.5rem)] sm:w-full p-4 sm:p-6">
+     <DialogHeader>
+       <DialogTitle>Room colour guide</DialogTitle>
+       <DialogDescription>
+         What each room tile colour means at a glance.
+       </DialogDescription>
+     </DialogHeader>
+     <ul className="space-y-3 mt-2">
+       <li className="flex items-start gap-3">
+         <span className="mt-0.5 inline-block h-5 w-5 rounded-md bg-emerald-500 ring-1 ring-inset ring-emerald-700/40 shrink-0" />
+         <div>
+           <p className="text-sm font-medium">Green</p>
+           <p className="text-xs text-muted-foreground">Room is clean and ready for a guest.</p>
+         </div>
+       </li>
+       <li className="flex items-start gap-3">
+         <span className="mt-0.5 inline-block h-5 w-5 rounded-md bg-red-500 ring-1 ring-inset ring-red-700/40 shrink-0" />
+         <div>
+           <p className="text-sm font-medium">Red</p>
+           <p className="text-xs text-muted-foreground">Stayover, or room has not been serviced / cleaned yet.</p>
+         </div>
+       </li>
+       <li className="flex items-start gap-3">
+         <span className="mt-0.5 inline-block h-5 w-5 rounded-md bg-yellow-400 ring-1 ring-inset ring-yellow-600/40 shrink-0" />
+         <div>
+           <p className="text-sm font-medium">Yellow</p>
+           <p className="text-xs text-muted-foreground">Cleaning in progress.</p>
+         </div>
+       </li>
+       <li className="flex items-start gap-3">
+         <span className="mt-0.5 inline-block h-5 w-5 rounded-md bg-muted-foreground/40 ring-1 ring-inset ring-muted-foreground/40 shrink-0" />
+         <div>
+           <p className="text-sm font-medium">Grey</p>
+           <p className="text-xs text-muted-foreground">Room out of service.</p>
+         </div>
+       </li>
+     </ul>
+   </DialogContent>
+ </Dialog>
 
  {/* Rejects dialog */}
  <Dialog open={rejectsOpen} onOpenChange={setRejectsOpen}>
@@ -4841,6 +4895,8 @@ function AccountDialog({
   const [newPw, setNewPw] = useState("");
   const [confirmPw, setConfirmPw] = useState("");
   const [busy, setBusy] = useState(false);
+  const [newEmail, setNewEmail] = useState("");
+  const [emailCurrentPw, setEmailCurrentPw] = useState("");
 
   useEffect(() => {
     if (open) {
@@ -4849,6 +4905,8 @@ function AccountDialog({
       setCurrentPw("");
       setNewPw("");
       setConfirmPw("");
+      setNewEmail("");
+      setEmailCurrentPw("");
     }
   }, [open, currentUsername]);
 
@@ -4915,6 +4973,36 @@ function AccountDialog({
       setConfirmPw("");
     } catch (err) {
       toast.error(err instanceof Error ? err.message : "Failed to update password");
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  async function saveEmail(e: React.FormEvent) {
+    e.preventDefault();
+    if (busy) return;
+    const next = newEmail.trim();
+    if (!next) { toast.error("Enter a new email"); return; }
+    setBusy(true);
+    try {
+      const user = getStoredUser();
+      if (!user) throw new Error("Not signed in");
+      if (next.toLowerCase() === user.email.toLowerCase()) {
+        toast.info("That's already your email");
+        return;
+      }
+      const { error: signErr } = await supabase.auth.signInWithPassword({
+        email: user.email,
+        password: emailCurrentPw,
+      });
+      if (signErr) throw new Error("Current password is incorrect");
+      const { error } = await supabase.auth.updateUser({ email: next });
+      if (error) throw error;
+      toast.success("Check your new email to confirm the change");
+      setNewEmail("");
+      setEmailCurrentPw("");
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : "Failed to update email");
     } finally {
       setBusy(false);
     }
@@ -4993,6 +5081,35 @@ function AccountDialog({
             </div>
             <div className="flex justify-end">
               <Button type="submit" size="sm" disabled={busy}>Save username</Button>
+            </div>
+          </form>
+          <div className="border-t" />
+          <form onSubmit={saveEmail} className="space-y-2">
+            <h3 className="text-sm font-semibold">Change email address</h3>
+            <p className="text-xs text-muted-foreground">
+              We'll send a confirmation link to the new address. The change takes effect once confirmed.
+            </p>
+            <div className="space-y-1">
+              <label className="text-xs font-medium">New email</label>
+              <Input
+                type="email"
+                value={newEmail}
+                onChange={(e) => setNewEmail(e.target.value)}
+                autoCapitalize="none"
+                autoCorrect="off"
+              />
+            </div>
+            <div className="space-y-1">
+              <label className="text-xs font-medium">Current password</label>
+              <Input
+                type="password"
+                value={emailCurrentPw}
+                onChange={(e) => setEmailCurrentPw(e.target.value)}
+                autoComplete="current-password"
+              />
+            </div>
+            <div className="flex justify-end">
+              <Button type="submit" size="sm" disabled={busy}>Save email</Button>
             </div>
           </form>
           <div className="border-t" />
