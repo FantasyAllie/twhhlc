@@ -76,10 +76,13 @@ const SheetContent = React.forwardRef<
     [ref],
   );
 
-  const isBottom = side === "bottom";
+  // Drag-to-dismiss is enabled on mobile for every side except the burger
+  // (left) menu. Desktop disables drag entirely via a runtime width check
+  // inside the header pointer handlers.
+  const isDraggable = side !== "left";
   const ctxValue = React.useMemo<SheetDragCtx>(
-    () => ({ enabled: isBottom, contentRef: innerRef, closeRef }),
-    [isBottom],
+    () => ({ enabled: isDraggable, contentRef: innerRef, closeRef }),
+    [isDraggable],
   );
 
   return (
@@ -102,7 +105,11 @@ const SheetContent = React.forwardRef<
       >
         <SheetPrimitive.Close
           ref={closeRef}
-          className="absolute right-4 top-4 z-30 inline-flex items-center justify-center gap-1 rounded-md border bg-background px-2.5 h-7 text-xs font-medium text-muted-foreground cursor-pointer transition-colors hover:bg-accent hover:text-foreground focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 ring-offset-background disabled:pointer-events-none data-[state=open]:bg-secondary"
+          className={cn(
+            "absolute right-4 top-4 z-30 inline-flex items-center justify-center gap-1 rounded-md border bg-background px-2.5 h-7 text-xs font-medium text-muted-foreground cursor-pointer transition-colors hover:bg-accent hover:text-foreground focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 ring-offset-background disabled:pointer-events-none data-[state=open]:bg-secondary",
+            // Drag-to-dismiss handles closing on touch; show close only on desktop.
+            isDraggable && "max-lg:hidden lg:inline-flex",
+          )}
         >
           <X className="h-3.5 w-3.5" />
           <span>Close</span>
