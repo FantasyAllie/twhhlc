@@ -367,6 +367,7 @@ export type Database = {
           needs_maintenance: boolean
           reception_bed_id: string | null
           reception_status_id: string | null
+          reception_status_secondary_id: string | null
           room_number: number
           sort_order: number
           updated_at: string
@@ -383,6 +384,7 @@ export type Database = {
           needs_maintenance?: boolean
           reception_bed_id?: string | null
           reception_status_id?: string | null
+          reception_status_secondary_id?: string | null
           room_number: number
           sort_order?: number
           updated_at?: string
@@ -399,12 +401,21 @@ export type Database = {
           needs_maintenance?: boolean
           reception_bed_id?: string | null
           reception_status_id?: string | null
+          reception_status_secondary_id?: string | null
           room_number?: number
           sort_order?: number
           updated_at?: string
           user_id?: string
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "rooms_reception_status_secondary_id_fkey"
+            columns: ["reception_status_secondary_id"]
+            isOneToOne: false
+            referencedRelation: "reception_items"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       template_item_rooms: {
         Row: {
