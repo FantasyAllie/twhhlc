@@ -780,8 +780,8 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
   > = {
     todo:     { bg: "var(--room-todo)",     fg: "var(--room-todo-fg)",     accent: "var(--room-todo-accent)",     label: "Stayover\n" },
     progress: { bg: "var(--room-progress)", fg: "var(--room-progress-fg)", accent: "var(--room-progress-accent)", label: "Cleaning in progress" },
-    done:     { bg: "var(--room-done)", fg: "var(--room-done-fg)", accent: "var(--room-done-accent)", label: "Cleaned & Ready for Quest\n" },
-    complete: { bg: "var(--room-done)", fg: "var(--room-done-fg)", accent: "var(--room-done-accent)", label: "Cleaned & Ready for Quest\n" },
+    done:     { bg: "var(--room-done)", fg: "var(--room-done-fg)", accent: "var(--room-done-accent)", label: "Clean" },
+    complete: { bg: "var(--room-done)", fg: "var(--room-done-fg)", accent: "var(--room-done-accent)", label: "Cleaned & Ready for Guest" },
   };
 
   const toggleReceptionDone = async (roomNumber: number) => {
@@ -3146,7 +3146,7 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
                        return (
                          <Row
                            key={s.id}
-                            label={s.label === "Clean" ? "Cleaned & Ready for Quest\n" : s.label}
+                           label={s.label}
                            selected={selected}
                            onClick={() => handleClick(s)}
                          />
@@ -3512,7 +3512,7 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
             {receptionStatuses.map((s, idx) => (
               <ManageEditableRow
                 key={s.id}
-                label={s.label === "Clean" ? "Cleaned & Ready for Quest\n" : s.label}
+                label={s.label}
                 canMoveUp={idx > 0}
                 canMoveDown={idx < receptionStatuses.length - 1}
                 onMoveUp={() => moveReceptionItem(s.id, -1)}
@@ -4177,13 +4177,13 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
         : isDirty
         ? { bg: "var(--room-dirty)", fg: "var(--room-dirty-fg)", accent: "var(--room-dirty-accent)", label: "Dirty" }
          : isClean
-         ? { bg: "var(--room-done)", fg: "var(--room-done-fg)", accent: "var(--room-done-accent)", label: "Cleaned & Ready for Quest\n" }
+         ? { bg: "var(--room-done)", fg: "var(--room-done-fg)", accent: "var(--room-done-accent)", label: "Clean" }
         : (isStayover || isDnd)
           ? { ...roomStateMeta.todo, label: "Stayover" }
            : isArrival && (state === "done" || state === "complete") && hasLinenCount
-             ? { bg: "var(--room-complete)", fg: "var(--room-complete-fg)", accent: "var(--room-complete-accent)", label: "Cleaned & Ready for Quest\n" }
+             ? { bg: "var(--room-complete)", fg: "var(--room-complete-fg)", accent: "var(--room-complete-accent)", label: "Clean" }
            : isArrival && (state === "done" || state === "complete")
-             ? { bg: "var(--room-done)", fg: "var(--room-done-fg)", accent: "var(--room-done-accent)", label: "Cleaned & Ready for Quest\n" }
+             ? { bg: "var(--room-done)", fg: "var(--room-done-fg)", accent: "var(--room-done-accent)", label: "Clean" }
            : isArrival && state === "todo"
              ? { ...roomStateMeta.todo, label: "Not started" }
           : !hasStatus
@@ -4262,20 +4262,20 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
     const isArrival = !!arrivalStatusIdGlobal && (room?.reception_status_id ?? room?.default_status) === arrivalStatusIdGlobal;
      const state = getRoomTileState(n, receptionDoneSet.has(n));
       const baseMeta = state === "done"
-        ? { bg: "var(--room-done)", fg: "var(--room-done-fg)", accent: "var(--room-done-accent)", label: "Cleaned & Ready for Quest\n" }
+        ? { bg: "var(--room-done)", fg: "var(--room-done-fg)", accent: "var(--room-done-accent)", label: "Clean" }
         : roomStateMeta[state];
      const hasStatus = !!(room?.reception_status_id ?? room?.default_status);
       const hasLinenCount = counts.some((c) => c.room_number === n && (c.count ?? 0) > 0);
       const meta = isDirty && !isStaff
         ? { bg: "var(--room-dirty)", fg: "var(--room-dirty-fg)", accent: "var(--room-dirty-accent)", label: "Dirty" }
         : isClean && !isStaff
-        ? { bg: "var(--room-done)", fg: "var(--room-done-fg)", accent: "var(--room-done-accent)", label: "Cleaned & Ready for Quest\n" }
+        ? { bg: "var(--room-done)", fg: "var(--room-done-fg)", accent: "var(--room-done-accent)", label: "Clean" }
         : (isStayover || isDnd) && !isStaff
           ? { ...roomStateMeta.todo, label: "Stayover" }
           : isArrival && !isStaff && (state === "done" || state === "complete") && hasLinenCount
-            ? { bg: "var(--room-complete)", fg: "var(--room-complete-fg)", accent: "var(--room-complete-accent)", label: "Cleaned & Ready for Quest\n" }
+            ? { bg: "var(--room-complete)", fg: "var(--room-complete-fg)", accent: "var(--room-complete-accent)", label: "Clean" }
           : isArrival && !isStaff && (state === "done" || state === "complete")
-            ? { bg: "var(--room-done)", fg: "var(--room-done-fg)", accent: "var(--room-done-accent)", label: "Cleaned & Ready for Quest\n" }
+            ? { bg: "var(--room-done)", fg: "var(--room-done-fg)", accent: "var(--room-done-accent)", label: "Clean" }
           : isArrival && !isStaff && state === "todo"
             ? { ...roomStateMeta.todo, label: "Not started" }
           : !hasStatus && !isStaff
