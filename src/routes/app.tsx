@@ -4179,6 +4179,8 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
          ? { bg: "var(--room-done)", fg: "var(--room-done-fg)", accent: "var(--room-done-accent)", label: "Clean" }
         : (isStayover || isDnd)
           ? { ...roomStateMeta.todo, label: "Stayover" }
+           : isArrival && (state === "done" || state === "complete")
+             ? { bg: "var(--room-complete)", fg: "var(--room-complete-fg)", accent: "var(--room-complete-accent)", label: "Arrival ready" }
            : isArrival && state === "todo"
              ? { ...roomStateMeta.todo, label: "Not started" }
           : !hasStatus
@@ -4266,6 +4268,8 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
         ? { bg: "var(--room-done)", fg: "var(--room-done-fg)", accent: "var(--room-done-accent)", label: "Clean" }
         : (isStayover || isDnd) && !isStaff
           ? { ...roomStateMeta.todo, label: "Stayover" }
+          : isArrival && !isStaff && (state === "done" || state === "complete")
+            ? { bg: "var(--room-complete)", fg: "var(--room-complete-fg)", accent: "var(--room-complete-accent)", label: "Arrival ready" }
           : isArrival && !isStaff && state === "todo"
             ? { ...roomStateMeta.todo, label: "Not started" }
           : !hasStatus && !isStaff
