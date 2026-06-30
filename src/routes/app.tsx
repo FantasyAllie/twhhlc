@@ -3105,10 +3105,11 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
                      const dndActive = !!dndId && occ === dndId;
                       const dirtyActive = !!dirtyId && occ === dirtyId;
                      const pairLabels: [string, string][] = [
+                        ["Arrival", "Departure"],
                        ["DND", "Stayover"],
                        ["Dirty", "ROS"],
                      ];
-                     const topLabels = ["Arrival", "Clean", "Staff"];
+                      const topLabels = ["Clean", "Staff"];
                      const findStatus = (lbl: string) =>
                        receptionStatuses.find(
                          (x) => x.label.toLowerCase() === lbl.toLowerCase(),
