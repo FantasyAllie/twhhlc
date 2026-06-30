@@ -3816,6 +3816,48 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
     </DialogContent>
   </Dialog>
 
+ {/* Reception color legend help dialog */}
+ <Dialog open={receptionHelpOpen} onOpenChange={setReceptionHelpOpen}>
+   <DialogContent className="max-w-md w-[calc(100vw-1.5rem)] sm:w-full p-4 sm:p-6">
+     <DialogHeader>
+       <DialogTitle>Room colour guide</DialogTitle>
+       <DialogDescription>
+         What each room tile colour means at a glance.
+       </DialogDescription>
+     </DialogHeader>
+     <ul className="space-y-3 mt-2">
+       <li className="flex items-start gap-3">
+         <span className="mt-0.5 inline-block h-5 w-5 rounded-md bg-emerald-500 ring-1 ring-inset ring-emerald-700/40 shrink-0" />
+         <div>
+           <p className="text-sm font-medium">Green</p>
+           <p className="text-xs text-muted-foreground">Room is clean and ready for a guest.</p>
+         </div>
+       </li>
+       <li className="flex items-start gap-3">
+         <span className="mt-0.5 inline-block h-5 w-5 rounded-md bg-red-500 ring-1 ring-inset ring-red-700/40 shrink-0" />
+         <div>
+           <p className="text-sm font-medium">Red</p>
+           <p className="text-xs text-muted-foreground">Stayover, or room has not been serviced / cleaned yet.</p>
+         </div>
+       </li>
+       <li className="flex items-start gap-3">
+         <span className="mt-0.5 inline-block h-5 w-5 rounded-md bg-yellow-400 ring-1 ring-inset ring-yellow-600/40 shrink-0" />
+         <div>
+           <p className="text-sm font-medium">Yellow</p>
+           <p className="text-xs text-muted-foreground">Cleaning in progress.</p>
+         </div>
+       </li>
+       <li className="flex items-start gap-3">
+         <span className="mt-0.5 inline-block h-5 w-5 rounded-md bg-muted-foreground/40 ring-1 ring-inset ring-muted-foreground/40 shrink-0" />
+         <div>
+           <p className="text-sm font-medium">Grey</p>
+           <p className="text-xs text-muted-foreground">Room out of service.</p>
+         </div>
+       </li>
+     </ul>
+   </DialogContent>
+ </Dialog>
+
  {/* Rejects dialog */}
  <Dialog open={rejectsOpen} onOpenChange={setRejectsOpen}>
    <DialogContent className="max-w-md w-[calc(100vw-1.5rem)] sm:w-full p-4 sm:p-6">
