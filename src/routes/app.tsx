@@ -3825,6 +3825,7 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
           Tally all linen rejects before sending back to be cleaned
         </DialogDescription>
      </DialogHeader>
+      {null}
      {template.length === 0 ? (
        <p className="text-sm text-muted-foreground py-4">
          No linen items yet. Add some from the Linen List.
