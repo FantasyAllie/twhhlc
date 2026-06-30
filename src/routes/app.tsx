@@ -3512,7 +3512,7 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
             {receptionStatuses.map((s, idx) => (
               <ManageEditableRow
                 key={s.id}
-                label={s.label}
+                label={s.label === "Clean" ? "Cleaned & Ready for Quest\n" : s.label}
                 canMoveUp={idx > 0}
                 canMoveDown={idx < receptionStatuses.length - 1}
                 onMoveUp={() => moveReceptionItem(s.id, -1)}
