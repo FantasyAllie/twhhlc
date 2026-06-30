@@ -1,2 +1,0 @@
-UPDATE public.reception_items SET sort_order = sort_order + 1 WHERE kind = 'status' AND sort_order >= 2 AND user_id = 'd8283537-ecd1-4899-8dda-baa9a0e0dfd6';
-INSERT INTO public.reception_items (kind, label, sort_order, user_id) VALUES ('status', 'Departure', 2, 'd8283537-ecd1-4899-8dda-baa9a0e0dfd6');

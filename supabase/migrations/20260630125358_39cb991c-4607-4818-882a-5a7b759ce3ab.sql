@@ -1,1 +1,0 @@
-ALTER TABLE public.rooms ADD COLUMN IF NOT EXISTS reception_status_secondary_id uuid REFERENCES public.reception_items(id) ON DELETE SET NULL;
