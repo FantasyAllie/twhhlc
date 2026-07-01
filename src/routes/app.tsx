@@ -1326,7 +1326,7 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
   };
 
   const pruneSnapshots = async (
-    kind: "totals" | "rejects" | "room_status",
+    kind: "totals" | "rejects" | "room_status" | "maintenance",
   ) => {
     const { data } = await supabase
       .from("export_snapshots")
@@ -1370,20 +1370,23 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
   };
 
   const proceedExport = async (
-    kind: "totals" | "rejects" | "room_status",
+    kind: "totals" | "rejects" | "room_status" | "maintenance",
   ) => {
     const computed =
       kind === "totals"
         ? computeTotals()
         : kind === "rejects"
         ? computeRejectTotals()
-        : computeRoomStatus();
-    const rows = computed.rows as SnapshotRow[] | RoomStatusRow[];
+        : kind === "room_status"
+        ? computeRoomStatus()
+        : computeMaintenance();
+    const rows = computed.rows as SnapshotRow[] | RoomStatusRow[] | MaintenanceRow[];
     const grand = computed.grand;
     if (rows.length === 0) {
       if (kind === "totals") setExportOpen(true);
       else if (kind === "rejects") setRejectExportOpen(true);
-      else setRoomStatusExportOpen(true);
+      else if (kind === "room_status") setRoomStatusExportOpen(true);
+      else toast.error("No rooms marked for maintenance");
       return;
     }
     const today = new Date().toDateString();
@@ -1406,7 +1409,8 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
     }
     if (kind === "totals") setExportOpen(true);
     else if (kind === "rejects") setRejectExportOpen(true);
-    else setRoomStatusExportOpen(true);
+    else if (kind === "room_status") setRoomStatusExportOpen(true);
+    else printMaintenance(new Date(), rows as MaintenanceRow[]);
     const { error } = await supabase
       .from("export_snapshots")
       .insert({ totals: rows, grand_total: grand, kind } as never);
