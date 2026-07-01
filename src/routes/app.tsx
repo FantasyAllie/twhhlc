@@ -4403,9 +4403,40 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
 
 
             {!isReception && (
-              <p className="text-xs text-muted-foreground">
-                {doneSet.size} of {rooms.length} done
-              </p>
+              (() => {
+                const staffId = receptionStatuses.find((s) => s.label.toLowerCase() === "staff")?.id ?? null;
+                const eligible = rooms.filter(
+                  (r) => !staffId || (r.reception_status_id ?? r.default_status) !== staffId,
+                );
+                const total = eligible.length;
+                const countsByRoom = new Map<number, number>();
+                counts.forEach((c) => {
+                  countsByRoom.set(c.room_number, (countsByRoom.get(c.room_number) ?? 0) + (c.count ?? 0));
+                });
+                let progress = 0;
+                eligible.forEach((r) => {
+                  const isDone = r.done;
+                  const hasStatus = !!(r.reception_status_id ?? r.default_status);
+                  const hasLinen = (countsByRoom.get(r.room_number) ?? 0) > 0;
+                  if (isDone) progress += 1;
+                  else if (hasStatus || hasLinen) progress += 0.5;
+                });
+                const pct = total > 0 ? Math.min(100, (progress / total) * 100) : 0;
+                return (
+                  <div className="mt-3 space-y-1">
+                    <div className="flex items-center justify-between text-xs text-muted-foreground">
+                      <span>Rooms progress</span>
+                      <span className="tabular-nums">{progress % 1 === 0 ? progress : progress.toFixed(1)} of {total}</span>
+                    </div>
+                    <div className="h-2 w-full overflow-hidden rounded-full bg-muted">
+                      <div
+                        className="h-full rounded-full bg-primary transition-[width] duration-300"
+                        style={{ width: `${pct}%` }}
+                      />
+                    </div>
+                  </div>
+                );
+              })()
             )}
  </section>
  </div>
