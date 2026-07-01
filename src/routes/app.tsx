@@ -4320,9 +4320,9 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
          {!isStaffRoom && (
            <>
              <span className="text-sm sm:text-base font-bold leading-none">{n}</span>
-              <span className="text-[9px] sm:text-[10px] md:text-xs font-medium leading-none opacity-90 whitespace-pre-line">
-                {meta.label}
-              </span>
+              <span className="text-[9px] sm:text-[10px] md:text-xs font-medium leading-none opacity-90 whitespace-pre-line pr-4">
+                 {meta.label}
+               </span>
              {isDnd && (
                <span
                    className="absolute right-1.5 top-2 text-xs sm:text-sm font-bold leading-none"
@@ -4349,7 +4349,7 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
           {room?.needs_maintenance && !isStaffRoom && (
             <Wrench
               aria-label="Maintenance"
-              className="absolute bottom-0.5 left-0.5 h-3 w-3 text-amber-600 dark:text-amber-400"
+              className="absolute bottom-0.5 right-0.5 h-3 w-3 text-amber-600 dark:text-amber-400"
             />
           )}
           {room?.guest_vacated && !isStaffRoom && (
@@ -4424,7 +4424,7 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
               Bed not selected
             </span>
           )}
-          <span className="text-[9px] sm:text-[10px] md:text-xs font-medium leading-none opacity-90 whitespace-pre-line">
+          <span className="text-[9px] sm:text-[10px] md:text-xs font-medium leading-none opacity-90 whitespace-pre-line pr-4">
             {isStaff ? "Staff" : meta.label}
           </span>
           {isDnd && !isStaff && (
@@ -4443,7 +4443,7 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
           {room?.needs_maintenance && (
             <Wrench
               aria-label="Maintenance"
-              className="absolute bottom-0.5 left-0.5 h-3 w-3 text-amber-600 dark:text-amber-400"
+              className="absolute bottom-0.5 right-0.5 h-3 w-3 text-amber-600 dark:text-amber-400"
             />
           )}
           {room?.guest_vacated && (
