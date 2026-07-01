@@ -745,6 +745,65 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
     toast.success("Confirmation sent to housekeeping");
   };
 
+  const submitMaintenanceRequest = async () => {
+    const roomNumber = Number(newMaintenanceRoom);
+    const text = newMaintenanceText.trim();
+    if (!Number.isFinite(roomNumber) || roomNumber <= 0) {
+      toast.error("Pick a room");
+      return;
+    }
+    if (!text) {
+      toast.error("Add a message");
+      return;
+    }
+    const { error } = await supabase.from("maintenance_requests" as never).insert({
+      room_number: roomNumber,
+      message: text,
+      created_by_username: authUser?.username ?? null,
+    } as never);
+    if (error) {
+      toast.error(error.message);
+      return;
+    }
+    setNewMaintenanceRoom("");
+    setNewMaintenanceText("");
+    qc.invalidateQueries({ queryKey: ["maintenance_requests"] });
+    toast.success("Maintenance request logged");
+  };
+
+  const markMaintenanceDone = async (id: string) => {
+    const who = authUser?.username ?? "Reception";
+    qc.setQueryData<MaintenanceRequest[]>(["maintenance_requests"], (old) =>
+      old?.map((m) =>
+        m.id === id
+          ? { ...m, done: true, done_by_username: who, done_at: new Date().toISOString() }
+          : m,
+      ) ?? [],
+    );
+    const { error } = await supabase
+      .from("maintenance_requests" as never)
+      .update({ done: true, done_by_username: who, done_at: new Date().toISOString() } as never)
+      .eq("id", id);
+    if (error) {
+      toast.error(error.message);
+      qc.invalidateQueries({ queryKey: ["maintenance_requests"] });
+      return;
+    }
+    qc.invalidateQueries({ queryKey: ["maintenance_requests"] });
+  };
+
+  const deleteMaintenanceRequest = async (id: string) => {
+    qc.setQueryData<MaintenanceRequest[]>(["maintenance_requests"], (old) =>
+      old?.filter((m) => m.id !== id) ?? [],
+    );
+    const { error } = await supabase
+      .from("maintenance_requests" as never)
+      .delete()
+      .eq("id", id);
+    if (error) toast.error(error.message);
+    qc.invalidateQueries({ queryKey: ["maintenance_requests"] });
+  };
+
   const getRejectCount = (templateItemId: string) =>
     rejects.find((r) => r.template_item_id === templateItemId)?.count ?? 0;
 
