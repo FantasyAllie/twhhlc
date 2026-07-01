@@ -4721,7 +4721,65 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
        <DialogDescription>Saved totals from this export.</DialogDescription>
      </DialogHeader>
      {viewingSnapshot && (
-        viewingSnapshot.kind === "room_status" ? (
+        viewingSnapshot.kind === "maintenance" ? (
+        <div className="space-y-4">
+          {viewingSnapshot.totals.length === 0 ? (
+            <p className="text-sm text-muted-foreground py-4">No rooms in this snapshot.</p>
+          ) : (
+            <div className="rounded-md border max-h-[60vh] overflow-y-auto">
+              <table className="w-full text-sm">
+                <thead className="bg-muted/50 sticky top-0">
+                  <tr>
+                    <th className="text-left px-3 py-2 w-16">Room</th>
+                    <th className="text-left px-3 py-2">Maintenance note</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {(viewingSnapshot.totals as MaintenanceRow[]).map((r) => (
+                    <tr key={r.room} className="border-t align-top">
+                      <td className="px-3 py-1.5 font-mono tabular-nums">{r.room}</td>
+                      <td className="px-3 py-1.5 whitespace-pre-wrap">{r.note || "—"}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          )}
+          <div className="flex items-center justify-between text-sm">
+            <span className="text-muted-foreground">
+              {viewingSnapshot.totals.length} room
+              {viewingSnapshot.totals.length === 1 ? "" : "s"}
+            </span>
+          </div>
+          <div className="flex justify-between gap-2">
+            <Button
+              variant="ghost"
+              size="sm"
+              className="text-destructive hover:text-destructive"
+              onClick={async () => {
+                if (!confirm("Delete this snapshot?")) return;
+                const id = viewingSnapshot.id;
+                setViewingSnapshot(null);
+                await deleteSnapshot(id);
+              }}
+            >
+              Delete
+            </Button>
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() =>
+                printMaintenance(
+                  new Date(viewingSnapshot.created_at),
+                  viewingSnapshot.totals as MaintenanceRow[],
+                )
+              }
+            >
+              Print
+            </Button>
+          </div>
+        </div>
+        ) : viewingSnapshot.kind === "room_status" ? (
         <div className="space-y-4">
           {viewingSnapshot.totals.length === 0 ? (
             <p className="text-sm text-muted-foreground py-4">No rooms in this snapshot.</p>
