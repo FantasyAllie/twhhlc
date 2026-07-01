@@ -1498,6 +1498,33 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
     await proceedExport("room_status");
   };
 
+  const computeMaintenance = (): { rows: MaintenanceRow[]; grand: number } => {
+    const rows: MaintenanceRow[] = [...rooms]
+      .filter((r) => r.needs_maintenance)
+      .sort((a, b) => a.room_number - b.room_number)
+      .map((r) => ({ room: r.room_number, note: (r.housekeeping_note ?? "").trim() }));
+    return { rows, grand: rows.length };
+  };
+
+  const openMaintenanceExport = async () => {
+    const { rows } = computeMaintenance();
+    if (rows.length === 0) {
+      toast.error("No rooms marked for maintenance");
+      return;
+    }
+    const today = new Date().toDateString();
+    const todays = snapshots.filter(
+      (s) =>
+        s.kind === "maintenance" &&
+        new Date(s.created_at).toDateString() === today,
+    );
+    if (todays.length > 0) {
+      setConfirmOverwrite({ kind: "maintenance" });
+      return;
+    }
+    await proceedExport("maintenance");
+  };
+
   const deleteSnapshot = async (id: string) => {
     qc.setQueryData<ExportSnapshot[]>(["export_snapshots"], (old) =>
       old?.filter((s) => s.id !== id) ?? [],
