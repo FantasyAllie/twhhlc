@@ -214,11 +214,7 @@
 @keyframes sheet-pop-in {
   0% {
     opacity: 0;
-    transform: translate(-50%, -50%) scale(0.9);
-  }
-  60% {
-    opacity: 1;
-    transform: translate(-50%, -50%) scale(1.02);
+    transform: translate(-50%, -50%) scale(0.5);
   }
   100% {
     opacity: 1;
