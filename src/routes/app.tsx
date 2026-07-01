@@ -208,12 +208,13 @@ type Room = { id: string; room_number: number; sort_order?: number; done: boolea
 type TemplateItemRoom = { id: string; template_item_id: string; room_number: number };
 type SnapshotRow = { name: string; count: number };
 type RoomStatusRow = { room: number; status: string; bed: string; maintenance?: boolean };
+type MaintenanceRow = { room: number; note: string };
 type ExportSnapshot = {
   id: string;
   created_at: string;
-  totals: SnapshotRow[] | RoomStatusRow[];
+  totals: SnapshotRow[] | RoomStatusRow[] | MaintenanceRow[];
   grand_total: number;
-  kind?: "totals" | "rejects" | "room_status";
+  kind?: "totals" | "rejects" | "room_status" | "maintenance";
 };
 type RejectCount = { id: string; template_item_id: string; count: number };
 type RoomMessage = {
