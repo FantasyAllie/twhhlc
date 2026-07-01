@@ -3472,31 +3472,33 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
       const close = () => setMenuSheetOpen(false);
       return (
         <div className="mt-4 space-y-4">
-          {isAdmin && (
-            <div className="space-y-2">
+          <div className="space-y-2">
+            {isAdmin && (
               <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">Manage</p>
-              <div className="space-y-1.5">
-                <Row icon={List} label="Linen List" onClick={() => { close(); setTemplateOpen(true); }} />
-                <Row icon={Hash} label="Manage Rooms" onClick={() => { close(); setManageRoomsOpen(true); }} />
-                <Row icon={Ban} label="Rejects" onClick={() => { close(); setRejectsOpen(true); }} />
-                <Row icon={History} label="History" onClick={() => { close(); setHistorySheetOpen(true); }} />
-                <Row icon={ConciergeBell} label="Bulk Room Status Setup" onClick={() => { close(); setQuickReceptionOpen(true); }} />
-              </div>
+            )}
+            <div className="space-y-1.5">
+              {isAdmin && (
+                <>
+                  <Row icon={List} label="Linen List" onClick={() => { close(); setTemplateOpen(true); }} />
+                  <Row icon={Hash} label="Manage Rooms" onClick={() => { close(); setManageRoomsOpen(true); }} />
+                  <Row icon={Ban} label="Rejects" onClick={() => { close(); setRejectsOpen(true); }} />
+                  <Row icon={History} label="History" onClick={() => { close(); setHistorySheetOpen(true); }} />
+                  <Row icon={ConciergeBell} label="Bulk Room Status Setup" onClick={() => { close(); setQuickReceptionOpen(true); }} />
+                </>
+              )}
+              <Row
+                icon={Wrench}
+                label={
+                  <span className="flex items-center gap-2">
+                    Maintenance Log
+                    {hasOpenMaintenance && (
+                      <span className="h-2 w-2 rounded-full bg-amber-500" aria-hidden />
+                    )}
+                  </span>
+                }
+                onClick={() => { close(); setMaintenanceLogOpen(true); }}
+              />
             </div>
-          )}
-          <div className="space-y-1.5">
-            <Row
-              icon={Wrench}
-              label={
-                <span className="flex items-center gap-2">
-                  Maintenance Log
-                  {hasOpenMaintenance && (
-                    <span className="h-2 w-2 rounded-full bg-amber-500" aria-hidden />
-                  )}
-                </span>
-              }
-              onClick={() => { close(); setMaintenanceLogOpen(true); }}
-            />
           </div>
           <div className="space-y-2">
             <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">Appearance</p>
