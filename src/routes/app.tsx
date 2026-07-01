@@ -429,7 +429,7 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
   const [manageRoomsOpen, setManageRoomsOpen] = useState(false);
   const [receptionHelpOpen, setReceptionHelpOpen] = useState(false);
   const [confirmOverwrite, setConfirmOverwrite] = useState<
-    { kind: "totals" | "rejects" | "room_status" } | null
+    { kind: "totals" | "rejects" | "room_status" | "maintenance" } | null
   >(null);
   const [newRoomNumber, setNewRoomNumber] = useState<string>("");
   const [addRoomConfirmOpen, setAddRoomConfirmOpen] = useState(false);
