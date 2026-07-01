@@ -4422,8 +4422,8 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
                   else if (hasStatus || hasLinen) progress += 0.5;
                 });
                 const pct = total > 0 ? Math.min(100, (progress / total) * 100) : 0;
-                return (
-                  <div className="mt-3 space-y-1">
+                 return (
+                   <div className="mt-3 space-y-1 max-lg:fixed max-lg:inset-x-0 max-lg:bottom-0 max-lg:z-40 max-lg:mt-0 max-lg:border-t max-lg:border-border max-lg:bg-background/95 max-lg:backdrop-blur max-lg:px-4 max-lg:pt-2 max-lg:pb-[calc(env(safe-area-inset-bottom,0px)+0.75rem)] max-lg:shadow-[0_-2px_8px_rgba(0,0,0,0.06)]">
                     <div className="flex items-center justify-between text-xs text-muted-foreground">
                       <span>Rooms progress</span>
                       <span className="tabular-nums">{progress % 1 === 0 ? progress : progress.toFixed(1)} of {total}</span>
@@ -4439,6 +4439,9 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
               })()
             )}
  </section>
+  {!isReception && (
+    <div className="lg:hidden h-[calc(env(safe-area-inset-bottom,0px)+3.25rem)]" aria-hidden />
+  )}
  </div>
 
  <Sheet open={openRoom !== null} onOpenChange={(o) => { if (!o) { if (openRoom !== null) setShowAllLinen(prev => ({ ...prev, [openRoom]: false })); setOpenRoom(null); setNewMessageText(""); } }}>
