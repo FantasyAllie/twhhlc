@@ -1456,7 +1456,10 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
     const statusLabel = (id: string | null | undefined) => {
       if (!id) return "";
       const lbl = receptionStatuses.find((s) => s.id === id)?.label ?? "";
-      return lbl === "DND" ? "DND/Stay" : lbl;
+      if (lbl === "DND") return "Stayover";
+      if (lbl.toLowerCase() === "staff") return "ROS - Staff";
+      if (lbl.toLowerCase() === "dirty") return "ROS - Dirty";
+      return lbl;
     };
     const bedLabel = (id: string | null | undefined) =>
       id ? receptionBeds.find((b) => b.id === id)?.label ?? "" : "";
