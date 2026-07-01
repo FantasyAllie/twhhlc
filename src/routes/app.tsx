@@ -2446,31 +2446,7 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
       if (isHousekeeper) {
         return null;
       }
-      return (
-        <Button
-          type="button"
-          variant="outline"
-          className="w-full justify-start gap-2 h-11"
-          onClick={() => setNotesSheetRoom(n)}
-        >
-          <StickyNote className="h-4 w-4" />
-          <span>Notes</span>
-          <span className="ml-auto flex items-center gap-1.5">
-            {hasMsg && (
-              <span aria-label="Message" className="h-2 w-2 rounded-full bg-amber-500" />
-            )}
-            {hasNote && (
-              <span aria-label="Note" className="h-2 w-2 rounded-full bg-primary" />
-            )}
-            {maintenance && (
-              <Wrench aria-label="Maintenance" className="h-3.5 w-3.5 text-amber-600 dark:text-amber-400" />
-            )}
-            {vacated && (
-              <DoorOpen aria-label="Vacated" className="h-3.5 w-3.5 text-emerald-600 dark:text-emerald-400" />
-            )}
-          </span>
-        </Button>
-      );
+      return null;
     })()}
 
     {isReception && (() => {
@@ -2537,6 +2513,42 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
             <Pencil className="h-4 w-4" />
           </button>
         )}
+        {!isHousekeeper && (() => {
+          const msgs = activeMessagesByRoom(n);
+          const room = rooms.find((r) => r.room_number === n);
+          const note = room?.housekeeping_note ?? null;
+          const maintenance = !!room?.needs_maintenance;
+          const vacated = !!room?.guest_vacated;
+          const hasMsg = msgs.length > 0;
+          const hasNote = !!note;
+          const hasIndicator = hasMsg || hasNote || maintenance || vacated;
+          return (
+            <button
+              type="button"
+              onClick={() => setNotesSheetRoom(n)}
+              className="relative inline-flex items-center justify-center h-11 w-11 shrink-0 rounded-full border bg-background text-sm font-medium cursor-pointer transition-colors hover:bg-accent"
+              aria-label="Notes"
+            >
+              <StickyNote className="h-4 w-4" />
+              {hasIndicator && (
+                <span className="absolute -top-0.5 -right-0.5 flex items-center gap-0.5">
+                  {hasMsg && (
+                    <span aria-label="Message" className="h-2 w-2 rounded-full bg-amber-500 ring-2 ring-background" />
+                  )}
+                  {hasNote && (
+                    <span aria-label="Note" className="h-2 w-2 rounded-full bg-primary ring-2 ring-background" />
+                  )}
+                  {maintenance && (
+                    <Wrench aria-label="Maintenance" className="h-3 w-3 text-amber-600 dark:text-amber-400" />
+                  )}
+                  {vacated && (
+                    <DoorOpen aria-label="Vacated" className="h-3 w-3 text-emerald-600 dark:text-emerald-400" />
+                  )}
+                </span>
+              )}
+            </button>
+          );
+        })()}
       </div>
     )}
     </div>
