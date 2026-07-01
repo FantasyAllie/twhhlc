@@ -2539,6 +2539,15 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
               <ClipboardList className="h-5 w-5 mr-2" />
               Room status
             </Button>
+            <Button
+              variant="outline"
+              size="lg"
+              className="justify-start h-12"
+              onClick={() => { setExportSheetOpen(false); printMaintenance(new Date()); }}
+            >
+              <Wrench className="h-5 w-5 mr-2" />
+              Maintenance list
+            </Button>
           </div>
         </SheetContent>
       </Sheet>
@@ -2557,6 +2566,10 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
           <DropdownMenuItem onClick={() => openRoomStatusExport()}>
             <ClipboardList className="h-4 w-4 mr-2" />
             Room status
+          </DropdownMenuItem>
+          <DropdownMenuItem onClick={() => printMaintenance(new Date())}>
+            <Wrench className="h-4 w-4 mr-2" />
+            Maintenance list
           </DropdownMenuItem>
         </DropdownMenuContent>
       </DropdownMenu>
