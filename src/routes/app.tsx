@@ -208,12 +208,13 @@ type Room = { id: string; room_number: number; sort_order?: number; done: boolea
 type TemplateItemRoom = { id: string; template_item_id: string; room_number: number };
 type SnapshotRow = { name: string; count: number };
 type RoomStatusRow = { room: number; status: string; bed: string; maintenance?: boolean };
+type MaintenanceRow = { room: number; note: string };
 type ExportSnapshot = {
   id: string;
   created_at: string;
-  totals: SnapshotRow[] | RoomStatusRow[];
+  totals: SnapshotRow[] | RoomStatusRow[] | MaintenanceRow[];
   grand_total: number;
-  kind?: "totals" | "rejects" | "room_status";
+  kind?: "totals" | "rejects" | "room_status" | "maintenance";
 };
 type RejectCount = { id: string; template_item_id: string; count: number };
 type RoomMessage = {
@@ -428,7 +429,7 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
   const [manageRoomsOpen, setManageRoomsOpen] = useState(false);
   const [receptionHelpOpen, setReceptionHelpOpen] = useState(false);
   const [confirmOverwrite, setConfirmOverwrite] = useState<
-    { kind: "totals" | "rejects" | "room_status" } | null
+    { kind: "totals" | "rejects" | "room_status" | "maintenance" } | null
   >(null);
   const [newRoomNumber, setNewRoomNumber] = useState<string>("");
   const [addRoomConfirmOpen, setAddRoomConfirmOpen] = useState(false);
@@ -1325,7 +1326,7 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
   };
 
   const pruneSnapshots = async (
-    kind: "totals" | "rejects" | "room_status",
+    kind: "totals" | "rejects" | "room_status" | "maintenance",
   ) => {
     const { data } = await supabase
       .from("export_snapshots")
@@ -1369,20 +1370,23 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
   };
 
   const proceedExport = async (
-    kind: "totals" | "rejects" | "room_status",
+    kind: "totals" | "rejects" | "room_status" | "maintenance",
   ) => {
     const computed =
       kind === "totals"
         ? computeTotals()
         : kind === "rejects"
         ? computeRejectTotals()
-        : computeRoomStatus();
-    const rows = computed.rows as SnapshotRow[] | RoomStatusRow[];
+        : kind === "room_status"
+        ? computeRoomStatus()
+        : computeMaintenance();
+    const rows = computed.rows as SnapshotRow[] | RoomStatusRow[] | MaintenanceRow[];
     const grand = computed.grand;
     if (rows.length === 0) {
       if (kind === "totals") setExportOpen(true);
       else if (kind === "rejects") setRejectExportOpen(true);
-      else setRoomStatusExportOpen(true);
+      else if (kind === "room_status") setRoomStatusExportOpen(true);
+      else toast.error("No rooms marked for maintenance");
       return;
     }
     const today = new Date().toDateString();
@@ -1405,7 +1409,8 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
     }
     if (kind === "totals") setExportOpen(true);
     else if (kind === "rejects") setRejectExportOpen(true);
-    else setRoomStatusExportOpen(true);
+    else if (kind === "room_status") setRoomStatusExportOpen(true);
+    else printMaintenance(new Date(), rows as MaintenanceRow[]);
     const { error } = await supabase
       .from("export_snapshots")
       .insert({ totals: rows, grand_total: grand, kind } as never);
@@ -1491,6 +1496,33 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
       return;
     }
     await proceedExport("room_status");
+  };
+
+  const computeMaintenance = (): { rows: MaintenanceRow[]; grand: number } => {
+    const rows: MaintenanceRow[] = [...rooms]
+      .filter((r) => r.needs_maintenance)
+      .sort((a, b) => a.room_number - b.room_number)
+      .map((r) => ({ room: r.room_number, note: (r.housekeeping_note ?? "").trim() }));
+    return { rows, grand: rows.length };
+  };
+
+  const openMaintenanceExport = async () => {
+    const { rows } = computeMaintenance();
+    if (rows.length === 0) {
+      toast.error("No rooms marked for maintenance");
+      return;
+    }
+    const today = new Date().toDateString();
+    const todays = snapshots.filter(
+      (s) =>
+        s.kind === "maintenance" &&
+        new Date(s.created_at).toDateString() === today,
+    );
+    if (todays.length > 0) {
+      setConfirmOverwrite({ kind: "maintenance" });
+      return;
+    }
+    await proceedExport("maintenance");
   };
 
   const deleteSnapshot = async (id: string) => {
@@ -1613,11 +1645,13 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
     win.document.close();
   };
 
-  const printMaintenance = (when: Date) => {
-    const list = [...rooms]
-      .filter((r) => r.needs_maintenance)
-      .sort((a, b) => a.room_number - b.room_number)
-      .map((r) => ({ room: r.room_number, note: (r.housekeeping_note ?? "").trim() }));
+  const printMaintenance = (when: Date, presetList?: MaintenanceRow[]) => {
+    const list =
+      presetList ??
+      [...rooms]
+        .filter((r) => r.needs_maintenance)
+        .sort((a, b) => a.room_number - b.room_number)
+        .map((r) => ({ room: r.room_number, note: (r.housekeeping_note ?? "").trim() }));
     if (list.length === 0) {
       toast.error("No rooms marked for maintenance");
       return;
@@ -2543,7 +2577,7 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
               variant="outline"
               size="lg"
               className="justify-start h-12"
-              onClick={() => { setExportSheetOpen(false); printMaintenance(new Date()); }}
+              onClick={() => { setExportSheetOpen(false); openMaintenanceExport(); }}
             >
               <Wrench className="h-5 w-5 mr-2" />
               Maintenance list
@@ -2567,7 +2601,7 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
             <ClipboardList className="h-4 w-4 mr-2" />
             Room status
           </DropdownMenuItem>
-          <DropdownMenuItem onClick={() => printMaintenance(new Date())}>
+          <DropdownMenuItem onClick={() => openMaintenanceExport()}>
             <Wrench className="h-4 w-4 mr-2" />
             Maintenance list
           </DropdownMenuItem>
@@ -3410,6 +3444,9 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
                     )}
                     {s.kind === "room_status" && (
                       <span className="text-xs uppercase tracking-wide text-muted-foreground">Room status</span>
+                    )}
+                    {s.kind === "maintenance" && (
+                      <span className="text-xs uppercase tracking-wide text-muted-foreground">Maintenance</span>
                     )}
                     <span className="text-xs text-muted-foreground">({s.grand_total})</span>
                   </button>
@@ -4684,7 +4721,65 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
        <DialogDescription>Saved totals from this export.</DialogDescription>
      </DialogHeader>
      {viewingSnapshot && (
-        viewingSnapshot.kind === "room_status" ? (
+        viewingSnapshot.kind === "maintenance" ? (
+        <div className="space-y-4">
+          {viewingSnapshot.totals.length === 0 ? (
+            <p className="text-sm text-muted-foreground py-4">No rooms in this snapshot.</p>
+          ) : (
+            <div className="rounded-md border max-h-[60vh] overflow-y-auto">
+              <table className="w-full text-sm">
+                <thead className="bg-muted/50 sticky top-0">
+                  <tr>
+                    <th className="text-left px-3 py-2 w-16">Room</th>
+                    <th className="text-left px-3 py-2">Maintenance note</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {(viewingSnapshot.totals as MaintenanceRow[]).map((r) => (
+                    <tr key={r.room} className="border-t align-top">
+                      <td className="px-3 py-1.5 font-mono tabular-nums">{r.room}</td>
+                      <td className="px-3 py-1.5 whitespace-pre-wrap">{r.note || "—"}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          )}
+          <div className="flex items-center justify-between text-sm">
+            <span className="text-muted-foreground">
+              {viewingSnapshot.totals.length} room
+              {viewingSnapshot.totals.length === 1 ? "" : "s"}
+            </span>
+          </div>
+          <div className="flex justify-between gap-2">
+            <Button
+              variant="ghost"
+              size="sm"
+              className="text-destructive hover:text-destructive"
+              onClick={async () => {
+                if (!confirm("Delete this snapshot?")) return;
+                const id = viewingSnapshot.id;
+                setViewingSnapshot(null);
+                await deleteSnapshot(id);
+              }}
+            >
+              Delete
+            </Button>
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() =>
+                printMaintenance(
+                  new Date(viewingSnapshot.created_at),
+                  viewingSnapshot.totals as MaintenanceRow[],
+                )
+              }
+            >
+              Print
+            </Button>
+          </div>
+        </div>
+        ) : viewingSnapshot.kind === "room_status" ? (
         <div className="space-y-4">
           {viewingSnapshot.totals.length === 0 ? (
             <p className="text-sm text-muted-foreground py-4">No rooms in this snapshot.</p>
@@ -4902,6 +4997,8 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
             ? "A rejects export already exists for today. Continuing will overwrite today's last history item. Please use the history feature to print previous exports. Would you like to continue with your export?"
             : confirmOverwrite?.kind === "room_status"
             ? "A room status export already exists for today. Continuing will overwrite today's last history item. Please use the history feature to print previous exports. Would you like to continue with your export?"
+            : confirmOverwrite?.kind === "maintenance"
+            ? "A maintenance list export already exists for today. Continuing will overwrite today's last history item. Please use the history feature to print previous exports. Would you like to continue with your export?"
             : "A linen export already exists for today. Continuing will overwrite today's last history item. Please use the history feature to print previous exports. Would you like to continue with your export?"}
         </DialogDescription>
       </DialogHeader>
