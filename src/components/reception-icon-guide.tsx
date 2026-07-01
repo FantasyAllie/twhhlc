@@ -61,13 +61,6 @@ const ENTRIES: Entry[] = [
     ),
   },
   {
-    key: "poop",
-    label: "Dirty marker",
-    description:
-      "Housekeeping has flagged this room as dirty. The tile also shows ROS - Dirty.",
-    render: () => <span className="text-2xl leading-none">💩</span>,
-  },
-  {
     key: "bell",
     label: "Bell",
     description:
