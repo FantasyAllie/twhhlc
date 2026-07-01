@@ -46,7 +46,7 @@ const ENTRIES: Entry[] = [
     key: "out",
     label: "OUT badge",
     description:
-      "Housekeeping has marked the guest as vacated. The room is ready for turnover once cleaned.",
+      "Reception has marked the guest as vacated. The room is ready for turnover once cleaned.",
     render: () => (
       <span className="rounded-sm bg-emerald-600 px-1.5 py-0.5 text-[10px] font-bold leading-none tracking-wide text-white dark:bg-emerald-500 dark:text-emerald-950">
         OUT
