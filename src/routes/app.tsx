@@ -2776,6 +2776,14 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
            <DropdownMenuSeparator />
          </>
        )}
+        <DropdownMenuItem onClick={() => setMaintenanceLogOpen(true)}>
+          <Wrench className="h-4 w-4 mr-2" />
+          <span className="flex-1">Maintenance Log</span>
+          {hasOpenMaintenance && (
+            <span className="ml-2 h-2 w-2 rounded-full bg-amber-500" aria-hidden />
+          )}
+        </DropdownMenuItem>
+        <DropdownMenuSeparator />
        <DropdownMenuLabel>Appearance</DropdownMenuLabel>
        <DropdownMenuItem onClick={() => toggleTheme()}>
          {theme === "dark" ? <Sun className="h-4 w-4 mr-2" /> : <Moon className="h-4 w-4 mr-2" />}
@@ -2788,13 +2796,6 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
            <Users className="h-4 w-4 mr-2" /> Users
          </DropdownMenuItem>
        )}
-        <DropdownMenuItem onClick={() => setMaintenanceLogOpen(true)}>
-          <Wrench className="h-4 w-4 mr-2" />
-          <span className="flex-1">Maintenance Log</span>
-          {hasOpenMaintenance && (
-            <span className="ml-2 h-2 w-2 rounded-full bg-amber-500" aria-hidden />
-          )}
-        </DropdownMenuItem>
        <DropdownMenuItem onClick={() => setNotificationsSheetOpen(true)}>
          <Bell className="h-4 w-4 mr-2" /> Notifications
        </DropdownMenuItem>
