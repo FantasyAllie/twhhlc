@@ -768,11 +768,43 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
     setNewMaintenanceRoom("");
     setNewMaintenanceText("");
     qc.invalidateQueries({ queryKey: ["maintenance_requests"] });
+    await writeRoomMaintenanceFlag(roomNumber, true);
     toast.success("Maintenance request logged");
+  };
+
+  // Low-level: write rooms.needs_maintenance without triggering the
+  // maintenance-log sync in setRoomNeedsMaintenance.
+  const writeRoomMaintenanceFlag = async (roomNumber: number, value: boolean) => {
+    qc.setQueryData<Room[]>(["rooms"], (old) => {
+      const list = old ? [...old] : [];
+      const idx = list.findIndex((r) => r.room_number === roomNumber);
+      if (idx >= 0) list[idx] = { ...list[idx], needs_maintenance: value };
+      return list;
+    });
+    const { error } = await supabase.from("rooms").upsert(
+      {
+        room_number: roomNumber,
+        needs_maintenance: value,
+        updated_at: new Date().toISOString(),
+      } as never,
+      { onConflict: "user_id,room_number" },
+    );
+    if (error) toast.error(error.message);
+    qc.invalidateQueries({ queryKey: ["rooms"] });
+  };
+
+  const clearRoomFlagIfNoOpenRequests = async (roomNumber: number) => {
+    const stillOpen = (qc.getQueryData<MaintenanceRequest[]>(["maintenance_requests"]) ?? [])
+      .some((m) => m.room_number === roomNumber && !m.done);
+    if (stillOpen) return;
+    const room = (qc.getQueryData<Room[]>(["rooms"]) ?? []).find((r) => r.room_number === roomNumber);
+    if (room?.needs_maintenance) await writeRoomMaintenanceFlag(roomNumber, false);
   };
 
   const markMaintenanceDone = async (id: string) => {
     const who = authUser?.username ?? "Reception";
+    const target = (qc.getQueryData<MaintenanceRequest[]>(["maintenance_requests"]) ?? [])
+      .find((m) => m.id === id);
     qc.setQueryData<MaintenanceRequest[]>(["maintenance_requests"], (old) =>
       old?.map((m) =>
         m.id === id
@@ -790,9 +822,12 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
       return;
     }
     qc.invalidateQueries({ queryKey: ["maintenance_requests"] });
+    if (target) await clearRoomFlagIfNoOpenRequests(target.room_number);
   };
 
   const deleteMaintenanceRequest = async (id: string) => {
+    const target = (qc.getQueryData<MaintenanceRequest[]>(["maintenance_requests"]) ?? [])
+      .find((m) => m.id === id);
     qc.setQueryData<MaintenanceRequest[]>(["maintenance_requests"], (old) =>
       old?.filter((m) => m.id !== id) ?? [],
     );
@@ -802,6 +837,7 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
       .eq("id", id);
     if (error) toast.error(error.message);
     qc.invalidateQueries({ queryKey: ["maintenance_requests"] });
+    if (target) await clearRoomFlagIfNoOpenRequests(target.room_number);
   };
 
   const getRejectCount = (templateItemId: string) =>
