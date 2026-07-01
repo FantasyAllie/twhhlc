@@ -363,6 +363,13 @@ function AppPage() {
           }
         },
       )
+      .on(
+        "postgres_changes",
+        { event: "*", schema: "public", table: "maintenance_requests" },
+        () => {
+          qc.invalidateQueries({ queryKey: ["maintenance_requests"] });
+        },
+      )
       .subscribe();
     return () => {
       supabase.removeChannel(channel);
