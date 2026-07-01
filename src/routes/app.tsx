@@ -226,6 +226,16 @@ type RoomMessage = {
   dismissed: boolean;
   created_at: string;
 };
+type MaintenanceRequest = {
+  id: string;
+  room_number: number;
+  message: string;
+  created_by_username: string | null;
+  done: boolean;
+  done_by_username: string | null;
+  done_at: string | null;
+  created_at: string;
+};
 
 function AppPage() {
  const qc = useQueryClient();
