@@ -3521,6 +3521,133 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
 </Sheet>
 
 {/* History sheet (Admin) */}
+<Sheet open={maintenanceLogOpen} onOpenChange={setMaintenanceLogOpen}>
+  <SheetContent side="bottom" className="max-h-[90vh] overflow-hidden rounded-t-2xl p-4 sm:p-6 flex flex-col">
+    <SheetHeader className="text-left">
+      <SheetTitle className="flex items-center gap-2">
+        <Wrench className="h-4 w-4" />
+        Maintenance Log
+        {hasOpenMaintenance && (
+          <span className="ml-1 inline-flex items-center gap-1 rounded-full bg-amber-500/15 text-amber-700 dark:text-amber-300 px-2 py-0.5 text-xs font-medium">
+            <span className="h-1.5 w-1.5 rounded-full bg-amber-500" aria-hidden />
+            {openMaintenanceCount} open
+          </span>
+        )}
+      </SheetTitle>
+      <SheetDescription>
+        {isReception
+          ? "Reception can mark maintenance requests as complete."
+          : "Log a maintenance issue for reception to action."}
+      </SheetDescription>
+    </SheetHeader>
+    <div className="mt-4 flex flex-col gap-2 border-b pb-4">
+      <div className="flex flex-col sm:flex-row gap-2">
+        <Input
+          type="number"
+          inputMode="numeric"
+          placeholder="Room #"
+          value={newMaintenanceRoom}
+          onChange={(e) => setNewMaintenanceRoom(e.target.value)}
+          className="sm:w-28"
+        />
+        <Input
+          placeholder="Describe the issue…"
+          value={newMaintenanceText}
+          onChange={(e) => setNewMaintenanceText(e.target.value)}
+          onKeyDown={(e) => {
+            if (e.key === "Enter") {
+              e.preventDefault();
+              void submitMaintenanceRequest();
+            }
+          }}
+          className="flex-1"
+        />
+        <Button type="button" onClick={() => void submitMaintenanceRequest()}>
+          <Plus className="h-4 w-4 mr-1" /> Log
+        </Button>
+      </div>
+    </div>
+    <div className="flex-1 min-h-0 overflow-y-auto mt-4 space-y-4">
+      <div className="space-y-2">
+        <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+          Open ({openMaintenanceCount})
+        </p>
+        {openMaintenanceCount === 0 ? (
+          <p className="text-sm text-muted-foreground">No open maintenance requests.</p>
+        ) : (
+          maintenanceRequests
+            .filter((m) => !m.done)
+            .map((m) => (
+              <div key={m.id} className="flex items-start gap-2 rounded-lg border bg-background p-3">
+                <div className="flex-1 min-w-0">
+                  <div className="flex items-center gap-2 flex-wrap">
+                    <span className="inline-flex h-6 items-center rounded-full bg-primary/10 text-primary px-2 text-xs font-semibold">
+                      Room {m.room_number}
+                    </span>
+                    <span className="text-xs text-muted-foreground">
+                      {new Date(m.created_at).toLocaleString(undefined, { month: "short", day: "numeric", hour: "numeric", minute: "2-digit" })}
+                      {m.created_by_username ? ` · ${m.created_by_username}` : ""}
+                    </span>
+                  </div>
+                  <p className="mt-1 text-sm whitespace-pre-wrap break-words">{m.message}</p>
+                </div>
+                {isReception ? (
+                  <Button
+                    type="button"
+                    size="sm"
+                    variant="outline"
+                    onClick={() => void markMaintenanceDone(m.id)}
+                    aria-label="Mark as done"
+                  >
+                    <Check className="h-4 w-4 mr-1" /> Done
+                  </Button>
+                ) : (
+                  <span className="text-xs text-muted-foreground shrink-0 pt-1">Awaiting reception</span>
+                )}
+              </div>
+            ))
+        )}
+      </div>
+      {maintenanceRequests.some((m) => m.done) && (
+        <div className="space-y-2">
+          <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">Completed</p>
+          {maintenanceRequests
+            .filter((m) => m.done)
+            .slice(0, 25)
+            .map((m) => (
+              <div key={m.id} className="flex items-start gap-2 rounded-lg border bg-muted/40 p-3">
+                <div className="flex-1 min-w-0">
+                  <div className="flex items-center gap-2 flex-wrap">
+                    <span className="inline-flex h-6 items-center rounded-full bg-muted text-muted-foreground px-2 text-xs font-semibold">
+                      Room {m.room_number}
+                    </span>
+                    <span className="text-xs text-muted-foreground">
+                      Done{m.done_by_username ? ` by ${m.done_by_username}` : ""}
+                      {m.done_at ? ` · ${new Date(m.done_at).toLocaleString(undefined, { month: "short", day: "numeric", hour: "numeric", minute: "2-digit" })}` : ""}
+                    </span>
+                  </div>
+                  <p className="mt-1 text-sm whitespace-pre-wrap break-words text-muted-foreground line-through">{m.message}</p>
+                </div>
+                {(isReception || isAdmin) && (
+                  <Button
+                    type="button"
+                    size="icon"
+                    variant="ghost"
+                    className="h-8 w-8 text-muted-foreground hover:text-destructive"
+                    onClick={() => void deleteMaintenanceRequest(m.id)}
+                    aria-label="Delete request"
+                  >
+                    <Trash2 className="h-4 w-4" />
+                  </Button>
+                )}
+              </div>
+            ))}
+        </div>
+      )}
+    </div>
+  </SheetContent>
+</Sheet>
+
 <Sheet open={historySheetOpen} onOpenChange={setHistorySheetOpen}>
    <SheetContent side="bottom" className="max-h-[90vh] overflow-hidden rounded-t-2xl p-4 sm:p-6">
     <SheetHeader className="text-left">
