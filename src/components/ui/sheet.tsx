@@ -38,7 +38,7 @@ const SheetOverlay = React.forwardRef<
 SheetOverlay.displayName = SheetPrimitive.Overlay.displayName;
 
 const sheetVariants = cva(
-  "fixed z-50 flex flex-col gap-0 bg-background p-6 shadow-lg transition ease-in-out data-[state=closed]:duration-300 data-[state=open]:duration-500 max-lg:data-[state=open]:animate-in max-lg:data-[state=closed]:animate-out lg:data-[state=open]:animate-[sheet-pop-in_350ms_cubic-bezier(0.34,1.56,0.64,1)] lg:data-[state=closed]:animate-[sheet-pop-out_180ms_ease-in]",
+  "fixed z-50 flex flex-col gap-0 bg-background p-6 shadow-lg transition ease-in-out data-[state=closed]:duration-300 data-[state=open]:duration-500 max-lg:data-[state=open]:animate-in max-lg:data-[state=closed]:animate-out lg:data-[state=open]:animate-[sheet-pop-in_250ms_ease-out] lg:data-[state=closed]:animate-[sheet-pop-out_180ms_ease-in]",
   {
     variants: {
       side: {
@@ -105,8 +105,15 @@ const SheetContent = React.forwardRef<
         )}
         {...props}
       >
+        {isDraggable && (
+          <div
+            aria-hidden
+            className="absolute top-2 left-1/2 -translate-x-1/2 h-1.5 w-10 rounded-full bg-muted-foreground/40 z-40 lg:hidden"
+          />
+        )}
         <SheetPrimitive.Close
           ref={closeRef}
+          data-sheet-close
           className={cn(
             "absolute right-4 top-4 z-30 inline-flex items-center justify-center gap-1 rounded-md border bg-background px-2.5 h-7 text-xs font-medium text-muted-foreground cursor-pointer transition-colors hover:bg-accent hover:text-foreground focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 ring-offset-background disabled:pointer-events-none data-[state=open]:bg-secondary",
             // Drag-to-dismiss handles closing on touch; show close only on desktop.
@@ -187,12 +194,6 @@ const SheetHeader = ({ className, children, ...props }: React.HTMLAttributes<HTM
       onPointerCancel={end}
       {...props}
     >
-      {ctx?.enabled && (
-        <div
-          aria-hidden
-          className="mx-auto -mt-2 mb-1 h-1.5 w-10 rounded-full bg-muted-foreground/30 lg:hidden"
-        />
-      )}
       {children}
     </div>
   );
