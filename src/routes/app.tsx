@@ -4328,7 +4328,12 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
       >
          {!isStaffRoom && (
            <>
-             <span className="text-sm sm:text-base font-bold leading-none">{n}</span>
+              <span className="text-sm sm:text-base font-bold leading-none inline-flex items-center gap-1">
+                {n}
+                {done && (
+                  <Check aria-label="Done" className="h-3 w-3" strokeWidth={4} />
+                )}
+              </span>
               <span className="text-[9px] sm:text-[10px] md:text-xs font-medium leading-none opacity-90 whitespace-pre-line pr-4">
                  {meta.label}
                </span>
