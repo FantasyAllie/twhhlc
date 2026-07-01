@@ -4228,21 +4228,11 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
       const hasLinenCount = counts.some((c) => c.room_number === n && (c.count ?? 0) > 0);
       const meta = isStaffRoom
         ? { bg: "var(--room-staff)", fg: "var(--room-staff-fg)", accent: "var(--room-staff-accent)", label: "Staff" }
-        : isDirty
-        ? { bg: "var(--room-dirty)", fg: "var(--room-dirty-fg)", accent: "var(--room-dirty-accent)", label: "Dirty" }
-          : isClean
-            ? ((state === "done" || state === "complete")
-                ? { bg: "var(--room-complete)", fg: "var(--room-complete-fg)", accent: "var(--room-complete-accent)", label: "Clean & Ready for Guests" }
-                : { ...roomStateMeta.todo, label: "Clean" })
-        : (isStayover || isDnd)
-          ? { ...roomStateMeta.todo, label: "Stayover" }
-            : isArrival
-              ? ((state === "done" || state === "complete")
-                  ? { bg: "var(--room-complete)", fg: "var(--room-complete-fg)", accent: "var(--room-complete-accent)", label: "Clean & Ready for Guests" }
-                  : { ...roomStateMeta.todo, label: "Arrival" })
-          : !hasStatus
-            ? { ...roomStateMeta.todo, label: "Not started" }
-            : baseMeta;
+        : (state === "done" || state === "complete")
+          ? { bg: "var(--room-complete)", fg: "var(--room-complete-fg)", accent: "var(--room-complete-accent)", label: "Clean & Ready for Guests" }
+          : (hasStatus || hasLinenCount)
+            ? { ...roomStateMeta.progress, label: "Cleaning in Progress" }
+            : { ...roomStateMeta.todo, label: isStayover || isDnd ? "Stayover" : isArrival ? "Arrival" : isDirty ? "Dirty" : isClean ? "Clean" : "Not started" };
     nodes.push(
         <button
         key={`r-${n}`}
