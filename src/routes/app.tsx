@@ -4310,21 +4310,13 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
         : roomStateMeta[state];
      const hasStatus = !!(room?.reception_status_id ?? room?.default_status);
       const hasLinenCount = counts.some((c) => c.room_number === n && (c.count ?? 0) > 0);
-      const meta = isDirty && !isStaff
-        ? { bg: "var(--room-dirty)", fg: "var(--room-dirty-fg)", accent: "var(--room-dirty-accent)", label: "Dirty" }
-        : isClean && !isStaff
-        ? ((state === "done" || state === "complete")
-            ? { bg: "var(--room-done)", fg: "var(--room-done-fg)", accent: "var(--room-done-accent)", label: "Clean & Ready for Guests" }
-            : { bg: "var(--room-done)", fg: "var(--room-done-fg)", accent: "var(--room-done-accent)", label: "Clean" })
-        : (isStayover || isDnd) && !isStaff
-          ? { ...roomStateMeta.todo, label: "Stayover" }
-          : isArrival && !isStaff && (state === "done" || state === "complete")
-            ? { bg: "var(--room-complete)", fg: "var(--room-complete-fg)", accent: "var(--room-complete-accent)", label: "Clean & Ready for Guests" }
-          : isArrival && !isStaff && state === "todo"
-            ? { ...roomStateMeta.todo, label: "Not started" }
-          : !hasStatus && !isStaff
-            ? { ...roomStateMeta.todo, label: "Not started" }
-            : baseMeta;
+      const meta = isStaff
+        ? { bg: "var(--room-staff)", fg: "var(--room-staff-fg)", accent: "var(--room-staff-accent)", label: "Staff" }
+        : (state === "done" || state === "complete")
+          ? { bg: "var(--room-complete)", fg: "var(--room-complete-fg)", accent: "var(--room-complete-accent)", label: "Clean & Ready for Guests" }
+          : (hasStatus || hasLinenCount || state === "progress")
+            ? { ...roomStateMeta.progress, label: "Cleaning in Progress" }
+            : { ...roomStateMeta.todo, label: isStayover || isDnd ? "Stayover" : isArrival ? "Arrival" : isDirty ? "Dirty" : isClean ? "Clean" : "Not started" };
     nodes.push(
       <button
         key={`r-${n}`}
