@@ -14,7 +14,7 @@ const ENTRIES: Entry[] = [
     key: "bed",
     label: "Bed icon",
     description:
-      "The room is clean and ready, but no bed type has been selected yet. Open the room to set the bed configuration.",
+      "The room is clean and ready, but no bed type has been selected yet. Might need to ask Housekeeping what the bed was made as, or check the room",
     render: () => <Bed className="h-5 w-5" />,
   },
   {
