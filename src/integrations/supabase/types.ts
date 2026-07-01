@@ -41,6 +41,45 @@ export type Database = {
         }
         Relationships: []
       }
+      maintenance_requests: {
+        Row: {
+          created_at: string
+          created_by_username: string | null
+          done: boolean
+          done_at: string | null
+          done_by_username: string | null
+          id: string
+          message: string
+          room_number: number
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          created_by_username?: string | null
+          done?: boolean
+          done_at?: string | null
+          done_by_username?: string | null
+          id?: string
+          message: string
+          room_number: number
+          updated_at?: string
+          user_id?: string
+        }
+        Update: {
+          created_at?: string
+          created_by_username?: string | null
+          done?: boolean
+          done_at?: string | null
+          done_by_username?: string | null
+          id?: string
+          message?: string
+          room_number?: number
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       notification_preferences: {
         Row: {
           checkout_enabled: boolean

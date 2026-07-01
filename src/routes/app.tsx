@@ -226,6 +226,16 @@ type RoomMessage = {
   dismissed: boolean;
   created_at: string;
 };
+type MaintenanceRequest = {
+  id: string;
+  room_number: number;
+  message: string;
+  created_by_username: string | null;
+  done: boolean;
+  done_by_username: string | null;
+  done_at: string | null;
+  created_at: string;
+};
 
 function AppPage() {
  const qc = useQueryClient();
@@ -353,6 +363,13 @@ function AppPage() {
           }
         },
       )
+      .on(
+        "postgres_changes",
+        { event: "*", schema: "public", table: "maintenance_requests" },
+        () => {
+          qc.invalidateQueries({ queryKey: ["maintenance_requests"] });
+        },
+      )
       .subscribe();
     return () => {
       supabase.removeChannel(channel);
@@ -390,6 +407,9 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
   const [editRoomSheetNumber, setEditRoomSheetNumber] = useState<number | null>(null);
   const [menuSheetOpen, setMenuSheetOpen] = useState(false);
   const [notificationsSheetOpen, setNotificationsSheetOpen] = useState(false);
+  const [maintenanceLogOpen, setMaintenanceLogOpen] = useState(false);
+  const [newMaintenanceRoom, setNewMaintenanceRoom] = useState<string>("");
+  const [newMaintenanceText, setNewMaintenanceText] = useState<string>("");
   // Admin "view as" overlay — lets admins temporarily experience the app as
   // another role. Does NOT change the auth token; backend still treats them
   // as admin. Only affects UI gating and visible affordances.
@@ -599,6 +619,18 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
     },
   });
 
+  const maintenanceRequestsQ = useQuery({
+    queryKey: ["maintenance_requests"],
+    queryFn: async (): Promise<MaintenanceRequest[]> => {
+      const { data, error } = await supabase
+        .from("maintenance_requests" as never)
+        .select("id,room_number,message,created_by_username,done,done_by_username,done_at,created_at")
+        .order("created_at", { ascending: false });
+      if (error) throw error;
+      return (data ?? []) as MaintenanceRequest[];
+    },
+  });
+
   const template = templateQ.data ?? [];
   const extras = extrasQ.data ?? [];
   const counts = countsQ.data ?? [];
@@ -616,6 +648,9 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
   const activeMessagesByRoom = (n: number) =>
     roomMessages.filter((m) => m.room_number === n && !m.dismissed);
   const hasActiveMessage = (n: number) => activeMessagesByRoom(n).length > 0;
+  const maintenanceRequests = (maintenanceRequestsQ.data ?? []) as MaintenanceRequest[];
+  const openMaintenanceCount = maintenanceRequests.filter((m) => !m.done).length;
+  const hasOpenMaintenance = openMaintenanceCount > 0;
 
   const [newMessageText, setNewMessageText] = useState("");
 
@@ -708,6 +743,65 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
     }
     await setRoomHousekeepingNote(roomNumber, "");
     toast.success("Confirmation sent to housekeeping");
+  };
+
+  const submitMaintenanceRequest = async () => {
+    const roomNumber = Number(newMaintenanceRoom);
+    const text = newMaintenanceText.trim();
+    if (!Number.isFinite(roomNumber) || roomNumber <= 0) {
+      toast.error("Pick a room");
+      return;
+    }
+    if (!text) {
+      toast.error("Add a message");
+      return;
+    }
+    const { error } = await supabase.from("maintenance_requests" as never).insert({
+      room_number: roomNumber,
+      message: text,
+      created_by_username: authUser?.username ?? null,
+    } as never);
+    if (error) {
+      toast.error(error.message);
+      return;
+    }
+    setNewMaintenanceRoom("");
+    setNewMaintenanceText("");
+    qc.invalidateQueries({ queryKey: ["maintenance_requests"] });
+    toast.success("Maintenance request logged");
+  };
+
+  const markMaintenanceDone = async (id: string) => {
+    const who = authUser?.username ?? "Reception";
+    qc.setQueryData<MaintenanceRequest[]>(["maintenance_requests"], (old) =>
+      old?.map((m) =>
+        m.id === id
+          ? { ...m, done: true, done_by_username: who, done_at: new Date().toISOString() }
+          : m,
+      ) ?? [],
+    );
+    const { error } = await supabase
+      .from("maintenance_requests" as never)
+      .update({ done: true, done_by_username: who, done_at: new Date().toISOString() } as never)
+      .eq("id", id);
+    if (error) {
+      toast.error(error.message);
+      qc.invalidateQueries({ queryKey: ["maintenance_requests"] });
+      return;
+    }
+    qc.invalidateQueries({ queryKey: ["maintenance_requests"] });
+  };
+
+  const deleteMaintenanceRequest = async (id: string) => {
+    qc.setQueryData<MaintenanceRequest[]>(["maintenance_requests"], (old) =>
+      old?.filter((m) => m.id !== id) ?? [],
+    );
+    const { error } = await supabase
+      .from("maintenance_requests" as never)
+      .delete()
+      .eq("id", id);
+    if (error) toast.error(error.message);
+    qc.invalidateQueries({ queryKey: ["maintenance_requests"] });
   };
 
   const getRejectCount = (templateItemId: string) =>
@@ -2638,14 +2732,26 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
       </Button>
     )}
  {isMobile ? (
-   <Button variant="ghost" size="sm" aria-label="Menu" onClick={() => setMenuSheetOpen(true)}>
+   <Button variant="ghost" size="sm" aria-label="Menu" onClick={() => setMenuSheetOpen(true)} className="relative">
      <Menu className="h-4 w-4" />
+     {hasOpenMaintenance && (
+       <span
+         aria-label={`${openMaintenanceCount} open maintenance request${openMaintenanceCount === 1 ? "" : "s"}`}
+         className="absolute -top-0.5 -right-0.5 h-2.5 w-2.5 rounded-full bg-amber-500 ring-2 ring-background"
+       />
+     )}
    </Button>
  ) : (
    <DropdownMenu>
      <DropdownMenuTrigger asChild>
-       <Button variant="ghost" size="sm" aria-label="Menu">
+       <Button variant="ghost" size="sm" aria-label="Menu" className="relative">
          <Menu className="h-4 w-4" />
+         {hasOpenMaintenance && (
+           <span
+             aria-label={`${openMaintenanceCount} open maintenance request${openMaintenanceCount === 1 ? "" : "s"}`}
+             className="absolute -top-0.5 -right-0.5 h-2.5 w-2.5 rounded-full bg-amber-500 ring-2 ring-background"
+           />
+         )}
        </Button>
      </DropdownMenuTrigger>
      <DropdownMenuContent align="end" className="w-64">
@@ -2682,6 +2788,13 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
            <Users className="h-4 w-4 mr-2" /> Users
          </DropdownMenuItem>
        )}
+        <DropdownMenuItem onClick={() => setMaintenanceLogOpen(true)}>
+          <Wrench className="h-4 w-4 mr-2" />
+          <span className="flex-1">Maintenance Log</span>
+          {hasOpenMaintenance && (
+            <span className="ml-2 h-2 w-2 rounded-full bg-amber-500" aria-hidden />
+          )}
+        </DropdownMenuItem>
        <DropdownMenuItem onClick={() => setNotificationsSheetOpen(true)}>
          <Bell className="h-4 w-4 mr-2" /> Notifications
        </DropdownMenuItem>
@@ -3384,6 +3497,18 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
               {realIsAdmin && (
                 <Row icon={Users} label="Users" onClick={() => { close(); setUsersOpen(true); }} />
               )}
+              <Row
+                icon={Wrench}
+                label={
+                  <span className="flex items-center gap-2">
+                    Maintenance Log
+                    {hasOpenMaintenance && (
+                      <span className="h-2 w-2 rounded-full bg-amber-500" aria-hidden />
+                    )}
+                  </span>
+                }
+                onClick={() => { close(); setMaintenanceLogOpen(true); }}
+              />
               <Row icon={Bell} label="Notifications" onClick={() => { close(); setNotificationsSheetOpen(true); }} />
               <Row icon={User} label="Account" onClick={() => { close(); setAccountOpen(true); }} />
               <Row icon={LogOut} label="Sign out" destructive onClick={() => { close(); void signOut(); }} />
@@ -3396,6 +3521,133 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
 </Sheet>
 
 {/* History sheet (Admin) */}
+<Sheet open={maintenanceLogOpen} onOpenChange={setMaintenanceLogOpen}>
+  <SheetContent side="bottom" className="max-h-[90vh] overflow-hidden rounded-t-2xl p-4 sm:p-6 flex flex-col">
+    <SheetHeader className="text-left">
+      <SheetTitle className="flex items-center gap-2">
+        <Wrench className="h-4 w-4" />
+        Maintenance Log
+        {hasOpenMaintenance && (
+          <span className="ml-1 inline-flex items-center gap-1 rounded-full bg-amber-500/15 text-amber-700 dark:text-amber-300 px-2 py-0.5 text-xs font-medium">
+            <span className="h-1.5 w-1.5 rounded-full bg-amber-500" aria-hidden />
+            {openMaintenanceCount} open
+          </span>
+        )}
+      </SheetTitle>
+      <SheetDescription>
+        {isReception
+          ? "Reception can mark maintenance requests as complete."
+          : "Log a maintenance issue for reception to action."}
+      </SheetDescription>
+    </SheetHeader>
+    <div className="mt-4 flex flex-col gap-2 border-b pb-4">
+      <div className="flex flex-col sm:flex-row gap-2">
+        <Input
+          type="number"
+          inputMode="numeric"
+          placeholder="Room #"
+          value={newMaintenanceRoom}
+          onChange={(e) => setNewMaintenanceRoom(e.target.value)}
+          className="sm:w-28"
+        />
+        <Input
+          placeholder="Describe the issue…"
+          value={newMaintenanceText}
+          onChange={(e) => setNewMaintenanceText(e.target.value)}
+          onKeyDown={(e) => {
+            if (e.key === "Enter") {
+              e.preventDefault();
+              void submitMaintenanceRequest();
+            }
+          }}
+          className="flex-1"
+        />
+        <Button type="button" onClick={() => void submitMaintenanceRequest()}>
+          <Plus className="h-4 w-4 mr-1" /> Log
+        </Button>
+      </div>
+    </div>
+    <div className="flex-1 min-h-0 overflow-y-auto mt-4 space-y-4">
+      <div className="space-y-2">
+        <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+          Open ({openMaintenanceCount})
+        </p>
+        {openMaintenanceCount === 0 ? (
+          <p className="text-sm text-muted-foreground">No open maintenance requests.</p>
+        ) : (
+          maintenanceRequests
+            .filter((m) => !m.done)
+            .map((m) => (
+              <div key={m.id} className="flex items-start gap-2 rounded-lg border bg-background p-3">
+                <div className="flex-1 min-w-0">
+                  <div className="flex items-center gap-2 flex-wrap">
+                    <span className="inline-flex h-6 items-center rounded-full bg-primary/10 text-primary px-2 text-xs font-semibold">
+                      Room {m.room_number}
+                    </span>
+                    <span className="text-xs text-muted-foreground">
+                      {new Date(m.created_at).toLocaleString(undefined, { month: "short", day: "numeric", hour: "numeric", minute: "2-digit" })}
+                      {m.created_by_username ? ` · ${m.created_by_username}` : ""}
+                    </span>
+                  </div>
+                  <p className="mt-1 text-sm whitespace-pre-wrap break-words">{m.message}</p>
+                </div>
+                {isReception ? (
+                  <Button
+                    type="button"
+                    size="sm"
+                    variant="outline"
+                    onClick={() => void markMaintenanceDone(m.id)}
+                    aria-label="Mark as done"
+                  >
+                    <Check className="h-4 w-4 mr-1" /> Done
+                  </Button>
+                ) : (
+                  <span className="text-xs text-muted-foreground shrink-0 pt-1">Awaiting reception</span>
+                )}
+              </div>
+            ))
+        )}
+      </div>
+      {maintenanceRequests.some((m) => m.done) && (
+        <div className="space-y-2">
+          <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">Completed</p>
+          {maintenanceRequests
+            .filter((m) => m.done)
+            .slice(0, 25)
+            .map((m) => (
+              <div key={m.id} className="flex items-start gap-2 rounded-lg border bg-muted/40 p-3">
+                <div className="flex-1 min-w-0">
+                  <div className="flex items-center gap-2 flex-wrap">
+                    <span className="inline-flex h-6 items-center rounded-full bg-muted text-muted-foreground px-2 text-xs font-semibold">
+                      Room {m.room_number}
+                    </span>
+                    <span className="text-xs text-muted-foreground">
+                      Done{m.done_by_username ? ` by ${m.done_by_username}` : ""}
+                      {m.done_at ? ` · ${new Date(m.done_at).toLocaleString(undefined, { month: "short", day: "numeric", hour: "numeric", minute: "2-digit" })}` : ""}
+                    </span>
+                  </div>
+                  <p className="mt-1 text-sm whitespace-pre-wrap break-words text-muted-foreground line-through">{m.message}</p>
+                </div>
+                {(isReception || isAdmin) && (
+                  <Button
+                    type="button"
+                    size="icon"
+                    variant="ghost"
+                    className="h-8 w-8 text-muted-foreground hover:text-destructive"
+                    onClick={() => void deleteMaintenanceRequest(m.id)}
+                    aria-label="Delete request"
+                  >
+                    <Trash2 className="h-4 w-4" />
+                  </Button>
+                )}
+              </div>
+            ))}
+        </div>
+      )}
+    </div>
+  </SheetContent>
+</Sheet>
+
 <Sheet open={historySheetOpen} onOpenChange={setHistorySheetOpen}>
    <SheetContent side="bottom" className="max-h-[90vh] overflow-hidden rounded-t-2xl p-4 sm:p-6">
     <SheetHeader className="text-left">
