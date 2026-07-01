@@ -1613,6 +1613,52 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
     win.document.close();
   };
 
+  const printMaintenance = (when: Date) => {
+    const list = [...rooms]
+      .filter((r) => r.needs_maintenance)
+      .sort((a, b) => a.room_number - b.room_number)
+      .map((r) => ({ room: r.room_number, note: (r.housekeeping_note ?? "").trim() }));
+    if (list.length === 0) {
+      toast.error("No rooms marked for maintenance");
+      return;
+    }
+    const dateStr = when.toLocaleDateString(undefined, {
+      year: "numeric",
+      month: "long",
+      day: "numeric",
+    });
+    const win = window.open("", "_blank");
+    if (!win) {
+      toast.error("Pop-up blocked");
+      return;
+    }
+    const esc = (s: string) =>
+      s.replace(/[<>&]/g, (ch) => ({ "<": "&lt;", ">": "&gt;", "&": "&amp;" }[ch]!));
+    const trs = list
+      .map(
+        (r) =>
+          `<tr><td class="num">${r.room}</td><td>${r.note ? esc(r.note) : '<span class="muted">—</span>'}</td></tr>`,
+      )
+      .join("");
+    win.document.write(`<!doctype html><html><head><title>Maintenance List - ${dateStr}</title><style>
+      body{font-family:system-ui,-apple-system,sans-serif;color:#000;background:#fff;padding:1.5rem;max-width:900px;margin:0 auto;}
+      h1{font-size:1.5rem;margin:0 0 .25rem;text-align:center;text-decoration:underline;}
+      .date{margin:0 0 1.25rem;font-size:.95rem;text-align:center;}
+      table{width:100%;border-collapse:collapse;font-size:.95rem;}
+      th,td{text-align:left;padding:.45rem .6rem;border:1px solid #444;vertical-align:top;}
+      th.num,td.num{text-align:center;font-variant-numeric:tabular-nums;width:4rem;}
+      th{background:#eee;}
+      .muted{color:#666;}
+      @media print{body{padding:0;}}
+    </style></head><body>
+      <h1>Maintenance List</h1>
+      <p class="date">${dateStr}</p>
+      <table><thead><tr><th class="num">Room</th><th>Maintenance note</th></tr></thead><tbody>${trs}</tbody></table>
+      <script>window.onload=()=>{window.print();}</script>
+    </body></html>`);
+    win.document.close();
+  };
+
  // --- Room category ---
  const toggleRoomCategory = async (roomNumber: number, value: Category) => {
  const current = parseCats(rooms.find((r) => r.room_number === roomNumber)?.category);
@@ -2493,6 +2539,15 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
               <ClipboardList className="h-5 w-5 mr-2" />
               Room status
             </Button>
+            <Button
+              variant="outline"
+              size="lg"
+              className="justify-start h-12"
+              onClick={() => { setExportSheetOpen(false); printMaintenance(new Date()); }}
+            >
+              <Wrench className="h-5 w-5 mr-2" />
+              Maintenance list
+            </Button>
           </div>
         </SheetContent>
       </Sheet>
@@ -2511,6 +2566,10 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
           <DropdownMenuItem onClick={() => openRoomStatusExport()}>
             <ClipboardList className="h-4 w-4 mr-2" />
             Room status
+          </DropdownMenuItem>
+          <DropdownMenuItem onClick={() => printMaintenance(new Date())}>
+            <Wrench className="h-4 w-4 mr-2" />
+            Maintenance list
           </DropdownMenuItem>
         </DropdownMenuContent>
       </DropdownMenu>
