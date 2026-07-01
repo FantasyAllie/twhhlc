@@ -1959,6 +1959,35 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
     );
     if (error) toast.error(error.message);
     qc.invalidateQueries({ queryKey: ["rooms"] });
+    // Sync with the Maintenance Log
+    if (value) {
+      const existingOpen = (qc.getQueryData<MaintenanceRequest[]>(["maintenance_requests"]) ?? [])
+        .some((m) => m.room_number === roomNumber && !m.done);
+      if (!existingOpen) {
+        const room = (qc.getQueryData<Room[]>(["rooms"]) ?? []).find((r) => r.room_number === roomNumber);
+        const noteText = (room?.housekeeping_note ?? "").trim();
+        const { error: insErr } = await supabase.from("maintenance_requests" as never).insert({
+          room_number: roomNumber,
+          message: noteText || "Needs maintenance",
+          created_by_username: authUser?.username ?? null,
+        } as never);
+        if (insErr) toast.error(insErr.message);
+        qc.invalidateQueries({ queryKey: ["maintenance_requests"] });
+      }
+    } else {
+      const who = authUser?.username ?? "Housekeeping";
+      const openIds = (qc.getQueryData<MaintenanceRequest[]>(["maintenance_requests"]) ?? [])
+        .filter((m) => m.room_number === roomNumber && !m.done)
+        .map((m) => m.id);
+      if (openIds.length > 0) {
+        const { error: upErr } = await supabase
+          .from("maintenance_requests" as never)
+          .update({ done: true, done_by_username: who, done_at: new Date().toISOString() } as never)
+          .in("id", openIds);
+        if (upErr) toast.error(upErr.message);
+        qc.invalidateQueries({ queryKey: ["maintenance_requests"] });
+      }
+    }
   };
 
   const setRoomGuestVacated = async (roomNumber: number, value: boolean) => {
