@@ -3077,8 +3077,8 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
          <>
            <SheetHeader className="text-left">
              <SheetTitle className="flex items-center gap-2">
-               <ConciergeBell className="h-4 w-4" />
-               Reception — Room {n}
+                <ConciergeBell className="h-4 w-4" />
+                Status — Room {n}
              </SheetTitle>
              <SheetDescription>Mark status and bed configuration</SheetDescription>
            </SheetHeader>
@@ -4235,6 +4235,8 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
           ? { ...roomStateMeta.todo, label: "Stayover" }
         : (state === "done" || state === "complete")
           ? { bg: "var(--room-complete)", fg: "var(--room-complete-fg)", accent: "var(--room-complete-accent)", label: "Clean & Ready for Guests" }
+        : isDirty
+          ? { ...roomStateMeta.todo, label: "ROS - Dirty" }
           : (hasStatus || hasLinenCount)
             ? { ...roomStateMeta.progress, label: "Cleaning in Progress" }
             : { ...roomStateMeta.todo, label: isArrival ? "Arrival" : isDirty ? "Dirty" : isClean ? "Clean" : "Not started" };
