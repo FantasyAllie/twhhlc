@@ -3445,6 +3445,9 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
                     {s.kind === "room_status" && (
                       <span className="text-xs uppercase tracking-wide text-muted-foreground">Room status</span>
                     )}
+                    {s.kind === "maintenance" && (
+                      <span className="text-xs uppercase tracking-wide text-muted-foreground">Maintenance</span>
+                    )}
                     <span className="text-xs text-muted-foreground">({s.grand_total})</span>
                   </button>
                   <Button
