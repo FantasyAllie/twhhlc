@@ -1645,11 +1645,13 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
     win.document.close();
   };
 
-  const printMaintenance = (when: Date) => {
-    const list = [...rooms]
-      .filter((r) => r.needs_maintenance)
-      .sort((a, b) => a.room_number - b.room_number)
-      .map((r) => ({ room: r.room_number, note: (r.housekeeping_note ?? "").trim() }));
+  const printMaintenance = (when: Date, presetList?: MaintenanceRow[]) => {
+    const list =
+      presetList ??
+      [...rooms]
+        .filter((r) => r.needs_maintenance)
+        .sort((a, b) => a.room_number - b.room_number)
+        .map((r) => ({ room: r.room_number, note: (r.housekeeping_note ?? "").trim() }));
     if (list.length === 0) {
       toast.error("No rooms marked for maintenance");
       return;
