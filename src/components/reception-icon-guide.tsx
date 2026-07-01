@@ -14,7 +14,7 @@ const ENTRIES: Entry[] = [
     key: "check",
     label: "Check mark",
     description:
-      "Reception has confirmed this room is done and ready — status and bed have been set for the day.",
+      "Reception has confirmed this room is done and ready — status and bed have been set for the day. Room's marked as stayover have also been serviced.",
     render: () => <Check className="h-5 w-5" strokeWidth={4} />,
   },
   {
