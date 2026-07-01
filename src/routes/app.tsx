@@ -2732,14 +2732,26 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
       </Button>
     )}
  {isMobile ? (
-   <Button variant="ghost" size="sm" aria-label="Menu" onClick={() => setMenuSheetOpen(true)}>
+   <Button variant="ghost" size="sm" aria-label="Menu" onClick={() => setMenuSheetOpen(true)} className="relative">
      <Menu className="h-4 w-4" />
+     {hasOpenMaintenance && (
+       <span
+         aria-label={`${openMaintenanceCount} open maintenance request${openMaintenanceCount === 1 ? "" : "s"}`}
+         className="absolute -top-0.5 -right-0.5 h-2.5 w-2.5 rounded-full bg-amber-500 ring-2 ring-background"
+       />
+     )}
    </Button>
  ) : (
    <DropdownMenu>
      <DropdownMenuTrigger asChild>
-       <Button variant="ghost" size="sm" aria-label="Menu">
+       <Button variant="ghost" size="sm" aria-label="Menu" className="relative">
          <Menu className="h-4 w-4" />
+         {hasOpenMaintenance && (
+           <span
+             aria-label={`${openMaintenanceCount} open maintenance request${openMaintenanceCount === 1 ? "" : "s"}`}
+             className="absolute -top-0.5 -right-0.5 h-2.5 w-2.5 rounded-full bg-amber-500 ring-2 ring-background"
+           />
+         )}
        </Button>
      </DropdownMenuTrigger>
      <DropdownMenuContent align="end" className="w-64">
