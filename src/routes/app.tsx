@@ -5,6 +5,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Minus, Plus, X, Menu, ArrowUp, ArrowDown, Pencil, Check, Trash2, Sun, Moon, List, Bed, Ban, History, Users, User, LogOut, Hash, ConciergeBell, ClipboardList, Printer, Filter, Wrench, StickyNote, DoorOpen, Bell, Eye, EyeOff, HelpCircle } from "lucide-react";
+import { ReceptionIconGuide } from "@/components/reception-icon-guide";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
 import { getToken, getStoredUser, clearSession } from "@/lib/auth-client";
@@ -3919,41 +3920,12 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
  <Dialog open={receptionHelpOpen} onOpenChange={setReceptionHelpOpen}>
    <DialogContent className="max-w-md w-[calc(100vw-1.5rem)] sm:w-full p-4 sm:p-6">
      <DialogHeader>
-       <DialogTitle>Room colour guide</DialogTitle>
-       <DialogDescription>
-         What each room tile colour means at a glance.
-       </DialogDescription>
+      <DialogTitle>Icon & symbol guide</DialogTitle>
+      <DialogDescription>
+        Tap any icon or symbol to see what it means.
+      </DialogDescription>
      </DialogHeader>
-     <ul className="space-y-3 mt-2">
-       <li className="flex items-start gap-3">
-         <span className="mt-0.5 inline-block h-5 w-5 rounded-md bg-emerald-500 ring-1 ring-inset ring-emerald-700/40 shrink-0" />
-         <div>
-           <p className="text-sm font-medium">Green</p>
-           <p className="text-xs text-muted-foreground">Room is clean and ready for a guest.</p>
-         </div>
-       </li>
-       <li className="flex items-start gap-3">
-         <span className="mt-0.5 inline-block h-5 w-5 rounded-md bg-red-500 ring-1 ring-inset ring-red-700/40 shrink-0" />
-         <div>
-           <p className="text-sm font-medium">Red</p>
-           <p className="text-xs text-muted-foreground">Stayover, or room has not been serviced / cleaned yet.</p>
-         </div>
-       </li>
-       <li className="flex items-start gap-3">
-         <span className="mt-0.5 inline-block h-5 w-5 rounded-md bg-yellow-400 ring-1 ring-inset ring-yellow-600/40 shrink-0" />
-         <div>
-           <p className="text-sm font-medium">Yellow</p>
-           <p className="text-xs text-muted-foreground">Cleaning in progress.</p>
-         </div>
-       </li>
-       <li className="flex items-start gap-3">
-         <span className="mt-0.5 inline-block h-5 w-5 rounded-md bg-muted-foreground/40 ring-1 ring-inset ring-muted-foreground/40 shrink-0" />
-         <div>
-           <p className="text-sm font-medium">Grey</p>
-           <p className="text-xs text-muted-foreground">Room out of service.</p>
-         </div>
-       </li>
-     </ul>
+    <ReceptionIconGuide />
    </DialogContent>
  </Dialog>
 
