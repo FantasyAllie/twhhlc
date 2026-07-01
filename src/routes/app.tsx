@@ -3229,7 +3229,7 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
   />
 )}
 <Sheet open={menuSheetOpen} onOpenChange={setMenuSheetOpen}>
-  <SheetContent side="right" disableDragDismiss className="w-auto max-w-[90vw] min-w-[18rem] sm:max-w-md overflow-y-auto p-4 sm:p-6">
+  <SheetContent side="right" disableDragDismiss className="w-auto max-w-[90vw] min-w-[18rem] sm:max-w-md overflow-y-auto p-4 sm:p-6 [&_[data-sheet-close]]:max-lg:hidden">
     <SheetHeader className="text-left">
       <SheetTitle className="flex items-center gap-2">
         <Menu className="h-4 w-4" />
@@ -4230,12 +4230,16 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
         ? { bg: "var(--room-staff)", fg: "var(--room-staff-fg)", accent: "var(--room-staff-accent)", label: "Staff" }
         : isDirty
         ? { bg: "var(--room-dirty)", fg: "var(--room-dirty-fg)", accent: "var(--room-dirty-accent)", label: "Dirty" }
-         : isClean
-          ? { bg: "var(--room-complete)", fg: "var(--room-complete-fg)", accent: "var(--room-complete-accent)", label: (state === "done" || state === "complete") ? "Clean & Ready for Guests" : "Clean" }
+          : isClean
+            ? ((state === "done" || state === "complete")
+                ? { bg: "var(--room-complete)", fg: "var(--room-complete-fg)", accent: "var(--room-complete-accent)", label: "Clean & Ready for Guests" }
+                : { ...roomStateMeta.todo, label: "Clean" })
         : (isStayover || isDnd)
           ? { ...roomStateMeta.todo, label: "Stayover" }
             : isArrival
-              ? { bg: "var(--room-complete)", fg: "var(--room-complete-fg)", accent: "var(--room-complete-accent)", label: (state === "done" || state === "complete") ? "Clean & Ready for Guests" : "Arrival" }
+              ? ((state === "done" || state === "complete")
+                  ? { bg: "var(--room-complete)", fg: "var(--room-complete-fg)", accent: "var(--room-complete-accent)", label: "Clean & Ready for Guests" }
+                  : { ...roomStateMeta.todo, label: "Arrival" })
           : !hasStatus
             ? { ...roomStateMeta.todo, label: "Not started" }
             : baseMeta;
