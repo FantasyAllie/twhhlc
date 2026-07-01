@@ -3483,6 +3483,20 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
               </div>
             </div>
           )}
+          <div className="space-y-1.5">
+            <Row
+              icon={Wrench}
+              label={
+                <span className="flex items-center gap-2">
+                  Maintenance Log
+                  {hasOpenMaintenance && (
+                    <span className="h-2 w-2 rounded-full bg-amber-500" aria-hidden />
+                  )}
+                </span>
+              }
+              onClick={() => { close(); setMaintenanceLogOpen(true); }}
+            />
+          </div>
           <div className="space-y-2">
             <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">Appearance</p>
             <Row
@@ -3497,18 +3511,6 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
               {realIsAdmin && (
                 <Row icon={Users} label="Users" onClick={() => { close(); setUsersOpen(true); }} />
               )}
-              <Row
-                icon={Wrench}
-                label={
-                  <span className="flex items-center gap-2">
-                    Maintenance Log
-                    {hasOpenMaintenance && (
-                      <span className="h-2 w-2 rounded-full bg-amber-500" aria-hidden />
-                    )}
-                  </span>
-                }
-                onClick={() => { close(); setMaintenanceLogOpen(true); }}
-              />
               <Row icon={Bell} label="Notifications" onClick={() => { close(); setNotificationsSheetOpen(true); }} />
               <Row icon={User} label="Account" onClick={() => { close(); setAccountOpen(true); }} />
               <Row icon={LogOut} label="Sign out" destructive onClick={() => { close(); void signOut(); }} />
