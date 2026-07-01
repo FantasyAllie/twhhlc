@@ -4424,6 +4424,9 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
           )}
          <span className="text-sm sm:text-base md:text-xl font-bold leading-none inline-flex items-center gap-1">
            {n}
+          {!isStaff && (state === "done" || state === "complete") && (
+            <Check aria-label="Done" className="h-3.5 w-3.5 opacity-80" />
+          )}
           {!isStaff && !isStayover && (state === "done" || state === "complete") && !room?.reception_bed_id && (
             <Bed aria-label="Bed not selected" className="h-3.5 w-3.5 opacity-80" />
           )}
