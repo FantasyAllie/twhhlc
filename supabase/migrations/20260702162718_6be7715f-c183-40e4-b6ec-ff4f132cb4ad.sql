@@ -1,0 +1,1 @@
+ALTER TABLE public.template_items ADD COLUMN IF NOT EXISTS list_type text NOT NULL DEFAULT 'housekeeping' CHECK (list_type IN ('housekeeping','fnb'));

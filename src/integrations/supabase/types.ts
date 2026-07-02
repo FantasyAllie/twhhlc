@@ -513,6 +513,7 @@ export type Database = {
           created_at: string
           default_count: number
           id: string
+          list_type: string
           name: string
           position: number
           user_id: string
@@ -523,6 +524,7 @@ export type Database = {
           created_at?: string
           default_count?: number
           id?: string
+          list_type?: string
           name: string
           position?: number
           user_id?: string
@@ -533,6 +535,7 @@ export type Database = {
           created_at?: string
           default_count?: number
           id?: string
+          list_type?: string
           name?: string
           position?: number
           user_id?: string
