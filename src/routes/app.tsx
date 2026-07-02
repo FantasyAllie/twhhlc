@@ -2970,9 +2970,31 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
    </DialogDescription>
  </DialogHeader>
    <div className="space-y-3">
+     <div className="inline-flex rounded-md border p-0.5 bg-muted/40 self-start">
+       <button
+         type="button"
+         onClick={() => setLinenListType("housekeeping")}
+         className={cn(
+           "px-3 py-1.5 text-sm rounded-[0.3rem] transition-colors",
+           linenListType === "housekeeping" ? "bg-background shadow-sm font-medium" : "text-muted-foreground",
+         )}
+       >
+         Housekeeping
+       </button>
+       <button
+         type="button"
+         onClick={() => setLinenListType("fnb")}
+         className={cn(
+           "px-3 py-1.5 text-sm rounded-[0.3rem] transition-colors",
+           linenListType === "fnb" ? "bg-background shadow-sm font-medium" : "text-muted-foreground",
+         )}
+       >
+         F&amp;B
+       </button>
+     </div>
     <form onSubmit={addTemplateItem} className="flex gap-2">
       <Input
-        placeholder="Add an item…"
+         placeholder={`Add an item to ${linenListType === "fnb" ? "F&B" : "Housekeeping"}…`}
         value={newTemplateName}
         onChange={(e) => setNewTemplateName(e.target.value)}
       />
@@ -2980,16 +3002,18 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
         Add
       </Button>
     </form>
-    {template.length === 0 ? (
-      <p className="text-sm text-muted-foreground">No items yet.</p>
-    ) : (
+     {(() => {
+       const listItems = templateAll.filter((t) => (t.list_type ?? "housekeeping") === linenListType);
+       return listItems.length === 0 ? (
+         <p className="text-sm text-muted-foreground">No items yet.</p>
+       ) : (
         <ul className="divide-y border-t max-h-[60vh] overflow-y-auto -mx-4 sm:-mx-6 px-4 sm:px-6">
           <li className="flex items-center gap-1.5 py-1.5 text-xs font-medium text-muted-foreground uppercase tracking-wide">
             <span className="h-3 w-3 shrink-0" aria-hidden />
             <span className="flex-1 min-w-0">Item</span>
             <span className="shrink-0 w-[88px] text-right">Actions</span>
           </li>
-          {template.map((item, idx) => {
+           {listItems.map((item, idx) => {
           return (
             <li key={item.id} className="flex items-center gap-1.5 py-2">
               <span
