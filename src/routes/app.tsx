@@ -4592,13 +4592,13 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
          F&amp;B Linen Counter
        </h2>
      </div>
-     {template.length === 0 ? (
+      {templateFnbList.length === 0 ? (
        <p className="text-sm text-muted-foreground">
-         No linen items yet. Add some from the Linen List.
+          No F&amp;B linen items yet. Add some from the Linen List (F&amp;B tab).
        </p>
      ) : (
        <ul className="divide-y border rounded-md bg-muted/30">
-         {template.map((item) => {
+          {templateFnbList.map((item) => {
            const value = fnbCountByItem.get(item.id) ?? 0;
            const swatch = item.color ? COLOR_SWATCHES[item.color] : null;
            return (
