@@ -648,7 +648,9 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
     },
   });
 
-  const template = templateQ.data ?? [];
+  const templateAll = templateQ.data ?? [];
+  const template = templateAll.filter((t) => (t.list_type ?? "housekeeping") === "housekeeping");
+  const templateFnbList = templateAll.filter((t) => t.list_type === "fnb");
   const fnbCounts = fnbCountsQ.data ?? [];
   const fnbCountByItem = new Map<string, number>(
     fnbCounts.map((c) => [c.template_item_id, c.count ?? 0]),
