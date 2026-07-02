@@ -12,6 +12,7 @@ import { getToken, getStoredUser, clearSession } from "@/lib/auth-client";
 import { notifyRoomEvent } from "@/lib/push.functions";
 import { NotificationsSheet } from "@/components/notifications-sheet";
 import { UsersDialog } from "@/components/users-dialog";
+import { UserApprovalDialog } from "@/components/user-approval-dialog";
 import { QuickReceptionSheet } from "@/components/quick-reception-sheet";
 import { useServerFn } from "@tanstack/react-start";
 import { useIsMobile } from "@/hooks/use-mobile";
@@ -381,6 +382,7 @@ function AppPage() {
   };
   const [accountOpen, setAccountOpen] = useState(false);
   const [usersOpen, setUsersOpen] = useState(false);
+  const [userApprovalOpen, setUserApprovalOpen] = useState(false);
  const [openRoom, setOpenRoom] = useState<number | null>(null);
  const [templateOpen, setTemplateOpen] = useState(false);
 const [linenListType, setLinenListType] = useState<"housekeeping" | "fnb">("housekeeping");
@@ -3014,6 +3016,11 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
        {realIsAdmin && (
          <DropdownMenuItem onClick={() => setUsersOpen(true)}>
            <Users className="h-4 w-4 mr-2" /> Users
+         </DropdownMenuItem>
+       )}
+       {realIsManager && !realIsAdmin && (
+         <DropdownMenuItem onClick={() => setUserApprovalOpen(true)}>
+           <Users className="h-4 w-4 mr-2" /> User Approval
          </DropdownMenuItem>
        )}
          {!menuIsFnbOnly && (
