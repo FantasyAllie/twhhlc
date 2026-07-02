@@ -2828,6 +2828,13 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
                   This checker shows when Housekeeping have finished with a room and the room is ready for a customer. {"\n\n"}Click on a room to see it's features and send a message to Housekeeping if needed.
                 </p>
               </>
+            ) : isFnb ? (
+              <>
+                <h1 className="text-xl sm:text-2xl font-semibold tracking-tight">Three Ways House Hotel</h1>
+                <p className="text-xs text-muted-foreground mt-1">
+                  Shared workspace for F&B staff
+                </p>
+              </>
             ) : (
               <>
                 <h1 className="text-xl sm:text-2xl font-semibold tracking-tight">Three Ways House Hotel</h1>
