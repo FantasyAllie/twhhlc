@@ -3921,12 +3921,6 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
       <SheetDescription>Recent exports</SheetDescription>
     </SheetHeader>
     <div className="flex-1 min-h-0 overflow-y-auto space-y-3">
-      {(() => {
-        const visibleSnapshots = isFnb
-          ? snapshots.filter((s) => s.kind === "fnb_totals")
-          : snapshots.filter((s) => s.kind !== "fnb_totals");
-        return null;
-      })()}
       {(isFnb ? snapshots.filter((s) => s.kind === "fnb_totals") : snapshots.filter((s) => s.kind !== "fnb_totals")).length === 0 ? (
         <p className="text-sm text-muted-foreground">No exports yet.</p>
       ) : (
