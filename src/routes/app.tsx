@@ -3272,39 +3272,37 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
                    </div>
                    {(() => {
                      const draft = noteDraft[n] ?? note ?? "";
-                     const dirty = draft !== (note ?? "");
                      return (
                        <>
                          <textarea
                            value={draft}
                            onChange={(e) => setNoteDraft((p) => ({ ...p, [n]: e.target.value }))}
-                           placeholder="Note for Reception (e.g. fan broken, no hot water)…"
+                            placeholder="Describe the issue (e.g. fan broken, no hot water)…"
                            rows={3}
                            className="w-full rounded-md border bg-background px-2 py-1.5 text-sm resize-none focus:outline-none focus:ring-2 focus:ring-ring"
                          />
                          <div className="flex justify-end gap-2">
-                           {note && (
-                             <Button
-                               type="button"
-                               variant="ghost"
-                               size="sm"
-                               className="h-8 text-xs"
-                               onClick={() => {
-                                 setNoteDraft((p) => ({ ...p, [n]: "" }));
-                                 setRoomHousekeepingNote(n, "");
-                               }}
-                             >
-                               Clear
-                             </Button>
-                           )}
                            <Button
                              type="button"
                              size="sm"
                              className="h-8 text-xs"
-                             disabled={!dirty}
-                             onClick={() => setRoomHousekeepingNote(n, draft)}
+                              disabled={!draft.trim()}
+                              onClick={async () => {
+                                const text = draft.trim();
+                                if (!text) return;
+                                const { error } = await supabase.from("maintenance_requests" as never).insert({
+                                  room_number: n,
+                                  message: text,
+                                  created_by_username: authUser?.username ?? null,
+                                } as never);
+                                if (error) { toast.error(error.message); return; }
+                                qc.invalidateQueries({ queryKey: ["maintenance_requests"] });
+                                await writeRoomMaintenanceFlag(n, true);
+                                setNoteDraft((p) => ({ ...p, [n]: "" }));
+                                toast.success("Sent to maintenance log");
+                              }}
                            >
-                             Save note
+                              Send to maintenance log
                            </Button>
                          </div>
                        </>
