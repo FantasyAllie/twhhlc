@@ -936,6 +936,11 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
    })();
    // Default view when no "view as" is set.
    const defaultView: ViewRole | undefined = (() => {
+      // If the account has F&B assigned but no other operational sub-role
+      // (housekeeper/reception), default them to the F&B home view — even if
+      // their position is admin/manager. They can still switch views if
+      // multiple are available.
+      if (hasFnbRole && !hasHousekeeperRole && !hasReceptionRole) return "fnb";
      if (realIsAdmin) return "admin";
      if (realIsManager) return "manager";
      if (position === "user") {
