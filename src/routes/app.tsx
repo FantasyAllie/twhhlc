@@ -3523,13 +3523,24 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
 
  {/* Edit defaults sheet (Admin): which template items appear in this room */}
 {/* App menu sheet (burger) */}
-{authUser && (
-  <NotificationsSheet
-    open={notificationsSheetOpen}
-    onOpenChange={setNotificationsSheetOpen}
-    userRole={(authUser.role === "manager" ? "admin" : authUser.role) as "admin" | "user" | "reception"}
-  />
-)}
+{authUser && (() => {
+  // Map (position, subRoles) → the notification-visibility bucket:
+  //   "admin"     → see all toggles
+  //   "reception" → hide the housekeeping "marked done" toggle
+  //   "user"      → hide the reception message/checkout toggles
+  let bucket: "admin" | "user" | "reception" = "admin";
+  if (authUser.position === "admin" || authUser.position === "manager") bucket = "admin";
+  else if (hasReceptionRole && hasHousekeeperRole) bucket = "admin";
+  else if (hasReceptionRole) bucket = "reception";
+  else if (hasHousekeeperRole) bucket = "user";
+  return (
+    <NotificationsSheet
+      open={notificationsSheetOpen}
+      onOpenChange={setNotificationsSheetOpen}
+      userRole={bucket}
+    />
+  );
+})()}
 <Sheet open={menuSheetOpen} onOpenChange={setMenuSheetOpen}>
   <SheetContent side="right" disableDragDismiss className="w-auto max-w-[90vw] min-w-[18rem] sm:max-w-md overflow-y-auto p-4 sm:p-6 [&_[data-sheet-close]]:max-lg:hidden">
     <SheetHeader className="text-left">
