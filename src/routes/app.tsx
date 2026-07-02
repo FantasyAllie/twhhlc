@@ -196,7 +196,7 @@ const COLOR_SWATCHES: Record<"green" | "yellow" | "red" | "blue", { bg: string; 
 };
 
 type ItemColor = "green" | "yellow" | "red" | "blue";
-type TemplateItem = { id: string; name: string; created_at: string; category: Category; position: number; default_count: number; color: ItemColor | null };
+type TemplateItem = { id: string; name: string; created_at: string; category: Category; position: number; default_count: number; color: ItemColor | null; list_type: "housekeeping" | "fnb" };
 type RoomExtra = { id: string; room_number: number; name: string; created_at: string };
 type RoomCount = {
  id: string;
@@ -484,7 +484,7 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
  queryFn: async (): Promise<TemplateItem[]> => {
  const { data, error } = await supabase
  .from("template_items")
-   .select("id,name,created_at,category,position,default_count,color")
+  .select("id,name,created_at,category,position,default_count,color,list_type")
  .order("position", { ascending: true })
  .order("created_at", { ascending: true });
  if (error) throw error;
