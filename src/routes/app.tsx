@@ -5147,7 +5147,7 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
                    return !excludedProgressStatuses.has(statusLabel);
                  });
                 const total = eligible.length;
-                const progress = eligible.filter((r) => r.done).length;
+                const progress = eligible.filter((r) => r.done || r.done_reception).length;
                 const pct = total > 0 ? Math.min(100, (progress / total) * 100) : 0;
                  return (
                    <div className="mt-3 space-y-1 max-lg:fixed max-lg:inset-x-0 max-lg:bottom-0 max-lg:z-40 max-lg:mt-0 max-lg:border-t max-lg:border-border max-lg:bg-background/95 max-lg:backdrop-blur max-lg:pl-[calc(env(safe-area-inset-left,0px)+1.5rem)] max-lg:pr-[calc(env(safe-area-inset-right,0px)+1.5rem)] max-lg:pt-2 max-lg:pb-[calc(env(safe-area-inset-bottom,0px)+0.75rem)] max-lg:shadow-[0_-2px_8px_rgba(0,0,0,0.06)]">
