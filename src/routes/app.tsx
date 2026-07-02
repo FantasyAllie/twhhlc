@@ -4780,6 +4780,9 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
     const arrivalStatusIdGlobal = receptionStatuses.find(
       (s) => s.label.toLowerCase() === "arrival",
     )?.id ?? null;
+    const rosStatusIdGlobal = receptionStatuses.find(
+      (s) => s.label.toLowerCase() === "ros",
+    )?.id ?? null;
    for (let i = 0; i < visibleRooms.length; i++) {
    const n = visibleRooms[i];
  const done = doneSet.has(n);
@@ -4795,12 +4798,15 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
      const isDirty = !!dirtyStatusIdGlobal && (room?.reception_status_id ?? room?.default_status) === dirtyStatusIdGlobal;
      const isClean = !!cleanStatusIdGlobal && (room?.reception_status_id ?? room?.default_status) === cleanStatusIdGlobal;
      const isArrival = !!arrivalStatusIdGlobal && (room?.reception_status_id ?? room?.default_status) === arrivalStatusIdGlobal;
+     const isRos = !!rosStatusIdGlobal && (room?.reception_status_id ?? room?.default_status) === rosStatusIdGlobal;
      const state = getRoomTileState(n, done);
      const baseMeta = roomStateMeta[state];
      const hasStatus = !!(room?.reception_status_id ?? room?.default_status);
       const hasLinenCount = counts.some((c) => c.room_number === n && (c.count ?? 0) > 0);
       const meta = isStaffRoom
         ? { bg: "var(--room-staff)", fg: "var(--room-staff-fg)", accent: "var(--room-staff-accent)", label: "Staff" }
+        : isRos
+          ? { bg: "var(--room-staff)", fg: "var(--room-staff-fg)", accent: "var(--room-staff-accent)", label: "ROS" }
         : (isStayover || isDnd)
           ? { bg: "var(--room-stayover)", fg: "var(--room-stayover-fg)", accent: "var(--room-stayover-accent)", label: "Stayover" }
         : (state === "done" || state === "complete")
@@ -4881,6 +4887,7 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
      const isDirty = !!dirtyStatusIdGlobal && (room?.reception_status_id ?? room?.default_status) === dirtyStatusIdGlobal;
      const isClean = !!cleanStatusIdGlobal && (room?.reception_status_id ?? room?.default_status) === cleanStatusIdGlobal;
     const isArrival = !!arrivalStatusIdGlobal && (room?.reception_status_id ?? room?.default_status) === arrivalStatusIdGlobal;
+     const isRos = !!rosStatusIdGlobal && (room?.reception_status_id ?? room?.default_status) === rosStatusIdGlobal;
      const state = getRoomTileState(n, receptionDoneSet.has(n));
       const baseMeta = state === "done"
         ? { bg: "var(--room-done)", fg: "var(--room-done-fg)", accent: "var(--room-done-accent)", label: "Clean" }
@@ -4889,6 +4896,8 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
       const hasLinenCount = counts.some((c) => c.room_number === n && (c.count ?? 0) > 0);
       const meta = isStaff
         ? { bg: "var(--room-staff)", fg: "var(--room-staff-fg)", accent: "var(--room-staff-accent)", label: "Staff" }
+        : isRos
+          ? { bg: "var(--room-staff)", fg: "var(--room-staff-fg)", accent: "var(--room-staff-accent)", label: "ROS" }
         : (isStayover || isDnd)
           ? { bg: "var(--room-stayover)", fg: "var(--room-stayover-fg)", accent: "var(--room-stayover-accent)", label: "Stayover" }
         : (state === "done" || state === "complete")
