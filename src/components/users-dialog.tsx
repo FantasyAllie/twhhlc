@@ -34,6 +34,7 @@ const POSITION_LABELS: Record<AssignablePosition, string> = {
 const SUB_ROLE_LABELS: Record<SubRole, string> = {
   reception: "Reception",
   housekeeper: "Housekeeper",
+  fnb: "F&B",
 };
 function positionBadge(p: Position): string {
   return p === "pending" ? "Pending" : POSITION_LABELS[p];
@@ -303,7 +304,7 @@ export function UsersDialog({
                 <div className="space-y-1 sm:col-span-2">
                   <label className="text-xs font-medium">Sub-roles</label>
                   <div className="flex flex-wrap gap-3">
-                    {(["reception", "housekeeper"] as SubRole[]).map((r) => (
+                    {(["reception", "housekeeper", "fnb"] as SubRole[]).map((r) => (
                       <label key={r} className="flex items-center gap-2 text-sm">
                         <input
                           type="checkbox"
@@ -413,7 +414,7 @@ export function UsersDialog({
               <div className="space-y-1">
                 <label className="text-xs font-medium">Sub-roles</label>
                 <div className="flex flex-wrap gap-3">
-                  {(["reception", "housekeeper"] as SubRole[]).map((r) => (
+                  {(["reception", "housekeeper", "fnb"] as SubRole[]).map((r) => (
                     <label key={r} className="flex items-center gap-2 text-sm">
                       <input
                         type="checkbox"

@@ -1,8 +1,8 @@
 import { supabase } from "@/integrations/supabase/client";
 
-export type AppRole = "admin" | "manager" | "user" | "reception" | "pending";
+export type AppRole = "admin" | "manager" | "user" | "reception" | "fnb" | "pending";
 export type Position = "admin" | "manager" | "user" | "pending";
-export type SubRole = "reception" | "housekeeper";
+export type SubRole = "reception" | "housekeeper" | "fnb";
 export type SessionUser = {
   id: string;
   username: string;
@@ -49,7 +49,7 @@ async function fetchRoleRows(userId: string): Promise<{ position: Position; subR
   let position: Position = "pending";
   const subRoles: SubRole[] = [];
   for (const r of roles) {
-    if (r === "reception" || r === "housekeeper") {
+    if (r === "reception" || r === "housekeeper" || r === "fnb") {
       if (!subRoles.includes(r)) subRoles.push(r);
     } else if (r === "admin" || r === "manager" || r === "user" || r === "pending") {
       if (priority[r] > priority[position]) position = r;
@@ -62,8 +62,9 @@ function compatRole(position: Position, subRoles: SubRole[]): AppRole {
   if (position === "admin" || position === "manager") return position;
   if (position === "pending") return "pending";
   // position === "user": pick sub-role for legacy display
-  if (subRoles.includes("reception") && !subRoles.includes("housekeeper")) return "reception";
   if (subRoles.includes("housekeeper")) return "user";
+  if (subRoles.includes("reception")) return "reception";
+  if (subRoles.includes("fnb")) return "fnb";
   return "pending";
 }
 

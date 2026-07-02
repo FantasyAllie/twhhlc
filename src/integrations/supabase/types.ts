@@ -41,6 +41,32 @@ export type Database = {
         }
         Relationships: []
       }
+      fnb_linen_counts: {
+        Row: {
+          count: number
+          template_item_id: string
+          updated_at: string
+        }
+        Insert: {
+          count?: number
+          template_item_id: string
+          updated_at?: string
+        }
+        Update: {
+          count?: number
+          template_item_id?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "fnb_linen_counts_template_item_id_fkey"
+            columns: ["template_item_id"]
+            isOneToOne: true
+            referencedRelation: "template_items"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       maintenance_requests: {
         Row: {
           created_at: string

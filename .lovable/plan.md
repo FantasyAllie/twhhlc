@@ -1,102 +1,46 @@
-## Goal
+## Add F&B sub-role with shared linen counter
 
-Split today's flat role list into two concepts:
+### Database
+- Add `fnb` to the `app_role` enum.
+- New table `fnb_linen_counts` — a single global counter shared across all F&B staff:
+  - `template_item_id` (unique, FK to `template_items.id`)
+  - `count` (int, default 0)
+  - `updated_at`
+- RLS + grants: signed-in users may read and update; admins/managers may delete/reset. Realtime enabled so admins viewing-as-F&B and multiple F&B users see live changes.
+- Optional: extend `export_snapshots.kind` to accept `"fnb"` for the new export.
 
-- **Position** — one per user: `Admin`, `Manager`, or `User` (plus `pending` internally). Determines capability tier.
-- **Sub-role(s)** — zero or more per user: `Reception`, `Housekeeper`. Determines which day-to-day views/screens the person uses.
+### Types & auth plumbing
+- Extend `SubRole` to `"reception" | "housekeeper" | "fnb"` in both `src/lib/auth.functions.ts` and `src/lib/auth-client.ts`.
+- Update the sub-role validator, role-splitting, and legacy compat mapping so a user with only `fnb` maps to a new effective view `"fnb"`.
+- Add `"fnb"` to the `ViewRole` union in `src/routes/app.tsx` and to `availableViews` / `defaultView` for admin (and any user assigned the F&B sub-role) so admins can "View as F&B".
 
-Capabilities per position (unchanged from today, just renamed/consolidated):
+### Users dialog
+- Add an "F&B" checkbox alongside Reception and Housekeeper in the sub-role selector.
 
-- **Admin** — everything, including the Users window (approve/create/edit/delete/reset password/disable).
-- **Manager** — same as Admin *except* cannot open the Users window, cannot approve pending signups, and cannot edit/create/delete users.
-- **User** — no admin tooling. What they can actually do is decided by their sub-role(s).
+### F&B home screen
+- When `effectiveRole === "fnb"`, render a dedicated home screen instead of the room grid. Layout mirrors the Rejects sheet but as a full page:
+  - Header: "F&B Linen Count"
+  - List of `template_items` with −/+ buttons and a running total (identical UX to Rejects).
+  - Reads/writes `fnb_linen_counts` (shared globally); realtime subscription keeps the tally in sync.
+  - Reset button (admins/managers only) to zero all counts.
+  - Print/Export button that produces a snapshot styled like the Rejects export ("Three Ways House Hotel F&B Linen Count") and saves an `export_snapshots` row with `kind: "fnb"`.
+- Progress bar and reception help sheet are hidden in this view (F&B has no rooms).
 
-Sub-role capabilities (kept identical to today):
+### Settings menu for F&B users
+- Signed in as F&B only: burger menu shows Linen List, Account, and Sign out. Everything room-related is hidden.
+- Admins/Managers keep their full menu when viewing-as-F&B.
 
-- **Reception** — the reception view (Clean/Arrival/DND/OUT flow, checkout, messages, bulk status, reception help, etc.).
-- **Housekeeper** — the housekeeping view (linen counts, statuses, bed selection, mark-as-done, notes/maintenance).
+### Shared Linen List button behavior
+- Linen List remains a single settings entry that edits `template_items` (still the shared master list of linen items — this is intentional so both counters use the same items).
+- New behavior inside the Linen List sheet: when the signed-in user has BOTH `housekeeper` and `fnb` sub-roles (or is an admin/manager viewing-as-F&B while also having housekeeping context), show a segmented toggle at the top: **Housekeeping** / **F&B**.
+  - Housekeeping tab: current per-room linen-list editor.
+  - F&B tab: shows the F&B counter (same increment UI as the home screen) so a manager can adjust it from settings without leaving the current view.
+  - Users with only one of the two sub-roles see just that tab and no switcher.
 
-Users can hold both sub-roles (Allie). Position and sub-roles are independent — e.g. a Manager can also hold the Housekeeper sub-role so they can jump into the housekeeping view. "View as" switches between the sub-roles the account actually holds (plus Admin/Manager tiers for Admins/Managers).
-
-## Target assignments
-
-| User | Position | Sub-role(s) |
-| --- | --- | --- |
-| Allie (fantasyallie@icloud.com) | Admin | Reception + Housekeeper |
-| Beckii | Manager | Housekeeper |
-| Marcia Drake | Manager | Housekeeper |
-| AJ | Manager | Housekeeper |
-| reception@themickleton.co.uk | User | Reception |
-| Shannon | User | Housekeeper |
-
-## Data model
-
-Reuse `public.user_roles` — one row per (user, role). Each user gets exactly one *position* row (`admin`/`manager`/`user`/`pending`) plus zero or more *sub-role* rows (`reception`/`housekeeper`).
-
-- Add `housekeeper` to the `public.app_role` enum. Keep `user` as the base position value (previously overloaded as "housekeeper"; we stop treating it as a view).
-- Migration also seeds the assignments in the table above, replacing existing rows for those six accounts.
-- `handle_new_user` trigger keeps assigning `pending` on signup (position only, no sub-roles) — Admins pick position + sub-roles when approving.
-- `is_approved()` continues to treat any non-`pending` position as approved.
-
-Sub-role notification/RLS policies stay as they are (they gate on `is_approved`, not on the specific role).
-
-## Server functions (`src/lib/auth.functions.ts`)
-
-- New types: `Position = "admin" | "manager" | "user"`, `SubRole = "reception" | "housekeeper"`, `AppUserRow` gains `position` + `subRoles: SubRole[]` (drop the single `role`).
-- `listUsers` returns position + sub-role array per user.
-- Replace `updateUserRole` with `updateUserAssignment({ id, position, subRoles })` that rewrites all role rows for a user in one transaction (still guards the "last admin" rule against the position field).
-- `createUser` takes `{ position, subRoles }`.
-- Approving a pending user is just `updateUserAssignment` with a real position (+ optional sub-roles).
-- All admin-only server fns keep `assertAdmin` — Managers stay blocked from user-management endpoints.
-
-## Client session (`src/lib/auth-client.ts`, `SessionUser`)
-
-`SessionUser` becomes `{ id, username, email, position, subRoles }`. Fetch all rows from `user_roles` for the signed-in user and split into position + sub-roles. Persist the new shape in `localStorage` under the existing key (old cached shape is discarded on next `refreshSession`).
-
-## App-wide permission remap (`src/routes/app.tsx` and friends)
-
-Introduce derived flags from `SessionUser`:
-
-- `isAdminPos` = position `admin`
-- `isManagerPos` = position `manager`
-- `canUseAdminTools` = `isAdminPos || isManagerPos` (drives everything today's `isAdmin` guards)
-- `canManageUsers` = `isAdminPos` only (Users menu entry, `/users` route, Users dialog, approve buttons)
-- `hasReceptionRole`, `hasHousekeeperRole` from sub-roles
-- `effectiveView` = current "view as" selection, defaulting to:
-  - Admin/Manager position without a sub-role → admin/manager dashboard view (same as today's default)
-  - Otherwise the account's single sub-role, or Housekeeper if it holds both (Allie's default; she can switch)
-
-Then update every existing check:
-
-- `isReception` → `effectiveView === "reception"`
-- `isHousekeeper` → `effectiveView === "housekeeper"`
-- `isAdmin` (used for admin UI chrome like Manage/Export/Users) → `canUseAdminTools` when `effectiveView` is the admin/manager tier; otherwise falls through to the sub-role view being rendered.
-- Notification preference gating: reuse `hasReceptionRole`/`hasHousekeeperRole` (and position) so an Admin sees all toggles, a User+Reception hides the "room marked done" toggle, etc. — matches today's behavior per user.
-- `/users` route + `UsersDialog` entry point and menu item: gated on `canManageUsers`.
-
-"View as" selector (`AccountDialog`):
-
-- Options = `Admin` (if position admin) + `Manager` (if position admin or manager) + one entry per sub-role the account holds.
-- Users with a single sub-role and no admin tier see no selector.
-- Persist selection in the existing `tw_view_as_role` key; extend the accepted values to include `housekeeper`.
-
-## Users management UI (`src/components/users-dialog.tsx` + `/users` route)
-
-- Rename the header/label "Role" → "Position" throughout.
-- Position control: dropdown with Admin / Manager / User.
-- Sub-role control: two checkboxes (Reception, Housekeeper), independent of position.
-- Add-user form, Edit dialog, and Pending-approval list all use position + sub-roles. Approving a pending signup requires choosing a position; sub-roles are optional (but if position is `User`, warn if no sub-roles are selected so the account isn't left without a view).
-- Approved list shows position badge + sub-role chips (e.g. "Manager · Housekeeper").
-- Managers cannot open this dialog or route at all (already the case for `/users`; extend to hide the menu entry and to make the dialog trigger no-op if reached). Server-side `assertAdmin` remains the source of truth.
-
-## Backend migration steps
-
-1. `ALTER TYPE public.app_role ADD VALUE IF NOT EXISTS 'housekeeper';` (in its own migration so subsequent DML can use it).
-2. Second migration seeds assignments: for each of the six named accounts, delete existing `user_roles` rows and insert the new (position + sub-role) rows listed above.
-3. Verify `handle_new_user` still fires for future signups (no change needed).
-
-## Out of scope / preserved
-
-- Room tile logic, notifications, maintenance log, reset flow, export menus — unchanged.
-- Notification preference storage — unchanged; only the visibility rules are remapped from the old flat role to the new position/sub-role flags.
-- No new capabilities are added or removed; this is purely a rename + split of roles.
+### Technical details
+- The F&B home screen is a new component (`FnbHomeScreen`) rendered inline from `src/routes/app.tsx` when `effectiveRole === "fnb"`, gated before the reception/housekeeping branch.
+- `fnb_linen_counts` mutations use optimistic updates via `qc.setQueryData(["fnb_linen_counts"], ...)` and a Postgres upsert on `template_item_id`.
+- Realtime channel `fnb_linen_counts` invalidates the query on INSERT/UPDATE/DELETE.
+- Export path reuses `handleExport`/`proceedExport`/`printExport` with a new `kind: "fnb"` branch and a matching history entry renderer.
+- Access-control fixes: `assertApproved`/`is_approved` DB helper must include `fnb` so F&B users pass the RLS gate; server functions unaffected because `updateUserAssignment` already validates sub-roles via a whitelist we'll extend.
+- Migration data step: no automatic assignments — admins assign F&B to specific users via the Users dialog.

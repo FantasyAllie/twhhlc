@@ -244,11 +244,11 @@ function AppPage() {
   const isMobile = useIsMobile();
   const [authUser, setAuthUser] = useState(() => getStoredUser());
   // Admin/Manager "view as" overlay — see definition further below for full context.
- type ViewRole = "admin" | "manager" | "user" | "reception";
+ type ViewRole = "admin" | "manager" | "user" | "reception" | "fnb" | "fnb";
   const [viewAsRole, setViewAsRole] = useState<ViewRole | null>(() => {
     if (typeof window === "undefined") return null;
     const v = window.localStorage.getItem("tw_view_as_role");
-    return v === "user" || v === "reception" || v === "admin" || v === "manager" ? v : null;
+    return v === "user" || v === "reception" || v === "admin" || v === "manager" || v === "fnb" ? v : null;
   });
   useEffect(() => {
     if (!getStoredUser()) {
@@ -515,6 +515,18 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
  },
  });
 
+ type FnbCount = { template_item_id: string; count: number };
+ const fnbCountsQ = useQuery({
+   queryKey: ["fnb_linen_counts"],
+   queryFn: async (): Promise<FnbCount[]> => {
+     const { data, error } = await supabase
+       .from("fnb_linen_counts" as never)
+       .select("template_item_id,count");
+     if (error) throw error;
+     return (data ?? []) as FnbCount[];
+   },
+ });
+
   const roomsQ = useQuery({
     queryKey: ["rooms"],
     queryFn: async (): Promise<Room[]> => {
@@ -637,6 +649,27 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
   });
 
   const template = templateQ.data ?? [];
+  const fnbCounts = fnbCountsQ.data ?? [];
+  const fnbCountByItem = new Map<string, number>(
+    fnbCounts.map((c) => [c.template_item_id, c.count ?? 0]),
+  );
+  const setFnbCount = async (template_item_id: string, count: number) => {
+    const safe = Math.max(0, Math.floor(count));
+    qc.setQueryData<FnbCount[]>(["fnb_linen_counts"], (old) => {
+      const list = old ? [...old] : [];
+      const idx = list.findIndex((c) => c.template_item_id === template_item_id);
+      if (idx >= 0) list[idx] = { ...list[idx], count: safe };
+      else list.push({ template_item_id, count: safe });
+      return list;
+    });
+    const { error } = await supabase
+      .from("fnb_linen_counts" as never)
+      .upsert({ template_item_id, count: safe, updated_at: new Date().toISOString() } as never, {
+        onConflict: "template_item_id",
+      } as never);
+    if (error) toast.error(error.message);
+    qc.invalidateQueries({ queryKey: ["fnb_linen_counts"] });
+  };
   const extras = extrasQ.data ?? [];
   const counts = countsQ.data ?? [];
   const rooms = roomsQ.data ?? [];
@@ -887,6 +920,7 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
    const realIsManager = position === "manager";
    const hasReceptionRole = subRoles.includes("reception");
    const hasHousekeeperRole = subRoles.includes("housekeeper");
+   const hasFnbRole = subRoles.includes("fnb");
    // Which view-as options this account can actually pick.
    const availableViews: ViewRole[] = (() => {
      const out: ViewRole[] = [];
@@ -894,6 +928,7 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
      if (realIsAdmin || realIsManager) out.push("manager");
      if (realIsAdmin || realIsManager || hasHousekeeperRole) out.push("user");
      if (realIsAdmin || realIsManager || hasReceptionRole) out.push("reception");
+     if (realIsAdmin || realIsManager || hasFnbRole) out.push("fnb");
      return out;
    })();
    // Default view when no "view as" is set.
@@ -903,6 +938,7 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
      if (position === "user") {
        if (hasHousekeeperRole) return "user";
        if (hasReceptionRole) return "reception";
+       if (hasFnbRole) return "fnb";
      }
      return undefined;
    })();
@@ -916,6 +952,7 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
    const isReception = effectiveRole === "reception";
    const isAdmin = effectiveRole === "admin" || effectiveRole === "manager";
    const isHousekeeper = effectiveRole === "user";
+   const isFnb = effectiveRole === "fnb";
   const doneSet = new Set(
     rooms
       .filter((r) => (isReception ? r.done_reception : r.done))
@@ -4520,6 +4557,72 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
   </Dialog>
 
  {/* Rooms */}
+ {isFnb ? (
+   <section className="space-y-4">
+     <div className="flex items-baseline justify-between">
+       <h2 className="text-sm font-medium text-muted-foreground uppercase tracking-wide">
+         F&amp;B Linen Counter
+       </h2>
+     </div>
+     {template.length === 0 ? (
+       <p className="text-sm text-muted-foreground">
+         No linen items yet. Add some from the Linen List.
+       </p>
+     ) : (
+       <ul className="divide-y border rounded-md bg-muted/30">
+         {template.map((item) => {
+           const value = fnbCountByItem.get(item.id) ?? 0;
+           const swatch = item.color ? COLOR_SWATCHES[item.color] : null;
+           return (
+             <li key={item.id} className="flex items-center gap-3 p-3">
+               <span
+                 className="h-3 w-3 rounded-full border-2 shrink-0"
+                 style={{
+                   backgroundColor: swatch
+                     ? theme === "dark"
+                       ? swatch.darkBg
+                       : swatch.bg
+                     : "transparent",
+                   borderColor: swatch ? swatch.border : "hsl(var(--border))",
+                 }}
+                 aria-hidden
+               />
+               <span className="flex-1 min-w-0 break-words text-sm font-medium">{item.name}</span>
+               <div className="flex items-center gap-2 shrink-0">
+                 <Button
+                   variant="outline"
+                   size="icon"
+                   className="h-10 w-10"
+                   onClick={() => setFnbCount(item.id, value - 1)}
+                   disabled={value <= 0}
+                   aria-label={`Decrease ${item.name}`}
+                 >
+                   -
+                 </Button>
+                 <Input
+                   type="number"
+                   min={0}
+                   value={value}
+                   onChange={(e) => setFnbCount(item.id, Number(e.target.value))}
+                   className="h-10 w-20 text-center tabular-nums"
+                 />
+                 <Button
+                   variant="outline"
+                   size="icon"
+                   className="h-10 w-10"
+                   onClick={() => setFnbCount(item.id, value + 1)}
+                   aria-label={`Increase ${item.name}`}
+                 >
+                   +
+                 </Button>
+               </div>
+             </li>
+           );
+         })}
+       </ul>
+     )}
+   </section>
+ ) : (
  <section className="space-y-4">
  <div className="flex items-baseline justify-between">
  <h2 className="text-sm font-medium text-muted-foreground uppercase tracking-wide">
@@ -4878,6 +4981,7 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
               })()
             )}
  </section>
+ )}
   {!isReception && (
     <div className="lg:hidden h-[calc(env(safe-area-inset-bottom,0px)+3.25rem)]" aria-hidden />
   )}
@@ -5412,10 +5516,10 @@ function AccountDialog({
   currentUsername: string;
   onUsernameChanged: (u: string) => void;
   canViewAs: boolean;
-  availableViews: ReadonlyArray<"admin" | "manager" | "user" | "reception">;
-  defaultView: "admin" | "manager" | "user" | "reception";
-  viewAsRole: "admin" | "manager" | "user" | "reception" | null;
-  onViewAsRoleChange: (r: "admin" | "manager" | "user" | "reception" | null) => void;
+  availableViews: ReadonlyArray<"admin" | "manager" | "user" | "reception" | "fnb">;
+  defaultView: "admin" | "manager" | "user" | "reception" | "fnb";
+  viewAsRole: "admin" | "manager" | "user" | "reception" | "fnb" | null;
+  onViewAsRoleChange: (r: "admin" | "manager" | "user" | "reception" | "fnb" | null) => void;
 }) {
   const [username, setUsername] = useState(currentUsername);
   const [unCurrentPw, setUnCurrentPw] = useState("");
@@ -5559,6 +5663,7 @@ function AccountDialog({
                   const base =
                     r === "user" ? "Housekeeper" :
                     r === "reception" ? "Reception" :
+                    r === "fnb" ? "F&B" :
                     r === "manager" ? "Manager" : "Admin";
                   const label = isSelf ? `${base} (your role)` : base;
                   return (
