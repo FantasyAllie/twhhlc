@@ -1531,7 +1531,7 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
   };
 
   const pruneSnapshots = async (
-    kind: "totals" | "rejects" | "room_status" | "maintenance",
+    kind: "totals" | "rejects" | "room_status" | "maintenance" | "fnb_totals",
   ) => {
     const { data } = await supabase
       .from("export_snapshots")
@@ -1575,7 +1575,7 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
   };
 
   const proceedExport = async (
-    kind: "totals" | "rejects" | "room_status" | "maintenance",
+    kind: "totals" | "rejects" | "room_status" | "maintenance" | "fnb_totals",
   ) => {
     const computed =
       kind === "totals"
@@ -1584,6 +1584,8 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
         ? computeRejectTotals()
         : kind === "room_status"
         ? computeRoomStatus()
+        : kind === "fnb_totals"
+        ? computeFnbTotals()
         : computeMaintenance();
     const rows = computed.rows as SnapshotRow[] | RoomStatusRow[] | MaintenanceRow[];
     const grand = computed.grand;
@@ -1591,6 +1593,7 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
       if (kind === "totals") setExportOpen(true);
       else if (kind === "rejects") setRejectExportOpen(true);
       else if (kind === "room_status") setRoomStatusExportOpen(true);
+      else if (kind === "fnb_totals") toast.error("No F&B linen counted");
       else toast.error("No rooms marked for maintenance");
       return;
     }
@@ -1615,6 +1618,7 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
     if (kind === "totals") setExportOpen(true);
     else if (kind === "rejects") setRejectExportOpen(true);
     else if (kind === "room_status") setRoomStatusExportOpen(true);
+    else if (kind === "fnb_totals") printTotals(rows as SnapshotRow[], grand, new Date(), "fnb_totals");
     else printMaintenance(new Date(), rows as MaintenanceRow[]);
     const { error } = await supabase
       .from("export_snapshots")
