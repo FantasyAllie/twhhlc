@@ -924,16 +924,16 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
    const hasReceptionRole = subRoles.includes("reception");
    const hasHousekeeperRole = subRoles.includes("housekeeper");
    const hasFnbRole = subRoles.includes("fnb");
-   // Which view-as options this account can actually pick.
-   const availableViews: ViewRole[] = (() => {
-     const out: ViewRole[] = [];
-     if (realIsAdmin) out.push("admin");
-     if (realIsAdmin || realIsManager) out.push("manager");
-     if (realIsAdmin || realIsManager || hasHousekeeperRole) out.push("user");
-     if (realIsAdmin || realIsManager || hasReceptionRole) out.push("reception");
-     if (realIsAdmin || realIsManager || hasFnbRole) out.push("fnb");
-     return out;
-   })();
+    // Which view-as options this account can actually pick. Only sub-role
+    // views appear as pills; admins/managers return to their default view
+    // by toggling the active pill off.
+    const availableViews: ViewRole[] = (() => {
+      const out: ViewRole[] = [];
+      if (realIsAdmin || realIsManager || hasHousekeeperRole) out.push("user");
+      if (realIsAdmin || realIsManager || hasReceptionRole) out.push("reception");
+      if (realIsAdmin || realIsManager || hasFnbRole) out.push("fnb");
+      return out;
+    })();
    // Default view when no "view as" is set.
    const defaultView: ViewRole | undefined = (() => {
       // If the account has F&B assigned but no other operational sub-role
@@ -950,8 +950,12 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
      }
      return undefined;
    })();
-   // A person can switch views if they have more than one available view.
-   const canViewAs = availableViews.length > 1;
+    // Show the switcher when there's at least one sub-role pill and either
+    // the user is admin/manager (needs to swap in and out of default) or
+    // they have multiple sub-role options.
+    const canViewAs =
+      availableViews.length > 0 &&
+      (realIsAdmin || realIsManager || availableViews.length > 1);
    const safeViewAs: ViewRole | null =
      viewAsRole && availableViews.includes(viewAsRole) ? viewAsRole : null;
    const effectiveRole: ViewRole | undefined =
@@ -3046,7 +3050,7 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
               <button
                 key={r}
                 type="button"
-                onClick={() => setViewAsRole(r === defaultView ? null : r)}
+                onClick={() => setViewAsRole(active ? null : r)}
                 className={cn(
                   "px-3 py-1.5 text-xs sm:text-sm rounded-[0.3rem] transition-colors",
                   active
@@ -5831,19 +5835,17 @@ function AccountDialog({
               <div className="space-y-1.5">
                 {availableViews.map((r) => {
                   const active = (viewAsRole ?? defaultView) === r;
-                  const isSelf = r === defaultView;
                   const base =
                     r === "user" ? "Housekeeper" :
                     r === "reception" ? "Reception" :
                     r === "fnb" ? "F&B" :
                     r === "manager" ? "Manager" : "Admin";
-                  const label = isSelf ? `${base} (your role)` : base;
                   return (
                     <button
                       key={r}
                       type="button"
                       onClick={() => {
-                        onViewAsRoleChange(isSelf ? null : r);
+                        onViewAsRoleChange(active ? null : r);
                         onOpenChange(false);
                       }}
                       className={cn(
@@ -5851,7 +5853,7 @@ function AccountDialog({
                         active ? "bg-accent border-primary" : "bg-background",
                       )}
                     >
-                      <span className="text-left flex-1">{label}</span>
+                      <span className="text-left flex-1">{base}</span>
                       {active && <Check className="h-4 w-4 shrink-0 text-primary" />}
                     </button>
                   );
