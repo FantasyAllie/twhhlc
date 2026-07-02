@@ -2893,13 +2893,17 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
        </Button>
      </DropdownMenuTrigger>
      <DropdownMenuContent align="end" className="w-64">
-       {isAdmin && (
-         <>
-           <DropdownMenuLabel>Manage</DropdownMenuLabel>
-           <DropdownMenuItem onClick={() => setTemplateOpen(true)}>
-             <List className="h-4 w-4 mr-2" /> Linen List
-           </DropdownMenuItem>
-           <DropdownMenuItem onClick={() => setManageRoomsOpen(true)}>
+        {(isAdmin || isFnb) && (
+          <>
+            <DropdownMenuLabel>Manage</DropdownMenuLabel>
+            <DropdownMenuItem onClick={() => setTemplateOpen(true)}>
+              <List className="h-4 w-4 mr-2" /> Linen List
+            </DropdownMenuItem>
+          </>
+        )}
+        {isAdmin && (
+          <>
+            <DropdownMenuItem onClick={() => setManageRoomsOpen(true)}>
              <Hash className="h-4 w-4 mr-2" /> Manage Rooms
            </DropdownMenuItem>
            <DropdownMenuItem onClick={() => setRejectsOpen(true)}>
