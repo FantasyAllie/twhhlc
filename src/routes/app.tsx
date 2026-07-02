@@ -1765,7 +1765,7 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
     rows: SnapshotRow[],
     grand: number,
     when: Date,
-    kind: "totals" | "rejects" = "totals",
+    kind: "totals" | "rejects" | "fnb_totals" = "totals",
   ) => {
     const dateStr = when.toLocaleDateString(undefined, {
       year: "numeric",
@@ -1775,6 +1775,8 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
     const heading =
       kind === "rejects"
         ? "Three Ways House Hotel Linen Rejects"
+        : kind === "fnb_totals"
+        ? "Three Ways House Hotel F&B Linen"
         : "Three Ways House Hotel Linen";
     const win = window.open("", "_blank");
     if (!win) {
