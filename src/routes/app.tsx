@@ -5367,11 +5367,11 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
     currentUsername={authUser?.username ?? ""}
     onUsernameChanged={(u) => setAuthUser((prev) => prev ? { ...prev, username: u } : prev)}
    canViewAs={canViewAs}
-   selfRole={realRole === "manager" ? "manager" : "admin"}
+   availableViews={availableViews}
+   defaultView={defaultView ?? "admin"}
    viewAsRole={safeViewAs}
    onViewAsRoleChange={(r) => {
-     // Guard: managers may never view as admin.
-     if (realIsManager && r === "admin") return;
+     if (r && !availableViews.includes(r)) return;
      setViewAsRole(r);
    }}
   />
