@@ -52,7 +52,7 @@ export const Route = createFileRoute("/app")({
   ssr: false,
   head: () => ({
     meta: [
-      { title: "Three Ways House Hotel Housekeeping" },
+      { title: "Three Ways House Hotel" },
       { name: "description", content: "Count items per room across 50 rooms." },
     ],
   }),
@@ -259,7 +259,7 @@ function AppPage() {
     return () => window.removeEventListener("tw-auth-changed", onChange);
   }, [navigate]);
   useEffect(() => {
-    document.title = "Three Ways House Hotel Housekeeping";
+    document.title = "Three Ways House Hotel";
   }, []);
   // Mobile keyboard: keep the focused input visible above the on-screen keyboard.
   // We listen to focus on form controls and use visualViewport to detect when the
@@ -2823,14 +2823,14 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
           <div className="min-w-0 flex-1">
             {isReception ? (
               <>
-                <h1 className="text-xl sm:text-2xl font-semibold tracking-tight">Three Ways House Hotel Housekeeping</h1>
+                <h1 className="text-xl sm:text-2xl font-semibold tracking-tight">Three Ways House Hotel</h1>
                 <p className="text-xs text-muted-foreground mt-1 whitespace-pre-line">
                   This checker shows when Housekeeping have finished with a room and the room is ready for a customer. {"\n\n"}Click on a room to see it's features and send a message to Housekeeping if needed.
                 </p>
               </>
             ) : (
               <>
-                <h1 className="text-xl sm:text-2xl font-semibold tracking-tight">Three Ways House Hotel Housekeeping</h1>
+                <h1 className="text-xl sm:text-2xl font-semibold tracking-tight">Three Ways House Hotel</h1>
                 <p className="text-xs text-muted-foreground mt-1">
                   Shared workspace for Housekeeping staff
                 </p>
