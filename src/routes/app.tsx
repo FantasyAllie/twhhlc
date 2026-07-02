@@ -3649,13 +3649,15 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
       return (
         <div className="mt-4 space-y-4">
           <div className="space-y-2">
-            {isAdmin && (
+            {(isAdmin || isFnb) && (
               <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">Manage</p>
             )}
             <div className="space-y-1.5">
+              {(isAdmin || isFnb) && (
+                <Row icon={List} label="Linen List" onClick={() => { close(); setTemplateOpen(true); }} />
+              )}
               {isAdmin && (
                 <>
-                  <Row icon={List} label="Linen List" onClick={() => { close(); setTemplateOpen(true); }} />
                   <Row icon={Hash} label="Manage Rooms" onClick={() => { close(); setManageRoomsOpen(true); }} />
                   <Row icon={Ban} label="Rejects" onClick={() => { close(); setRejectsOpen(true); }} />
                   <Row icon={History} label="History" onClick={() => { close(); setHistorySheetOpen(true); }} />
