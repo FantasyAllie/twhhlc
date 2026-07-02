@@ -1772,10 +1772,18 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
     qc.invalidateQueries({ queryKey: ["export_snapshots"] });
   };
 
-  const clearAllSnapshots = async () => {
-    qc.setQueryData<ExportSnapshot[]>(["export_snapshots"], []);
-    const { error } = await supabase.from("export_snapshots").delete().neq("id", "00000000-0000-0000-0000-000000000000");
-    if (error) toast.error(error.message);
+  const clearAllSnapshots = async (onlyKind?: ExportSnapshot["kind"]) => {
+    if (onlyKind) {
+      qc.setQueryData<ExportSnapshot[]>(["export_snapshots"], (old) =>
+        (old ?? []).filter((s) => s.kind !== onlyKind),
+      );
+      const { error } = await supabase.from("export_snapshots").delete().eq("kind", onlyKind);
+      if (error) toast.error(error.message);
+    } else {
+      qc.setQueryData<ExportSnapshot[]>(["export_snapshots"], []);
+      const { error } = await supabase.from("export_snapshots").delete().neq("id", "00000000-0000-0000-0000-000000000000");
+      if (error) toast.error(error.message);
+    }
     qc.invalidateQueries({ queryKey: ["export_snapshots"] });
   };
 
