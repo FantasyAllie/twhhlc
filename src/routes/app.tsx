@@ -3690,6 +3690,18 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
                 ) : (
                   <span className="text-xs text-muted-foreground shrink-0 pt-1">Awaiting reception</span>
                 )}
+                {isAdmin && (
+                  <Button
+                    type="button"
+                    size="icon"
+                    variant="ghost"
+                    className="h-8 w-8 text-muted-foreground hover:text-destructive"
+                    onClick={() => void deleteMaintenanceRequest(m.id)}
+                    aria-label="Delete request"
+                  >
+                    <Trash2 className="h-4 w-4" />
+                  </Button>
+                )}
               </div>
             ))
         )}
