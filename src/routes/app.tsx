@@ -5695,119 +5695,89 @@ function AccountDialog({
   onViewAsRoleChange: (r: "admin" | "manager" | "user" | "reception" | "fnb" | null) => void;
 }) {
   const [username, setUsername] = useState(currentUsername);
-  const [unCurrentPw, setUnCurrentPw] = useState("");
-  const [currentPw, setCurrentPw] = useState("");
+  const [newEmail, setNewEmail] = useState("");
   const [newPw, setNewPw] = useState("");
   const [confirmPw, setConfirmPw] = useState("");
+  const [currentPw, setCurrentPw] = useState("");
   const [busy, setBusy] = useState(false);
-  const [newEmail, setNewEmail] = useState("");
-  const [emailCurrentPw, setEmailCurrentPw] = useState("");
 
   useEffect(() => {
     if (open) {
       setUsername(currentUsername);
-      setUnCurrentPw("");
-      setCurrentPw("");
+      setNewEmail("");
       setNewPw("");
       setConfirmPw("");
-      setNewEmail("");
-      setEmailCurrentPw("");
+      setCurrentPw("");
     }
   }, [open, currentUsername]);
 
-  async function saveUsername(e: React.FormEvent) {
+  async function saveAll(e: React.FormEvent) {
     e.preventDefault();
     if (busy) return;
-    if (username.trim() === currentUsername) {
-      toast.info("Display name is unchanged");
+    const user = getStoredUser();
+    if (!user) { toast.error("Not signed in"); return; }
+
+    const trimmedUsername = username.trim();
+    const trimmedEmail = newEmail.trim();
+    const wantsUsername = trimmedUsername !== "" && trimmedUsername !== currentUsername;
+    const wantsEmail = trimmedEmail !== "" && trimmedEmail.toLowerCase() !== user.email.toLowerCase();
+    const wantsPassword = newPw.length > 0 || confirmPw.length > 0;
+
+    if (!wantsUsername && !wantsEmail && !wantsPassword) {
+      toast.info("Nothing to change");
       return;
     }
-    setBusy(true);
-    try {
-      const user = getStoredUser();
-      if (!user) throw new Error("Not signed in");
-      // Optionally re-verify current password before updating.
-      if (unCurrentPw) {
-        const { error: signErr } = await supabase.auth.signInWithPassword({
-          email: user.email,
-          password: unCurrentPw,
-        });
-        if (signErr) throw new Error("Current password is incorrect");
-      }
-      const newName = username.trim();
-      const { error: pErr } = await supabase
-        .from("profiles")
-        .update({ display_name: newName })
-        .eq("id", user.id);
-      if (pErr) throw pErr;
-      await supabase.auth.updateUser({ data: { display_name: newName } });
-      // Refresh cached session so the new name appears immediately.
-      const { refreshSession } = await import("@/lib/auth-client");
-      await refreshSession();
-      onUsernameChanged(newName);
-      toast.success("Display name updated");
-      setUnCurrentPw("");
-    } catch (err) {
-      toast.error(err instanceof Error ? err.message : "Failed to update display name");
-    } finally {
-      setBusy(false);
-    }
-  }
-
-  async function savePassword(e: React.FormEvent) {
-    e.preventDefault();
-    if (busy) return;
-    if (newPw !== confirmPw) {
+    if (wantsPassword && newPw !== confirmPw) {
       toast.error("New passwords do not match");
       return;
     }
+    if (!currentPw) {
+      toast.error("Enter your current password to save changes");
+      return;
+    }
+
     setBusy(true);
     try {
-      const user = getStoredUser();
-      if (!user) throw new Error("Not signed in");
       const { error: signErr } = await supabase.auth.signInWithPassword({
         email: user.email,
         password: currentPw,
       });
       if (signErr) throw new Error("Current password is incorrect");
-      const { error } = await supabase.auth.updateUser({ password: newPw });
-      if (error) throw error;
-      toast.success("Password updated");
-      setCurrentPw("");
+
+      const messages: string[] = [];
+
+      if (wantsUsername) {
+        const { error: pErr } = await supabase
+          .from("profiles")
+          .update({ display_name: trimmedUsername })
+          .eq("id", user.id);
+        if (pErr) throw pErr;
+        await supabase.auth.updateUser({ data: { display_name: trimmedUsername } });
+        const { refreshSession } = await import("@/lib/auth-client");
+        await refreshSession();
+        onUsernameChanged(trimmedUsername);
+        messages.push("Username updated");
+      }
+
+      if (wantsEmail) {
+        const { error } = await supabase.auth.updateUser({ email: trimmedEmail });
+        if (error) throw error;
+        messages.push("Check your new email to confirm the change");
+      }
+
+      if (wantsPassword) {
+        const { error } = await supabase.auth.updateUser({ password: newPw });
+        if (error) throw error;
+        messages.push("Password updated");
+      }
+
+      toast.success(messages.join(" · "));
+      setNewEmail("");
       setNewPw("");
       setConfirmPw("");
+      setCurrentPw("");
     } catch (err) {
-      toast.error(err instanceof Error ? err.message : "Failed to update password");
-    } finally {
-      setBusy(false);
-    }
-  }
-
-  async function saveEmail(e: React.FormEvent) {
-    e.preventDefault();
-    if (busy) return;
-    const next = newEmail.trim();
-    if (!next) { toast.error("Enter a new email"); return; }
-    setBusy(true);
-    try {
-      const user = getStoredUser();
-      if (!user) throw new Error("Not signed in");
-      if (next.toLowerCase() === user.email.toLowerCase()) {
-        toast.info("That's already your email");
-        return;
-      }
-      const { error: signErr } = await supabase.auth.signInWithPassword({
-        email: user.email,
-        password: emailCurrentPw,
-      });
-      if (signErr) throw new Error("Current password is incorrect");
-      const { error } = await supabase.auth.updateUser({ email: next });
-      if (error) throw error;
-      toast.success("Check your new email to confirm the change");
-      setNewEmail("");
-      setEmailCurrentPw("");
-    } catch (err) {
-      toast.error(err instanceof Error ? err.message : "Failed to update email");
+      toast.error(err instanceof Error ? err.message : "Failed to save changes");
     } finally {
       setBusy(false);
     }
@@ -5819,10 +5789,10 @@ function AccountDialog({
         <DialogHeader>
           <DialogTitle>Account</DialogTitle>
           <DialogDescription>
-            Update your username or password. Your current password is required to confirm changes.
+            Update your username, email, or password. Enter your current password once at the bottom to save any changes.
           </DialogDescription>
         </DialogHeader>
-        <div className="space-y-6">
+        <form onSubmit={saveAll} className="space-y-6">
           {canViewAs && (
             <div className="space-y-2">
               <h3 className="text-sm font-semibold">View as</h3>
@@ -5859,71 +5829,34 @@ function AccountDialog({
             </div>
           )}
           {canViewAs && <div className="border-t" />}
-          <form onSubmit={saveUsername} className="space-y-2">
-            <h3 className="text-sm font-semibold">Change username</h3>
-            <div className="space-y-1">
-              <label className="text-xs font-medium">New username</label>
-              <Input
-                value={username}
-                onChange={(e) => setUsername(e.target.value)}
-                autoCapitalize="none"
-                autoCorrect="off"
-              />
-            </div>
-            <div className="space-y-1">
-              <label className="text-xs font-medium">Current password</label>
-              <Input
-                type="password"
-                value={unCurrentPw}
-                onChange={(e) => setUnCurrentPw(e.target.value)}
-                autoComplete="current-password"
-              />
-            </div>
-            <div className="flex justify-end">
-              <Button type="submit" size="sm" disabled={busy}>Save username</Button>
-            </div>
-          </form>
+          <div className="space-y-2">
+            <h3 className="text-sm font-semibold">New username</h3>
+            <Input
+              value={username}
+              onChange={(e) => setUsername(e.target.value)}
+              autoCapitalize="none"
+              autoCorrect="off"
+              placeholder={currentUsername}
+            />
+          </div>
           <div className="border-t" />
-          <form onSubmit={saveEmail} className="space-y-2">
-            <h3 className="text-sm font-semibold">Change email address</h3>
+          <div className="space-y-2">
+            <h3 className="text-sm font-semibold">New email</h3>
             <p className="text-xs text-muted-foreground">
               We'll send a confirmation link to the new address. The change takes effect once confirmed.
             </p>
-            <div className="space-y-1">
-              <label className="text-xs font-medium">New email</label>
-              <Input
-                type="email"
-                value={newEmail}
-                onChange={(e) => setNewEmail(e.target.value)}
-                autoCapitalize="none"
-                autoCorrect="off"
-              />
-            </div>
-            <div className="space-y-1">
-              <label className="text-xs font-medium">Current password</label>
-              <Input
-                type="password"
-                value={emailCurrentPw}
-                onChange={(e) => setEmailCurrentPw(e.target.value)}
-                autoComplete="current-password"
-              />
-            </div>
-            <div className="flex justify-end">
-              <Button type="submit" size="sm" disabled={busy}>Save email</Button>
-            </div>
-          </form>
+            <Input
+              type="email"
+              value={newEmail}
+              onChange={(e) => setNewEmail(e.target.value)}
+              autoCapitalize="none"
+              autoCorrect="off"
+              placeholder="name@example.com"
+            />
+          </div>
           <div className="border-t" />
-          <form onSubmit={savePassword} className="space-y-2">
-            <h3 className="text-sm font-semibold">Change password</h3>
-            <div className="space-y-1">
-              <label className="text-xs font-medium">Current password</label>
-              <Input
-                type="password"
-                value={currentPw}
-                onChange={(e) => setCurrentPw(e.target.value)}
-                autoComplete="current-password"
-              />
-            </div>
+          <div className="space-y-2">
+            <h3 className="text-sm font-semibold">New password</h3>
             <div className="space-y-1">
               <label className="text-xs font-medium">New password</label>
               <Input
@@ -5942,11 +5875,21 @@ function AccountDialog({
                 autoComplete="new-password"
               />
             </div>
-            <div className="flex justify-end">
-              <Button type="submit" size="sm" disabled={busy}>Save password</Button>
+          </div>
+          <div className="border-t" />
+          <div className="space-y-2">
+            <label className="text-xs font-medium">Enter existing password to save changes</label>
+            <Input
+              type="password"
+              value={currentPw}
+              onChange={(e) => setCurrentPw(e.target.value)}
+              autoComplete="current-password"
+            />
+            <div className="flex justify-end pt-1">
+              <Button type="submit" size="sm" disabled={busy}>Save changes</Button>
             </div>
-          </form>
-        </div>
+          </div>
+        </form>
       </DialogContent>
     </Dialog>
   );
