@@ -1,21 +1,49 @@
 import { createServerFn } from "@tanstack/react-start";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 
+// A user has exactly one Position and zero or more Sub-roles.
+// Positions live alongside sub-role rows in public.user_roles.
+export type Position = "admin" | "manager" | "user" | "pending";
+export type SubRole = "reception" | "housekeeper";
+// Compat role used by legacy UI paths — derived from position + sub-roles.
 export type AppRole = "admin" | "manager" | "user" | "reception" | "pending";
-export type ApprovedRole = "admin" | "manager" | "user" | "reception";
-export type SessionUser = { id: string; username: string; email: string; role: AppRole };
+export type SessionUser = {
+  id: string;
+  username: string;
+  email: string;
+  position: Position;
+  subRoles: SubRole[];
+  /** Back-compat: rough single-role summary. Prefer position/subRoles. */
+  role: AppRole;
+};
 export type AppUserRow = {
   id: string;
   username: string;
   email: string;
-  role: AppRole;
+  position: Position;
+  subRoles: SubRole[];
   created_at: string;
   disabled: boolean;
 };
 
-function validateRole(r: string): ApprovedRole {
-  if (r !== "admin" && r !== "manager" && r !== "user" && r !== "reception") throw new Error("Invalid role");
-  return r;
+const POSITIONS: ReadonlyArray<Position> = ["admin", "manager", "user", "pending"];
+const SUB_ROLES: ReadonlyArray<SubRole> = ["reception", "housekeeper"];
+
+function validatePosition(p: string): Exclude<Position, "pending"> {
+  if (p !== "admin" && p !== "manager" && p !== "user") throw new Error("Invalid position");
+  return p;
+}
+function validateSubRoles(rs: unknown): SubRole[] {
+  if (!Array.isArray(rs)) throw new Error("Invalid sub-roles");
+  const out: SubRole[] = [];
+  for (const r of rs) {
+    if (r === "reception" || r === "housekeeper") {
+      if (!out.includes(r)) out.push(r);
+    } else {
+      throw new Error("Invalid sub-role");
+    }
+  }
+  return out;
 }
 function validatePassword(p: string) {
   if (typeof p !== "string" || p.length < 6 || p.length > 128) {
@@ -34,6 +62,21 @@ async function assertAdmin(ctx: { userId: string }) {
   if (error || !data) throw new Error("Admin access required");
 }
 
+function splitRoles(rows: Array<{ role: string }>): { position: Position; subRoles: SubRole[] } {
+  let position: Position = "pending";
+  const subRoles: SubRole[] = [];
+  const priority: Record<Position, number> = { admin: 4, manager: 3, user: 2, pending: 1 };
+  for (const r of rows) {
+    if (r.role === "reception" || r.role === "housekeeper") {
+      if (!subRoles.includes(r.role)) subRoles.push(r.role);
+    } else if ((POSITIONS as ReadonlyArray<string>).includes(r.role)) {
+      const p = r.role as Position;
+      if (priority[p] > priority[position]) position = p;
+    }
+  }
+  return { position, subRoles };
+}
+
 export const listUsers = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .handler(async ({ context }): Promise<AppUserRow[]> => {
@@ -47,11 +90,11 @@ export const listUsers = createServerFn({ method: "POST" })
     const { data: roleRows } = await supabaseAdmin
       .from("user_roles")
       .select("user_id, role");
-    const roleMap = new Map<string, AppRole>();
-    const priority: Record<AppRole, number> = { admin: 4, manager: 3, reception: 2, user: 1, pending: 0 };
-    for (const r of (roleRows ?? []) as { user_id: string; role: AppRole }[]) {
-      const cur = roleMap.get(r.user_id);
-      if (!cur || priority[r.role] > priority[cur]) roleMap.set(r.user_id, r.role);
+    const rowsByUser = new Map<string, Array<{ role: string }>>();
+    for (const r of (roleRows ?? []) as { user_id: string; role: string }[]) {
+      const list = rowsByUser.get(r.user_id) ?? [];
+      list.push({ role: r.role });
+      rowsByUser.set(r.user_id, list);
     }
     // Pull ban status from auth.users in one paged listing
     const disabledMap = new Map<string, boolean>();
@@ -72,25 +115,33 @@ export const listUsers = createServerFn({ method: "POST" })
     } catch {
       // best-effort: leave disabledMap empty
     }
-    return ((profiles ?? []) as Array<{ id: string; email: string | null; display_name: string | null; created_at: string }>).map((p) => ({
-      id: p.id,
-      email: p.email ?? "",
-      username: p.display_name || (p.email ?? "").split("@")[0] || "user",
-      role: roleMap.get(p.id) ?? "pending",
-      created_at: p.created_at,
-      disabled: disabledMap.get(p.id) ?? false,
-    }));
+    return ((profiles ?? []) as Array<{ id: string; email: string | null; display_name: string | null; created_at: string }>).map((p) => {
+      const { position, subRoles } = splitRoles(rowsByUser.get(p.id) ?? []);
+      return {
+        id: p.id,
+        email: p.email ?? "",
+        username: p.display_name || (p.email ?? "").split("@")[0] || "user",
+        position,
+        subRoles,
+        created_at: p.created_at,
+        disabled: disabledMap.get(p.id) ?? false,
+      };
+    });
   });
 
-export const updateUserRole = createServerFn({ method: "POST" })
+/**
+ * Replace a user's entire (position + sub-role) assignment in one shot.
+ * Guards against demoting the last admin (self) and against invalid inputs.
+ */
+export const updateUserAssignment = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
-  .inputValidator((d: { id: string; role: ApprovedRole }) => d)
+  .inputValidator((d: { id: string; position: "admin" | "manager" | "user"; subRoles: SubRole[] }) => d)
   .handler(async ({ data, context }) => {
     await assertAdmin(context);
-    const role = validateRole(data.role);
+    const position = validatePosition(data.position);
+    const subRoles = validateSubRoles(data.subRoles);
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
-    // Prevent demoting the last admin if it's the actor themselves.
-    if (role !== "admin") {
+    if (position !== "admin") {
       const { count } = await supabaseAdmin
         .from("user_roles")
         .select("user_id", { count: "exact", head: true })
@@ -99,11 +150,13 @@ export const updateUserRole = createServerFn({ method: "POST" })
         throw new Error("Cannot demote the only remaining admin");
       }
     }
-    // Replace role rows for this user with the single chosen role.
+    // Rewrite all role rows for this user.
     await supabaseAdmin.from("user_roles").delete().eq("user_id", data.id);
-    const { error } = await supabaseAdmin
-      .from("user_roles")
-      .insert({ user_id: data.id, role });
+    const insertRows = [
+      { user_id: data.id, role: position },
+      ...subRoles.map((r) => ({ user_id: data.id, role: r })),
+    ];
+    const { error } = await supabaseAdmin.from("user_roles").insert(insertRows);
     if (error) throw new Error(error.message);
     return { ok: true };
   });
@@ -122,10 +175,11 @@ export const deleteUser = createServerFn({ method: "POST" })
 
 export const createUser = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
-  .inputValidator((d: { email: string; password: string; displayName?: string; role: ApprovedRole }) => d)
+  .inputValidator((d: { email: string; password: string; displayName?: string; position: "admin" | "manager" | "user"; subRoles: SubRole[] }) => d)
   .handler(async ({ data, context }) => {
     await assertAdmin(context);
-    const role = validateRole(data.role);
+    const position = validatePosition(data.position);
+    const subRoles = validateSubRoles(data.subRoles);
     validatePassword(data.password);
     const email = String(data.email).trim().toLowerCase();
     if (!email.includes("@")) throw new Error("Valid email is required");
@@ -137,9 +191,12 @@ export const createUser = createServerFn({ method: "POST" })
       user_metadata: data.displayName ? { display_name: data.displayName } : {},
     });
     if (error || !created.user) throw new Error(error?.message ?? "Failed to create user");
-    // Trigger inserted role 'pending' (or admin if magic email). Override to chosen role.
+    // Trigger inserted role 'pending' (or admin if magic email). Override.
     await supabaseAdmin.from("user_roles").delete().eq("user_id", created.user.id);
-    await supabaseAdmin.from("user_roles").insert({ user_id: created.user.id, role });
+    await supabaseAdmin.from("user_roles").insert([
+      { user_id: created.user.id, role: position },
+      ...subRoles.map((r) => ({ user_id: created.user.id, role: r })),
+    ]);
     return { ok: true };
   });
 
