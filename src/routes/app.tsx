@@ -5786,42 +5786,6 @@ function AccountDialog({
           </DialogDescription>
         </DialogHeader>
         <form onSubmit={saveAll} className="space-y-6">
-          {canViewAs && (
-            <div className="space-y-2">
-              <h3 className="text-sm font-semibold">View as</h3>
-              <p className="text-xs text-muted-foreground">
-                Temporarily experience the app as another view. Your account permissions are unchanged.
-              </p>
-              <div className="space-y-1.5">
-                {availableViews.map((r) => {
-                  const active = (viewAsRole ?? defaultView) === r;
-                  const base =
-                    r === "user" ? "Housekeeper" :
-                    r === "reception" ? "Reception" :
-                    r === "fnb" ? "F&B" :
-                    r === "manager" ? "Manager" : "Admin";
-                  return (
-                    <button
-                      key={r}
-                      type="button"
-                      onClick={() => {
-                        onViewAsRoleChange(active ? null : r);
-                        onOpenChange(false);
-                      }}
-                      className={cn(
-                        "w-full flex items-center gap-3 rounded-full border px-4 min-h-11 text-sm font-medium transition-colors hover:bg-accent",
-                        active ? "bg-accent border-primary" : "bg-background",
-                      )}
-                    >
-                      <span className="text-left flex-1">{base}</span>
-                      {active && <Check className="h-4 w-4 shrink-0 text-primary" />}
-                    </button>
-                  );
-                })}
-              </div>
-            </div>
-          )}
-          {canViewAs && <div className="border-t" />}
           <div className="space-y-2">
             <h3 className="text-sm font-semibold">New username</h3>
             <Input
