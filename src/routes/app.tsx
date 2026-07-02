@@ -3772,14 +3772,14 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
       return (
         <div className="mt-4 space-y-4">
           <div className="space-y-2">
-            {(isAdmin || isFnb) && (
+            {(menuHasHk || menuHasFnb) && (
               <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">Manage</p>
             )}
             <div className="space-y-1.5">
-              {(isAdmin || isFnb) && (
+              {(menuHasHk || menuHasFnb) && (
                 <Row icon={List} label="Linen List" onClick={() => { close(); setTemplateOpen(true); }} />
               )}
-              {isAdmin && (
+              {menuIsAdmin && (
                 <>
                   <Row icon={Hash} label="Manage Rooms" onClick={() => { close(); setManageRoomsOpen(true); }} />
                   <Row icon={Ban} label="Rejects" onClick={() => { close(); setRejectsOpen(true); }} />
@@ -3787,10 +3787,10 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
                   <Row icon={ConciergeBell} label="Bulk Room Status Setup" onClick={() => { close(); setQuickReceptionOpen(true); }} />
                 </>
               )}
-              {isFnb && !isAdmin && (
+              {menuIsFnbOnly && (
                 <Row icon={History} label="History" onClick={() => { close(); setHistorySheetOpen(true); }} />
               )}
-              {!isFnb && (
+              {!menuIsFnbOnly && (
                 <Row
                   icon={Wrench}
                   label={
@@ -3820,7 +3820,7 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
               {realIsAdmin && (
                 <Row icon={Users} label="Users" onClick={() => { close(); setUsersOpen(true); }} />
               )}
-              {!isFnb && (
+              {!menuIsFnbOnly && (
                 <Row icon={Bell} label="Notifications" onClick={() => { close(); setNotificationsSheetOpen(true); }} />
               )}
               <Row icon={User} label="Account" onClick={() => { close(); setAccountOpen(true); }} />
