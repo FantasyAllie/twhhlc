@@ -3512,7 +3512,11 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
   <NotificationsSheet
     open={notificationsSheetOpen}
     onOpenChange={setNotificationsSheetOpen}
-    userRole={(authUser.role === "manager" ? "admin" : authUser.role) as "admin" | "user" | "reception"}
+   userRole={(authUser.role === "manager"
+     ? "admin"
+     : authUser.role === "fnb"
+     ? "reception"
+     : authUser.role) as "admin" | "user" | "reception"}
   />
 )}
 <Sheet open={menuSheetOpen} onOpenChange={setMenuSheetOpen}>
@@ -3616,7 +3620,7 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
         )}
       </SheetTitle>
       <SheetDescription>
-        {isReception
+        {canReceptionEdit
           ? "Reception can mark maintenance requests as complete."
           : "Log a maintenance issue for reception to action."}
       </SheetDescription>
@@ -3672,7 +3676,7 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
                   </div>
                   <p className="mt-1 text-sm whitespace-pre-wrap break-words">{m.message}</p>
                 </div>
-                {isReception ? (
+                {canReceptionEdit ? (
                   <Button
                     type="button"
                     size="sm"
@@ -3721,7 +3725,7 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
                   </div>
                   <p className="mt-1 text-sm whitespace-pre-wrap break-words text-muted-foreground line-through">{m.message}</p>
                 </div>
-                {(isReception || isAdmin) && (
+                {(canReceptionEdit || isAdmin) && (
                   <Button
                     type="button"
                     size="icon"
