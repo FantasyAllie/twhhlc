@@ -928,13 +928,13 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
     // Which view-as options this account can actually pick. Only sub-role
     // views appear as pills; admins/managers return to their default view
     // by toggling the active pill off.
-    const availableViews: ViewRole[] = (() => {
-      const out: ViewRole[] = [];
-      if (realIsAdmin || realIsManager || hasHousekeeperRole) out.push("user");
-      if (realIsAdmin || realIsManager || hasReceptionRole) out.push("reception");
-      if (realIsAdmin || realIsManager || hasFnbRole) out.push("fnb");
-      return out;
-    })();
+     const availableViews: ViewRole[] = (() => {
+       const out: ViewRole[] = [];
+       if (hasHousekeeperRole) out.push("user");
+       if (hasReceptionRole) out.push("reception");
+       if (hasFnbRole) out.push("fnb");
+       return out;
+     })();
    // Default view when no "view as" is set.
    const defaultView: ViewRole | undefined = (() => {
       // If the account has F&B assigned but no other operational sub-role
@@ -954,9 +954,7 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
     // Show the switcher when there's at least one sub-role pill and either
     // the user is admin/manager (needs to swap in and out of default) or
     // they have multiple sub-role options.
-    const canViewAs =
-      availableViews.length > 0 &&
-      (realIsAdmin || realIsManager || availableViews.length > 1);
+     const canViewAs = availableViews.length >= 1;
    const safeViewAs: ViewRole | null =
      viewAsRole && availableViews.includes(viewAsRole) ? viewAsRole : null;
    const effectiveRole: ViewRole | undefined =
@@ -966,6 +964,14 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
    const isAdmin = effectiveRole === "admin" || effectiveRole === "manager";
    const isHousekeeper = effectiveRole === "user";
    const isFnb = effectiveRole === "fnb";
+    // Settings-menu permissions: derived from real position/sub-roles,
+    // not the active home-screen pill. The settings menu should stay the
+    // same regardless of which view the user is currently in.
+    const menuIsAdmin = realIsAdmin || realIsManager;
+    const menuHasFnb = menuIsAdmin || hasFnbRole;
+    const menuHasHk = menuIsAdmin || hasHousekeeperRole;
+    const menuIsFnbOnly =
+      position === "user" && hasFnbRole && !hasHousekeeperRole && !hasReceptionRole;
   const doneSet = new Set(
     rooms
       .filter((r) => (isReception ? r.done_reception : r.done))
