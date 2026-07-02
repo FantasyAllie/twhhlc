@@ -3050,7 +3050,7 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
               <button
                 key={r}
                 type="button"
-                onClick={() => setViewAsRole(r === defaultView ? null : r)}
+                onClick={() => setViewAsRole(active ? null : r)}
                 className={cn(
                   "px-3 py-1.5 text-xs sm:text-sm rounded-[0.3rem] transition-colors",
                   active
