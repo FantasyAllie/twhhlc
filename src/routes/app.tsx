@@ -954,7 +954,7 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
     // Show the switcher when there's at least one sub-role pill and either
     // the user is admin/manager (needs to swap in and out of default) or
     // they have multiple sub-role options.
-     const canViewAs = availableViews.length >= 1;
+     const canViewAs = availableViews.length >= 2;
    const safeViewAs: ViewRole | null =
      viewAsRole && availableViews.includes(viewAsRole) ? viewAsRole : null;
    const effectiveRole: ViewRole | undefined =
@@ -2643,7 +2643,7 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
             <Pencil className="h-4 w-4" />
           </button>
         )}
-        {!isHousekeeper && (() => {
+        {(!isHousekeeper || isAdmin) && (() => {
           const msgs = activeMessagesByRoom(n);
           const room = rooms.find((r) => r.room_number === n);
           const note = room?.housekeeping_note ?? null;
@@ -5135,10 +5135,14 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
 
             {!isReception && (
               (() => {
-                const staffId = receptionStatuses.find((s) => s.label.toLowerCase() === "staff")?.id ?? null;
-                const eligible = rooms.filter(
-                  (r) => !staffId || (r.reception_status_id ?? r.default_status) !== staffId,
-                );
+                 const staffId = receptionStatuses.find((s) => s.label.toLowerCase() === "staff")?.id ?? null;
+                 const rosId = receptionStatuses.find((s) => s.label.toLowerCase() === "ros")?.id ?? null;
+                 const eligible = rooms.filter((r) => {
+                   const sid = r.reception_status_id ?? r.default_status;
+                   if (staffId && sid === staffId) return false;
+                   if (rosId && sid === rosId) return false;
+                   return true;
+                 });
                 const total = eligible.length;
                 const countsByRoom = new Map<number, number>();
                 counts.forEach((c) => {
