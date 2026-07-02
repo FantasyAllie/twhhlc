@@ -5135,10 +5135,14 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
 
             {!isReception && (
               (() => {
-                const staffId = receptionStatuses.find((s) => s.label.toLowerCase() === "staff")?.id ?? null;
-                const eligible = rooms.filter(
-                  (r) => !staffId || (r.reception_status_id ?? r.default_status) !== staffId,
-                );
+                 const staffId = receptionStatuses.find((s) => s.label.toLowerCase() === "staff")?.id ?? null;
+                 const rosId = receptionStatuses.find((s) => s.label.toLowerCase() === "ros")?.id ?? null;
+                 const eligible = rooms.filter((r) => {
+                   const sid = r.reception_status_id ?? r.default_status;
+                   if (staffId && sid === staffId) return false;
+                   if (rosId && sid === rosId) return false;
+                   return true;
+                 });
                 const total = eligible.length;
                 const countsByRoom = new Map<number, number>();
                 counts.forEach((c) => {
