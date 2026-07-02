@@ -954,7 +954,7 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
     // Show the switcher when there's at least one sub-role pill and either
     // the user is admin/manager (needs to swap in and out of default) or
     // they have multiple sub-role options.
-     const canViewAs = availableViews.length >= 1;
+     const canViewAs = availableViews.length >= 2;
    const safeViewAs: ViewRole | null =
      viewAsRole && availableViews.includes(viewAsRole) ? viewAsRole : null;
    const effectiveRole: ViewRole | undefined =
