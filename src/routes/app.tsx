@@ -887,6 +887,7 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
    const realIsManager = position === "manager";
    const hasReceptionRole = subRoles.includes("reception");
    const hasHousekeeperRole = subRoles.includes("housekeeper");
+   const hasFnbRole = subRoles.includes("fnb");
    // Which view-as options this account can actually pick.
    const availableViews: ViewRole[] = (() => {
      const out: ViewRole[] = [];
@@ -894,6 +895,7 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
      if (realIsAdmin || realIsManager) out.push("manager");
      if (realIsAdmin || realIsManager || hasHousekeeperRole) out.push("user");
      if (realIsAdmin || realIsManager || hasReceptionRole) out.push("reception");
+     if (realIsAdmin || realIsManager || hasFnbRole) out.push("fnb");
      return out;
    })();
    // Default view when no "view as" is set.
@@ -903,6 +905,7 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
      if (position === "user") {
        if (hasHousekeeperRole) return "user";
        if (hasReceptionRole) return "reception";
+       if (hasFnbRole) return "fnb";
      }
      return undefined;
    })();
@@ -916,6 +919,7 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
    const isReception = effectiveRole === "reception";
    const isAdmin = effectiveRole === "admin" || effectiveRole === "manager";
    const isHousekeeper = effectiveRole === "user";
+   const isFnb = effectiveRole === "fnb";
   const doneSet = new Set(
     rooms
       .filter((r) => (isReception ? r.done_reception : r.done))
