@@ -2969,7 +2969,16 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
   )}
 
  {/* Linen list dialog */}
-  <Dialog open={templateOpen} onOpenChange={(o) => { setTemplateOpen(o); if (o) setLinenListType(isFnb ? "fnb" : "housekeeping"); }}>
+   <Dialog open={templateOpen} onOpenChange={(o) => {
+     setTemplateOpen(o);
+     if (o) {
+       const canHk = realIsAdmin || realIsManager || hasHousekeeperRole;
+       const canFn = realIsAdmin || realIsManager || hasFnbRole;
+       if (!canHk && canFn) setLinenListType("fnb");
+       else if (canHk && !canFn) setLinenListType("housekeeping");
+       else setLinenListType(isFnb ? "fnb" : "housekeeping");
+     }
+   }}>
 <DialogContent className="max-w-2xl w-[calc(100vw-1.5rem)] sm:w-full p-4 sm:p-6">
  <DialogHeader>
  <DialogTitle>Linen List</DialogTitle>
@@ -2979,7 +2988,8 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
    </DialogDescription>
  </DialogHeader>
    <div className="space-y-3">
-     <div className="inline-flex rounded-md border p-0.5 bg-muted/40 self-start">
+      {(realIsAdmin || realIsManager || (hasHousekeeperRole && hasFnbRole)) && (
+      <div className="inline-flex rounded-md border p-0.5 bg-muted/40 self-start">
        <button
          type="button"
          onClick={() => setLinenListType("housekeeping")}
@@ -3000,7 +3010,8 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
        >
          F&amp;B
        </button>
-     </div>
+      </div>
+      )}
     <form onSubmit={addTemplateItem} className="flex gap-2">
       <Input
          placeholder={`Add an item to ${linenListType === "fnb" ? "F&B" : "Housekeeping"}…`}
