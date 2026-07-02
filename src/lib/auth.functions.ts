@@ -62,6 +62,16 @@ async function assertAdmin(ctx: { userId: string }) {
   if (error || !data) throw new Error("Admin access required");
 }
 
+async function assertAdminOrManager(ctx: { userId: string }) {
+  const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+  const { data, error } = await supabaseAdmin
+    .from("user_roles")
+    .select("role")
+    .eq("user_id", ctx.userId)
+    .in("role", ["admin", "manager"]);
+  if (error || !data || data.length === 0) throw new Error("Admin or manager access required");
+}
+
 function splitRoles(rows: Array<{ role: string }>): { position: Position; subRoles: SubRole[] } {
   let position: Position = "pending";
   const subRoles: SubRole[] = [];
