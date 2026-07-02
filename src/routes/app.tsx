@@ -4557,6 +4557,72 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
   </Dialog>
 
  {/* Rooms */}
+ {isFnb ? (
+   <section className="space-y-4">
+     <div className="flex items-baseline justify-between">
+       <h2 className="text-sm font-medium text-muted-foreground uppercase tracking-wide">
+         F&amp;B Linen Counter
+       </h2>
+     </div>
+     {template.length === 0 ? (
+       <p className="text-sm text-muted-foreground">
+         No linen items yet. Add some from the Linen List.
+       </p>
+     ) : (
+       <ul className="divide-y border rounded-md bg-muted/30">
+         {template.map((item) => {
+           const value = fnbCountByItem.get(item.id) ?? 0;
+           const swatch = item.color ? COLOR_SWATCHES[item.color] : null;
+           return (
+             <li key={item.id} className="flex items-center gap-3 p-3">
+               <span
+                 className="h-3 w-3 rounded-full border-2 shrink-0"
+                 style={{
+                   backgroundColor: swatch
+                     ? theme === "dark"
+                       ? swatch.darkBg
+                       : swatch.bg
+                     : "transparent",
+                   borderColor: swatch ? swatch.border : "hsl(var(--border))",
+                 }}
+                 aria-hidden
+               />
+               <span className="flex-1 min-w-0 break-words text-sm font-medium">{item.name}</span>
+               <div className="flex items-center gap-2 shrink-0">
+                 <Button
+                   variant="outline"
+                   size="icon"
+                   className="h-10 w-10"
+                   onClick={() => setFnbCount(item.id, value - 1)}
+                   disabled={value <= 0}
+                   aria-label={`Decrease ${item.name}`}
+                 >
+                   -
+                 </Button>
+                 <Input
+                   type="number"
+                   min={0}
+                   value={value}
+                   onChange={(e) => setFnbCount(item.id, Number(e.target.value))}
+                   className="h-10 w-20 text-center tabular-nums"
+                 />
+                 <Button
+                   variant="outline"
+                   size="icon"
+                   className="h-10 w-10"
+                   onClick={() => setFnbCount(item.id, value + 1)}
+                   aria-label={`Increase ${item.name}`}
+                 >
+                   +
+                 </Button>
+               </div>
+             </li>
+           );
+         })}
+       </ul>
+     )}
+   </section>
+ ) : (
  <section className="space-y-4">
  <div className="flex items-baseline justify-between">
  <h2 className="text-sm font-medium text-muted-foreground uppercase tracking-wide">
@@ -4915,6 +4981,7 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
               })()
             )}
  </section>
+ )}
   {!isReception && (
     <div className="lg:hidden h-[calc(env(safe-area-inset-bottom,0px)+3.25rem)]" aria-hidden />
   )}
