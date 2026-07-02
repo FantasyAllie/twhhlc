@@ -3811,6 +3811,9 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
               {realIsAdmin && (
                 <Row icon={Users} label="Users" onClick={() => { close(); setUsersOpen(true); }} />
               )}
+              {realIsManager && !realIsAdmin && (
+                <Row icon={Users} label="User Approval" onClick={() => { close(); setUserApprovalOpen(true); }} />
+              )}
               {!menuIsFnbOnly && (
                 <Row icon={Bell} label="Notifications" onClick={() => { close(); setNotificationsSheetOpen(true); }} />
               )}
