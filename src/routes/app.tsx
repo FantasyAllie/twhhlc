@@ -3373,14 +3373,22 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
                  </Button>
                </div>
              )}
-           <div className="mt-4 space-y-4">
-             <div className="space-y-2">
-               <Row
-                 label="Mark as Done"
-                 selected={receptionDoneSet.has(n)}
-                 onClick={() => toggleReceptionDone(n)}
-               />
-             </div>
+            <div className="mt-4 space-y-4">
+              {canReceptionEdit && (
+                <div className="space-y-2">
+                  <Row
+                    label="Mark as Done"
+                    selected={receptionDoneSet.has(n)}
+                    onClick={() => toggleReceptionDone(n)}
+                  />
+                </div>
+              )}
+              {!canReceptionEdit && isFnb && (
+                <p className="text-xs text-muted-foreground">
+                  Read-only view. Room status is managed by Reception and Housekeeping.
+                </p>
+              )}
+              {canReceptionEdit && (<>
              <div className="space-y-2">
                <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">Status</p>
                {receptionStatuses.length === 0 && (
