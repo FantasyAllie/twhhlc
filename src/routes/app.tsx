@@ -5475,14 +5475,18 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
           <Button
             variant="outline"
             size="sm"
-            onClick={() =>
-              printTotals(
-                viewingSnapshot.totals as SnapshotRow[],
-                viewingSnapshot.grand_total,
-                new Date(viewingSnapshot.created_at),
-                viewingSnapshot.kind === "rejects" ? "rejects" : "totals",
-              )
-            }
+             onClick={() =>
+               printTotals(
+                 viewingSnapshot.totals as SnapshotRow[],
+                 viewingSnapshot.grand_total,
+                 new Date(viewingSnapshot.created_at),
+                 viewingSnapshot.kind === "rejects"
+                   ? "rejects"
+                   : viewingSnapshot.kind === "fnb_totals"
+                   ? "fnb_totals"
+                   : "totals",
+               )
+             }
           >
             Print
           </Button>
@@ -5576,6 +5580,8 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
             ? "A room status export already exists for today. Continuing will overwrite today's last history item. Please use the history feature to print previous exports. Would you like to continue with your export?"
             : confirmOverwrite?.kind === "maintenance"
             ? "A maintenance list export already exists for today. Continuing will overwrite today's last history item. Please use the history feature to print previous exports. Would you like to continue with your export?"
+            : confirmOverwrite?.kind === "fnb_totals"
+            ? "An F&B linen export already exists for today. Continuing will overwrite today's last history item. Please use the history feature to print previous exports. Would you like to continue with your export?"
             : "A linen export already exists for today. Continuing will overwrite today's last history item. Please use the history feature to print previous exports. Would you like to continue with your export?"}
         </DialogDescription>
       </DialogHeader>
