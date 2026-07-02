@@ -2893,6 +2893,16 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
         Print
       </Button>
     )}
+    {isFnb && (
+      <Button
+        variant="outline"
+        size="sm"
+        onClick={() => void openFnbExport()}
+      >
+        <Printer className="h-4 w-4 mr-2" />
+        Export
+      </Button>
+    )}
     {isReception && (
       <Button
         variant="outline"
