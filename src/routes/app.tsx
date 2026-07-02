@@ -3004,12 +3004,7 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
            <DropdownMenuSeparator />
          </>
        )}
-          {menuIsFnbOnly && (
-           <DropdownMenuItem onClick={() => setHistorySheetOpen(true)}>
-             <History className="h-4 w-4 mr-2" /> History
-           </DropdownMenuItem>
-         )}
-          {!menuIsFnbOnly && (
+           {!menuIsFnbOnly && (
            <DropdownMenuItem onClick={() => setMaintenanceLogOpen(true)}>
              <Wrench className="h-4 w-4 mr-2" />
              <span className="flex-1">Maintenance Log</span>
@@ -3788,9 +3783,6 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
                   <Row icon={History} label="History" onClick={() => { close(); setHistorySheetOpen(true); }} />
                   <Row icon={ConciergeBell} label="Bulk Room Status Setup" onClick={() => { close(); setQuickReceptionOpen(true); }} />
                 </>
-              )}
-              {menuIsFnbOnly && (
-                <Row icon={History} label="History" onClick={() => { close(); setHistorySheetOpen(true); }} />
               )}
               {!menuIsFnbOnly && (
                 <Row
