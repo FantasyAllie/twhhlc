@@ -2960,7 +2960,7 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
   )}
 
  {/* Linen list dialog */}
- <Dialog open={templateOpen} onOpenChange={setTemplateOpen}>
+  <Dialog open={templateOpen} onOpenChange={(o) => { setTemplateOpen(o); if (o) setLinenListType(isFnb ? "fnb" : "housekeeping"); }}>
 <DialogContent className="max-w-2xl w-[calc(100vw-1.5rem)] sm:w-full p-4 sm:p-6">
  <DialogHeader>
  <DialogTitle>Linen List</DialogTitle>
