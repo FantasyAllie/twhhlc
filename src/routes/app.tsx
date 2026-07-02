@@ -244,7 +244,7 @@ function AppPage() {
   const isMobile = useIsMobile();
   const [authUser, setAuthUser] = useState(() => getStoredUser());
   // Admin/Manager "view as" overlay — see definition further below for full context.
- type ViewRole = "admin" | "manager" | "user" | "reception" | "fnb";
+ type ViewRole = "admin" | "manager" | "user" | "reception" | "fnb" | "fnb";
   const [viewAsRole, setViewAsRole] = useState<ViewRole | null>(() => {
     if (typeof window === "undefined") return null;
     const v = window.localStorage.getItem("tw_view_as_role");
@@ -5412,10 +5412,10 @@ function AccountDialog({
   currentUsername: string;
   onUsernameChanged: (u: string) => void;
   canViewAs: boolean;
-  availableViews: ReadonlyArray<"admin" | "manager" | "user" | "reception">;
-  defaultView: "admin" | "manager" | "user" | "reception";
-  viewAsRole: "admin" | "manager" | "user" | "reception" | null;
-  onViewAsRoleChange: (r: "admin" | "manager" | "user" | "reception" | null) => void;
+  availableViews: ReadonlyArray<"admin" | "manager" | "user" | "reception" | "fnb">;
+  defaultView: "admin" | "manager" | "user" | "reception" | "fnb";
+  viewAsRole: "admin" | "manager" | "user" | "reception" | "fnb" | null;
+  onViewAsRoleChange: (r: "admin" | "manager" | "user" | "reception" | "fnb" | null) => void;
 }) {
   const [username, setUsername] = useState(currentUsername);
   const [unCurrentPw, setUnCurrentPw] = useState("");
