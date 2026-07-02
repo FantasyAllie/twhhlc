@@ -1715,6 +1715,35 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
     return { rows, grand: rows.length };
   };
 
+  const computeFnbTotals = (): { rows: SnapshotRow[]; grand: number } => {
+    const rows: SnapshotRow[] = [];
+    for (const item of templateFnbList) {
+      const count = fnbCountByItem.get(item.id) ?? 0;
+      if (count <= 0) continue;
+      rows.push({ name: item.name.trim(), count });
+    }
+    rows.sort((a, b) => a.name.localeCompare(b.name, undefined, { sensitivity: "base" }));
+    const grand = rows.reduce((s, r) => s + r.count, 0);
+    return { rows, grand };
+  };
+
+  const openFnbExport = async () => {
+    const { rows } = computeFnbTotals();
+    if (rows.length === 0) {
+      toast.error("No F&B linen counted");
+      return;
+    }
+    const today = new Date().toDateString();
+    const todays = snapshots.filter(
+      (s) => s.kind === "fnb_totals" && new Date(s.created_at).toDateString() === today,
+    );
+    if (todays.length > 0) {
+      setConfirmOverwrite({ kind: "fnb_totals" });
+      return;
+    }
+    await proceedExport("fnb_totals");
+  };
+
   const openMaintenanceExport = async () => {
     const { rows } = computeMaintenance();
     if (rows.length === 0) {
