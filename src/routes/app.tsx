@@ -928,13 +928,13 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
     // Which view-as options this account can actually pick. Only sub-role
     // views appear as pills; admins/managers return to their default view
     // by toggling the active pill off.
-    const availableViews: ViewRole[] = (() => {
-      const out: ViewRole[] = [];
-      if (realIsAdmin || realIsManager || hasHousekeeperRole) out.push("user");
-      if (realIsAdmin || realIsManager || hasReceptionRole) out.push("reception");
-      if (realIsAdmin || realIsManager || hasFnbRole) out.push("fnb");
-      return out;
-    })();
+     const availableViews: ViewRole[] = (() => {
+       const out: ViewRole[] = [];
+       if (hasHousekeeperRole) out.push("user");
+       if (hasReceptionRole) out.push("reception");
+       if (hasFnbRole) out.push("fnb");
+       return out;
+     })();
    // Default view when no "view as" is set.
    const defaultView: ViewRole | undefined = (() => {
       // If the account has F&B assigned but no other operational sub-role
@@ -954,9 +954,7 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
     // Show the switcher when there's at least one sub-role pill and either
     // the user is admin/manager (needs to swap in and out of default) or
     // they have multiple sub-role options.
-    const canViewAs =
-      availableViews.length > 0 &&
-      (realIsAdmin || realIsManager || availableViews.length > 1);
+     const canViewAs = availableViews.length >= 1;
    const safeViewAs: ViewRole | null =
      viewAsRole && availableViews.includes(viewAsRole) ? viewAsRole : null;
    const effectiveRole: ViewRole | undefined =
@@ -966,6 +964,14 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
    const isAdmin = effectiveRole === "admin" || effectiveRole === "manager";
    const isHousekeeper = effectiveRole === "user";
    const isFnb = effectiveRole === "fnb";
+    // Settings-menu permissions: derived from real position/sub-roles,
+    // not the active home-screen pill. The settings menu should stay the
+    // same regardless of which view the user is currently in.
+    const menuIsAdmin = realIsAdmin || realIsManager;
+    const menuHasFnb = menuIsAdmin || hasFnbRole;
+    const menuHasHk = menuIsAdmin || hasHousekeeperRole;
+    const menuIsFnbOnly =
+      position === "user" && hasFnbRole && !hasHousekeeperRole && !hasReceptionRole;
   const doneSet = new Set(
     rooms
       .filter((r) => (isReception ? r.done_reception : r.done))
@@ -2971,15 +2977,15 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
        </Button>
      </DropdownMenuTrigger>
      <DropdownMenuContent align="end" className="w-64">
-        {(isAdmin || isFnb) && (
-          <>
-            <DropdownMenuLabel>Manage</DropdownMenuLabel>
-            <DropdownMenuItem onClick={() => setTemplateOpen(true)}>
-              <List className="h-4 w-4 mr-2" /> Linen List
-            </DropdownMenuItem>
-          </>
-        )}
-        {isAdmin && (
+         {(menuHasHk || menuHasFnb) && (
+           <>
+             <DropdownMenuLabel>Manage</DropdownMenuLabel>
+             <DropdownMenuItem onClick={() => setTemplateOpen(true)}>
+               <List className="h-4 w-4 mr-2" /> Linen List
+             </DropdownMenuItem>
+           </>
+         )}
+         {menuIsAdmin && (
           <>
             <DropdownMenuItem onClick={() => setManageRoomsOpen(true)}>
              <Hash className="h-4 w-4 mr-2" /> Manage Rooms
@@ -2996,12 +3002,12 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
            <DropdownMenuSeparator />
          </>
        )}
-         {isFnb && !isAdmin && (
+          {menuIsFnbOnly && (
            <DropdownMenuItem onClick={() => setHistorySheetOpen(true)}>
              <History className="h-4 w-4 mr-2" /> History
            </DropdownMenuItem>
          )}
-         {!isFnb && (
+          {!menuIsFnbOnly && (
            <DropdownMenuItem onClick={() => setMaintenanceLogOpen(true)}>
              <Wrench className="h-4 w-4 mr-2" />
              <span className="flex-1">Maintenance Log</span>
@@ -3023,7 +3029,7 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
            <Users className="h-4 w-4 mr-2" /> Users
          </DropdownMenuItem>
        )}
-        {!isFnb && (
+         {!menuIsFnbOnly && (
           <DropdownMenuItem onClick={() => setNotificationsSheetOpen(true)}>
             <Bell className="h-4 w-4 mr-2" /> Notifications
           </DropdownMenuItem>
@@ -3766,14 +3772,14 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
       return (
         <div className="mt-4 space-y-4">
           <div className="space-y-2">
-            {(isAdmin || isFnb) && (
+            {(menuHasHk || menuHasFnb) && (
               <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">Manage</p>
             )}
             <div className="space-y-1.5">
-              {(isAdmin || isFnb) && (
+              {(menuHasHk || menuHasFnb) && (
                 <Row icon={List} label="Linen List" onClick={() => { close(); setTemplateOpen(true); }} />
               )}
-              {isAdmin && (
+              {menuIsAdmin && (
                 <>
                   <Row icon={Hash} label="Manage Rooms" onClick={() => { close(); setManageRoomsOpen(true); }} />
                   <Row icon={Ban} label="Rejects" onClick={() => { close(); setRejectsOpen(true); }} />
@@ -3781,10 +3787,10 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
                   <Row icon={ConciergeBell} label="Bulk Room Status Setup" onClick={() => { close(); setQuickReceptionOpen(true); }} />
                 </>
               )}
-              {isFnb && !isAdmin && (
+              {menuIsFnbOnly && (
                 <Row icon={History} label="History" onClick={() => { close(); setHistorySheetOpen(true); }} />
               )}
-              {!isFnb && (
+              {!menuIsFnbOnly && (
                 <Row
                   icon={Wrench}
                   label={
@@ -3814,7 +3820,7 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
               {realIsAdmin && (
                 <Row icon={Users} label="Users" onClick={() => { close(); setUsersOpen(true); }} />
               )}
-              {!isFnb && (
+              {!menuIsFnbOnly && (
                 <Row icon={Bell} label="Notifications" onClick={() => { close(); setNotificationsSheetOpen(true); }} />
               )}
               <Row icon={User} label="Account" onClick={() => { close(); setAccountOpen(true); }} />

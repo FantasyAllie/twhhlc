@@ -1,46 +1,50 @@
-## Add F&B sub-role with shared linen counter
+## Changes
 
-### Database
-- Add `fnb` to the `app_role` enum.
-- New table `fnb_linen_counts` — a single global counter shared across all F&B staff:
-  - `template_item_id` (unique, FK to `template_items.id`)
-  - `count` (int, default 0)
-  - `updated_at`
-- RLS + grants: signed-in users may read and update; admins/managers may delete/reset. Realtime enabled so admins viewing-as-F&B and multiple F&B users see live changes.
-- Optional: extend `export_snapshots.kind` to accept `"fnb"` for the new export.
+### 1. Home-screen pills — sub-role assignment only
 
-### Types & auth plumbing
-- Extend `SubRole` to `"reception" | "housekeeper" | "fnb"` in both `src/lib/auth.functions.ts` and `src/lib/auth-client.ts`.
-- Update the sub-role validator, role-splitting, and legacy compat mapping so a user with only `fnb` maps to a new effective view `"fnb"`.
-- Add `"fnb"` to the `ViewRole` union in `src/routes/app.tsx` and to `availableViews` / `defaultView` for admin (and any user assigned the F&B sub-role) so admins can "View as F&B".
+In `src/routes/app.tsx`, tighten `availableViews` so a pill only appears when the user actually holds that sub-role. Position (admin/manager) alone will no longer add pills.
 
-### Users dialog
-- Add an "F&B" checkbox alongside Reception and Housekeeper in the sub-role selector.
+```text
+before: availableViews = admin/manager → all three pills
+after:  availableViews = only the sub-roles the account is assigned
+```
 
-### F&B home screen
-- When `effectiveRole === "fnb"`, render a dedicated home screen instead of the room grid. Layout mirrors the Rejects sheet but as a full page:
-  - Header: "F&B Linen Count"
-  - List of `template_items` with −/+ buttons and a running total (identical UX to Rejects).
-  - Reads/writes `fnb_linen_counts` (shared globally); realtime subscription keeps the tally in sync.
-  - Reset button (admins/managers only) to zero all counts.
-  - Print/Export button that produces a snapshot styled like the Rejects export ("Three Ways House Hotel F&B Linen Count") and saves an `export_snapshots` row with `kind: "fnb"`.
-- Progress bar and reception help sheet are hidden in this view (F&B has no rooms).
+- `user` pill → only if `hasHousekeeperRole`
+- `reception` pill → only if `hasReceptionRole`
+- `fnb` pill → only if `hasFnbRole`
 
-### Settings menu for F&B users
-- Signed in as F&B only: burger menu shows Linen List, Account, and Sign out. Everything room-related is hidden.
-- Admins/Managers keep their full menu when viewing-as-F&B.
+`canViewAs` becomes `availableViews.length >= 1` (so an admin with one sub-role can still toggle in/out of admin default; an admin with zero sub-roles sees no pills, matching the user's rule).
 
-### Shared Linen List button behavior
-- Linen List remains a single settings entry that edits `template_items` (still the shared master list of linen items — this is intentional so both counters use the same items).
-- New behavior inside the Linen List sheet: when the signed-in user has BOTH `housekeeper` and `fnb` sub-roles (or is an admin/manager viewing-as-F&B while also having housekeeping context), show a segmented toggle at the top: **Housekeeping** / **F&B**.
-  - Housekeeping tab: current per-room linen-list editor.
-  - F&B tab: shows the F&B counter (same increment UI as the home screen) so a manager can adjust it from settings without leaving the current view.
-  - Users with only one of the two sub-roles see just that tab and no switcher.
+`defaultView` and F&B-only auto-default logic stay as they are.
 
-### Technical details
-- The F&B home screen is a new component (`FnbHomeScreen`) rendered inline from `src/routes/app.tsx` when `effectiveRole === "fnb"`, gated before the reception/housekeeping branch.
-- `fnb_linen_counts` mutations use optimistic updates via `qc.setQueryData(["fnb_linen_counts"], ...)` and a Postgres upsert on `template_item_id`.
-- Realtime channel `fnb_linen_counts` invalidates the query on INSERT/UPDATE/DELETE.
-- Export path reuses `handleExport`/`proceedExport`/`printExport` with a new `kind: "fnb"` branch and a matching history entry renderer.
-- Access-control fixes: `assertApproved`/`is_approved` DB helper must include `fnb` so F&B users pass the RLS gate; server functions unaffected because `updateUserAssignment` already validates sub-roles via a whitelist we'll extend.
-- Migration data step: no automatic assignments — admins assign F&B to specific users via the Users dialog.
+### 2. Settings menu — always reflect real permissions, not the active pill
+
+Today the burger menu uses `isAdmin` / `isFnb` / `isHousekeeper` / `isReception` derived from `effectiveRole` (i.e. the current pill). This is why toggling to F&B, for example, hides Maintenance Log and Notifications for an admin.
+
+Introduce menu-only permission booleans derived from real identity:
+
+- `menuIsAdmin = realIsAdmin || realIsManager`
+- `menuHasFnb  = realIsAdmin || realIsManager || hasFnbRole`
+- `menuHasHk   = realIsAdmin || realIsManager || hasHousekeeperRole`
+- `menuIsFnbOnly = position === "user" && hasFnbRole && !hasHousekeeperRole && !hasReceptionRole`
+- `menuIsReceptionOnly = position === "user" && hasReceptionRole && !hasHousekeeperRole && !hasFnbRole`
+
+Swap the settings menu conditions (both desktop `DropdownMenu` around lines 2974–3036 and the mobile `Sheet` around lines 3774–3820) to use these instead of `isAdmin` / `isFnb` / etc:
+
+- Linen List: `menuHasFnb || menuHasHk` (admins and anyone with fnb or housekeeper)
+- Manage Rooms / Rejects / Bulk Room Status / History (admin block) / Users: `menuIsAdmin`
+- "F&B history-only" fallback item: only for `menuIsFnbOnly`
+- Maintenance Log: hide only for `menuIsFnbOnly` (an admin viewing as F&B still sees it)
+- Notifications: hide only for `menuIsFnbOnly`
+
+Room-view and home-screen rendering keep using `effectiveRole` — this change is scoped to the settings menu.
+
+### 3. In-feature sub-role switcher
+
+The Linen List dialog already has its Housekeeping/F&B toggle (`linenListType`) and gates it on assigned roles. No change needed there — the plan explicitly preserves it as the pattern for future shared features.
+
+### Files touched
+
+- `src/routes/app.tsx` — only the two blocks above (availableViews computation + settings menu conditions in the desktop DropdownMenu and mobile Sheet).
+
+No schema, no other UI, no business logic changes.
