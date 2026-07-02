@@ -244,7 +244,7 @@ function AppPage() {
   const isMobile = useIsMobile();
   const [authUser, setAuthUser] = useState(() => getStoredUser());
   // Admin "view as" overlay — see definition further below for full context.
- type ViewRole = "admin" | "manager" | "user" | "reception";
+ type ViewRole = "admin" | "manager" | "user" | "reception" | "fnb";
   const [viewAsRole, setViewAsRole] = useState<ViewRole | null>(() => {
     if (typeof window === "undefined") return null;
     const v = window.localStorage.getItem("tw_view_as_role");
@@ -885,9 +885,12 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
      viewAsRole && realIsManager && viewAsRole === "admin" ? null : viewAsRole;
    const effectiveRole: ViewRole | undefined =
      canViewAs && safeViewAs ? safeViewAs : realRole;
-   const isReception = effectiveRole === "reception";
-   const isAdmin = effectiveRole === "admin" || effectiveRole === "manager";
-  const isHousekeeper = effectiveRole === "user";
+    const isFnb = effectiveRole === "fnb";
+    // F&B shares the read-only reception layout, but cannot edit room state.
+    const isReception = effectiveRole === "reception" || isFnb;
+    const canReceptionEdit = effectiveRole === "reception";
+    const isAdmin = effectiveRole === "admin" || effectiveRole === "manager";
+   const isHousekeeper = effectiveRole === "user";
   const doneSet = new Set(
     rooms
       .filter((r) => (isReception ? r.done_reception : r.done))
