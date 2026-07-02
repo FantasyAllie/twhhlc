@@ -1096,13 +1096,13 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
     const name = newTemplateName.trim();
     if (!name) return;
     const category = roomTypes[0]?.value ?? "double";
-    const maxPos = template
-      .filter((t) => t.category === category)
+    const maxPos = templateAll
+      .filter((t) => t.list_type === linenListType && t.category === category)
       .reduce((m, t) => Math.max(m, t.position), 0);
     setNewTemplateName("");
     const { error } = await supabase
       .from("template_items")
-      .insert({ name, category, position: maxPos + 1 });
+      .insert({ name, category, position: maxPos + 1, list_type: linenListType });
     if (error) toast.error(error.message);
     qc.invalidateQueries({ queryKey: ["template_items"] });
   };
