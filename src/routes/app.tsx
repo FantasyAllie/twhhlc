@@ -244,11 +244,11 @@ function AppPage() {
   const isMobile = useIsMobile();
   const [authUser, setAuthUser] = useState(() => getStoredUser());
   // Admin/Manager "view as" overlay — see definition further below for full context.
- type ViewRole = "admin" | "manager" | "user" | "reception";
+ type ViewRole = "admin" | "manager" | "user" | "reception" | "fnb";
   const [viewAsRole, setViewAsRole] = useState<ViewRole | null>(() => {
     if (typeof window === "undefined") return null;
     const v = window.localStorage.getItem("tw_view_as_role");
-    return v === "user" || v === "reception" || v === "admin" || v === "manager" ? v : null;
+    return v === "user" || v === "reception" || v === "admin" || v === "manager" || v === "fnb" ? v : null;
   });
   useEffect(() => {
     if (!getStoredUser()) {
