@@ -3512,9 +3512,9 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
   <NotificationsSheet
     open={notificationsSheetOpen}
     onOpenChange={setNotificationsSheetOpen}
-   userRole={(authUser.role === "manager"
+   userRole={((authUser.role as string) === "manager"
      ? "admin"
-     : authUser.role === "fnb"
+     : (authUser.role as string) === "fnb"
      ? "reception"
      : authUser.role) as "admin" | "user" | "reception"}
   />
