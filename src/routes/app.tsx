@@ -215,7 +215,7 @@ type ExportSnapshot = {
   created_at: string;
   totals: SnapshotRow[] | RoomStatusRow[] | MaintenanceRow[];
   grand_total: number;
-  kind?: "totals" | "rejects" | "room_status" | "maintenance";
+  kind?: "totals" | "rejects" | "room_status" | "maintenance" | "fnb_totals";
 };
 type RejectCount = { id: string; template_item_id: string; count: number };
 type RoomMessage = {
@@ -456,7 +456,7 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
   const [manageRoomsOpen, setManageRoomsOpen] = useState(false);
   const [receptionHelpOpen, setReceptionHelpOpen] = useState(false);
   const [confirmOverwrite, setConfirmOverwrite] = useState<
-    { kind: "totals" | "rejects" | "room_status" | "maintenance" } | null
+    { kind: "totals" | "rejects" | "room_status" | "maintenance" | "fnb_totals" } | null
   >(null);
   const [newRoomNumber, setNewRoomNumber] = useState<string>("");
   const [addRoomConfirmOpen, setAddRoomConfirmOpen] = useState(false);
