@@ -5137,31 +5137,23 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
               (() => {
                  const staffId = receptionStatuses.find((s) => s.label.toLowerCase() === "staff")?.id ?? null;
                  const rosId = receptionStatuses.find((s) => s.label.toLowerCase() === "ros")?.id ?? null;
+                 const statusLabelById = new Map(
+                   receptionStatuses.map((s) => [s.id, s.label.toLowerCase()]),
+                 );
+                 const excludedProgressStatuses = new Set(["staff", "ros", "staff/ros", "ros - staff"]);
                  const eligible = rooms.filter((r) => {
                    const sid = r.reception_status_id ?? r.default_status;
-                   if (staffId && sid === staffId) return false;
-                   if (rosId && sid === rosId) return false;
-                   return true;
+                   const statusLabel = sid ? (statusLabelById.get(sid) ?? sid).toLowerCase() : "";
+                   return !excludedProgressStatuses.has(statusLabel);
                  });
                 const total = eligible.length;
-                const countsByRoom = new Map<number, number>();
-                counts.forEach((c) => {
-                  countsByRoom.set(c.room_number, (countsByRoom.get(c.room_number) ?? 0) + (c.count ?? 0));
-                });
-                let progress = 0;
-                eligible.forEach((r) => {
-                  const isDone = r.done;
-                  const hasStatus = !!(r.reception_status_id ?? r.default_status);
-                  const hasLinen = (countsByRoom.get(r.room_number) ?? 0) > 0;
-                  if (isDone) progress += 1;
-                  else if (hasStatus || hasLinen) progress += 0.5;
-                });
+                const progress = eligible.filter((r) => r.done).length;
                 const pct = total > 0 ? Math.min(100, (progress / total) * 100) : 0;
                  return (
                    <div className="mt-3 space-y-1 max-lg:fixed max-lg:inset-x-0 max-lg:bottom-0 max-lg:z-40 max-lg:mt-0 max-lg:border-t max-lg:border-border max-lg:bg-background/95 max-lg:backdrop-blur max-lg:pl-[calc(env(safe-area-inset-left,0px)+1.5rem)] max-lg:pr-[calc(env(safe-area-inset-right,0px)+1.5rem)] max-lg:pt-2 max-lg:pb-[calc(env(safe-area-inset-bottom,0px)+0.75rem)] max-lg:shadow-[0_-2px_8px_rgba(0,0,0,0.06)]">
                     <div className="flex items-center justify-between text-xs text-muted-foreground">
                       <span>Rooms progress</span>
-                      <span className="tabular-nums">{progress % 1 === 0 ? progress : progress.toFixed(1)} of {total}</span>
+                      <span className="tabular-nums">{progress} of {total}</span>
                     </div>
                     <div className="h-2 w-full overflow-hidden rounded-full bg-muted">
                       <div
