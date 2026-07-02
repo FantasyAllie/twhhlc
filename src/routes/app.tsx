@@ -515,6 +515,18 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
  },
  });
 
+ type FnbCount = { template_item_id: string; count: number };
+ const fnbCountsQ = useQuery({
+   queryKey: ["fnb_linen_counts"],
+   queryFn: async (): Promise<FnbCount[]> => {
+     const { data, error } = await supabase
+       .from("fnb_linen_counts" as never)
+       .select("template_item_id,count");
+     if (error) throw error;
+     return (data ?? []) as FnbCount[];
+   },
+ });
+
   const roomsQ = useQuery({
     queryKey: ["rooms"],
     queryFn: async (): Promise<Room[]> => {
