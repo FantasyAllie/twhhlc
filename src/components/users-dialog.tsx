@@ -23,7 +23,15 @@ import {
   DialogDescription,
 } from "@/components/ui/dialog";
 import { toast } from "sonner";
-import { Trash2, Check, X, Pencil, Ban, RotateCcw } from "lucide-react";
+import { Trash2, Check, X, Pencil, Ban, RotateCcw, ChevronDown } from "lucide-react";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 
 type AssignablePosition = Exclude<Position, "pending">;
 const POSITION_LABELS: Record<AssignablePosition, string> = {
@@ -241,17 +249,29 @@ export function UsersDialog({
                         <div className="font-medium truncate">{u.username}</div>
                         <div className="text-xs text-muted-foreground truncate">{u.email}</div>
                       </div>
-                      <div className="flex items-center gap-1">
-                        <Button size="sm" variant="default" onClick={() => onApprovePending(u, ["housekeeper"]) }>
-                          <Check className="h-4 w-4 mr-1" />Approve as housekeeper
-                        </Button>
-                        <Button size="sm" variant="ghost" onClick={() => onApprovePending(u, ["reception"]) }>
-                          Reception
-                        </Button>
-                        <Button size="sm" variant="ghost" className="text-destructive hover:text-destructive" onClick={() => onDelete(u)}>
-                          <X className="h-4 w-4" />
-                        </Button>
-                      </div>
+                       <div className="flex items-center gap-1">
+                         <DropdownMenu>
+                           <DropdownMenuTrigger asChild>
+                             <Button size="sm" variant="default">
+                               <Check className="h-4 w-4 mr-1" />
+                               Approve as
+                               <ChevronDown className="h-4 w-4 ml-1" />
+                             </Button>
+                           </DropdownMenuTrigger>
+                           <DropdownMenuContent align="end" className="w-48">
+                             <DropdownMenuLabel>Sub-role</DropdownMenuLabel>
+                             <DropdownMenuSeparator />
+                             {(["housekeeper", "reception", "fnb"] as SubRole[]).map((r) => (
+                               <DropdownMenuItem key={r} onClick={() => onApprovePending(u, [r])}>
+                                 {SUB_ROLE_LABELS[r]}
+                               </DropdownMenuItem>
+                             ))}
+                           </DropdownMenuContent>
+                         </DropdownMenu>
+                         <Button size="sm" variant="ghost" className="text-destructive hover:text-destructive" onClick={() => onDelete(u)}>
+                           <X className="h-4 w-4" />
+                         </Button>
+                       </div>
                     </li>
                   ))}
                 </ul>
