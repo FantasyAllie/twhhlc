@@ -2998,9 +2998,11 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
            <Users className="h-4 w-4 mr-2" /> Users
          </DropdownMenuItem>
        )}
-       <DropdownMenuItem onClick={() => setNotificationsSheetOpen(true)}>
-         <Bell className="h-4 w-4 mr-2" /> Notifications
-       </DropdownMenuItem>
+        {!isFnb && (
+          <DropdownMenuItem onClick={() => setNotificationsSheetOpen(true)}>
+            <Bell className="h-4 w-4 mr-2" /> Notifications
+          </DropdownMenuItem>
+        )}
        <DropdownMenuItem onClick={() => setAccountOpen(true)}>
          <User className="h-4 w-4 mr-2" /> Account
        </DropdownMenuItem>
@@ -3768,7 +3770,9 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
               {realIsAdmin && (
                 <Row icon={Users} label="Users" onClick={() => { close(); setUsersOpen(true); }} />
               )}
-              <Row icon={Bell} label="Notifications" onClick={() => { close(); setNotificationsSheetOpen(true); }} />
+              {!isFnb && (
+                <Row icon={Bell} label="Notifications" onClick={() => { close(); setNotificationsSheetOpen(true); }} />
+              )}
               <Row icon={User} label="Account" onClick={() => { close(); setAccountOpen(true); }} />
               <Row icon={LogOut} label="Sign out" destructive onClick={() => { close(); void signOut(); }} />
             </div>
