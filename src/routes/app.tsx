@@ -3027,21 +3027,40 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
  )}
  </div>
  </header>
-   {canViewAs && safeViewAs && (
-    <div className="bg-amber-500/15 border-b border-amber-500/40 text-amber-900 dark:text-amber-200 px-3 py-1.5 text-xs flex items-center justify-between gap-2">
-      <span className="flex items-center gap-2">
-        <Eye className="h-3.5 w-3.5" />
-         Viewing as <span className="font-semibold capitalize">{safeViewAs === "user" ? "housekeeper" : safeViewAs}</span>
-      </span>
-      <button
-        type="button"
-        onClick={() => setViewAsRole(null)}
-        className="underline underline-offset-2 hover:no-underline font-medium"
-      >
-        Exit
-      </button>
-    </div>
-  )}
+    {canViewAs && (
+      <div className="border-b bg-muted/30 px-3 py-2 flex items-center justify-center">
+        <div className="inline-flex rounded-md border p-0.5 bg-background">
+          {availableViews.map((r) => {
+            const active = (safeViewAs ?? defaultView) === r;
+            const label =
+              r === "user"
+                ? "Housekeeping"
+                : r === "fnb"
+                ? "F&B"
+                : r === "reception"
+                ? "Reception"
+                : r === "admin"
+                ? "Admin"
+                : "Manager";
+            return (
+              <button
+                key={r}
+                type="button"
+                onClick={() => setViewAsRole(r === defaultView ? null : r)}
+                className={cn(
+                  "px-3 py-1.5 text-xs sm:text-sm rounded-[0.3rem] transition-colors",
+                  active
+                    ? "bg-primary text-primary-foreground shadow-sm font-medium"
+                    : "text-muted-foreground hover:text-foreground",
+                )}
+              >
+                {label}
+              </button>
+            );
+          })}
+        </div>
+      </div>
+    )}
 
  {/* Linen list dialog */}
    <Dialog open={templateOpen} onOpenChange={(o) => {
