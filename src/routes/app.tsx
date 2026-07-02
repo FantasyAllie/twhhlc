@@ -383,6 +383,7 @@ function AppPage() {
   const [usersOpen, setUsersOpen] = useState(false);
  const [openRoom, setOpenRoom] = useState<number | null>(null);
  const [templateOpen, setTemplateOpen] = useState(false);
+const [linenListType, setLinenListType] = useState<"housekeeping" | "fnb">("housekeeping");
 const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
   const [newTemplateName, setNewTemplateName] = useState("");
   const [editingItemId, setEditingItemId] = useState<string | null>(null);
