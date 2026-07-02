@@ -2977,15 +2977,15 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
        </Button>
      </DropdownMenuTrigger>
      <DropdownMenuContent align="end" className="w-64">
-        {(isAdmin || isFnb) && (
-          <>
-            <DropdownMenuLabel>Manage</DropdownMenuLabel>
-            <DropdownMenuItem onClick={() => setTemplateOpen(true)}>
-              <List className="h-4 w-4 mr-2" /> Linen List
-            </DropdownMenuItem>
-          </>
-        )}
-        {isAdmin && (
+         {(menuHasHk || menuHasFnb) && (
+           <>
+             <DropdownMenuLabel>Manage</DropdownMenuLabel>
+             <DropdownMenuItem onClick={() => setTemplateOpen(true)}>
+               <List className="h-4 w-4 mr-2" /> Linen List
+             </DropdownMenuItem>
+           </>
+         )}
+         {menuIsAdmin && (
           <>
             <DropdownMenuItem onClick={() => setManageRoomsOpen(true)}>
              <Hash className="h-4 w-4 mr-2" /> Manage Rooms
@@ -3002,12 +3002,12 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
            <DropdownMenuSeparator />
          </>
        )}
-         {isFnb && !isAdmin && (
+          {menuIsFnbOnly && (
            <DropdownMenuItem onClick={() => setHistorySheetOpen(true)}>
              <History className="h-4 w-4 mr-2" /> History
            </DropdownMenuItem>
          )}
-         {!isFnb && (
+          {!menuIsFnbOnly && (
            <DropdownMenuItem onClick={() => setMaintenanceLogOpen(true)}>
              <Wrench className="h-4 w-4 mr-2" />
              <span className="flex-1">Maintenance Log</span>
@@ -3029,7 +3029,7 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
            <Users className="h-4 w-4 mr-2" /> Users
          </DropdownMenuItem>
        )}
-        {!isFnb && (
+         {!menuIsFnbOnly && (
           <DropdownMenuItem onClick={() => setNotificationsSheetOpen(true)}>
             <Bell className="h-4 w-4 mr-2" /> Notifications
           </DropdownMenuItem>
