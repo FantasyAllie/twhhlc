@@ -5835,7 +5835,6 @@ function AccountDialog({
               <div className="space-y-1.5">
                 {availableViews.map((r) => {
                   const active = (viewAsRole ?? defaultView) === r;
-                  const isSelf = r === defaultView;
                   const base =
                     r === "user" ? "Housekeeper" :
                     r === "reception" ? "Reception" :
@@ -5847,7 +5846,7 @@ function AccountDialog({
                       key={r}
                       type="button"
                       onClick={() => {
-                        onViewAsRoleChange(isSelf ? null : r);
+                        onViewAsRoleChange(active ? null : r);
                         onOpenChange(false);
                       }}
                       className={cn(
@@ -5855,7 +5854,7 @@ function AccountDialog({
                         active ? "bg-accent border-primary" : "bg-background",
                       )}
                     >
-                      <span className="text-left flex-1">{label}</span>
+                      <span className="text-left flex-1">{base}</span>
                       {active && <Check className="h-4 w-4 shrink-0 text-primary" />}
                     </button>
                   );
