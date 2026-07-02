@@ -3727,18 +3727,23 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
                   <Row icon={ConciergeBell} label="Bulk Room Status Setup" onClick={() => { close(); setQuickReceptionOpen(true); }} />
                 </>
               )}
-              <Row
-                icon={Wrench}
-                label={
-                  <span className="flex items-center gap-2">
-                    Maintenance Log
-                    {hasOpenMaintenance && (
-                      <span className="h-2 w-2 rounded-full bg-amber-500" aria-hidden />
-                    )}
-                  </span>
-                }
-                onClick={() => { close(); setMaintenanceLogOpen(true); }}
-              />
+              {isFnb && !isAdmin && (
+                <Row icon={History} label="History" onClick={() => { close(); setHistorySheetOpen(true); }} />
+              )}
+              {!isFnb && (
+                <Row
+                  icon={Wrench}
+                  label={
+                    <span className="flex items-center gap-2">
+                      Maintenance Log
+                      {hasOpenMaintenance && (
+                        <span className="h-2 w-2 rounded-full bg-amber-500" aria-hidden />
+                      )}
+                    </span>
+                  }
+                  onClick={() => { close(); setMaintenanceLogOpen(true); }}
+                />
+              )}
             </div>
           </div>
           <div className="space-y-2">
