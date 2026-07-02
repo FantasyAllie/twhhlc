@@ -649,6 +649,27 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
   });
 
   const template = templateQ.data ?? [];
+  const fnbCounts = fnbCountsQ.data ?? [];
+  const fnbCountByItem = new Map<string, number>(
+    fnbCounts.map((c) => [c.template_item_id, c.count ?? 0]),
+  );
+  const setFnbCount = async (template_item_id: string, count: number) => {
+    const safe = Math.max(0, Math.floor(count));
+    qc.setQueryData<FnbCount[]>(["fnb_linen_counts"], (old) => {
+      const list = old ? [...old] : [];
+      const idx = list.findIndex((c) => c.template_item_id === template_item_id);
+      if (idx >= 0) list[idx] = { ...list[idx], count: safe };
+      else list.push({ template_item_id, count: safe });
+      return list;
+    });
+    const { error } = await supabase
+      .from("fnb_linen_counts" as never)
+      .upsert({ template_item_id, count: safe, updated_at: new Date().toISOString() } as never, {
+        onConflict: "template_item_id",
+      } as never);
+    if (error) toast.error(error.message);
+    qc.invalidateQueries({ queryKey: ["fnb_linen_counts"] });
+  };
   const extras = extrasQ.data ?? [];
   const counts = countsQ.data ?? [];
   const rooms = roomsQ.data ?? [];
