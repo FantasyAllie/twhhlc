@@ -1,7 +1,17 @@
 import { supabase } from "@/integrations/supabase/client";
 
 export type AppRole = "admin" | "manager" | "user" | "reception" | "pending";
-export type SessionUser = { id: string; username: string; email: string; role: AppRole };
+export type Position = "admin" | "manager" | "user" | "pending";
+export type SubRole = "reception" | "housekeeper";
+export type SessionUser = {
+  id: string;
+  username: string;
+  email: string;
+  position: Position;
+  subRoles: SubRole[];
+  /** Legacy compat single-role summary; prefer position/subRoles. */
+  role: AppRole;
+};
 
 const USER_CACHE_KEY = "tw_session_user";
 
@@ -29,15 +39,31 @@ function storeCachedUser(u: SessionUser | null) {
   else window.localStorage.removeItem(USER_CACHE_KEY);
 }
 
-async function fetchRole(userId: string): Promise<AppRole> {
-  // Returns the highest-privilege role we find, or "pending" if none.
+async function fetchRoleRows(userId: string): Promise<{ position: Position; subRoles: SubRole[] }> {
   const { data } = await supabase
     .from("user_roles")
     .select("role")
     .eq("user_id", userId);
-  const roles = ((data ?? []) as { role: AppRole }[]).map((r) => r.role);
-  const order: AppRole[] = ["admin", "manager", "reception", "user", "pending"];
-  for (const r of order) if (roles.includes(r)) return r;
+  const roles = ((data ?? []) as { role: string }[]).map((r) => r.role);
+  const priority: Record<Position, number> = { admin: 4, manager: 3, user: 2, pending: 1 };
+  let position: Position = "pending";
+  const subRoles: SubRole[] = [];
+  for (const r of roles) {
+    if (r === "reception" || r === "housekeeper") {
+      if (!subRoles.includes(r)) subRoles.push(r);
+    } else if (r === "admin" || r === "manager" || r === "user" || r === "pending") {
+      if (priority[r] > priority[position]) position = r;
+    }
+  }
+  return { position, subRoles };
+}
+
+function compatRole(position: Position, subRoles: SubRole[]): AppRole {
+  if (position === "admin" || position === "manager") return position;
+  if (position === "pending") return "pending";
+  // position === "user": pick sub-role for legacy display
+  if (subRoles.includes("reception") && !subRoles.includes("housekeeper")) return "reception";
+  if (subRoles.includes("housekeeper")) return "user";
   return "pending";
 }
 
@@ -61,15 +87,26 @@ async function refreshFromSession(session: import("@supabase/supabase-js").Sessi
   cachedToken = session.access_token;
   const u = session.user;
   const email = u.email ?? "";
-  let role: AppRole = "pending";
+  let position: Position = "pending";
+  let subRoles: SubRole[] = [];
   let displayName: string | null = null;
   try {
-    [role, displayName] = await Promise.all([fetchRole(u.id), fetchDisplayName(u.id)]);
+    const [rr, dn] = await Promise.all([fetchRoleRows(u.id), fetchDisplayName(u.id)]);
+    position = rr.position;
+    subRoles = rr.subRoles;
+    displayName = dn;
   } catch {
     /* keep defaults */
   }
   const username = displayName || email.split("@")[0] || "user";
-  cachedUser = { id: u.id, username, email, role };
+  cachedUser = {
+    id: u.id,
+    username,
+    email,
+    position,
+    subRoles,
+    role: compatRole(position, subRoles),
+  };
   storeCachedUser(cachedUser);
   emit();
 }
