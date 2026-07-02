@@ -430,6 +430,7 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
     if (pos === "manager") allowed.push("manager");
     if (pos === "admin" || pos === "manager" || subs.includes("housekeeper")) allowed.push("user");
     if (pos === "admin" || pos === "manager" || subs.includes("reception")) allowed.push("reception");
+    if (pos === "admin" || pos === "manager" || subs.includes("fnb")) allowed.push("fnb");
     if (!allowed.includes(viewAsRole)) setViewAsRole(null);
   }, [authUser, viewAsRole]);
 
