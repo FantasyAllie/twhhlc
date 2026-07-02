@@ -2643,7 +2643,7 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
             <Pencil className="h-4 w-4" />
           </button>
         )}
-        {!isHousekeeper && (() => {
+        {(!isHousekeeper || isAdmin) && (() => {
           const msgs = activeMessagesByRoom(n);
           const room = rooms.find((r) => r.room_number === n);
           const note = room?.housekeeping_note ?? null;
