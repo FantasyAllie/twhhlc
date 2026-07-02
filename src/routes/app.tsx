@@ -3145,7 +3145,7 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
                           size="icon"
                           className="h-11 w-11"
                           onClick={() => moveTemplateItem(item.id, 1)}
-                          disabled={idx === template.length - 1}
+                          disabled={idx === listItems.length - 1}
                           aria-label="Move down"
                         >
                           <ArrowDown className="h-5 w-5" />
@@ -3169,7 +3169,8 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
           );
         })}
       </ul>
-    )}
+       );
+     })()}
   </div>
  </DialogContent>
  </Dialog>
