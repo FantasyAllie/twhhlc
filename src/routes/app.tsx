@@ -5402,7 +5402,8 @@ function AccountDialog({
   currentUsername,
   onUsernameChanged,
   canViewAs,
-  selfRole,
+  availableViews,
+  defaultView,
   viewAsRole,
   onViewAsRoleChange,
 }: {
@@ -5411,7 +5412,8 @@ function AccountDialog({
   currentUsername: string;
   onUsernameChanged: (u: string) => void;
   canViewAs: boolean;
-  selfRole: "admin" | "manager";
+  availableViews: ReadonlyArray<"admin" | "manager" | "user" | "reception">;
+  defaultView: "admin" | "manager" | "user" | "reception";
   viewAsRole: "admin" | "manager" | "user" | "reception" | null;
   onViewAsRoleChange: (r: "admin" | "manager" | "user" | "reception" | null) => void;
 }) {
@@ -5548,27 +5550,23 @@ function AccountDialog({
             <div className="space-y-2">
               <h3 className="text-sm font-semibold">View as</h3>
               <p className="text-xs text-muted-foreground">
-                Temporarily experience the app as another role. Your account stays {selfRole === "manager" ? "a manager" : "an admin"}.
+                Temporarily experience the app as another view. Your account permissions are unchanged.
               </p>
               <div className="space-y-1.5">
-                {((selfRole === "manager"
-                  ? ["manager", "user", "reception"]
-                  : ["admin", "user", "reception"]) as ReadonlyArray<"admin" | "manager" | "user" | "reception">).map((r) => {
-                  const active = (viewAsRole ?? selfRole) === r;
-                  const label =
-                    r === "user"
-                      ? "Housekeeper"
-                      : r === "reception"
-                      ? "Reception"
-                      : r === "manager"
-                      ? "Manager (your role)"
-                      : "Admin (your role)";
+                {availableViews.map((r) => {
+                  const active = (viewAsRole ?? defaultView) === r;
+                  const isSelf = r === defaultView;
+                  const base =
+                    r === "user" ? "Housekeeper" :
+                    r === "reception" ? "Reception" :
+                    r === "manager" ? "Manager" : "Admin";
+                  const label = isSelf ? `${base} (your role)` : base;
                   return (
                     <button
                       key={r}
                       type="button"
                       onClick={() => {
-                        onViewAsRoleChange(r === selfRole ? null : r);
+                        onViewAsRoleChange(isSelf ? null : r);
                         onOpenChange(false);
                       }}
                       className={cn(
