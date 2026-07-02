@@ -5653,16 +5653,9 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
     onOpenChange={setAccountOpen}
     currentUsername={authUser?.username ?? ""}
     onUsernameChanged={(u) => setAuthUser((prev) => prev ? { ...prev, username: u } : prev)}
-   canViewAs={canViewAs}
-   availableViews={availableViews}
-   defaultView={defaultView ?? "admin"}
-   viewAsRole={safeViewAs}
-   onViewAsRoleChange={(r) => {
-     if (r && !availableViews.includes(r)) return;
-     setViewAsRole(r);
-   }}
   />
   <UsersDialog open={usersOpen} onOpenChange={setUsersOpen} />
+  <UserApprovalDialog open={userApprovalOpen} onOpenChange={setUserApprovalOpen} />
   <QuickReceptionSheet
     open={quickReceptionOpen}
     onOpenChange={setQuickReceptionOpen}
@@ -5688,21 +5681,11 @@ function AccountDialog({
   onOpenChange,
   currentUsername,
   onUsernameChanged,
-  canViewAs,
-  availableViews,
-  defaultView,
-  viewAsRole,
-  onViewAsRoleChange,
 }: {
   open: boolean;
   onOpenChange: (o: boolean) => void;
   currentUsername: string;
   onUsernameChanged: (u: string) => void;
-  canViewAs: boolean;
-  availableViews: ReadonlyArray<"admin" | "manager" | "user" | "reception" | "fnb">;
-  defaultView: "admin" | "manager" | "user" | "reception" | "fnb";
-  viewAsRole: "admin" | "manager" | "user" | "reception" | "fnb" | null;
-  onViewAsRoleChange: (r: "admin" | "manager" | "user" | "reception" | "fnb" | null) => void;
 }) {
   const [username, setUsername] = useState(currentUsername);
   const [newEmail, setNewEmail] = useState("");
