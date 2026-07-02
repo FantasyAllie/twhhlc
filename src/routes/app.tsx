@@ -12,6 +12,7 @@ import { getToken, getStoredUser, clearSession } from "@/lib/auth-client";
 import { notifyRoomEvent } from "@/lib/push.functions";
 import { NotificationsSheet } from "@/components/notifications-sheet";
 import { UsersDialog } from "@/components/users-dialog";
+import { UserApprovalDialog } from "@/components/user-approval-dialog";
 import { QuickReceptionSheet } from "@/components/quick-reception-sheet";
 import { useServerFn } from "@tanstack/react-start";
 import { useIsMobile } from "@/hooks/use-mobile";
@@ -381,6 +382,7 @@ function AppPage() {
   };
   const [accountOpen, setAccountOpen] = useState(false);
   const [usersOpen, setUsersOpen] = useState(false);
+  const [userApprovalOpen, setUserApprovalOpen] = useState(false);
  const [openRoom, setOpenRoom] = useState<number | null>(null);
  const [templateOpen, setTemplateOpen] = useState(false);
 const [linenListType, setLinenListType] = useState<"housekeeping" | "fnb">("housekeeping");
@@ -3016,6 +3018,11 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
            <Users className="h-4 w-4 mr-2" /> Users
          </DropdownMenuItem>
        )}
+       {realIsManager && !realIsAdmin && (
+         <DropdownMenuItem onClick={() => setUserApprovalOpen(true)}>
+           <Users className="h-4 w-4 mr-2" /> User Approval
+         </DropdownMenuItem>
+       )}
          {!menuIsFnbOnly && (
           <DropdownMenuItem onClick={() => setNotificationsSheetOpen(true)}>
             <Bell className="h-4 w-4 mr-2" /> Notifications
@@ -3803,6 +3810,9 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
             <div className="space-y-1.5">
               {realIsAdmin && (
                 <Row icon={Users} label="Users" onClick={() => { close(); setUsersOpen(true); }} />
+              )}
+              {realIsManager && !realIsAdmin && (
+                <Row icon={Users} label="User Approval" onClick={() => { close(); setUserApprovalOpen(true); }} />
               )}
               {!menuIsFnbOnly && (
                 <Row icon={Bell} label="Notifications" onClick={() => { close(); setNotificationsSheetOpen(true); }} />
@@ -5643,16 +5653,9 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
     onOpenChange={setAccountOpen}
     currentUsername={authUser?.username ?? ""}
     onUsernameChanged={(u) => setAuthUser((prev) => prev ? { ...prev, username: u } : prev)}
-   canViewAs={canViewAs}
-   availableViews={availableViews}
-   defaultView={defaultView ?? "admin"}
-   viewAsRole={safeViewAs}
-   onViewAsRoleChange={(r) => {
-     if (r && !availableViews.includes(r)) return;
-     setViewAsRole(r);
-   }}
   />
   <UsersDialog open={usersOpen} onOpenChange={setUsersOpen} />
+  <UserApprovalDialog open={userApprovalOpen} onOpenChange={setUserApprovalOpen} />
   <QuickReceptionSheet
     open={quickReceptionOpen}
     onOpenChange={setQuickReceptionOpen}
@@ -5678,21 +5681,11 @@ function AccountDialog({
   onOpenChange,
   currentUsername,
   onUsernameChanged,
-  canViewAs,
-  availableViews,
-  defaultView,
-  viewAsRole,
-  onViewAsRoleChange,
 }: {
   open: boolean;
   onOpenChange: (o: boolean) => void;
   currentUsername: string;
   onUsernameChanged: (u: string) => void;
-  canViewAs: boolean;
-  availableViews: ReadonlyArray<"admin" | "manager" | "user" | "reception" | "fnb">;
-  defaultView: "admin" | "manager" | "user" | "reception" | "fnb";
-  viewAsRole: "admin" | "manager" | "user" | "reception" | "fnb" | null;
-  onViewAsRoleChange: (r: "admin" | "manager" | "user" | "reception" | "fnb" | null) => void;
 }) {
   const [username, setUsername] = useState(currentUsername);
   const [newEmail, setNewEmail] = useState("");
@@ -5793,42 +5786,6 @@ function AccountDialog({
           </DialogDescription>
         </DialogHeader>
         <form onSubmit={saveAll} className="space-y-6">
-          {canViewAs && (
-            <div className="space-y-2">
-              <h3 className="text-sm font-semibold">View as</h3>
-              <p className="text-xs text-muted-foreground">
-                Temporarily experience the app as another view. Your account permissions are unchanged.
-              </p>
-              <div className="space-y-1.5">
-                {availableViews.map((r) => {
-                  const active = (viewAsRole ?? defaultView) === r;
-                  const base =
-                    r === "user" ? "Housekeeper" :
-                    r === "reception" ? "Reception" :
-                    r === "fnb" ? "F&B" :
-                    r === "manager" ? "Manager" : "Admin";
-                  return (
-                    <button
-                      key={r}
-                      type="button"
-                      onClick={() => {
-                        onViewAsRoleChange(active ? null : r);
-                        onOpenChange(false);
-                      }}
-                      className={cn(
-                        "w-full flex items-center gap-3 rounded-full border px-4 min-h-11 text-sm font-medium transition-colors hover:bg-accent",
-                        active ? "bg-accent border-primary" : "bg-background",
-                      )}
-                    >
-                      <span className="text-left flex-1">{base}</span>
-                      {active && <Check className="h-4 w-4 shrink-0 text-primary" />}
-                    </button>
-                  );
-                })}
-              </div>
-            </div>
-          )}
-          {canViewAs && <div className="border-t" />}
           <div className="space-y-2">
             <h3 className="text-sm font-semibold">New username</h3>
             <Input

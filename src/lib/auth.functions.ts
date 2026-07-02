@@ -62,6 +62,16 @@ async function assertAdmin(ctx: { userId: string }) {
   if (error || !data) throw new Error("Admin access required");
 }
 
+async function assertAdminOrManager(ctx: { userId: string }) {
+  const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+  const { data, error } = await supabaseAdmin
+    .from("user_roles")
+    .select("role")
+    .eq("user_id", ctx.userId)
+    .in("role", ["admin", "manager"]);
+  if (error || !data || data.length === 0) throw new Error("Admin or manager access required");
+}
+
 function splitRoles(rows: Array<{ role: string }>): { position: Position; subRoles: SubRole[] } {
   let position: Position = "pending";
   const subRoles: SubRole[] = [];
@@ -229,6 +239,66 @@ export const setUserDisabled = createServerFn({ method: "POST" })
       data.id,
       { ban_duration } as unknown as Parameters<typeof supabaseAdmin.auth.admin.updateUserById>[1],
     ));
+    if (error) throw new Error(error.message);
+    return { ok: true };
+  });
+
+/** Pending-user row for the approval-only view (admin or manager). */
+export type PendingUserRow = { id: string; username: string; email: string; created_at: string };
+
+export const listPendingUsers = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .handler(async ({ context }): Promise<PendingUserRow[]> => {
+    await assertAdminOrManager(context);
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    const { data: roleRows, error: rErr } = await supabaseAdmin
+      .from("user_roles")
+      .select("user_id")
+      .eq("role", "pending");
+    if (rErr) throw new Error(rErr.message);
+    const ids = ((roleRows ?? []) as { user_id: string }[]).map((r) => r.user_id);
+    if (ids.length === 0) return [];
+    const { data: profiles, error } = await supabaseAdmin
+      .from("profiles")
+      .select("id, email, display_name, created_at")
+      .in("id", ids)
+      .order("created_at", { ascending: true });
+    if (error) throw new Error(error.message);
+    return ((profiles ?? []) as Array<{ id: string; email: string | null; display_name: string | null; created_at: string }>).map((p) => ({
+      id: p.id,
+      email: p.email ?? "",
+      username: p.display_name || (p.email ?? "").split("@")[0] || "user",
+      created_at: p.created_at,
+    }));
+  });
+
+/**
+ * Approve a pending user by promoting them to position "user" with the chosen sub-role.
+ * Callable by admins or managers. Only works on accounts currently in "pending".
+ */
+export const approvePendingUser = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((d: { id: string; subRole: SubRole }) => d)
+  .handler(async ({ data, context }) => {
+    await assertAdminOrManager(context);
+    if (data.subRole !== "reception" && data.subRole !== "housekeeper" && data.subRole !== "fnb") {
+      throw new Error("Invalid sub-role");
+    }
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    const { data: existing, error: eErr } = await supabaseAdmin
+      .from("user_roles")
+      .select("role")
+      .eq("user_id", data.id);
+    if (eErr) throw new Error(eErr.message);
+    const roles = ((existing ?? []) as { role: string }[]).map((r) => r.role);
+    if (!roles.includes("pending")) {
+      throw new Error("This account is not pending approval");
+    }
+    await supabaseAdmin.from("user_roles").delete().eq("user_id", data.id);
+    const { error } = await supabaseAdmin.from("user_roles").insert([
+      { user_id: data.id, role: "user" },
+      { user_id: data.id, role: data.subRole },
+    ]);
     if (error) throw new Error(error.message);
     return { ok: true };
   });
