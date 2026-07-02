@@ -215,7 +215,7 @@ type ExportSnapshot = {
   created_at: string;
   totals: SnapshotRow[] | RoomStatusRow[] | MaintenanceRow[];
   grand_total: number;
-  kind?: "totals" | "rejects" | "room_status" | "maintenance";
+  kind?: "totals" | "rejects" | "room_status" | "maintenance" | "fnb_totals";
 };
 type RejectCount = { id: string; template_item_id: string; count: number };
 type RoomMessage = {
@@ -456,7 +456,7 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
   const [manageRoomsOpen, setManageRoomsOpen] = useState(false);
   const [receptionHelpOpen, setReceptionHelpOpen] = useState(false);
   const [confirmOverwrite, setConfirmOverwrite] = useState<
-    { kind: "totals" | "rejects" | "room_status" | "maintenance" } | null
+    { kind: "totals" | "rejects" | "room_status" | "maintenance" | "fnb_totals" } | null
   >(null);
   const [newRoomNumber, setNewRoomNumber] = useState<string>("");
   const [addRoomConfirmOpen, setAddRoomConfirmOpen] = useState(false);
@@ -1531,7 +1531,7 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
   };
 
   const pruneSnapshots = async (
-    kind: "totals" | "rejects" | "room_status" | "maintenance",
+    kind: "totals" | "rejects" | "room_status" | "maintenance" | "fnb_totals",
   ) => {
     const { data } = await supabase
       .from("export_snapshots")
@@ -1575,7 +1575,7 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
   };
 
   const proceedExport = async (
-    kind: "totals" | "rejects" | "room_status" | "maintenance",
+    kind: "totals" | "rejects" | "room_status" | "maintenance" | "fnb_totals",
   ) => {
     const computed =
       kind === "totals"
@@ -1584,6 +1584,8 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
         ? computeRejectTotals()
         : kind === "room_status"
         ? computeRoomStatus()
+        : kind === "fnb_totals"
+        ? computeFnbTotals()
         : computeMaintenance();
     const rows = computed.rows as SnapshotRow[] | RoomStatusRow[] | MaintenanceRow[];
     const grand = computed.grand;
@@ -1591,6 +1593,7 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
       if (kind === "totals") setExportOpen(true);
       else if (kind === "rejects") setRejectExportOpen(true);
       else if (kind === "room_status") setRoomStatusExportOpen(true);
+      else if (kind === "fnb_totals") toast.error("No F&B linen counted");
       else toast.error("No rooms marked for maintenance");
       return;
     }
@@ -1615,6 +1618,7 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
     if (kind === "totals") setExportOpen(true);
     else if (kind === "rejects") setRejectExportOpen(true);
     else if (kind === "room_status") setRoomStatusExportOpen(true);
+    else if (kind === "fnb_totals") printTotals(rows as SnapshotRow[], grand, new Date(), "fnb_totals");
     else printMaintenance(new Date(), rows as MaintenanceRow[]);
     const { error } = await supabase
       .from("export_snapshots")
@@ -1711,6 +1715,35 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
     return { rows, grand: rows.length };
   };
 
+  const computeFnbTotals = (): { rows: SnapshotRow[]; grand: number } => {
+    const rows: SnapshotRow[] = [];
+    for (const item of templateFnbList) {
+      const count = fnbCountByItem.get(item.id) ?? 0;
+      if (count <= 0) continue;
+      rows.push({ name: item.name.trim(), count });
+    }
+    rows.sort((a, b) => a.name.localeCompare(b.name, undefined, { sensitivity: "base" }));
+    const grand = rows.reduce((s, r) => s + r.count, 0);
+    return { rows, grand };
+  };
+
+  const openFnbExport = async () => {
+    const { rows } = computeFnbTotals();
+    if (rows.length === 0) {
+      toast.error("No F&B linen counted");
+      return;
+    }
+    const today = new Date().toDateString();
+    const todays = snapshots.filter(
+      (s) => s.kind === "fnb_totals" && new Date(s.created_at).toDateString() === today,
+    );
+    if (todays.length > 0) {
+      setConfirmOverwrite({ kind: "fnb_totals" });
+      return;
+    }
+    await proceedExport("fnb_totals");
+  };
+
   const openMaintenanceExport = async () => {
     const { rows } = computeMaintenance();
     if (rows.length === 0) {
@@ -1739,10 +1772,18 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
     qc.invalidateQueries({ queryKey: ["export_snapshots"] });
   };
 
-  const clearAllSnapshots = async () => {
-    qc.setQueryData<ExportSnapshot[]>(["export_snapshots"], []);
-    const { error } = await supabase.from("export_snapshots").delete().neq("id", "00000000-0000-0000-0000-000000000000");
-    if (error) toast.error(error.message);
+  const clearAllSnapshots = async (onlyKind?: ExportSnapshot["kind"]) => {
+    if (onlyKind) {
+      qc.setQueryData<ExportSnapshot[]>(["export_snapshots"], (old) =>
+        (old ?? []).filter((s) => s.kind !== onlyKind),
+      );
+      const { error } = await supabase.from("export_snapshots").delete().eq("kind", onlyKind);
+      if (error) toast.error(error.message);
+    } else {
+      qc.setQueryData<ExportSnapshot[]>(["export_snapshots"], []);
+      const { error } = await supabase.from("export_snapshots").delete().neq("id", "00000000-0000-0000-0000-000000000000");
+      if (error) toast.error(error.message);
+    }
     qc.invalidateQueries({ queryKey: ["export_snapshots"] });
   };
 
@@ -1761,7 +1802,7 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
     rows: SnapshotRow[],
     grand: number,
     when: Date,
-    kind: "totals" | "rejects" = "totals",
+    kind: "totals" | "rejects" | "fnb_totals" = "totals",
   ) => {
     const dateStr = when.toLocaleDateString(undefined, {
       year: "numeric",
@@ -1771,6 +1812,8 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
     const heading =
       kind === "rejects"
         ? "Three Ways House Hotel Linen Rejects"
+        : kind === "fnb_totals"
+        ? "Three Ways House Hotel F&B Linen"
         : "Three Ways House Hotel Linen";
     const win = window.open("", "_blank");
     if (!win) {
@@ -2858,6 +2901,16 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
         Print
       </Button>
     )}
+    {isFnb && (
+      <Button
+        variant="outline"
+        size="sm"
+        onClick={() => void openFnbExport()}
+      >
+        <Printer className="h-4 w-4 mr-2" />
+        Export
+      </Button>
+    )}
     {isReception && (
       <Button
         variant="outline"
@@ -2918,14 +2971,21 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
            <DropdownMenuSeparator />
          </>
        )}
-        <DropdownMenuItem onClick={() => setMaintenanceLogOpen(true)}>
-          <Wrench className="h-4 w-4 mr-2" />
-          <span className="flex-1">Maintenance Log</span>
-          {hasOpenMaintenance && (
-            <span className="ml-2 h-2 w-2 rounded-full bg-amber-500" aria-hidden />
-          )}
-        </DropdownMenuItem>
-        <DropdownMenuSeparator />
+         {isFnb && !isAdmin && (
+           <DropdownMenuItem onClick={() => setHistorySheetOpen(true)}>
+             <History className="h-4 w-4 mr-2" /> History
+           </DropdownMenuItem>
+         )}
+         {!isFnb && (
+           <DropdownMenuItem onClick={() => setMaintenanceLogOpen(true)}>
+             <Wrench className="h-4 w-4 mr-2" />
+             <span className="flex-1">Maintenance Log</span>
+             {hasOpenMaintenance && (
+               <span className="ml-2 h-2 w-2 rounded-full bg-amber-500" aria-hidden />
+             )}
+           </DropdownMenuItem>
+         )}
+         <DropdownMenuSeparator />
        <DropdownMenuLabel>Appearance</DropdownMenuLabel>
        <DropdownMenuItem onClick={() => toggleTheme()}>
          {theme === "dark" ? <Sun className="h-4 w-4 mr-2" /> : <Moon className="h-4 w-4 mr-2" />}
@@ -3675,18 +3735,23 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
                   <Row icon={ConciergeBell} label="Bulk Room Status Setup" onClick={() => { close(); setQuickReceptionOpen(true); }} />
                 </>
               )}
-              <Row
-                icon={Wrench}
-                label={
-                  <span className="flex items-center gap-2">
-                    Maintenance Log
-                    {hasOpenMaintenance && (
-                      <span className="h-2 w-2 rounded-full bg-amber-500" aria-hidden />
-                    )}
-                  </span>
-                }
-                onClick={() => { close(); setMaintenanceLogOpen(true); }}
-              />
+              {isFnb && !isAdmin && (
+                <Row icon={History} label="History" onClick={() => { close(); setHistorySheetOpen(true); }} />
+              )}
+              {!isFnb && (
+                <Row
+                  icon={Wrench}
+                  label={
+                    <span className="flex items-center gap-2">
+                      Maintenance Log
+                      {hasOpenMaintenance && (
+                        <span className="h-2 w-2 rounded-full bg-amber-500" aria-hidden />
+                      )}
+                    </span>
+                  }
+                  onClick={() => { close(); setMaintenanceLogOpen(true); }}
+                />
+              )}
             </div>
           </div>
           <div className="space-y-2">
@@ -3864,12 +3929,15 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
       <SheetDescription>Recent exports</SheetDescription>
     </SheetHeader>
     <div className="flex-1 min-h-0 overflow-y-auto space-y-3">
-      {snapshots.length === 0 ? (
+      {(isFnb ? snapshots.filter((s) => s.kind === "fnb_totals") : snapshots.filter((s) => s.kind !== "fnb_totals")).length === 0 ? (
         <p className="text-sm text-muted-foreground">No exports yet.</p>
       ) : (
         (() => {
+          const visible = isFnb
+            ? snapshots.filter((s) => s.kind === "fnb_totals")
+            : snapshots.filter((s) => s.kind !== "fnb_totals");
           const groups = new Map<string, typeof snapshots>();
-          for (const s of snapshots) {
+          for (const s of visible) {
             const key = new Date(s.created_at).toDateString();
             const list = groups.get(key) ?? [];
             if (list.length < 6) list.push(s);
@@ -3907,6 +3975,9 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
                     {s.kind === "maintenance" && (
                       <span className="text-xs uppercase tracking-wide text-muted-foreground">Maintenance</span>
                     )}
+                    {s.kind === "fnb_totals" && (
+                      <span className="text-xs uppercase tracking-wide text-muted-foreground">F&amp;B Linen</span>
+                    )}
                     <span className="text-xs text-muted-foreground">({s.grand_total})</span>
                   </button>
                   <Button
@@ -3925,12 +3996,12 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
           ));
         })()
       )}
-      {snapshots.length > 0 && (
+      {(isFnb ? snapshots.filter((s) => s.kind === "fnb_totals") : snapshots.filter((s) => s.kind !== "fnb_totals")).length > 0 && (
         <Button
           type="button"
           variant="outline"
           className="w-full text-destructive hover:text-destructive"
-          onClick={() => clearAllSnapshots()}
+          onClick={() => clearAllSnapshots(isFnb ? "fnb_totals" : undefined)}
         >
           <Trash2 className="h-4 w-4 mr-2" />
           Clear history
@@ -5404,14 +5475,18 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
           <Button
             variant="outline"
             size="sm"
-            onClick={() =>
-              printTotals(
-                viewingSnapshot.totals as SnapshotRow[],
-                viewingSnapshot.grand_total,
-                new Date(viewingSnapshot.created_at),
-                viewingSnapshot.kind === "rejects" ? "rejects" : "totals",
-              )
-            }
+             onClick={() =>
+               printTotals(
+                 viewingSnapshot.totals as SnapshotRow[],
+                 viewingSnapshot.grand_total,
+                 new Date(viewingSnapshot.created_at),
+                 viewingSnapshot.kind === "rejects"
+                   ? "rejects"
+                   : viewingSnapshot.kind === "fnb_totals"
+                   ? "fnb_totals"
+                   : "totals",
+               )
+             }
           >
             Print
           </Button>
@@ -5505,6 +5580,8 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
             ? "A room status export already exists for today. Continuing will overwrite today's last history item. Please use the history feature to print previous exports. Would you like to continue with your export?"
             : confirmOverwrite?.kind === "maintenance"
             ? "A maintenance list export already exists for today. Continuing will overwrite today's last history item. Please use the history feature to print previous exports. Would you like to continue with your export?"
+            : confirmOverwrite?.kind === "fnb_totals"
+            ? "An F&B linen export already exists for today. Continuing will overwrite today's last history item. Please use the history feature to print previous exports. Would you like to continue with your export?"
             : "A linen export already exists for today. Continuing will overwrite today's last history item. Please use the history feature to print previous exports. Would you like to continue with your export?"}
         </DialogDescription>
       </DialogHeader>
