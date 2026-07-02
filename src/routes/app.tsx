@@ -3921,12 +3921,21 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
       <SheetDescription>Recent exports</SheetDescription>
     </SheetHeader>
     <div className="flex-1 min-h-0 overflow-y-auto space-y-3">
-      {snapshots.length === 0 ? (
+      {(() => {
+        const visibleSnapshots = isFnb
+          ? snapshots.filter((s) => s.kind === "fnb_totals")
+          : snapshots.filter((s) => s.kind !== "fnb_totals");
+        return null;
+      })()}
+      {(isFnb ? snapshots.filter((s) => s.kind === "fnb_totals") : snapshots.filter((s) => s.kind !== "fnb_totals")).length === 0 ? (
         <p className="text-sm text-muted-foreground">No exports yet.</p>
       ) : (
         (() => {
+          const visible = isFnb
+            ? snapshots.filter((s) => s.kind === "fnb_totals")
+            : snapshots.filter((s) => s.kind !== "fnb_totals");
           const groups = new Map<string, typeof snapshots>();
-          for (const s of snapshots) {
+          for (const s of visible) {
             const key = new Date(s.created_at).toDateString();
             const list = groups.get(key) ?? [];
             if (list.length < 6) list.push(s);
@@ -3964,6 +3973,9 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
                     {s.kind === "maintenance" && (
                       <span className="text-xs uppercase tracking-wide text-muted-foreground">Maintenance</span>
                     )}
+                    {s.kind === "fnb_totals" && (
+                      <span className="text-xs uppercase tracking-wide text-muted-foreground">F&amp;B Linen</span>
+                    )}
                     <span className="text-xs text-muted-foreground">({s.grand_total})</span>
                   </button>
                   <Button
@@ -3982,12 +3994,12 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
           ));
         })()
       )}
-      {snapshots.length > 0 && (
+      {(isFnb ? snapshots.filter((s) => s.kind === "fnb_totals") : snapshots.filter((s) => s.kind !== "fnb_totals")).length > 0 && (
         <Button
           type="button"
           variant="outline"
           className="w-full text-destructive hover:text-destructive"
-          onClick={() => clearAllSnapshots()}
+          onClick={() => clearAllSnapshots(isFnb ? "fnb_totals" : undefined)}
         >
           <Trash2 className="h-4 w-4 mr-2" />
           Clear history
