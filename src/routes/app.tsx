@@ -5376,8 +5376,8 @@ function AccountDialog({
   onUsernameChanged: (u: string) => void;
   canViewAs: boolean;
   selfRole: "admin" | "manager";
-  viewAsRole: "admin" | "manager" | "user" | "reception" | null;
-  onViewAsRoleChange: (r: "admin" | "manager" | "user" | "reception" | null) => void;
+  viewAsRole: "admin" | "manager" | "user" | "reception" | "fnb" | null;
+  onViewAsRoleChange: (r: "admin" | "manager" | "user" | "reception" | "fnb" | null) => void;
 }) {
   const [username, setUsername] = useState(currentUsername);
   const [unCurrentPw, setUnCurrentPw] = useState("");
@@ -5516,14 +5516,16 @@ function AccountDialog({
               </p>
               <div className="space-y-1.5">
                 {((selfRole === "manager"
-                  ? ["manager", "user", "reception"]
-                  : ["admin", "user", "reception"]) as ReadonlyArray<"admin" | "manager" | "user" | "reception">).map((r) => {
+                  ? ["manager", "user", "reception", "fnb"]
+                  : ["admin", "user", "reception", "fnb"]) as ReadonlyArray<"admin" | "manager" | "user" | "reception" | "fnb">).map((r) => {
                   const active = (viewAsRole ?? selfRole) === r;
                   const label =
                     r === "user"
                       ? "Housekeeper"
                       : r === "reception"
                       ? "Reception"
+                      : r === "fnb"
+                      ? "F&B"
                       : r === "manager"
                       ? "Manager (your role)"
                       : "Admin (your role)";
