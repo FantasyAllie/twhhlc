@@ -266,7 +266,6 @@ export function UsersDialog({
                   >
                     <option value="user">Housekeeper</option>
                     <option value="reception">Reception</option>
-                    <option value="fnb">F&amp;B</option>
                     <option value="manager">Manager</option>
                     <option value="admin">Admin</option>
                   </select>
@@ -297,7 +296,7 @@ export function UsersDialog({
                           )}
                         </div>
                         <div className="text-xs text-muted-foreground capitalize truncate">
-                          {u.role === "user" ? "Housekeeper" : u.role === "fnb" ? "F&B" : u.role} · {u.email}{me && u.id === me.id ? " · you" : ""}
+                          {u.role === "user" ? "Housekeeper" : u.role} · {u.email}{me && u.id === me.id ? " · you" : ""}
                         </div>
                       </div>
                       <div className="flex items-center gap-1">
@@ -363,7 +362,6 @@ export function UsersDialog({
                 >
                   <option value="user">Housekeeper</option>
                   <option value="reception">Reception</option>
-                  <option value="fnb">F&amp;B</option>
                   <option value="manager">Manager</option>
                   <option value="admin">Admin</option>
                 </select>

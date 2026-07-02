@@ -304,7 +304,6 @@ function UsersPage() {
               >
                 <option value="user">User</option>
                 <option value="reception">Reception</option>
-                <option value="fnb">F&amp;B</option>
                 <option value="manager">Manager</option>
                 <option value="admin">Admin</option>
               </select>
@@ -397,7 +396,6 @@ function UsersPage() {
                 >
                   <option value="user">User</option>
                   <option value="reception">Reception</option>
-                  <option value="fnb">F&amp;B</option>
                   <option value="manager">Manager</option>
                   <option value="admin">Admin</option>
                 </select>

@@ -244,7 +244,7 @@ function AppPage() {
   const isMobile = useIsMobile();
   const [authUser, setAuthUser] = useState(() => getStoredUser());
   // Admin "view as" overlay — see definition further below for full context.
- type ViewRole = "admin" | "manager" | "user" | "reception" | "fnb";
+ type ViewRole = "admin" | "manager" | "user" | "reception";
   const [viewAsRole, setViewAsRole] = useState<ViewRole | null>(() => {
     if (typeof window === "undefined") return null;
     const v = window.localStorage.getItem("tw_view_as_role");
@@ -309,8 +309,7 @@ function AppPage() {
   // Realtime: push room status changes to all signed-in clients (esp. reception)
   useEffect(() => {
     if (!authUser) return;
-    const currentRoleForNotify = viewAsRole ?? authUser.role;
-    const notifyEnabled = currentRoleForNotify !== "reception" && currentRoleForNotify !== "fnb";
+    const notifyEnabled = (viewAsRole ?? authUser.role) !== "reception";
     if (
       notifyEnabled &&
       typeof window !== "undefined" &&
@@ -886,12 +885,9 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
      viewAsRole && realIsManager && viewAsRole === "admin" ? null : viewAsRole;
    const effectiveRole: ViewRole | undefined =
      canViewAs && safeViewAs ? safeViewAs : realRole;
-    const isFnb = effectiveRole === "fnb";
-    // F&B shares the read-only reception layout, but cannot edit room state.
-    const isReception = effectiveRole === "reception" || isFnb;
-    const canReceptionEdit = effectiveRole === "reception";
-    const isAdmin = effectiveRole === "admin" || effectiveRole === "manager";
-   const isHousekeeper = effectiveRole === "user";
+   const isReception = effectiveRole === "reception";
+   const isAdmin = effectiveRole === "admin" || effectiveRole === "manager";
+  const isHousekeeper = effectiveRole === "user";
   const doneSet = new Set(
     rooms
       .filter((r) => (isReception ? r.done_reception : r.done))
@@ -3373,22 +3369,14 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
                  </Button>
                </div>
              )}
-            <div className="mt-4 space-y-4">
-              {canReceptionEdit && (
-                <div className="space-y-2">
-                  <Row
-                    label="Mark as Done"
-                    selected={receptionDoneSet.has(n)}
-                    onClick={() => toggleReceptionDone(n)}
-                  />
-                </div>
-              )}
-              {!canReceptionEdit && isFnb && (
-                <p className="text-xs text-muted-foreground">
-                  Read-only view. Room status is managed by Reception and Housekeeping.
-                </p>
-              )}
-              {canReceptionEdit && (<>
+           <div className="mt-4 space-y-4">
+             <div className="space-y-2">
+               <Row
+                 label="Mark as Done"
+                 selected={receptionDoneSet.has(n)}
+                 onClick={() => toggleReceptionDone(n)}
+               />
+             </div>
              <div className="space-y-2">
                <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">Status</p>
                {receptionStatuses.length === 0 && (
@@ -3498,7 +3486,6 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
                  })}
                </div>
              </div>
-              </>)}
            </div>
          </>
        );
@@ -3512,11 +3499,7 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
   <NotificationsSheet
     open={notificationsSheetOpen}
     onOpenChange={setNotificationsSheetOpen}
-   userRole={((authUser.role as string) === "manager"
-     ? "admin"
-     : (authUser.role as string) === "fnb"
-     ? "reception"
-     : authUser.role) as "admin" | "user" | "reception"}
+    userRole={(authUser.role === "manager" ? "admin" : authUser.role) as "admin" | "user" | "reception"}
   />
 )}
 <Sheet open={menuSheetOpen} onOpenChange={setMenuSheetOpen}>
@@ -3620,7 +3603,7 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
         )}
       </SheetTitle>
       <SheetDescription>
-        {canReceptionEdit
+        {isReception
           ? "Reception can mark maintenance requests as complete."
           : "Log a maintenance issue for reception to action."}
       </SheetDescription>
@@ -3676,7 +3659,7 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
                   </div>
                   <p className="mt-1 text-sm whitespace-pre-wrap break-words">{m.message}</p>
                 </div>
-                {canReceptionEdit ? (
+                {isReception ? (
                   <Button
                     type="button"
                     size="sm"
@@ -3725,7 +3708,7 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
                   </div>
                   <p className="mt-1 text-sm whitespace-pre-wrap break-words text-muted-foreground line-through">{m.message}</p>
                 </div>
-                {(canReceptionEdit || isAdmin) && (
+                {(isReception || isAdmin) && (
                   <Button
                     type="button"
                     size="icon"
@@ -5390,8 +5373,8 @@ function AccountDialog({
   onUsernameChanged: (u: string) => void;
   canViewAs: boolean;
   selfRole: "admin" | "manager";
-  viewAsRole: "admin" | "manager" | "user" | "reception" | "fnb" | null;
-  onViewAsRoleChange: (r: "admin" | "manager" | "user" | "reception" | "fnb" | null) => void;
+  viewAsRole: "admin" | "manager" | "user" | "reception" | null;
+  onViewAsRoleChange: (r: "admin" | "manager" | "user" | "reception" | null) => void;
 }) {
   const [username, setUsername] = useState(currentUsername);
   const [unCurrentPw, setUnCurrentPw] = useState("");
@@ -5530,16 +5513,14 @@ function AccountDialog({
               </p>
               <div className="space-y-1.5">
                 {((selfRole === "manager"
-                  ? ["manager", "user", "reception", "fnb"]
-                  : ["admin", "user", "reception", "fnb"]) as ReadonlyArray<"admin" | "manager" | "user" | "reception" | "fnb">).map((r) => {
+                  ? ["manager", "user", "reception"]
+                  : ["admin", "user", "reception"]) as ReadonlyArray<"admin" | "manager" | "user" | "reception">).map((r) => {
                   const active = (viewAsRole ?? selfRole) === r;
                   const label =
                     r === "user"
                       ? "Housekeeper"
                       : r === "reception"
                       ? "Reception"
-                      : r === "fnb"
-                      ? "F&B"
                       : r === "manager"
                       ? "Manager (your role)"
                       : "Admin (your role)";
