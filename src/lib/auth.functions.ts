@@ -4,9 +4,9 @@ import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 // A user has exactly one Position and zero or more Sub-roles.
 // Positions live alongside sub-role rows in public.user_roles.
 export type Position = "admin" | "manager" | "user" | "pending";
-export type SubRole = "reception" | "housekeeper";
+export type SubRole = "reception" | "housekeeper" | "fnb";
 // Compat role used by legacy UI paths — derived from position + sub-roles.
-export type AppRole = "admin" | "manager" | "user" | "reception" | "pending";
+export type AppRole = "admin" | "manager" | "user" | "reception" | "fnb" | "pending";
 export type SessionUser = {
   id: string;
   username: string;
@@ -27,7 +27,7 @@ export type AppUserRow = {
 };
 
 const POSITIONS: ReadonlyArray<Position> = ["admin", "manager", "user", "pending"];
-const SUB_ROLES: ReadonlyArray<SubRole> = ["reception", "housekeeper"];
+const SUB_ROLES: ReadonlyArray<SubRole> = ["reception", "housekeeper", "fnb"];
 
 function validatePosition(p: string): Exclude<Position, "pending"> {
   if (p !== "admin" && p !== "manager" && p !== "user") throw new Error("Invalid position");
@@ -37,7 +37,7 @@ function validateSubRoles(rs: unknown): SubRole[] {
   if (!Array.isArray(rs)) throw new Error("Invalid sub-roles");
   const out: SubRole[] = [];
   for (const r of rs) {
-    if (r === "reception" || r === "housekeeper") {
+    if (r === "reception" || r === "housekeeper" || r === "fnb") {
       if (!out.includes(r)) out.push(r);
     } else {
       throw new Error("Invalid sub-role");
@@ -67,7 +67,7 @@ function splitRoles(rows: Array<{ role: string }>): { position: Position; subRol
   const subRoles: SubRole[] = [];
   const priority: Record<Position, number> = { admin: 4, manager: 3, user: 2, pending: 1 };
   for (const r of rows) {
-    if (r.role === "reception" || r.role === "housekeeper") {
+    if (r.role === "reception" || r.role === "housekeeper" || r.role === "fnb") {
       if (!subRoles.includes(r.role)) subRoles.push(r.role);
     } else if ((POSITIONS as ReadonlyArray<string>).includes(r.role)) {
       const p = r.role as Position;
