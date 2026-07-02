@@ -196,7 +196,7 @@ const COLOR_SWATCHES: Record<"green" | "yellow" | "red" | "blue", { bg: string; 
 };
 
 type ItemColor = "green" | "yellow" | "red" | "blue";
-type TemplateItem = { id: string; name: string; created_at: string; category: Category; position: number; default_count: number; color: ItemColor | null };
+type TemplateItem = { id: string; name: string; created_at: string; category: Category; position: number; default_count: number; color: ItemColor | null; list_type: "housekeeping" | "fnb" };
 type RoomExtra = { id: string; room_number: number; name: string; created_at: string };
 type RoomCount = {
  id: string;
@@ -383,6 +383,7 @@ function AppPage() {
   const [usersOpen, setUsersOpen] = useState(false);
  const [openRoom, setOpenRoom] = useState<number | null>(null);
  const [templateOpen, setTemplateOpen] = useState(false);
+const [linenListType, setLinenListType] = useState<"housekeeping" | "fnb">("housekeeping");
 const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
   const [newTemplateName, setNewTemplateName] = useState("");
   const [editingItemId, setEditingItemId] = useState<string | null>(null);
@@ -484,7 +485,7 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
  queryFn: async (): Promise<TemplateItem[]> => {
  const { data, error } = await supabase
  .from("template_items")
-   .select("id,name,created_at,category,position,default_count,color")
+  .select("id,name,created_at,category,position,default_count,color,list_type")
  .order("position", { ascending: true })
  .order("created_at", { ascending: true });
  if (error) throw error;
@@ -648,7 +649,9 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
     },
   });
 
-  const template = templateQ.data ?? [];
+  const templateAll = templateQ.data ?? [];
+  const template = templateAll.filter((t) => (t.list_type ?? "housekeeping") === "housekeeping");
+  const templateFnbList = templateAll.filter((t) => t.list_type === "fnb");
   const fnbCounts = fnbCountsQ.data ?? [];
   const fnbCountByItem = new Map<string, number>(
     fnbCounts.map((c) => [c.template_item_id, c.count ?? 0]),
@@ -1093,13 +1096,13 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
     const name = newTemplateName.trim();
     if (!name) return;
     const category = roomTypes[0]?.value ?? "double";
-    const maxPos = template
-      .filter((t) => t.category === category)
+    const maxPos = templateAll
+      .filter((t) => t.list_type === linenListType && t.category === category)
       .reduce((m, t) => Math.max(m, t.position), 0);
     setNewTemplateName("");
     const { error } = await supabase
       .from("template_items")
-      .insert({ name, category, position: maxPos + 1 });
+      .insert({ name, category, position: maxPos + 1, list_type: linenListType });
     if (error) toast.error(error.message);
     qc.invalidateQueries({ queryKey: ["template_items"] });
   };
@@ -2957,7 +2960,7 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
   )}
 
  {/* Linen list dialog */}
- <Dialog open={templateOpen} onOpenChange={setTemplateOpen}>
+  <Dialog open={templateOpen} onOpenChange={(o) => { setTemplateOpen(o); if (o) setLinenListType(isFnb ? "fnb" : "housekeeping"); }}>
 <DialogContent className="max-w-2xl w-[calc(100vw-1.5rem)] sm:w-full p-4 sm:p-6">
  <DialogHeader>
  <DialogTitle>Linen List</DialogTitle>
@@ -2967,9 +2970,31 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
    </DialogDescription>
  </DialogHeader>
    <div className="space-y-3">
+     <div className="inline-flex rounded-md border p-0.5 bg-muted/40 self-start">
+       <button
+         type="button"
+         onClick={() => setLinenListType("housekeeping")}
+         className={cn(
+           "px-3 py-1.5 text-sm rounded-[0.3rem] transition-colors",
+           linenListType === "housekeeping" ? "bg-background shadow-sm font-medium" : "text-muted-foreground",
+         )}
+       >
+         Housekeeping
+       </button>
+       <button
+         type="button"
+         onClick={() => setLinenListType("fnb")}
+         className={cn(
+           "px-3 py-1.5 text-sm rounded-[0.3rem] transition-colors",
+           linenListType === "fnb" ? "bg-background shadow-sm font-medium" : "text-muted-foreground",
+         )}
+       >
+         F&amp;B
+       </button>
+     </div>
     <form onSubmit={addTemplateItem} className="flex gap-2">
       <Input
-        placeholder="Add an item…"
+         placeholder={`Add an item to ${linenListType === "fnb" ? "F&B" : "Housekeeping"}…`}
         value={newTemplateName}
         onChange={(e) => setNewTemplateName(e.target.value)}
       />
@@ -2977,16 +3002,18 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
         Add
       </Button>
     </form>
-    {template.length === 0 ? (
-      <p className="text-sm text-muted-foreground">No items yet.</p>
-    ) : (
+     {(() => {
+       const listItems = templateAll.filter((t) => (t.list_type ?? "housekeeping") === linenListType);
+       return listItems.length === 0 ? (
+         <p className="text-sm text-muted-foreground">No items yet.</p>
+       ) : (
         <ul className="divide-y border-t max-h-[60vh] overflow-y-auto -mx-4 sm:-mx-6 px-4 sm:px-6">
           <li className="flex items-center gap-1.5 py-1.5 text-xs font-medium text-muted-foreground uppercase tracking-wide">
             <span className="h-3 w-3 shrink-0" aria-hidden />
             <span className="flex-1 min-w-0">Item</span>
             <span className="shrink-0 w-[88px] text-right">Actions</span>
           </li>
-          {template.map((item, idx) => {
+           {listItems.map((item, idx) => {
           return (
             <li key={item.id} className="flex items-center gap-1.5 py-2">
               <span
@@ -3118,7 +3145,7 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
                           size="icon"
                           className="h-11 w-11"
                           onClick={() => moveTemplateItem(item.id, 1)}
-                          disabled={idx === template.length - 1}
+                          disabled={idx === listItems.length - 1}
                           aria-label="Move down"
                         >
                           <ArrowDown className="h-5 w-5" />
@@ -3142,7 +3169,8 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
           );
         })}
       </ul>
-    )}
+       );
+     })()}
   </div>
  </DialogContent>
  </Dialog>
@@ -4564,13 +4592,13 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
          F&amp;B Linen Counter
        </h2>
      </div>
-     {template.length === 0 ? (
+      {templateFnbList.length === 0 ? (
        <p className="text-sm text-muted-foreground">
-         No linen items yet. Add some from the Linen List.
+          No F&amp;B linen items yet. Add some from the Linen List (F&amp;B tab).
        </p>
      ) : (
        <ul className="divide-y border rounded-md bg-muted/30">
-         {template.map((item) => {
+          {templateFnbList.map((item) => {
            const value = fnbCountByItem.get(item.id) ?? 0;
            const swatch = item.color ? COLOR_SWATCHES[item.color] : null;
            return (
