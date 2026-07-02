@@ -6,10 +6,11 @@ import {
   createUser,
   deleteUser,
   updateUserPassword,
-  updateUserRole,
+  updateUserAssignment,
   setUserDisabled,
   type AppUserRow,
-  type ApprovedRole,
+  type Position,
+  type SubRole,
 } from "@/lib/auth.functions";
 import { getStoredUser } from "@/lib/auth-client";
 import { Button } from "@/components/ui/button";
@@ -22,7 +23,25 @@ import {
   DialogDescription,
 } from "@/components/ui/dialog";
 import { toast } from "sonner";
-import { Trash2, KeyRound, Check, X, Pencil, Ban, RotateCcw } from "lucide-react";
+import { Trash2, Check, X, Pencil, Ban, RotateCcw } from "lucide-react";
+
+type AssignablePosition = Exclude<Position, "pending">;
+const POSITION_LABELS: Record<AssignablePosition, string> = {
+  admin: "Admin",
+  manager: "Manager",
+  user: "User",
+};
+const SUB_ROLE_LABELS: Record<SubRole, string> = {
+  reception: "Reception",
+  housekeeper: "Housekeeper",
+};
+function positionBadge(p: Position): string {
+  return p === "pending" ? "Pending" : POSITION_LABELS[p];
+}
+function summariseRoles(u: AppUserRow): string {
+  const subs = u.subRoles.map((r) => SUB_ROLE_LABELS[r]).join(", ");
+  return subs ? `${positionBadge(u.position)} · ${subs}` : positionBadge(u.position);
+}
 
 export function UsersDialog({
   open,
@@ -38,7 +57,7 @@ export function UsersDialog({
   const createFn = useServerFn(createUser);
   const deleteFn = useServerFn(deleteUser);
   const pwFn = useServerFn(updateUserPassword);
-  const roleFn = useServerFn(updateUserRole);
+  const assignFn = useServerFn(updateUserAssignment);
   const disableFn = useServerFn(setUserDisabled);
 
   const usersQ = useQuery({
@@ -50,26 +69,32 @@ export function UsersDialog({
   const [newEmail, setNewEmail] = useState("");
   const [newDisplayName, setNewDisplayName] = useState("");
   const [newPassword, setNewPassword] = useState("");
-  const [newRole, setNewRole] = useState<ApprovedRole>("user");
+  const [newPosition, setNewPosition] = useState<AssignablePosition>("user");
+  const [newSubRoles, setNewSubRoles] = useState<SubRole[]>(["housekeeper"]);
   const [busy, setBusy] = useState(false);
 
   const [pwUser, setPwUser] = useState<AppUserRow | null>(null);
   const [pwValue, setPwValue] = useState("");
 
   const [editUser, setEditUser] = useState<AppUserRow | null>(null);
-  const [editRole, setEditRole] = useState<ApprovedRole>("user");
+  const [editPosition, setEditPosition] = useState<AssignablePosition>("user");
+  const [editSubRoles, setEditSubRoles] = useState<SubRole[]>([]);
   const [editPw, setEditPw] = useState("");
   const [editBusy, setEditBusy] = useState(false);
   const [disableBusy, setDisableBusy] = useState(false);
 
   function openEdit(u: AppUserRow) {
     setEditUser(u);
-    setEditRole((u.role === "pending" ? "user" : u.role) as ApprovedRole);
+    setEditPosition((u.position === "pending" ? "user" : u.position) as AssignablePosition);
+    setEditSubRoles([...u.subRoles]);
     setEditPw("");
   }
   function closeEdit() {
     setEditUser(null);
     setEditPw("");
+  }
+  function toggleSubRole(list: SubRole[], role: SubRole): SubRole[] {
+    return list.includes(role) ? list.filter((r) => r !== role) : [...list, role];
   }
 
   async function onSaveEdit(e: React.FormEvent) {
@@ -77,8 +102,12 @@ export function UsersDialog({
     if (!editUser || editBusy) return;
     setEditBusy(true);
     try {
-      if (editRole !== editUser.role) {
-        await roleFn({ data: { id: editUser.id, role: editRole } });
+      const rolesChanged =
+        editPosition !== editUser.position ||
+        editSubRoles.length !== editUser.subRoles.length ||
+        editSubRoles.some((r) => !editUser.subRoles.includes(r));
+      if (rolesChanged) {
+        await assignFn({ data: { id: editUser.id, position: editPosition, subRoles: editSubRoles } });
       }
       if (editPw.trim().length > 0) {
         await pwFn({ data: { id: editUser.id, password: editPw } });
@@ -133,14 +162,16 @@ export function UsersDialog({
           email: newEmail,
           displayName: newDisplayName || undefined,
           password: newPassword,
-          role: newRole,
+          position: newPosition,
+          subRoles: newSubRoles,
         },
       });
       toast.success("User created");
       setNewEmail("");
       setNewDisplayName("");
       setNewPassword("");
-      setNewRole("user");
+      setNewPosition("user");
+      setNewSubRoles(["housekeeper"]);
       qc.invalidateQueries({ queryKey: ["app_users"] });
     } catch (err) {
       toast.error(err instanceof Error ? err.message : "Failed to create user");
@@ -160,13 +191,13 @@ export function UsersDialog({
     }
   }
 
-  async function onSetRole(u: AppUserRow, next: ApprovedRole) {
+  async function onApprovePending(u: AppUserRow, subRoles: SubRole[]) {
     try {
-      await roleFn({ data: { id: u.id, role: next } });
-      toast.success(`Role updated to ${next}`);
+      await assignFn({ data: { id: u.id, position: "user", subRoles } });
+      toast.success("User approved");
       qc.invalidateQueries({ queryKey: ["app_users"] });
     } catch (err) {
-      toast.error(err instanceof Error ? err.message : "Failed to update role");
+      toast.error(err instanceof Error ? err.message : "Failed to approve user");
     }
   }
 
@@ -184,8 +215,8 @@ export function UsersDialog({
   }
 
   const all = usersQ.data ?? [];
-  const pending = all.filter((u) => u.role === "pending");
-  const approved = all.filter((u) => u.role !== "pending");
+  const pending = all.filter((u) => u.position === "pending");
+  const approved = all.filter((u) => u.position !== "pending");
 
   return (
     <>
@@ -210,10 +241,10 @@ export function UsersDialog({
                         <div className="text-xs text-muted-foreground truncate">{u.email}</div>
                       </div>
                       <div className="flex items-center gap-1">
-                        <Button size="sm" variant="default" onClick={() => onSetRole(u, "user")}>
+                        <Button size="sm" variant="default" onClick={() => onApprovePending(u, ["housekeeper"]) }>
                           <Check className="h-4 w-4 mr-1" />Approve as housekeeper
                         </Button>
-                        <Button size="sm" variant="ghost" onClick={() => onSetRole(u, "reception")}>
+                        <Button size="sm" variant="ghost" onClick={() => onApprovePending(u, ["reception"]) }>
                           Reception
                         </Button>
                         <Button size="sm" variant="ghost" className="text-destructive hover:text-destructive" onClick={() => onDelete(u)}>
@@ -258,17 +289,31 @@ export function UsersDialog({
                   />
                 </div>
                 <div className="space-y-1">
-                  <label className="text-xs font-medium">Role</label>
+                  <label className="text-xs font-medium">Position</label>
                   <select
                     className="w-full h-9 rounded-md border bg-background px-3 text-sm"
-                    value={newRole}
-                    onChange={(e) => setNewRole(e.target.value as ApprovedRole)}
+                    value={newPosition}
+                    onChange={(e) => setNewPosition(e.target.value as AssignablePosition)}
                   >
-                    <option value="user">Housekeeper</option>
-                    <option value="reception">Reception</option>
+                    <option value="user">User</option>
                     <option value="manager">Manager</option>
                     <option value="admin">Admin</option>
                   </select>
+                </div>
+                <div className="space-y-1 sm:col-span-2">
+                  <label className="text-xs font-medium">Sub-roles</label>
+                  <div className="flex flex-wrap gap-3">
+                    {(["reception", "housekeeper"] as SubRole[]).map((r) => (
+                      <label key={r} className="flex items-center gap-2 text-sm">
+                        <input
+                          type="checkbox"
+                          checked={newSubRoles.includes(r)}
+                          onChange={() => setNewSubRoles((prev) => toggleSubRole(prev, r))}
+                        />
+                        {SUB_ROLE_LABELS[r]}
+                      </label>
+                    ))}
+                  </div>
                 </div>
                 <div className="sm:col-span-2 flex justify-end">
                   <Button type="submit" disabled={busy} size="sm">
@@ -295,8 +340,8 @@ export function UsersDialog({
                             </span>
                           )}
                         </div>
-                        <div className="text-xs text-muted-foreground capitalize truncate">
-                          {u.role === "user" ? "Housekeeper" : u.role} · {u.email}{me && u.id === me.id ? " · you" : ""}
+                        <div className="text-xs text-muted-foreground truncate">
+                          {summariseRoles(u)} · {u.email}{me && u.id === me.id ? " · you" : ""}
                         </div>
                       </div>
                       <div className="flex items-center gap-1">
@@ -354,17 +399,36 @@ export function UsersDialog({
           {editUser && (
             <form onSubmit={onSaveEdit} className="space-y-4">
               <div className="space-y-1">
-                <label className="text-xs font-medium">Role</label>
+                <label className="text-xs font-medium">Position</label>
                 <select
                   className="w-full h-9 rounded-md border bg-background px-3 text-sm"
-                  value={editRole}
-                  onChange={(e) => setEditRole(e.target.value as ApprovedRole)}
+                  value={editPosition}
+                  onChange={(e) => setEditPosition(e.target.value as AssignablePosition)}
                 >
-                  <option value="user">Housekeeper</option>
-                  <option value="reception">Reception</option>
+                  <option value="user">User</option>
                   <option value="manager">Manager</option>
                   <option value="admin">Admin</option>
                 </select>
+              </div>
+              <div className="space-y-1">
+                <label className="text-xs font-medium">Sub-roles</label>
+                <div className="flex flex-wrap gap-3">
+                  {(["reception", "housekeeper"] as SubRole[]).map((r) => (
+                    <label key={r} className="flex items-center gap-2 text-sm">
+                      <input
+                        type="checkbox"
+                        checked={editSubRoles.includes(r)}
+                        onChange={() => setEditSubRoles((prev) => toggleSubRole(prev, r))}
+                      />
+                      {SUB_ROLE_LABELS[r]}
+                    </label>
+                  ))}
+                </div>
+                {editPosition === "user" && editSubRoles.length === 0 && (
+                  <p className="text-[11px] text-amber-600 dark:text-amber-400">
+                    A User with no sub-roles has no working view.
+                  </p>
+                )}
               </div>
               <div className="space-y-1">
                 <label className="text-xs font-medium">New password (optional)</label>

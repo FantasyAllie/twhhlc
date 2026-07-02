@@ -243,12 +243,12 @@ function AppPage() {
   const { theme, toggleTheme } = useTheme();
   const isMobile = useIsMobile();
   const [authUser, setAuthUser] = useState(() => getStoredUser());
-  // Admin "view as" overlay — see definition further below for full context.
+  // Admin/Manager "view as" overlay — see definition further below for full context.
  type ViewRole = "admin" | "manager" | "user" | "reception";
   const [viewAsRole, setViewAsRole] = useState<ViewRole | null>(() => {
     if (typeof window === "undefined") return null;
     const v = window.localStorage.getItem("tw_view_as_role");
-    return v === "user" || v === "reception" || v === "admin" ? v : null;
+    return v === "user" || v === "reception" || v === "admin" || v === "manager" ? v : null;
   });
   useEffect(() => {
     if (!getStoredUser()) {
@@ -418,13 +418,18 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
     if (viewAsRole) window.localStorage.setItem("tw_view_as_role", viewAsRole);
     else window.localStorage.removeItem("tw_view_as_role");
   }, [viewAsRole]);
-  // Clear overlay if the signed-in user can't use view-as, or if a manager
-  // somehow has "admin" selected (managers may not impersonate admin).
+  // Clear overlay whenever the current view-as isn't a view this account has.
+  // (Actual list computed below; keep the effect narrow — pass position/subRoles.)
   useEffect(() => {
     if (!authUser || !viewAsRole) return;
-    const role = authUser.role;
-    if (role !== "admin" && role !== "manager") setViewAsRole(null);
-    else if (role === "manager" && viewAsRole === "admin") setViewAsRole(null);
+    const pos = authUser.position;
+    const subs = authUser.subRoles;
+    const allowed: ViewRole[] = [];
+    if (pos === "admin") allowed.push("admin", "manager");
+    if (pos === "manager") allowed.push("manager");
+    if (pos === "admin" || pos === "manager" || subs.includes("housekeeper")) allowed.push("user");
+    if (pos === "admin" || pos === "manager" || subs.includes("reception")) allowed.push("reception");
+    if (!allowed.includes(viewAsRole)) setViewAsRole(null);
   }, [authUser, viewAsRole]);
 
   // Fire-and-forget push fan-out; never blocks the UI.
@@ -876,18 +881,41 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
     if (error) toast.error(error.message);
     qc.invalidateQueries({ queryKey: ["reject_counts"] });
   };
-   const realRole = authUser?.role === "pending" ? undefined : (authUser?.role as ViewRole | undefined);
-   const realIsAdmin = realRole === "admin";
-   const realIsManager = realRole === "manager";
-   const canViewAs = realIsAdmin || realIsManager;
-   // Managers can view-as housekeeper/reception, but never as admin.
+   const position = authUser?.position;
+   const subRoles = authUser?.subRoles ?? [];
+   const realIsAdmin = position === "admin";
+   const realIsManager = position === "manager";
+   const hasReceptionRole = subRoles.includes("reception");
+   const hasHousekeeperRole = subRoles.includes("housekeeper");
+   // Which view-as options this account can actually pick.
+   const availableViews: ViewRole[] = (() => {
+     const out: ViewRole[] = [];
+     if (realIsAdmin) out.push("admin");
+     if (realIsAdmin || realIsManager) out.push("manager");
+     if (realIsAdmin || realIsManager || hasHousekeeperRole) out.push("user");
+     if (realIsAdmin || realIsManager || hasReceptionRole) out.push("reception");
+     return out;
+   })();
+   // Default view when no "view as" is set.
+   const defaultView: ViewRole | undefined = (() => {
+     if (realIsAdmin) return "admin";
+     if (realIsManager) return "manager";
+     if (position === "user") {
+       if (hasHousekeeperRole) return "user";
+       if (hasReceptionRole) return "reception";
+     }
+     return undefined;
+   })();
+   // A person can switch views if they have more than one available view.
+   const canViewAs = availableViews.length > 1;
    const safeViewAs: ViewRole | null =
-     viewAsRole && realIsManager && viewAsRole === "admin" ? null : viewAsRole;
+     viewAsRole && availableViews.includes(viewAsRole) ? viewAsRole : null;
    const effectiveRole: ViewRole | undefined =
-     canViewAs && safeViewAs ? safeViewAs : realRole;
+     canViewAs && safeViewAs ? safeViewAs : defaultView;
+   const realRole: ViewRole | undefined = defaultView;
    const isReception = effectiveRole === "reception";
    const isAdmin = effectiveRole === "admin" || effectiveRole === "manager";
-  const isHousekeeper = effectiveRole === "user";
+   const isHousekeeper = effectiveRole === "user";
   const doneSet = new Set(
     rooms
       .filter((r) => (isReception ? r.done_reception : r.done))
@@ -3495,13 +3523,24 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
 
  {/* Edit defaults sheet (Admin): which template items appear in this room */}
 {/* App menu sheet (burger) */}
-{authUser && (
-  <NotificationsSheet
-    open={notificationsSheetOpen}
-    onOpenChange={setNotificationsSheetOpen}
-    userRole={(authUser.role === "manager" ? "admin" : authUser.role) as "admin" | "user" | "reception"}
-  />
-)}
+{authUser && (() => {
+  // Map (position, subRoles) → the notification-visibility bucket:
+  //   "admin"     → see all toggles
+  //   "reception" → hide the housekeeping "marked done" toggle
+  //   "user"      → hide the reception message/checkout toggles
+  let bucket: "admin" | "user" | "reception" = "admin";
+  if (authUser.position === "admin" || authUser.position === "manager") bucket = "admin";
+  else if (hasReceptionRole && hasHousekeeperRole) bucket = "admin";
+  else if (hasReceptionRole) bucket = "reception";
+  else if (hasHousekeeperRole) bucket = "user";
+  return (
+    <NotificationsSheet
+      open={notificationsSheetOpen}
+      onOpenChange={setNotificationsSheetOpen}
+      userRole={bucket}
+    />
+  );
+})()}
 <Sheet open={menuSheetOpen} onOpenChange={setMenuSheetOpen}>
   <SheetContent side="right" disableDragDismiss className="w-auto max-w-[90vw] min-w-[18rem] sm:max-w-md overflow-y-auto p-4 sm:p-6 [&_[data-sheet-close]]:max-lg:hidden">
     <SheetHeader className="text-left">
@@ -5328,11 +5367,11 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
     currentUsername={authUser?.username ?? ""}
     onUsernameChanged={(u) => setAuthUser((prev) => prev ? { ...prev, username: u } : prev)}
    canViewAs={canViewAs}
-   selfRole={realRole === "manager" ? "manager" : "admin"}
+   availableViews={availableViews}
+   defaultView={defaultView ?? "admin"}
    viewAsRole={safeViewAs}
    onViewAsRoleChange={(r) => {
-     // Guard: managers may never view as admin.
-     if (realIsManager && r === "admin") return;
+     if (r && !availableViews.includes(r)) return;
      setViewAsRole(r);
    }}
   />
@@ -5363,7 +5402,8 @@ function AccountDialog({
   currentUsername,
   onUsernameChanged,
   canViewAs,
-  selfRole,
+  availableViews,
+  defaultView,
   viewAsRole,
   onViewAsRoleChange,
 }: {
@@ -5372,7 +5412,8 @@ function AccountDialog({
   currentUsername: string;
   onUsernameChanged: (u: string) => void;
   canViewAs: boolean;
-  selfRole: "admin" | "manager";
+  availableViews: ReadonlyArray<"admin" | "manager" | "user" | "reception">;
+  defaultView: "admin" | "manager" | "user" | "reception";
   viewAsRole: "admin" | "manager" | "user" | "reception" | null;
   onViewAsRoleChange: (r: "admin" | "manager" | "user" | "reception" | null) => void;
 }) {
@@ -5509,27 +5550,23 @@ function AccountDialog({
             <div className="space-y-2">
               <h3 className="text-sm font-semibold">View as</h3>
               <p className="text-xs text-muted-foreground">
-                Temporarily experience the app as another role. Your account stays {selfRole === "manager" ? "a manager" : "an admin"}.
+                Temporarily experience the app as another view. Your account permissions are unchanged.
               </p>
               <div className="space-y-1.5">
-                {((selfRole === "manager"
-                  ? ["manager", "user", "reception"]
-                  : ["admin", "user", "reception"]) as ReadonlyArray<"admin" | "manager" | "user" | "reception">).map((r) => {
-                  const active = (viewAsRole ?? selfRole) === r;
-                  const label =
-                    r === "user"
-                      ? "Housekeeper"
-                      : r === "reception"
-                      ? "Reception"
-                      : r === "manager"
-                      ? "Manager (your role)"
-                      : "Admin (your role)";
+                {availableViews.map((r) => {
+                  const active = (viewAsRole ?? defaultView) === r;
+                  const isSelf = r === defaultView;
+                  const base =
+                    r === "user" ? "Housekeeper" :
+                    r === "reception" ? "Reception" :
+                    r === "manager" ? "Manager" : "Admin";
+                  const label = isSelf ? `${base} (your role)` : base;
                   return (
                     <button
                       key={r}
                       type="button"
                       onClick={() => {
-                        onViewAsRoleChange(r === selfRole ? null : r);
+                        onViewAsRoleChange(isSelf ? null : r);
                         onOpenChange(false);
                       }}
                       className={cn(
