@@ -5840,7 +5840,6 @@ function AccountDialog({
                     r === "reception" ? "Reception" :
                     r === "fnb" ? "F&B" :
                     r === "manager" ? "Manager" : "Admin";
-                  const label = isSelf ? `${base} (your role)` : base;
                   return (
                     <button
                       key={r}
