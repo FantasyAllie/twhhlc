@@ -5001,7 +5001,7 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
           {(hasActiveMessage(n) || !!room?.housekeeping_note) && !isStaffRoom && (
             <span
               aria-label="Housekeeping note"
-               className="absolute top-1 right-1 h-2 w-2 rounded-full bg-amber-500 ring-2 ring-background"
+               className="absolute bottom-1 left-1 h-2 w-2 rounded-full bg-amber-500 ring-2 ring-background"
             />
           )}
           {room?.needs_maintenance && !isStaffRoom && (
@@ -5013,7 +5013,7 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
           {room?.guest_vacated && !isStaffRoom && (
             <span
               aria-label="Guest vacated"
-              className="absolute top-0.5 left-0.5 rounded-sm bg-emerald-600 px-1 py-px text-[8px] font-bold leading-none tracking-wide text-white shadow-sm dark:bg-emerald-500 dark:text-emerald-950"
+              className="absolute top-0.5 right-0.5 rounded-sm bg-emerald-600 px-1 py-px text-[8px] font-bold leading-none tracking-wide text-white shadow-sm dark:bg-emerald-500 dark:text-emerald-950"
             >
               OUT
             </span>
@@ -5043,6 +5043,8 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
           ? { bg: "var(--room-stayover)", fg: "var(--room-stayover-fg)", accent: "var(--room-stayover-accent)", label: "Stayover" }
         : (state === "done" || state === "complete")
           ? { bg: "var(--room-complete)", fg: "var(--room-complete-fg)", accent: "var(--room-complete-accent)", label: "Clean & Ready for Guests" }
+          : isDirty
+            ? { bg: "var(--room-dirty)", fg: "var(--room-dirty-fg)", accent: "var(--room-dirty-accent)", label: "Dirty" }
           : (hasStatus || hasLinenCount || state === "progress")
             ? { ...roomStateMeta.progress, label: "Cleaning in Progress" }
             : { ...roomStateMeta.todo, label: isArrival ? "Arrival" : isDirty ? "Dirty" : isClean ? "Clean" : "Not started" };
@@ -5099,7 +5101,7 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
           {hasActiveMessage(n) && (
             <span
               aria-label="Message"
-               className="absolute top-1 right-1 h-2 w-2 rounded-full bg-amber-500 ring-2 ring-background"
+                className="absolute bottom-1 left-1 h-2 w-2 rounded-full bg-amber-500 ring-2 ring-background"
             />
           )}
           {room?.needs_maintenance && (
@@ -5111,7 +5113,7 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
           {room?.guest_vacated && (
             <span
               aria-label="Guest vacated"
-              className="absolute top-0.5 left-0.5 rounded-sm bg-emerald-600 px-1 py-px text-[8px] font-bold leading-none tracking-wide text-white shadow-sm dark:bg-emerald-500 dark:text-emerald-950"
+              className="absolute top-0.5 right-0.5 rounded-sm bg-emerald-600 px-1 py-px text-[8px] font-bold leading-none tracking-wide text-white shadow-sm dark:bg-emerald-500 dark:text-emerald-950"
             >
               OUT
             </span>
