@@ -4953,7 +4953,7 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
         : (state === "done" || state === "complete")
           ? { bg: "var(--room-complete)", fg: "var(--room-complete-fg)", accent: "var(--room-complete-accent)", label: "Clean & Ready for Guests" }
         : isDirty
-          ? { bg: "var(--room-dirty)", fg: "var(--room-dirty-fg)", accent: "var(--room-dirty-accent)", label: "Dirty" }
+          ? { ...roomStateMeta.todo, label: "ROS - Dirty" }
           : (hasStatus || hasLinenCount)
             ? { ...roomStateMeta.progress, label: "Cleaning in Progress" }
             : { ...roomStateMeta.todo, label: isArrival ? "Arrival" : isDirty ? "Dirty" : isClean ? "Clean" : "Not started" };
