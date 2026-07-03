@@ -3074,6 +3074,80 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
  </div>
  </header>
 
+ {isMobile && (canViewAs || (isAdmin && !isReception) || isReception) && (
+   <div className="flex flex-wrap items-center gap-2">
+     {canViewAs && (
+       <DropdownMenu>
+         <DropdownMenuTrigger asChild>
+           <Button variant="outline" size="sm">Role Picker</Button>
+         </DropdownMenuTrigger>
+         <DropdownMenuContent align="start" className="w-56">
+           <DropdownMenuLabel>Role Picker</DropdownMenuLabel>
+           <DropdownMenuSeparator />
+           {availableViews.map((r) => {
+             const active = (safeViewAs ?? defaultView) === r;
+             const label =
+               r === "user" ? "Housekeeping"
+               : r === "fnb" ? "F&B"
+               : r === "reception" ? "Reception"
+               : r === "admin" ? "Admin"
+               : "Manager";
+             return (
+               <DropdownMenuItem key={r} onClick={() => setViewAsRole(active ? null : r)}>
+                 <span className="flex-1">{label}</span>
+                 {active && <Check className="h-4 w-4 ml-2" />}
+               </DropdownMenuItem>
+             );
+           })}
+         </DropdownMenuContent>
+       </DropdownMenu>
+     )}
+     {isAdmin && !isReception && (
+       <Sheet open={exportSheetOpen} onOpenChange={setExportSheetOpen}>
+         <SheetTrigger asChild>
+           <Button variant="outline" size="sm">Export</Button>
+         </SheetTrigger>
+         <SheetContent side="bottom" className="max-h-[85vh] overflow-y-auto rounded-t-2xl p-4 sm:p-6">
+           <SheetHeader className="text-left">
+             <SheetTitle>Export</SheetTitle>
+             <SheetDescription>Choose what to export.</SheetDescription>
+           </SheetHeader>
+           <div className="mt-4 grid gap-2">
+             <Button variant="outline" size="lg" className="justify-start h-12" onClick={() => { setExportSheetOpen(false); openExport(); }}>
+               <List className="h-5 w-5 mr-2" />
+               Linen totals
+             </Button>
+             <Button variant="outline" size="lg" className="justify-start h-12" onClick={() => { setExportSheetOpen(false); openRoomStatusExport(); }}>
+               <ClipboardList className="h-5 w-5 mr-2" />
+               Room status
+             </Button>
+             <Button variant="outline" size="lg" className="justify-start h-12" onClick={() => { setExportSheetOpen(false); void openFnbExport(); }}>
+               <List className="h-5 w-5 mr-2" />
+               F&amp;B Linen totals
+             </Button>
+           </div>
+         </SheetContent>
+       </Sheet>
+     )}
+     {isReception && (
+       <Button variant="outline" size="sm" onClick={() => {
+         const { rows } = computeRoomStatus();
+         if (rows.length === 0) { toast.error("No rooms to print"); return; }
+         printRoomStatus(rows, new Date());
+       }}>
+         <Printer className="h-4 w-4 mr-2" />
+         Print
+       </Button>
+     )}
+     {isReception && (
+       <Button variant="outline" size="sm" onClick={() => setReceptionHelpOpen(true)} aria-label="Help">
+         <HelpCircle className="h-4 w-4 mr-2" />
+         Help
+       </Button>
+     )}
+   </div>
+ )}
+
  {/* Linen list dialog */}
    <Dialog open={templateOpen} onOpenChange={(o) => {
      setTemplateOpen(o);
