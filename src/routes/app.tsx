@@ -2855,7 +2855,7 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
             )}
           </div>
  <div className="flex items-center gap-2">
-    {canViewAs && (
+    {!isMobile && canViewAs && (
       <div className="inline-flex rounded-md border p-0.5 bg-background h-9 items-center">
         {availableViews.map((r) => {
           const active = (safeViewAs ?? defaultView) === r;
@@ -2887,7 +2887,7 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
         })}
       </div>
     )}
-    {isAdmin && !isReception && (isMobile ? (
+    {!isMobile && isAdmin && !isReception && (isMobile ? (
       <Sheet open={exportSheetOpen} onOpenChange={setExportSheetOpen}>
         <SheetTrigger asChild>
           <Button variant="outline" size="sm">Export</Button>
@@ -2951,7 +2951,7 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
         </DropdownMenuContent>
       </DropdownMenu>
     ))}
-    {isReception && (
+    {!isMobile && isReception && (
       <Button
         variant="outline"
         size="sm"
@@ -2968,7 +2968,7 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
         Print
       </Button>
     )}
-    {isReception && (
+    {!isMobile && isReception && (
       <Button
         variant="outline"
         size="sm"
