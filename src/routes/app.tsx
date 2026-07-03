@@ -3019,9 +3019,11 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
            <DropdownMenuItem onClick={() => setRejectsOpen(true)}>
              <Ban className="h-4 w-4 mr-2" /> Rejects
            </DropdownMenuItem>
-           <DropdownMenuItem onClick={() => setHistorySheetOpen(true)}>
-             <History className="h-4 w-4 mr-2" /> History
-           </DropdownMenuItem>
+            {!isReception && (
+              <DropdownMenuItem onClick={() => setHistorySheetOpen(true)}>
+                <History className="h-4 w-4 mr-2" /> History
+              </DropdownMenuItem>
+            )}
            <DropdownMenuItem onClick={() => setQuickReceptionOpen(true)}>
              <ConciergeBell className="h-4 w-4 mr-2" /> Bulk Room Status Setup
            </DropdownMenuItem>
@@ -3775,7 +3777,9 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
                 <>
                   <Row icon={Hash} label="Manage Rooms" onClick={() => { close(); setManageRoomsOpen(true); }} />
                   <Row icon={Ban} label="Rejects" onClick={() => { close(); setRejectsOpen(true); }} />
-                  <Row icon={History} label="History" onClick={() => { close(); setHistorySheetOpen(true); }} />
+                  {!isReception && (
+                    <Row icon={History} label="History" onClick={() => { close(); setHistorySheetOpen(true); }} />
+                  )}
                   <Row icon={ConciergeBell} label="Bulk Room Status Setup" onClick={() => { close(); setQuickReceptionOpen(true); }} />
                 </>
               )}
