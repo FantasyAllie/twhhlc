@@ -2855,7 +2855,39 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
             )}
           </div>
  <div className="flex items-center gap-2">
-    {isAdmin && (isMobile ? (
+    {canViewAs && (
+      <div className="inline-flex rounded-md border p-0.5 bg-background h-9 items-center">
+        {availableViews.map((r) => {
+          const active = (safeViewAs ?? defaultView) === r;
+          const label =
+            r === "user"
+              ? "Housekeeping"
+              : r === "fnb"
+              ? "F&B"
+              : r === "reception"
+              ? "Reception"
+              : r === "admin"
+              ? "Admin"
+              : "Manager";
+          return (
+            <button
+              key={r}
+              type="button"
+              onClick={() => setViewAsRole(active ? null : r)}
+              className={cn(
+                "px-3 h-8 text-xs sm:text-sm rounded-[0.3rem] transition-colors whitespace-nowrap",
+                active
+                  ? "bg-primary text-primary-foreground shadow-sm font-medium"
+                  : "text-muted-foreground hover:text-foreground",
+              )}
+            >
+              {label}
+            </button>
+          );
+        })}
+      </div>
+    )}
+    {isAdmin && !isReception && (isMobile ? (
       <Sheet open={exportSheetOpen} onOpenChange={setExportSheetOpen}>
         <SheetTrigger asChild>
           <Button variant="outline" size="sm">Export</Button>
