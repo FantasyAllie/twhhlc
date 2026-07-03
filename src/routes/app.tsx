@@ -3071,40 +3071,6 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
  )}
  </div>
  </header>
-    {canViewAs && (
-      <div className="border-b bg-muted/30 px-3 py-2 flex items-center justify-center">
-        <div className="inline-flex rounded-md border p-0.5 bg-background">
-          {availableViews.map((r) => {
-            const active = (safeViewAs ?? defaultView) === r;
-            const label =
-              r === "user"
-                ? "Housekeeping"
-                : r === "fnb"
-                ? "F&B"
-                : r === "reception"
-                ? "Reception"
-                : r === "admin"
-                ? "Admin"
-                : "Manager";
-            return (
-              <button
-                key={r}
-                type="button"
-                onClick={() => setViewAsRole(active ? null : r)}
-                className={cn(
-                  "px-3 py-1.5 text-xs sm:text-sm rounded-[0.3rem] transition-colors",
-                  active
-                    ? "bg-primary text-primary-foreground shadow-sm font-medium"
-                    : "text-muted-foreground hover:text-foreground",
-                )}
-              >
-                {label}
-              </button>
-            );
-          })}
-        </div>
-      </div>
-    )}
 
  {/* Linen list dialog */}
    <Dialog open={templateOpen} onOpenChange={(o) => {
