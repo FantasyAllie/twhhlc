@@ -2855,7 +2855,39 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
             )}
           </div>
  <div className="flex items-center gap-2">
-    {isAdmin && (isMobile ? (
+    {canViewAs && (
+      <div className="inline-flex rounded-md border p-0.5 bg-background h-9 items-center">
+        {availableViews.map((r) => {
+          const active = (safeViewAs ?? defaultView) === r;
+          const label =
+            r === "user"
+              ? "Housekeeping"
+              : r === "fnb"
+              ? "F&B"
+              : r === "reception"
+              ? "Reception"
+              : r === "admin"
+              ? "Admin"
+              : "Manager";
+          return (
+            <button
+              key={r}
+              type="button"
+              onClick={() => setViewAsRole(active ? null : r)}
+              className={cn(
+                "px-3 h-8 text-xs sm:text-sm rounded-[0.3rem] transition-colors whitespace-nowrap",
+                active
+                  ? "bg-primary text-primary-foreground shadow-sm font-medium"
+                  : "text-muted-foreground hover:text-foreground",
+              )}
+            >
+              {label}
+            </button>
+          );
+        })}
+      </div>
+    )}
+    {isAdmin && !isReception && (isMobile ? (
       <Sheet open={exportSheetOpen} onOpenChange={setExportSheetOpen}>
         <SheetTrigger asChild>
           <Button variant="outline" size="sm">Export</Button>
@@ -2987,9 +3019,11 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
            <DropdownMenuItem onClick={() => setRejectsOpen(true)}>
              <Ban className="h-4 w-4 mr-2" /> Rejects
            </DropdownMenuItem>
-           <DropdownMenuItem onClick={() => setHistorySheetOpen(true)}>
-             <History className="h-4 w-4 mr-2" /> History
-           </DropdownMenuItem>
+            {!isReception && (
+              <DropdownMenuItem onClick={() => setHistorySheetOpen(true)}>
+                <History className="h-4 w-4 mr-2" /> History
+              </DropdownMenuItem>
+            )}
            <DropdownMenuItem onClick={() => setQuickReceptionOpen(true)}>
              <ConciergeBell className="h-4 w-4 mr-2" /> Bulk Room Status Setup
            </DropdownMenuItem>
@@ -3039,40 +3073,6 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
  )}
  </div>
  </header>
-    {canViewAs && (
-      <div className="border-b bg-muted/30 px-3 py-2 flex items-center justify-center">
-        <div className="inline-flex rounded-md border p-0.5 bg-background">
-          {availableViews.map((r) => {
-            const active = (safeViewAs ?? defaultView) === r;
-            const label =
-              r === "user"
-                ? "Housekeeping"
-                : r === "fnb"
-                ? "F&B"
-                : r === "reception"
-                ? "Reception"
-                : r === "admin"
-                ? "Admin"
-                : "Manager";
-            return (
-              <button
-                key={r}
-                type="button"
-                onClick={() => setViewAsRole(active ? null : r)}
-                className={cn(
-                  "px-3 py-1.5 text-xs sm:text-sm rounded-[0.3rem] transition-colors",
-                  active
-                    ? "bg-primary text-primary-foreground shadow-sm font-medium"
-                    : "text-muted-foreground hover:text-foreground",
-                )}
-              >
-                {label}
-              </button>
-            );
-          })}
-        </div>
-      </div>
-    )}
 
  {/* Linen list dialog */}
    <Dialog open={templateOpen} onOpenChange={(o) => {
@@ -3777,7 +3777,9 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
                 <>
                   <Row icon={Hash} label="Manage Rooms" onClick={() => { close(); setManageRoomsOpen(true); }} />
                   <Row icon={Ban} label="Rejects" onClick={() => { close(); setRejectsOpen(true); }} />
-                  <Row icon={History} label="History" onClick={() => { close(); setHistorySheetOpen(true); }} />
+                  {!isReception && (
+                    <Row icon={History} label="History" onClick={() => { close(); setHistorySheetOpen(true); }} />
+                  )}
                   <Row icon={ConciergeBell} label="Bulk Room Status Setup" onClick={() => { close(); setQuickReceptionOpen(true); }} />
                 </>
               )}
