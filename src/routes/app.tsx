@@ -2835,7 +2835,7 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
               <>
                 <h1 className="text-xl sm:text-2xl font-semibold tracking-tight">Three Ways House Hotel</h1>
                 <p className="text-xs text-muted-foreground mt-1 whitespace-pre-line">
-                  This checker shows when Housekeeping have finished with a room and the room is ready for a customer. {"\n\n"}Click on a room to see it's features and send a message to Housekeeping if needed.
+                  An auto-updating room tracker for Housekeeping. Use the help if you get stuck 
                 </p>
               </>
             ) : isFnb ? (
