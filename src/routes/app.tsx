@@ -5077,7 +5077,10 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
           {(hasActiveMessage(n) || !!room?.housekeeping_note) && !isStaffRoom && (
             <span
               aria-label="Housekeeping note"
-               className="absolute bottom-1 left-1 h-2 w-2 rounded-full bg-amber-500 ring-2 ring-background"
+                className={cn(
+                  "absolute right-1 h-2 w-2 rounded-full bg-amber-500 ring-2 ring-background",
+                  room?.guest_vacated ? "top-5" : "top-1",
+                )}
             />
           )}
           {room?.needs_maintenance && !isStaffRoom && (
@@ -5177,7 +5180,10 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
           {hasActiveMessage(n) && (
             <span
               aria-label="Message"
-                className="absolute bottom-1 left-1 h-2 w-2 rounded-full bg-amber-500 ring-2 ring-background"
+                className={cn(
+                  "absolute right-1 h-2 w-2 rounded-full bg-amber-500 ring-2 ring-background",
+                  room?.guest_vacated ? "top-5" : "top-1",
+                )}
             />
           )}
           {room?.needs_maintenance && (
