@@ -2855,7 +2855,7 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
             )}
           </div>
  <div className="flex items-center gap-2">
-    {canViewAs && (
+    {!isMobile && canViewAs && (
       <div className="inline-flex rounded-md border p-0.5 bg-background h-9 items-center">
         {availableViews.map((r) => {
           const active = (safeViewAs ?? defaultView) === r;
@@ -2887,7 +2887,7 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
         })}
       </div>
     )}
-    {isAdmin && !isReception && (isMobile ? (
+    {!isMobile && isAdmin && !isReception && (isMobile ? (
       <Sheet open={exportSheetOpen} onOpenChange={setExportSheetOpen}>
         <SheetTrigger asChild>
           <Button variant="outline" size="sm">Export</Button>
@@ -2951,7 +2951,7 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
         </DropdownMenuContent>
       </DropdownMenu>
     ))}
-    {isReception && (
+    {!isMobile && isReception && (
       <Button
         variant="outline"
         size="sm"
@@ -2968,7 +2968,7 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
         Print
       </Button>
     )}
-    {isReception && (
+    {!isMobile && isReception && (
       <Button
         variant="outline"
         size="sm"
@@ -3073,6 +3073,80 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
  )}
  </div>
  </header>
+
+ {isMobile && (canViewAs || (isAdmin && !isReception) || isReception) && (
+   <div className="flex flex-wrap items-center gap-2">
+     {canViewAs && (
+       <DropdownMenu>
+         <DropdownMenuTrigger asChild>
+           <Button variant="outline" size="sm">Role Picker</Button>
+         </DropdownMenuTrigger>
+         <DropdownMenuContent align="start" className="w-56">
+           <DropdownMenuLabel>Role Picker</DropdownMenuLabel>
+           <DropdownMenuSeparator />
+           {availableViews.map((r) => {
+             const active = (safeViewAs ?? defaultView) === r;
+             const label =
+               r === "user" ? "Housekeeping"
+               : r === "fnb" ? "F&B"
+               : r === "reception" ? "Reception"
+               : r === "admin" ? "Admin"
+               : "Manager";
+             return (
+               <DropdownMenuItem key={r} onClick={() => setViewAsRole(active ? null : r)}>
+                 <span className="flex-1">{label}</span>
+                 {active && <Check className="h-4 w-4 ml-2" />}
+               </DropdownMenuItem>
+             );
+           })}
+         </DropdownMenuContent>
+       </DropdownMenu>
+     )}
+     {isAdmin && !isReception && (
+       <Sheet open={exportSheetOpen} onOpenChange={setExportSheetOpen}>
+         <SheetTrigger asChild>
+           <Button variant="outline" size="sm">Export</Button>
+         </SheetTrigger>
+         <SheetContent side="bottom" className="max-h-[85vh] overflow-y-auto rounded-t-2xl p-4 sm:p-6">
+           <SheetHeader className="text-left">
+             <SheetTitle>Export</SheetTitle>
+             <SheetDescription>Choose what to export.</SheetDescription>
+           </SheetHeader>
+           <div className="mt-4 grid gap-2">
+             <Button variant="outline" size="lg" className="justify-start h-12" onClick={() => { setExportSheetOpen(false); openExport(); }}>
+               <List className="h-5 w-5 mr-2" />
+               Linen totals
+             </Button>
+             <Button variant="outline" size="lg" className="justify-start h-12" onClick={() => { setExportSheetOpen(false); openRoomStatusExport(); }}>
+               <ClipboardList className="h-5 w-5 mr-2" />
+               Room status
+             </Button>
+             <Button variant="outline" size="lg" className="justify-start h-12" onClick={() => { setExportSheetOpen(false); void openFnbExport(); }}>
+               <List className="h-5 w-5 mr-2" />
+               F&amp;B Linen totals
+             </Button>
+           </div>
+         </SheetContent>
+       </Sheet>
+     )}
+     {isReception && (
+       <Button variant="outline" size="sm" onClick={() => {
+         const { rows } = computeRoomStatus();
+         if (rows.length === 0) { toast.error("No rooms to print"); return; }
+         printRoomStatus(rows, new Date());
+       }}>
+         <Printer className="h-4 w-4 mr-2" />
+         Print
+       </Button>
+     )}
+     {isReception && (
+       <Button variant="outline" size="sm" onClick={() => setReceptionHelpOpen(true)} aria-label="Help">
+         <HelpCircle className="h-4 w-4 mr-2" />
+         Help
+       </Button>
+     )}
+   </div>
+ )}
 
  {/* Linen list dialog */}
    <Dialog open={templateOpen} onOpenChange={(o) => {
@@ -3572,6 +3646,22 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
              </SheetTitle>
              <SheetDescription>Mark status and bed configuration</SheetDescription>
            </SheetHeader>
+              {!isReception && !!room?.guest_vacated && (
+                <div className="mt-3 flex items-center justify-between gap-2 rounded-md border bg-background p-3">
+                  <span className="flex items-center gap-2 text-sm font-medium">
+                    <DoorOpen className="h-4 w-4 text-emerald-600 dark:text-emerald-400" />
+                    Guest has checked out
+                  </span>
+                  <Button
+                    type="button"
+                    size="sm"
+                    variant="outline"
+                    onClick={() => setRoomGuestVacated(n, false)}
+                  >
+                    Dismiss
+                  </Button>
+                </div>
+              )}
              {isAdmin && (
                <div className="mt-2">
                  <Button
@@ -5003,7 +5093,10 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
           {(hasActiveMessage(n) || !!room?.housekeeping_note) && !isStaffRoom && (
             <span
               aria-label="Housekeeping note"
-               className="absolute bottom-1 left-1 h-2 w-2 rounded-full bg-amber-500 ring-2 ring-background"
+                className={cn(
+                  "absolute right-1 h-2 w-2 rounded-full bg-amber-500 ring-2 ring-background",
+                  room?.guest_vacated ? "top-5" : "top-1",
+                )}
             />
           )}
           {room?.needs_maintenance && !isStaffRoom && (
@@ -5103,7 +5196,10 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
           {hasActiveMessage(n) && (
             <span
               aria-label="Message"
-                className="absolute bottom-1 left-1 h-2 w-2 rounded-full bg-amber-500 ring-2 ring-background"
+                className={cn(
+                  "absolute right-1 h-2 w-2 rounded-full bg-amber-500 ring-2 ring-background",
+                  room?.guest_vacated ? "top-5" : "top-1",
+                )}
             />
           )}
           {room?.needs_maintenance && (
