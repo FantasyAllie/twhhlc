@@ -3646,6 +3646,22 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
              </SheetTitle>
              <SheetDescription>Mark status and bed configuration</SheetDescription>
            </SheetHeader>
+              {!isReception && !!room?.guest_vacated && (
+                <div className="mt-3 flex items-center justify-between gap-2 rounded-md border bg-background p-3">
+                  <span className="flex items-center gap-2 text-sm font-medium">
+                    <DoorOpen className="h-4 w-4 text-emerald-600 dark:text-emerald-400" />
+                    Guest has checked out
+                  </span>
+                  <Button
+                    type="button"
+                    size="sm"
+                    variant="outline"
+                    onClick={() => setRoomGuestVacated(n, false)}
+                  >
+                    Dismiss
+                  </Button>
+                </div>
+              )}
              {isAdmin && (
                <div className="mt-2">
                  <Button
