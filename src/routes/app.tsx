@@ -391,6 +391,7 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
   const [editingItemId, setEditingItemId] = useState<string | null>(null);
   const [editingItemName, setEditingItemName] = useState("");
   const [exportSheetOpen, setExportSheetOpen] = useState(false);
+  const [rolePickerSheetOpen, setRolePickerSheetOpen] = useState(false);
   const [editItemSheetId, setEditItemSheetId] = useState<string | null>(null);
   const [filtersSheetOpen, setFiltersSheetOpen] = useState(false);
   const [addRoomTypeOpen, setAddRoomTypeOpen] = useState(false);
@@ -3077,30 +3078,40 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
  {isMobile && (canViewAs || (isAdmin && !isReception) || isReception) && (
    <div className="flex flex-wrap items-center gap-2">
      {canViewAs && (
-       <DropdownMenu>
-         <DropdownMenuTrigger asChild>
-           <Button variant="outline" size="sm">Role Picker</Button>
-         </DropdownMenuTrigger>
-         <DropdownMenuContent align="start" className="w-56">
-           <DropdownMenuLabel>Role Picker</DropdownMenuLabel>
-           <DropdownMenuSeparator />
-           {availableViews.map((r) => {
-             const active = (safeViewAs ?? defaultView) === r;
-             const label =
-               r === "user" ? "Housekeeping"
-               : r === "fnb" ? "F&B"
-               : r === "reception" ? "Reception"
-               : r === "admin" ? "Admin"
-               : "Manager";
-             return (
-               <DropdownMenuItem key={r} onClick={() => setViewAsRole(active ? null : r)}>
-                 <span className="flex-1">{label}</span>
-                 {active && <Check className="h-4 w-4 ml-2" />}
-               </DropdownMenuItem>
-             );
-           })}
-         </DropdownMenuContent>
-       </DropdownMenu>
+        <Sheet open={rolePickerSheetOpen} onOpenChange={setRolePickerSheetOpen}>
+          <SheetTrigger asChild>
+            <Button variant="outline" size="sm">Role Picker</Button>
+          </SheetTrigger>
+          <SheetContent side="bottom" className="max-h-[85vh] overflow-y-auto rounded-t-2xl p-4 sm:p-6">
+            <SheetHeader className="text-left">
+              <SheetTitle>Role Picker</SheetTitle>
+              <SheetDescription>Switch between your assigned roles.</SheetDescription>
+            </SheetHeader>
+            <div className="mt-4 grid gap-2">
+              {availableViews.map((r) => {
+                const active = (safeViewAs ?? defaultView) === r;
+                const label =
+                  r === "user" ? "Housekeeping"
+                  : r === "fnb" ? "F&B"
+                  : r === "reception" ? "Reception"
+                  : r === "admin" ? "Admin"
+                  : "Manager";
+                return (
+                  <Button
+                    key={r}
+                    variant={active ? "default" : "outline"}
+                    size="lg"
+                    className="justify-start h-12"
+                    onClick={() => { setViewAsRole(active ? null : r); setRolePickerSheetOpen(false); }}
+                  >
+                    <span className="flex-1 text-left">{label}</span>
+                    {active && <Check className="h-4 w-4 ml-2" />}
+                  </Button>
+                );
+              })}
+            </div>
+          </SheetContent>
+        </Sheet>
      )}
      {isAdmin && !isReception && (
        <Sheet open={exportSheetOpen} onOpenChange={setExportSheetOpen}>
