@@ -5272,13 +5272,11 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
          aria-label={`Room ${n} ${meta.label}${isStaffRoom ? " staff" : ""}`}
       >
           {!isStaffRoom && receptionDoneSet.has(n) && (!room?.reception_bed_id || !hasStatus) && (
-            <span
+            <AlertCircle
               aria-hidden="true"
-              className="pointer-events-none absolute inset-0 flex items-center justify-center text-6xl md:text-7xl font-black opacity-25 leading-none"
+              className="pointer-events-none absolute inset-0 m-auto h-[80%] w-[80%] opacity-30"
               style={{ color: meta.accent }}
-            >
-              !
-            </span>
+            />
           )}
          {!isStaffRoom && (
            <>
