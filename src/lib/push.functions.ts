@@ -274,3 +274,105 @@ export const notifyRoomEvent = createServerFn({ method: "POST" })
 
     return { ok: true, recipients: subs.length };
   });
+
+export type MessagesDepartment = "housekeeping" | "reception" | "fnb";
+type MessagesThread = "hk_reception" | "hk_fnb" | "reception_fnb";
+
+const THREAD_PAIR: Record<MessagesThread, [MessagesDepartment, MessagesDepartment]> = {
+  hk_reception: ["housekeeping", "reception"],
+  hk_fnb: ["housekeeping", "fnb"],
+  reception_fnb: ["reception", "fnb"],
+};
+
+const DEPT_TO_ROLES: Record<MessagesDepartment, Role[]> = {
+  housekeeping: ["user", "admin"],
+  reception: ["reception", "admin"],
+  // "fnb" is stored in user_roles as a separate role name.
+  fnb: ["fnb" as Role, "admin"],
+};
+
+const PREF_COL_FROM: Record<MessagesDepartment, keyof NotificationPrefs> = {
+  reception: "notify_from_reception",
+  housekeeping: "notify_from_housekeeping",
+  fnb: "notify_from_fnb",
+};
+
+const DEPT_LABEL: Record<MessagesDepartment, string> = {
+  housekeeping: "Housekeeping",
+  reception: "Reception",
+  fnb: "F&B",
+};
+
+export const notifyDepartmentMessage = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator(
+    (d: {
+      thread: MessagesThread;
+      senderDepartment: MessagesDepartment | null;
+      message: string;
+      roomNumber?: number | null;
+    }) => d,
+  )
+  .handler(async ({ data, context }) => {
+    const sender = await getActor(context);
+    if (sender.role === "pending") return { ok: true, recipients: 0 };
+    const db = await getDb();
+    const pair = THREAD_PAIR[data.thread];
+    if (!pair) throw new Error("Unknown thread");
+
+    // Determine which side is the sender; the other side receives.
+    // If the client couldn't say (admin/manager on both sides), notify both
+    // halves and filter each by whether they opted in to the opposite half.
+    const pairs: Array<{ from: MessagesDepartment; to: MessagesDepartment }> = [];
+    if (data.senderDepartment && pair.includes(data.senderDepartment)) {
+      const to = pair[0] === data.senderDepartment ? pair[1] : pair[0];
+      pairs.push({ from: data.senderDepartment, to });
+    } else {
+      pairs.push({ from: pair[0], to: pair[1] });
+      pairs.push({ from: pair[1], to: pair[0] });
+    }
+
+    const roomTag = typeof data.roomNumber === "number" ? ` — Room ${data.roomNumber}` : "";
+    const body = data.message?.slice(0, 240) || "New message";
+
+    let totalSubs = 0;
+    for (const { from, to } of pairs) {
+      const roles = DEPT_TO_ROLES[to];
+      const { data: usersRows } = await db
+        .from("user_roles")
+        .select("user_id")
+        .in("role", roles)
+        .neq("user_id", sender.id);
+      const userIds = Array.from(
+        new Set(((usersRows ?? []) as { user_id: string }[]).map((r) => r.user_id)),
+      );
+      if (userIds.length === 0) continue;
+
+      const prefCol = PREF_COL_FROM[from];
+      const { data: prefsRows } = await db
+        .from("notification_preferences" as never)
+        .select(`user_id,${prefCol}`)
+        .in("user_id", userIds);
+      const disabled = new Set<string>();
+      for (const p of (prefsRows ?? []) as Array<Record<string, unknown>>) {
+        if (p[prefCol] === false) disabled.add(p.user_id as string);
+      }
+      const optedIn = userIds.filter((id) => !disabled.has(id));
+      if (optedIn.length === 0) continue;
+
+      const { data: subRows } = await db
+        .from("push_subscriptions" as never)
+        .select("id,user_id,endpoint,p256dh,auth")
+        .in("user_id", optedIn);
+      const subs = (subRows ?? []) as SubRow[];
+      totalSubs += subs.length;
+      await sendToSubs(subs, {
+        title: `${DEPT_LABEL[from]} — ${sender.username}${roomTag}`,
+        body,
+        url: `/app`,
+        tag: `dept-${data.thread}-${from}`,
+      });
+    }
+
+    return { ok: true, recipients: totalSubs };
+  });
