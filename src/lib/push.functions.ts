@@ -71,12 +71,18 @@ export type NotificationPrefs = {
   messages_enabled: boolean;
   checkout_enabled: boolean;
   done_enabled: boolean;
+  notify_from_reception: boolean;
+  notify_from_housekeeping: boolean;
+  notify_from_fnb: boolean;
 };
 
 const DEFAULT_PREFS: NotificationPrefs = {
   messages_enabled: true,
   checkout_enabled: true,
   done_enabled: true,
+  notify_from_reception: true,
+  notify_from_housekeeping: true,
+  notify_from_fnb: true,
 };
 
 export const getNotificationPrefs = createServerFn({ method: "POST" })
@@ -85,10 +91,11 @@ export const getNotificationPrefs = createServerFn({ method: "POST" })
     const db = await getDb();
     const { data: row } = await db
       .from("notification_preferences" as never)
-      .select("messages_enabled,checkout_enabled,done_enabled")
+      .select("messages_enabled,checkout_enabled,done_enabled,notify_from_reception,notify_from_housekeeping,notify_from_fnb")
       .eq("user_id", context.userId)
       .maybeSingle();
-    return (row as NotificationPrefs | null) ?? DEFAULT_PREFS;
+    if (!row) return DEFAULT_PREFS;
+    return { ...DEFAULT_PREFS, ...(row as Partial<NotificationPrefs>) };
   });
 
 export const setNotificationPrefs = createServerFn({ method: "POST" })
@@ -98,6 +105,9 @@ export const setNotificationPrefs = createServerFn({ method: "POST" })
       messages_enabled?: boolean;
       checkout_enabled?: boolean;
       done_enabled?: boolean;
+      notify_from_reception?: boolean;
+      notify_from_housekeeping?: boolean;
+      notify_from_fnb?: boolean;
     }) => d,
   )
   .handler(async ({ data, context }) => {
@@ -106,6 +116,9 @@ export const setNotificationPrefs = createServerFn({ method: "POST" })
     if (typeof data.messages_enabled === "boolean") patch.messages_enabled = data.messages_enabled;
     if (typeof data.checkout_enabled === "boolean") patch.checkout_enabled = data.checkout_enabled;
     if (typeof data.done_enabled === "boolean") patch.done_enabled = data.done_enabled;
+    if (typeof data.notify_from_reception === "boolean") patch.notify_from_reception = data.notify_from_reception;
+    if (typeof data.notify_from_housekeeping === "boolean") patch.notify_from_housekeeping = data.notify_from_housekeeping;
+    if (typeof data.notify_from_fnb === "boolean") patch.notify_from_fnb = data.notify_from_fnb;
     const { error } = await db
       .from("notification_preferences" as never)
       .upsert(patch as never, { onConflict: "user_id" });
