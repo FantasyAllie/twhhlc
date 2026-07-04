@@ -1003,6 +1003,13 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
       return out;
     })();
     const canUseMessages = availableThreads.length > 0;
+    const myMessageDepartments: MessagesDepartment[] = (() => {
+      const out: MessagesDepartment[] = [];
+      if (hasHousekeeperRole) out.push("housekeeping");
+      if (hasReceptionRole) out.push("reception");
+      if (hasFnbRole) out.push("fnb");
+      return out;
+    })();
     const menuIsFnbOnly =
       position === "user" && hasFnbRole && !hasHousekeeperRole && !hasReceptionRole;
   const doneSet = new Set(
