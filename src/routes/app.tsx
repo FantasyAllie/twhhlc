@@ -3933,6 +3933,13 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
                   onClick={() => { close(); setMaintenanceLogOpen(true); }}
                 />
               )}
+              {canUseMessages && (
+                <Row
+                  icon={MessageSquare}
+                  label="Messages"
+                  onClick={() => { close(); setMessagesInitial({}); setMessagesSheetOpen(true); }}
+                />
+              )}
             </div>
           </div>
           <div className="space-y-2">
