@@ -695,7 +695,14 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
   const rejects = (rejectsQ.data ?? []) as RejectCount[];
   const roomMessages = (messagesQ.data ?? []) as RoomMessage[];
   const activeMessagesByRoom = (n: number) =>
-    roomMessages.filter((m) => m.room_number === n && !m.dismissed);
+    roomMessages.filter(
+      (m) =>
+        m.room_number === n &&
+        m.thread === "hk_reception" &&
+        !m.done_at &&
+        !m.deleted_at &&
+        !m.dismissed,
+    );
   const hasActiveMessage = (n: number) => activeMessagesByRoom(n).length > 0;
   const maintenanceRequests = (maintenanceRequestsQ.data ?? []) as MaintenanceRequest[];
   const openMaintenanceCount = maintenanceRequests.filter((m) => !m.done).length;
