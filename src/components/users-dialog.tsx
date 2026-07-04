@@ -451,14 +451,20 @@ export function UsersDialog({
                   </p>
                 )}
               </div>
-              <div className="space-y-1">
-                <label className="text-xs font-medium">New password (optional)</label>
+              <div className="rounded-md border p-3 space-y-2">
+                <div>
+                  <div className="text-sm font-medium">Reset password</div>
+                  <div className="text-xs text-muted-foreground">
+                    Set a new password for this user. Leave blank to keep the current one.
+                  </div>
+                </div>
                 <Input
                   type="text"
                   value={editPw}
                   onChange={(e) => setEditPw(e.target.value)}
-                  placeholder="Leave blank to keep current"
+                  placeholder="New password (min. 6 characters)"
                   minLength={6}
+                  autoComplete="new-password"
                 />
               </div>
               <div className="rounded-md border p-3 flex items-center justify-between gap-3">
