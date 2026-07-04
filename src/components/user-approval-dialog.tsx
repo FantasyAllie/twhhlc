@@ -27,7 +27,7 @@ import { Check, ChevronDown } from "lucide-react";
 
 const SUB_ROLE_LABELS: Record<SubRole, string> = {
   reception: "Reception",
-  housekeeper: "Housekeeper",
+  housekeeper: "Housekeeping",
   fnb: "F&B",
 };
 
