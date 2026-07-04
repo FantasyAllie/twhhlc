@@ -4902,7 +4902,16 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
  Rooms
  </h2>
      {isReception && (() => {
-        const totalSelected = receptionFeatureFilter.length + (receptionDoneOnlyFilter ? 1 : 0);
+         const totalSelected = receptionFeatureFilter.length + receptionStatusFilter.length + (receptionDoneOnlyFilter ? 1 : 0);
+         const statusFilterLabels = ["Stayover", "Arrival", "Dirty", "Clean"] as const;
+         const statusFilterOptions = statusFilterLabels
+           .map((label) => {
+             const match = receptionStatuses.find(
+               (s) => s.label.toLowerCase() === label.toLowerCase(),
+             );
+             return match ? { id: match.id, label } : null;
+           })
+           .filter((v): v is { id: string; label: string } => v !== null);
        return (
         <Popover open={filtersSheetOpen} onOpenChange={setFiltersSheetOpen}>
           <PopoverTrigger asChild>
@@ -4929,6 +4938,32 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
                   <span className="text-sm flex-1">Only show rooms marked done</span>
                 </label>
               </div>
+              {statusFilterOptions.length > 0 && (
+                <div className="space-y-2">
+                  <p className="text-xs font-medium text-muted-foreground uppercase tracking-wide">Status</p>
+                  <div className="grid gap-1">
+                    {statusFilterOptions.map((s) => {
+                      const checked = receptionStatusFilter.includes(s.id);
+                      return (
+                        <label
+                          key={s.id}
+                          className="flex items-center gap-2 py-1.5 px-2 rounded-md hover:bg-muted cursor-pointer"
+                        >
+                          <Checkbox
+                            checked={checked}
+                            onCheckedChange={(c) => {
+                              setReceptionStatusFilter((prev) =>
+                                c ? [...prev, s.id] : prev.filter((id) => id !== s.id),
+                              );
+                            }}
+                          />
+                          <span className="text-sm flex-1">{s.label}</span>
+                        </label>
+                      );
+                    })}
+                  </div>
+                </div>
+              )}
               {roomFeatures.length > 0 && (
                 <div className="space-y-2">
                   <p className="text-xs font-medium text-muted-foreground uppercase tracking-wide">Features</p>
