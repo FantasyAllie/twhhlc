@@ -4903,7 +4903,7 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
  </h2>
      {isReception && (() => {
          const totalSelected = receptionFeatureFilter.length + receptionStatusFilter.length + (receptionDoneOnlyFilter ? 1 : 0);
-         const statusFilterLabels = ["Stayover", "Arrival", "Dirty", "Clean"] as const;
+         const statusFilterLabels: string[] = ["Stayover", "Arrival", "Dirty", "Clean"];
          const statusFilterOptions = statusFilterLabels
            .map((label) => {
              const match = receptionStatuses.find(
