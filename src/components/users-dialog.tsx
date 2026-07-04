@@ -41,7 +41,7 @@ const POSITION_LABELS: Record<AssignablePosition, string> = {
 };
 const SUB_ROLE_LABELS: Record<SubRole, string> = {
   reception: "Reception",
-  housekeeper: "Housekeeper",
+  housekeeper: "Housekeeping",
   fnb: "F&B",
 };
 function positionBadge(p: Position): string {
