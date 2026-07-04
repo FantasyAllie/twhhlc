@@ -23,6 +23,7 @@ import {
   setNotificationPrefs,
   sendTestNotification,
   type NotificationPrefs,
+  type MessagesDepartment,
 } from "@/lib/push.functions";
 import { getToken } from "@/lib/auth-client";
 
@@ -30,16 +31,21 @@ const DEFAULT_PREFS: NotificationPrefs = {
   messages_enabled: true,
   checkout_enabled: true,
   done_enabled: true,
+  notify_from_reception: true,
+  notify_from_housekeeping: true,
+  notify_from_fnb: true,
 };
 
 export function NotificationsSheet({
   open,
   onOpenChange,
   userRole,
+  myDepartments,
 }: {
   open: boolean;
   onOpenChange: (o: boolean) => void;
   userRole: "admin" | "user" | "reception";
+  myDepartments?: MessagesDepartment[];
 }) {
   const supported = typeof window !== "undefined" && isPushSupported();
   const onIos = typeof window !== "undefined" && isIos();
@@ -198,13 +204,6 @@ export function NotificationsSheet({
             <div className="space-y-2">
               {userRole !== "reception" && (
                 <PrefRow
-                  label="New message from reception"
-                  checked={prefs.messages_enabled}
-                  onChange={(v) => void updatePref({ messages_enabled: v })}
-                />
-              )}
-              {userRole !== "reception" && (
-                <PrefRow
                   label="A room is marked checked out by reception"
                   checked={prefs.checkout_enabled}
                   onChange={(v) => void updatePref({ checkout_enabled: v })}
@@ -220,6 +219,47 @@ export function NotificationsSheet({
             </div>
             <p className="text-[11px] text-muted-foreground pt-1">
               These preferences apply to your account on every device.
+            </p>
+          </div>
+
+          <div className="space-y-2 rounded-md border bg-background p-3">
+            <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+              Notify me about new messages from
+            </p>
+            <div className="space-y-2">
+              {(["reception", "housekeeping", "fnb"] as MessagesDepartment[])
+                .filter((d) => !(myDepartments ?? []).includes(d) || (myDepartments ?? []).length > 1)
+                .map((d) => (
+                  <PrefRow
+                    key={d}
+                    label={
+                      d === "reception"
+                        ? "Reception"
+                        : d === "housekeeping"
+                        ? "Housekeeping"
+                        : "F&B"
+                    }
+                    checked={
+                      d === "reception"
+                        ? prefs.notify_from_reception
+                        : d === "housekeeping"
+                        ? prefs.notify_from_housekeeping
+                        : prefs.notify_from_fnb
+                    }
+                    onChange={(v) =>
+                      void updatePref(
+                        d === "reception"
+                          ? { notify_from_reception: v }
+                          : d === "housekeeping"
+                          ? { notify_from_housekeeping: v }
+                          : { notify_from_fnb: v },
+                      )
+                    }
+                  />
+                ))}
+            </div>
+            <p className="text-[11px] text-muted-foreground pt-1">
+              Applies to the Messages window between departments.
             </p>
           </div>
         </div>
