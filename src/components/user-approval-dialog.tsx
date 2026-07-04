@@ -67,7 +67,7 @@ export function UserApprovalDialog({
         <DialogHeader>
           <DialogTitle>User Approval</DialogTitle>
           <DialogDescription>
-            Approve new signups by assigning them a sub-role. New accounts are regular users by default; only an admin can change their position later.
+            Approve new signups by assigning them a department. New accounts are regular users by default; only an admin can change their position later.
           </DialogDescription>
         </DialogHeader>
         <section className="rounded-lg border bg-card">
@@ -95,7 +95,7 @@ export function UserApprovalDialog({
                       </Button>
                     </DropdownMenuTrigger>
                     <DropdownMenuContent align="end" className="w-48">
-                      <DropdownMenuLabel>Sub-role</DropdownMenuLabel>
+                      <DropdownMenuLabel>Department</DropdownMenuLabel>
                       <DropdownMenuSeparator />
                       {(Object.keys(SUB_ROLE_LABELS) as SubRole[]).map((r) => (
                         <DropdownMenuItem key={r} onClick={() => void onApprove(u, r)}>
