@@ -3940,6 +3940,46 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
       const close = () => setMenuSheetOpen(false);
       return (
         <div className="mt-4 space-y-4">
+          {(canViewAs || (isAdmin && !isReception) || isReception) && (
+            <div className="space-y-2">
+              <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">Actions</p>
+              <div className="space-y-1.5">
+                {canViewAs && (
+                  <Row
+                    icon={Users}
+                    label="Role Picker"
+                    onClick={() => { close(); setRolePickerSheetOpen(true); }}
+                  />
+                )}
+                {isAdmin && !isReception && (
+                  <Row
+                    icon={ClipboardList}
+                    label="Export"
+                    onClick={() => { close(); setExportSheetOpen(true); }}
+                  />
+                )}
+                {isReception && (
+                  <Row
+                    icon={Printer}
+                    label="Print"
+                    onClick={() => {
+                      close();
+                      const { rows } = computeRoomStatus();
+                      if (rows.length === 0) { toast.error("No rooms to print"); return; }
+                      printRoomStatus(rows, new Date());
+                    }}
+                  />
+                )}
+                {isReception && (
+                  <Row
+                    icon={HelpCircle}
+                    label="Help"
+                    onClick={() => { close(); setReceptionHelpOpen(true); }}
+                  />
+                )}
+              </div>
+            </div>
+          )}
           <div className="space-y-2">
             {(menuHasHk || menuHasFnb) && (
               <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">Manage</p>
@@ -3981,46 +4021,6 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
               )}
             </div>
           </div>
-          {(canViewAs || (isAdmin && !isReception) || isReception) && (
-            <div className="space-y-2">
-              <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">Actions</p>
-              <div className="space-y-1.5">
-                {canViewAs && (
-                  <Row
-                    icon={Users}
-                    label="Role Picker"
-                    onClick={() => { close(); setRolePickerSheetOpen(true); }}
-                  />
-                )}
-                {isAdmin && !isReception && (
-                  <Row
-                    icon={ClipboardList}
-                    label="Export"
-                    onClick={() => { close(); setExportSheetOpen(true); }}
-                  />
-                )}
-                {isReception && (
-                  <Row
-                    icon={Printer}
-                    label="Print"
-                    onClick={() => {
-                      close();
-                      const { rows } = computeRoomStatus();
-                      if (rows.length === 0) { toast.error("No rooms to print"); return; }
-                      printRoomStatus(rows, new Date());
-                    }}
-                  />
-                )}
-                {isReception && (
-                  <Row
-                    icon={HelpCircle}
-                    label="Help"
-                    onClick={() => { close(); setReceptionHelpOpen(true); }}
-                  />
-                )}
-              </div>
-            </div>
-          )}
           <div className="space-y-2">
             <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">Appearance</p>
             <Row
