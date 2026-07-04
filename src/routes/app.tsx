@@ -4732,8 +4732,8 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
 
  {/* Rejects dialog */}
  <Dialog open={rejectsOpen} onOpenChange={setRejectsOpen}>
-   <DialogContent className="max-w-md w-[calc(100vw-1.5rem)] sm:w-full p-4 sm:p-6">
-     <DialogHeader>
+    <DialogContent className="max-w-md w-[calc(100vw-1.5rem)] sm:w-full p-4 sm:p-6 h-[90vh] sm:h-auto sm:max-h-[85vh] flex flex-col gap-3">
+      <DialogHeader className="shrink-0">
        <DialogTitle>Rejects</DialogTitle>
         <DialogDescription>
           Tally all linen rejects before sending back to be cleaned
@@ -4744,8 +4744,8 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
          No linen items yet. Add some from the Linen List.
        </p>
      ) : (
-        <div className="border rounded-md bg-muted/30 flex flex-col min-h-0 overflow-hidden">
-          <div className="flex-1 min-h-0 overflow-y-auto p-4 max-h-[60vh]">
+         <div className="border rounded-md bg-muted/30 flex flex-col min-h-0 flex-1 overflow-hidden">
+           <div className="flex-1 min-h-0 overflow-y-auto p-4">
             <ul className="space-y-1">
               {template.map((item) => {
                 const count = getRejectCount(item.id);
