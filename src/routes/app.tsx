@@ -3924,7 +3924,7 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
 />
 <Sheet open={menuSheetOpen} onOpenChange={setMenuSheetOpen}>
   <SheetContent side="right" disableDragDismiss className="w-auto max-w-[90vw] min-w-[18rem] sm:max-w-md overflow-y-auto p-4 sm:p-6 [&_[data-sheet-close]]:max-lg:hidden">
-    <SheetHeader className="text-left">
+    <SheetHeader className="text-left sticky top-0 -mx-4 sm:-mx-6 -mt-4 sm:-mt-6 px-4 sm:px-6 pt-4 sm:pt-6 pb-3 bg-background z-10 border-b">
       <SheetTitle className="flex items-center gap-2">
         <Menu className="h-4 w-4" />
         Settings
