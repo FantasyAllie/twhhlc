@@ -1427,13 +1427,13 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
     );
     const { error } = await supabase
       .from("rooms")
-      .update({ done: false, done_reception: false, reception_status_id: null, reception_bed_id: null, housekeeping_note: null, needs_maintenance: false })
+      .update({ done: false, done_reception: false, reception_status_id: null, reception_bed_id: null, housekeeping_note: null, needs_maintenance: false, guest_vacated: false })
       .neq("room_number", -1)
     if (error) toast.error(error.message);
     if (dndRoomNumbers.length > 0) {
       const { error: e2 } = await supabase
         .from("rooms")
-        .update({ done: false, done_reception: false, reception_status_id: stayId ?? null, reception_bed_id: null, housekeeping_note: null, needs_maintenance: false })
+        .update({ done: false, done_reception: false, reception_status_id: stayId ?? null, reception_bed_id: null, housekeeping_note: null, needs_maintenance: false, guest_vacated: false })
         .in("room_number", dndRoomNumbers);
       if (e2) toast.error(e2.message);
     }
