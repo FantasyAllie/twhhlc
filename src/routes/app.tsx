@@ -3513,6 +3513,23 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
                        ))}
                      </ul>
                    )}
+                    {canUseMessages && (
+                      <div className="flex justify-end">
+                        <Button
+                          type="button"
+                          variant="outline"
+                          size="sm"
+                          className="h-7 text-xs"
+                          onClick={() => {
+                            setNotesSheetRoom(null);
+                            setMessagesInitial({ thread: "hk_reception", room: n });
+                            setMessagesSheetOpen(true);
+                          }}
+                        >
+                          <MessageSquare className="h-3 w-3 mr-1" /> Open in Messages
+                        </Button>
+                      </div>
+                    )}
                    <div className="flex gap-2">
                      <Input
                        value={newMessageText}
