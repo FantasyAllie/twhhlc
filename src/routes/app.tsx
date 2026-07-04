@@ -3897,6 +3897,7 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
       open={notificationsSheetOpen}
       onOpenChange={setNotificationsSheetOpen}
       userRole={bucket}
+      myDepartments={myMessageDepartments}
     />
   );
 })()}
