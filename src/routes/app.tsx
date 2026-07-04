@@ -4,7 +4,7 @@ import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Minus, Plus, X, Menu, ArrowUp, ArrowDown, Pencil, Check, Trash2, Sun, Moon, List, Bed, Ban, History, Users, User, LogOut, Hash, ConciergeBell, ClipboardList, Printer, Filter, Wrench, StickyNote, DoorOpen, Bell, Eye, EyeOff, HelpCircle } from "lucide-react";
+import { Minus, Plus, X, Menu, ArrowUp, ArrowDown, Pencil, Check, Trash2, Sun, Moon, List, Bed, Ban, History, Users, User, LogOut, Hash, ConciergeBell, ClipboardList, Printer, Filter, Wrench, StickyNote, DoorOpen, Bell, Eye, EyeOff, HelpCircle, AlertCircle } from "lucide-react";
 import { ReceptionIconGuide } from "@/components/reception-icon-guide";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
@@ -1420,6 +1420,7 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
         done_reception: false,
         housekeeping_note: null,
         needs_maintenance: false,
+        guest_vacated: false,
         reception_status_id:
           dndId && r.reception_status_id === dndId && stayId ? stayId : null,
         reception_bed_id: null,
@@ -1427,13 +1428,13 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
     );
     const { error } = await supabase
       .from("rooms")
-      .update({ done: false, done_reception: false, reception_status_id: null, reception_bed_id: null, housekeeping_note: null, needs_maintenance: false })
+      .update({ done: false, done_reception: false, reception_status_id: null, reception_bed_id: null, housekeeping_note: null, needs_maintenance: false, guest_vacated: false })
       .neq("room_number", -1)
     if (error) toast.error(error.message);
     if (dndRoomNumbers.length > 0) {
       const { error: e2 } = await supabase
         .from("rooms")
-        .update({ done: false, done_reception: false, reception_status_id: stayId ?? null, reception_bed_id: null, housekeeping_note: null, needs_maintenance: false })
+        .update({ done: false, done_reception: false, reception_status_id: stayId ?? null, reception_bed_id: null, housekeeping_note: null, needs_maintenance: false, guest_vacated: false })
         .in("room_number", dndRoomNumbers);
       if (e2) toast.error(e2.message);
     }
@@ -5187,11 +5188,8 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
           {!isStaff && (state === "done" || state === "complete") && (
             <Check aria-label="Done" className="h-3.5 w-3.5 opacity-80" />
           )}
-          {!isStaff && !isRos && !isStayover && !isDnd && (state === "done" || state === "complete") && !room?.reception_bed_id && (
-            <Bed aria-label="Bed not selected" className="h-3.5 w-3.5 opacity-80" />
-          )}
-          {!isStaff && !isRos && !isStayover && !isDnd && (state === "done" || state === "complete") && !hasStatus && (
-            <ConciergeBell aria-label="Status not set" className="h-3.5 w-3.5 opacity-80" />
+          {!isStaff && !isRos && !isStayover && !isDnd && (state === "done" || state === "complete") && (!room?.reception_bed_id || !hasStatus) && (
+            <AlertCircle aria-label="Status or bed not set" className="h-3.5 w-3.5 opacity-80" />
           )}
          </span>
           <span className="text-[9px] sm:text-[10px] md:text-xs font-medium leading-none opacity-90 whitespace-pre-line pr-4">
