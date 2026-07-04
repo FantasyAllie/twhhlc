@@ -1420,6 +1420,7 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
         done_reception: false,
         housekeeping_note: null,
         needs_maintenance: false,
+        guest_vacated: false,
         reception_status_id:
           dndId && r.reception_status_id === dndId && stayId ? stayId : null,
         reception_bed_id: null,
