@@ -4,14 +4,14 @@ import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Minus, Plus, X, Menu, ArrowUp, ArrowDown, Pencil, Check, Trash2, Sun, Moon, List, Bed, Ban, History, Users, User, LogOut, Hash, ConciergeBell, ClipboardList, Printer, Filter, Wrench, StickyNote, DoorOpen, Bell, Eye, EyeOff, HelpCircle, AlertCircle, MessageSquare } from "lucide-react";
+import { Minus, Plus, X, Menu, ArrowUp, ArrowDown, Pencil, Check, Trash2, Sun, Moon, List, Bed, Ban, History, Users, User, LogOut, Hash, ConciergeBell, ClipboardList, Printer, Filter, Wrench, DoorOpen, Bell, Eye, EyeOff, HelpCircle, AlertCircle, MessageSquare } from "lucide-react";
 import { ReceptionIconGuide } from "@/components/reception-icon-guide";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
 import { getToken, getStoredUser, clearSession } from "@/lib/auth-client";
 import { notifyRoomEvent } from "@/lib/push.functions";
 import { NotificationsSheet } from "@/components/notifications-sheet";
-import { MessagesSheet, type MessagesThread } from "@/components/messages-sheet";
+import { MessagesSheet, type MessagesThread, type Department as MessagesDepartment } from "@/components/messages-sheet";
 import { UsersDialog } from "@/components/users-dialog";
 import { UserApprovalDialog } from "@/components/user-approval-dialog";
 import { QuickReceptionSheet } from "@/components/quick-reception-sheet";
@@ -1003,6 +1003,13 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
       return out;
     })();
     const canUseMessages = availableThreads.length > 0;
+    const myMessageDepartments: MessagesDepartment[] = (() => {
+      const out: MessagesDepartment[] = [];
+      if (hasHousekeeperRole) out.push("housekeeping");
+      if (hasReceptionRole) out.push("reception");
+      if (hasFnbRole) out.push("fnb");
+      return out;
+    })();
     const menuIsFnbOnly =
       position === "user" && hasFnbRole && !hasHousekeeperRole && !hasReceptionRole;
   const doneSet = new Set(
@@ -2689,9 +2696,9 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
               type="button"
               onClick={() => setNotesSheetRoom(n)}
               className="relative inline-flex items-center justify-center h-11 w-11 shrink-0 rounded-full border bg-background text-sm font-medium cursor-pointer transition-colors hover:bg-accent"
-              aria-label="Notes"
+              aria-label="Communications"
             >
-              <StickyNote className="h-4 w-4" />
+              <MessageSquare className="h-4 w-4" />
               {hasIndicator && (
                 <span className="absolute -top-0.5 -right-0.5 flex items-center gap-0.5">
                   {hasMsg && (
@@ -3110,88 +3117,64 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
  </div>
  </header>
 
- {isMobile && (canViewAs || (isAdmin && !isReception) || isReception) && (
-   <div className="flex flex-wrap items-center gap-2">
-     {canViewAs && (
-        <Sheet open={rolePickerSheetOpen} onOpenChange={setRolePickerSheetOpen}>
-          <SheetTrigger asChild>
-            <Button variant="outline" size="sm">Role Picker</Button>
-          </SheetTrigger>
-          <SheetContent side="bottom" className="max-h-[85vh] overflow-y-auto rounded-t-2xl p-4 sm:p-6">
-            <SheetHeader className="text-left">
-              <SheetTitle>Role Picker</SheetTitle>
-              <SheetDescription>Switch between your assigned roles.</SheetDescription>
-            </SheetHeader>
-            <div className="mt-4 grid gap-2">
-              {availableViews.map((r) => {
-                const active = (safeViewAs ?? defaultView) === r;
-                const label =
-                  r === "user" ? "Housekeeping"
-                  : r === "fnb" ? "F&B"
-                  : r === "reception" ? "Reception"
-                  : r === "admin" ? "Admin"
-                  : "Manager";
-                return (
-                  <Button
-                    key={r}
-                    variant={active ? "default" : "outline"}
-                    size="lg"
-                    className="justify-start h-12"
-                    onClick={() => { setViewAsRole(active ? null : r); setRolePickerSheetOpen(false); }}
-                  >
-                    <span className="flex-1 text-left">{label}</span>
-                    {active && <Check className="h-4 w-4 ml-2" />}
-                  </Button>
-                );
-              })}
-            </div>
-          </SheetContent>
-        </Sheet>
-     )}
-     {isAdmin && !isReception && (
-       <Sheet open={exportSheetOpen} onOpenChange={setExportSheetOpen}>
-         <SheetTrigger asChild>
-           <Button variant="outline" size="sm">Export</Button>
-         </SheetTrigger>
-         <SheetContent side="bottom" className="max-h-[85vh] overflow-y-auto rounded-t-2xl p-4 sm:p-6">
-           <SheetHeader className="text-left">
-             <SheetTitle>Export</SheetTitle>
-             <SheetDescription>Choose what to export.</SheetDescription>
-           </SheetHeader>
-           <div className="mt-4 grid gap-2">
-             <Button variant="outline" size="lg" className="justify-start h-12" onClick={() => { setExportSheetOpen(false); openExport(); }}>
-               <List className="h-5 w-5 mr-2" />
-               Linen totals
+ {/* Mobile role-picker sheet (triggered from the burger menu). */}
+ {isMobile && canViewAs && (
+   <Sheet open={rolePickerSheetOpen} onOpenChange={setRolePickerSheetOpen}>
+     <SheetContent side="bottom" className="max-h-[85vh] overflow-y-auto rounded-t-2xl p-4 sm:p-6">
+       <SheetHeader className="text-left">
+         <SheetTitle>Role Picker</SheetTitle>
+         <SheetDescription>Switch between your assigned departments.</SheetDescription>
+       </SheetHeader>
+       <div className="mt-4 grid gap-2">
+         {availableViews.map((r) => {
+           const active = (safeViewAs ?? defaultView) === r;
+           const label =
+             r === "user" ? "Housekeeping"
+             : r === "fnb" ? "F&B"
+             : r === "reception" ? "Reception"
+             : r === "admin" ? "Admin"
+             : "Manager";
+           return (
+             <Button
+               key={r}
+               variant={active ? "default" : "outline"}
+               size="lg"
+               className="justify-start h-12"
+               onClick={() => { setViewAsRole(active ? null : r); setRolePickerSheetOpen(false); }}
+             >
+               <span className="flex-1 text-left">{label}</span>
+               {active && <Check className="h-4 w-4 ml-2" />}
              </Button>
-             <Button variant="outline" size="lg" className="justify-start h-12" onClick={() => { setExportSheetOpen(false); openRoomStatusExport(); }}>
-               <ClipboardList className="h-5 w-5 mr-2" />
-               Room status
-             </Button>
-             <Button variant="outline" size="lg" className="justify-start h-12" onClick={() => { setExportSheetOpen(false); void openFnbExport(); }}>
-               <List className="h-5 w-5 mr-2" />
-               F&amp;B Linen totals
-             </Button>
-           </div>
-         </SheetContent>
-       </Sheet>
-     )}
-     {isReception && (
-       <Button variant="outline" size="sm" onClick={() => {
-         const { rows } = computeRoomStatus();
-         if (rows.length === 0) { toast.error("No rooms to print"); return; }
-         printRoomStatus(rows, new Date());
-       }}>
-         <Printer className="h-4 w-4 mr-2" />
-         Print
-       </Button>
-     )}
-     {isReception && (
-       <Button variant="outline" size="sm" onClick={() => setReceptionHelpOpen(true)} aria-label="Help">
-         <HelpCircle className="h-4 w-4 mr-2" />
-         Help
-       </Button>
-     )}
-   </div>
+           );
+         })}
+       </div>
+     </SheetContent>
+   </Sheet>
+ )}
+ {/* Mobile export sheet (triggered from the burger menu). */}
+ {isMobile && isAdmin && !isReception && (
+   <Sheet open={exportSheetOpen} onOpenChange={setExportSheetOpen}>
+     <SheetContent side="bottom" className="max-h-[85vh] overflow-y-auto rounded-t-2xl p-4 sm:p-6">
+       <SheetHeader className="text-left">
+         <SheetTitle>Export</SheetTitle>
+         <SheetDescription>Choose what to export.</SheetDescription>
+       </SheetHeader>
+       <div className="mt-4 grid gap-2">
+         <Button variant="outline" size="lg" className="justify-start h-12" onClick={() => { setExportSheetOpen(false); openExport(); }}>
+           <List className="h-5 w-5 mr-2" />
+           Linen totals
+         </Button>
+         <Button variant="outline" size="lg" className="justify-start h-12" onClick={() => { setExportSheetOpen(false); openRoomStatusExport(); }}>
+           <ClipboardList className="h-5 w-5 mr-2" />
+           Room status
+         </Button>
+         <Button variant="outline" size="lg" className="justify-start h-12" onClick={() => { setExportSheetOpen(false); void openFnbExport(); }}>
+           <List className="h-5 w-5 mr-2" />
+           F&amp;B Linen totals
+         </Button>
+       </div>
+     </SheetContent>
+   </Sheet>
  )}
 
  {/* Linen list dialog */}
@@ -3434,9 +3417,9 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
        return (
          <>
            <SheetHeader className="text-left">
-             <SheetTitle className="flex items-center gap-2">
-               <StickyNote className="h-4 w-4" />
-               Notes — Room {n}
+              <SheetTitle className="flex items-center gap-2">
+                <MessageSquare className="h-4 w-4" />
+                Communications — Room {n}
              </SheetTitle>
              <SheetDescription>Shared between Housekeeping and Reception</SheetDescription>
            </SheetHeader>
@@ -3910,6 +3893,19 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
   initialRoom={messagesInitial.room ?? null}
   currentUsername={authUser?.username ?? null}
   roomNumbers={rooms.map((r) => r.room_number).sort((a, b) => a - b)}
+  myDepartments={myMessageDepartments}
+  isAdminOrManager={menuIsAdmin}
+  onLogMaintenance={async (roomNumber, message) => {
+    const { error } = await supabase.from("maintenance_requests" as never).insert({
+      room_number: roomNumber,
+      message,
+      created_by_username: authUser?.username ?? null,
+    } as never);
+    if (error) return { ok: false, error: error.message };
+    await writeRoomMaintenanceFlag(roomNumber, true);
+    qc.invalidateQueries({ queryKey: ["maintenance_requests"] });
+    return { ok: true };
+  }}
 />
 <Sheet open={menuSheetOpen} onOpenChange={setMenuSheetOpen}>
   <SheetContent side="right" disableDragDismiss className="w-auto max-w-[90vw] min-w-[18rem] sm:max-w-md overflow-y-auto p-4 sm:p-6 [&_[data-sheet-close]]:max-lg:hidden">
@@ -3985,6 +3981,46 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
               )}
             </div>
           </div>
+          {(canViewAs || (isAdmin && !isReception) || isReception) && (
+            <div className="space-y-2">
+              <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">Actions</p>
+              <div className="space-y-1.5">
+                {canViewAs && (
+                  <Row
+                    icon={Users}
+                    label="Role Picker"
+                    onClick={() => { close(); setRolePickerSheetOpen(true); }}
+                  />
+                )}
+                {isAdmin && !isReception && (
+                  <Row
+                    icon={ClipboardList}
+                    label="Export"
+                    onClick={() => { close(); setExportSheetOpen(true); }}
+                  />
+                )}
+                {isReception && (
+                  <Row
+                    icon={Printer}
+                    label="Print"
+                    onClick={() => {
+                      close();
+                      const { rows } = computeRoomStatus();
+                      if (rows.length === 0) { toast.error("No rooms to print"); return; }
+                      printRoomStatus(rows, new Date());
+                    }}
+                  />
+                )}
+                {isReception && (
+                  <Row
+                    icon={HelpCircle}
+                    label="Help"
+                    onClick={() => { close(); setReceptionHelpOpen(true); }}
+                  />
+                )}
+              </div>
+            </div>
+          )}
           <div className="space-y-2">
             <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">Appearance</p>
             <Row
