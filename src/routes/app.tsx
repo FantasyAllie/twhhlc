@@ -5272,13 +5272,11 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
          aria-label={`Room ${n} ${meta.label}${isStaffRoom ? " staff" : ""}`}
       >
           {!isStaffRoom && receptionDoneSet.has(n) && (!room?.reception_bed_id || !hasStatus) && (
-            <span
+            <AlertCircle
               aria-hidden="true"
-              className="pointer-events-none absolute inset-0 flex items-center justify-center text-6xl md:text-7xl font-black opacity-25 leading-none"
+              className="pointer-events-none absolute inset-0 m-auto h-[80%] w-[80%] opacity-30"
               style={{ color: meta.accent }}
-            >
-              !
-            </span>
+            />
           )}
          {!isStaffRoom && (
            <>
@@ -5384,13 +5382,17 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
               💩
             </span>
           )}
+          {!isStaff && !isRos && !isStayover && !isDnd && (state === "done" || state === "complete") && (!room?.reception_bed_id || !hasStatus) && (
+            <AlertCircle
+              aria-hidden="true"
+              className="pointer-events-none absolute inset-0 m-auto h-[80%] w-[80%] opacity-30"
+              style={{ color: meta.accent }}
+            />
+          )}
          <span className="text-sm sm:text-base md:text-xl font-bold leading-none inline-flex items-center gap-1">
            {n}
           {!isStaff && (state === "done" || state === "complete") && (
             <Check aria-label="Done" className="h-3.5 w-3.5 opacity-80" />
-          )}
-          {!isStaff && !isRos && !isStayover && !isDnd && (state === "done" || state === "complete") && (!room?.reception_bed_id || !hasStatus) && (
-            <AlertCircle aria-label="Status or bed not set" className="h-3.5 w-3.5 opacity-80" />
           )}
          </span>
           <span className="text-[9px] sm:text-[10px] md:text-xs font-medium leading-none opacity-90 whitespace-pre-line pr-4">
