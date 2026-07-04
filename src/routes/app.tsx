@@ -3120,7 +3120,7 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
           <SheetContent side="bottom" className="max-h-[85vh] overflow-y-auto rounded-t-2xl p-4 sm:p-6">
             <SheetHeader className="text-left">
               <SheetTitle>Role Picker</SheetTitle>
-              <SheetDescription>Switch between your assigned roles.</SheetDescription>
+              <SheetDescription>Switch between your assigned departments.</SheetDescription>
             </SheetHeader>
             <div className="mt-4 grid gap-2">
               {availableViews.map((r) => {
