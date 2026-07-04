@@ -221,10 +221,13 @@ type ExportSnapshot = {
 type RejectCount = { id: string; template_item_id: string; count: number };
 type RoomMessage = {
   id: string;
-  room_number: number;
+  room_number: number | null;
   message: string;
   created_by_username: string | null;
   dismissed: boolean;
+  thread: "hk_reception" | "hk_fnb" | "reception_fnb";
+  done_at: string | null;
+  deleted_at: string | null;
   created_at: string;
 };
 type MaintenanceRequest = {
