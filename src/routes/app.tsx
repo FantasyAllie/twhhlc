@@ -3868,6 +3868,15 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
     />
   );
 })()}
+<MessagesSheet
+  open={messagesSheetOpen}
+  onOpenChange={setMessagesSheetOpen}
+  availableThreads={availableThreads}
+  initialThread={messagesInitial.thread}
+  initialRoom={messagesInitial.room ?? null}
+  currentUsername={authUser?.username ?? null}
+  roomNumbers={rooms.map((r) => r.room_number).sort((a, b) => a - b)}
+/>
 <Sheet open={menuSheetOpen} onOpenChange={setMenuSheetOpen}>
   <SheetContent side="right" disableDragDismiss className="w-auto max-w-[90vw] min-w-[18rem] sm:max-w-md overflow-y-auto p-4 sm:p-6 [&_[data-sheet-close]]:max-lg:hidden">
     <SheetHeader className="text-left">
