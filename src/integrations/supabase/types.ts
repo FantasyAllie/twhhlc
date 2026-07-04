@@ -111,6 +111,9 @@ export type Database = {
           checkout_enabled: boolean
           done_enabled: boolean
           messages_enabled: boolean
+          notify_from_fnb: boolean
+          notify_from_housekeeping: boolean
+          notify_from_reception: boolean
           updated_at: string
           user_id: string
         }
@@ -118,6 +121,9 @@ export type Database = {
           checkout_enabled?: boolean
           done_enabled?: boolean
           messages_enabled?: boolean
+          notify_from_fnb?: boolean
+          notify_from_housekeeping?: boolean
+          notify_from_reception?: boolean
           updated_at?: string
           user_id: string
         }
@@ -125,6 +131,9 @@ export type Database = {
           checkout_enabled?: boolean
           done_enabled?: boolean
           messages_enabled?: boolean
+          notify_from_fnb?: boolean
+          notify_from_housekeeping?: boolean
+          notify_from_reception?: boolean
           updated_at?: string
           user_id?: string
         }
