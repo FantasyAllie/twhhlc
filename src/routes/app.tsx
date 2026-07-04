@@ -734,6 +734,7 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
       room_number: roomNumber,
       message: text,
       created_by_username: authUser?.username ?? null,
+      thread: "hk_reception",
     } as never);
     if (error) {
       toast.error(error.message);
@@ -747,11 +748,11 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
 
   const dismissRoomMessage = async (id: string) => {
     qc.setQueryData<RoomMessage[]>(["room_messages"], (old) =>
-      old?.map((m) => (m.id === id ? { ...m, dismissed: true } : m)) ?? [],
+      old?.map((m) => (m.id === id ? { ...m, dismissed: true, done_at: new Date().toISOString() } : m)) ?? [],
     );
     const { error } = await supabase
       .from("room_messages" as never)
-      .update({ dismissed: true, updated_at: new Date().toISOString() } as never)
+      .update({ dismissed: true, done_at: new Date().toISOString(), updated_at: new Date().toISOString() } as never)
       .eq("id", id);
     if (error) toast.error(error.message);
     qc.invalidateQueries({ queryKey: ["room_messages"] });
@@ -764,6 +765,7 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
       room_number: m.room_number,
       message: ack,
       created_by_username: who,
+      thread: "hk_reception",
     } as never);
     if (error) {
       toast.error(error.message);
@@ -779,7 +781,7 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
     );
     const { error } = await supabase
       .from("room_messages" as never)
-      .delete()
+      .update({ deleted_at: new Date().toISOString(), updated_at: new Date().toISOString() } as never)
       .eq("id", id);
     if (error) toast.error(error.message);
     qc.invalidateQueries({ queryKey: ["room_messages"] });
@@ -792,6 +794,7 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
       room_number: roomNumber,
       message: ack,
       created_by_username: who,
+      thread: "hk_reception",
     } as never);
     if (error) {
       toast.error(error.message);
