@@ -361,30 +361,39 @@ export type Database = {
         Row: {
           created_at: string
           created_by_username: string | null
+          deleted_at: string | null
           dismissed: boolean
+          done_at: string | null
           id: string
           message: string
-          room_number: number
+          room_number: number | null
+          thread: string
           updated_at: string
           user_id: string
         }
         Insert: {
           created_at?: string
           created_by_username?: string | null
+          deleted_at?: string | null
           dismissed?: boolean
+          done_at?: string | null
           id?: string
           message: string
-          room_number: number
+          room_number?: number | null
+          thread?: string
           updated_at?: string
           user_id?: string
         }
         Update: {
           created_at?: string
           created_by_username?: string | null
+          deleted_at?: string | null
           dismissed?: boolean
+          done_at?: string | null
           id?: string
           message?: string
-          room_number?: number
+          room_number?: number | null
+          thread?: string
           updated_at?: string
           user_id?: string
         }

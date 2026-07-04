@@ -4,13 +4,14 @@ import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Minus, Plus, X, Menu, ArrowUp, ArrowDown, Pencil, Check, Trash2, Sun, Moon, List, Bed, Ban, History, Users, User, LogOut, Hash, ConciergeBell, ClipboardList, Printer, Filter, Wrench, StickyNote, DoorOpen, Bell, Eye, EyeOff, HelpCircle, AlertCircle } from "lucide-react";
+import { Minus, Plus, X, Menu, ArrowUp, ArrowDown, Pencil, Check, Trash2, Sun, Moon, List, Bed, Ban, History, Users, User, LogOut, Hash, ConciergeBell, ClipboardList, Printer, Filter, Wrench, StickyNote, DoorOpen, Bell, Eye, EyeOff, HelpCircle, AlertCircle, MessageSquare } from "lucide-react";
 import { ReceptionIconGuide } from "@/components/reception-icon-guide";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
 import { getToken, getStoredUser, clearSession } from "@/lib/auth-client";
 import { notifyRoomEvent } from "@/lib/push.functions";
 import { NotificationsSheet } from "@/components/notifications-sheet";
+import { MessagesSheet, type MessagesThread } from "@/components/messages-sheet";
 import { UsersDialog } from "@/components/users-dialog";
 import { UserApprovalDialog } from "@/components/user-approval-dialog";
 import { QuickReceptionSheet } from "@/components/quick-reception-sheet";
@@ -221,10 +222,13 @@ type ExportSnapshot = {
 type RejectCount = { id: string; template_item_id: string; count: number };
 type RoomMessage = {
   id: string;
-  room_number: number;
+  room_number: number | null;
   message: string;
   created_by_username: string | null;
   dismissed: boolean;
+  thread: "hk_reception" | "hk_fnb" | "reception_fnb";
+  done_at: string | null;
+  deleted_at: string | null;
   created_at: string;
 };
 type MaintenanceRequest = {
@@ -411,6 +415,8 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
   const [editRoomSheetNumber, setEditRoomSheetNumber] = useState<number | null>(null);
   const [menuSheetOpen, setMenuSheetOpen] = useState(false);
   const [notificationsSheetOpen, setNotificationsSheetOpen] = useState(false);
+  const [messagesSheetOpen, setMessagesSheetOpen] = useState(false);
+  const [messagesInitial, setMessagesInitial] = useState<{ thread?: MessagesThread; room?: number | null }>({});
   const [maintenanceLogOpen, setMaintenanceLogOpen] = useState(false);
   const [newMaintenanceRoom, setNewMaintenanceRoom] = useState<string>("");
   const [newMaintenanceText, setNewMaintenanceText] = useState<string>("");
@@ -634,7 +640,8 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
     queryFn: async (): Promise<RoomMessage[]> => {
       const { data, error } = await supabase
         .from("room_messages" as never)
-        .select("id,room_number,message,created_by_username,dismissed,created_at")
+        .select("id,room_number,message,created_by_username,dismissed,thread,done_at,deleted_at,created_at")
+        .is("deleted_at", null)
         .order("created_at", { ascending: false });
       if (error) throw error;
       return (data ?? []) as RoomMessage[];
@@ -691,7 +698,14 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
   const rejects = (rejectsQ.data ?? []) as RejectCount[];
   const roomMessages = (messagesQ.data ?? []) as RoomMessage[];
   const activeMessagesByRoom = (n: number) =>
-    roomMessages.filter((m) => m.room_number === n && !m.dismissed);
+    roomMessages.filter(
+      (m) =>
+        m.room_number === n &&
+        m.thread === "hk_reception" &&
+        !m.done_at &&
+        !m.deleted_at &&
+        !m.dismissed,
+    );
   const hasActiveMessage = (n: number) => activeMessagesByRoom(n).length > 0;
   const maintenanceRequests = (maintenanceRequestsQ.data ?? []) as MaintenanceRequest[];
   const openMaintenanceCount = maintenanceRequests.filter((m) => !m.done).length;
@@ -723,6 +737,7 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
       room_number: roomNumber,
       message: text,
       created_by_username: authUser?.username ?? null,
+      thread: "hk_reception",
     } as never);
     if (error) {
       toast.error(error.message);
@@ -736,11 +751,11 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
 
   const dismissRoomMessage = async (id: string) => {
     qc.setQueryData<RoomMessage[]>(["room_messages"], (old) =>
-      old?.map((m) => (m.id === id ? { ...m, dismissed: true } : m)) ?? [],
+      old?.map((m) => (m.id === id ? { ...m, dismissed: true, done_at: new Date().toISOString() } : m)) ?? [],
     );
     const { error } = await supabase
       .from("room_messages" as never)
-      .update({ dismissed: true, updated_at: new Date().toISOString() } as never)
+      .update({ dismissed: true, done_at: new Date().toISOString(), updated_at: new Date().toISOString() } as never)
       .eq("id", id);
     if (error) toast.error(error.message);
     qc.invalidateQueries({ queryKey: ["room_messages"] });
@@ -753,6 +768,7 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
       room_number: m.room_number,
       message: ack,
       created_by_username: who,
+      thread: "hk_reception",
     } as never);
     if (error) {
       toast.error(error.message);
@@ -768,7 +784,7 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
     );
     const { error } = await supabase
       .from("room_messages" as never)
-      .delete()
+      .update({ deleted_at: new Date().toISOString(), updated_at: new Date().toISOString() } as never)
       .eq("id", id);
     if (error) toast.error(error.message);
     qc.invalidateQueries({ queryKey: ["room_messages"] });
@@ -781,6 +797,7 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
       room_number: roomNumber,
       message: ack,
       created_by_username: who,
+      thread: "hk_reception",
     } as never);
     if (error) {
       toast.error(error.message);
@@ -975,6 +992,17 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
     const menuIsAdmin = realIsAdmin || realIsManager;
     const menuHasFnb = menuIsAdmin || hasFnbRole;
     const menuHasHk = menuIsAdmin || hasHousekeeperRole;
+    const availableThreads: MessagesThread[] = (() => {
+      const out: MessagesThread[] = [];
+      const hk = menuIsAdmin || hasHousekeeperRole;
+      const rc = menuIsAdmin || hasReceptionRole;
+      const fb = menuIsAdmin || hasFnbRole;
+      if (hk || rc) out.push("hk_reception");
+      if (hk || fb) out.push("hk_fnb");
+      if (rc || fb) out.push("reception_fnb");
+      return out;
+    })();
+    const canUseMessages = availableThreads.length > 0;
     const menuIsFnbOnly =
       position === "user" && hasFnbRole && !hasHousekeeperRole && !hasReceptionRole;
   const doneSet = new Set(
@@ -3041,6 +3069,12 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
              )}
            </DropdownMenuItem>
          )}
+          {canUseMessages && (
+            <DropdownMenuItem onClick={() => { setMessagesInitial({}); setMessagesSheetOpen(true); }}>
+              <MessageSquare className="h-4 w-4 mr-2" />
+              Messages
+            </DropdownMenuItem>
+          )}
          <DropdownMenuSeparator />
        <DropdownMenuLabel>Appearance</DropdownMenuLabel>
        <DropdownMenuItem onClick={() => toggleTheme()}>
@@ -3479,6 +3513,23 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
                        ))}
                      </ul>
                    )}
+                    {canUseMessages && (
+                      <div className="flex justify-end">
+                        <Button
+                          type="button"
+                          variant="outline"
+                          size="sm"
+                          className="h-7 text-xs"
+                          onClick={() => {
+                            setNotesSheetRoom(null);
+                            setMessagesInitial({ thread: "hk_reception", room: n });
+                            setMessagesSheetOpen(true);
+                          }}
+                        >
+                          <MessageSquare className="h-3 w-3 mr-1" /> Open in Messages
+                        </Button>
+                      </div>
+                    )}
                    <div className="flex gap-2">
                      <Input
                        value={newMessageText}
@@ -3546,6 +3597,23 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
                          </li>
                        ))}
                      </ul>
+                      {canUseMessages && (
+                        <div className="flex justify-end">
+                          <Button
+                            type="button"
+                            variant="outline"
+                            size="sm"
+                            className="h-7 text-xs"
+                            onClick={() => {
+                              setNotesSheetRoom(null);
+                              setMessagesInitial({ thread: "hk_reception", room: n });
+                              setMessagesSheetOpen(true);
+                            }}
+                          >
+                            <MessageSquare className="h-3 w-3 mr-1" /> Reply in Messages
+                          </Button>
+                        </div>
+                      )}
                    </div>
                  )}
                  <div className="space-y-2 rounded-md border bg-background p-3">
@@ -3834,6 +3902,15 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
     />
   );
 })()}
+<MessagesSheet
+  open={messagesSheetOpen}
+  onOpenChange={setMessagesSheetOpen}
+  availableThreads={availableThreads}
+  initialThread={messagesInitial.thread}
+  initialRoom={messagesInitial.room ?? null}
+  currentUsername={authUser?.username ?? null}
+  roomNumbers={rooms.map((r) => r.room_number).sort((a, b) => a - b)}
+/>
 <Sheet open={menuSheetOpen} onOpenChange={setMenuSheetOpen}>
   <SheetContent side="right" disableDragDismiss className="w-auto max-w-[90vw] min-w-[18rem] sm:max-w-md overflow-y-auto p-4 sm:p-6 [&_[data-sheet-close]]:max-lg:hidden">
     <SheetHeader className="text-left">
@@ -3897,6 +3974,13 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
                     </span>
                   }
                   onClick={() => { close(); setMaintenanceLogOpen(true); }}
+                />
+              )}
+              {canUseMessages && (
+                <Row
+                  icon={MessageSquare}
+                  label="Messages"
+                  onClick={() => { close(); setMessagesInitial({}); setMessagesSheetOpen(true); }}
                 />
               )}
             </div>
