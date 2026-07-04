@@ -3917,6 +3917,19 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
   initialRoom={messagesInitial.room ?? null}
   currentUsername={authUser?.username ?? null}
   roomNumbers={rooms.map((r) => r.room_number).sort((a, b) => a - b)}
+  myDepartments={myMessageDepartments}
+  isAdminOrManager={menuIsAdmin}
+  onLogMaintenance={async (roomNumber, message) => {
+    const { error } = await supabase.from("maintenance_requests" as never).insert({
+      room_number: roomNumber,
+      message,
+      created_by_username: authUser?.username ?? null,
+    } as never);
+    if (error) return { ok: false, error: error.message };
+    await writeRoomMaintenanceFlag(roomNumber, true);
+    qc.invalidateQueries({ queryKey: ["maintenance_requests"] });
+    return { ok: true };
+  }}
 />
 <Sheet open={menuSheetOpen} onOpenChange={setMenuSheetOpen}>
   <SheetContent side="right" disableDragDismiss className="w-auto max-w-[90vw] min-w-[18rem] sm:max-w-md overflow-y-auto p-4 sm:p-6 [&_[data-sheet-close]]:max-lg:hidden">
