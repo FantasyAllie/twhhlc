@@ -3955,7 +3955,7 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
       );
       const close = () => setMenuSheetOpen(false);
       return (
-        <div className="mt-4 space-y-4">
+        <div className="space-y-4">
           {(canViewAs || (isAdmin && !isReception) || isReception) && (
             <div className="space-y-2">
               <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">Actions</p>
