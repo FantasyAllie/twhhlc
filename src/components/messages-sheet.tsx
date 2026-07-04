@@ -386,8 +386,7 @@ export function MessagesSheet({
               {canLogMaintenance && (
                 <label className="ml-auto flex items-center gap-2 text-xs font-medium">
                   <Wrench className={cn("h-3.5 w-3.5", alsoMaintenance ? "text-amber-600 dark:text-amber-400" : "text-muted-foreground")} />
-                  <span className="hidden xs:inline">Also log as maintenance</span>
-                  <span className="xs:hidden">Maintenance</span>
+                  <span>Maintenance</span>
                   <Switch checked={alsoMaintenance} onCheckedChange={setAlsoMaintenance} disabled={typeof room !== "number"} />
                 </label>
               )}
