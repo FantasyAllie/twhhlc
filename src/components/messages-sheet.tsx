@@ -266,7 +266,29 @@ export function MessagesSheet({
           <SheetDescription>Shared thread — everyone in these roles sees it.</SheetDescription>
         </SheetHeader>
 
-        {availableThreads.length > 1 && (
+        {useSendToPicker && sendToTargets.length > 1 && (
+          <div className="mt-3 flex flex-wrap items-center gap-2">
+            <span className="text-xs text-muted-foreground">Send to</span>
+            {sendToTargets.map((target) => {
+              const t = threadForTarget(target);
+              const active = activeTarget === target;
+              return (
+                <Button
+                  key={target}
+                  type="button"
+                  size="sm"
+                  variant={active ? "default" : "outline"}
+                  className="rounded-full"
+                  disabled={!t}
+                  onClick={() => { if (t) setThread(t); }}
+                >
+                  {DEPT_LABELS[target]}
+                </Button>
+              );
+            })}
+          </div>
+        )}
+        {!useSendToPicker && availableThreads.length > 1 && (
           <div className="mt-3 flex flex-wrap gap-2">
             {availableThreads.map((t) => (
               <Button
