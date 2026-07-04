@@ -4,11 +4,19 @@ import { supabase } from "@/integrations/supabase/client";
 import { Sheet, SheetContent, SheetDescription, SheetHeader, SheetTitle } from "@/components/ui/sheet";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { MessageSquare, Check, X, RotateCcw } from "lucide-react";
+import { MessageSquare, Check, X, RotateCcw, Wrench } from "lucide-react";
+import { Switch } from "@/components/ui/switch";
 import { cn } from "@/lib/utils";
 import { toast } from "sonner";
 
 export type MessagesThread = "hk_reception" | "hk_fnb" | "reception_fnb";
+export type Department = "housekeeping" | "reception" | "fnb";
+
+const DEPT_LABELS: Record<Department, string> = {
+  housekeeping: "Housekeeping",
+  reception: "Reception",
+  fnb: "F&B",
+};
 
 type Msg = {
   id: string;
@@ -30,6 +38,16 @@ const THREAD_LABELS: Record<MessagesThread, string> = {
 // Rooms don't route to F&B — only HK↔Reception carries per-room messages.
 const supportsRoomTag = (t: MessagesThread) => t === "hk_reception";
 
+// Threads are ordered pairs; sender/target order doesn't matter for the shared feed,
+// but we need to derive the thread from (sender, target).
+function threadFor(a: Department, b: Department): MessagesThread | null {
+  const s = new Set([a, b]);
+  if (s.has("housekeeping") && s.has("reception")) return "hk_reception";
+  if (s.has("housekeeping") && s.has("fnb")) return "hk_fnb";
+  if (s.has("reception") && s.has("fnb")) return "reception_fnb";
+  return null;
+}
+
 export function MessagesSheet({
   open,
   onOpenChange,
@@ -38,6 +56,9 @@ export function MessagesSheet({
   initialRoom,
   currentUsername,
   roomNumbers,
+  myDepartments,
+  isAdminOrManager,
+  onLogMaintenance,
 }: {
   open: boolean;
   onOpenChange: (o: boolean) => void;
@@ -46,6 +67,9 @@ export function MessagesSheet({
   initialRoom?: number | null;
   currentUsername: string | null;
   roomNumbers: number[];
+  myDepartments: Department[];
+  isAdminOrManager: boolean;
+  onLogMaintenance?: (roomNumber: number, message: string) => Promise<{ ok: boolean; error?: string }>;
 }) {
   const qc = useQueryClient();
   const [thread, setThread] = useState<MessagesThread>(
@@ -55,7 +79,54 @@ export function MessagesSheet({
   );
   const [text, setText] = useState("");
   const [room, setRoom] = useState<number | "">(initialRoom ?? "");
+  const [alsoMaintenance, setAlsoMaintenance] = useState(false);
   const feedRef = useRef<HTMLDivElement | null>(null);
+
+  // "Send to" picker options for non-admin users with a single department.
+  // Admin/manager (and mixed-department users) keep the thread-pair pill picker.
+  const useSendToPicker = !isAdminOrManager && myDepartments.length >= 1;
+  const sendToTargets: Department[] = useMemo(() => {
+    if (!useSendToPicker) return [];
+    // Union of "other" departments across all of my departments.
+    const set = new Set<Department>();
+    for (const mine of myDepartments) {
+      for (const other of ["housekeeping", "reception", "fnb"] as Department[]) {
+        if (other !== mine) set.add(other);
+      }
+    }
+    return ["housekeeping", "reception", "fnb"].filter((d) => set.has(d as Department)) as Department[];
+  }, [useSendToPicker, myDepartments]);
+
+  // For a "Send to <dept>" pick, choose the thread using my primary matching
+  // department. Prefer HK, then Reception, then F&B.
+  function threadForTarget(target: Department): MessagesThread | null {
+    const priority: Department[] = ["housekeeping", "reception", "fnb"];
+    for (const mine of priority) {
+      if (mine === target) continue;
+      if (myDepartments.includes(mine)) {
+        const t = threadFor(mine, target);
+        if (t && availableThreads.includes(t)) return t;
+      }
+    }
+    return null;
+  }
+
+  const activeTarget: Department | null = useMemo(() => {
+    if (!useSendToPicker) return null;
+    // Derive the "target" from the current thread + my departments.
+    const [a, b] = thread === "hk_reception"
+      ? (["housekeeping", "reception"] as const)
+      : thread === "hk_fnb"
+      ? (["housekeeping", "fnb"] as const)
+      : (["reception", "fnb"] as const);
+    return (myDepartments.includes(a) ? b : a) as Department;
+  }, [useSendToPicker, thread, myDepartments]);
+
+  // Maintenance toggle only makes sense on the Housekeeping↔Reception thread.
+  const canLogMaintenance = thread === "hk_reception" && !!onLogMaintenance;
+  useEffect(() => {
+    if (!canLogMaintenance) setAlsoMaintenance(false);
+  }, [canLogMaintenance]);
 
   useEffect(() => {
     if (!open) return;
@@ -112,6 +183,10 @@ export function MessagesSheet({
     const body = text.trim();
     if (!body) return;
     const roomNumber = supportsRoomTag(thread) && typeof room === "number" ? room : null;
+    if (alsoMaintenance && (!canLogMaintenance || roomNumber === null)) {
+      toast.error("Pick a room to also log as maintenance");
+      return;
+    }
     const { error } = await supabase.from("room_messages" as never).insert({
       thread,
       room_number: roomNumber,
@@ -122,7 +197,16 @@ export function MessagesSheet({
       toast.error(error.message);
       return;
     }
+    if (alsoMaintenance && canLogMaintenance && roomNumber !== null && onLogMaintenance) {
+      const res = await onLogMaintenance(roomNumber, body);
+      if (!res.ok) {
+        toast.error(res.error ?? "Message sent but maintenance log failed");
+      } else {
+        toast.success("Message sent and logged for maintenance");
+      }
+    }
     setText("");
+    setAlsoMaintenance(false);
     qc.invalidateQueries({ queryKey: ["messages_feed", thread] });
     qc.invalidateQueries({ queryKey: ["room_messages"] });
   };
