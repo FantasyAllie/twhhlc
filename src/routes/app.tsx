@@ -3434,9 +3434,9 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
        return (
          <>
            <SheetHeader className="text-left">
-             <SheetTitle className="flex items-center gap-2">
-               <StickyNote className="h-4 w-4" />
-               Notes — Room {n}
+              <SheetTitle className="flex items-center gap-2">
+                <MessageSquare className="h-4 w-4" />
+                Communications — Room {n}
              </SheetTitle>
              <SheetDescription>Shared between Housekeeping and Reception</SheetDescription>
            </SheetHeader>
