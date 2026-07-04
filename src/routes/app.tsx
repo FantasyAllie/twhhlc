@@ -5187,11 +5187,8 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
           {!isStaff && (state === "done" || state === "complete") && (
             <Check aria-label="Done" className="h-3.5 w-3.5 opacity-80" />
           )}
-          {!isStaff && !isRos && !isStayover && !isDnd && (state === "done" || state === "complete") && !room?.reception_bed_id && (
-            <Bed aria-label="Bed not selected" className="h-3.5 w-3.5 opacity-80" />
-          )}
-          {!isStaff && !isRos && !isStayover && !isDnd && (state === "done" || state === "complete") && !hasStatus && (
-            <ConciergeBell aria-label="Status not set" className="h-3.5 w-3.5 opacity-80" />
+          {!isStaff && !isRos && !isStayover && !isDnd && (state === "done" || state === "complete") && (!room?.reception_bed_id || !hasStatus) && (
+            <AlertCircle aria-label="Status or bed not set" className="h-3.5 w-3.5 opacity-80" />
           )}
          </span>
           <span className="text-[9px] sm:text-[10px] md:text-xs font-medium leading-none opacity-90 whitespace-pre-line pr-4">
