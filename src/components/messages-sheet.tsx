@@ -8,6 +8,7 @@ import { MessageSquare, Check, X, RotateCcw, Wrench } from "lucide-react";
 import { Switch } from "@/components/ui/switch";
 import { cn } from "@/lib/utils";
 import { toast } from "sonner";
+import { notifyDepartmentMessage } from "@/lib/push.functions";
 
 export type MessagesThread = "hk_reception" | "hk_fnb" | "reception_fnb";
 export type Department = "housekeeping" | "reception" | "fnb";
@@ -205,6 +206,20 @@ export function MessagesSheet({
         toast.success("Message sent and logged for maintenance");
       }
     }
+    // Fire push notifications to the receiving department(s).
+    // Sender department: the thread half the user belongs to, when unambiguous.
+    const pair: [Department, Department] =
+      thread === "hk_reception"
+        ? ["housekeeping", "reception"]
+        : thread === "hk_fnb"
+        ? ["housekeeping", "fnb"]
+        : ["reception", "fnb"];
+    const mineInThread = pair.filter((d) => myDepartments.includes(d));
+    const senderDepartment: Department | null =
+      mineInThread.length === 1 ? mineInThread[0] : null;
+    void notifyDepartmentMessage({
+      data: { thread, senderDepartment, message: body, roomNumber },
+    }).catch(() => {});
     setText("");
     setAlsoMaintenance(false);
     qc.invalidateQueries({ queryKey: ["messages_feed", thread] });
