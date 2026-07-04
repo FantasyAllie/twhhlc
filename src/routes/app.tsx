@@ -3069,6 +3069,12 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
              )}
            </DropdownMenuItem>
          )}
+          {canUseMessages && (
+            <DropdownMenuItem onClick={() => { setMessagesInitial({}); setMessagesSheetOpen(true); }}>
+              <MessageSquare className="h-4 w-4 mr-2" />
+              Messages
+            </DropdownMenuItem>
+          )}
          <DropdownMenuSeparator />
        <DropdownMenuLabel>Appearance</DropdownMenuLabel>
        <DropdownMenuItem onClick={() => toggleTheme()}>
