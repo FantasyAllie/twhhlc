@@ -3423,7 +3423,22 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
              </SheetTitle>
              <SheetDescription>Shared between Housekeeping and Reception</SheetDescription>
            </SheetHeader>
-           <div className="mt-4 space-y-3">
+            <div className="mt-4 space-y-3">
+              {canUseMessages && (
+                <Button
+                  type="button"
+                  variant="outline"
+                  className="w-full justify-center gap-2 rounded-full"
+                  onClick={() => {
+                    setNotesSheetRoom(null);
+                    setMessagesInitial({ thread: "hk_reception", room: n });
+                    setMessagesSheetOpen(true);
+                  }}
+                >
+                  <MessageSquare className="h-4 w-4" />
+                  Open Messages
+                </Button>
+              )}
              {isReception ? (
                <>
                  <div className="flex items-center justify-between gap-2 rounded-md border bg-background p-3">
