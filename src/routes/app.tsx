@@ -3122,7 +3122,7 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
    <Sheet open={rolePickerSheetOpen} onOpenChange={setRolePickerSheetOpen}>
      <SheetContent side="bottom" className="max-h-[85vh] overflow-y-auto rounded-t-2xl p-4 sm:p-6">
        <SheetHeader className="text-left">
-         <SheetTitle>Role Picker</SheetTitle>
+         <SheetTitle>Department</SheetTitle>
          <SheetDescription>Switch between your assigned departments.</SheetDescription>
        </SheetHeader>
        <div className="mt-4 grid gap-2">
@@ -3947,7 +3947,7 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
                 {canViewAs && (
                   <Row
                     icon={Users}
-                    label="Role Picker"
+                    label="Department"
                     onClick={() => { close(); setRolePickerSheetOpen(true); }}
                   />
                 )}
