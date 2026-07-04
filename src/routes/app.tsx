@@ -992,6 +992,17 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
     const menuIsAdmin = realIsAdmin || realIsManager;
     const menuHasFnb = menuIsAdmin || hasFnbRole;
     const menuHasHk = menuIsAdmin || hasHousekeeperRole;
+    const availableThreads: MessagesThread[] = (() => {
+      const out: MessagesThread[] = [];
+      const hk = menuIsAdmin || hasHousekeeperRole;
+      const rc = menuIsAdmin || hasReceptionRole;
+      const fb = menuIsAdmin || hasFnbRole;
+      if (hk || rc) out.push("hk_reception");
+      if (hk || fb) out.push("hk_fnb");
+      if (rc || fb) out.push("reception_fnb");
+      return out;
+    })();
+    const canUseMessages = availableThreads.length > 0;
     const menuIsFnbOnly =
       position === "user" && hasFnbRole && !hasHousekeeperRole && !hasReceptionRole;
   const doneSet = new Set(
