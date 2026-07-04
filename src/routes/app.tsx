@@ -994,12 +994,23 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
     const menuHasHk = menuIsAdmin || hasHousekeeperRole;
     const availableThreads: MessagesThread[] = (() => {
       const out: MessagesThread[] = [];
-      const hk = menuIsAdmin || hasHousekeeperRole;
-      const rc = menuIsAdmin || hasReceptionRole;
-      const fb = menuIsAdmin || hasFnbRole;
-      if (hk || rc) out.push("hk_reception");
-      if (hk || fb) out.push("hk_fnb");
-      if (rc || fb) out.push("reception_fnb");
+      // Messaging rules:
+      // 1. Users can only message departments they are assigned to.
+      // 2. Every department can also message Reception (universal hub),
+      //    and Reception can message every department.
+      // Admins/managers keep access to all threads for oversight.
+      const isReceptionUser = hasReceptionRole;
+      const reachable = new Set<MessagesDepartment>();
+      if (hasHousekeeperRole) reachable.add("housekeeping");
+      if (hasReceptionRole) reachable.add("reception");
+      if (hasFnbRole) reachable.add("fnb");
+      // Rule 2: reception is always reachable for anyone with any department.
+      if (reachable.size > 0) reachable.add("reception");
+      const bothReachable = (a: MessagesDepartment, b: MessagesDepartment) =>
+        menuIsAdmin || isReceptionUser || (reachable.has(a) && reachable.has(b));
+      if (bothReachable("housekeeping", "reception")) out.push("hk_reception");
+      if (bothReachable("housekeeping", "fnb")) out.push("hk_fnb");
+      if (bothReachable("reception", "fnb")) out.push("reception_fnb");
       return out;
     })();
     const canUseMessages = availableThreads.length > 0;
