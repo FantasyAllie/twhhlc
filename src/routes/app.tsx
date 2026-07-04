@@ -4744,58 +4744,78 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
          No linen items yet. Add some from the Linen List.
        </p>
      ) : (
-       <div className="space-y-3">
-         <ul className="divide-y rounded-md border max-h-[60vh] overflow-y-auto">
-           {template.map((item) => {
-             const count = getRejectCount(item.id);
-             return (
-               <li key={item.id} className="flex items-center gap-3 px-3 py-2">
-                 <span className="flex-1 truncate text-sm">{item.name}</span>
-                 <div className="flex items-center gap-1">
-                   <Button
-                     variant="outline"
-                     size="icon"
-                     className="h-8 w-8"
-                     onClick={() => updateRejectCount(item.id, -1)}
-                     disabled={count === 0}
-                     aria-label={`Decrease ${item.name}`}
-                   >
-                     <Minus className="h-4 w-4" />
-                   </Button>
-                   <span className="w-8 text-center tabular-nums font-medium">{count}</span>
-                   <Button
-                     variant="outline"
-                     size="icon"
-                     className="h-8 w-8"
-                     onClick={() => updateRejectCount(item.id, 1)}
-                     aria-label={`Increase ${item.name}`}
-                   >
-                     <Plus className="h-4 w-4" />
-                   </Button>
-                 </div>
-               </li>
-             );
-           })}
-         </ul>
-         <div className="flex items-center justify-between text-sm">
-           <span className="text-muted-foreground">
-             Total: {rejects.reduce((s, r) => s + r.count, 0)}
-           </span>
-           <div className="flex items-center gap-2">
-             <Button
-               variant="ghost"
-               size="sm"
-               className="text-destructive hover:text-destructive"
-               onClick={resetRejects}
-             >
-               Reset all
-             </Button>
-             <Button variant="outline" size="sm" onClick={openRejectExport}>
-               Export
-             </Button>
-           </div>
-         </div>
-       </div>
+        <div className="border rounded-md bg-muted/30 flex flex-col min-h-0 overflow-hidden">
+          <div className="flex-1 min-h-0 overflow-y-auto p-4 max-h-[60vh]">
+            <ul className="space-y-1">
+              {template.map((item) => {
+                const count = getRejectCount(item.id);
+                const c = item.color ? COLOR_SWATCHES[item.color] : null;
+                const style: React.CSSProperties | undefined = c
+                  ? { backgroundColor: theme === "dark" ? c.darkBg : c.bg, borderLeft: `4px solid ${c.border}` }
+                  : undefined;
+                return (
+                  <li
+                    key={item.id}
+                    className="flex items-center gap-3 py-2 px-2 rounded-md border"
+                    style={style}
+                  >
+                    <span
+                      className="flex-1 min-w-0 break-words"
+                      style={item.color ? { color: theme === "dark" ? "#f8fafc" : "#0f172a" } : undefined}
+                    >
+                      {item.name}
+                    </span>
+                    <div className="flex items-center gap-1 shrink-0">
+                      <Button
+                        variant="outline"
+                        size="icon"
+                        className="h-10 w-10 sm:h-8 sm:w-8"
+                        onClick={() => updateRejectCount(item.id, -1)}
+                        disabled={count === 0}
+                        aria-label={`Decrease ${item.name}`}
+                      >
+                        <Minus className="h-4 w-4" />
+                      </Button>
+                      <span
+                        className="w-10 sm:w-8 text-center tabular-nums font-medium"
+                        style={item.color ? { color: theme === "dark" ? "#f8fafc" : "#0f172a" } : undefined}
+                      >
+                        {count}
+                      </span>
+                      <Button
+                        variant="outline"
+                        size="icon"
+                        className="h-10 w-10 sm:h-8 sm:w-8"
+                        onClick={() => updateRejectCount(item.id, 1)}
+                        aria-label={`Increase ${item.name}`}
+                      >
+                        <Plus className="h-4 w-4" />
+                      </Button>
+                    </div>
+                  </li>
+                );
+              })}
+            </ul>
+          </div>
+          <div className="flex items-center justify-between gap-2 border-t bg-background/60 px-3 py-2 text-sm">
+            <span className="text-muted-foreground">
+              Total: {rejects.reduce((s, r) => s + r.count, 0)}
+            </span>
+            <div className="flex items-center gap-2">
+              <Button
+                variant="ghost"
+                size="sm"
+                className="text-destructive hover:text-destructive"
+                onClick={resetRejects}
+              >
+                Reset all
+              </Button>
+              <Button variant="outline" size="sm" onClick={openRejectExport}>
+                Export
+              </Button>
+            </div>
+          </div>
+        </div>
      )}
    </DialogContent>
  </Dialog>
