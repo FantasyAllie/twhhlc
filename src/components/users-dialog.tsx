@@ -259,7 +259,7 @@ export function UsersDialog({
                              </Button>
                            </DropdownMenuTrigger>
                            <DropdownMenuContent align="end" className="w-48">
-                             <DropdownMenuLabel>Sub-role</DropdownMenuLabel>
+                              <DropdownMenuLabel>Department</DropdownMenuLabel>
                              <DropdownMenuSeparator />
                              {(["housekeeper", "reception", "fnb"] as SubRole[]).map((r) => (
                                <DropdownMenuItem key={r} onClick={() => onApprovePending(u, [r])}>
@@ -322,7 +322,7 @@ export function UsersDialog({
                   </select>
                 </div>
                 <div className="space-y-1 sm:col-span-2">
-                  <label className="text-xs font-medium">Sub-roles</label>
+                  <label className="text-xs font-medium">Departments</label>
                   <div className="flex flex-wrap gap-3">
                     {(["reception", "housekeeper", "fnb"] as SubRole[]).map((r) => (
                       <label key={r} className="flex items-center gap-2 text-sm">
@@ -432,7 +432,7 @@ export function UsersDialog({
                 </select>
               </div>
               <div className="space-y-1">
-                <label className="text-xs font-medium">Sub-roles</label>
+                <label className="text-xs font-medium">Departments</label>
                 <div className="flex flex-wrap gap-3">
                   {(["reception", "housekeeper", "fnb"] as SubRole[]).map((r) => (
                     <label key={r} className="flex items-center gap-2 text-sm">
@@ -447,7 +447,7 @@ export function UsersDialog({
                 </div>
                 {editPosition === "user" && editSubRoles.length === 0 && (
                   <p className="text-[11px] text-amber-600 dark:text-amber-400">
-                    A User with no sub-roles has no working view.
+                    A User with no departments has no working view.
                   </p>
                 )}
               </div>
