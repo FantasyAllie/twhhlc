@@ -165,9 +165,13 @@ async function sendToSubs(
       .delete()
       .in("endpoint", goneEndpoints);
   }
-  const failed = results.filter((r) => !r.ok && !r.gone);
-  if (failed.length > 0) {
-    console.warn("push delivery failures", failed.map((f) => ({ status: f.status, err: f.error })));
+  for (const r of results) {
+    const host = (() => { try { return new URL(r.endpoint).host; } catch { return "?"; } })();
+    if (r.ok) {
+      console.log(`push OK status=${r.status} host=${host}`);
+    } else {
+      console.warn(`push FAIL status=${r.status} gone=${r.gone} host=${host} err=${r.error ?? ""}`);
+    }
   }
 }
 
