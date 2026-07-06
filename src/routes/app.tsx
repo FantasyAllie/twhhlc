@@ -4010,12 +4010,33 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
         </button>
       );
       const close = () => setMenuSheetOpen(false);
+      const Section = ({
+        id,
+        title,
+        children,
+      }: { id: string; title: string; children: React.ReactNode }) => {
+        const collapsed = !!menuCollapsed[id];
+        return (
+          <div className="space-y-2">
+            <button
+              type="button"
+              onClick={() => void toggleMenuSection(id)}
+              className="w-full flex items-center justify-between text-xs font-semibold uppercase tracking-wide text-muted-foreground hover:text-foreground transition-colors"
+            >
+              <span>{title}</span>
+              <ChevronDown
+                className={cn("h-3.5 w-3.5 transition-transform", collapsed && "-rotate-90")}
+                aria-hidden
+              />
+            </button>
+            {!collapsed && <div className="space-y-1.5">{children}</div>}
+          </div>
+        );
+      };
       return (
         <div className="space-y-4">
           {(canViewAs || (isAdmin && !isReception) || isReception) && (
-            <div className="space-y-2">
-              <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">Actions</p>
-              <div className="space-y-1.5">
+            <Section id="actions" title="Actions">
                 {canViewAs && (
                   <Row
                     icon={Users}
@@ -4049,14 +4070,10 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
                     onClick={() => { close(); setReceptionHelpOpen(true); }}
                   />
                 )}
-              </div>
-            </div>
+            </Section>
           )}
-          <div className="space-y-2">
-            {(menuHasHk || menuHasFnb) && (
-              <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">Manage</p>
-            )}
-            <div className="space-y-1.5">
+          {((menuHasHk || menuHasFnb) && !isMaintenance) || (menuIsAdmin && !isMaintenance) ? (
+            <Section id="manage" title="Manage">
               {(menuHasHk || menuHasFnb) && !isMaintenance && (
                 <Row icon={List} label="Linen List" onClick={() => { close(); setTemplateOpen(true); }} />
               )}
@@ -4070,6 +4087,10 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
                   <Row icon={ConciergeBell} label="Bulk Room Status Setup" onClick={() => { close(); setQuickReceptionOpen(true); }} />
                 </>
               )}
+            </Section>
+          ) : null}
+          {((!menuIsFnbOnly && !isMaintenance) || (menuCanUseLostProperty && !isMaintenance) || canUseMessages) && (
+            <Section id="utilities" title="Utilities">
               {!menuIsFnbOnly && !isMaintenance && (
                 <Row
                   icon={Wrench}
@@ -4098,16 +4119,15 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
                   onClick={() => { close(); setMessagesInitial({}); setMessagesSheetOpen(true); }}
                 />
               )}
-            </div>
-          </div>
-          <div className="space-y-2">
-            <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">Appearance</p>
+            </Section>
+          )}
+          <Section id="appearance" title="Appearance">
             <Row
               icon={theme === "dark" ? Sun : Moon}
               label={theme === "dark" ? "Light mode" : "Dark mode"}
               onClick={() => toggleTheme()}
             />
-          </div>
+          </Section>
           <div className="space-y-2">
             <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">Account</p>
             <div className="space-y-1.5">
