@@ -425,6 +425,16 @@ export function MessagesSheet({
                             </span>
                           )}
                         </div>
+                        {m.reply_to_snippet && (
+                          <div className="mb-1.5 rounded-md border-l-4 border-primary bg-muted/60 px-2 py-1">
+                            <div className="text-[10px] font-semibold text-primary">
+                              {m.reply_to_sender ?? "Original"}
+                            </div>
+                            <div className="text-xs text-muted-foreground line-clamp-2 whitespace-pre-wrap break-words">
+                              {m.reply_to_snippet}
+                            </div>
+                          </div>
+                        )}
                         <p className="whitespace-pre-wrap break-words">{m.message}</p>
                         <div className="mt-1.5 flex justify-end gap-1">
                           {done ? (
