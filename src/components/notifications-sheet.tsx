@@ -34,6 +34,8 @@ const DEFAULT_PREFS: NotificationPrefs = {
   notify_from_reception: true,
   notify_from_housekeeping: true,
   notify_from_fnb: true,
+  notify_from_maintenance: true,
+  notify_maintenance_requests: true,
 };
 
 export function NotificationsSheet({
@@ -44,7 +46,7 @@ export function NotificationsSheet({
 }: {
   open: boolean;
   onOpenChange: (o: boolean) => void;
-  userRole: "admin" | "user" | "reception";
+  userRole: "admin" | "user" | "reception" | "maintenance";
   myDepartments?: MessagesDepartment[];
 }) {
   const supported = typeof window !== "undefined" && isPushSupported();
