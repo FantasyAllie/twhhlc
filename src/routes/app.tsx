@@ -5101,13 +5101,16 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
        const replyToItem = (it: Item) => {
          const thread: MessagesThread =
            it.origin === "reception" ? "reception_maintenance" : "hk_maintenance";
-          const quoted = it.message
-            .split("\n")
-            .map((l) => `> ${l}`)
-            .join("\n");
-          const attribution = it.sender ? ` ${it.sender}` : "";
-          const prefill = `${quoted}\n\nRe:${attribution}\n`;
-          setMessagesInitial({ thread, room: it.roomNumber ?? null, text: prefill });
+          setMessagesInitial({
+            thread,
+            room: it.roomNumber ?? null,
+            text: "",
+            replyTo: {
+              id: rawId(it.id),
+              sender: it.sender ?? (it.origin === "reception" ? "Reception" : "Housekeeping"),
+              snippet: it.message.slice(0, 280),
+            },
+          });
          setMessagesSheetOpen(true);
        };
        return (
