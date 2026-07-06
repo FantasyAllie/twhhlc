@@ -5459,7 +5459,7 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
                 const progress = eligible.filter((r) => r.done || r.done_reception).length;
                 const pct = total > 0 ? Math.min(100, (progress / total) * 100) : 0;
                  return (
-                   <div className="mt-3 space-y-1 max-lg:fixed max-lg:inset-x-0 max-lg:bottom-0 max-lg:z-40 max-lg:mt-0 max-lg:border-t max-lg:border-border max-lg:bg-background/95 max-lg:backdrop-blur max-lg:pl-[calc(env(safe-area-inset-left,0px)+1.5rem)] max-lg:pr-[calc(env(safe-area-inset-right,0px)+1.5rem)] max-lg:pt-2 max-lg:pb-[calc(env(safe-area-inset-bottom,0px)+0.75rem)] max-lg:shadow-[0_-2px_8px_rgba(0,0,0,0.06)]">
+                    <div className="mt-3 space-y-1 max-lg:fixed max-lg:inset-x-0 max-lg:bottom-0 max-lg:z-40 max-lg:mt-0 max-lg:border-t max-lg:border-border max-lg:bg-background/95 max-lg:backdrop-blur max-lg:pl-[calc(env(safe-area-inset-left,0px)+1.5rem)] max-lg:pr-[calc(env(safe-area-inset-right,0px)+1.5rem)] max-lg:pt-2 max-lg:pb-[calc(env(safe-area-inset-bottom,0px)+0.75rem)] max-lg:shadow-[0_-2px_8px_rgba(0,0,0,0.06)] max-lg:transform-gpu max-lg:will-change-transform max-lg:[backface-visibility:hidden]">
                     <div className="flex items-center justify-between text-xs text-muted-foreground">
                       <span>Rooms progress</span>
                       <span className="tabular-nums">{progress} of {total}</span>
