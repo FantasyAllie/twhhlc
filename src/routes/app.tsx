@@ -422,6 +422,34 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
   const [newMaintenanceRoom, setNewMaintenanceRoom] = useState<string>("");
   const [newMaintenanceText, setNewMaintenanceText] = useState<string>("");
   const [lostPropertyOpen, setLostPropertyOpen] = useState(false);
+  // Menu section collapse state, synced to profiles.preferences.menu_collapsed
+  const menuPrefsQ = useQuery({
+    queryKey: ["profile_preferences", authUser?.id],
+    enabled: !!authUser?.id,
+    queryFn: async (): Promise<Record<string, unknown>> => {
+      if (!authUser?.id) return {};
+      const { data } = await supabase
+        .from("profiles")
+        .select("preferences")
+        .eq("id", authUser.id)
+        .maybeSingle();
+      const prefs = (data as { preferences?: Record<string, unknown> } | null)?.preferences;
+      return prefs ?? {};
+    },
+  });
+  const menuCollapsed = (menuPrefsQ.data?.menu_collapsed as Record<string, boolean> | undefined) ?? {};
+  const toggleMenuSection = async (key: string) => {
+    if (!authUser?.id) return;
+    const currentPrefs = (menuPrefsQ.data ?? {}) as Record<string, unknown>;
+    const currentCollapsed = (currentPrefs.menu_collapsed as Record<string, boolean> | undefined) ?? {};
+    const nextCollapsed = { ...currentCollapsed, [key]: !currentCollapsed[key] };
+    const nextPrefs = { ...currentPrefs, menu_collapsed: nextCollapsed };
+    qc.setQueryData(["profile_preferences", authUser.id], nextPrefs);
+    await supabase
+      .from("profiles")
+      .update({ preferences: nextPrefs } as never)
+      .eq("id", authUser.id);
+  };
   // Admin "view as" overlay — lets admins temporarily experience the app as
   // another role. Does NOT change the auth token; backend still treats them
   // as admin. Only affects UI gating and visible affordances.
