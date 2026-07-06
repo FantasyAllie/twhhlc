@@ -43,6 +43,7 @@ const SUB_ROLE_LABELS: Record<SubRole, string> = {
   reception: "Reception",
   housekeeper: "Housekeeping",
   fnb: "F&B",
+  maintenance: "Maintenance",
 };
 function positionBadge(p: Position): string {
   return p === "pending" ? "Pending" : POSITION_LABELS[p];
@@ -261,7 +262,7 @@ export function UsersDialog({
                            <DropdownMenuContent align="end" className="w-48">
                               <DropdownMenuLabel>Department</DropdownMenuLabel>
                              <DropdownMenuSeparator />
-                             {(["housekeeper", "reception", "fnb"] as SubRole[]).map((r) => (
+                             {(["housekeeper", "reception", "fnb", "maintenance"] as SubRole[]).map((r) => (
                                <DropdownMenuItem key={r} onClick={() => onApprovePending(u, [r])}>
                                  {SUB_ROLE_LABELS[r]}
                                </DropdownMenuItem>
@@ -324,7 +325,7 @@ export function UsersDialog({
                 <div className="space-y-1 sm:col-span-2">
                   <label className="text-xs font-medium">Departments</label>
                   <div className="flex flex-wrap gap-3">
-                    {(["reception", "housekeeper", "fnb"] as SubRole[]).map((r) => (
+                     {(["reception", "housekeeper", "fnb", "maintenance"] as SubRole[]).map((r) => (
                       <label key={r} className="flex items-center gap-2 text-sm">
                         <input
                           type="checkbox"
@@ -434,7 +435,7 @@ export function UsersDialog({
               <div className="space-y-1">
                 <label className="text-xs font-medium">Departments</label>
                 <div className="flex flex-wrap gap-3">
-                  {(["reception", "housekeeper", "fnb"] as SubRole[]).map((r) => (
+                   {(["reception", "housekeeper", "fnb", "maintenance"] as SubRole[]).map((r) => (
                     <label key={r} className="flex items-center gap-2 text-sm">
                       <input
                         type="checkbox"

@@ -249,7 +249,7 @@ function AppPage() {
   const isMobile = useIsMobile();
   const [authUser, setAuthUser] = useState(() => getStoredUser());
   // Admin/Manager "view as" overlay — see definition further below for full context.
- type ViewRole = "admin" | "manager" | "user" | "reception" | "fnb" | "fnb";
+type ViewRole = "admin" | "manager" | "user" | "reception" | "fnb" | "maintenance";
   const [viewAsRole, setViewAsRole] = useState<ViewRole | null>(() => {
     if (typeof window === "undefined") return null;
     const v = window.localStorage.getItem("tw_view_as_role");
@@ -440,6 +440,7 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
     if (pos === "admin" || pos === "manager" || subs.includes("housekeeper")) allowed.push("user");
     if (pos === "admin" || pos === "manager" || subs.includes("reception")) allowed.push("reception");
     if (pos === "admin" || pos === "manager" || subs.includes("fnb")) allowed.push("fnb");
+    if (pos === "admin" || pos === "manager" || subs.includes("maintenance")) allowed.push("maintenance");
     if (!allowed.includes(viewAsRole)) setViewAsRole(null);
   }, [authUser, viewAsRole]);
 
@@ -945,6 +946,7 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
    const hasReceptionRole = subRoles.includes("reception");
    const hasHousekeeperRole = subRoles.includes("housekeeper");
    const hasFnbRole = subRoles.includes("fnb");
+   const hasMaintenanceRole = subRoles.includes("maintenance");
     // Which view-as options this account can actually pick. Only sub-role
     // views appear as pills; admins/managers return to their default view
     // by toggling the active pill off.
@@ -953,6 +955,7 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
        if (hasHousekeeperRole) out.push("user");
        if (hasReceptionRole) out.push("reception");
        if (hasFnbRole) out.push("fnb");
+       if (hasMaintenanceRole) out.push("maintenance");
        return out;
      })();
    // Default view when no "view as" is set.
@@ -962,12 +965,14 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
       // their position is admin/manager. They can still switch views if
       // multiple are available.
       if (hasFnbRole && !hasHousekeeperRole && !hasReceptionRole) return "fnb";
+      if (hasMaintenanceRole && !hasHousekeeperRole && !hasReceptionRole && !hasFnbRole) return "maintenance";
      if (realIsAdmin) return "admin";
      if (realIsManager) return "manager";
      if (position === "user") {
        if (hasHousekeeperRole) return "user";
        if (hasReceptionRole) return "reception";
        if (hasFnbRole) return "fnb";
+       if (hasMaintenanceRole) return "maintenance";
      }
      return undefined;
    })();
@@ -986,31 +991,44 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
     const isAdmin = realIsAdmin || realIsManager;
    const isHousekeeper = effectiveRole === "user";
    const isFnb = effectiveRole === "fnb";
+   const isMaintenance = effectiveRole === "maintenance";
     // Settings-menu permissions: derived from real position/sub-roles,
     // not the active home-screen pill. The settings menu should stay the
     // same regardless of which view the user is currently in.
     const menuIsAdmin = realIsAdmin || realIsManager;
     const menuHasFnb = menuIsAdmin || hasFnbRole;
     const menuHasHk = menuIsAdmin || hasHousekeeperRole;
+    const menuHasMaintenance = menuIsAdmin || hasMaintenanceRole;
+    // Lost Property log is only meaningful to Reception + Housekeeping.
+    const menuCanUseLostProperty = menuIsAdmin || hasReceptionRole || hasHousekeeperRole;
+    // Reception can resolve entries; Housekeeping views them read-only.
+    const canResolveLostProperty = menuIsAdmin || hasReceptionRole;
     const availableThreads: MessagesThread[] = (() => {
       const out: MessagesThread[] = [];
       // Messaging rules:
       // 1. Users can only message departments they are assigned to.
       // 2. Every department can also message Reception (universal hub),
       //    and Reception can message every department.
+      // 3. Maintenance can message Housekeeping and Reception. F&B cannot
+      //    reach Maintenance directly — they go through Reception.
       // Admins/managers keep access to all threads for oversight.
       const isReceptionUser = hasReceptionRole;
       const reachable = new Set<MessagesDepartment>();
       if (hasHousekeeperRole) reachable.add("housekeeping");
       if (hasReceptionRole) reachable.add("reception");
       if (hasFnbRole) reachable.add("fnb");
+      if (hasMaintenanceRole) reachable.add("maintenance");
       // Rule 2: reception is always reachable for anyone with any department.
       if (reachable.size > 0) reachable.add("reception");
+      // Rule 3: HK and Reception can always reach Maintenance for oversight.
+      if (hasHousekeeperRole || hasReceptionRole || hasMaintenanceRole) reachable.add("maintenance");
       const bothReachable = (a: MessagesDepartment, b: MessagesDepartment) =>
         menuIsAdmin || isReceptionUser || (reachable.has(a) && reachable.has(b));
       if (bothReachable("housekeeping", "reception")) out.push("hk_reception");
       if (bothReachable("housekeeping", "fnb")) out.push("hk_fnb");
       if (bothReachable("reception", "fnb")) out.push("reception_fnb");
+      if (bothReachable("housekeeping", "maintenance")) out.push("hk_maintenance");
+      if (bothReachable("reception", "maintenance")) out.push("reception_maintenance");
       return out;
     })();
     const canUseMessages = availableThreads.length > 0;
@@ -1019,6 +1037,7 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
       if (hasHousekeeperRole) out.push("housekeeping");
       if (hasReceptionRole) out.push("reception");
       if (hasFnbRole) out.push("fnb");
+      if (hasMaintenanceRole) out.push("maintenance");
       return out;
     })();
     const menuIsFnbOnly =
@@ -2707,7 +2726,7 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
               type="button"
               onClick={() => setNotesSheetRoom(n)}
               className="relative inline-flex items-center justify-center h-11 w-11 shrink-0 rounded-full border bg-background text-sm font-medium cursor-pointer transition-colors hover:bg-accent"
-              aria-label="Communications"
+              aria-label="Notifications"
             >
               <MessageSquare className="h-4 w-4" />
               {hasIndicator && (
@@ -3430,7 +3449,7 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
            <SheetHeader className="text-left">
               <SheetTitle className="flex items-center gap-2">
                 <MessageSquare className="h-4 w-4" />
-                Communications — Room {n}
+                 Notifications — Room {n}
              </SheetTitle>
              <SheetDescription>Shared between Housekeeping and Reception</SheetDescription>
            </SheetHeader>
@@ -3625,59 +3644,6 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
                       )}
                    </div>
                  )}
-                 <div className="space-y-2 rounded-md border bg-background p-3">
-                   <div className="flex items-center justify-between gap-2">
-                     <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
-                       For Reception
-                     </p>
-                     <label className="flex items-center gap-2 text-xs font-medium">
-                       <Wrench className={cn("h-3.5 w-3.5", maintenance ? "text-amber-600 dark:text-amber-400" : "text-muted-foreground")} />
-                       Needs maintenance
-                       <Switch
-                         checked={maintenance}
-                         onCheckedChange={(v) => setRoomNeedsMaintenance(n, v)}
-                       />
-                     </label>
-                   </div>
-                   {(() => {
-                     const draft = noteDraft[n] ?? note ?? "";
-                     return (
-                       <>
-                         <textarea
-                           value={draft}
-                           onChange={(e) => setNoteDraft((p) => ({ ...p, [n]: e.target.value }))}
-                            placeholder="Describe the issue (e.g. fan broken, no hot water)…"
-                           rows={3}
-                           className="w-full rounded-md border bg-background px-2 py-1.5 text-sm resize-none focus:outline-none focus:ring-2 focus:ring-ring"
-                         />
-                         <div className="flex justify-end gap-2">
-                           <Button
-                             type="button"
-                             size="sm"
-                             className="h-8 text-xs"
-                              disabled={!draft.trim()}
-                              onClick={async () => {
-                                const text = draft.trim();
-                                if (!text) return;
-                                const { error } = await supabase.from("maintenance_requests" as never).insert({
-                                  room_number: n,
-                                  message: text,
-                                  created_by_username: authUser?.username ?? null,
-                                } as never);
-                                if (error) { toast.error(error.message); return; }
-                                qc.invalidateQueries({ queryKey: ["maintenance_requests"] });
-                                await writeRoomMaintenanceFlag(n, true);
-                                setNoteDraft((p) => ({ ...p, [n]: "" }));
-                                toast.success("Sent to maintenance log");
-                              }}
-                           >
-                              Send to maintenance log
-                           </Button>
-                         </div>
-                       </>
-                     );
-                   })()}
-                 </div>
                </>
              )}
            </div>

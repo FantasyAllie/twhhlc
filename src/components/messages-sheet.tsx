@@ -4,19 +4,25 @@ import { supabase } from "@/integrations/supabase/client";
 import { Sheet, SheetContent, SheetDescription, SheetHeader, SheetTitle } from "@/components/ui/sheet";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { MessageSquare, Check, X, RotateCcw, Wrench } from "lucide-react";
+import { MessageSquare, Check, X, RotateCcw, Wrench, PackageSearch } from "lucide-react";
 import { Switch } from "@/components/ui/switch";
 import { cn } from "@/lib/utils";
 import { toast } from "sonner";
 import { notifyDepartmentMessage } from "@/lib/push.functions";
 
-export type MessagesThread = "hk_reception" | "hk_fnb" | "reception_fnb";
-export type Department = "housekeeping" | "reception" | "fnb";
+export type MessagesThread =
+  | "hk_reception"
+  | "hk_fnb"
+  | "reception_fnb"
+  | "hk_maintenance"
+  | "reception_maintenance";
+export type Department = "housekeeping" | "reception" | "fnb" | "maintenance";
 
 const DEPT_LABELS: Record<Department, string> = {
   housekeeping: "Housekeeping",
   reception: "Reception",
   fnb: "F&B",
+  maintenance: "Maintenance",
 };
 
 type Msg = {
@@ -34,10 +40,13 @@ const THREAD_LABELS: Record<MessagesThread, string> = {
   hk_reception: "Housekeeping ↔ Reception",
   hk_fnb: "Housekeeping ↔ F&B",
   reception_fnb: "Reception ↔ F&B",
+  hk_maintenance: "Housekeeping ↔ Maintenance",
+  reception_maintenance: "Reception ↔ Maintenance",
 };
 
-// Rooms don't route to F&B — only HK↔Reception carries per-room messages.
-const supportsRoomTag = (t: MessagesThread) => t === "hk_reception";
+// Room tags matter for HK↔Reception and any maintenance thread — F&B is not room-scoped.
+const supportsRoomTag = (t: MessagesThread) =>
+  t === "hk_reception" || t === "hk_maintenance" || t === "reception_maintenance";
 
 // Threads are ordered pairs; sender/target order doesn't matter for the shared feed,
 // but we need to derive the thread from (sender, target).
@@ -46,6 +55,8 @@ function threadFor(a: Department, b: Department): MessagesThread | null {
   if (s.has("housekeeping") && s.has("reception")) return "hk_reception";
   if (s.has("housekeeping") && s.has("fnb")) return "hk_fnb";
   if (s.has("reception") && s.has("fnb")) return "reception_fnb";
+  if (s.has("housekeeping") && s.has("maintenance")) return "hk_maintenance";
+  if (s.has("reception") && s.has("maintenance")) return "reception_maintenance";
   return null;
 }
 
@@ -60,6 +71,7 @@ export function MessagesSheet({
   myDepartments,
   isAdminOrManager,
   onLogMaintenance,
+  onLogLostProperty,
 }: {
   open: boolean;
   onOpenChange: (o: boolean) => void;
@@ -71,6 +83,10 @@ export function MessagesSheet({
   myDepartments: Department[];
   isAdminOrManager: boolean;
   onLogMaintenance?: (roomNumber: number, message: string) => Promise<{ ok: boolean; error?: string }>;
+  onLogLostProperty?: (
+    roomNumber: number | null,
+    message: string,
+  ) => Promise<{ ok: boolean; error?: string }>;
 }) {
   const qc = useQueryClient();
   const [thread, setThread] = useState<MessagesThread>(
@@ -81,6 +97,7 @@ export function MessagesSheet({
   const [text, setText] = useState("");
   const [room, setRoom] = useState<number | "">(initialRoom ?? "");
   const [alsoMaintenance, setAlsoMaintenance] = useState(false);
+  const [alsoLostProperty, setAlsoLostProperty] = useState(false);
   const feedRef = useRef<HTMLDivElement | null>(null);
 
   // "Send to" picker options for non-admin users with a single department.
@@ -99,9 +116,9 @@ export function MessagesSheet({
   }, [useSendToPicker, myDepartments]);
 
   // For a "Send to <dept>" pick, choose the thread using my primary matching
-  // department. Prefer HK, then Reception, then F&B.
+  // department. Prefer HK, then Reception, then F&B, then Maintenance.
   function threadForTarget(target: Department): MessagesThread | null {
-    const priority: Department[] = ["housekeeping", "reception", "fnb"];
+    const priority: Department[] = ["housekeeping", "reception", "fnb", "maintenance"];
     for (const mine of priority) {
       if (mine === target) continue;
       if (myDepartments.includes(mine)) {
@@ -115,19 +132,30 @@ export function MessagesSheet({
   const activeTarget: Department | null = useMemo(() => {
     if (!useSendToPicker) return null;
     // Derive the "target" from the current thread + my departments.
-    const [a, b] = thread === "hk_reception"
-      ? (["housekeeping", "reception"] as const)
-      : thread === "hk_fnb"
-      ? (["housekeeping", "fnb"] as const)
-      : (["reception", "fnb"] as const);
+    const [a, b] =
+      thread === "hk_reception"
+        ? (["housekeeping", "reception"] as const)
+        : thread === "hk_fnb"
+        ? (["housekeeping", "fnb"] as const)
+        : thread === "reception_fnb"
+        ? (["reception", "fnb"] as const)
+        : thread === "hk_maintenance"
+        ? (["housekeeping", "maintenance"] as const)
+        : (["reception", "maintenance"] as const);
     return (myDepartments.includes(a) ? b : a) as Department;
   }, [useSendToPicker, thread, myDepartments]);
 
   // Maintenance toggle only makes sense on the Housekeeping↔Reception thread.
   const canLogMaintenance = thread === "hk_reception" && !!onLogMaintenance;
+  // Lost Property mirrors Maintenance — only relevant on HK↔Reception (Reception
+  // owns the log; Housekeeping is the usual reporter).
+  const canLogLostProperty = thread === "hk_reception" && !!onLogLostProperty;
   useEffect(() => {
     if (!canLogMaintenance) setAlsoMaintenance(false);
   }, [canLogMaintenance]);
+  useEffect(() => {
+    if (!canLogLostProperty) setAlsoLostProperty(false);
+  }, [canLogLostProperty]);
 
   useEffect(() => {
     if (!open) return;
@@ -188,6 +216,16 @@ export function MessagesSheet({
       toast.error("Pick a room to also log as maintenance");
       return;
     }
+    // Housekeeping must tag a room for lost property. Reception may leave it
+    // untagged (they may not know the room yet). We can't distinguish sender
+    // exactly here, so require a room tag whenever HK is my department AND I'm
+    // not also Reception.
+    const senderIsHkOnly =
+      myDepartments.includes("housekeeping") && !myDepartments.includes("reception");
+    if (alsoLostProperty && senderIsHkOnly && roomNumber === null) {
+      toast.error("Pick a room to also log as lost property");
+      return;
+    }
     const { error } = await supabase.from("room_messages" as never).insert({
       thread,
       room_number: roomNumber,
@@ -206,6 +244,14 @@ export function MessagesSheet({
         toast.success("Message sent and logged for maintenance");
       }
     }
+    if (alsoLostProperty && canLogLostProperty && onLogLostProperty) {
+      const res = await onLogLostProperty(roomNumber, body);
+      if (!res.ok) {
+        toast.error(res.error ?? "Message sent but lost property log failed");
+      } else {
+        toast.success("Message sent and logged as lost property");
+      }
+    }
     // Fire push notifications to the receiving department(s).
     // Sender department: the thread half the user belongs to, when unambiguous.
     const pair: [Department, Department] =
@@ -213,7 +259,11 @@ export function MessagesSheet({
         ? ["housekeeping", "reception"]
         : thread === "hk_fnb"
         ? ["housekeeping", "fnb"]
-        : ["reception", "fnb"];
+        : thread === "reception_fnb"
+        ? ["reception", "fnb"]
+        : thread === "hk_maintenance"
+        ? ["housekeeping", "maintenance"]
+        : ["reception", "maintenance"];
     const mineInThread = pair.filter((d) => myDepartments.includes(d));
     const senderDepartment: Department | null =
       mineInThread.length === 1 ? mineInThread[0] : null;
@@ -222,6 +272,7 @@ export function MessagesSheet({
     }).catch(() => {});
     setText("");
     setAlsoMaintenance(false);
+    setAlsoLostProperty(false);
     qc.invalidateQueries({ queryKey: ["messages_feed", thread] });
     qc.invalidateQueries({ queryKey: ["room_messages"] });
   };
@@ -405,6 +456,23 @@ export function MessagesSheet({
                   <Switch checked={alsoMaintenance} onCheckedChange={setAlsoMaintenance} disabled={typeof room !== "number"} />
                 </label>
               )}
+            </div>
+          )}
+          {(canLogMaintenance || canLogLostProperty) && supportsRoomTag(thread) && canLogLostProperty && (
+            <div className="flex items-center gap-2">
+              <label className="ml-auto flex items-center gap-2 text-xs font-medium">
+                <PackageSearch className={cn("h-3.5 w-3.5", alsoLostProperty ? "text-sky-600 dark:text-sky-400" : "text-muted-foreground")} />
+                <span>Lost Property</span>
+                <Switch
+                  checked={alsoLostProperty}
+                  onCheckedChange={setAlsoLostProperty}
+                  disabled={
+                    myDepartments.includes("housekeeping") && !myDepartments.includes("reception")
+                      ? typeof room !== "number"
+                      : false
+                  }
+                />
+              </label>
             </div>
           )}
           <div className="flex gap-2">
