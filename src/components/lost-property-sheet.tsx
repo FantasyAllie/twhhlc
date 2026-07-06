@@ -1,4 +1,4 @@
-import { useEffect, useMemo } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import {
@@ -9,6 +9,7 @@ import {
   SheetTitle,
 } from "@/components/ui/sheet";
 import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
 import { PackageSearch, Check, Trash2 } from "lucide-react";
 import { toast } from "sonner";
 
@@ -37,6 +38,32 @@ export function LostPropertySheet({
   currentUsername: string | null;
 }) {
   const qc = useQueryClient();
+
+  const RETENTION_KEY = "lost_property_retention_months";
+  const [retentionMonths, setRetentionMonths] = useState<number>(() => {
+    if (typeof window === "undefined") return 3;
+    const raw = window.localStorage.getItem(RETENTION_KEY);
+    const n = raw === null ? NaN : Number(raw);
+    return Number.isFinite(n) && n >= 0 ? n : 3;
+  });
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    window.localStorage.setItem(RETENTION_KEY, String(retentionMonths));
+  }, [retentionMonths]);
+  const canDiscard = (iso: string) => {
+    if (retentionMonths <= 0) return true;
+    const created = new Date(iso).getTime();
+    const now = Date.now();
+    // Approx month = 30.44 days
+    const monthsElapsed = (now - created) / (1000 * 60 * 60 * 24 * 30.44);
+    return monthsElapsed >= retentionMonths;
+  };
+  const monthsRemaining = (iso: string) => {
+    if (retentionMonths <= 0) return 0;
+    const created = new Date(iso).getTime();
+    const monthsElapsed = (Date.now() - created) / (1000 * 60 * 60 * 24 * 30.44);
+    return Math.max(0, retentionMonths - monthsElapsed);
+  };
 
   const q = useQuery({
     queryKey: ["lost_property"],
@@ -118,6 +145,28 @@ export function LostPropertySheet({
           </SheetDescription>
         </SheetHeader>
 
+        {canResolve && (
+          <div className="mt-3 flex items-center gap-2 rounded-lg border bg-muted/40 px-3 py-2">
+            <label htmlFor="lp-retention" className="text-sm">
+              Keep items for
+            </label>
+            <Input
+              id="lp-retention"
+              type="number"
+              inputMode="numeric"
+              min={0}
+              max={120}
+              value={retentionMonths}
+              onChange={(e) => {
+                const n = Number(e.target.value);
+                if (Number.isFinite(n) && n >= 0) setRetentionMonths(Math.floor(n));
+              }}
+              className="h-8 w-16 text-center"
+            />
+            <span className="text-sm">months</span>
+          </div>
+        )}
+
         <div className="flex-1 min-h-0 overflow-y-auto mt-4 space-y-4">
           <div className="space-y-2">
             <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
@@ -154,16 +203,30 @@ export function LostPropertySheet({
                         <Check className="h-3.5 w-3.5 mr-1" />
                         Collected
                       </Button>
-                      <Button
-                        type="button"
-                        size="sm"
-                        variant="outline"
-                        className="h-8 text-xs"
-                        onClick={() => void setStatus(r.id, "discarded")}
-                      >
-                        <Trash2 className="h-3.5 w-3.5 mr-1" />
-                        Throw away
-                      </Button>
+                      {canDiscard(r.created_at) ? (
+                        <Button
+                          type="button"
+                          size="sm"
+                          variant="outline"
+                          className="h-8 text-xs"
+                          onClick={() => void setStatus(r.id, "discarded")}
+                        >
+                          <Trash2 className="h-3.5 w-3.5 mr-1" />
+                          Throw away
+                        </Button>
+                      ) : (
+                        <span className="text-[10px] text-muted-foreground text-center leading-tight">
+                          {(() => {
+                            const rem = monthsRemaining(r.created_at);
+                            if (rem >= 1) {
+                              const m = Math.ceil(rem);
+                              return `${m} month${m === 1 ? "" : "s"} left`;
+                            }
+                            const days = Math.max(1, Math.ceil(rem * 30.44));
+                            return `${days} day${days === 1 ? "" : "s"} left`;
+                          })()}
+                        </span>
+                      )}
                     </div>
                   ) : (
                     <span className="text-xs text-muted-foreground shrink-0 pt-1">Awaiting reception</span>
