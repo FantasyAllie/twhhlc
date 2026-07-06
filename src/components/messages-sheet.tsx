@@ -279,7 +279,9 @@ export function MessagesSheet({
         ? ["reception", "fnb"]
         : thread === "hk_maintenance"
         ? ["housekeeping", "maintenance"]
-        : ["reception", "maintenance"];
+        : thread === "reception_maintenance"
+        ? ["reception", "maintenance"]
+        : ["fnb", "maintenance"];
     const mineInThread = pair.filter((d) => myDepartments.includes(d));
     const senderDepartment: Department | null =
       mineInThread.length === 1 ? mineInThread[0] : null;
