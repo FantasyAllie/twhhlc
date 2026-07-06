@@ -9,7 +9,7 @@ import { ReceptionIconGuide } from "@/components/reception-icon-guide";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
 import { getToken, getStoredUser, clearSession } from "@/lib/auth-client";
-import { notifyRoomEvent } from "@/lib/push.functions";
+import { notifyRoomEvent, notifyMaintenanceRequest } from "@/lib/push.functions";
 import { NotificationsSheet } from "@/components/notifications-sheet";
 import { MessagesSheet, type MessagesThread, type Department as MessagesDepartment } from "@/components/messages-sheet";
 import { UsersDialog } from "@/components/users-dialog";
