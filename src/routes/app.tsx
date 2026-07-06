@@ -3072,7 +3072,7 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
        </Button>
      </DropdownMenuTrigger>
      <DropdownMenuContent align="end" className="w-64">
-         {(menuHasHk || menuHasFnb) && (
+          {(menuHasHk || menuHasFnb) && !isMaintenance && (
            <>
              <DropdownMenuLabel>Manage</DropdownMenuLabel>
              <DropdownMenuItem onClick={() => setTemplateOpen(true)}>
@@ -3080,7 +3080,7 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
              </DropdownMenuItem>
            </>
          )}
-         {menuIsAdmin && (
+          {menuIsAdmin && !isMaintenance && (
           <>
             <DropdownMenuItem onClick={() => setManageRoomsOpen(true)}>
              <Hash className="h-4 w-4 mr-2" /> Manage Rooms
@@ -3099,7 +3099,7 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
            <DropdownMenuSeparator />
          </>
        )}
-           {!menuIsFnbOnly && (
+             {!menuIsFnbOnly && !isMaintenance && (
            <DropdownMenuItem onClick={() => setMaintenanceLogOpen(true)}>
              <Wrench className="h-4 w-4 mr-2" />
              <span className="flex-1">Maintenance Log</span>
@@ -3128,12 +3128,12 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
        </DropdownMenuItem>
        <DropdownMenuSeparator />
        <DropdownMenuLabel>Account</DropdownMenuLabel>
-       {realIsAdmin && (
+        {realIsAdmin && !isMaintenance && (
          <DropdownMenuItem onClick={() => setUsersOpen(true)}>
            <Users className="h-4 w-4 mr-2" /> Users
          </DropdownMenuItem>
        )}
-       {realIsManager && !realIsAdmin && (
+        {realIsManager && !realIsAdmin && !isMaintenance && (
          <DropdownMenuItem onClick={() => setUserApprovalOpen(true)}>
            <Users className="h-4 w-4 mr-2" /> User Approval
          </DropdownMenuItem>
