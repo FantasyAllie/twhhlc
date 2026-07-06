@@ -3910,11 +3910,12 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
   //   "admin"     → see all toggles
   //   "reception" → hide the housekeeping "marked done" toggle
   //   "user"      → hide the reception message/checkout toggles
-  let bucket: "admin" | "user" | "reception" = "admin";
+  let bucket: "admin" | "user" | "reception" | "maintenance" = "admin";
   if (authUser.position === "admin" || authUser.position === "manager") bucket = "admin";
   else if (hasReceptionRole && hasHousekeeperRole) bucket = "admin";
   else if (hasReceptionRole) bucket = "reception";
   else if (hasHousekeeperRole) bucket = "user";
+  else if (myMessageDepartments.includes("maintenance")) bucket = "maintenance";
   return (
     <NotificationsSheet
       open={notificationsSheetOpen}
