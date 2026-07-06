@@ -4,7 +4,7 @@ import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Minus, Plus, X, Menu, ArrowUp, ArrowDown, Pencil, Check, Trash2, Sun, Moon, List, Bed, Ban, History, Users, User, LogOut, Hash, ConciergeBell, ClipboardList, Printer, Filter, Wrench, DoorOpen, Bell, Eye, EyeOff, HelpCircle, AlertCircle, MessageSquare, PackageSearch, RotateCcw } from "lucide-react";
+import { Minus, Plus, X, Menu, ArrowUp, ArrowDown, Pencil, Check, Trash2, Sun, Moon, List, Bed, Ban, History, Users, User, LogOut, Hash, ConciergeBell, ClipboardList, Printer, Filter, Wrench, DoorOpen, Bell, Eye, EyeOff, HelpCircle, AlertCircle, MessageSquare, PackageSearch, RotateCcw, ChevronDown } from "lucide-react";
 import { ReceptionIconGuide } from "@/components/reception-icon-guide";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
@@ -422,6 +422,34 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
   const [newMaintenanceRoom, setNewMaintenanceRoom] = useState<string>("");
   const [newMaintenanceText, setNewMaintenanceText] = useState<string>("");
   const [lostPropertyOpen, setLostPropertyOpen] = useState(false);
+  // Menu section collapse state, synced to profiles.preferences.menu_collapsed
+  const menuPrefsQ = useQuery({
+    queryKey: ["profile_preferences", authUser?.id],
+    enabled: !!authUser?.id,
+    queryFn: async (): Promise<Record<string, unknown>> => {
+      if (!authUser?.id) return {};
+      const { data } = await supabase
+        .from("profiles")
+        .select("preferences")
+        .eq("id", authUser.id)
+        .maybeSingle();
+      const prefs = (data as { preferences?: Record<string, unknown> } | null)?.preferences;
+      return prefs ?? {};
+    },
+  });
+  const menuCollapsed = (menuPrefsQ.data?.menu_collapsed as Record<string, boolean> | undefined) ?? {};
+  const toggleMenuSection = async (key: string) => {
+    if (!authUser?.id) return;
+    const currentPrefs = (menuPrefsQ.data ?? {}) as Record<string, unknown>;
+    const currentCollapsed = (currentPrefs.menu_collapsed as Record<string, boolean> | undefined) ?? {};
+    const nextCollapsed = { ...currentCollapsed, [key]: !currentCollapsed[key] };
+    const nextPrefs = { ...currentPrefs, menu_collapsed: nextCollapsed };
+    qc.setQueryData(["profile_preferences", authUser.id], nextPrefs);
+    await supabase
+      .from("profiles")
+      .update({ preferences: nextPrefs } as never)
+      .eq("id", authUser.id);
+  };
   // Admin "view as" overlay — lets admins temporarily experience the app as
   // another role. Does NOT change the auth token; backend still treats them
   // as admin. Only affects UI gating and visible affordances.
@@ -3982,12 +4010,33 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
         </button>
       );
       const close = () => setMenuSheetOpen(false);
+      const Section = ({
+        id,
+        title,
+        children,
+      }: { id: string; title: string; children: React.ReactNode }) => {
+        const collapsed = !!menuCollapsed[id];
+        return (
+          <div className="space-y-2">
+            <button
+              type="button"
+              onClick={() => void toggleMenuSection(id)}
+              className="w-full flex items-center justify-between text-xs font-semibold uppercase tracking-wide text-muted-foreground hover:text-foreground transition-colors"
+            >
+              <span>{title}</span>
+              <ChevronDown
+                className={cn("h-3.5 w-3.5 transition-transform", collapsed && "-rotate-90")}
+                aria-hidden
+              />
+            </button>
+            {!collapsed && <div className="space-y-1.5">{children}</div>}
+          </div>
+        );
+      };
       return (
         <div className="space-y-4">
           {(canViewAs || (isAdmin && !isReception) || isReception) && (
-            <div className="space-y-2">
-              <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">Actions</p>
-              <div className="space-y-1.5">
+            <Section id="actions" title="Actions">
                 {canViewAs && (
                   <Row
                     icon={Users}
@@ -4021,14 +4070,10 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
                     onClick={() => { close(); setReceptionHelpOpen(true); }}
                   />
                 )}
-              </div>
-            </div>
+            </Section>
           )}
-          <div className="space-y-2">
-            {(menuHasHk || menuHasFnb) && (
-              <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">Manage</p>
-            )}
-            <div className="space-y-1.5">
+          {((menuHasHk || menuHasFnb) && !isMaintenance) || (menuIsAdmin && !isMaintenance) ? (
+            <Section id="manage" title="Manage">
               {(menuHasHk || menuHasFnb) && !isMaintenance && (
                 <Row icon={List} label="Linen List" onClick={() => { close(); setTemplateOpen(true); }} />
               )}
@@ -4042,6 +4087,10 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
                   <Row icon={ConciergeBell} label="Bulk Room Status Setup" onClick={() => { close(); setQuickReceptionOpen(true); }} />
                 </>
               )}
+            </Section>
+          ) : null}
+          {((!menuIsFnbOnly && !isMaintenance) || (menuCanUseLostProperty && !isMaintenance) || canUseMessages) && (
+            <Section id="utilities" title="Utilities">
               {!menuIsFnbOnly && !isMaintenance && (
                 <Row
                   icon={Wrench}
@@ -4070,16 +4119,15 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
                   onClick={() => { close(); setMessagesInitial({}); setMessagesSheetOpen(true); }}
                 />
               )}
-            </div>
-          </div>
-          <div className="space-y-2">
-            <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">Appearance</p>
+            </Section>
+          )}
+          <Section id="appearance" title="Appearance">
             <Row
               icon={theme === "dark" ? Sun : Moon}
               label={theme === "dark" ? "Light mode" : "Dark mode"}
               onClick={() => toggleTheme()}
             />
-          </div>
+          </Section>
           <div className="space-y-2">
             <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">Account</p>
             <div className="space-y-1.5">
