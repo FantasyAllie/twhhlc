@@ -3931,6 +3931,12 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
     return { ok: true };
   }}
 />
+<LostPropertySheet
+  open={lostPropertyOpen}
+  onOpenChange={setLostPropertyOpen}
+  canResolve={canResolveLostProperty}
+  currentUsername={authUser?.username ?? null}
+/>
 <Sheet open={menuSheetOpen} onOpenChange={setMenuSheetOpen}>
   <SheetContent side="right" disableDragDismiss className="w-auto max-w-[90vw] min-w-[18rem] sm:max-w-md p-0 flex flex-col overflow-hidden [&_[data-sheet-close]]:max-lg:hidden">
     <SheetHeader className="text-left shrink-0 px-4 sm:px-6 pt-4 sm:pt-6 pb-3 bg-background border-b">
