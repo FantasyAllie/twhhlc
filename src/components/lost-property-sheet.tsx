@@ -30,11 +30,13 @@ export function LostPropertySheet({
   open,
   onOpenChange,
   canResolve,
+  isAdmin,
   currentUsername,
 }: {
   open: boolean;
   onOpenChange: (o: boolean) => void;
   canResolve: boolean;
+  isAdmin?: boolean;
   currentUsername: string | null;
 }) {
   const qc = useQueryClient();
@@ -145,7 +147,7 @@ export function LostPropertySheet({
           </SheetDescription>
         </SheetHeader>
 
-        {canResolve && (
+        {isAdmin && (
           <div className="mt-3 flex items-center gap-2 rounded-lg border bg-muted/40 px-3 py-2">
             <label htmlFor="lp-retention" className="text-sm">
               Keep items for

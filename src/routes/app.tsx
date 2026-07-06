@@ -3939,6 +3939,7 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
   open={lostPropertyOpen}
   onOpenChange={setLostPropertyOpen}
   canResolve={canResolveLostProperty}
+  isAdmin={menuIsAdmin}
   currentUsername={authUser?.username ?? null}
 />
 <Sheet open={menuSheetOpen} onOpenChange={setMenuSheetOpen}>
