@@ -1024,6 +1024,12 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
       if (reachable.size > 0) reachable.add("reception");
       // Rule 3: HK and Reception can always reach Maintenance for oversight.
       if (hasHousekeeperRole || hasReceptionRole || hasMaintenanceRole) reachable.add("maintenance");
+      // Maintenance can reach every department directly, including F&B.
+      if (hasMaintenanceRole) {
+        reachable.add("housekeeping");
+        reachable.add("fnb");
+      }
+      if (hasFnbRole) reachable.add("maintenance");
       const bothReachable = (a: MessagesDepartment, b: MessagesDepartment) =>
         menuIsAdmin || isReceptionUser || (reachable.has(a) && reachable.has(b));
       if (bothReachable("housekeeping", "reception")) out.push("hk_reception");
