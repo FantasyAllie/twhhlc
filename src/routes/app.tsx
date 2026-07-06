@@ -2937,6 +2937,8 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
               ? "Reception"
               : r === "admin"
               ? "Admin"
+              : r === "maintenance"
+              ? "Maintenance"
               : "Manager";
           return (
             <button
@@ -3171,6 +3173,7 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
              : r === "fnb" ? "F&B"
              : r === "reception" ? "Reception"
              : r === "admin" ? "Admin"
+              : r === "maintenance" ? "Maintenance"
              : "Manager";
            return (
              <Button
