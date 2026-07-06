@@ -1,7 +1,7 @@
 import { createServerFn } from "@tanstack/react-start";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 
-type Role = "admin" | "user" | "reception";
+type Role = "admin" | "user" | "reception" | "maintenance";
 type AppRole = Role | "pending";
 
 async function getDb() {
@@ -279,13 +279,20 @@ export const notifyRoomEvent = createServerFn({ method: "POST" })
     return { ok: true, recipients: subs.length };
   });
 
-export type MessagesDepartment = "housekeeping" | "reception" | "fnb";
-type MessagesThread = "hk_reception" | "hk_fnb" | "reception_fnb";
+export type MessagesDepartment = "housekeeping" | "reception" | "fnb" | "maintenance";
+type MessagesThread =
+  | "hk_reception"
+  | "hk_fnb"
+  | "reception_fnb"
+  | "hk_maintenance"
+  | "reception_maintenance";
 
 const THREAD_PAIR: Record<MessagesThread, [MessagesDepartment, MessagesDepartment]> = {
   hk_reception: ["housekeeping", "reception"],
   hk_fnb: ["housekeeping", "fnb"],
   reception_fnb: ["reception", "fnb"],
+  hk_maintenance: ["housekeeping", "maintenance"],
+  reception_maintenance: ["reception", "maintenance"],
 };
 
 const DEPT_TO_ROLES: Record<MessagesDepartment, Role[]> = {
@@ -293,18 +300,23 @@ const DEPT_TO_ROLES: Record<MessagesDepartment, Role[]> = {
   reception: ["reception", "admin"],
   // "fnb" is stored in user_roles as a separate role name.
   fnb: ["fnb" as Role, "admin"],
+  maintenance: ["maintenance", "admin"],
 };
 
 const PREF_COL_FROM: Record<MessagesDepartment, keyof NotificationPrefs> = {
   reception: "notify_from_reception",
   housekeeping: "notify_from_housekeeping",
   fnb: "notify_from_fnb",
+  // Reuse the housekeeping toggle for maintenance — most operational messages
+  // are treated together, and there's no separate maintenance preference column.
+  maintenance: "notify_from_housekeeping",
 };
 
 const DEPT_LABEL: Record<MessagesDepartment, string> = {
   housekeeping: "Housekeeping",
   reception: "Reception",
   fnb: "F&B",
+  maintenance: "Maintenance",
 };
 
 export const notifyDepartmentMessage = createServerFn({ method: "POST" })

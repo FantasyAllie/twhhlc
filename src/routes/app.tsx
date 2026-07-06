@@ -4,7 +4,7 @@ import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Minus, Plus, X, Menu, ArrowUp, ArrowDown, Pencil, Check, Trash2, Sun, Moon, List, Bed, Ban, History, Users, User, LogOut, Hash, ConciergeBell, ClipboardList, Printer, Filter, Wrench, DoorOpen, Bell, Eye, EyeOff, HelpCircle, AlertCircle, MessageSquare } from "lucide-react";
+import { Minus, Plus, X, Menu, ArrowUp, ArrowDown, Pencil, Check, Trash2, Sun, Moon, List, Bed, Ban, History, Users, User, LogOut, Hash, ConciergeBell, ClipboardList, Printer, Filter, Wrench, DoorOpen, Bell, Eye, EyeOff, HelpCircle, AlertCircle, MessageSquare, PackageSearch, RotateCcw } from "lucide-react";
 import { ReceptionIconGuide } from "@/components/reception-icon-guide";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
@@ -15,6 +15,7 @@ import { MessagesSheet, type MessagesThread, type Department as MessagesDepartme
 import { UsersDialog } from "@/components/users-dialog";
 import { UserApprovalDialog } from "@/components/user-approval-dialog";
 import { QuickReceptionSheet } from "@/components/quick-reception-sheet";
+import { LostPropertySheet } from "@/components/lost-property-sheet";
 import { useServerFn } from "@tanstack/react-start";
 import { useIsMobile } from "@/hooks/use-mobile";
 import {
@@ -226,7 +227,7 @@ type RoomMessage = {
   message: string;
   created_by_username: string | null;
   dismissed: boolean;
-  thread: "hk_reception" | "hk_fnb" | "reception_fnb";
+  thread: "hk_reception" | "hk_fnb" | "reception_fnb" | "hk_maintenance" | "reception_maintenance";
   done_at: string | null;
   deleted_at: string | null;
   created_at: string;
@@ -249,7 +250,7 @@ function AppPage() {
   const isMobile = useIsMobile();
   const [authUser, setAuthUser] = useState(() => getStoredUser());
   // Admin/Manager "view as" overlay — see definition further below for full context.
- type ViewRole = "admin" | "manager" | "user" | "reception" | "fnb" | "fnb";
+type ViewRole = "admin" | "manager" | "user" | "reception" | "fnb" | "maintenance";
   const [viewAsRole, setViewAsRole] = useState<ViewRole | null>(() => {
     if (typeof window === "undefined") return null;
     const v = window.localStorage.getItem("tw_view_as_role");
@@ -420,6 +421,7 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
   const [maintenanceLogOpen, setMaintenanceLogOpen] = useState(false);
   const [newMaintenanceRoom, setNewMaintenanceRoom] = useState<string>("");
   const [newMaintenanceText, setNewMaintenanceText] = useState<string>("");
+  const [lostPropertyOpen, setLostPropertyOpen] = useState(false);
   // Admin "view as" overlay — lets admins temporarily experience the app as
   // another role. Does NOT change the auth token; backend still treats them
   // as admin. Only affects UI gating and visible affordances.
@@ -440,6 +442,7 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
     if (pos === "admin" || pos === "manager" || subs.includes("housekeeper")) allowed.push("user");
     if (pos === "admin" || pos === "manager" || subs.includes("reception")) allowed.push("reception");
     if (pos === "admin" || pos === "manager" || subs.includes("fnb")) allowed.push("fnb");
+    if (pos === "admin" || pos === "manager" || subs.includes("maintenance")) allowed.push("maintenance");
     if (!allowed.includes(viewAsRole)) setViewAsRole(null);
   }, [authUser, viewAsRole]);
 
@@ -945,6 +948,7 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
    const hasReceptionRole = subRoles.includes("reception");
    const hasHousekeeperRole = subRoles.includes("housekeeper");
    const hasFnbRole = subRoles.includes("fnb");
+   const hasMaintenanceRole = subRoles.includes("maintenance");
     // Which view-as options this account can actually pick. Only sub-role
     // views appear as pills; admins/managers return to their default view
     // by toggling the active pill off.
@@ -953,6 +957,7 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
        if (hasHousekeeperRole) out.push("user");
        if (hasReceptionRole) out.push("reception");
        if (hasFnbRole) out.push("fnb");
+       if (hasMaintenanceRole) out.push("maintenance");
        return out;
      })();
    // Default view when no "view as" is set.
@@ -962,12 +967,14 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
       // their position is admin/manager. They can still switch views if
       // multiple are available.
       if (hasFnbRole && !hasHousekeeperRole && !hasReceptionRole) return "fnb";
+      if (hasMaintenanceRole && !hasHousekeeperRole && !hasReceptionRole && !hasFnbRole) return "maintenance";
      if (realIsAdmin) return "admin";
      if (realIsManager) return "manager";
      if (position === "user") {
        if (hasHousekeeperRole) return "user";
        if (hasReceptionRole) return "reception";
        if (hasFnbRole) return "fnb";
+       if (hasMaintenanceRole) return "maintenance";
      }
      return undefined;
    })();
@@ -986,31 +993,44 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
     const isAdmin = realIsAdmin || realIsManager;
    const isHousekeeper = effectiveRole === "user";
    const isFnb = effectiveRole === "fnb";
+   const isMaintenance = effectiveRole === "maintenance";
     // Settings-menu permissions: derived from real position/sub-roles,
     // not the active home-screen pill. The settings menu should stay the
     // same regardless of which view the user is currently in.
     const menuIsAdmin = realIsAdmin || realIsManager;
     const menuHasFnb = menuIsAdmin || hasFnbRole;
     const menuHasHk = menuIsAdmin || hasHousekeeperRole;
+    const menuHasMaintenance = menuIsAdmin || hasMaintenanceRole;
+    // Lost Property log is only meaningful to Reception + Housekeeping.
+    const menuCanUseLostProperty = menuIsAdmin || hasReceptionRole || hasHousekeeperRole;
+    // Reception can resolve entries; Housekeeping views them read-only.
+    const canResolveLostProperty = menuIsAdmin || hasReceptionRole;
     const availableThreads: MessagesThread[] = (() => {
       const out: MessagesThread[] = [];
       // Messaging rules:
       // 1. Users can only message departments they are assigned to.
       // 2. Every department can also message Reception (universal hub),
       //    and Reception can message every department.
+      // 3. Maintenance can message Housekeeping and Reception. F&B cannot
+      //    reach Maintenance directly — they go through Reception.
       // Admins/managers keep access to all threads for oversight.
       const isReceptionUser = hasReceptionRole;
       const reachable = new Set<MessagesDepartment>();
       if (hasHousekeeperRole) reachable.add("housekeeping");
       if (hasReceptionRole) reachable.add("reception");
       if (hasFnbRole) reachable.add("fnb");
+      if (hasMaintenanceRole) reachable.add("maintenance");
       // Rule 2: reception is always reachable for anyone with any department.
       if (reachable.size > 0) reachable.add("reception");
+      // Rule 3: HK and Reception can always reach Maintenance for oversight.
+      if (hasHousekeeperRole || hasReceptionRole || hasMaintenanceRole) reachable.add("maintenance");
       const bothReachable = (a: MessagesDepartment, b: MessagesDepartment) =>
         menuIsAdmin || isReceptionUser || (reachable.has(a) && reachable.has(b));
       if (bothReachable("housekeeping", "reception")) out.push("hk_reception");
       if (bothReachable("housekeeping", "fnb")) out.push("hk_fnb");
       if (bothReachable("reception", "fnb")) out.push("reception_fnb");
+      if (bothReachable("housekeeping", "maintenance")) out.push("hk_maintenance");
+      if (bothReachable("reception", "maintenance")) out.push("reception_maintenance");
       return out;
     })();
     const canUseMessages = availableThreads.length > 0;
@@ -1019,6 +1039,7 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
       if (hasHousekeeperRole) out.push("housekeeping");
       if (hasReceptionRole) out.push("reception");
       if (hasFnbRole) out.push("fnb");
+      if (hasMaintenanceRole) out.push("maintenance");
       return out;
     })();
     const menuIsFnbOnly =
@@ -2707,7 +2728,7 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
               type="button"
               onClick={() => setNotesSheetRoom(n)}
               className="relative inline-flex items-center justify-center h-11 w-11 shrink-0 rounded-full border bg-background text-sm font-medium cursor-pointer transition-colors hover:bg-accent"
-              aria-label="Communications"
+              aria-label="Notifications"
             >
               <MessageSquare className="h-4 w-4" />
               {hasIndicator && (
@@ -3051,7 +3072,7 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
        </Button>
      </DropdownMenuTrigger>
      <DropdownMenuContent align="end" className="w-64">
-         {(menuHasHk || menuHasFnb) && (
+          {(menuHasHk || menuHasFnb) && !isMaintenance && (
            <>
              <DropdownMenuLabel>Manage</DropdownMenuLabel>
              <DropdownMenuItem onClick={() => setTemplateOpen(true)}>
@@ -3059,7 +3080,7 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
              </DropdownMenuItem>
            </>
          )}
-         {menuIsAdmin && (
+          {menuIsAdmin && !isMaintenance && (
           <>
             <DropdownMenuItem onClick={() => setManageRoomsOpen(true)}>
              <Hash className="h-4 w-4 mr-2" /> Manage Rooms
@@ -3078,7 +3099,7 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
            <DropdownMenuSeparator />
          </>
        )}
-           {!menuIsFnbOnly && (
+             {!menuIsFnbOnly && !isMaintenance && (
            <DropdownMenuItem onClick={() => setMaintenanceLogOpen(true)}>
              <Wrench className="h-4 w-4 mr-2" />
              <span className="flex-1">Maintenance Log</span>
@@ -3087,6 +3108,12 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
              )}
            </DropdownMenuItem>
          )}
+           {menuCanUseLostProperty && !isMaintenance && (
+             <DropdownMenuItem onClick={() => setLostPropertyOpen(true)}>
+               <PackageSearch className="h-4 w-4 mr-2" />
+               Lost Property
+             </DropdownMenuItem>
+           )}
           {canUseMessages && (
             <DropdownMenuItem onClick={() => { setMessagesInitial({}); setMessagesSheetOpen(true); }}>
               <MessageSquare className="h-4 w-4 mr-2" />
@@ -3101,12 +3128,12 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
        </DropdownMenuItem>
        <DropdownMenuSeparator />
        <DropdownMenuLabel>Account</DropdownMenuLabel>
-       {realIsAdmin && (
+        {realIsAdmin && !isMaintenance && (
          <DropdownMenuItem onClick={() => setUsersOpen(true)}>
            <Users className="h-4 w-4 mr-2" /> Users
          </DropdownMenuItem>
        )}
-       {realIsManager && !realIsAdmin && (
+        {realIsManager && !realIsAdmin && !isMaintenance && (
          <DropdownMenuItem onClick={() => setUserApprovalOpen(true)}>
            <Users className="h-4 w-4 mr-2" /> User Approval
          </DropdownMenuItem>
@@ -3430,7 +3457,7 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
            <SheetHeader className="text-left">
               <SheetTitle className="flex items-center gap-2">
                 <MessageSquare className="h-4 w-4" />
-                Communications — Room {n}
+                 Notifications — Room {n}
              </SheetTitle>
              <SheetDescription>Shared between Housekeeping and Reception</SheetDescription>
            </SheetHeader>
@@ -3625,59 +3652,6 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
                       )}
                    </div>
                  )}
-                 <div className="space-y-2 rounded-md border bg-background p-3">
-                   <div className="flex items-center justify-between gap-2">
-                     <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
-                       For Reception
-                     </p>
-                     <label className="flex items-center gap-2 text-xs font-medium">
-                       <Wrench className={cn("h-3.5 w-3.5", maintenance ? "text-amber-600 dark:text-amber-400" : "text-muted-foreground")} />
-                       Needs maintenance
-                       <Switch
-                         checked={maintenance}
-                         onCheckedChange={(v) => setRoomNeedsMaintenance(n, v)}
-                       />
-                     </label>
-                   </div>
-                   {(() => {
-                     const draft = noteDraft[n] ?? note ?? "";
-                     return (
-                       <>
-                         <textarea
-                           value={draft}
-                           onChange={(e) => setNoteDraft((p) => ({ ...p, [n]: e.target.value }))}
-                            placeholder="Describe the issue (e.g. fan broken, no hot water)…"
-                           rows={3}
-                           className="w-full rounded-md border bg-background px-2 py-1.5 text-sm resize-none focus:outline-none focus:ring-2 focus:ring-ring"
-                         />
-                         <div className="flex justify-end gap-2">
-                           <Button
-                             type="button"
-                             size="sm"
-                             className="h-8 text-xs"
-                              disabled={!draft.trim()}
-                              onClick={async () => {
-                                const text = draft.trim();
-                                if (!text) return;
-                                const { error } = await supabase.from("maintenance_requests" as never).insert({
-                                  room_number: n,
-                                  message: text,
-                                  created_by_username: authUser?.username ?? null,
-                                } as never);
-                                if (error) { toast.error(error.message); return; }
-                                qc.invalidateQueries({ queryKey: ["maintenance_requests"] });
-                                await writeRoomMaintenanceFlag(n, true);
-                                setNoteDraft((p) => ({ ...p, [n]: "" }));
-                                toast.success("Sent to maintenance log");
-                              }}
-                           >
-                              Send to maintenance log
-                           </Button>
-                         </div>
-                       </>
-                     );
-                   })()}
-                 </div>
                </>
              )}
            </div>
@@ -3927,12 +3901,41 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
       room_number: roomNumber,
       message,
       created_by_username: authUser?.username ?? null,
+      origin_department:
+        myMessageDepartments.includes("housekeeping") && !myMessageDepartments.includes("reception")
+          ? "housekeeping"
+          : myMessageDepartments.includes("reception")
+          ? "reception"
+          : myMessageDepartments[0] ?? null,
     } as never);
     if (error) return { ok: false, error: error.message };
     await writeRoomMaintenanceFlag(roomNumber, true);
     qc.invalidateQueries({ queryKey: ["maintenance_requests"] });
     return { ok: true };
   }}
+  onLogLostProperty={async (roomNumber, message) => {
+    const senderRole =
+      myMessageDepartments.includes("housekeeping") && !myMessageDepartments.includes("reception")
+        ? "housekeeping"
+        : myMessageDepartments.includes("reception")
+        ? "reception"
+        : myMessageDepartments[0] ?? null;
+    const { error } = await supabase.from("lost_property" as never).insert({
+      room_number: roomNumber,
+      message,
+      created_by_username: authUser?.username ?? null,
+      created_by_role: senderRole,
+    } as never);
+    if (error) return { ok: false, error: error.message };
+    qc.invalidateQueries({ queryKey: ["lost_property"] });
+    return { ok: true };
+  }}
+/>
+<LostPropertySheet
+  open={lostPropertyOpen}
+  onOpenChange={setLostPropertyOpen}
+  canResolve={canResolveLostProperty}
+  currentUsername={authUser?.username ?? null}
 />
 <Sheet open={menuSheetOpen} onOpenChange={setMenuSheetOpen}>
   <SheetContent side="right" disableDragDismiss className="w-auto max-w-[90vw] min-w-[18rem] sm:max-w-md p-0 flex flex-col overflow-hidden [&_[data-sheet-close]]:max-lg:hidden">
@@ -4013,10 +4016,10 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
               <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">Manage</p>
             )}
             <div className="space-y-1.5">
-              {(menuHasHk || menuHasFnb) && (
+              {(menuHasHk || menuHasFnb) && !isMaintenance && (
                 <Row icon={List} label="Linen List" onClick={() => { close(); setTemplateOpen(true); }} />
               )}
-              {menuIsAdmin && (
+              {menuIsAdmin && !isMaintenance && (
                 <>
                   <Row icon={Hash} label="Manage Rooms" onClick={() => { close(); setManageRoomsOpen(true); }} />
                   <Row icon={Ban} label="Rejects" onClick={() => { close(); setRejectsOpen(true); }} />
@@ -4026,7 +4029,7 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
                   <Row icon={ConciergeBell} label="Bulk Room Status Setup" onClick={() => { close(); setQuickReceptionOpen(true); }} />
                 </>
               )}
-              {!menuIsFnbOnly && (
+              {!menuIsFnbOnly && !isMaintenance && (
                 <Row
                   icon={Wrench}
                   label={
@@ -4038,6 +4041,13 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
                     </span>
                   }
                   onClick={() => { close(); setMaintenanceLogOpen(true); }}
+                />
+              )}
+              {menuCanUseLostProperty && !isMaintenance && (
+                <Row
+                  icon={PackageSearch}
+                  label="Lost Property"
+                  onClick={() => { close(); setLostPropertyOpen(true); }}
                 />
               )}
               {canUseMessages && (
@@ -4060,10 +4070,10 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
           <div className="space-y-2">
             <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">Account</p>
             <div className="space-y-1.5">
-              {realIsAdmin && (
+              {realIsAdmin && !isMaintenance && (
                 <Row icon={Users} label="Users" onClick={() => { close(); setUsersOpen(true); }} />
               )}
-              {realIsManager && !realIsAdmin && (
+              {realIsManager && !realIsAdmin && !isMaintenance && (
                 <Row icon={Users} label="User Approval" onClick={() => { close(); setUserApprovalOpen(true); }} />
               )}
               {!menuIsFnbOnly && (
@@ -4999,7 +5009,177 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
   </Dialog>
 
  {/* Rooms */}
- {isFnb ? (
+ {isMaintenance ? (
+   <section className="space-y-4">
+     <div className="flex items-baseline justify-between">
+       <h2 className="text-sm font-medium text-muted-foreground uppercase tracking-wide">
+         Maintenance Requests
+       </h2>
+       <span className="text-xs text-muted-foreground">
+         {openMaintenanceCount} open
+       </span>
+     </div>
+     {(() => {
+       const openReqs = maintenanceRequests.filter((m) => !m.done);
+       const doneReqs = maintenanceRequests.filter((m) => m.done).slice(0, 30);
+       const openMsgs = roomMessages
+         .filter(
+           (m) =>
+             (m.thread === "hk_maintenance" || m.thread === "reception_maintenance") &&
+             !m.done_at &&
+             !m.deleted_at,
+         )
+         .slice(0, 100);
+       type Item = {
+         id: string;
+         source: "req" | "msg";
+         roomNumber: number | null;
+         message: string;
+         sender: string | null;
+         createdAt: string;
+         origin: "housekeeping" | "reception" | null;
+         done: boolean;
+       };
+       const items: Item[] = [
+         ...openReqs.map<Item>((m) => ({
+           id: `req-${m.id}`,
+           source: "req",
+           roomNumber: m.room_number,
+           message: m.message,
+           sender: m.created_by_username,
+           createdAt: m.created_at,
+           origin:
+             ((m as unknown as { origin_department?: string | null }).origin_department as
+               | "housekeeping"
+               | "reception"
+               | null) ?? null,
+           done: false,
+         })),
+         ...openMsgs.map<Item>((m) => ({
+           id: `msg-${m.id}`,
+           source: "msg",
+           roomNumber: m.room_number,
+           message: m.message,
+           sender: m.created_by_username,
+           createdAt: m.created_at,
+           origin: m.thread === "reception_maintenance" ? "reception" : "housekeeping",
+           done: false,
+         })),
+       ].sort((a, b) => (a.createdAt < b.createdAt ? 1 : -1));
+       const rawId = (id: string) => id.replace(/^req-|^msg-/, "");
+       const markDoneItem = async (it: Item) => {
+         if (it.source === "req") {
+           await markMaintenanceDone(rawId(it.id));
+         } else {
+           await supabase
+             .from("room_messages" as never)
+             .update({ done_at: new Date().toISOString(), updated_at: new Date().toISOString() } as never)
+             .eq("id", rawId(it.id));
+           qc.invalidateQueries({ queryKey: ["room_messages"] });
+         }
+       };
+       const deleteItem = async (it: Item) => {
+         if (it.source === "req") {
+           await supabase
+             .from("maintenance_requests" as never)
+             .update({ deleted_at: new Date().toISOString(), updated_at: new Date().toISOString(), done: true, done_at: new Date().toISOString() } as never)
+             .eq("id", rawId(it.id));
+           qc.invalidateQueries({ queryKey: ["maintenance_requests"] });
+         } else {
+           await supabase
+             .from("room_messages" as never)
+             .update({ deleted_at: new Date().toISOString(), updated_at: new Date().toISOString() } as never)
+             .eq("id", rawId(it.id));
+           qc.invalidateQueries({ queryKey: ["room_messages"] });
+         }
+       };
+       const replyToItem = (it: Item) => {
+         const thread: MessagesThread =
+           it.origin === "reception" ? "reception_maintenance" : "hk_maintenance";
+         setMessagesInitial({ thread, room: it.roomNumber ?? null });
+         setMessagesSheetOpen(true);
+       };
+       return (
+         <>
+           {items.length === 0 ? (
+             <p className="text-sm text-muted-foreground py-8 text-center">
+               No open maintenance items.
+             </p>
+           ) : (
+             <ul className="space-y-2">
+               {items.map((it) => (
+                 <li key={it.id} className="rounded-lg border bg-background p-3">
+                   <div className="flex items-center gap-2 flex-wrap text-xs text-muted-foreground">
+                     {typeof it.roomNumber === "number" && (
+                       <span className="inline-flex h-6 items-center rounded-full bg-primary/10 text-primary px-2 font-semibold">
+                         Room {it.roomNumber}
+                       </span>
+                     )}
+                     {it.origin && (
+                       <span className="inline-flex h-5 items-center rounded-full bg-muted px-2 text-[10px] font-semibold uppercase">
+                         {it.origin === "reception" ? "Reception" : "Housekeeping"}
+                       </span>
+                     )}
+                     <span>
+                       {new Date(it.createdAt).toLocaleString(undefined, { month: "short", day: "numeric", hour: "numeric", minute: "2-digit" })}
+                       {it.sender ? ` · ${it.sender}` : ""}
+                     </span>
+                   </div>
+                   <p className="mt-2 text-sm whitespace-pre-wrap break-words">{it.message}</p>
+                   <div className="mt-3 flex flex-wrap justify-end gap-2">
+                     <Button type="button" size="sm" variant="outline" className="h-8 text-xs" onClick={() => void replyToItem(it)}>
+                       <MessageSquare className="h-3.5 w-3.5 mr-1" /> Reply
+                     </Button>
+                     <Button type="button" size="sm" variant="default" className="h-8 text-xs" onClick={() => void markDoneItem(it)}>
+                       <Check className="h-3.5 w-3.5 mr-1" /> Done
+                     </Button>
+                     <Button type="button" size="sm" variant="ghost" className="h-8 text-xs text-destructive hover:text-destructive" onClick={() => void deleteItem(it)}>
+                       <Trash2 className="h-3.5 w-3.5 mr-1" /> Delete
+                     </Button>
+                   </div>
+                 </li>
+               ))}
+             </ul>
+           )}
+           {doneReqs.length > 0 && (
+             <div className="mt-6 space-y-2">
+               <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">Completed</p>
+               {doneReqs.map((m) => (
+                 <div key={m.id} className="rounded-lg border bg-muted/40 p-3">
+                   <div className="flex items-center gap-2 flex-wrap text-xs text-muted-foreground">
+                     <span className="inline-flex h-6 items-center rounded-full bg-muted px-2 font-semibold">Room {m.room_number}</span>
+                     <span>
+                       Done{m.done_by_username ? ` by ${m.done_by_username}` : ""}
+                       {m.done_at ? ` · ${new Date(m.done_at).toLocaleString(undefined, { month: "short", day: "numeric", hour: "numeric", minute: "2-digit" })}` : ""}
+                     </span>
+                   </div>
+                   <p className="mt-1 text-sm whitespace-pre-wrap break-words text-muted-foreground line-through">{m.message}</p>
+                   <div className="mt-2 flex justify-end">
+                     <Button
+                       type="button"
+                       size="sm"
+                       variant="ghost"
+                       className="h-7 text-xs"
+                       onClick={async () => {
+                         await supabase
+                           .from("maintenance_requests" as never)
+                           .update({ done: false, done_at: null, done_by_username: null, updated_at: new Date().toISOString() } as never)
+                           .eq("id", m.id);
+                         qc.invalidateQueries({ queryKey: ["maintenance_requests"] });
+                       }}
+                     >
+                       <RotateCcw className="h-3 w-3 mr-1" /> Reopen
+                     </Button>
+                   </div>
+                 </div>
+               ))}
+             </div>
+           )}
+         </>
+       );
+     })()}
+   </section>
+ ) : isFnb ? (
    <section className="space-y-4">
      <div className="flex items-baseline justify-between">
        <h2 className="text-sm font-medium text-muted-foreground uppercase tracking-wide">

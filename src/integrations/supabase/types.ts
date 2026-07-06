@@ -67,15 +67,59 @@ export type Database = {
           },
         ]
       }
+      lost_property: {
+        Row: {
+          created_at: string
+          created_by_role: string | null
+          created_by_username: string | null
+          deleted_at: string | null
+          id: string
+          message: string
+          resolved_at: string | null
+          resolved_by_username: string | null
+          room_number: number | null
+          status: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          created_by_role?: string | null
+          created_by_username?: string | null
+          deleted_at?: string | null
+          id?: string
+          message: string
+          resolved_at?: string | null
+          resolved_by_username?: string | null
+          room_number?: number | null
+          status?: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          created_by_role?: string | null
+          created_by_username?: string | null
+          deleted_at?: string | null
+          id?: string
+          message?: string
+          resolved_at?: string | null
+          resolved_by_username?: string | null
+          room_number?: number | null
+          status?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       maintenance_requests: {
         Row: {
           created_at: string
           created_by_username: string | null
+          deleted_at: string | null
           done: boolean
           done_at: string | null
           done_by_username: string | null
           id: string
           message: string
+          origin_department: string | null
           room_number: number
           updated_at: string
           user_id: string
@@ -83,11 +127,13 @@ export type Database = {
         Insert: {
           created_at?: string
           created_by_username?: string | null
+          deleted_at?: string | null
           done?: boolean
           done_at?: string | null
           done_by_username?: string | null
           id?: string
           message: string
+          origin_department?: string | null
           room_number: number
           updated_at?: string
           user_id?: string
@@ -95,11 +141,13 @@ export type Database = {
         Update: {
           created_at?: string
           created_by_username?: string | null
+          deleted_at?: string | null
           done?: boolean
           done_at?: string | null
           done_by_username?: string | null
           id?: string
           message?: string
+          origin_department?: string | null
           room_number?: number
           updated_at?: string
           user_id?: string
@@ -597,6 +645,7 @@ export type Database = {
         | "manager"
         | "fnb"
         | "housekeeper"
+        | "maintenance"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -732,6 +781,7 @@ export const Constants = {
         "manager",
         "fnb",
         "housekeeper",
+        "maintenance",
       ],
     },
   },

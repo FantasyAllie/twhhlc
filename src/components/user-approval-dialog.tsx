@@ -29,6 +29,7 @@ const SUB_ROLE_LABELS: Record<SubRole, string> = {
   reception: "Reception",
   housekeeper: "Housekeeping",
   fnb: "F&B",
+  maintenance: "Maintenance",
 };
 
 export function UserApprovalDialog({
