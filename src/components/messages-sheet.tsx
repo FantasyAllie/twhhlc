@@ -66,6 +66,7 @@ export function MessagesSheet({
   availableThreads,
   initialThread,
   initialRoom,
+  initialText,
   currentUsername,
   roomNumbers,
   myDepartments,
@@ -78,6 +79,7 @@ export function MessagesSheet({
   availableThreads: MessagesThread[];
   initialThread?: MessagesThread;
   initialRoom?: number | null;
+  initialText?: string;
   currentUsername: string | null;
   roomNumbers: number[];
   myDepartments: Department[];
@@ -94,7 +96,7 @@ export function MessagesSheet({
       ? initialThread
       : availableThreads[0] ?? "hk_reception",
   );
-  const [text, setText] = useState("");
+  const [text, setText] = useState(initialText ?? "");
   const [room, setRoom] = useState<number | "">(initialRoom ?? "");
   const [alsoMaintenance, setAlsoMaintenance] = useState(false);
   const [alsoLostProperty, setAlsoLostProperty] = useState(false);
@@ -161,7 +163,8 @@ export function MessagesSheet({
     if (!open) return;
     if (initialThread && availableThreads.includes(initialThread)) setThread(initialThread);
     if (typeof initialRoom === "number") setRoom(initialRoom);
-  }, [open, initialThread, initialRoom, availableThreads]);
+    if (typeof initialText === "string" && initialText.length > 0) setText(initialText);
+  }, [open, initialThread, initialRoom, initialText, availableThreads]);
 
   const q = useQuery({
     queryKey: ["messages_feed", thread],
