@@ -3896,6 +3896,7 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
   initialThread={messagesInitial.thread}
   initialRoom={messagesInitial.room ?? null}
   initialText={messagesInitial.text}
+  initialReplyTo={messagesInitial.replyTo}
   currentUsername={authUser?.username ?? null}
   roomNumbers={rooms.map((r) => r.room_number).sort((a, b) => a - b)}
   myDepartments={myMessageDepartments}
