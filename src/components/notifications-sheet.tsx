@@ -34,6 +34,8 @@ const DEFAULT_PREFS: NotificationPrefs = {
   notify_from_reception: true,
   notify_from_housekeeping: true,
   notify_from_fnb: true,
+  notify_from_maintenance: true,
+  notify_maintenance_requests: true,
 };
 
 export function NotificationsSheet({
@@ -44,7 +46,7 @@ export function NotificationsSheet({
 }: {
   open: boolean;
   onOpenChange: (o: boolean) => void;
-  userRole: "admin" | "user" | "reception";
+  userRole: "admin" | "user" | "reception" | "maintenance";
   myDepartments?: MessagesDepartment[];
 }) {
   const supported = typeof window !== "undefined" && isPushSupported();
@@ -227,7 +229,7 @@ export function NotificationsSheet({
               Notify me about new messages from
             </p>
             <div className="space-y-2">
-              {(["reception", "housekeeping", "fnb"] as MessagesDepartment[])
+              {(["reception", "housekeeping", "fnb", "maintenance"] as MessagesDepartment[])
                 .filter((d) => !(myDepartments ?? []).includes(d) || (myDepartments ?? []).length > 1)
                 .map((d) => (
                   <PrefRow
@@ -237,14 +239,18 @@ export function NotificationsSheet({
                         ? "Reception"
                         : d === "housekeeping"
                         ? "Housekeeping"
-                        : "F&B"
+                        : d === "fnb"
+                        ? "F&B"
+                        : "Maintenance"
                     }
                     checked={
                       d === "reception"
                         ? prefs.notify_from_reception
                         : d === "housekeeping"
                         ? prefs.notify_from_housekeeping
-                        : prefs.notify_from_fnb
+                        : d === "fnb"
+                        ? prefs.notify_from_fnb
+                        : prefs.notify_from_maintenance
                     }
                     onChange={(v) =>
                       void updatePref(
@@ -252,7 +258,9 @@ export function NotificationsSheet({
                           ? { notify_from_reception: v }
                           : d === "housekeeping"
                           ? { notify_from_housekeeping: v }
-                          : { notify_from_fnb: v },
+                          : d === "fnb"
+                          ? { notify_from_fnb: v }
+                          : { notify_from_maintenance: v },
                       )
                     }
                   />
@@ -262,6 +270,22 @@ export function NotificationsSheet({
               Applies to the Messages window between departments.
             </p>
           </div>
+
+          {(userRole === "admin" || userRole === "maintenance" || (myDepartments ?? []).includes("maintenance")) && (
+            <div className="space-y-2 rounded-md border bg-background p-3">
+              <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+                Maintenance requests
+              </p>
+              <PrefRow
+                label="New maintenance request from Housekeeping or Reception"
+                checked={prefs.notify_maintenance_requests}
+                onChange={(v) => void updatePref({ notify_maintenance_requests: v })}
+              />
+              <p className="text-[11px] text-muted-foreground pt-1">
+                Get a push when Housekeeping or Reception log a new maintenance job.
+              </p>
+            </div>
+          )}
         </div>
       </SheetContent>
     </Sheet>

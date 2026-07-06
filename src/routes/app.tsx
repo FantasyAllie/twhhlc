@@ -9,7 +9,7 @@ import { ReceptionIconGuide } from "@/components/reception-icon-guide";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
 import { getToken, getStoredUser, clearSession } from "@/lib/auth-client";
-import { notifyRoomEvent } from "@/lib/push.functions";
+import { notifyRoomEvent, notifyMaintenanceRequest } from "@/lib/push.functions";
 import { NotificationsSheet } from "@/components/notifications-sheet";
 import { MessagesSheet, type MessagesThread, type Department as MessagesDepartment } from "@/components/messages-sheet";
 import { UsersDialog } from "@/components/users-dialog";
@@ -862,6 +862,7 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
     setNewMaintenanceText("");
     qc.invalidateQueries({ queryKey: ["maintenance_requests"] });
     await writeRoomMaintenanceFlag(roomNumber, true);
+    void notifyMaintenanceRequest({ data: { roomNumber, message: text } });
     toast.success("Maintenance request logged");
   };
 
@@ -2245,6 +2246,13 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
         } as never);
         if (insErr) toast.error(insErr.message);
         qc.invalidateQueries({ queryKey: ["maintenance_requests"] });
+        void notifyMaintenanceRequest({
+          data: {
+            roomNumber,
+            message: noteText || "Needs maintenance",
+            originDepartment: "housekeeping",
+          },
+        });
       }
     } else {
       const who = authUser?.username ?? "Housekeeping";
@@ -3910,11 +3918,12 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
   //   "admin"     → see all toggles
   //   "reception" → hide the housekeeping "marked done" toggle
   //   "user"      → hide the reception message/checkout toggles
-  let bucket: "admin" | "user" | "reception" = "admin";
+  let bucket: "admin" | "user" | "reception" | "maintenance" = "admin";
   if (authUser.position === "admin" || authUser.position === "manager") bucket = "admin";
   else if (hasReceptionRole && hasHousekeeperRole) bucket = "admin";
   else if (hasReceptionRole) bucket = "reception";
   else if (hasHousekeeperRole) bucket = "user";
+  else if (myMessageDepartments.includes("maintenance")) bucket = "maintenance";
   return (
     <NotificationsSheet
       open={notificationsSheetOpen}
@@ -3937,20 +3946,31 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
   myDepartments={myMessageDepartments}
   isAdminOrManager={menuIsAdmin}
   onLogMaintenance={async (roomNumber, message) => {
+    const originDepartment =
+      myMessageDepartments.includes("housekeeping") && !myMessageDepartments.includes("reception")
+        ? "housekeeping"
+        : myMessageDepartments.includes("reception")
+        ? "reception"
+        : myMessageDepartments[0] ?? null;
     const { error } = await supabase.from("maintenance_requests" as never).insert({
       room_number: roomNumber,
       message,
       created_by_username: authUser?.username ?? null,
-      origin_department:
-        myMessageDepartments.includes("housekeeping") && !myMessageDepartments.includes("reception")
-          ? "housekeeping"
-          : myMessageDepartments.includes("reception")
-          ? "reception"
-          : myMessageDepartments[0] ?? null,
+      origin_department: originDepartment,
     } as never);
     if (error) return { ok: false, error: error.message };
     await writeRoomMaintenanceFlag(roomNumber, true);
     qc.invalidateQueries({ queryKey: ["maintenance_requests"] });
+    void notifyMaintenanceRequest({
+      data: {
+        roomNumber,
+        message,
+        originDepartment:
+          originDepartment === "housekeeping" || originDepartment === "reception" || originDepartment === "fnb"
+            ? originDepartment
+            : null,
+      },
+    });
     return { ok: true };
   }}
   onLogLostProperty={async (roomNumber, message) => {

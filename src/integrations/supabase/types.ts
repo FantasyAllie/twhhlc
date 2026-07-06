@@ -161,7 +161,9 @@ export type Database = {
           messages_enabled: boolean
           notify_from_fnb: boolean
           notify_from_housekeeping: boolean
+          notify_from_maintenance: boolean
           notify_from_reception: boolean
+          notify_maintenance_requests: boolean
           updated_at: string
           user_id: string
         }
@@ -171,7 +173,9 @@ export type Database = {
           messages_enabled?: boolean
           notify_from_fnb?: boolean
           notify_from_housekeeping?: boolean
+          notify_from_maintenance?: boolean
           notify_from_reception?: boolean
+          notify_maintenance_requests?: boolean
           updated_at?: string
           user_id: string
         }
@@ -181,7 +185,9 @@ export type Database = {
           messages_enabled?: boolean
           notify_from_fnb?: boolean
           notify_from_housekeeping?: boolean
+          notify_from_maintenance?: boolean
           notify_from_reception?: boolean
+          notify_maintenance_requests?: boolean
           updated_at?: string
           user_id?: string
         }
