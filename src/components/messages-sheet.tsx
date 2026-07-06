@@ -499,6 +499,28 @@ export function MessagesSheet({
               </label>
             </div>
           )}
+          {replyTo && (
+            <div className="flex items-start gap-2 rounded-md border-l-4 border-primary bg-muted/60 px-2 py-1.5">
+              <div className="flex-1 min-w-0">
+                <div className="text-[10px] font-semibold text-primary">
+                  Replying to {replyTo.sender}
+                </div>
+                <div className="text-xs text-muted-foreground line-clamp-2 whitespace-pre-wrap break-words">
+                  {replyTo.snippet}
+                </div>
+              </div>
+              <Button
+                type="button"
+                size="icon"
+                variant="ghost"
+                className="h-6 w-6 shrink-0"
+                onClick={() => setReplyTo(null)}
+                aria-label="Cancel reply"
+              >
+                <X className="h-3.5 w-3.5" />
+              </Button>
+            </div>
+          )}
           <div className="flex gap-2">
             <Input
               value={text}
