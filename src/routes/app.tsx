@@ -421,6 +421,7 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
   const [maintenanceLogOpen, setMaintenanceLogOpen] = useState(false);
   const [newMaintenanceRoom, setNewMaintenanceRoom] = useState<string>("");
   const [newMaintenanceText, setNewMaintenanceText] = useState<string>("");
+  const [lostPropertyOpen, setLostPropertyOpen] = useState(false);
   // Admin "view as" overlay — lets admins temporarily experience the app as
   // another role. Does NOT change the auth token; backend still treats them
   // as admin. Only affects UI gating and visible affordances.
