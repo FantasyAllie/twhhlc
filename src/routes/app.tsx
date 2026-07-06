@@ -862,6 +862,7 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
     setNewMaintenanceText("");
     qc.invalidateQueries({ queryKey: ["maintenance_requests"] });
     await writeRoomMaintenanceFlag(roomNumber, true);
+    void notifyMaintenanceRequest({ data: { roomNumber, message: text } });
     toast.success("Maintenance request logged");
   };
 
