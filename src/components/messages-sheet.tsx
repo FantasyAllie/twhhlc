@@ -15,7 +15,8 @@ export type MessagesThread =
   | "hk_fnb"
   | "reception_fnb"
   | "hk_maintenance"
-  | "reception_maintenance";
+  | "reception_maintenance"
+  | "fnb_maintenance";
 export type Department = "housekeeping" | "reception" | "fnb" | "maintenance";
 
 const DEPT_LABELS: Record<Department, string> = {
@@ -45,6 +46,7 @@ const THREAD_LABELS: Record<MessagesThread, string> = {
   reception_fnb: "Reception ↔ F&B",
   hk_maintenance: "Housekeeping ↔ Maintenance",
   reception_maintenance: "Reception ↔ Maintenance",
+  fnb_maintenance: "F&B ↔ Maintenance",
 };
 
 // Room tags matter for HK↔Reception and any maintenance thread — F&B is not room-scoped.
@@ -60,6 +62,7 @@ function threadFor(a: Department, b: Department): MessagesThread | null {
   if (s.has("reception") && s.has("fnb")) return "reception_fnb";
   if (s.has("housekeeping") && s.has("maintenance")) return "hk_maintenance";
   if (s.has("reception") && s.has("maintenance")) return "reception_maintenance";
+  if (s.has("fnb") && s.has("maintenance")) return "fnb_maintenance";
   return null;
 }
 
@@ -149,7 +152,9 @@ export function MessagesSheet({
         ? (["reception", "fnb"] as const)
         : thread === "hk_maintenance"
         ? (["housekeeping", "maintenance"] as const)
-        : (["reception", "maintenance"] as const);
+        : thread === "reception_maintenance"
+        ? (["reception", "maintenance"] as const)
+        : (["fnb", "maintenance"] as const);
     return (myDepartments.includes(a) ? b : a) as Department;
   }, [useSendToPicker, thread, myDepartments]);
 
@@ -276,7 +281,9 @@ export function MessagesSheet({
         ? ["reception", "fnb"]
         : thread === "hk_maintenance"
         ? ["housekeeping", "maintenance"]
-        : ["reception", "maintenance"];
+        : thread === "reception_maintenance"
+        ? ["reception", "maintenance"]
+        : ["fnb", "maintenance"];
     const mineInThread = pair.filter((d) => myDepartments.includes(d));
     const senderDepartment: Department | null =
       mineInThread.length === 1 ? mineInThread[0] : null;

@@ -285,7 +285,8 @@ type MessagesThread =
   | "hk_fnb"
   | "reception_fnb"
   | "hk_maintenance"
-  | "reception_maintenance";
+  | "reception_maintenance"
+  | "fnb_maintenance";
 
 const THREAD_PAIR: Record<MessagesThread, [MessagesDepartment, MessagesDepartment]> = {
   hk_reception: ["housekeeping", "reception"],
@@ -293,6 +294,7 @@ const THREAD_PAIR: Record<MessagesThread, [MessagesDepartment, MessagesDepartmen
   reception_fnb: ["reception", "fnb"],
   hk_maintenance: ["housekeeping", "maintenance"],
   reception_maintenance: ["reception", "maintenance"],
+  fnb_maintenance: ["fnb", "maintenance"],
 };
 
 const DEPT_TO_ROLES: Record<MessagesDepartment, Role[]> = {

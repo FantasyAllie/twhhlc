@@ -1012,7 +1012,7 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
       // 2. Every department can also message Reception (universal hub),
       //    and Reception can message every department.
       // 3. Maintenance can message Housekeeping and Reception. F&B cannot
-      //    reach Maintenance directly — they go through Reception.
+      //    Maintenance can also message F&B directly.
       // Admins/managers keep access to all threads for oversight.
       const isReceptionUser = hasReceptionRole;
       const reachable = new Set<MessagesDepartment>();
@@ -1024,6 +1024,12 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
       if (reachable.size > 0) reachable.add("reception");
       // Rule 3: HK and Reception can always reach Maintenance for oversight.
       if (hasHousekeeperRole || hasReceptionRole || hasMaintenanceRole) reachable.add("maintenance");
+      // Maintenance can reach every department directly, including F&B.
+      if (hasMaintenanceRole) {
+        reachable.add("housekeeping");
+        reachable.add("fnb");
+      }
+      if (hasFnbRole) reachable.add("maintenance");
       const bothReachable = (a: MessagesDepartment, b: MessagesDepartment) =>
         menuIsAdmin || isReceptionUser || (reachable.has(a) && reachable.has(b));
       if (bothReachable("housekeeping", "reception")) out.push("hk_reception");
@@ -1031,6 +1037,7 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
       if (bothReachable("reception", "fnb")) out.push("reception_fnb");
       if (bothReachable("housekeeping", "maintenance")) out.push("hk_maintenance");
       if (bothReachable("reception", "maintenance")) out.push("reception_maintenance");
+      if (bothReachable("fnb", "maintenance")) out.push("fnb_maintenance");
       return out;
     })();
     const canUseMessages = availableThreads.length > 0;
