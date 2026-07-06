@@ -152,7 +152,9 @@ export function MessagesSheet({
         ? (["reception", "fnb"] as const)
         : thread === "hk_maintenance"
         ? (["housekeeping", "maintenance"] as const)
-        : (["reception", "maintenance"] as const);
+        : thread === "reception_maintenance"
+        ? (["reception", "maintenance"] as const)
+        : (["fnb", "maintenance"] as const);
     return (myDepartments.includes(a) ? b : a) as Department;
   }, [useSendToPicker, thread, myDepartments]);
 
