@@ -12,7 +12,7 @@ import {
   type Position,
   type SubRole,
 } from "@/lib/auth.functions";
-import { getStoredUser } from "@/lib/auth-client";
+import { getStoredUser, refreshSession } from "@/lib/auth-client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import {
@@ -124,6 +124,9 @@ export function UsersDialog({
       }
       toast.success("User updated");
       qc.invalidateQueries({ queryKey: ["app_users"] });
+      if (me?.id === editUser.id) {
+        void refreshSession();
+      }
       closeEdit();
     } catch (err) {
       toast.error(err instanceof Error ? err.message : "Failed to update user");
