@@ -2246,6 +2246,13 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
         } as never);
         if (insErr) toast.error(insErr.message);
         qc.invalidateQueries({ queryKey: ["maintenance_requests"] });
+        void notifyMaintenanceRequest({
+          data: {
+            roomNumber,
+            message: noteText || "Needs maintenance",
+            originDepartment: "housekeeping",
+          },
+        });
       }
     } else {
       const who = authUser?.username ?? "Housekeeping";
