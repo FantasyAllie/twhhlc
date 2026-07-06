@@ -4037,6 +4037,13 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
                   onClick={() => { close(); setMaintenanceLogOpen(true); }}
                 />
               )}
+              {menuCanUseLostProperty && !isMaintenance && (
+                <Row
+                  icon={PackageSearch}
+                  label="Lost Property"
+                  onClick={() => { close(); setLostPropertyOpen(true); }}
+                />
+              )}
               {canUseMessages && (
                 <Row
                   icon={MessageSquare}
