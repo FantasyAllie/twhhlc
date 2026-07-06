@@ -3108,6 +3108,12 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
              )}
            </DropdownMenuItem>
          )}
+           {menuCanUseLostProperty && !isMaintenance && (
+             <DropdownMenuItem onClick={() => setLostPropertyOpen(true)}>
+               <PackageSearch className="h-4 w-4 mr-2" />
+               Lost Property
+             </DropdownMenuItem>
+           )}
           {canUseMessages && (
             <DropdownMenuItem onClick={() => { setMessagesInitial({}); setMessagesSheetOpen(true); }}>
               <MessageSquare className="h-4 w-4 mr-2" />
