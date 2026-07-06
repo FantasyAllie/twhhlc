@@ -417,7 +417,7 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
   const [menuSheetOpen, setMenuSheetOpen] = useState(false);
   const [notificationsSheetOpen, setNotificationsSheetOpen] = useState(false);
   const [messagesSheetOpen, setMessagesSheetOpen] = useState(false);
-  const [messagesInitial, setMessagesInitial] = useState<{ thread?: MessagesThread; room?: number | null; text?: string }>({});
+  const [messagesInitial, setMessagesInitial] = useState<{ thread?: MessagesThread; room?: number | null; text?: string; replyTo?: { id: string; sender: string; snippet: string } }>({});
   const [maintenanceLogOpen, setMaintenanceLogOpen] = useState(false);
   const [newMaintenanceRoom, setNewMaintenanceRoom] = useState<string>("");
   const [newMaintenanceText, setNewMaintenanceText] = useState<string>("");
@@ -3896,6 +3896,7 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
   initialThread={messagesInitial.thread}
   initialRoom={messagesInitial.room ?? null}
   initialText={messagesInitial.text}
+  initialReplyTo={messagesInitial.replyTo}
   currentUsername={authUser?.username ?? null}
   roomNumbers={rooms.map((r) => r.room_number).sort((a, b) => a - b)}
   myDepartments={myMessageDepartments}
@@ -5101,13 +5102,16 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
        const replyToItem = (it: Item) => {
          const thread: MessagesThread =
            it.origin === "reception" ? "reception_maintenance" : "hk_maintenance";
-          const quoted = it.message
-            .split("\n")
-            .map((l) => `> ${l}`)
-            .join("\n");
-          const attribution = it.sender ? ` ${it.sender}` : "";
-          const prefill = `${quoted}\n\nRe:${attribution}\n`;
-          setMessagesInitial({ thread, room: it.roomNumber ?? null, text: prefill });
+          setMessagesInitial({
+            thread,
+            room: it.roomNumber ?? null,
+            text: "",
+            replyTo: {
+              id: rawId(it.id),
+              sender: it.sender ?? (it.origin === "reception" ? "Reception" : "Housekeeping"),
+              snippet: it.message.slice(0, 280),
+            },
+          });
          setMessagesSheetOpen(true);
        };
        return (

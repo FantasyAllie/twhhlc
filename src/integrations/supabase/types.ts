@@ -423,6 +423,9 @@ export type Database = {
           done_at: string | null
           id: string
           message: string
+          reply_to_id: string | null
+          reply_to_sender: string | null
+          reply_to_snippet: string | null
           room_number: number | null
           thread: string
           updated_at: string
@@ -436,6 +439,9 @@ export type Database = {
           done_at?: string | null
           id?: string
           message: string
+          reply_to_id?: string | null
+          reply_to_sender?: string | null
+          reply_to_snippet?: string | null
           room_number?: number | null
           thread?: string
           updated_at?: string
@@ -449,12 +455,23 @@ export type Database = {
           done_at?: string | null
           id?: string
           message?: string
+          reply_to_id?: string | null
+          reply_to_sender?: string | null
+          reply_to_snippet?: string | null
           room_number?: number | null
           thread?: string
           updated_at?: string
           user_id?: string
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "room_messages_reply_to_id_fkey"
+            columns: ["reply_to_id"]
+            isOneToOne: false
+            referencedRelation: "room_messages"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       room_types: {
         Row: {
