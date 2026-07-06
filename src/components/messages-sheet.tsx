@@ -34,6 +34,9 @@ type Msg = {
   done_at: string | null;
   deleted_at: string | null;
   created_at: string;
+  reply_to_id: string | null;
+  reply_to_sender: string | null;
+  reply_to_snippet: string | null;
 };
 
 const THREAD_LABELS: Record<MessagesThread, string> = {
@@ -67,6 +70,7 @@ export function MessagesSheet({
   initialThread,
   initialRoom,
   initialText,
+  initialReplyTo,
   currentUsername,
   roomNumbers,
   myDepartments,
@@ -80,6 +84,7 @@ export function MessagesSheet({
   initialThread?: MessagesThread;
   initialRoom?: number | null;
   initialText?: string;
+  initialReplyTo?: { id: string; sender: string; snippet: string };
   currentUsername: string | null;
   roomNumbers: number[];
   myDepartments: Department[];
@@ -98,6 +103,7 @@ export function MessagesSheet({
   );
   const [text, setText] = useState(initialText ?? "");
   const [room, setRoom] = useState<number | "">(initialRoom ?? "");
+  const [replyTo, setReplyTo] = useState<{ id: string; sender: string; snippet: string } | null>(initialReplyTo ?? null);
   const [alsoMaintenance, setAlsoMaintenance] = useState(false);
   const [alsoLostProperty, setAlsoLostProperty] = useState(false);
   const feedRef = useRef<HTMLDivElement | null>(null);
@@ -164,7 +170,8 @@ export function MessagesSheet({
     if (initialThread && availableThreads.includes(initialThread)) setThread(initialThread);
     if (typeof initialRoom === "number") setRoom(initialRoom);
     if (typeof initialText === "string" && initialText.length > 0) setText(initialText);
-  }, [open, initialThread, initialRoom, initialText, availableThreads]);
+    setReplyTo(initialReplyTo ?? null);
+  }, [open, initialThread, initialRoom, initialText, initialReplyTo, availableThreads]);
 
   const q = useQuery({
     queryKey: ["messages_feed", thread],
@@ -173,7 +180,7 @@ export function MessagesSheet({
       const cutoff = new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString();
       const { data, error } = await supabase
         .from("room_messages" as never)
-        .select("id,thread,room_number,message,created_by_username,done_at,deleted_at,created_at")
+          .select("id,thread,room_number,message,created_by_username,done_at,deleted_at,created_at,reply_to_id,reply_to_sender,reply_to_snippet")
         .eq("thread", thread)
         .is("deleted_at", null)
         .or(`done_at.is.null,done_at.gte.${cutoff}`)
@@ -234,6 +241,9 @@ export function MessagesSheet({
       room_number: roomNumber,
       message: body,
       created_by_username: currentUsername ?? null,
+      reply_to_id: replyTo?.id ?? null,
+      reply_to_sender: replyTo?.sender ?? null,
+      reply_to_snippet: replyTo?.snippet ?? null,
     } as never);
     if (error) {
       toast.error(error.message);
@@ -274,6 +284,7 @@ export function MessagesSheet({
       data: { thread, senderDepartment, message: body, roomNumber },
     }).catch(() => {});
     setText("");
+    setReplyTo(null);
     setAlsoMaintenance(false);
     setAlsoLostProperty(false);
     qc.invalidateQueries({ queryKey: ["messages_feed", thread] });
