@@ -3946,20 +3946,31 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
   myDepartments={myMessageDepartments}
   isAdminOrManager={menuIsAdmin}
   onLogMaintenance={async (roomNumber, message) => {
+    const originDepartment =
+      myMessageDepartments.includes("housekeeping") && !myMessageDepartments.includes("reception")
+        ? "housekeeping"
+        : myMessageDepartments.includes("reception")
+        ? "reception"
+        : myMessageDepartments[0] ?? null;
     const { error } = await supabase.from("maintenance_requests" as never).insert({
       room_number: roomNumber,
       message,
       created_by_username: authUser?.username ?? null,
-      origin_department:
-        myMessageDepartments.includes("housekeeping") && !myMessageDepartments.includes("reception")
-          ? "housekeeping"
-          : myMessageDepartments.includes("reception")
-          ? "reception"
-          : myMessageDepartments[0] ?? null,
+      origin_department: originDepartment,
     } as never);
     if (error) return { ok: false, error: error.message };
     await writeRoomMaintenanceFlag(roomNumber, true);
     qc.invalidateQueries({ queryKey: ["maintenance_requests"] });
+    void notifyMaintenanceRequest({
+      data: {
+        roomNumber,
+        message,
+        originDepartment:
+          originDepartment === "housekeeping" || originDepartment === "reception" || originDepartment === "fnb"
+            ? originDepartment
+            : null,
+      },
+    });
     return { ok: true };
   }}
   onLogLostProperty={async (roomNumber, message) => {
