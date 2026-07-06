@@ -65,6 +65,11 @@ const DialogContent = React.forwardRef<
         "lg:inset-x-auto lg:bottom-auto lg:top-1/2 lg:left-1/2 lg:!w-[calc(100vw-2rem)] lg:!max-w-2xl lg:-translate-x-1/2 lg:-translate-y-1/2 lg:rounded-2xl lg:border lg:max-h-[85vh]",
         className,
       )}
+      onOpenAutoFocus={(e) => {
+        // Prevent inputs inside the dialog from stealing focus on open,
+        // which would pop the mobile keyboard uninvited.
+        e.preventDefault();
+      }}
       {...props}
     >
       <div

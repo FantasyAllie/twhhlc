@@ -103,6 +103,11 @@ const SheetContent = React.forwardRef<
           side === "left" && "pl-[max(1rem,env(safe-area-inset-left))]",
           side === "right" && "pr-[max(1rem,env(safe-area-inset-right))]",
         )}
+        onOpenAutoFocus={(e) => {
+          // Prevent inputs inside the sheet from stealing focus on open,
+          // which would pop the mobile keyboard uninvited.
+          e.preventDefault();
+        }}
         {...props}
       >
         {isDraggable && (
