@@ -74,6 +74,8 @@ export type NotificationPrefs = {
   notify_from_reception: boolean;
   notify_from_housekeeping: boolean;
   notify_from_fnb: boolean;
+  notify_from_maintenance: boolean;
+  notify_maintenance_requests: boolean;
 };
 
 const DEFAULT_PREFS: NotificationPrefs = {
@@ -83,6 +85,8 @@ const DEFAULT_PREFS: NotificationPrefs = {
   notify_from_reception: true,
   notify_from_housekeeping: true,
   notify_from_fnb: true,
+  notify_from_maintenance: true,
+  notify_maintenance_requests: true,
 };
 
 export const getNotificationPrefs = createServerFn({ method: "POST" })
@@ -91,7 +95,7 @@ export const getNotificationPrefs = createServerFn({ method: "POST" })
     const db = await getDb();
     const { data: row } = await db
       .from("notification_preferences" as never)
-      .select("messages_enabled,checkout_enabled,done_enabled,notify_from_reception,notify_from_housekeeping,notify_from_fnb")
+      .select("messages_enabled,checkout_enabled,done_enabled,notify_from_reception,notify_from_housekeeping,notify_from_fnb,notify_from_maintenance,notify_maintenance_requests")
       .eq("user_id", context.userId)
       .maybeSingle();
     if (!row) return DEFAULT_PREFS;
@@ -108,6 +112,8 @@ export const setNotificationPrefs = createServerFn({ method: "POST" })
       notify_from_reception?: boolean;
       notify_from_housekeeping?: boolean;
       notify_from_fnb?: boolean;
+      notify_from_maintenance?: boolean;
+      notify_maintenance_requests?: boolean;
     }) => d,
   )
   .handler(async ({ data, context }) => {
@@ -119,6 +125,8 @@ export const setNotificationPrefs = createServerFn({ method: "POST" })
     if (typeof data.notify_from_reception === "boolean") patch.notify_from_reception = data.notify_from_reception;
     if (typeof data.notify_from_housekeeping === "boolean") patch.notify_from_housekeeping = data.notify_from_housekeeping;
     if (typeof data.notify_from_fnb === "boolean") patch.notify_from_fnb = data.notify_from_fnb;
+    if (typeof data.notify_from_maintenance === "boolean") patch.notify_from_maintenance = data.notify_from_maintenance;
+    if (typeof data.notify_maintenance_requests === "boolean") patch.notify_maintenance_requests = data.notify_maintenance_requests;
     const { error } = await db
       .from("notification_preferences" as never)
       .upsert(patch as never, { onConflict: "user_id" });
@@ -309,9 +317,7 @@ const PREF_COL_FROM: Record<MessagesDepartment, keyof NotificationPrefs> = {
   reception: "notify_from_reception",
   housekeeping: "notify_from_housekeeping",
   fnb: "notify_from_fnb",
-  // Reuse the housekeeping toggle for maintenance — most operational messages
-  // are treated together, and there's no separate maintenance preference column.
-  maintenance: "notify_from_housekeeping",
+  maintenance: "notify_from_maintenance",
 };
 
 const DEPT_LABEL: Record<MessagesDepartment, string> = {
