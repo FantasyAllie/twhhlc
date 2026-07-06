@@ -4010,10 +4010,10 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
               <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">Manage</p>
             )}
             <div className="space-y-1.5">
-              {(menuHasHk || menuHasFnb) && (
+              {(menuHasHk || menuHasFnb) && !isMaintenance && (
                 <Row icon={List} label="Linen List" onClick={() => { close(); setTemplateOpen(true); }} />
               )}
-              {menuIsAdmin && (
+              {menuIsAdmin && !isMaintenance && (
                 <>
                   <Row icon={Hash} label="Manage Rooms" onClick={() => { close(); setManageRoomsOpen(true); }} />
                   <Row icon={Ban} label="Rejects" onClick={() => { close(); setRejectsOpen(true); }} />
@@ -4023,7 +4023,7 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
                   <Row icon={ConciergeBell} label="Bulk Room Status Setup" onClick={() => { close(); setQuickReceptionOpen(true); }} />
                 </>
               )}
-              {!menuIsFnbOnly && (
+              {!menuIsFnbOnly && !isMaintenance && (
                 <Row
                   icon={Wrench}
                   label={
@@ -4064,10 +4064,10 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
           <div className="space-y-2">
             <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">Account</p>
             <div className="space-y-1.5">
-              {realIsAdmin && (
+              {realIsAdmin && !isMaintenance && (
                 <Row icon={Users} label="Users" onClick={() => { close(); setUsersOpen(true); }} />
               )}
-              {realIsManager && !realIsAdmin && (
+              {realIsManager && !realIsAdmin && !isMaintenance && (
                 <Row icon={Users} label="User Approval" onClick={() => { close(); setUserApprovalOpen(true); }} />
               )}
               {!menuIsFnbOnly && (
