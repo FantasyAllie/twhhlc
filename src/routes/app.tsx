@@ -2633,6 +2633,13 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
           <div className="space-y-3">
             <div className="flex items-center justify-between gap-2 rounded-md border bg-background p-3">
               <span className="flex items-center gap-2 text-sm font-medium">
+                <DoorOpen className={cn("h-4 w-4", room?.early_check_in ? "text-amber-600 dark:text-amber-400" : "text-muted-foreground")} />
+                Early check-in
+              </span>
+              <Switch checked={!!room?.early_check_in} onCheckedChange={(v) => setRoomEarlyCheckIn(n, v)} />
+            </div>
+            <div className="flex items-center justify-between gap-2 rounded-md border bg-background p-3">
+              <span className="flex items-center gap-2 text-sm font-medium">
                 <DoorOpen className={cn("h-4 w-4", vacated ? "text-emerald-600 dark:text-emerald-400" : "text-muted-foreground")} />
                 Guest has checked out
               </span>
@@ -3559,13 +3566,6 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
               )}
              {isReception ? (
                <>
-                 <div className="flex items-center justify-between gap-2 rounded-md border bg-background p-3">
-                   <span className="flex items-center gap-2 text-sm font-medium">
-                     <DoorOpen className={cn("h-4 w-4", vacated ? "text-emerald-600 dark:text-emerald-400" : "text-muted-foreground")} />
-                     Guest has checked out
-                   </span>
-                   <Switch checked={vacated} onCheckedChange={(v) => setRoomGuestVacated(n, v)} />
-                 </div>
                   <div className="flex items-center justify-between gap-2 rounded-md border bg-background p-3">
                     <span className="flex items-center gap-2 text-sm font-medium">
                       <DoorOpen className={cn("h-4 w-4", room?.early_check_in ? "text-amber-600 dark:text-amber-400" : "text-muted-foreground")} />
@@ -3573,6 +3573,13 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
                     </span>
                     <Switch checked={!!room?.early_check_in} onCheckedChange={(v) => setRoomEarlyCheckIn(n, v)} />
                   </div>
+                 <div className="flex items-center justify-between gap-2 rounded-md border bg-background p-3">
+                   <span className="flex items-center gap-2 text-sm font-medium">
+                     <DoorOpen className={cn("h-4 w-4", vacated ? "text-emerald-600 dark:text-emerald-400" : "text-muted-foreground")} />
+                     Guest has checked out
+                   </span>
+                   <Switch checked={vacated} onCheckedChange={(v) => setRoomGuestVacated(n, v)} />
+                 </div>
                  {maintenance && (
                    <div className="flex items-center gap-2 rounded-md border border-amber-500/60 bg-amber-50 dark:bg-amber-950/40 p-3 text-sm">
                      <Wrench className="h-4 w-4 text-amber-600 dark:text-amber-400 shrink-0" />
