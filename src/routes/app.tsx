@@ -4186,9 +4186,9 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
         )}
       </SheetTitle>
       <SheetDescription>
-        {isReception
-          ? "Reception can mark maintenance requests as complete."
-          : "Log a maintenance issue for reception to action."}
+        {isReception || isMaintenance
+          ? "Reception and Maintenance can mark requests as complete."
+          : "Log a maintenance issue for Reception or Maintenance to action."}
       </SheetDescription>
     </SheetHeader>
     <div className="mt-4 flex flex-col gap-2 border-b pb-4">
@@ -4242,7 +4242,7 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
                   </div>
                   <p className="mt-1 text-sm whitespace-pre-wrap break-words">{m.message}</p>
                 </div>
-                {isReception ? (
+                {isReception || isMaintenance ? (
                   <Button
                     type="button"
                     size="sm"
@@ -4253,7 +4253,7 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
                     <Check className="h-4 w-4 mr-1" /> Done
                   </Button>
                 ) : (
-                  <span className="text-xs text-muted-foreground shrink-0 pt-1">Awaiting reception</span>
+                  <span className="text-xs text-muted-foreground shrink-0 pt-1">Awaiting action</span>
                 )}
                 {isAdmin && (
                   <Button
@@ -4291,7 +4291,7 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
                   </div>
                   <p className="mt-1 text-sm whitespace-pre-wrap break-words text-muted-foreground line-through">{m.message}</p>
                 </div>
-                {(isReception || isAdmin) && (
+                {(isReception || isMaintenance || isAdmin) && (
                   <Button
                     type="button"
                     size="icon"
