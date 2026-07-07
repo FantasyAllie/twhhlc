@@ -896,7 +896,7 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
   };
 
   const markMaintenanceDone = async (id: string) => {
-    const who = authUser?.username ?? "Reception";
+    const who = authUser?.username ?? (isMaintenance ? "Maintenance" : "Reception");
     const target = (qc.getQueryData<MaintenanceRequest[]>(["maintenance_requests"]) ?? [])
       .find((m) => m.id === id);
     qc.setQueryData<MaintenanceRequest[]>(["maintenance_requests"], (old) =>
