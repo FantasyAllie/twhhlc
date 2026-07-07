@@ -5669,7 +5669,9 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
             ? { bg: "var(--room-dirty)", fg: "var(--room-dirty-fg)", accent: "var(--room-dirty-accent)", label: "Dirty" }
           : (hasStatus || hasLinenCount || state === "progress")
             ? { ...roomStateMeta.progress, label: "Cleaning in Progress" }
-            : { ...roomStateMeta.todo, label: isArrival ? "Arrival" : isDirty ? "Dirty" : isClean ? "Clean" : "Not started" };
+             : room?.early_check_in
+               ? { bg: "var(--room-early)", fg: "var(--room-early-fg)", accent: "var(--room-early-accent)", label: "Early check-in" }
+               : { ...roomStateMeta.todo, label: isArrival ? "Arrival" : isDirty ? "Dirty" : isClean ? "Clean" : "Not started" };
     nodes.push(
       <button
         key={`r-${n}`}
