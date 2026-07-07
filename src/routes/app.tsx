@@ -2304,6 +2304,40 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
     if (value) fireRoomNotification("checkout", roomNumber);
   };
 
+  const setRoomEarlyCheckIn = async (roomNumber: number, value: boolean) => {
+    qc.setQueryData<Room[]>(["rooms"], (old) => {
+      const list = old ? [...old] : [];
+      const idx = list.findIndex((r) => r.room_number === roomNumber);
+      if (idx >= 0) list[idx] = { ...list[idx], early_check_in: value };
+      else
+        list.push({
+          id: `temp-${roomNumber}`,
+          room_number: roomNumber,
+          done: false,
+          done_reception: false,
+          category: null,
+          default_status: null,
+          reception_status_id: null,
+          reception_bed_id: null,
+          housekeeping_note: null,
+          needs_maintenance: false,
+          guest_vacated: false,
+          early_check_in: value,
+        });
+      return list;
+    });
+    const { error } = await supabase.from("rooms").upsert(
+      {
+        room_number: roomNumber,
+        early_check_in: value,
+        updated_at: new Date().toISOString(),
+      } as never,
+      { onConflict: "user_id,room_number" },
+    );
+    if (error) toast.error(error.message);
+    qc.invalidateQueries({ queryKey: ["rooms"] });
+  };
+
   // --- Room type management ---
   const addRoomType = async (label: string) => {
     const clean = label.trim();
