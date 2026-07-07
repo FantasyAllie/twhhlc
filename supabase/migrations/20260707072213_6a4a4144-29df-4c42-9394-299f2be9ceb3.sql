@@ -1,0 +1,1 @@
+ALTER TABLE public.rooms ADD COLUMN IF NOT EXISTS early_check_in boolean NOT NULL DEFAULT false;

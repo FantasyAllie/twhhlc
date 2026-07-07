@@ -518,6 +518,7 @@ export type Database = {
           default_status: string | null
           done: boolean
           done_reception: boolean
+          early_check_in: boolean
           guest_vacated: boolean
           housekeeping_note: string | null
           id: string
@@ -535,6 +536,7 @@ export type Database = {
           default_status?: string | null
           done?: boolean
           done_reception?: boolean
+          early_check_in?: boolean
           guest_vacated?: boolean
           housekeeping_note?: string | null
           id?: string
@@ -552,6 +554,7 @@ export type Database = {
           default_status?: string | null
           done?: boolean
           done_reception?: boolean
+          early_check_in?: boolean
           guest_vacated?: boolean
           housekeeping_note?: string | null
           id?: string

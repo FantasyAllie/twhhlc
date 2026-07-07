@@ -208,7 +208,7 @@ type RoomCount = {
  item_id: string;
  count: number;
 };
-type Room = { id: string; room_number: number; sort_order?: number; done: boolean; done_reception: boolean; category: Category | null; default_status: string | null; reception_status_id: string | null; reception_bed_id: string | null; housekeeping_note: string | null; needs_maintenance: boolean; guest_vacated: boolean };
+type Room = { id: string; room_number: number; sort_order?: number; done: boolean; done_reception: boolean; category: Category | null; default_status: string | null; reception_status_id: string | null; reception_bed_id: string | null; housekeeping_note: string | null; needs_maintenance: boolean; guest_vacated: boolean; early_check_in?: boolean };
 type TemplateItemRoom = { id: string; template_item_id: string; room_number: number };
 type SnapshotRow = { name: string; count: number };
 type RoomStatusRow = { room: number; status: string; bed: string; maintenance?: boolean };
@@ -574,7 +574,7 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
     queryFn: async (): Promise<Room[]> => {
       const { data, error } = await supabase
         .from("rooms")
-        .select("id,room_number,sort_order,done,done_reception,category,default_status,reception_status_id,reception_bed_id,housekeeping_note,needs_maintenance,guest_vacated")
+        .select("id,room_number,sort_order,done,done_reception,category,default_status,reception_status_id,reception_bed_id,housekeeping_note,needs_maintenance,guest_vacated,early_check_in")
         .order("sort_order", { ascending: true });
       if (error) throw error;
       return (data ?? []) as Room[];
@@ -1125,7 +1125,7 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
           default_status: null,
           category: null,
           reception_status_id: null,
-          reception_bed_id: null, housekeeping_note: null, needs_maintenance: false, guest_vacated: false,
+          reception_bed_id: null, housekeeping_note: null, needs_maintenance: false, guest_vacated: false, early_check_in: false,
         });
       return list;
     });
@@ -1390,7 +1390,7 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
   const list = old ? [...old] : [];
   const idx = list.findIndex((r) => r.room_number === roomNumber);
   if (idx >= 0) list[idx] = { ...list[idx], done: true };
-  else list.push({ id: `temp-${roomNumber}`, room_number: roomNumber, done: true, done_reception: false, category: null, default_status: null, reception_status_id: null, reception_bed_id: null, housekeeping_note: null, needs_maintenance: false, guest_vacated: false });
+  else list.push({ id: `temp-${roomNumber}`, room_number: roomNumber, done: true, done_reception: false, category: null, default_status: null, reception_status_id: null, reception_bed_id: null, housekeeping_note: null, needs_maintenance: false, guest_vacated: false, early_check_in: false });
   return list;
   });
   const { error: roomErr } = await supabase.from("rooms").upsert(
@@ -1475,7 +1475,7 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
         ...r,
         done: false,
         done_reception: false,
-        housekeeping_note: null, needs_maintenance: false, guest_vacated: false,
+        housekeeping_note: null, needs_maintenance: false, guest_vacated: false, early_check_in: false,
         reception_status_id:
           dndId && r.reception_status_id === dndId && stayId ? stayId : null,
         reception_bed_id: null,
@@ -1485,7 +1485,7 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
     const r1 = await supabase.from("rooms").update({
       done: false,
       done_reception: false,
-      housekeeping_note: null, needs_maintenance: false, guest_vacated: false,
+      housekeeping_note: null, needs_maintenance: false, guest_vacated: false, early_check_in: false,
       reception_status_id: null,
       reception_bed_id: null,
     }).neq("room_number", -1);
@@ -1496,7 +1496,7 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
         .update({
           done: false,
           done_reception: false,
-          housekeeping_note: null, needs_maintenance: false, guest_vacated: false,
+          housekeeping_note: null, needs_maintenance: false, guest_vacated: false, early_check_in: false,
           reception_status_id: stayId ?? null,
           reception_bed_id: null,
         })
@@ -1523,7 +1523,7 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
         done_reception: false,
         housekeeping_note: null,
         needs_maintenance: false,
-        guest_vacated: false,
+        guest_vacated: false, early_check_in: false,
         reception_status_id:
           dndId && r.reception_status_id === dndId && stayId ? stayId : null,
         reception_bed_id: null,
@@ -1531,13 +1531,13 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
     );
     const { error } = await supabase
       .from("rooms")
-      .update({ done: false, done_reception: false, reception_status_id: null, reception_bed_id: null, housekeeping_note: null, needs_maintenance: false, guest_vacated: false })
+      .update({ done: false, done_reception: false, reception_status_id: null, reception_bed_id: null, housekeeping_note: null, needs_maintenance: false, guest_vacated: false, early_check_in: false })
       .neq("room_number", -1)
     if (error) toast.error(error.message);
     if (dndRoomNumbers.length > 0) {
       const { error: e2 } = await supabase
         .from("rooms")
-        .update({ done: false, done_reception: false, reception_status_id: stayId ?? null, reception_bed_id: null, housekeeping_note: null, needs_maintenance: false, guest_vacated: false })
+        .update({ done: false, done_reception: false, reception_status_id: stayId ?? null, reception_bed_id: null, housekeeping_note: null, needs_maintenance: false, guest_vacated: false, early_check_in: false })
         .in("room_number", dndRoomNumbers);
       if (e2) toast.error(e2.message);
     }
@@ -1557,7 +1557,7 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
     const nextSort = (rooms.reduce((m, r) => Math.max(m, r.sort_order ?? r.room_number), 0)) + 1;
     qc.setQueryData<Room[]>(["rooms"], (old) => {
       const list = old ? [...old] : [];
-      list.push({ id: `temp-${n}`, room_number: n, sort_order: nextSort, done: false, done_reception: false, category: null, default_status: null, reception_status_id: null, reception_bed_id: null, housekeeping_note: null, needs_maintenance: false, guest_vacated: false });
+      list.push({ id: `temp-${n}`, room_number: n, sort_order: nextSort, done: false, done_reception: false, category: null, default_status: null, reception_status_id: null, reception_bed_id: null, housekeeping_note: null, needs_maintenance: false, guest_vacated: false, early_check_in: false });
       list.sort((a, b) => (a.sort_order ?? a.room_number) - (b.sort_order ?? b.room_number));
       return list;
     });
@@ -2081,7 +2081,7 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
  category,
   default_status: null,
   reception_status_id: null,
-  reception_bed_id: null, housekeeping_note: null, needs_maintenance: false, guest_vacated: false,
+  reception_bed_id: null, housekeeping_note: null, needs_maintenance: false, guest_vacated: false, early_check_in: false,
  });
  return list;
  });
@@ -2114,7 +2114,7 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
          category: null,
          default_status: status,
           reception_status_id: null,
-          reception_bed_id: null, housekeeping_note: null, needs_maintenance: false, guest_vacated: false,
+          reception_bed_id: null, housekeeping_note: null, needs_maintenance: false, guest_vacated: false, early_check_in: false,
        });
      return list;
    });
@@ -2148,7 +2148,7 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
           category: null,
           default_status: null,
           reception_status_id: field === "reception_status_id" ? value : null,
-          reception_bed_id: field === "reception_bed_id" ? value : null, housekeeping_note: null, needs_maintenance: false, guest_vacated: false,
+          reception_bed_id: field === "reception_bed_id" ? value : null, housekeeping_note: null, needs_maintenance: false, guest_vacated: false, early_check_in: false,
         });
       return list;
     });
@@ -2186,7 +2186,7 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
           reception_status_id: null,
           reception_bed_id: null,
           housekeeping_note: next,
-          needs_maintenance: false, guest_vacated: false,
+          needs_maintenance: false, guest_vacated: false, early_check_in: false,
         });
       return list;
     });
@@ -2218,7 +2218,7 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
           reception_status_id: null,
           reception_bed_id: null,
           housekeeping_note: null,
-          needs_maintenance: value, guest_vacated: false,
+          needs_maintenance: value, guest_vacated: false, early_check_in: false,
         });
       return list;
     });
@@ -2302,6 +2302,40 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
     if (error) toast.error(error.message);
     qc.invalidateQueries({ queryKey: ["rooms"] });
     if (value) fireRoomNotification("checkout", roomNumber);
+  };
+
+  const setRoomEarlyCheckIn = async (roomNumber: number, value: boolean) => {
+    qc.setQueryData<Room[]>(["rooms"], (old) => {
+      const list = old ? [...old] : [];
+      const idx = list.findIndex((r) => r.room_number === roomNumber);
+      if (idx >= 0) list[idx] = { ...list[idx], early_check_in: value };
+      else
+        list.push({
+          id: `temp-${roomNumber}`,
+          room_number: roomNumber,
+          done: false,
+          done_reception: false,
+          category: null,
+          default_status: null,
+          reception_status_id: null,
+          reception_bed_id: null,
+          housekeeping_note: null,
+          needs_maintenance: false,
+          guest_vacated: false,
+          early_check_in: value,
+        });
+      return list;
+    });
+    const { error } = await supabase.from("rooms").upsert(
+      {
+        room_number: roomNumber,
+        early_check_in: value,
+        updated_at: new Date().toISOString(),
+      } as never,
+      { onConflict: "user_id,room_number" },
+    );
+    if (error) toast.error(error.message);
+    qc.invalidateQueries({ queryKey: ["rooms"] });
   };
 
   // --- Room type management ---
@@ -3532,6 +3566,13 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
                    </span>
                    <Switch checked={vacated} onCheckedChange={(v) => setRoomGuestVacated(n, v)} />
                  </div>
+                  <div className="flex items-center justify-between gap-2 rounded-md border bg-background p-3">
+                    <span className="flex items-center gap-2 text-sm font-medium">
+                      <DoorOpen className={cn("h-4 w-4", room?.early_check_in ? "text-amber-600 dark:text-amber-400" : "text-muted-foreground")} />
+                      Early check-in
+                    </span>
+                    <Switch checked={!!room?.early_check_in} onCheckedChange={(v) => setRoomEarlyCheckIn(n, v)} />
+                  </div>
                  {maintenance && (
                    <div className="flex items-center gap-2 rounded-md border border-amber-500/60 bg-amber-50 dark:bg-amber-950/40 p-3 text-sm">
                      <Wrench className="h-4 w-4 text-amber-600 dark:text-amber-400 shrink-0" />
@@ -5628,7 +5669,9 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
             ? { bg: "var(--room-dirty)", fg: "var(--room-dirty-fg)", accent: "var(--room-dirty-accent)", label: "Dirty" }
           : (hasStatus || hasLinenCount || state === "progress")
             ? { ...roomStateMeta.progress, label: "Cleaning in Progress" }
-            : { ...roomStateMeta.todo, label: isArrival ? "Arrival" : isDirty ? "Dirty" : isClean ? "Clean" : "Not started" };
+             : room?.early_check_in
+               ? { bg: "var(--room-early)", fg: "var(--room-early-fg)", accent: "var(--room-early-accent)", label: "Early check-in" }
+               : { ...roomStateMeta.todo, label: isArrival ? "Arrival" : isDirty ? "Dirty" : isClean ? "Clean" : "Not started" };
     nodes.push(
       <button
         key={`r-${n}`}
