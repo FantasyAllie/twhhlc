@@ -673,7 +673,7 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
     queryFn: async (): Promise<RoomMessage[]> => {
       const { data, error } = await supabase
         .from("room_messages" as never)
-        .select("id,room_number,message,created_by_username,dismissed,thread,done_at,deleted_at,created_at")
+        .select("id,room_number,message,created_by_username,created_by_role,reply_to_id,dismissed,thread,done_at,deleted_at,created_at")
         .is("deleted_at", null)
         .order("created_at", { ascending: false });
       if (error) throw error;
