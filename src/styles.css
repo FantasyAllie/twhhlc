@@ -146,6 +146,9 @@
   --room-early: oklch(0.9 0.14 90);
   --room-early-fg: oklch(0.38 0.12 70);
   --room-early-accent: oklch(0.72 0.17 80);
+  --room-cleandone: oklch(0.93 0.08 300);
+  --room-cleandone-fg: oklch(0.4 0.18 300);
+  --room-cleandone-accent: oklch(0.6 0.22 300);
 }
 
 .dark {
