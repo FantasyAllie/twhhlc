@@ -3713,11 +3713,16 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
                          <li key={m.id} className="flex items-start gap-2 text-sm bg-background/70 rounded p-2">
                            <div className="flex-1 min-w-0">
                              <p className="break-words whitespace-pre-wrap">{m.message}</p>
-                             {m.created_by_username && (
-                               <p className="text-[10px] text-muted-foreground mt-0.5">
-                                 from {m.created_by_username}
-                               </p>
-                             )}
+                              <p className="text-[10px] text-muted-foreground mt-0.5">
+                                {m.created_by_username ? <>from {m.created_by_username} · </> : null}
+                                {new Date(m.created_at).toLocaleString(undefined, {
+                                  weekday: "short",
+                                  day: "numeric",
+                                  month: "short",
+                                  hour: "2-digit",
+                                  minute: "2-digit",
+                                })}
+                              </p>
                            </div>
                            <div className="flex flex-col gap-1 shrink-0">
                              <Button
