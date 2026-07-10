@@ -226,6 +226,8 @@ type RoomMessage = {
   room_number: number | null;
   message: string;
   created_by_username: string | null;
+  created_by_role: string | null;
+  reply_to_id: string | null;
   dismissed: boolean;
   thread: "hk_reception" | "hk_fnb" | "reception_fnb" | "hk_maintenance" | "reception_maintenance";
   done_at: string | null;
