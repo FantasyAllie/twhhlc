@@ -226,6 +226,8 @@ type RoomMessage = {
   room_number: number | null;
   message: string;
   created_by_username: string | null;
+  created_by_role: string | null;
+  reply_to_id: string | null;
   dismissed: boolean;
   thread: "hk_reception" | "hk_fnb" | "reception_fnb" | "hk_maintenance" | "reception_maintenance";
   done_at: string | null;
@@ -671,7 +673,7 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
     queryFn: async (): Promise<RoomMessage[]> => {
       const { data, error } = await supabase
         .from("room_messages" as never)
-        .select("id,room_number,message,created_by_username,dismissed,thread,done_at,deleted_at,created_at")
+        .select("id,room_number,message,created_by_username,created_by_role,reply_to_id,dismissed,thread,done_at,deleted_at,created_at")
         .is("deleted_at", null)
         .order("created_at", { ascending: false });
       if (error) throw error;
@@ -768,6 +770,7 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
       room_number: roomNumber,
       message: text,
       created_by_username: authUser?.username ?? null,
+      created_by_role: isReception ? "reception" : (isHousekeeper ? "housekeeping" : (authUser?.role ?? null)),
       thread: "hk_reception",
     } as never);
     if (error) {
@@ -799,6 +802,8 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
       room_number: m.room_number,
       message: ack,
       created_by_username: who,
+      created_by_role: "housekeeping",
+      reply_to_id: m.id,
       thread: "hk_reception",
     } as never);
     if (error) {
@@ -828,6 +833,7 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
       room_number: roomNumber,
       message: ack,
       created_by_username: who,
+      created_by_role: "reception",
       thread: "hk_reception",
     } as never);
     if (error) {
@@ -2819,7 +2825,13 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
           const note = room?.housekeeping_note ?? null;
           const maintenance = !!room?.needs_maintenance;
           const vacated = !!room?.guest_vacated;
-          const hasMsg = msgs.length > 0;
+          // On reception, ignore messages reception themselves sent (they're
+          // outgoing to housekeeping). Housekeeping originals and any replies
+          // still trigger the dot.
+          const relevantMsgs = isReception
+            ? msgs.filter((m) => m.created_by_role !== "reception" || !!m.reply_to_id)
+            : msgs;
+          const hasMsg = relevantMsgs.length > 0;
           const hasNote = !!note;
           const hasIndicator = hasMsg || hasNote || maintenance || vacated;
           return (

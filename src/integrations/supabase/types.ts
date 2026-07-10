@@ -426,6 +426,7 @@ export type Database = {
       room_messages: {
         Row: {
           created_at: string
+          created_by_role: string | null
           created_by_username: string | null
           deleted_at: string | null
           dismissed: boolean
@@ -442,6 +443,7 @@ export type Database = {
         }
         Insert: {
           created_at?: string
+          created_by_role?: string | null
           created_by_username?: string | null
           deleted_at?: string | null
           dismissed?: boolean
@@ -458,6 +460,7 @@ export type Database = {
         }
         Update: {
           created_at?: string
+          created_by_role?: string | null
           created_by_username?: string | null
           deleted_at?: string | null
           dismissed?: boolean

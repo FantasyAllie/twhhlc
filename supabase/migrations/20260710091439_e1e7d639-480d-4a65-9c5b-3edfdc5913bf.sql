@@ -1,0 +1,1 @@
+ALTER TABLE public.room_messages ADD COLUMN IF NOT EXISTS created_by_role text;
