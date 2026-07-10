@@ -1490,6 +1490,21 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
       reception_bed_id: null,
     }).neq("room_number", -1);
     if (r1.error) toast.error(r1.error.message);
+    // Also clear any per-room default_status that is currently Stayover, so
+    // rooms configured with a Stayover default don't retain the Stayover tile
+    // after a reset.
+    if (stayId) {
+      qc.setQueryData<Room[]>(["rooms"], (old) =>
+        old?.map((r) =>
+          r.default_status === stayId ? { ...r, default_status: null } : r,
+        ) ?? [],
+      );
+      const rs = await supabase
+        .from("rooms")
+        .update({ default_status: null })
+        .eq("default_status", stayId);
+      if (rs.error) toast.error(rs.error.message);
+    }
     if (dndRoomNumbers.length > 0) {
       const { error: e3 } = await supabase
         .from("rooms")
@@ -5577,7 +5592,9 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
         : (isStayover || isDnd)
           ? { bg: "var(--room-stayover)", fg: "var(--room-stayover-fg)", accent: "var(--room-stayover-accent)", label: "Stayover" }
         : (state === "done" || state === "complete")
-          ? { bg: "var(--room-complete)", fg: "var(--room-complete-fg)", accent: "var(--room-complete-accent)", label: "Clean & Ready for Guests" }
+          ? (isClean
+              ? { bg: "var(--room-cleandone)", fg: "var(--room-cleandone-fg)", accent: "var(--room-cleandone-accent)", label: "Clean & Ready for Guests" }
+              : { bg: "var(--room-complete)", fg: "var(--room-complete-fg)", accent: "var(--room-complete-accent)", label: "Clean & Ready for Guests" })
         : isDirty
           ? { bg: "var(--room-dirty)", fg: "var(--room-dirty-fg)", accent: "var(--room-dirty-accent)", label: "ROS - Dirty" }
           : (hasStatus || hasLinenCount)
@@ -5673,7 +5690,9 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
         : (isStayover || isDnd)
           ? { bg: "var(--room-stayover)", fg: "var(--room-stayover-fg)", accent: "var(--room-stayover-accent)", label: "Stayover" }
         : (state === "done" || state === "complete")
-          ? { bg: "var(--room-complete)", fg: "var(--room-complete-fg)", accent: "var(--room-complete-accent)", label: "Clean & Ready for Guests" }
+          ? (isClean
+              ? { bg: "var(--room-cleandone)", fg: "var(--room-cleandone-fg)", accent: "var(--room-cleandone-accent)", label: "Clean & Ready for Guests" }
+              : { bg: "var(--room-complete)", fg: "var(--room-complete-fg)", accent: "var(--room-complete-accent)", label: "Clean & Ready for Guests" })
           : isDirty
             ? { bg: "var(--room-dirty)", fg: "var(--room-dirty-fg)", accent: "var(--room-dirty-accent)", label: "Dirty" }
           : (hasStatus || hasLinenCount || state === "progress")
