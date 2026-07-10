@@ -770,6 +770,7 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
       room_number: roomNumber,
       message: text,
       created_by_username: authUser?.username ?? null,
+      created_by_role: isReception ? "reception" : (isHousekeeper ? "housekeeping" : (authUser?.role ?? null)),
       thread: "hk_reception",
     } as never);
     if (error) {
@@ -801,6 +802,8 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
       room_number: m.room_number,
       message: ack,
       created_by_username: who,
+      created_by_role: "housekeeping",
+      reply_to_id: m.id,
       thread: "hk_reception",
     } as never);
     if (error) {
@@ -830,6 +833,7 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
       room_number: roomNumber,
       message: ack,
       created_by_username: who,
+      created_by_role: "reception",
       thread: "hk_reception",
     } as never);
     if (error) {
