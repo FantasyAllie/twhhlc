@@ -83,6 +83,9 @@
   --color-room-early: var(--room-early);
   --color-room-early-fg: var(--room-early-fg);
   --color-room-early-accent: var(--room-early-accent);
+  --color-room-cleandone: var(--room-cleandone);
+  --color-room-cleandone-fg: var(--room-cleandone-fg);
+  --color-room-cleandone-accent: var(--room-cleandone-accent);
 }
 
 :root {
