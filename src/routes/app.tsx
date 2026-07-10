@@ -2825,7 +2825,13 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
           const note = room?.housekeeping_note ?? null;
           const maintenance = !!room?.needs_maintenance;
           const vacated = !!room?.guest_vacated;
-          const hasMsg = msgs.length > 0;
+          // On reception, ignore messages reception themselves sent (they're
+          // outgoing to housekeeping). Housekeeping originals and any replies
+          // still trigger the dot.
+          const relevantMsgs = isReception
+            ? msgs.filter((m) => m.created_by_role !== "reception" || !!m.reply_to_id)
+            : msgs;
+          const hasMsg = relevantMsgs.length > 0;
           const hasNote = !!note;
           const hasIndicator = hasMsg || hasNote || maintenance || vacated;
           return (
