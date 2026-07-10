@@ -198,11 +198,23 @@ export function MessagesSheet({
 
   const items = useMemo(() => q.data ?? [], [q.data]);
 
+  const prevLenRef = useRef(0);
   useEffect(() => {
     if (!open) return;
     const el = feedRef.current;
-    if (el) el.scrollTop = el.scrollHeight;
+    // Only auto-scroll to bottom on open, or when new messages arrive.
+    // Skip when the list shrinks (e.g. after deleting a message) so the
+    // user's scroll position isn't yanked to the bottom.
+    if (el && items.length > prevLenRef.current) {
+      el.scrollTop = el.scrollHeight;
+    }
+    prevLenRef.current = items.length;
   }, [open, items.length]);
+  useEffect(() => {
+    if (open) {
+      prevLenRef.current = 0;
+    }
+  }, [open]);
 
   // Realtime: refetch on any change to this thread.
   useEffect(() => {
