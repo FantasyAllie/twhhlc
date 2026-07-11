@@ -3906,20 +3906,37 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
                   </Button>
                 </div>
               )}
-             {isAdmin && (
-               <div className="mt-2">
-                 <Button
-                   type="button"
-                   size="sm"
-                   variant="outline"
-                   className="w-full"
-                   onClick={() => {
-                     setReceptionSheetRoom(null);
-                     setQuickReceptionOpen(true);
-                   }}
-                 >
-                   Edit all rooms
-                 </Button>
+             {(isAdmin || isCurrentDnd) && (
+               <div className="mt-2 flex gap-2">
+                 {isAdmin && (
+                   <Button
+                     type="button"
+                     size="sm"
+                     variant="outline"
+                     className="flex-1"
+                     onClick={() => {
+                       setReceptionSheetRoom(null);
+                       setQuickReceptionOpen(true);
+                     }}
+                   >
+                     Edit all rooms
+                   </Button>
+                 )}
+                 {isCurrentDnd && (
+                   <Button
+                     type="button"
+                     size="sm"
+                     variant="outline"
+                     className="flex-1"
+                     onClick={() => {
+                       setStayoverPhotosRoomFilter(n);
+                       setStayoverPhotosOpen(true);
+                     }}
+                   >
+                     <Camera className="h-4 w-4 mr-1" />
+                     Photo
+                   </Button>
+                 )}
                </div>
              )}
            <div className="mt-4 space-y-4">
