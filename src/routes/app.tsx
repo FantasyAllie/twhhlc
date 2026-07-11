@@ -1086,20 +1086,40 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
     })();
     const menuIsFnbOnly =
       position === "user" && hasFnbRole && !hasHousekeeperRole && !hasReceptionRole;
-    const logLostProperty = async (roomNumber: number | null, message: string) => {
+    const logLostProperty = async (
+      roomNumber: number | null,
+      message: string,
+      photos: File[] = [],
+    ) => {
       const senderRole =
         myMessageDepartments.includes("housekeeping") && !myMessageDepartments.includes("reception")
           ? "housekeeping"
           : myMessageDepartments.includes("reception")
           ? "reception"
           : myMessageDepartments[0] ?? null;
-      const { error } = await supabase.from("lost_property" as never).insert({
-        room_number: roomNumber,
-        message,
-        created_by_username: authUser?.username ?? null,
-        created_by_role: senderRole,
-      } as never);
+      const { data, error } = await supabase
+        .from("lost_property" as never)
+        .insert({
+          room_number: roomNumber,
+          message,
+          created_by_username: authUser?.username ?? null,
+          created_by_role: senderRole,
+        } as never)
+        .select("id")
+        .single();
       if (error) return { ok: false as const, error: error.message };
+      const newId = (data as { id: string } | null)?.id;
+      if (newId && photos.length > 0) {
+        const { uploadEntryPhotos } = await import("@/lib/entry-photos");
+        const { paths, errors } = await uploadEntryPhotos("lost_property", newId, photos);
+        if (errors.length > 0) toast.error(`Photo upload: ${errors[0]}`);
+        if (paths.length > 0) {
+          await supabase
+            .from("lost_property" as never)
+            .update({ photo_paths: paths, updated_at: new Date().toISOString() } as never)
+            .eq("id", newId);
+        }
+      }
       qc.invalidateQueries({ queryKey: ["lost_property"] });
       return { ok: true as const };
     };
