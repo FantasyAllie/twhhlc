@@ -415,7 +415,7 @@ export function MessagesSheet({
             <span className="text-xs text-muted-foreground">Send to</span>
             {sendToTargets.map((target) => {
               const t = threadForTarget(target);
-              const active = activeTarget === target;
+              const active = logTarget === null && activeTarget === target;
               return (
                 <Button
                   key={target}
@@ -424,33 +424,83 @@ export function MessagesSheet({
                   variant={active ? "default" : "outline"}
                   className="rounded-full"
                   disabled={!t}
-                  onClick={() => { if (t) setThread(t); }}
+                  onClick={() => { if (t) pickThread(t); }}
                 >
                   {DEPT_LABELS[target]}
                 </Button>
               );
             })}
+            {canPickMaintenanceLog && (
+              <Button
+                type="button"
+                size="sm"
+                variant={logTarget === "maintenance" ? "default" : "outline"}
+                className="rounded-full"
+                onClick={() => setLogTarget("maintenance")}
+              >
+                <Wrench className="h-3.5 w-3.5 mr-1" /> Maintenance
+              </Button>
+            )}
+            {canPickLostPropertyLog && (
+              <Button
+                type="button"
+                size="sm"
+                variant={logTarget === "lost_property" ? "default" : "outline"}
+                className="rounded-full"
+                onClick={() => setLogTarget("lost_property")}
+              >
+                <PackageSearch className="h-3.5 w-3.5 mr-1" /> Lost Property
+              </Button>
+            )}
           </div>
         )}
-        {!useSendToPicker && availableThreads.length > 1 && (
+        {!useSendToPicker && (availableThreads.length > 1 || canPickMaintenanceLog || canPickLostPropertyLog) && (
           <div className="mt-3 flex flex-wrap gap-2">
             {availableThreads.map((t) => (
               <Button
                 key={t}
                 type="button"
                 size="sm"
-                variant={t === thread ? "default" : "outline"}
+                variant={logTarget === null && t === thread ? "default" : "outline"}
                 className="rounded-full"
-                onClick={() => setThread(t)}
+                onClick={() => pickThread(t)}
               >
                 {THREAD_LABELS[t]}
               </Button>
             ))}
+            {canPickMaintenanceLog && (
+              <Button
+                type="button"
+                size="sm"
+                variant={logTarget === "maintenance" ? "default" : "outline"}
+                className="rounded-full"
+                onClick={() => setLogTarget("maintenance")}
+              >
+                <Wrench className="h-3.5 w-3.5 mr-1" /> Maintenance
+              </Button>
+            )}
+            {canPickLostPropertyLog && (
+              <Button
+                type="button"
+                size="sm"
+                variant={logTarget === "lost_property" ? "default" : "outline"}
+                className="rounded-full"
+                onClick={() => setLogTarget("lost_property")}
+              >
+                <PackageSearch className="h-3.5 w-3.5 mr-1" /> Lost Property
+              </Button>
+            )}
           </div>
         )}
 
         <div ref={feedRef} className="flex-1 min-h-0 overflow-y-auto mt-4 space-y-4 pr-1">
-          {groups.length === 0 ? (
+          {logTarget ? (
+            <div className="flex h-full items-center justify-center text-center text-sm text-muted-foreground px-6">
+              {logTarget === "maintenance"
+                ? "Sending to the Maintenance log. Pick a room and describe the issue."
+                : "Adding to Lost Property. Optionally tag a room, then describe the item."}
+            </div>
+          ) : groups.length === 0 ? (
             <p className="text-sm text-muted-foreground text-center py-8">
               No messages yet. Say hi.
             </p>
