@@ -574,9 +574,15 @@ export function MessagesSheet({
         </div>
 
         <div className="mt-3 border-t pt-3 space-y-2">
-          {supportsRoomTag(thread) && (
+          {(logTarget !== null || supportsRoomTag(thread)) && (
             <div className="flex items-center gap-2">
-              <span className="text-xs text-muted-foreground shrink-0">Tag room:</span>
+              <span className="text-xs text-muted-foreground shrink-0">
+                {logTarget === "maintenance"
+                  ? "Room:"
+                  : logTarget === "lost_property"
+                  ? "Room (optional):"
+                  : "Tag room:"}
+              </span>
               <select
                 value={room === "" ? "" : String(room)}
                 onChange={(e) => setRoom(e.target.value === "" ? "" : Number(e.target.value))}
@@ -587,7 +593,7 @@ export function MessagesSheet({
                   <option key={n} value={n}>Room {n}</option>
                 ))}
               </select>
-              {canLogMaintenance && (
+              {logTarget === null && canLogMaintenance && (
                 <label className="ml-auto flex items-center gap-2 text-xs font-medium">
                   <Wrench className={cn("h-3.5 w-3.5", alsoMaintenance ? "text-amber-600 dark:text-amber-400" : "text-muted-foreground")} />
                   <span>Maintenance</span>
@@ -596,7 +602,7 @@ export function MessagesSheet({
               )}
             </div>
           )}
-          {(canLogMaintenance || canLogLostProperty) && supportsRoomTag(thread) && canLogLostProperty && (
+          {logTarget === null && (canLogMaintenance || canLogLostProperty) && supportsRoomTag(thread) && canLogLostProperty && (
             <div className="flex items-center gap-2">
               <label className="ml-auto flex items-center gap-2 text-xs font-medium">
                 <PackageSearch className={cn("h-3.5 w-3.5", alsoLostProperty ? "text-sky-600 dark:text-sky-400" : "text-muted-foreground")} />
