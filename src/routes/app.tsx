@@ -3970,9 +3970,25 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
                               : s.id === dirtyId && rosId
                                 ? rosId
                                 : null;
-                         setRoomReceptionStatus(n, next);
+                          setRoomReceptionStatus(n, next);
+                          if (s.id === dndId) {
+                            void deleteTodayStayoverPhotosForRoom(n).then(() => {
+                              qc.invalidateQueries({ queryKey: ["stayover_photos"] });
+                            });
+                          }
                        } else {
-                         setRoomReceptionStatus(n, s.id);
+                          if (s.id === dndId) {
+                            // Require a photo of the DND door before applying.
+                            setPendingDndRoom(n);
+                            dndFileInputRef.current?.click();
+                          } else {
+                            setRoomReceptionStatus(n, s.id);
+                            if (occ === dndId) {
+                              void deleteTodayStayoverPhotosForRoom(n).then(() => {
+                                qc.invalidateQueries({ queryKey: ["stayover_photos"] });
+                              });
+                            }
+                          }
                        }
                      };
                      const renderRow = (s: { id: string; label: string }) => {
