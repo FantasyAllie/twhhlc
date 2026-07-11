@@ -4421,33 +4421,83 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
           : "Log a maintenance issue for Reception or Maintenance to action."}
       </SheetDescription>
     </SheetHeader>
-    <div className="mt-4 flex flex-col gap-2 border-b pb-4">
-      <div className="flex flex-col sm:flex-row gap-2">
-        <Input
-          type="number"
-          inputMode="numeric"
-          placeholder="Room #"
-          value={newMaintenanceRoom}
-          onChange={(e) => setNewMaintenanceRoom(e.target.value)}
-          className="sm:w-28"
-        />
-        <Input
-          placeholder="Describe the issue…"
-          value={newMaintenanceText}
-          onChange={(e) => setNewMaintenanceText(e.target.value)}
-          onKeyDown={(e) => {
-            if (e.key === "Enter") {
-              e.preventDefault();
-              void submitMaintenanceRequest();
-            }
-          }}
-          className="flex-1"
-        />
-        <Button type="button" onClick={() => void submitMaintenanceRequest()}>
-          <Plus className="h-4 w-4 mr-1" /> Log
+    <div className="mt-4 border-b pb-4">
+      {maintenanceComposerOpen ? (
+        <div className="flex flex-col gap-2 rounded-lg border bg-background p-3">
+          <div className="flex items-center justify-between">
+            <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+              Log a new issue
+            </p>
+            <Button
+              type="button"
+              size="icon"
+              variant="ghost"
+              className="h-6 w-6"
+              onClick={() => {
+                setMaintenanceComposerOpen(false);
+                setNewMaintenanceRoom("");
+                setNewMaintenanceText("");
+                setNewMaintenancePhotos([]);
+              }}
+              aria-label="Close"
+            >
+              <X className="h-4 w-4" />
+            </Button>
+          </div>
+          <div className="flex flex-col sm:flex-row gap-2">
+            <select
+              value={newMaintenanceRoom}
+              onChange={(e) => setNewMaintenanceRoom(e.target.value)}
+              className="h-9 rounded-md border bg-background px-2 text-sm sm:w-32"
+            >
+              <option value="">Select a room</option>
+              {rooms
+                .map((r) => r.room_number)
+                .sort((a, b) => a - b)
+                .map((n) => (
+                  <option key={n} value={String(n)}>
+                    Room {n}
+                  </option>
+                ))}
+            </select>
+            <Input
+              placeholder="Describe the issue…"
+              value={newMaintenanceText}
+              onChange={(e) => setNewMaintenanceText(e.target.value)}
+              onKeyDown={(e) => {
+                if (e.key === "Enter") {
+                  e.preventDefault();
+                  void submitMaintenanceRequest();
+                }
+              }}
+              className="flex-1"
+            />
+            <Button
+              type="button"
+              onClick={async () => {
+                await submitMaintenanceRequest();
+                setMaintenanceComposerOpen(false);
+              }}
+            >
+              <Plus className="h-4 w-4 mr-1" /> Log
+            </Button>
+          </div>
+          <PhotoComposer value={newMaintenancePhotos} onChange={setNewMaintenancePhotos} />
+        </div>
+      ) : (
+        <Button
+          type="button"
+          variant="outline"
+          className="w-full justify-between"
+          onClick={() => setMaintenanceComposerOpen(true)}
+        >
+          <span className="flex items-center gap-2">
+            <Plus className="h-4 w-4" />
+            Log a new issue
+          </span>
+          <ChevronDown className="h-4 w-4 opacity-60" />
         </Button>
-      </div>
-      <PhotoComposer value={newMaintenancePhotos} onChange={setNewMaintenancePhotos} />
+      )}
     </div>
     <div className="flex-1 min-h-0 overflow-y-auto mt-4 space-y-4">
       <div className="space-y-2">
