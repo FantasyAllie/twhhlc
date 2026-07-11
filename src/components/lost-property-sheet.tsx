@@ -201,6 +201,43 @@ export function LostPropertySheet({
           </div>
         )}
 
+        {canAddEntry && (
+          <div className="mt-3 space-y-2 rounded-lg border bg-background p-3">
+            <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+              Add entry
+            </p>
+            <div className="flex items-center gap-2">
+              <span className="text-xs text-muted-foreground shrink-0">Room:</span>
+              <select
+                value={newRoom === "" ? "" : String(newRoom)}
+                onChange={(e) => setNewRoom(e.target.value === "" ? "" : Number(e.target.value))}
+                className="h-8 rounded-md border bg-background px-2 text-sm"
+              >
+                <option value="">— none —</option>
+                {roomNumbers.map((n) => (
+                  <option key={n} value={n}>Room {n}</option>
+                ))}
+              </select>
+            </div>
+            <div className="flex gap-2">
+              <Input
+                value={newText}
+                onChange={(e) => setNewText(e.target.value)}
+                placeholder="Describe the item…"
+                onKeyDown={(e) => {
+                  if (e.key === "Enter" && !e.shiftKey) {
+                    e.preventDefault();
+                    void addEntry();
+                  }
+                }}
+              />
+              <Button type="button" onClick={() => void addEntry()} disabled={!newText.trim()}>
+                <Plus className="h-4 w-4 mr-1" /> Add
+              </Button>
+            </div>
+          </div>
+        )}
+
         <div className="flex-1 min-h-0 overflow-y-auto mt-4 space-y-4">
           <div className="space-y-2">
             <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
