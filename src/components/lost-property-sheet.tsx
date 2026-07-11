@@ -10,7 +10,8 @@ import {
 } from "@/components/ui/sheet";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { PackageSearch, Check, Trash2 } from "lucide-react";
+import { Textarea } from "@/components/ui/textarea";
+import { PackageSearch, Check, Trash2, Plus } from "lucide-react";
 import { toast } from "sonner";
 
 type LostPropertyRow = {
@@ -32,14 +33,59 @@ export function LostPropertySheet({
   canResolve,
   isAdmin,
   currentUsername,
+  canAdd,
+  requireRoom,
+  onAdd,
 }: {
   open: boolean;
   onOpenChange: (o: boolean) => void;
   canResolve: boolean;
   isAdmin?: boolean;
   currentUsername: string | null;
+  canAdd?: boolean;
+  requireRoom?: boolean;
+  onAdd?: (
+    roomNumber: number | null,
+    message: string,
+  ) => Promise<{ ok: boolean; error?: string }>;
 }) {
   const qc = useQueryClient();
+
+  const [addRoom, setAddRoom] = useState("");
+  const [addMessage, setAddMessage] = useState("");
+  const [submitting, setSubmitting] = useState(false);
+
+  const submitAdd = async () => {
+    if (!onAdd) return;
+    const body = addMessage.trim();
+    if (!body) {
+      toast.error("Enter a description");
+      return;
+    }
+    let roomNumber: number | null = null;
+    const raw = addRoom.trim();
+    if (raw) {
+      const n = Number(raw);
+      if (!Number.isFinite(n) || n <= 0) {
+        toast.error("Invalid room number");
+        return;
+      }
+      roomNumber = Math.floor(n);
+    } else if (requireRoom) {
+      toast.error("Room number required");
+      return;
+    }
+    setSubmitting(true);
+    const res = await onAdd(roomNumber, body);
+    setSubmitting(false);
+    if (!res.ok) {
+      toast.error(res.error ?? "Could not log item");
+      return;
+    }
+    toast.success("Logged to lost property");
+    setAddRoom("");
+    setAddMessage("");
+  };
 
   const RETENTION_KEY = "lost_property_retention_months";
   const [retentionMonths, setRetentionMonths] = useState<number>(() => {
@@ -170,6 +216,46 @@ export function LostPropertySheet({
         )}
 
         <div className="flex-1 min-h-0 overflow-y-auto mt-4 space-y-4">
+          {canAdd && onAdd && (
+            <div className="space-y-2 rounded-lg border bg-background p-3">
+              <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+                Log a new item
+              </p>
+              <div className="flex items-center gap-2">
+                <label htmlFor="lp-add-room" className="text-sm shrink-0">
+                  Room
+                </label>
+                <Input
+                  id="lp-add-room"
+                  type="number"
+                  inputMode="numeric"
+                  min={1}
+                  placeholder={requireRoom ? "Required" : "Optional"}
+                  value={addRoom}
+                  onChange={(e) => setAddRoom(e.target.value)}
+                  className="h-8 w-24"
+                />
+              </div>
+              <Textarea
+                placeholder="Describe the item (e.g. black wallet on nightstand)"
+                value={addMessage}
+                onChange={(e) => setAddMessage(e.target.value.slice(0, 500))}
+                rows={2}
+                className="resize-none"
+              />
+              <div className="flex justify-end">
+                <Button
+                  type="button"
+                  size="sm"
+                  onClick={() => void submitAdd()}
+                  disabled={submitting || !addMessage.trim()}
+                >
+                  <Plus className="h-3.5 w-3.5 mr-1" />
+                  {submitting ? "Logging…" : "Log item"}
+                </Button>
+              </div>
+            </div>
+          )}
           <div className="space-y-2">
             <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
               Open ({openRows.length})
