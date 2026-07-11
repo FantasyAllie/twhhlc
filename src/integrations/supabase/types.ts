@@ -75,6 +75,7 @@ export type Database = {
           deleted_at: string | null
           id: string
           message: string
+          photo_paths: string[]
           resolved_at: string | null
           resolved_by_username: string | null
           room_number: number | null
@@ -88,6 +89,7 @@ export type Database = {
           deleted_at?: string | null
           id?: string
           message: string
+          photo_paths?: string[]
           resolved_at?: string | null
           resolved_by_username?: string | null
           room_number?: number | null
@@ -101,6 +103,7 @@ export type Database = {
           deleted_at?: string | null
           id?: string
           message?: string
+          photo_paths?: string[]
           resolved_at?: string | null
           resolved_by_username?: string | null
           room_number?: number | null
@@ -120,6 +123,7 @@ export type Database = {
           id: string
           message: string
           origin_department: string | null
+          photo_paths: string[]
           room_number: number
           updated_at: string
           user_id: string
@@ -134,6 +138,7 @@ export type Database = {
           id?: string
           message: string
           origin_department?: string | null
+          photo_paths?: string[]
           room_number: number
           updated_at?: string
           user_id?: string
@@ -148,6 +153,7 @@ export type Database = {
           id?: string
           message?: string
           origin_department?: string | null
+          photo_paths?: string[]
           room_number?: number
           updated_at?: string
           user_id?: string
