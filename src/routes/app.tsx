@@ -16,6 +16,7 @@ import { UsersDialog } from "@/components/users-dialog";
 import { UserApprovalDialog } from "@/components/user-approval-dialog";
 import { QuickReceptionSheet } from "@/components/quick-reception-sheet";
 import { LostPropertySheet } from "@/components/lost-property-sheet";
+import { PhotoAttachments, PhotoComposer } from "@/components/entry-photos";
 import { useServerFn } from "@tanstack/react-start";
 import { useIsMobile } from "@/hooks/use-mobile";
 import {
@@ -243,6 +244,7 @@ type MaintenanceRequest = {
   done_by_username: string | null;
   done_at: string | null;
   created_at: string;
+  photo_paths: string[];
 };
 
 function AppPage() {
@@ -422,6 +424,7 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
   const [messagesInitial, setMessagesInitial] = useState<{ thread?: MessagesThread; room?: number | null; text?: string; replyTo?: { id: string; sender: string; snippet: string } }>({});
   const [maintenanceLogOpen, setMaintenanceLogOpen] = useState(false);
   const [newMaintenanceRoom, setNewMaintenanceRoom] = useState<string>("");
+ const [newMaintenancePhotos, setNewMaintenancePhotos] = useState<File[]>([]);
   const [newMaintenanceText, setNewMaintenanceText] = useState<string>("");
   const [lostPropertyOpen, setLostPropertyOpen] = useState(false);
   // Menu section collapse state, synced to profiles.preferences.menu_collapsed
@@ -686,7 +689,7 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
     queryFn: async (): Promise<MaintenanceRequest[]> => {
       const { data, error } = await supabase
         .from("maintenance_requests" as never)
-        .select("id,room_number,message,created_by_username,done,done_by_username,done_at,created_at")
+        .select("id,room_number,message,created_by_username,done,done_by_username,done_at,created_at,photo_paths")
         .order("created_at", { ascending: false });
       if (error) throw error;
       return (data ?? []) as MaintenanceRequest[];
@@ -855,21 +858,56 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
       toast.error("Add a message");
       return;
     }
-    const { error } = await supabase.from("maintenance_requests" as never).insert({
-      room_number: roomNumber,
-      message: text,
-      created_by_username: authUser?.username ?? null,
-    } as never);
+    const { data: inserted, error } = await supabase
+      .from("maintenance_requests" as never)
+      .insert({
+        room_number: roomNumber,
+        message: text,
+        created_by_username: authUser?.username ?? null,
+      } as never)
+      .select("id")
+      .single();
     if (error) {
       toast.error(error.message);
       return;
     }
+    const newId = (inserted as { id: string } | null)?.id;
+    if (newId && newMaintenancePhotos.length > 0) {
+      const { uploadEntryPhotos } = await import("@/lib/entry-photos");
+      const { paths, errors } = await uploadEntryPhotos(
+        "maintenance",
+        newId,
+        newMaintenancePhotos,
+      );
+      if (errors.length > 0) toast.error(`Photo upload: ${errors[0]}`);
+      if (paths.length > 0) {
+        await supabase
+          .from("maintenance_requests" as never)
+          .update({ photo_paths: paths } as never)
+          .eq("id", newId);
+      }
+    }
     setNewMaintenanceRoom("");
     setNewMaintenanceText("");
+    setNewMaintenancePhotos([]);
     qc.invalidateQueries({ queryKey: ["maintenance_requests"] });
     await writeRoomMaintenanceFlag(roomNumber, true);
     void notifyMaintenanceRequest({ data: { roomNumber, message: text } });
     toast.success("Maintenance request logged");
+  };
+
+  const setMaintenancePhotoPaths = async (id: string, paths: string[]) => {
+    qc.setQueryData<MaintenanceRequest[]>(["maintenance_requests"], (old) =>
+      old?.map((m) => (m.id === id ? { ...m, photo_paths: paths } : m)) ?? [],
+    );
+    const { error } = await supabase
+      .from("maintenance_requests" as never)
+      .update({ photo_paths: paths } as never)
+      .eq("id", id);
+    if (error) {
+      toast.error(error.message);
+      qc.invalidateQueries({ queryKey: ["maintenance_requests"] });
+    }
   };
 
   // Low-level: write rooms.needs_maintenance without triggering the
@@ -1086,20 +1124,40 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
     })();
     const menuIsFnbOnly =
       position === "user" && hasFnbRole && !hasHousekeeperRole && !hasReceptionRole;
-    const logLostProperty = async (roomNumber: number | null, message: string) => {
+    const logLostProperty = async (
+      roomNumber: number | null,
+      message: string,
+      photos: File[] = [],
+    ) => {
       const senderRole =
         myMessageDepartments.includes("housekeeping") && !myMessageDepartments.includes("reception")
           ? "housekeeping"
           : myMessageDepartments.includes("reception")
           ? "reception"
           : myMessageDepartments[0] ?? null;
-      const { error } = await supabase.from("lost_property" as never).insert({
-        room_number: roomNumber,
-        message,
-        created_by_username: authUser?.username ?? null,
-        created_by_role: senderRole,
-      } as never);
+      const { data, error } = await supabase
+        .from("lost_property" as never)
+        .insert({
+          room_number: roomNumber,
+          message,
+          created_by_username: authUser?.username ?? null,
+          created_by_role: senderRole,
+        } as never)
+        .select("id")
+        .single();
       if (error) return { ok: false as const, error: error.message };
+      const newId = (data as { id: string } | null)?.id;
+      if (newId && photos.length > 0) {
+        const { uploadEntryPhotos } = await import("@/lib/entry-photos");
+        const { paths, errors } = await uploadEntryPhotos("lost_property", newId, photos);
+        if (errors.length > 0) toast.error(`Photo upload: ${errors[0]}`);
+        if (paths.length > 0) {
+          await supabase
+            .from("lost_property" as never)
+            .update({ photo_paths: paths, updated_at: new Date().toISOString() } as never)
+            .eq("id", newId);
+        }
+      }
       qc.invalidateQueries({ queryKey: ["lost_property"] });
       return { ok: true as const };
     };
@@ -4269,6 +4327,7 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
           <Plus className="h-4 w-4 mr-1" /> Log
         </Button>
       </div>
+      <PhotoComposer value={newMaintenancePhotos} onChange={setNewMaintenancePhotos} />
     </div>
     <div className="flex-1 min-h-0 overflow-y-auto mt-4 space-y-4">
       <div className="space-y-2">
@@ -4293,6 +4352,16 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
                     </span>
                   </div>
                   <p className="mt-1 text-sm whitespace-pre-wrap break-words">{m.message}</p>
+                  <PhotoAttachments
+                    kind="maintenance"
+                    entryId={m.id}
+                    paths={m.photo_paths ?? []}
+                    canEdit={
+                      isAdmin ||
+                      (!!authUser?.username && m.created_by_username === authUser.username)
+                    }
+                    onChange={(next) => setMaintenancePhotoPaths(m.id, next)}
+                  />
                 </div>
                 {isReception || isMaintenance ? (
                   <Button
@@ -4342,6 +4411,16 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
                     </span>
                   </div>
                   <p className="mt-1 text-sm whitespace-pre-wrap break-words text-muted-foreground line-through">{m.message}</p>
+                  <PhotoAttachments
+                    kind="maintenance"
+                    entryId={m.id}
+                    paths={m.photo_paths ?? []}
+                    canEdit={
+                      isAdmin ||
+                      (!!authUser?.username && m.created_by_username === authUser.username)
+                    }
+                    onChange={(next) => setMaintenancePhotoPaths(m.id, next)}
+                  />
                 </div>
                 {(isReception || isMaintenance || isAdmin) && (
                   <Button

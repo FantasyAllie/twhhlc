@@ -13,6 +13,8 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { PackageSearch, Check, Trash2, Plus } from "lucide-react";
 import { toast } from "sonner";
+import { PhotoAttachments, PhotoComposer } from "@/components/entry-photos";
+import { supabase as sb } from "@/integrations/supabase/client";
 
 type LostPropertyRow = {
   id: string;
@@ -25,6 +27,7 @@ type LostPropertyRow = {
   resolved_at: string | null;
   deleted_at: string | null;
   created_at: string;
+  photo_paths: string[];
 };
 
 export function LostPropertySheet({
@@ -47,12 +50,14 @@ export function LostPropertySheet({
   onAdd?: (
     roomNumber: number | null,
     message: string,
+    photos: File[],
   ) => Promise<{ ok: boolean; error?: string }>;
 }) {
   const qc = useQueryClient();
 
   const [addRoom, setAddRoom] = useState("");
   const [addMessage, setAddMessage] = useState("");
+  const [addPhotos, setAddPhotos] = useState<File[]>([]);
   const [submitting, setSubmitting] = useState(false);
 
   const submitAdd = async () => {
@@ -76,7 +81,7 @@ export function LostPropertySheet({
       return;
     }
     setSubmitting(true);
-    const res = await onAdd(roomNumber, body);
+    const res = await onAdd(roomNumber, body, addPhotos);
     setSubmitting(false);
     if (!res.ok) {
       toast.error(res.error ?? "Could not log item");
@@ -85,6 +90,7 @@ export function LostPropertySheet({
     toast.success("Logged to lost property");
     setAddRoom("");
     setAddMessage("");
+    setAddPhotos([]);
   };
 
   const RETENTION_KEY = "lost_property_retention_months";
@@ -119,7 +125,7 @@ export function LostPropertySheet({
     queryFn: async (): Promise<LostPropertyRow[]> => {
       const { data, error } = await supabase
         .from("lost_property" as never)
-        .select("id,room_number,message,created_by_username,created_by_role,status,resolved_by_username,resolved_at,deleted_at,created_at")
+          .select("id,room_number,message,created_by_username,created_by_role,status,resolved_by_username,resolved_at,deleted_at,created_at,photo_paths")
         .is("deleted_at", null)
         .order("created_at", { ascending: false })
         .limit(500);
@@ -177,6 +183,20 @@ export function LostPropertySheet({
       hour: "numeric",
       minute: "2-digit",
     });
+
+  const setRowPhotoPaths = async (id: string, paths: string[]) => {
+    qc.setQueryData<LostPropertyRow[]>(["lost_property"], (old) =>
+      old?.map((r) => (r.id === id ? { ...r, photo_paths: paths } : r)) ?? [],
+    );
+    const { error } = await sb
+      .from("lost_property" as never)
+      .update({ photo_paths: paths, updated_at: new Date().toISOString() } as never)
+      .eq("id", id);
+    if (error) {
+      toast.error(error.message);
+      qc.invalidateQueries({ queryKey: ["lost_property"] });
+    }
+  };
 
   return (
     <Sheet open={open} onOpenChange={onOpenChange}>
@@ -243,6 +263,7 @@ export function LostPropertySheet({
                 rows={2}
                 className="resize-none"
               />
+              <PhotoComposer value={addPhotos} onChange={setAddPhotos} />
               <div className="flex justify-end">
                 <Button
                   type="button"
@@ -278,6 +299,16 @@ export function LostPropertySheet({
                       </span>
                     </div>
                     <p className="mt-1 text-sm whitespace-pre-wrap break-words">{r.message}</p>
+                    <PhotoAttachments
+                      kind="lost_property"
+                      entryId={r.id}
+                      paths={r.photo_paths ?? []}
+                      canEdit={
+                        !!isAdmin ||
+                        (!!currentUsername && r.created_by_username === currentUsername)
+                      }
+                      onChange={(next) => setRowPhotoPaths(r.id, next)}
+                    />
                   </div>
                   {canResolve ? (
                     <div className="flex flex-col gap-1 shrink-0">
@@ -366,6 +397,16 @@ export function LostPropertySheet({
                     <p className="mt-1 text-sm whitespace-pre-wrap break-words text-muted-foreground line-through">
                       {r.message}
                     </p>
+                    <PhotoAttachments
+                      kind="lost_property"
+                      entryId={r.id}
+                      paths={r.photo_paths ?? []}
+                      canEdit={
+                        !!isAdmin ||
+                        (!!currentUsername && r.created_by_username === currentUsername)
+                      }
+                      onChange={(next) => setRowPhotoPaths(r.id, next)}
+                    />
                   </div>
                   {canResolve && (
                     <Button
