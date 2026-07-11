@@ -4352,6 +4352,16 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
                     </span>
                   </div>
                   <p className="mt-1 text-sm whitespace-pre-wrap break-words">{m.message}</p>
+                  <PhotoAttachments
+                    kind="maintenance"
+                    entryId={m.id}
+                    paths={m.photo_paths ?? []}
+                    canEdit={
+                      isAdmin ||
+                      (!!authUser?.username && m.created_by_username === authUser.username)
+                    }
+                    onChange={(next) => setMaintenancePhotoPaths(m.id, next)}
+                  />
                 </div>
                 {isReception || isMaintenance ? (
                   <Button
@@ -4401,6 +4411,16 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
                     </span>
                   </div>
                   <p className="mt-1 text-sm whitespace-pre-wrap break-words text-muted-foreground line-through">{m.message}</p>
+                  <PhotoAttachments
+                    kind="maintenance"
+                    entryId={m.id}
+                    paths={m.photo_paths ?? []}
+                    canEdit={
+                      isAdmin ||
+                      (!!authUser?.username && m.created_by_username === authUser.username)
+                    }
+                    onChange={(next) => setMaintenancePhotoPaths(m.id, next)}
+                  />
                 </div>
                 {(isReception || isMaintenance || isAdmin) && (
                   <Button
