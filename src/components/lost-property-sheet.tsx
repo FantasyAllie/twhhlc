@@ -263,6 +263,7 @@ export function LostPropertySheet({
                 rows={2}
                 className="resize-none"
               />
+              <PhotoComposer value={addPhotos} onChange={setAddPhotos} />
               <div className="flex justify-end">
                 <Button
                   type="button"
@@ -298,6 +299,16 @@ export function LostPropertySheet({
                       </span>
                     </div>
                     <p className="mt-1 text-sm whitespace-pre-wrap break-words">{r.message}</p>
+                    <PhotoAttachments
+                      kind="lost_property"
+                      entryId={r.id}
+                      paths={r.photo_paths ?? []}
+                      canEdit={
+                        !!isAdmin ||
+                        (!!currentUsername && r.created_by_username === currentUsername)
+                      }
+                      onChange={(next) => setRowPhotoPaths(r.id, next)}
+                    />
                   </div>
                   {canResolve ? (
                     <div className="flex flex-col gap-1 shrink-0">
@@ -386,6 +397,16 @@ export function LostPropertySheet({
                     <p className="mt-1 text-sm whitespace-pre-wrap break-words text-muted-foreground line-through">
                       {r.message}
                     </p>
+                    <PhotoAttachments
+                      kind="lost_property"
+                      entryId={r.id}
+                      paths={r.photo_paths ?? []}
+                      canEdit={
+                        !!isAdmin ||
+                        (!!currentUsername && r.created_by_username === currentUsername)
+                      }
+                      onChange={(next) => setRowPhotoPaths(r.id, next)}
+                    />
                   </div>
                   {canResolve && (
                     <Button
