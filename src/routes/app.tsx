@@ -1086,6 +1086,23 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
     })();
     const menuIsFnbOnly =
       position === "user" && hasFnbRole && !hasHousekeeperRole && !hasReceptionRole;
+    const logLostProperty = async (roomNumber: number | null, message: string) => {
+      const senderRole =
+        myMessageDepartments.includes("housekeeping") && !myMessageDepartments.includes("reception")
+          ? "housekeeping"
+          : myMessageDepartments.includes("reception")
+          ? "reception"
+          : myMessageDepartments[0] ?? null;
+      const { error } = await supabase.from("lost_property" as never).insert({
+        room_number: roomNumber,
+        message,
+        created_by_username: authUser?.username ?? null,
+        created_by_role: senderRole,
+      } as never);
+      if (error) return { ok: false as const, error: error.message };
+      qc.invalidateQueries({ queryKey: ["lost_property"] });
+      return { ok: true as const };
+    };
   const doneSet = new Set(
     rooms
       .filter((r) => (isReception ? r.done_reception : r.done))
