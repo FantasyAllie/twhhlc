@@ -4360,7 +4360,7 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
                   onClick={() => { close(); setLostPropertyOpen(true); }}
                 />
               )}
-              {!isMaintenance && (
+              {(menuIsAdmin || hasHousekeeperRole || hasReceptionRole) && !isMaintenance && (
                 <Row
                   icon={Camera}
                   label="Stayover Photos"
