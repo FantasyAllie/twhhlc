@@ -11,7 +11,7 @@ import {
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
-import { PackageSearch, Check, Trash2, Plus } from "lucide-react";
+import { PackageSearch, Check, Trash2, Plus, ChevronDown, X } from "lucide-react";
 import { toast } from "sonner";
 import { PhotoAttachments, PhotoComposer } from "@/components/entry-photos";
 import { supabase as sb } from "@/integrations/supabase/client";
@@ -38,6 +38,7 @@ export function LostPropertySheet({
   currentUsername,
   canAdd,
   requireRoom,
+  roomNumbers,
   onAdd,
 }: {
   open: boolean;
@@ -47,6 +48,7 @@ export function LostPropertySheet({
   currentUsername: string | null;
   canAdd?: boolean;
   requireRoom?: boolean;
+  roomNumbers?: number[];
   onAdd?: (
     roomNumber: number | null,
     message: string,
@@ -55,10 +57,17 @@ export function LostPropertySheet({
 }) {
   const qc = useQueryClient();
 
-  const [addRoom, setAddRoom] = useState("");
+  const [addOpen, setAddOpen] = useState(false);
+  const [addRoom, setAddRoom] = useState<number | "">("");
   const [addMessage, setAddMessage] = useState("");
   const [addPhotos, setAddPhotos] = useState<File[]>([]);
   const [submitting, setSubmitting] = useState(false);
+
+  const resetAddForm = () => {
+    setAddRoom("");
+    setAddMessage("");
+    setAddPhotos([]);
+  };
 
   const submitAdd = async () => {
     if (!onAdd) return;
@@ -68,14 +77,8 @@ export function LostPropertySheet({
       return;
     }
     let roomNumber: number | null = null;
-    const raw = addRoom.trim();
-    if (raw) {
-      const n = Number(raw);
-      if (!Number.isFinite(n) || n <= 0) {
-        toast.error("Invalid room number");
-        return;
-      }
-      roomNumber = Math.floor(n);
+    if (typeof addRoom === "number") {
+      roomNumber = addRoom;
     } else if (requireRoom) {
       toast.error("Room number required");
       return;
@@ -88,9 +91,8 @@ export function LostPropertySheet({
       return;
     }
     toast.success("Logged to lost property");
-    setAddRoom("");
-    setAddMessage("");
-    setAddPhotos([]);
+    resetAddForm();
+    setAddOpen(false);
   };
 
   const RETENTION_KEY = "lost_property_retention_months";
@@ -237,45 +239,80 @@ export function LostPropertySheet({
 
         <div className="flex-1 min-h-0 overflow-y-auto mt-4 space-y-4">
           {canAdd && onAdd && (
-            <div className="space-y-2 rounded-lg border bg-background p-3">
-              <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
-                Log a new item
-              </p>
-              <div className="flex items-center gap-2">
-                <label htmlFor="lp-add-room" className="text-sm shrink-0">
-                  Room
-                </label>
-                <Input
-                  id="lp-add-room"
-                  type="number"
-                  inputMode="numeric"
-                  min={1}
-                  placeholder={requireRoom ? "Required" : "Optional"}
-                  value={addRoom}
-                  onChange={(e) => setAddRoom(e.target.value)}
-                  className="h-8 w-24"
+            addOpen ? (
+              <div className="space-y-2 rounded-lg border bg-background p-3">
+                <div className="flex items-center justify-between">
+                  <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+                    Log a new item
+                  </p>
+                  <Button
+                    type="button"
+                    size="icon"
+                    variant="ghost"
+                    className="h-6 w-6"
+                    onClick={() => {
+                      setAddOpen(false);
+                      resetAddForm();
+                    }}
+                    aria-label="Close"
+                  >
+                    <X className="h-4 w-4" />
+                  </Button>
+                </div>
+                <div className="flex items-center gap-2">
+                  <label htmlFor="lp-add-room" className="text-sm shrink-0">
+                    Room
+                  </label>
+                  <select
+                    id="lp-add-room"
+                    value={addRoom === "" ? "" : String(addRoom)}
+                    onChange={(e) =>
+                      setAddRoom(e.target.value === "" ? "" : Number(e.target.value))
+                    }
+                    className="h-8 rounded-md border bg-background px-2 text-sm"
+                  >
+                    <option value="">{requireRoom ? "Select a room" : "— none —"}</option>
+                    {(roomNumbers ?? []).map((n) => (
+                      <option key={n} value={n}>
+                        Room {n}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+                <Textarea
+                  placeholder="Describe the item (e.g. black wallet on nightstand)"
+                  value={addMessage}
+                  onChange={(e) => setAddMessage(e.target.value.slice(0, 500))}
+                  rows={2}
+                  className="resize-none"
                 />
+                <PhotoComposer value={addPhotos} onChange={setAddPhotos} />
+                <div className="flex justify-end">
+                  <Button
+                    type="button"
+                    size="sm"
+                    onClick={() => void submitAdd()}
+                    disabled={submitting || !addMessage.trim()}
+                  >
+                    <Plus className="h-3.5 w-3.5 mr-1" />
+                    {submitting ? "Logging…" : "Log item"}
+                  </Button>
+                </div>
               </div>
-              <Textarea
-                placeholder="Describe the item (e.g. black wallet on nightstand)"
-                value={addMessage}
-                onChange={(e) => setAddMessage(e.target.value.slice(0, 500))}
-                rows={2}
-                className="resize-none"
-              />
-              <PhotoComposer value={addPhotos} onChange={setAddPhotos} />
-              <div className="flex justify-end">
-                <Button
-                  type="button"
-                  size="sm"
-                  onClick={() => void submitAdd()}
-                  disabled={submitting || !addMessage.trim()}
-                >
-                  <Plus className="h-3.5 w-3.5 mr-1" />
-                  {submitting ? "Logging…" : "Log item"}
-                </Button>
-              </div>
-            </div>
+            ) : (
+              <Button
+                type="button"
+                variant="outline"
+                className="w-full justify-between"
+                onClick={() => setAddOpen(true)}
+              >
+                <span className="flex items-center gap-2">
+                  <Plus className="h-4 w-4" />
+                  Log a new item
+                </span>
+                <ChevronDown className="h-4 w-4 opacity-60" />
+              </Button>
+            )
           )}
           <div className="space-y-2">
             <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
