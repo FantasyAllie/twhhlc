@@ -2839,6 +2839,14 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
       );
     })()}
 
+    {isReception && (() => {
+      const room = rooms.find((r) => r.room_number === n);
+      const occ = room?.reception_status_id ?? room?.default_status ?? null;
+      const dndId = receptionStatuses.find((x) => x.label === "DND")?.id ?? null;
+      if (!dndId || occ !== dndId) return null;
+      return <DndDoorPhoto roomNumber={n} />;
+    })()}
+
     {!isReception && (
       <div className="flex flex-row gap-2">
         <button
