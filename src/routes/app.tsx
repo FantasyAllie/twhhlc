@@ -3847,6 +3847,8 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
        const n = receptionSheetRoom;
        const room = rooms.find((r) => r.room_number === n);
        const occ = room?.reception_status_id ?? room?.default_status ?? null;
+        const dndIdCurrent = receptionStatuses.find((x) => x.label === "DND")?.id ?? null;
+        const isCurrentDnd = !!dndIdCurrent && occ === dndIdCurrent;
        const norm = (s: string) => s.toLowerCase().replace(/[^a-z0-9]/g, "");
        const cats = parseCats(room?.category).map(norm);
        const hasSuperKing = cats.includes("superking");
