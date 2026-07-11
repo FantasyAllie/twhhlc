@@ -4347,6 +4347,17 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
                   onClick={() => { close(); setLostPropertyOpen(true); }}
                 />
               )}
+              {!isMaintenance && (
+                <Row
+                  icon={Camera}
+                  label="Stayover Photos"
+                  onClick={() => {
+                    close();
+                    setStayoverPhotosRoomFilter(undefined);
+                    setStayoverPhotosOpen(true);
+                  }}
+                />
+              )}
               {canUseMessages && (
                 <Row
                   icon={MessageSquare}
