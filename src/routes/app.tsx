@@ -856,21 +856,56 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
       toast.error("Add a message");
       return;
     }
-    const { error } = await supabase.from("maintenance_requests" as never).insert({
-      room_number: roomNumber,
-      message: text,
-      created_by_username: authUser?.username ?? null,
-    } as never);
+    const { data: inserted, error } = await supabase
+      .from("maintenance_requests" as never)
+      .insert({
+        room_number: roomNumber,
+        message: text,
+        created_by_username: authUser?.username ?? null,
+      } as never)
+      .select("id")
+      .single();
     if (error) {
       toast.error(error.message);
       return;
     }
+    const newId = (inserted as { id: string } | null)?.id;
+    if (newId && newMaintenancePhotos.length > 0) {
+      const { uploadEntryPhotos } = await import("@/lib/entry-photos");
+      const { paths, errors } = await uploadEntryPhotos(
+        "maintenance",
+        newId,
+        newMaintenancePhotos,
+      );
+      if (errors.length > 0) toast.error(`Photo upload: ${errors[0]}`);
+      if (paths.length > 0) {
+        await supabase
+          .from("maintenance_requests" as never)
+          .update({ photo_paths: paths } as never)
+          .eq("id", newId);
+      }
+    }
     setNewMaintenanceRoom("");
     setNewMaintenanceText("");
+    setNewMaintenancePhotos([]);
     qc.invalidateQueries({ queryKey: ["maintenance_requests"] });
     await writeRoomMaintenanceFlag(roomNumber, true);
     void notifyMaintenanceRequest({ data: { roomNumber, message: text } });
     toast.success("Maintenance request logged");
+  };
+
+  const setMaintenancePhotoPaths = async (id: string, paths: string[]) => {
+    qc.setQueryData<MaintenanceRequest[]>(["maintenance_requests"], (old) =>
+      old?.map((m) => (m.id === id ? { ...m, photo_paths: paths } : m)) ?? [],
+    );
+    const { error } = await supabase
+      .from("maintenance_requests" as never)
+      .update({ photo_paths: paths } as never)
+      .eq("id", id);
+    if (error) {
+      toast.error(error.message);
+      qc.invalidateQueries({ queryKey: ["maintenance_requests"] });
+    }
   };
 
   // Low-level: write rooms.needs_maintenance without triggering the
