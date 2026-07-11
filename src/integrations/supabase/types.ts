@@ -586,6 +586,30 @@ export type Database = {
           },
         ]
       }
+      stayover_photos: {
+        Row: {
+          created_at: string
+          created_by_username: string | null
+          id: string
+          path: string
+          room_number: number
+        }
+        Insert: {
+          created_at?: string
+          created_by_username?: string | null
+          id?: string
+          path: string
+          room_number: number
+        }
+        Update: {
+          created_at?: string
+          created_by_username?: string | null
+          id?: string
+          path?: string
+          room_number?: number
+        }
+        Relationships: []
+      }
       template_item_rooms: {
         Row: {
           created_at: string

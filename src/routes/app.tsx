@@ -1,10 +1,10 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { createFileRoute, useNavigate, Link } from "@tanstack/react-router";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Minus, Plus, X, Menu, ArrowUp, ArrowDown, Pencil, Check, Trash2, Sun, Moon, List, Bed, Ban, History, Users, User, LogOut, Hash, ConciergeBell, ClipboardList, Printer, Filter, Wrench, DoorOpen, Bell, Eye, EyeOff, HelpCircle, AlertCircle, MessageSquare, PackageSearch, RotateCcw, ChevronDown } from "lucide-react";
+import { Minus, Plus, X, Menu, ArrowUp, ArrowDown, Pencil, Check, Trash2, Sun, Moon, List, Bed, Ban, History, Users, User, LogOut, Hash, ConciergeBell, ClipboardList, Printer, Filter, Wrench, DoorOpen, Bell, Eye, EyeOff, HelpCircle, AlertCircle, MessageSquare, PackageSearch, RotateCcw, ChevronDown, Camera } from "lucide-react";
 import { ReceptionIconGuide } from "@/components/reception-icon-guide";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
@@ -17,6 +17,12 @@ import { UserApprovalDialog } from "@/components/user-approval-dialog";
 import { QuickReceptionSheet } from "@/components/quick-reception-sheet";
 import { LostPropertySheet } from "@/components/lost-property-sheet";
 import { PhotoAttachments, PhotoComposer } from "@/components/entry-photos";
+import { StayoverPhotosSheet } from "@/components/stayover-photos-sheet";
+import {
+  deleteTodayStayoverPhotosForRoom,
+  purgeExpiredStayoverPhotos,
+  uploadStayoverPhoto,
+} from "@/lib/stayover-photos";
 import { useServerFn } from "@tanstack/react-start";
 import { useIsMobile } from "@/hooks/use-mobile";
 import {
@@ -271,6 +277,10 @@ type ViewRole = "admin" | "manager" | "user" | "reception" | "fnb" | "maintenanc
   useEffect(() => {
     document.title = "Three Ways House Hotel";
   }, []);
+  // Purge stayover photos older than 2 weeks on load.
+  useEffect(() => {
+    void purgeExpiredStayoverPhotos();
+  }, []);
   // Mobile keyboard: keep the focused input visible above the on-screen keyboard.
   // We listen to focus on form controls and use visualViewport to detect when the
   // keyboard reduces the visible area, then scroll the field into view.
@@ -426,7 +436,13 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
   const [newMaintenanceRoom, setNewMaintenanceRoom] = useState<string>("");
  const [newMaintenancePhotos, setNewMaintenancePhotos] = useState<File[]>([]);
   const [newMaintenanceText, setNewMaintenanceText] = useState<string>("");
+  const [maintenanceComposerOpen, setMaintenanceComposerOpen] = useState(false);
   const [lostPropertyOpen, setLostPropertyOpen] = useState(false);
+  // Stayover / DND photo state
+  const [stayoverPhotosOpen, setStayoverPhotosOpen] = useState(false);
+  const [stayoverPhotosRoomFilter, setStayoverPhotosRoomFilter] = useState<number | undefined>(undefined);
+  const [pendingDndRoom, setPendingDndRoom] = useState<number | null>(null);
+  const dndFileInputRef = useRef<HTMLInputElement | null>(null);
   // Menu section collapse state, synced to profiles.preferences.menu_collapsed
   const menuPrefsQ = useQuery({
     queryKey: ["profile_preferences", authUser?.id],
@@ -3835,6 +3851,8 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
        const n = receptionSheetRoom;
        const room = rooms.find((r) => r.room_number === n);
        const occ = room?.reception_status_id ?? room?.default_status ?? null;
+        const dndIdCurrent = receptionStatuses.find((x) => x.label === "DND")?.id ?? null;
+        const isCurrentDnd = !!dndIdCurrent && occ === dndIdCurrent;
        const norm = (s: string) => s.toLowerCase().replace(/[^a-z0-9]/g, "");
        const cats = parseCats(room?.category).map(norm);
        const hasSuperKing = cats.includes("superking");
@@ -3892,20 +3910,37 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
                   </Button>
                 </div>
               )}
-             {isAdmin && (
-               <div className="mt-2">
-                 <Button
-                   type="button"
-                   size="sm"
-                   variant="outline"
-                   className="w-full"
-                   onClick={() => {
-                     setReceptionSheetRoom(null);
-                     setQuickReceptionOpen(true);
-                   }}
-                 >
-                   Edit all rooms
-                 </Button>
+             {(isAdmin || isCurrentDnd) && (
+               <div className="mt-2 flex gap-2">
+                 {isAdmin && (
+                   <Button
+                     type="button"
+                     size="sm"
+                     variant="outline"
+                     className="flex-1"
+                     onClick={() => {
+                       setReceptionSheetRoom(null);
+                       setQuickReceptionOpen(true);
+                     }}
+                   >
+                     Edit all rooms
+                   </Button>
+                 )}
+                 {isCurrentDnd && (
+                   <Button
+                     type="button"
+                     size="sm"
+                     variant="outline"
+                     className="flex-1"
+                     onClick={() => {
+                       setStayoverPhotosRoomFilter(n);
+                       setStayoverPhotosOpen(true);
+                     }}
+                   >
+                     <Camera className="h-4 w-4 mr-1" />
+                     Photo
+                   </Button>
+                 )}
                </div>
              )}
            <div className="mt-4 space-y-4">
@@ -3958,9 +3993,25 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
                               : s.id === dirtyId && rosId
                                 ? rosId
                                 : null;
-                         setRoomReceptionStatus(n, next);
+                          setRoomReceptionStatus(n, next);
+                          if (s.id === dndId) {
+                            void deleteTodayStayoverPhotosForRoom(n).then(() => {
+                              qc.invalidateQueries({ queryKey: ["stayover_photos"] });
+                            });
+                          }
                        } else {
-                         setRoomReceptionStatus(n, s.id);
+                          if (s.id === dndId) {
+                            // Require a photo of the DND door before applying.
+                            setPendingDndRoom(n);
+                            dndFileInputRef.current?.click();
+                          } else {
+                            setRoomReceptionStatus(n, s.id);
+                            if (occ === dndId) {
+                              void deleteTodayStayoverPhotosForRoom(n).then(() => {
+                                qc.invalidateQueries({ queryKey: ["stayover_photos"] });
+                              });
+                            }
+                          }
                        }
                      };
                      const renderRow = (s: { id: string; label: string }) => {
@@ -4106,7 +4157,65 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
   currentUsername={authUser?.username ?? null}
   canAdd={menuCanUseLostProperty}
   requireRoom={hasHousekeeperRole && !hasReceptionRole}
+  roomNumbers={rooms.map((r) => r.room_number).sort((a, b) => a - b)}
   onAdd={logLostProperty}
+/>
+<StayoverPhotosSheet
+  open={stayoverPhotosOpen}
+  onOpenChange={(o) => {
+    setStayoverPhotosOpen(o);
+    if (!o) setStayoverPhotosRoomFilter(undefined);
+  }}
+  roomFilter={stayoverPhotosRoomFilter}
+  title={
+    typeof stayoverPhotosRoomFilter === "number"
+      ? `Room ${stayoverPhotosRoomFilter} — DND Photo`
+      : "Stayover Photos"
+  }
+/>
+<input
+  ref={dndFileInputRef}
+  type="file"
+  accept="image/*"
+  capture="environment"
+  className="hidden"
+  onChange={async (e) => {
+    const file = e.target.files?.[0];
+    e.target.value = "";
+    const room = pendingDndRoom;
+    setPendingDndRoom(null);
+    if (!file || room === null) return;
+    const dndId = receptionStatuses.find((x) => x.label === "DND")?.id ?? null;
+    if (!dndId) {
+      toast.error("DND status not configured");
+      return;
+    }
+    const res = await uploadStayoverPhoto(room, file, authUser?.username ?? null);
+    if (!res.ok) {
+      toast.error(res.error ?? "Photo upload failed");
+      return;
+    }
+    setRoomReceptionStatus(room, dndId);
+    // Mark room as done (housekeeping + reception) alongside DND.
+    qc.setQueryData<Room[]>(["rooms"], (old) => {
+      const list = old ? [...old] : [];
+      const idx = list.findIndex((r) => r.room_number === room);
+      if (idx >= 0) list[idx] = { ...list[idx], done: true, done_reception: true };
+      return list;
+    });
+    await supabase.from("rooms").upsert(
+      {
+        room_number: room,
+        done: true,
+        done_reception: true,
+        updated_at: new Date().toISOString(),
+      } as never,
+      { onConflict: "user_id,room_number" },
+    );
+    qc.invalidateQueries({ queryKey: ["rooms"] });
+    qc.invalidateQueries({ queryKey: ["stayover_photos"] });
+    toast.success("DND set and photo saved");
+  }}
 />
 <Sheet open={menuSheetOpen} onOpenChange={setMenuSheetOpen}>
   <SheetContent side="right" disableDragDismiss className="w-auto max-w-[90vw] min-w-[18rem] sm:max-w-md p-0 flex flex-col overflow-hidden [&_[data-sheet-close]]:max-lg:hidden">
@@ -4242,6 +4351,17 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
                   onClick={() => { close(); setLostPropertyOpen(true); }}
                 />
               )}
+              {!isMaintenance && (
+                <Row
+                  icon={Camera}
+                  label="Stayover Photos"
+                  onClick={() => {
+                    close();
+                    setStayoverPhotosRoomFilter(undefined);
+                    setStayoverPhotosOpen(true);
+                  }}
+                />
+              )}
               {canUseMessages && (
                 <Row
                   icon={MessageSquare}
@@ -4301,33 +4421,83 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
           : "Log a maintenance issue for Reception or Maintenance to action."}
       </SheetDescription>
     </SheetHeader>
-    <div className="mt-4 flex flex-col gap-2 border-b pb-4">
-      <div className="flex flex-col sm:flex-row gap-2">
-        <Input
-          type="number"
-          inputMode="numeric"
-          placeholder="Room #"
-          value={newMaintenanceRoom}
-          onChange={(e) => setNewMaintenanceRoom(e.target.value)}
-          className="sm:w-28"
-        />
-        <Input
-          placeholder="Describe the issue…"
-          value={newMaintenanceText}
-          onChange={(e) => setNewMaintenanceText(e.target.value)}
-          onKeyDown={(e) => {
-            if (e.key === "Enter") {
-              e.preventDefault();
-              void submitMaintenanceRequest();
-            }
-          }}
-          className="flex-1"
-        />
-        <Button type="button" onClick={() => void submitMaintenanceRequest()}>
-          <Plus className="h-4 w-4 mr-1" /> Log
+    <div className="mt-4 border-b pb-4">
+      {maintenanceComposerOpen ? (
+        <div className="flex flex-col gap-2 rounded-lg border bg-background p-3">
+          <div className="flex items-center justify-between">
+            <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+              Log a new issue
+            </p>
+            <Button
+              type="button"
+              size="icon"
+              variant="ghost"
+              className="h-6 w-6"
+              onClick={() => {
+                setMaintenanceComposerOpen(false);
+                setNewMaintenanceRoom("");
+                setNewMaintenanceText("");
+                setNewMaintenancePhotos([]);
+              }}
+              aria-label="Close"
+            >
+              <X className="h-4 w-4" />
+            </Button>
+          </div>
+          <div className="flex flex-col sm:flex-row gap-2">
+            <select
+              value={newMaintenanceRoom}
+              onChange={(e) => setNewMaintenanceRoom(e.target.value)}
+              className="h-9 rounded-md border bg-background px-2 text-sm sm:w-32"
+            >
+              <option value="">Select a room</option>
+              {rooms
+                .map((r) => r.room_number)
+                .sort((a, b) => a - b)
+                .map((n) => (
+                  <option key={n} value={String(n)}>
+                    Room {n}
+                  </option>
+                ))}
+            </select>
+            <Input
+              placeholder="Describe the issue…"
+              value={newMaintenanceText}
+              onChange={(e) => setNewMaintenanceText(e.target.value)}
+              onKeyDown={(e) => {
+                if (e.key === "Enter") {
+                  e.preventDefault();
+                  void submitMaintenanceRequest();
+                }
+              }}
+              className="flex-1"
+            />
+            <Button
+              type="button"
+              onClick={async () => {
+                await submitMaintenanceRequest();
+                setMaintenanceComposerOpen(false);
+              }}
+            >
+              <Plus className="h-4 w-4 mr-1" /> Log
+            </Button>
+          </div>
+          <PhotoComposer value={newMaintenancePhotos} onChange={setNewMaintenancePhotos} />
+        </div>
+      ) : (
+        <Button
+          type="button"
+          variant="outline"
+          className="w-full justify-between"
+          onClick={() => setMaintenanceComposerOpen(true)}
+        >
+          <span className="flex items-center gap-2">
+            <Plus className="h-4 w-4" />
+            Log a new issue
+          </span>
+          <ChevronDown className="h-4 w-4 opacity-60" />
         </Button>
-      </div>
-      <PhotoComposer value={newMaintenancePhotos} onChange={setNewMaintenancePhotos} />
+      )}
     </div>
     <div className="flex-1 min-h-0 overflow-y-auto mt-4 space-y-4">
       <div className="space-y-2">
