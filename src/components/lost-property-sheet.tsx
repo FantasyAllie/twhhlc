@@ -10,7 +10,7 @@ import {
 } from "@/components/ui/sheet";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { PackageSearch, Check, Trash2 } from "lucide-react";
+import { PackageSearch, Check, Trash2, Plus } from "lucide-react";
 import { toast } from "sonner";
 
 type LostPropertyRow = {
@@ -32,12 +32,18 @@ export function LostPropertySheet({
   canResolve,
   isAdmin,
   currentUsername,
+  roomNumbers,
+  canAddEntry,
+  senderRole,
 }: {
   open: boolean;
   onOpenChange: (o: boolean) => void;
   canResolve: boolean;
   isAdmin?: boolean;
   currentUsername: string | null;
+  roomNumbers: number[];
+  canAddEntry: boolean;
+  senderRole: string | null;
 }) {
   const qc = useQueryClient();
 
@@ -100,6 +106,32 @@ export function LostPropertySheet({
   const rows = useMemo(() => q.data ?? [], [q.data]);
   const openRows = rows.filter((r) => r.status === "open");
   const resolvedRows = rows.filter((r) => r.status !== "open").slice(0, 50);
+
+  const [newRoom, setNewRoom] = useState<number | "">("");
+  const [newText, setNewText] = useState("");
+  const senderIsHkOnly = senderRole === "housekeeping";
+  const addEntry = async () => {
+    const body = newText.trim();
+    if (!body) return;
+    if (senderIsHkOnly && typeof newRoom !== "number") {
+      toast.error("Pick a room for the lost item");
+      return;
+    }
+    const { error } = await supabase.from("lost_property" as never).insert({
+      room_number: typeof newRoom === "number" ? newRoom : null,
+      message: body,
+      created_by_username: currentUsername ?? null,
+      created_by_role: senderRole,
+    } as never);
+    if (error) {
+      toast.error(error.message);
+      return;
+    }
+    setNewText("");
+    setNewRoom("");
+    qc.invalidateQueries({ queryKey: ["lost_property"] });
+    toast.success("Lost property entry added");
+  };
 
   const setStatus = async (id: string, status: "collected" | "discarded") => {
     const { error } = await supabase
