@@ -4326,6 +4326,7 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
           <Plus className="h-4 w-4 mr-1" /> Log
         </Button>
       </div>
+      <PhotoComposer value={newMaintenancePhotos} onChange={setNewMaintenancePhotos} />
     </div>
     <div className="flex-1 min-h-0 overflow-y-auto mt-4 space-y-4">
       <div className="space-y-2">
