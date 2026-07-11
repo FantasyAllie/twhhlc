@@ -4043,15 +4043,6 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
   canResolve={canResolveLostProperty}
   isAdmin={menuIsAdmin}
   currentUsername={authUser?.username ?? null}
-  roomNumbers={rooms.map((r) => r.room_number).sort((a, b) => a - b)}
-  canAddEntry={myMessageDepartments.length > 0 || menuIsAdmin}
-  senderRole={
-    myMessageDepartments.includes("housekeeping") && !myMessageDepartments.includes("reception")
-      ? "housekeeping"
-      : myMessageDepartments.includes("reception")
-      ? "reception"
-      : myMessageDepartments[0] ?? null
-  }
 />
 <Sheet open={menuSheetOpen} onOpenChange={setMenuSheetOpen}>
   <SheetContent side="right" disableDragDismiss className="w-auto max-w-[90vw] min-w-[18rem] sm:max-w-md p-0 flex flex-col overflow-hidden [&_[data-sheet-close]]:max-lg:hidden">
