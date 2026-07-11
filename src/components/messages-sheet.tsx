@@ -109,6 +109,7 @@ export function MessagesSheet({
   const [replyTo, setReplyTo] = useState<{ id: string; sender: string; snippet: string } | null>(initialReplyTo ?? null);
   const [alsoMaintenance, setAlsoMaintenance] = useState(false);
   const [alsoLostProperty, setAlsoLostProperty] = useState(false);
+  const [logTarget, setLogTarget] = useState<"maintenance" | "lost_property" | null>(null);
   const feedRef = useRef<HTMLDivElement | null>(null);
 
   // "Send to" picker options for non-admin users with a single department.
@@ -163,12 +164,21 @@ export function MessagesSheet({
   // Lost Property mirrors Maintenance — only relevant on HK↔Reception (Reception
   // owns the log; Housekeeping is the usual reporter).
   const canLogLostProperty = thread === "hk_reception" && !!onLogLostProperty;
+  // Whether the direct-log destinations are usable by this user.
+  const canPickMaintenanceLog = !!onLogMaintenance;
+  const canPickLostPropertyLog = !!onLogLostProperty;
   useEffect(() => {
     if (!canLogMaintenance) setAlsoMaintenance(false);
   }, [canLogMaintenance]);
   useEffect(() => {
     if (!canLogLostProperty) setAlsoLostProperty(false);
   }, [canLogLostProperty]);
+
+  // When switching threads, clear any active log-target so pills stay in sync.
+  const pickThread = (t: MessagesThread) => {
+    setLogTarget(null);
+    setThread(t);
+  };
 
   useEffect(() => {
     if (!open) return;
@@ -238,6 +248,41 @@ export function MessagesSheet({
   const send = async () => {
     const body = text.trim();
     if (!body) return;
+    // Direct-to-log destinations (Maintenance / Lost Property) bypass the chat feed.
+    if (logTarget === "maintenance") {
+      if (typeof room !== "number") {
+        toast.error("Pick a room for maintenance");
+        return;
+      }
+      if (!onLogMaintenance) return;
+      const res = await onLogMaintenance(room, body);
+      if (!res.ok) {
+        toast.error(res.error ?? "Failed to log maintenance");
+        return;
+      }
+      toast.success("Logged to maintenance");
+      setText("");
+      setReplyTo(null);
+      return;
+    }
+    if (logTarget === "lost_property") {
+      const senderIsHkOnly =
+        myDepartments.includes("housekeeping") && !myDepartments.includes("reception");
+      if (senderIsHkOnly && typeof room !== "number") {
+        toast.error("Pick a room for the lost item");
+        return;
+      }
+      if (!onLogLostProperty) return;
+      const res = await onLogLostProperty(typeof room === "number" ? room : null, body);
+      if (!res.ok) {
+        toast.error(res.error ?? "Failed to log lost property");
+        return;
+      }
+      toast.success("Added to lost property");
+      setText("");
+      setReplyTo(null);
+      return;
+    }
     const roomNumber = supportsRoomTag(thread) && typeof room === "number" ? room : null;
     if (alsoMaintenance && (!canLogMaintenance || roomNumber === null)) {
       toast.error("Pick a room to also log as maintenance");
@@ -370,7 +415,7 @@ export function MessagesSheet({
             <span className="text-xs text-muted-foreground">Send to</span>
             {sendToTargets.map((target) => {
               const t = threadForTarget(target);
-              const active = activeTarget === target;
+              const active = logTarget === null && activeTarget === target;
               return (
                 <Button
                   key={target}
@@ -379,33 +424,83 @@ export function MessagesSheet({
                   variant={active ? "default" : "outline"}
                   className="rounded-full"
                   disabled={!t}
-                  onClick={() => { if (t) setThread(t); }}
+                  onClick={() => { if (t) pickThread(t); }}
                 >
                   {DEPT_LABELS[target]}
                 </Button>
               );
             })}
+            {canPickMaintenanceLog && (
+              <Button
+                type="button"
+                size="sm"
+                variant={logTarget === "maintenance" ? "default" : "outline"}
+                className="rounded-full"
+                onClick={() => setLogTarget("maintenance")}
+              >
+                <Wrench className="h-3.5 w-3.5 mr-1" /> Maintenance
+              </Button>
+            )}
+            {canPickLostPropertyLog && (
+              <Button
+                type="button"
+                size="sm"
+                variant={logTarget === "lost_property" ? "default" : "outline"}
+                className="rounded-full"
+                onClick={() => setLogTarget("lost_property")}
+              >
+                <PackageSearch className="h-3.5 w-3.5 mr-1" /> Lost Property
+              </Button>
+            )}
           </div>
         )}
-        {!useSendToPicker && availableThreads.length > 1 && (
+        {!useSendToPicker && (availableThreads.length > 1 || canPickMaintenanceLog || canPickLostPropertyLog) && (
           <div className="mt-3 flex flex-wrap gap-2">
             {availableThreads.map((t) => (
               <Button
                 key={t}
                 type="button"
                 size="sm"
-                variant={t === thread ? "default" : "outline"}
+                variant={logTarget === null && t === thread ? "default" : "outline"}
                 className="rounded-full"
-                onClick={() => setThread(t)}
+                onClick={() => pickThread(t)}
               >
                 {THREAD_LABELS[t]}
               </Button>
             ))}
+            {canPickMaintenanceLog && (
+              <Button
+                type="button"
+                size="sm"
+                variant={logTarget === "maintenance" ? "default" : "outline"}
+                className="rounded-full"
+                onClick={() => setLogTarget("maintenance")}
+              >
+                <Wrench className="h-3.5 w-3.5 mr-1" /> Maintenance
+              </Button>
+            )}
+            {canPickLostPropertyLog && (
+              <Button
+                type="button"
+                size="sm"
+                variant={logTarget === "lost_property" ? "default" : "outline"}
+                className="rounded-full"
+                onClick={() => setLogTarget("lost_property")}
+              >
+                <PackageSearch className="h-3.5 w-3.5 mr-1" /> Lost Property
+              </Button>
+            )}
           </div>
         )}
 
         <div ref={feedRef} className="flex-1 min-h-0 overflow-y-auto mt-4 space-y-4 pr-1">
-          {groups.length === 0 ? (
+          {logTarget ? (
+            <div className="flex h-full items-center justify-center text-center text-sm text-muted-foreground px-6">
+              {logTarget === "maintenance"
+                ? "Sending to the Maintenance log. Pick a room and describe the issue."
+                : "Adding to Lost Property. Optionally tag a room, then describe the item."}
+            </div>
+          ) : groups.length === 0 ? (
             <p className="text-sm text-muted-foreground text-center py-8">
               No messages yet. Say hi.
             </p>
@@ -479,9 +574,15 @@ export function MessagesSheet({
         </div>
 
         <div className="mt-3 border-t pt-3 space-y-2">
-          {supportsRoomTag(thread) && (
+          {(logTarget !== null || supportsRoomTag(thread)) && (
             <div className="flex items-center gap-2">
-              <span className="text-xs text-muted-foreground shrink-0">Tag room:</span>
+              <span className="text-xs text-muted-foreground shrink-0">
+                {logTarget === "maintenance"
+                  ? "Room:"
+                  : logTarget === "lost_property"
+                  ? "Room (optional):"
+                  : "Tag room:"}
+              </span>
               <select
                 value={room === "" ? "" : String(room)}
                 onChange={(e) => setRoom(e.target.value === "" ? "" : Number(e.target.value))}
@@ -492,7 +593,7 @@ export function MessagesSheet({
                   <option key={n} value={n}>Room {n}</option>
                 ))}
               </select>
-              {canLogMaintenance && (
+              {logTarget === null && canLogMaintenance && (
                 <label className="ml-auto flex items-center gap-2 text-xs font-medium">
                   <Wrench className={cn("h-3.5 w-3.5", alsoMaintenance ? "text-amber-600 dark:text-amber-400" : "text-muted-foreground")} />
                   <span>Maintenance</span>
@@ -501,7 +602,7 @@ export function MessagesSheet({
               )}
             </div>
           )}
-          {(canLogMaintenance || canLogLostProperty) && supportsRoomTag(thread) && canLogLostProperty && (
+          {logTarget === null && (canLogMaintenance || canLogLostProperty) && supportsRoomTag(thread) && canLogLostProperty && (
             <div className="flex items-center gap-2">
               <label className="ml-auto flex items-center gap-2 text-xs font-medium">
                 <PackageSearch className={cn("h-3.5 w-3.5", alsoLostProperty ? "text-sky-600 dark:text-sky-400" : "text-muted-foreground")} />
@@ -545,7 +646,11 @@ export function MessagesSheet({
               value={text}
               onChange={(e) => setText(e.target.value)}
               placeholder={
-                supportsRoomTag(thread) && typeof room === "number"
+                logTarget === "maintenance"
+                  ? "Describe the maintenance issue…"
+                  : logTarget === "lost_property"
+                  ? "Describe the lost item…"
+                  : supportsRoomTag(thread) && typeof room === "number"
                   ? `Message about Room ${room}…`
                   : "Type a message…"
               }
