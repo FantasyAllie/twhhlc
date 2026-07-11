@@ -243,6 +243,7 @@ type MaintenanceRequest = {
   done_by_username: string | null;
   done_at: string | null;
   created_at: string;
+  photo_paths: string[];
 };
 
 function AppPage() {
