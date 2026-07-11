@@ -17,6 +17,12 @@ import { UserApprovalDialog } from "@/components/user-approval-dialog";
 import { QuickReceptionSheet } from "@/components/quick-reception-sheet";
 import { LostPropertySheet } from "@/components/lost-property-sheet";
 import { PhotoAttachments, PhotoComposer } from "@/components/entry-photos";
+import { StayoverPhotosSheet } from "@/components/stayover-photos-sheet";
+import {
+  deleteTodayStayoverPhotosForRoom,
+  purgeExpiredStayoverPhotos,
+  uploadStayoverPhoto,
+} from "@/lib/stayover-photos";
 import { useServerFn } from "@tanstack/react-start";
 import { useIsMobile } from "@/hooks/use-mobile";
 import {
