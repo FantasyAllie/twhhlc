@@ -1471,19 +1471,13 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
 
   const resetAll = async () => {
     if (!confirm("Reset done state, counts, and quick status setup for all rooms?")) return;
-    const dndId = receptionStatuses.find((x) => x.label === "DND")?.id ?? null;
-    const stayId = receptionStatuses.find((x) => x.label === "Stayover")?.id ?? null;
-    const dndRoomNumbers = dndId
-      ? rooms.filter((r) => r.reception_status_id === dndId).map((r) => r.room_number)
-      : [];
     qc.setQueryData<Room[]>(["rooms"], (old) =>
       old?.map((r) => ({
         ...r,
         done: false,
         done_reception: false,
         housekeeping_note: null, needs_maintenance: false, guest_vacated: false, early_check_in: false,
-        reception_status_id:
-          dndId && r.reception_status_id === dndId && stayId ? stayId : null,
+        reception_status_id: null,
         reception_bed_id: null,
       })) ?? [],
     );
@@ -1496,34 +1490,6 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
       reception_bed_id: null,
     }).neq("room_number", -1);
     if (r1.error) toast.error(r1.error.message);
-    // Also clear any per-room default_status that is currently Stayover, so
-    // rooms configured with a Stayover default don't retain the Stayover tile
-    // after a reset.
-    if (stayId) {
-      qc.setQueryData<Room[]>(["rooms"], (old) =>
-        old?.map((r) =>
-          r.default_status === stayId ? { ...r, default_status: null } : r,
-        ) ?? [],
-      );
-      const rs = await supabase
-        .from("rooms")
-        .update({ default_status: null })
-        .eq("default_status", stayId);
-      if (rs.error) toast.error(rs.error.message);
-    }
-    if (dndRoomNumbers.length > 0) {
-      const { error: e3 } = await supabase
-        .from("rooms")
-        .update({
-          done: false,
-          done_reception: false,
-          housekeeping_note: null, needs_maintenance: false, guest_vacated: false, early_check_in: false,
-          reception_status_id: stayId ?? null,
-          reception_bed_id: null,
-        })
-        .in("room_number", dndRoomNumbers);
-      if (e3) toast.error(e3.message);
-    }
     const r2 = await supabase.from("room_item_counts").delete().neq("room_number", -1);
     if (r2.error) toast.error(r2.error.message);
     qc.invalidateQueries({ queryKey: ["rooms"] });
