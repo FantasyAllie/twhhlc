@@ -687,7 +687,7 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
     queryFn: async (): Promise<MaintenanceRequest[]> => {
       const { data, error } = await supabase
         .from("maintenance_requests" as never)
-        .select("id,room_number,message,created_by_username,done,done_by_username,done_at,created_at")
+        .select("id,room_number,message,created_by_username,done,done_by_username,done_at,created_at,photo_paths")
         .order("created_at", { ascending: false });
       if (error) throw error;
       return (data ?? []) as MaintenanceRequest[];
