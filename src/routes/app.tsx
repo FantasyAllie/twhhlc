@@ -423,6 +423,7 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
   const [messagesInitial, setMessagesInitial] = useState<{ thread?: MessagesThread; room?: number | null; text?: string; replyTo?: { id: string; sender: string; snippet: string } }>({});
   const [maintenanceLogOpen, setMaintenanceLogOpen] = useState(false);
   const [newMaintenanceRoom, setNewMaintenanceRoom] = useState<string>("");
+ const [newMaintenancePhotos, setNewMaintenancePhotos] = useState<File[]>([]);
   const [newMaintenanceText, setNewMaintenanceText] = useState<string>("");
   const [lostPropertyOpen, setLostPropertyOpen] = useState(false);
   // Menu section collapse state, synced to profiles.preferences.menu_collapsed
