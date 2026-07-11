@@ -109,6 +109,7 @@ export function MessagesSheet({
   const [replyTo, setReplyTo] = useState<{ id: string; sender: string; snippet: string } | null>(initialReplyTo ?? null);
   const [alsoMaintenance, setAlsoMaintenance] = useState(false);
   const [alsoLostProperty, setAlsoLostProperty] = useState(false);
+  const [logTarget, setLogTarget] = useState<"maintenance" | "lost_property" | null>(null);
   const feedRef = useRef<HTMLDivElement | null>(null);
 
   // "Send to" picker options for non-admin users with a single department.
@@ -163,12 +164,21 @@ export function MessagesSheet({
   // Lost Property mirrors Maintenance — only relevant on HK↔Reception (Reception
   // owns the log; Housekeeping is the usual reporter).
   const canLogLostProperty = thread === "hk_reception" && !!onLogLostProperty;
+  // Whether the direct-log destinations are usable by this user.
+  const canPickMaintenanceLog = !!onLogMaintenance;
+  const canPickLostPropertyLog = !!onLogLostProperty;
   useEffect(() => {
     if (!canLogMaintenance) setAlsoMaintenance(false);
   }, [canLogMaintenance]);
   useEffect(() => {
     if (!canLogLostProperty) setAlsoLostProperty(false);
   }, [canLogLostProperty]);
+
+  // When switching threads, clear any active log-target so pills stay in sync.
+  const pickThread = (t: MessagesThread) => {
+    setLogTarget(null);
+    setThread(t);
+  };
 
   useEffect(() => {
     if (!open) return;
@@ -238,6 +248,41 @@ export function MessagesSheet({
   const send = async () => {
     const body = text.trim();
     if (!body) return;
+    // Direct-to-log destinations (Maintenance / Lost Property) bypass the chat feed.
+    if (logTarget === "maintenance") {
+      if (typeof room !== "number") {
+        toast.error("Pick a room for maintenance");
+        return;
+      }
+      if (!onLogMaintenance) return;
+      const res = await onLogMaintenance(room, body);
+      if (!res.ok) {
+        toast.error(res.error ?? "Failed to log maintenance");
+        return;
+      }
+      toast.success("Logged to maintenance");
+      setText("");
+      setReplyTo(null);
+      return;
+    }
+    if (logTarget === "lost_property") {
+      const senderIsHkOnly =
+        myDepartments.includes("housekeeping") && !myDepartments.includes("reception");
+      if (senderIsHkOnly && typeof room !== "number") {
+        toast.error("Pick a room for the lost item");
+        return;
+      }
+      if (!onLogLostProperty) return;
+      const res = await onLogLostProperty(typeof room === "number" ? room : null, body);
+      if (!res.ok) {
+        toast.error(res.error ?? "Failed to log lost property");
+        return;
+      }
+      toast.success("Added to lost property");
+      setText("");
+      setReplyTo(null);
+      return;
+    }
     const roomNumber = supportsRoomTag(thread) && typeof room === "number" ? room : null;
     if (alsoMaintenance && (!canLogMaintenance || roomNumber === null)) {
       toast.error("Pick a room to also log as maintenance");
