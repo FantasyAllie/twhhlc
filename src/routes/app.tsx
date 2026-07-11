@@ -432,7 +432,13 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
   const [newMaintenanceRoom, setNewMaintenanceRoom] = useState<string>("");
  const [newMaintenancePhotos, setNewMaintenancePhotos] = useState<File[]>([]);
   const [newMaintenanceText, setNewMaintenanceText] = useState<string>("");
+  const [maintenanceComposerOpen, setMaintenanceComposerOpen] = useState(false);
   const [lostPropertyOpen, setLostPropertyOpen] = useState(false);
+  // Stayover / DND photo state
+  const [stayoverPhotosOpen, setStayoverPhotosOpen] = useState(false);
+  const [stayoverPhotosRoomFilter, setStayoverPhotosRoomFilter] = useState<number | undefined>(undefined);
+  const [pendingDndRoom, setPendingDndRoom] = useState<number | null>(null);
+  const dndFileInputRef = useRef<HTMLInputElement | null>(null);
   // Menu section collapse state, synced to profiles.preferences.menu_collapsed
   const menuPrefsQ = useQuery({
     queryKey: ["profile_preferences", authUser?.id],
