@@ -277,6 +277,10 @@ type ViewRole = "admin" | "manager" | "user" | "reception" | "fnb" | "maintenanc
   useEffect(() => {
     document.title = "Three Ways House Hotel";
   }, []);
+  // Purge stayover photos older than 2 weeks on load.
+  useEffect(() => {
+    void purgeExpiredStayoverPhotos();
+  }, []);
   // Mobile keyboard: keep the focused input visible above the on-screen keyboard.
   // We listen to focus on form controls and use visualViewport to detect when the
   // keyboard reduces the visible area, then scroll the field into view.
