@@ -646,7 +646,11 @@ export function MessagesSheet({
               value={text}
               onChange={(e) => setText(e.target.value)}
               placeholder={
-                supportsRoomTag(thread) && typeof room === "number"
+                logTarget === "maintenance"
+                  ? "Describe the maintenance issue…"
+                  : logTarget === "lost_property"
+                  ? "Describe the lost item…"
+                  : supportsRoomTag(thread) && typeof room === "number"
                   ? `Message about Room ${room}…`
                   : "Type a message…"
               }
