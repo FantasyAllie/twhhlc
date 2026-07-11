@@ -4153,7 +4153,65 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
   currentUsername={authUser?.username ?? null}
   canAdd={menuCanUseLostProperty}
   requireRoom={hasHousekeeperRole && !hasReceptionRole}
+  roomNumbers={rooms.map((r) => r.room_number).sort((a, b) => a - b)}
   onAdd={logLostProperty}
+/>
+<StayoverPhotosSheet
+  open={stayoverPhotosOpen}
+  onOpenChange={(o) => {
+    setStayoverPhotosOpen(o);
+    if (!o) setStayoverPhotosRoomFilter(undefined);
+  }}
+  roomFilter={stayoverPhotosRoomFilter}
+  title={
+    typeof stayoverPhotosRoomFilter === "number"
+      ? `Room ${stayoverPhotosRoomFilter} — DND Photo`
+      : "Stayover Photos"
+  }
+/>
+<input
+  ref={dndFileInputRef}
+  type="file"
+  accept="image/*"
+  capture="environment"
+  className="hidden"
+  onChange={async (e) => {
+    const file = e.target.files?.[0];
+    e.target.value = "";
+    const room = pendingDndRoom;
+    setPendingDndRoom(null);
+    if (!file || room === null) return;
+    const dndId = receptionStatuses.find((x) => x.label === "DND")?.id ?? null;
+    if (!dndId) {
+      toast.error("DND status not configured");
+      return;
+    }
+    const res = await uploadStayoverPhoto(room, file, authUser?.username ?? null);
+    if (!res.ok) {
+      toast.error(res.error ?? "Photo upload failed");
+      return;
+    }
+    setRoomReceptionStatus(room, dndId);
+    // Mark room as done (housekeeping + reception) alongside DND.
+    qc.setQueryData<Room[]>(["rooms"], (old) => {
+      const list = old ? [...old] : [];
+      const idx = list.findIndex((r) => r.room_number === room);
+      if (idx >= 0) list[idx] = { ...list[idx], done: true, done_reception: true };
+      return list;
+    });
+    await supabase.from("rooms").upsert(
+      {
+        room_number: room,
+        done: true,
+        done_reception: true,
+        updated_at: new Date().toISOString(),
+      } as never,
+      { onConflict: "user_id,room_number" },
+    );
+    qc.invalidateQueries({ queryKey: ["rooms"] });
+    qc.invalidateQueries({ queryKey: ["stayover_photos"] });
+    toast.success("DND set and photo saved");
+  }}
 />
 <Sheet open={menuSheetOpen} onOpenChange={setMenuSheetOpen}>
   <SheetContent side="right" disableDragDismiss className="w-auto max-w-[90vw] min-w-[18rem] sm:max-w-md p-0 flex flex-col overflow-hidden [&_[data-sheet-close]]:max-lg:hidden">
