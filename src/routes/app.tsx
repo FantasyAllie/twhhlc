@@ -3293,6 +3293,17 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
                Lost Property
              </DropdownMenuItem>
            )}
+          {(menuIsAdmin || hasHousekeeperRole || hasReceptionRole) && !isMaintenance && (
+            <DropdownMenuItem
+              onClick={() => {
+                setStayoverPhotosRoomFilter(undefined);
+                setStayoverPhotosOpen(true);
+              }}
+            >
+              <Camera className="h-4 w-4 mr-2" />
+              Stayover Photos
+            </DropdownMenuItem>
+          )}
           {canUseMessages && (
             <DropdownMenuItem onClick={() => { setMessagesInitial({}); setMessagesSheetOpen(true); }}>
               <MessageSquare className="h-4 w-4 mr-2" />
