@@ -45,7 +45,7 @@ async function fetchRoleRows(userId: string): Promise<{ position: Position; subR
     .select("role")
     .eq("user_id", userId);
   const roles = ((data ?? []) as { role: string }[]).map((r) => r.role);
-  const priority: Record<Position, number> = { regional_admin: 5, admin: 4, manager: 3, user: 2, pending: 1 };
+  const priority: Record<Position, number> = { admin: 5, regional_admin: 4, manager: 3, user: 2, pending: 1 };
   let position: Position = "pending";
   const subRoles: SubRole[] = [];
   for (const r of roles) {
