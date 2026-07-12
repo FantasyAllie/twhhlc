@@ -3350,7 +3350,7 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
        <DropdownMenuLabel>Account</DropdownMenuLabel>
          {canSwitchHotel && (
            <DropdownMenuItem onClick={() => setHotelSwitcherOpen(true)}>
-             <ArrowUp className="h-4 w-4 mr-2 rotate-90" /> Switch hotel
+             <RotateCcw className="h-4 w-4 mr-2" /> Switch hotel
            </DropdownMenuItem>
          )}
         {realIsAdmin && !isMaintenance && (
