@@ -4,7 +4,7 @@ import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Minus, Plus, X, Menu, ArrowUp, ArrowDown, Pencil, Check, Trash2, Sun, Moon, List, Bed, Ban, History, Users, User, LogOut, Hash, ConciergeBell, ClipboardList, Printer, Filter, Wrench, DoorOpen, Bell, Eye, EyeOff, HelpCircle, AlertCircle, MessageSquare, PackageSearch, RotateCcw, ChevronDown, Camera, Building2 } from "lucide-react";
+import { Minus, Plus, X, Menu, ArrowUp, ArrowDown, Pencil, Check, Trash2, Sun, Moon, List, Bed, Ban, History, Users, User, LogOut, Hash, ConciergeBell, ClipboardList, Printer, Filter, Wrench, DoorOpen, Bell, Eye, EyeOff, HelpCircle, AlertCircle, MessageSquare, PackageSearch, RotateCcw, ChevronDown, Camera } from "lucide-react";
 import { ReceptionIconGuide } from "@/components/reception-icon-guide";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
@@ -59,7 +59,7 @@ import {
 } from "@/components/ui/sheet";
 import { useTheme } from "@/components/theme-provider";
 import { useCurrentHotel, DEFAULT_HOTEL_NAME } from "@/lib/hotels";
-import { listHotels, setActiveHotel, type HotelOption } from "@/lib/auth.functions";
+// Workspace selection moved to /login; no in-app switcher.
 
 export const Route = createFileRoute("/app")({
   ssr: false,
@@ -264,14 +264,6 @@ function AppPage() {
   const [authUser, setAuthUser] = useState(() => getStoredUser());
   const currentHotelQ = useCurrentHotel();
   const hotelName = currentHotelQ.data?.name ?? DEFAULT_HOTEL_NAME;
-  const currentHotelId = currentHotelQ.data?.id ?? null;
-  const listHotelsFn = useServerFn(listHotels);
-  const setActiveHotelFn = useServerFn(setActiveHotel);
-  const hotelsQ = useQuery({
-    queryKey: ["hotels"],
-    enabled: authUser?.position === "regional_admin",
-    queryFn: () => listHotelsFn() as Promise<HotelOption[]>,
-  });
   // Admin/Manager "view as" overlay — see definition further below for full context.
 type ViewRole = "admin" | "manager" | "user" | "reception" | "fnb" | "maintenance";
   const [viewAsRole, setViewAsRole] = useState<ViewRole | null>(() => {
@@ -1154,16 +1146,6 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
     })();
     const menuIsFnbOnly =
       position === "user" && hasFnbRole && !hasHousekeeperRole && !hasReceptionRole;
-    const switchHotel = async (hotelId: string) => {
-      if (!hotelId || hotelId === currentHotelId) return;
-      try {
-        await setActiveHotelFn({ data: { hotelId } });
-        await qc.invalidateQueries();
-        toast.success("Workspace switched");
-      } catch (err) {
-        toast.error(err instanceof Error ? err.message : "Failed to switch workspace");
-      }
-    };
     const logLostProperty = async (
       roomNumber: number | null,
       message: string,
@@ -3124,28 +3106,6 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
             )}
           </div>
  <div className="flex items-center gap-2">
-     {!isMobile && realIsRegionalAdmin && hotelsQ.data && hotelsQ.data.length > 0 && (
-       <DropdownMenu>
-         <DropdownMenuTrigger asChild>
-           <Button variant="outline" size="sm" className="max-w-[14rem]">
-             <Building2 className="h-4 w-4 mr-2 shrink-0" />
-             <span className="truncate">{hotelName}</span>
-             <ChevronDown className="h-4 w-4 ml-2 shrink-0" />
-           </Button>
-         </DropdownMenuTrigger>
-         <DropdownMenuContent align="end" className="w-64">
-           <DropdownMenuLabel>Workspace</DropdownMenuLabel>
-           <DropdownMenuSeparator />
-           {hotelsQ.data.map((hotel) => (
-             <DropdownMenuItem key={hotel.id} onClick={() => void switchHotel(hotel.id)}>
-               {hotel.id === currentHotelId && <Check className="h-4 w-4 mr-2" />}
-               {hotel.id !== currentHotelId && <span className="w-4 mr-2" />}
-               <span className="truncate">{hotel.name}</span>
-             </DropdownMenuItem>
-           ))}
-         </DropdownMenuContent>
-       </DropdownMenu>
-     )}
     {!isMobile && canViewAs && (
       <div className="inline-flex rounded-md border p-0.5 bg-background h-9 items-center">
         {availableViews.map((r) => {
