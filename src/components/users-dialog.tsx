@@ -389,18 +389,20 @@ export function UsersDialog({
                     minLength={6}
                   />
                 </div>
-                <div className="space-y-1">
-                  <label className="text-xs font-medium">Position</label>
-                  <select
-                    className="w-full h-9 rounded-md border bg-background px-3 text-sm"
-                    value={newPosition}
-                    onChange={(e) => setNewPosition(e.target.value as AssignablePosition)}
-                  >
-                    {assignablePositions.map((p) => (
-                      <option key={p} value={p}>{POSITION_LABELS[p]}</option>
-                    ))}
-                  </select>
-                </div>
+                {assignablePositions.length > 1 && (
+                  <div className="space-y-1">
+                    <label className="text-xs font-medium">Position</label>
+                    <select
+                      className="w-full h-9 rounded-md border bg-background px-3 text-sm"
+                      value={newPosition}
+                      onChange={(e) => setNewPosition(e.target.value as AssignablePosition)}
+                    >
+                      {assignablePositions.map((p) => (
+                        <option key={p} value={p}>{POSITION_LABELS[p]}</option>
+                      ))}
+                    </select>
+                  </div>
+                )}
                 <div className="space-y-1 sm:col-span-2">
                   <label className="text-xs font-medium">Hotel workspaces</label>
                   {isRegionalAdmin ? (
