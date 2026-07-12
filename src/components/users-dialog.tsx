@@ -212,7 +212,7 @@ export function UsersDialog({
       const hotel = await createHotelFn({ data: { name: newHotelName } }) as HotelOption;
       toast.success("Hotel created");
       setNewHotelName("");
-      setNewHotelId(hotel.id);
+      setNewHotelIds((prev) => (prev.includes(hotel.id) ? prev : [...prev, hotel.id]));
       qc.invalidateQueries({ queryKey: ["hotels"] });
     } catch (err) {
       toast.error(err instanceof Error ? err.message : "Failed to create hotel");
@@ -233,7 +233,7 @@ export function UsersDialog({
           password: newPassword,
           position: newPosition,
           subRoles: newSubRoles,
-          hotelId: newHotelId || undefined,
+          hotelIds: newHotelIds,
         },
       });
       toast.success("User created");
