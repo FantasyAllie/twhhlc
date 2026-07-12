@@ -6,13 +6,14 @@ import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { lovable } from "@/integrations/lovable";
 import { refreshSession } from "@/lib/auth-client";
+import logoUrl from "@/assets/logo.png";
 
 export const Route = createFileRoute("/login")({
   ssr: false,
   head: () => ({
     meta: [
-      { title: "Sign in — TW Housekeeping" },
-      { name: "description", content: "Sign in to the linen counter." },
+      { title: "Sign in — The Hotel Hub" },
+      { name: "description", content: "Sign in to The Hotel Hub." },
     ],
   }),
   component: LoginPage,
@@ -126,14 +127,19 @@ function LoginPage() {
   return (
     <div className="min-h-screen flex items-center justify-center bg-background p-6">
       <div className="w-full max-w-sm space-y-4 rounded-lg border bg-card p-6 shadow-sm">
-        <div className="space-y-1 text-center">
-          <h1 className="text-xl font-semibold">Three Ways House Hotel</h1>
+        <div className="space-y-2 text-center">
+          <img
+            src={logoUrl}
+            alt="The Hotel Hub"
+            className="mx-auto h-16 w-16 object-contain"
+          />
+          <h1 className="text-xl font-semibold">The Hotel Hub</h1>
           <p className="text-sm text-muted-foreground">
             {mode === "signup"
               ? "Create your account"
               : mode === "forgot"
                 ? "Reset your password"
-                : "Housekeeping — sign in"}
+                : "Sign in to your hotel workspace"}
           </p>
         </div>
 

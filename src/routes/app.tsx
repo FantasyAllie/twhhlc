@@ -58,12 +58,13 @@ import {
   SheetTrigger,
 } from "@/components/ui/sheet";
 import { useTheme } from "@/components/theme-provider";
+import { useCurrentHotelName, DEFAULT_HOTEL_NAME } from "@/lib/hotels";
 
 export const Route = createFileRoute("/app")({
   ssr: false,
   head: () => ({
     meta: [
-      { title: "Three Ways House Hotel" },
+      { title: "The Hotel Hub" },
       { name: "description", content: "Count items per room across 50 rooms." },
     ],
   }),
@@ -259,6 +260,7 @@ function AppPage() {
   const navigate = useNavigate();
   const { theme, toggleTheme } = useTheme();
   const isMobile = useIsMobile();
+  const hotelName = useCurrentHotelName();
   const [authUser, setAuthUser] = useState(() => getStoredUser());
   // Admin/Manager "view as" overlay — see definition further below for full context.
 type ViewRole = "admin" | "manager" | "user" | "reception" | "fnb" | "maintenance";
@@ -276,8 +278,8 @@ type ViewRole = "admin" | "manager" | "user" | "reception" | "fnb" | "maintenanc
     return () => window.removeEventListener("tw-auth-changed", onChange);
   }, [navigate]);
   useEffect(() => {
-    document.title = "Three Ways House Hotel";
-  }, []);
+    document.title = hotelName ?? DEFAULT_HOTEL_NAME;
+  }, [hotelName]);
   // Purge stayover photos older than 48 hours on load.
   useEffect(() => {
     void purgeExpiredStayoverPhotos();
@@ -2010,10 +2012,10 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
     });
     const heading =
       kind === "rejects"
-        ? "Three Ways House Hotel Linen Rejects"
+        ? `${hotelName} Linen Rejects`
         : kind === "fnb_totals"
-        ? "Three Ways House Hotel F&B Linen"
-        : "Three Ways House Hotel Linen";
+        ? `${hotelName} F&B Linen`
+        : `${hotelName} Linen`;
     const win = window.open("", "_blank");
     if (!win) {
       toast.error("Pop-up blocked");
@@ -3079,21 +3081,21 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
           <div className="min-w-0 flex-1">
             {isReception ? (
               <>
-                <h1 className="text-xl sm:text-2xl font-semibold tracking-tight">Three Ways House Hotel</h1>
+                <h1 className="text-xl sm:text-2xl font-semibold tracking-tight">{hotelName}</h1>
                 <p className="text-xs text-muted-foreground mt-1 whitespace-pre-line">
                   An auto-updating room tracker for Housekeeping. Use the help if you get stuck 
                 </p>
               </>
             ) : isFnb ? (
               <>
-                <h1 className="text-xl sm:text-2xl font-semibold tracking-tight">Three Ways House Hotel</h1>
+                <h1 className="text-xl sm:text-2xl font-semibold tracking-tight">{hotelName}</h1>
                 <p className="text-xs text-muted-foreground mt-1">
                   Shared workspace for F&B staff
                 </p>
               </>
             ) : (
               <>
-                <h1 className="text-xl sm:text-2xl font-semibold tracking-tight">Three Ways House Hotel</h1>
+                <h1 className="text-xl sm:text-2xl font-semibold tracking-tight">{hotelName}</h1>
                 <p className="text-xs text-muted-foreground mt-1">
                   Shared workspace for Housekeeping staff
                 </p>

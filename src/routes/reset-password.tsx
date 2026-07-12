@@ -9,7 +9,7 @@ export const Route = createFileRoute("/reset-password")({
   ssr: false,
   head: () => ({
     meta: [
-      { title: "Reset password — TW Housekeeping" },
+      { title: "Reset password — The Hotel Hub" },
       { name: "description", content: "Set a new password for your account." },
     ],
   }),

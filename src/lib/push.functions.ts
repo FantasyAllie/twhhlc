@@ -193,7 +193,7 @@ export const sendTestNotification = createServerFn({ method: "POST" })
       .eq("user_id", context.userId);
     const subs = (rows ?? []) as SubRow[];
     await sendToSubs(subs, {
-      title: "TW Housekeeping — Test notification",
+      title: "The Hotel Hub — Test notification",
       body: "If you can see this, push notifications are working on this device.",
       url: "/app",
     });
