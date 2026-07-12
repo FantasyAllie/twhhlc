@@ -68,8 +68,8 @@ async function getAdminAccess(ctx: { userId: string }) {
   const isAdmin = roleList.includes("admin") || isRegionalAdmin;
   if (!isAdmin) throw new Error("Admin access required");
 
-  const { data: membership } = await supabaseAdmin
-    .from("hotel_members")
+  const { data: active } = await supabaseAdmin
+    .from("user_active_hotel")
     .select("hotel_id")
     .eq("user_id", ctx.userId)
     .maybeSingle();
@@ -77,7 +77,7 @@ async function getAdminAccess(ctx: { userId: string }) {
   return {
     supabaseAdmin,
     isRegionalAdmin,
-    homeHotelId: (membership as { hotel_id: string } | null)?.hotel_id ?? null,
+    activeHotelId: (active as { hotel_id: string } | null)?.hotel_id ?? null,
   };
 }
 
@@ -113,15 +113,18 @@ function splitRoles(rows: Array<{ role: string }>): { position: Position; subRol
 export const listUsers = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .handler(async ({ context }): Promise<AppUserRow[]> => {
-    const { supabaseAdmin, isRegionalAdmin, homeHotelId } = await getAdminAccess(context);
+    const { supabaseAdmin, isRegionalAdmin, activeHotelId } = await getAdminAccess(context);
 
     const membershipQuery = supabaseAdmin
       .from("hotel_members")
       .select("user_id, hotel_id, hotels ( id, name, slug )");
+    // Regional admins see all memberships across every hotel. Non-regional
+    // admins are scoped to their currently active hotel — they only see users
+    // who belong to that same hotel.
     const { data: memberships, error: mErr } = isRegionalAdmin
       ? await membershipQuery
-      : homeHotelId
-      ? await membershipQuery.eq("hotel_id", homeHotelId)
+      : activeHotelId
+      ? await membershipQuery.eq("hotel_id", activeHotelId)
       : { data: [], error: null };
     if (mErr) throw new Error(mErr.message);
 
@@ -130,16 +133,19 @@ export const listUsers = createServerFn({ method: "POST" })
       hotel_id: string;
       hotels: { id: string; name: string; slug: string } | null;
     }>;
-    const membershipByUser = new Map<string, { hotelId: string; hotelName: string | null }>();
+    const membershipsByUser = new Map<string, { ids: string[]; names: string[] }>();
     for (const row of membershipRows) {
-      membershipByUser.set(row.user_id, { hotelId: row.hotel_id, hotelName: row.hotels?.name ?? null });
+      const entry = membershipsByUser.get(row.user_id) ?? { ids: [], names: [] };
+      entry.ids.push(row.hotel_id);
+      entry.names.push(row.hotels?.name ?? "Unknown");
+      membershipsByUser.set(row.user_id, entry);
     }
 
     const profileQuery = supabaseAdmin
       .from("profiles")
       .select("id, email, display_name, created_at")
       .order("created_at", { ascending: true });
-    const scopedIds = membershipRows.map((m) => m.user_id);
+    const scopedIds = Array.from(membershipsByUser.keys());
     const { data: profiles, error } = isRegionalAdmin
       ? await profileQuery
       : scopedIds.length > 0
@@ -176,14 +182,15 @@ export const listUsers = createServerFn({ method: "POST" })
     }
     return ((profiles ?? []) as Array<{ id: string; email: string | null; display_name: string | null; created_at: string }>).map((p) => {
       const { position, subRoles } = splitRoles(rowsByUser.get(p.id) ?? []);
+      const m = membershipsByUser.get(p.id);
       return {
         id: p.id,
         email: p.email ?? "",
         username: p.display_name || (p.email ?? "").split("@")[0] || "user",
         position,
         subRoles,
-        hotelId: membershipByUser.get(p.id)?.hotelId ?? null,
-        hotelName: membershipByUser.get(p.id)?.hotelName ?? null,
+        hotelIds: m?.ids ?? [],
+        hotelNames: m?.names ?? [],
         created_at: p.created_at,
         disabled: disabledMap.get(p.id) ?? false,
       };
