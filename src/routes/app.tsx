@@ -4334,8 +4334,15 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
       };
       return (
         <div className="space-y-4">
-          {((isAdmin && !isReception) || isReception) && (
+          {(canViewAs || (isAdmin && !isReception) || isReception) && (
             <Section id="actions" title="Actions">
+                {canViewAs && (
+                  <Row
+                    icon={LayoutGrid}
+                    label="Departments"
+                    onClick={() => { close(); setRolePickerSheetOpen(true); }}
+                  />
+                )}
                 {isAdmin && !isReception && (
                   <Row
                     icon={ClipboardList}
