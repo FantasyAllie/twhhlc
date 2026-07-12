@@ -1,7 +1,7 @@
 import { supabase } from "@/integrations/supabase/client";
 
-export type AppRole = "admin" | "manager" | "user" | "reception" | "fnb" | "maintenance" | "pending";
-export type Position = "admin" | "manager" | "user" | "pending";
+export type AppRole = "regional_admin" | "admin" | "manager" | "user" | "reception" | "fnb" | "maintenance" | "pending";
+export type Position = "regional_admin" | "admin" | "manager" | "user" | "pending";
 export type SubRole = "reception" | "housekeeper" | "fnb" | "maintenance";
 export type SessionUser = {
   id: string;
@@ -45,13 +45,13 @@ async function fetchRoleRows(userId: string): Promise<{ position: Position; subR
     .select("role")
     .eq("user_id", userId);
   const roles = ((data ?? []) as { role: string }[]).map((r) => r.role);
-  const priority: Record<Position, number> = { admin: 4, manager: 3, user: 2, pending: 1 };
+  const priority: Record<Position, number> = { regional_admin: 5, admin: 4, manager: 3, user: 2, pending: 1 };
   let position: Position = "pending";
   const subRoles: SubRole[] = [];
   for (const r of roles) {
     if (r === "reception" || r === "housekeeper" || r === "fnb" || r === "maintenance") {
       if (!subRoles.includes(r)) subRoles.push(r);
-    } else if (r === "admin" || r === "manager" || r === "user" || r === "pending") {
+    } else if (r === "regional_admin" || r === "admin" || r === "manager" || r === "user" || r === "pending") {
       if (priority[r] > priority[position]) position = r;
     }
   }
@@ -59,7 +59,7 @@ async function fetchRoleRows(userId: string): Promise<{ position: Position; subR
 }
 
 function compatRole(position: Position, subRoles: SubRole[]): AppRole {
-  if (position === "admin" || position === "manager") return position;
+  if (position === "regional_admin" || position === "admin" || position === "manager") return position;
   if (position === "pending") return "pending";
   // position === "user": pick sub-role for legacy display
   if (subRoles.includes("housekeeper")) return "user";

@@ -1,14 +1,17 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useServerFn } from "@tanstack/react-start";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import {
   listUsers,
+  listHotels,
   createUser,
+  createHotel,
   deleteUser,
   updateUserPassword,
   updateUserAssignment,
   setUserDisabled,
   type AppUserRow,
+  type HotelOption,
   type Position,
   type SubRole,
 } from "@/lib/auth.functions";
@@ -23,7 +26,7 @@ import {
   DialogDescription,
 } from "@/components/ui/dialog";
 import { toast } from "sonner";
-import { Trash2, Check, X, Pencil, Ban, RotateCcw, ChevronDown } from "lucide-react";
+import { Trash2, Check, X, Pencil, Ban, RotateCcw, ChevronDown, Building2 } from "lucide-react";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -35,6 +38,7 @@ import {
 
 type AssignablePosition = Exclude<Position, "pending">;
 const POSITION_LABELS: Record<AssignablePosition, string> = {
+  regional_admin: "Regional Admin",
   admin: "Admin",
   manager: "Manager",
   user: "User",
@@ -64,7 +68,9 @@ export function UsersDialog({
   const me = getStoredUser();
 
   const listFn = useServerFn(listUsers);
+  const listHotelsFn = useServerFn(listHotels);
   const createFn = useServerFn(createUser);
+  const createHotelFn = useServerFn(createHotel);
   const deleteFn = useServerFn(deleteUser);
   const pwFn = useServerFn(updateUserPassword);
   const assignFn = useServerFn(updateUserAssignment);
@@ -75,13 +81,21 @@ export function UsersDialog({
     enabled: open,
     queryFn: () => listFn() as Promise<AppUserRow[]>,
   });
+  const hotelsQ = useQuery({
+    queryKey: ["hotels"],
+    enabled: open,
+    queryFn: () => listHotelsFn() as Promise<HotelOption[]>,
+  });
 
   const [newEmail, setNewEmail] = useState("");
   const [newDisplayName, setNewDisplayName] = useState("");
   const [newPassword, setNewPassword] = useState("");
   const [newPosition, setNewPosition] = useState<AssignablePosition>("user");
   const [newSubRoles, setNewSubRoles] = useState<SubRole[]>(["housekeeper"]);
+  const [newHotelId, setNewHotelId] = useState("");
+  const [newHotelName, setNewHotelName] = useState("");
   const [busy, setBusy] = useState(false);
+  const [hotelBusy, setHotelBusy] = useState(false);
 
   const [pwUser, setPwUser] = useState<AppUserRow | null>(null);
   const [pwValue, setPwValue] = useState("");
@@ -89,14 +103,26 @@ export function UsersDialog({
   const [editUser, setEditUser] = useState<AppUserRow | null>(null);
   const [editPosition, setEditPosition] = useState<AssignablePosition>("user");
   const [editSubRoles, setEditSubRoles] = useState<SubRole[]>([]);
+  const [editHotelId, setEditHotelId] = useState("");
   const [editPw, setEditPw] = useState("");
   const [editBusy, setEditBusy] = useState(false);
   const [disableBusy, setDisableBusy] = useState(false);
+
+  const isRegionalAdmin = me?.position === "regional_admin";
+  const assignablePositions: AssignablePosition[] = isRegionalAdmin
+    ? ["regional_admin", "admin", "manager", "user"]
+    : ["admin", "manager", "user"];
+
+  useEffect(() => {
+    const firstHotelId = hotelsQ.data?.[0]?.id ?? "";
+    if (!newHotelId && firstHotelId) setNewHotelId(firstHotelId);
+  }, [hotelsQ.data, newHotelId]);
 
   function openEdit(u: AppUserRow) {
     setEditUser(u);
     setEditPosition((u.position === "pending" ? "user" : u.position) as AssignablePosition);
     setEditSubRoles([...u.subRoles]);
+    setEditHotelId(u.hotelId ?? hotelsQ.data?.[0]?.id ?? "");
     setEditPw("");
   }
   function closeEdit() {
@@ -112,18 +138,20 @@ export function UsersDialog({
     if (!editUser || editBusy) return;
     setEditBusy(true);
     try {
-      const rolesChanged =
+      const assignmentChanged =
         editPosition !== editUser.position ||
         editSubRoles.length !== editUser.subRoles.length ||
-        editSubRoles.some((r) => !editUser.subRoles.includes(r));
-      if (rolesChanged) {
-        await assignFn({ data: { id: editUser.id, position: editPosition, subRoles: editSubRoles } });
+        editSubRoles.some((r) => !editUser.subRoles.includes(r)) ||
+        editHotelId !== (editUser.hotelId ?? "");
+      if (assignmentChanged) {
+        await assignFn({ data: { id: editUser.id, position: editPosition, subRoles: editSubRoles, hotelId: editHotelId || undefined } });
       }
       if (editPw.trim().length > 0) {
         await pwFn({ data: { id: editUser.id, password: editPw } });
       }
       toast.success("User updated");
       qc.invalidateQueries({ queryKey: ["app_users"] });
+      qc.invalidateQueries({ queryKey: ["current-hotel"] });
       if (me?.id === editUser.id) {
         void refreshSession();
       }
@@ -165,6 +193,23 @@ export function UsersDialog({
     }
   }
 
+  async function onCreateHotel(e: React.FormEvent) {
+    e.preventDefault();
+    if (hotelBusy || !newHotelName.trim()) return;
+    setHotelBusy(true);
+    try {
+      const hotel = await createHotelFn({ data: { name: newHotelName } }) as HotelOption;
+      toast.success("Hotel created");
+      setNewHotelName("");
+      setNewHotelId(hotel.id);
+      qc.invalidateQueries({ queryKey: ["hotels"] });
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : "Failed to create hotel");
+    } finally {
+      setHotelBusy(false);
+    }
+  }
+
   async function onCreate(e: React.FormEvent) {
     e.preventDefault();
     if (busy) return;
@@ -177,6 +222,7 @@ export function UsersDialog({
           password: newPassword,
           position: newPosition,
           subRoles: newSubRoles,
+          hotelId: newHotelId || undefined,
         },
       });
       toast.success("User created");
@@ -228,6 +274,7 @@ export function UsersDialog({
   }
 
   const all = usersQ.data ?? [];
+  const hotels = hotelsQ.data ?? [];
   const pending = all.filter((u) => u.position === "pending");
   const approved = all.filter((u) => u.position !== "pending");
 
@@ -320,9 +367,23 @@ export function UsersDialog({
                     value={newPosition}
                     onChange={(e) => setNewPosition(e.target.value as AssignablePosition)}
                   >
-                    <option value="user">User</option>
-                    <option value="manager">Manager</option>
-                    <option value="admin">Admin</option>
+                    {assignablePositions.map((p) => (
+                      <option key={p} value={p}>{POSITION_LABELS[p]}</option>
+                    ))}
+                  </select>
+                </div>
+                <div className="space-y-1 sm:col-span-2">
+                  <label className="text-xs font-medium">Hotel workspace</label>
+                  <select
+                    className="w-full h-9 rounded-md border bg-background px-3 text-sm"
+                    value={newHotelId}
+                    onChange={(e) => setNewHotelId(e.target.value)}
+                    disabled={hotels.length <= 1}
+                    required
+                  >
+                    {hotels.map((h) => (
+                      <option key={h.id} value={h.id}>{h.name}</option>
+                    ))}
                   </select>
                 </div>
                 <div className="space-y-1 sm:col-span-2">
@@ -348,6 +409,34 @@ export function UsersDialog({
               </form>
             </section>
 
+            {isRegionalAdmin && (
+              <section className="rounded-lg border bg-card p-4">
+                <div className="flex items-center gap-2 mb-3">
+                  <Building2 className="h-4 w-4 text-muted-foreground" />
+                  <h2 className="text-sm font-semibold">Hotel workspaces</h2>
+                </div>
+                <form onSubmit={onCreateHotel} className="flex flex-col sm:flex-row gap-2">
+                  <Input
+                    value={newHotelName}
+                    onChange={(e) => setNewHotelName(e.target.value)}
+                    placeholder="Hotel name"
+                    minLength={2}
+                    maxLength={80}
+                  />
+                  <Button type="submit" size="sm" disabled={hotelBusy || !newHotelName.trim()}>
+                    {hotelBusy ? "Creating…" : "Create hotel"}
+                  </Button>
+                </form>
+                <div className="mt-3 flex flex-wrap gap-2">
+                  {hotels.map((h) => (
+                    <span key={h.id} className="rounded-full border bg-background px-3 py-1 text-xs font-medium">
+                      {h.name}
+                    </span>
+                  ))}
+                </div>
+              </section>
+            )}
+
             <section className="rounded-lg border bg-card">
               <div className="px-4 py-3 border-b text-sm font-semibold">Approved users</div>
               {usersQ.isLoading ? (
@@ -366,7 +455,7 @@ export function UsersDialog({
                           )}
                         </div>
                         <div className="text-xs text-muted-foreground truncate">
-                          {summariseRoles(u)} · {u.email}{me && u.id === me.id ? " · you" : ""}
+                          {summariseRoles(u)} · {u.hotelName ?? "No hotel"} · {u.email}{me && u.id === me.id ? " · you" : ""}
                         </div>
                       </div>
                       <div className="flex items-center gap-1">
@@ -430,9 +519,23 @@ export function UsersDialog({
                   value={editPosition}
                   onChange={(e) => setEditPosition(e.target.value as AssignablePosition)}
                 >
-                  <option value="user">User</option>
-                  <option value="manager">Manager</option>
-                  <option value="admin">Admin</option>
+                  {assignablePositions.map((p) => (
+                    <option key={p} value={p}>{POSITION_LABELS[p]}</option>
+                  ))}
+                </select>
+              </div>
+              <div className="space-y-1">
+                <label className="text-xs font-medium">Hotel workspace</label>
+                <select
+                  className="w-full h-9 rounded-md border bg-background px-3 text-sm"
+                  value={editHotelId}
+                  onChange={(e) => setEditHotelId(e.target.value)}
+                  disabled={hotels.length <= 1}
+                  required
+                >
+                  {hotels.map((h) => (
+                    <option key={h.id} value={h.id}>{h.name}</option>
+                  ))}
                 </select>
               </div>
               <div className="space-y-1">
