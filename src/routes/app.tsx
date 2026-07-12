@@ -3106,28 +3106,6 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
             )}
           </div>
  <div className="flex items-center gap-2">
-     {!isMobile && realIsRegionalAdmin && hotelsQ.data && hotelsQ.data.length > 0 && (
-       <DropdownMenu>
-         <DropdownMenuTrigger asChild>
-           <Button variant="outline" size="sm" className="max-w-[14rem]">
-             <Building2 className="h-4 w-4 mr-2 shrink-0" />
-             <span className="truncate">{hotelName}</span>
-             <ChevronDown className="h-4 w-4 ml-2 shrink-0" />
-           </Button>
-         </DropdownMenuTrigger>
-         <DropdownMenuContent align="end" className="w-64">
-           <DropdownMenuLabel>Workspace</DropdownMenuLabel>
-           <DropdownMenuSeparator />
-           {hotelsQ.data.map((hotel) => (
-             <DropdownMenuItem key={hotel.id} onClick={() => void switchHotel(hotel.id)}>
-               {hotel.id === currentHotelId && <Check className="h-4 w-4 mr-2" />}
-               {hotel.id !== currentHotelId && <span className="w-4 mr-2" />}
-               <span className="truncate">{hotel.name}</span>
-             </DropdownMenuItem>
-           ))}
-         </DropdownMenuContent>
-       </DropdownMenu>
-     )}
     {!isMobile && canViewAs && (
       <div className="inline-flex rounded-md border p-0.5 bg-background h-9 items-center">
         {availableViews.map((r) => {
