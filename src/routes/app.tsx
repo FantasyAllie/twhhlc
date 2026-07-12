@@ -59,7 +59,7 @@ import {
 } from "@/components/ui/sheet";
 import { useTheme } from "@/components/theme-provider";
 import { useCurrentHotel, DEFAULT_HOTEL_NAME } from "@/lib/hotels";
-// Workspace selection moved to /login; no in-app switcher.
+import { listHotels, setActiveHotel, type HotelOption } from "@/lib/auth.functions";
 
 export const Route = createFileRoute("/app")({
   ssr: false,
@@ -264,6 +264,31 @@ function AppPage() {
   const [authUser, setAuthUser] = useState(() => getStoredUser());
   const currentHotelQ = useCurrentHotel();
   const hotelName = currentHotelQ.data?.name ?? DEFAULT_HOTEL_NAME;
+  const listHotelsFn = useServerFn(listHotels);
+  const setActiveHotelFn = useServerFn(setActiveHotel);
+  const hotelsQ = useQuery({
+    queryKey: ["my-hotels"],
+    enabled: !!authUser,
+    queryFn: () => listHotelsFn() as Promise<HotelOption[]>,
+  });
+  const availableHotels = hotelsQ.data ?? [];
+  const canSwitchHotel = availableHotels.length > 1;
+  const [hotelSwitcherOpen, setHotelSwitcherOpen] = useState(false);
+  const [switchingHotelId, setSwitchingHotelId] = useState<string | null>(null);
+  async function switchHotel(hotelId: string) {
+    if (switchingHotelId) return;
+    setSwitchingHotelId(hotelId);
+    try {
+      await setActiveHotelFn({ data: { hotelId } });
+      await qc.invalidateQueries();
+      toast.success("Workspace switched");
+      setHotelSwitcherOpen(false);
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : "Failed to switch workspace");
+    } finally {
+      setSwitchingHotelId(null);
+    }
+  }
   // Admin/Manager "view as" overlay — see definition further below for full context.
 type ViewRole = "admin" | "manager" | "user" | "reception" | "fnb" | "maintenance";
   const [viewAsRole, setViewAsRole] = useState<ViewRole | null>(() => {
@@ -3104,42 +3129,42 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
                 </p>
               </>
             )}
+            {canViewAs && (
+              <div className="mt-3 inline-flex flex-wrap rounded-md border p-0.5 bg-background items-center">
+                {availableViews.map((r) => {
+                  const active = (safeViewAs ?? defaultView) === r;
+                  const label =
+                    r === "user"
+                      ? "Housekeeping"
+                      : r === "fnb"
+                      ? "F&B"
+                      : r === "reception"
+                      ? "Reception"
+                      : r === "admin"
+                      ? "Admin"
+                      : r === "maintenance"
+                      ? "Maintenance"
+                      : "Manager";
+                  return (
+                    <button
+                      key={r}
+                      type="button"
+                      onClick={() => setViewAsRole(active ? null : r)}
+                      className={cn(
+                        "px-3 h-8 text-xs sm:text-sm rounded-[0.3rem] transition-colors whitespace-nowrap",
+                        active
+                          ? "bg-primary text-primary-foreground shadow-sm font-medium"
+                          : "text-muted-foreground hover:text-foreground",
+                      )}
+                    >
+                      {label}
+                    </button>
+                  );
+                })}
+              </div>
+            )}
           </div>
  <div className="flex items-center gap-2">
-    {!isMobile && canViewAs && (
-      <div className="inline-flex rounded-md border p-0.5 bg-background h-9 items-center">
-        {availableViews.map((r) => {
-          const active = (safeViewAs ?? defaultView) === r;
-          const label =
-            r === "user"
-              ? "Housekeeping"
-              : r === "fnb"
-              ? "F&B"
-              : r === "reception"
-              ? "Reception"
-              : r === "admin"
-              ? "Admin"
-              : r === "maintenance"
-              ? "Maintenance"
-              : "Manager";
-          return (
-            <button
-              key={r}
-              type="button"
-              onClick={() => setViewAsRole(active ? null : r)}
-              className={cn(
-                "px-3 h-8 text-xs sm:text-sm rounded-[0.3rem] transition-colors whitespace-nowrap",
-                active
-                  ? "bg-primary text-primary-foreground shadow-sm font-medium"
-                  : "text-muted-foreground hover:text-foreground",
-              )}
-            >
-              {label}
-            </button>
-          );
-        })}
-      </div>
-    )}
     {!isMobile && isAdmin && !isReception && (isMobile ? (
       <Sheet open={exportSheetOpen} onOpenChange={setExportSheetOpen}>
         <SheetTrigger asChild>
@@ -3323,6 +3348,11 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
        </DropdownMenuItem>
        <DropdownMenuSeparator />
        <DropdownMenuLabel>Account</DropdownMenuLabel>
+         {canSwitchHotel && (
+           <DropdownMenuItem onClick={() => setHotelSwitcherOpen(true)}>
+             <RotateCcw className="h-4 w-4 mr-2" /> Switch hotel
+           </DropdownMenuItem>
+         )}
         {realIsAdmin && !isMaintenance && (
          <DropdownMenuItem onClick={() => setUsersOpen(true)}>
            <Users className="h-4 w-4 mr-2" /> Users
@@ -4299,15 +4329,8 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
       };
       return (
         <div className="space-y-4">
-          {(canViewAs || (isAdmin && !isReception) || isReception) && (
+          {((isAdmin && !isReception) || isReception) && (
             <Section id="actions" title="Actions">
-                {canViewAs && (
-                  <Row
-                    icon={Users}
-                    label="Department"
-                    onClick={() => { close(); setRolePickerSheetOpen(true); }}
-                  />
-                )}
                 {isAdmin && !isReception && (
                   <Row
                     icon={ClipboardList}
@@ -4406,6 +4429,9 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
           <div className="space-y-2">
             <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">Account</p>
             <div className="space-y-1.5">
+              {canSwitchHotel && (
+                <Row icon={RotateCcw} label="Switch hotel" onClick={() => { close(); setHotelSwitcherOpen(true); }} />
+              )}
               {realIsAdmin && !isMaintenance && (
                 <Row icon={Users} label="Users" onClick={() => { close(); setUsersOpen(true); }} />
               )}
@@ -4427,6 +4453,35 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
 </Sheet>
 
 {/* History sheet (Admin) */}
+{/* Hotel switcher sheet */}
+<Sheet open={hotelSwitcherOpen} onOpenChange={setHotelSwitcherOpen}>
+  <SheetContent side="bottom" className="max-h-[85vh] overflow-y-auto rounded-t-2xl p-4 sm:p-6">
+    <SheetHeader className="text-left">
+      <SheetTitle>Switch hotel</SheetTitle>
+      <SheetDescription>Choose which hotel workspace to work in.</SheetDescription>
+    </SheetHeader>
+    <div className="mt-4 grid gap-2">
+      {availableHotels.map((h) => {
+        const active = currentHotelQ.data?.id === h.id;
+        return (
+          <Button
+            key={h.id}
+            variant={active ? "default" : "outline"}
+            size="lg"
+            className="justify-start h-12"
+            disabled={active || switchingHotelId !== null}
+            onClick={() => void switchHotel(h.id)}
+          >
+            <span className="flex-1 text-left">{h.name}</span>
+            {active && <Check className="h-4 w-4 ml-2" />}
+            {switchingHotelId === h.id && <span className="text-xs ml-2">Switching…</span>}
+          </Button>
+        );
+      })}
+    </div>
+  </SheetContent>
+</Sheet>
+
 <Sheet open={maintenanceLogOpen} onOpenChange={setMaintenanceLogOpen}>
   <SheetContent side="bottom" className="max-h-[90vh] overflow-hidden rounded-t-2xl p-4 sm:p-6 flex flex-col">
     <SheetHeader className="text-left">

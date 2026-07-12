@@ -10,6 +10,7 @@ import {
   updateUserPassword,
   updateUserAssignment,
   setUserDisabled,
+  deleteHotel,
   type AppUserRow,
   type HotelOption,
   type Position,
@@ -75,6 +76,7 @@ export function UsersDialog({
   const pwFn = useServerFn(updateUserPassword);
   const assignFn = useServerFn(updateUserAssignment);
   const disableFn = useServerFn(setUserDisabled);
+  const deleteHotelFn = useServerFn(deleteHotel);
 
   const usersQ = useQuery({
     queryKey: ["app_users"],
@@ -452,8 +454,30 @@ export function UsersDialog({
                 </form>
                 <div className="mt-3 flex flex-wrap gap-2">
                   {hotels.map((h) => (
-                    <span key={h.id} className="rounded-full border bg-background px-3 py-1 text-xs font-medium">
+                    <span
+                      key={h.id}
+                      className="group inline-flex items-center gap-1 rounded-full border bg-background pl-3 pr-1 py-1 text-xs font-medium"
+                    >
                       {h.name}
+                      <button
+                        type="button"
+                        aria-label={`Delete ${h.name}`}
+                        onClick={async () => {
+                          if (!confirm(`Delete hotel workspace "${h.name}"? This permanently removes all of its rooms, templates, messages, photos and other data. This cannot be undone.`)) return;
+                          try {
+                            await deleteHotelFn({ data: { hotelId: h.id } });
+                            toast.success("Hotel workspace deleted");
+                            qc.invalidateQueries({ queryKey: ["hotels"] });
+                            qc.invalidateQueries({ queryKey: ["app_users"] });
+                            qc.invalidateQueries({ queryKey: ["current-hotel"] });
+                          } catch (err) {
+                            toast.error(err instanceof Error ? err.message : "Failed to delete hotel");
+                          }
+                        }}
+                        className="opacity-0 group-hover:opacity-100 focus:opacity-100 rounded-full p-1 text-muted-foreground hover:text-destructive transition-opacity"
+                      >
+                        <Trash2 className="h-3.5 w-3.5" />
+                      </button>
                     </span>
                   ))}
                 </div>

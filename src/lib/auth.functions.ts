@@ -476,6 +476,24 @@ export const setActiveHotel = createServerFn({ method: "POST" })
     return { ok: true };
   });
 
+export const deleteHotel = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((d: { hotelId: string }) => d)
+  .handler(async ({ data, context }) => {
+    const { supabaseAdmin, isRegionalAdmin } = await getAdminAccess(context);
+    if (!isRegionalAdmin) throw new Error("Regional admin access required");
+    const { data: remaining } = await supabaseAdmin.from("hotels").select("id");
+    if (((remaining ?? []) as { id: string }[]).length <= 1) {
+      throw new Error("Cannot delete the last hotel workspace");
+    }
+    const { error } = await supabaseAdmin
+      .from("hotels")
+      .delete()
+      .eq("id", data.hotelId);
+    if (error) throw new Error(error.message);
+    return { ok: true };
+  });
+
 export const updateUserPassword = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .inputValidator((d: { id: string; password: string }) => d)
