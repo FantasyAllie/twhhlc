@@ -3353,16 +3353,11 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
              <RotateCcw className="h-4 w-4 mr-2" /> Switch hotel
            </DropdownMenuItem>
          )}
-        {realIsAdmin && !isMaintenance && (
-         <DropdownMenuItem onClick={() => setUsersOpen(true)}>
-           <Users className="h-4 w-4 mr-2" /> Users
-         </DropdownMenuItem>
-       )}
-        {realIsManager && !realIsAdmin && !isMaintenance && (
-         <DropdownMenuItem onClick={() => setUserApprovalOpen(true)}>
-           <Users className="h-4 w-4 mr-2" /> User Approval
-         </DropdownMenuItem>
-       )}
+         {(realIsAdmin || realIsManager) && !isMaintenance && (
+          <DropdownMenuItem onClick={() => setUsersOpen(true)}>
+            <Users className="h-4 w-4 mr-2" /> Users
+          </DropdownMenuItem>
+        )}
          {!menuIsFnbOnly && (
           <DropdownMenuItem onClick={() => setNotificationsSheetOpen(true)}>
             <Bell className="h-4 w-4 mr-2" /> Notifications
@@ -4439,11 +4434,8 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
               {canSwitchHotel && (
                 <Row icon={RotateCcw} label="Switch hotel" onClick={() => { close(); setHotelSwitcherOpen(true); }} />
               )}
-              {realIsAdmin && !isMaintenance && (
+              {(realIsAdmin || realIsManager) && !isMaintenance && (
                 <Row icon={Users} label="Users" onClick={() => { close(); setUsersOpen(true); }} />
-              )}
-              {realIsManager && !realIsAdmin && !isMaintenance && (
-                <Row icon={Users} label="User Approval" onClick={() => { close(); setUserApprovalOpen(true); }} />
               )}
               {!menuIsFnbOnly && (
                 <Row icon={Bell} label="Notifications" onClick={() => { close(); setNotificationsSheetOpen(true); }} />

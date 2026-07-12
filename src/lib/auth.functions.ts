@@ -61,12 +61,19 @@ async function getAdminAccess(ctx: { userId: string }) {
     .from("user_roles")
     .select("role")
     .eq("user_id", ctx.userId)
-    .in("role", ["admin", "regional_admin"]);
+    .in("role", ["admin", "regional_admin", "manager"]);
   if (error) throw new Error(error.message);
   const roleList = ((roles ?? []) as { role: string }[]).map((r) => r.role);
-  const isRegionalAdmin = roleList.includes("regional_admin");
-  const isAdmin = roleList.includes("admin") || isRegionalAdmin;
-  if (!isAdmin) throw new Error("Admin access required");
+  const isSuperAdmin = roleList.includes("admin");
+  const isRegionalManager = roleList.includes("regional_admin");
+  const isManagerOnly = !isSuperAdmin && !isRegionalManager && roleList.includes("manager");
+  if (!isSuperAdmin && !isRegionalManager && !isManagerOnly) {
+    throw new Error("Admin, regional manager or manager access required");
+  }
+  // Cross-hotel visibility (see every hotel) is for the top two tiers only.
+  const isCrossHotel = isSuperAdmin || isRegionalManager;
+  // Kept for back-compat with existing call sites reading `isRegionalAdmin`.
+  const isRegionalAdmin = isCrossHotel;
 
   const { data: active } = await supabaseAdmin
     .from("user_active_hotel")
@@ -76,13 +83,37 @@ async function getAdminAccess(ctx: { userId: string }) {
 
   return {
     supabaseAdmin,
+    isSuperAdmin,
+    isRegionalManager,
+    isManagerOnly,
+    isCrossHotel,
     isRegionalAdmin,
     activeHotelId: (active as { hotel_id: string } | null)?.hotel_id ?? null,
   };
 }
 
+/** Enforce the "who can assign which position" ladder. */
+function assertCanAssignPosition(
+  caller: { isSuperAdmin: boolean; isRegionalManager: boolean; isManagerOnly: boolean },
+  target: Exclude<Position, "pending">,
+) {
+  if (caller.isSuperAdmin) return; // admin can assign anything
+  if (caller.isRegionalManager) {
+    if (target === "admin") throw new Error("Only admins can assign the admin position");
+    return; // regional_admin/manager/user OK
+  }
+  if (caller.isManagerOnly) {
+    if (target !== "user") throw new Error("Managers can only add users");
+    return;
+  }
+  throw new Error("Insufficient permissions");
+}
+
 async function assertAdmin(ctx: { userId: string }) {
-  await getAdminAccess(ctx);
+  const acc = await getAdminAccess(ctx);
+  if (!acc.isSuperAdmin && !acc.isRegionalManager) {
+    throw new Error("Admin or regional manager access required");
+  }
 }
 
 async function assertAdminOrManager(ctx: { userId: string }) {
@@ -98,7 +129,7 @@ async function assertAdminOrManager(ctx: { userId: string }) {
 function splitRoles(rows: Array<{ role: string }>): { position: Position; subRoles: SubRole[] } {
   let position: Position = "pending";
   const subRoles: SubRole[] = [];
-  const priority: Record<Position, number> = { regional_admin: 5, admin: 4, manager: 3, user: 2, pending: 1 };
+  const priority: Record<Position, number> = { admin: 5, regional_admin: 4, manager: 3, user: 2, pending: 1 };
   for (const r of rows) {
     if (r.role === "reception" || r.role === "housekeeper" || r.role === "fnb" || r.role === "maintenance") {
       if (!subRoles.includes(r.role)) subRoles.push(r.role);
@@ -205,12 +236,11 @@ export const updateUserAssignment = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .inputValidator((d: { id: string; position: "regional_admin" | "admin" | "manager" | "user"; subRoles: SubRole[]; hotelIds?: string[] }) => d)
   .handler(async ({ data, context }) => {
-    const { supabaseAdmin, isRegionalAdmin, activeHotelId } = await getAdminAccess(context);
+    const access = await getAdminAccess(context);
+    const { supabaseAdmin, isRegionalAdmin, activeHotelId } = access;
     const position = validatePosition(data.position);
     const subRoles = validateSubRoles(data.subRoles);
-    if (position === "regional_admin" && !isRegionalAdmin) {
-      throw new Error("Regional admin access required");
-    }
+    assertCanAssignPosition(access, position);
 
     // Non-regional admins may only manage users who are members of their
     // currently active hotel, and may only (re)assign that same hotel.
@@ -300,12 +330,11 @@ export const createUser = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .inputValidator((d: { email: string; password: string; displayName?: string; position: "regional_admin" | "admin" | "manager" | "user"; subRoles: SubRole[]; hotelIds?: string[] }) => d)
   .handler(async ({ data, context }) => {
-    const { supabaseAdmin, isRegionalAdmin, activeHotelId } = await getAdminAccess(context);
+    const access = await getAdminAccess(context);
+    const { supabaseAdmin, isRegionalAdmin, activeHotelId } = access;
     const position = validatePosition(data.position);
     const subRoles = validateSubRoles(data.subRoles);
-    if (position === "regional_admin" && !isRegionalAdmin) {
-      throw new Error("Regional admin access required");
-    }
+    assertCanAssignPosition(access, position);
     validatePassword(data.password);
     const email = String(data.email).trim().toLowerCase();
     if (!email.includes("@")) throw new Error("Valid email is required");
@@ -412,8 +441,8 @@ export const createHotel = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .inputValidator((d: { name: string }) => d)
   .handler(async ({ data, context }): Promise<HotelOption> => {
-    const { supabaseAdmin, isRegionalAdmin } = await getAdminAccess(context);
-    if (!isRegionalAdmin) throw new Error("Regional admin access required");
+    const { supabaseAdmin, isCrossHotel } = await getAdminAccess(context);
+    if (!isCrossHotel) throw new Error("Only admins or regional managers can create hotels");
     const name = String(data.name ?? "").trim();
     if (name.length < 2 || name.length > 80) throw new Error("Hotel name must be 2-80 characters");
     const baseSlug = name
@@ -480,8 +509,8 @@ export const deleteHotel = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .inputValidator((d: { hotelId: string }) => d)
   .handler(async ({ data, context }) => {
-    const { supabaseAdmin, isRegionalAdmin } = await getAdminAccess(context);
-    if (!isRegionalAdmin) throw new Error("Regional admin access required");
+    const { supabaseAdmin, isCrossHotel } = await getAdminAccess(context);
+    if (!isCrossHotel) throw new Error("Only admins or regional managers can delete hotels");
     const { data: remaining } = await supabaseAdmin.from("hotels").select("id");
     if (((remaining ?? []) as { id: string }[]).length <= 1) {
       throw new Error("Cannot delete the last hotel workspace");

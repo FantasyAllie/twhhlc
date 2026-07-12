@@ -39,7 +39,7 @@ import {
 
 type AssignablePosition = Exclude<Position, "pending">;
 const POSITION_LABELS: Record<AssignablePosition, string> = {
-  regional_admin: "Regional Admin",
+  regional_admin: "Regional Manager",
   admin: "Admin",
   manager: "Manager",
   user: "User",
@@ -113,10 +113,26 @@ export function UsersDialog({
   // Sort/filter Accounts by hotel. "" = show every hotel.
   const [accountsFilterHotelId, setAccountsFilterHotelId] = useState<string>("");
 
-  const isRegionalAdmin = me?.position === "regional_admin";
-  const assignablePositions: AssignablePosition[] = isRegionalAdmin
-    ? ["regional_admin", "admin", "manager", "user"]
-    : ["admin", "manager", "user"];
+  const myPos = me?.position;
+  const isSuperAdmin = myPos === "admin";
+  const isRegionalManager = myPos === "regional_admin";
+  const isManagerOnly = myPos === "manager";
+  // Admins and Regional Managers manage across every hotel; Managers only
+  // manage users inside their currently active hotel workspace.
+  const canManageHotels = isSuperAdmin || isRegionalManager;
+  // Kept as the old name because it's referenced in the JSX below.
+  const isRegionalAdmin = canManageHotels;
+  const assignablePositions: AssignablePosition[] = isSuperAdmin
+    ? ["admin", "regional_admin", "manager", "user"]
+    : isRegionalManager
+    ? ["regional_admin", "manager", "user"]
+    : isManagerOnly
+    ? ["user"]
+    : [];
+  // Managers can only add plain Users, so lock the new-user form's position.
+  useEffect(() => {
+    if (isManagerOnly && newPosition !== "user") setNewPosition("user");
+  }, [isManagerOnly, newPosition]);
 
   useEffect(() => {
     const firstHotelId = hotelsQ.data?.[0]?.id ?? "";
@@ -373,18 +389,20 @@ export function UsersDialog({
                     minLength={6}
                   />
                 </div>
-                <div className="space-y-1">
-                  <label className="text-xs font-medium">Position</label>
-                  <select
-                    className="w-full h-9 rounded-md border bg-background px-3 text-sm"
-                    value={newPosition}
-                    onChange={(e) => setNewPosition(e.target.value as AssignablePosition)}
-                  >
-                    {assignablePositions.map((p) => (
-                      <option key={p} value={p}>{POSITION_LABELS[p]}</option>
-                    ))}
-                  </select>
-                </div>
+                {assignablePositions.length > 1 && (
+                  <div className="space-y-1">
+                    <label className="text-xs font-medium">Position</label>
+                    <select
+                      className="w-full h-9 rounded-md border bg-background px-3 text-sm"
+                      value={newPosition}
+                      onChange={(e) => setNewPosition(e.target.value as AssignablePosition)}
+                    >
+                      {assignablePositions.map((p) => (
+                        <option key={p} value={p}>{POSITION_LABELS[p]}</option>
+                      ))}
+                    </select>
+                  </div>
+                )}
                 <div className="space-y-1 sm:col-span-2">
                   <label className="text-xs font-medium">Hotel workspaces</label>
                   {isRegionalAdmin ? (
@@ -632,7 +650,7 @@ export function UsersDialog({
                     {editUser.hotelNames.length > 0
                       ? editUser.hotelNames.join(", ")
                       : "No hotels assigned"}
-                    . Only regional admins can change hotel assignments.
+                    . Only admins and regional managers can change hotel assignments.
                   </p>
                 )}
               </div>
