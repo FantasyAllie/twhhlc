@@ -1146,16 +1146,6 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
     })();
     const menuIsFnbOnly =
       position === "user" && hasFnbRole && !hasHousekeeperRole && !hasReceptionRole;
-    const switchHotel = async (hotelId: string) => {
-      if (!hotelId || hotelId === currentHotelId) return;
-      try {
-        await setActiveHotelFn({ data: { hotelId } });
-        await qc.invalidateQueries();
-        toast.success("Workspace switched");
-      } catch (err) {
-        toast.error(err instanceof Error ? err.message : "Failed to switch workspace");
-      }
-    };
     const logLostProperty = async (
       roomNumber: number | null,
       message: string,
