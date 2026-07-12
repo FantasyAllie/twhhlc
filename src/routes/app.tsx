@@ -58,12 +58,13 @@ import {
   SheetTrigger,
 } from "@/components/ui/sheet";
 import { useTheme } from "@/components/theme-provider";
+import { useCurrentHotelName, DEFAULT_HOTEL_NAME } from "@/lib/hotels";
 
 export const Route = createFileRoute("/app")({
   ssr: false,
   head: () => ({
     meta: [
-      { title: "Three Ways House Hotel" },
+      { title: "The Hotel Hub" },
       { name: "description", content: "Count items per room across 50 rooms." },
     ],
   }),
