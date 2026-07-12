@@ -441,8 +441,8 @@ export const createHotel = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .inputValidator((d: { name: string }) => d)
   .handler(async ({ data, context }): Promise<HotelOption> => {
-    const { supabaseAdmin, isRegionalAdmin } = await getAdminAccess(context);
-    if (!isRegionalAdmin) throw new Error("Regional admin access required");
+    const { supabaseAdmin, isCrossHotel } = await getAdminAccess(context);
+    if (!isCrossHotel) throw new Error("Only admins or regional managers can create hotels");
     const name = String(data.name ?? "").trim();
     if (name.length < 2 || name.length > 80) throw new Error("Hotel name must be 2-80 characters");
     const baseSlug = name
@@ -509,8 +509,8 @@ export const deleteHotel = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .inputValidator((d: { hotelId: string }) => d)
   .handler(async ({ data, context }) => {
-    const { supabaseAdmin, isRegionalAdmin } = await getAdminAccess(context);
-    if (!isRegionalAdmin) throw new Error("Regional admin access required");
+    const { supabaseAdmin, isCrossHotel } = await getAdminAccess(context);
+    if (!isCrossHotel) throw new Error("Only admins or regional managers can delete hotels");
     const { data: remaining } = await supabaseAdmin.from("hotels").select("id");
     if (((remaining ?? []) as { id: string }[]).length <= 1) {
       throw new Error("Cannot delete the last hotel workspace");
