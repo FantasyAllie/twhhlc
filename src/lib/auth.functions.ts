@@ -217,11 +217,12 @@ export const updateUserAssignment = createServerFn({ method: "POST" })
     }
 
     if (position !== "admin" && position !== "regional_admin") {
-      const { count } = await supabaseAdmin
+      const { data: adminRows } = await supabaseAdmin
         .from("user_roles")
-        .select("user_id", { count: "exact", head: true })
+        .select("user_id")
         .in("role", ["admin", "regional_admin"]);
-      if ((count ?? 0) <= 1 && context.userId === data.id) {
+      const adminUserCount = new Set(((adminRows ?? []) as { user_id: string }[]).map((r) => r.user_id)).size;
+      if (adminUserCount <= 1 && context.userId === data.id) {
         throw new Error("Cannot demote the only remaining admin");
       }
     }
