@@ -3129,7 +3129,7 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
                 </p>
               </>
             )}
-            {canViewAs && (
+            {canViewAs && !isMobile && (
               <div className="mt-3 inline-flex flex-wrap rounded-md border p-0.5 bg-background items-center">
                 {availableViews.map((r) => {
                   const active = (safeViewAs ?? defaultView) === r;
@@ -3348,6 +3348,11 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
        </DropdownMenuItem>
        <DropdownMenuSeparator />
        <DropdownMenuLabel>Account</DropdownMenuLabel>
+          {isMobile && canViewAs && (
+            <DropdownMenuItem onClick={() => setRolePickerSheetOpen(true)}>
+              <LayoutGrid className="h-4 w-4 mr-2" /> Department
+            </DropdownMenuItem>
+          )}
          {canSwitchHotel && (
            <DropdownMenuItem onClick={() => setHotelSwitcherOpen(true)}>
              <RotateCcw className="h-4 w-4 mr-2" /> Switch hotel
