@@ -3081,21 +3081,21 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
           <div className="min-w-0 flex-1">
             {isReception ? (
               <>
-                <h1 className="text-xl sm:text-2xl font-semibold tracking-tight">Three Ways House Hotel</h1>
+                <h1 className="text-xl sm:text-2xl font-semibold tracking-tight">{hotelName}</h1>
                 <p className="text-xs text-muted-foreground mt-1 whitespace-pre-line">
                   An auto-updating room tracker for Housekeeping. Use the help if you get stuck 
                 </p>
               </>
             ) : isFnb ? (
               <>
-                <h1 className="text-xl sm:text-2xl font-semibold tracking-tight">Three Ways House Hotel</h1>
+                <h1 className="text-xl sm:text-2xl font-semibold tracking-tight">{hotelName}</h1>
                 <p className="text-xs text-muted-foreground mt-1">
                   Shared workspace for F&B staff
                 </p>
               </>
             ) : (
               <>
-                <h1 className="text-xl sm:text-2xl font-semibold tracking-tight">Three Ways House Hotel</h1>
+                <h1 className="text-xl sm:text-2xl font-semibold tracking-tight">{hotelName}</h1>
                 <p className="text-xs text-muted-foreground mt-1">
                   Shared workspace for Housekeeping staff
                 </p>
