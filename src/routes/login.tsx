@@ -7,7 +7,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { lovable } from "@/integrations/lovable";
 import { refreshSession } from "@/lib/auth-client";
 import { useServerFn } from "@tanstack/react-start";
-import { listHotels, setActiveHotel, type HotelOption } from "@/lib/auth.functions";
+import { listMyHotels, setActiveHotel, type HotelOption } from "@/lib/auth.functions";
 import logoUrl from "@/assets/logo.png";
 
 export const Route = createFileRoute("/login")({
@@ -40,19 +40,23 @@ function LoginPage() {
   const [displayName, setDisplayName] = useState("");
   const [busy, setBusy] = useState(false);
   const [hotelChoices, setHotelChoices] = useState<HotelOption[] | null>(null);
-  const listHotelsFn = useServerFn(listHotels);
+  const listMyHotelsFn = useServerFn(listMyHotels);
   const setActiveHotelFn = useServerFn(setActiveHotel);
 
   async function proceedAfterAuth() {
-    // Regional admins pick a workspace to enter; everyone else goes straight in.
+    // Everyone with more than one assigned hotel picks which one they're
+    // working at today. A single-hotel user is auto-set and goes straight in.
     try {
-      const hotels = (await listHotelsFn()) as HotelOption[];
+      const hotels = (await listMyHotelsFn()) as HotelOption[];
       if (hotels.length > 1) {
         setHotelChoices(hotels);
         return;
       }
+      if (hotels.length === 1) {
+        await setActiveHotelFn({ data: { hotelId: hotels[0].id } });
+      }
     } catch {
-      /* non-admins throw; ignore and continue */
+      /* pending/no-hotel accounts fall through */
     }
     navigate({ to: "/app", replace: true });
   }
