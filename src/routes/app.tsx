@@ -278,7 +278,7 @@ type ViewRole = "admin" | "manager" | "user" | "reception" | "fnb" | "maintenanc
   useEffect(() => {
     document.title = "Three Ways House Hotel";
   }, []);
-  // Purge stayover photos older than 2 weeks on load.
+  // Purge stayover photos older than 48 hours on load.
   useEffect(() => {
     void purgeExpiredStayoverPhotos();
   }, []);
