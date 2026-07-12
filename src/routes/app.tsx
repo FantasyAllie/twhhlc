@@ -4,7 +4,7 @@ import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Minus, Plus, X, Menu, ArrowUp, ArrowDown, Pencil, Check, Trash2, Sun, Moon, List, Bed, Ban, History, Users, User, LogOut, Hash, ConciergeBell, ClipboardList, Printer, Filter, Wrench, DoorOpen, Bell, Eye, EyeOff, HelpCircle, AlertCircle, MessageSquare, PackageSearch, RotateCcw, ChevronDown, Camera } from "lucide-react";
+import { Minus, Plus, X, Menu, ArrowUp, ArrowDown, Pencil, Check, Trash2, Sun, Moon, List, Bed, Ban, History, Users, User, LogOut, Hash, ConciergeBell, ClipboardList, Printer, Filter, Wrench, DoorOpen, Bell, Eye, EyeOff, HelpCircle, AlertCircle, MessageSquare, PackageSearch, RotateCcw, ChevronDown, Camera, LayoutGrid } from "lucide-react";
 import { ReceptionIconGuide } from "@/components/reception-icon-guide";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
@@ -3129,7 +3129,7 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
                 </p>
               </>
             )}
-            {canViewAs && (
+            {canViewAs && !isMobile && (
               <div className="mt-3 inline-flex flex-wrap rounded-md border p-0.5 bg-background items-center">
                 {availableViews.map((r) => {
                   const active = (safeViewAs ?? defaultView) === r;
@@ -3348,6 +3348,11 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
        </DropdownMenuItem>
        <DropdownMenuSeparator />
        <DropdownMenuLabel>Account</DropdownMenuLabel>
+          {isMobile && canViewAs && (
+            <DropdownMenuItem onClick={() => setRolePickerSheetOpen(true)}>
+              <LayoutGrid className="h-4 w-4 mr-2" /> Department
+            </DropdownMenuItem>
+          )}
          {canSwitchHotel && (
            <DropdownMenuItem onClick={() => setHotelSwitcherOpen(true)}>
              <RotateCcw className="h-4 w-4 mr-2" /> Switch hotel
