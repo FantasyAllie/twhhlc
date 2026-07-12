@@ -260,6 +260,7 @@ function AppPage() {
   const navigate = useNavigate();
   const { theme, toggleTheme } = useTheme();
   const isMobile = useIsMobile();
+  const hotelName = useCurrentHotelName();
   const [authUser, setAuthUser] = useState(() => getStoredUser());
   // Admin/Manager "view as" overlay — see definition further below for full context.
 type ViewRole = "admin" | "manager" | "user" | "reception" | "fnb" | "maintenance";
@@ -277,8 +278,8 @@ type ViewRole = "admin" | "manager" | "user" | "reception" | "fnb" | "maintenanc
     return () => window.removeEventListener("tw-auth-changed", onChange);
   }, [navigate]);
   useEffect(() => {
-    document.title = "Three Ways House Hotel";
-  }, []);
+    document.title = hotelName ?? DEFAULT_HOTEL_NAME;
+  }, [hotelName]);
   // Purge stayover photos older than 48 hours on load.
   useEffect(() => {
     void purgeExpiredStayoverPhotos();
