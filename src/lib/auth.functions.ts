@@ -61,12 +61,19 @@ async function getAdminAccess(ctx: { userId: string }) {
     .from("user_roles")
     .select("role")
     .eq("user_id", ctx.userId)
-    .in("role", ["admin", "regional_admin"]);
+    .in("role", ["admin", "regional_admin", "manager"]);
   if (error) throw new Error(error.message);
   const roleList = ((roles ?? []) as { role: string }[]).map((r) => r.role);
-  const isRegionalAdmin = roleList.includes("regional_admin");
-  const isAdmin = roleList.includes("admin") || isRegionalAdmin;
-  if (!isAdmin) throw new Error("Admin access required");
+  const isSuperAdmin = roleList.includes("admin");
+  const isRegionalManager = roleList.includes("regional_admin");
+  const isManagerOnly = !isSuperAdmin && !isRegionalManager && roleList.includes("manager");
+  if (!isSuperAdmin && !isRegionalManager && !isManagerOnly) {
+    throw new Error("Admin, regional manager or manager access required");
+  }
+  // Cross-hotel visibility (see every hotel) is for the top two tiers only.
+  const isCrossHotel = isSuperAdmin || isRegionalManager;
+  // Kept for back-compat with existing call sites reading `isRegionalAdmin`.
+  const isRegionalAdmin = isCrossHotel;
 
   const { data: active } = await supabaseAdmin
     .from("user_active_hotel")
@@ -76,13 +83,37 @@ async function getAdminAccess(ctx: { userId: string }) {
 
   return {
     supabaseAdmin,
+    isSuperAdmin,
+    isRegionalManager,
+    isManagerOnly,
+    isCrossHotel,
     isRegionalAdmin,
     activeHotelId: (active as { hotel_id: string } | null)?.hotel_id ?? null,
   };
 }
 
+/** Enforce the "who can assign which position" ladder. */
+function assertCanAssignPosition(
+  caller: { isSuperAdmin: boolean; isRegionalManager: boolean; isManagerOnly: boolean },
+  target: Exclude<Position, "pending">,
+) {
+  if (caller.isSuperAdmin) return; // admin can assign anything
+  if (caller.isRegionalManager) {
+    if (target === "admin") throw new Error("Only admins can assign the admin position");
+    return; // regional_admin/manager/user OK
+  }
+  if (caller.isManagerOnly) {
+    if (target !== "user") throw new Error("Managers can only add users");
+    return;
+  }
+  throw new Error("Insufficient permissions");
+}
+
 async function assertAdmin(ctx: { userId: string }) {
-  await getAdminAccess(ctx);
+  const acc = await getAdminAccess(ctx);
+  if (!acc.isSuperAdmin && !acc.isRegionalManager) {
+    throw new Error("Admin or regional manager access required");
+  }
 }
 
 async function assertAdminOrManager(ctx: { userId: string }) {
