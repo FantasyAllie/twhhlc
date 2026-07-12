@@ -22,16 +22,7 @@ export function useCurrentHotel() {
         .eq("user_id", uid)
         .maybeSingle();
       const activeHotel = (activeData as { hotels: { id: string; name: string; slug: string | null } | null } | null)?.hotels;
-      if (activeHotel) return activeHotel;
-
-      const { data, error } = await supabase
-        .from("hotel_members")
-        .select("hotels ( id, name, slug )")
-        .eq("user_id", uid)
-        .maybeSingle();
-      if (error) return null;
-      const h = (data as { hotels: { id: string; name: string; slug: string | null } | null } | null)?.hotels;
-      return h ?? null;
+      return activeHotel ?? null;
     },
     staleTime: 5 * 60 * 1000,
   });
