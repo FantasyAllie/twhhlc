@@ -73,7 +73,7 @@ export function StayoverPhotosSheet({
             {title ?? "Stayover Photos"}
           </SheetTitle>
           <SheetDescription>
-            Photos of DND doors. Automatically deleted after 2 weeks.
+            Photos of DND doors. Automatically deleted after 48 hours.
           </SheetDescription>
         </SheetHeader>
         <div className="flex-1 min-h-0 overflow-y-auto mt-4">
