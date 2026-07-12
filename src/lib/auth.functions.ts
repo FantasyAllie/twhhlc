@@ -22,8 +22,9 @@ export type AppUserRow = {
   email: string;
   position: Position;
   subRoles: SubRole[];
-  hotelId: string | null;
-  hotelName: string | null;
+  /** All hotels this user can log into. */
+  hotelIds: string[];
+  hotelNames: string[];
   created_at: string;
   disabled: boolean;
 };
