@@ -10,6 +10,7 @@ import {
   updateUserPassword,
   updateUserAssignment,
   setUserDisabled,
+  deleteHotel,
   type AppUserRow,
   type HotelOption,
   type Position,
@@ -75,6 +76,7 @@ export function UsersDialog({
   const pwFn = useServerFn(updateUserPassword);
   const assignFn = useServerFn(updateUserAssignment);
   const disableFn = useServerFn(setUserDisabled);
+  const deleteHotelFn = useServerFn(deleteHotel);
 
   const usersQ = useQuery({
     queryKey: ["app_users"],
