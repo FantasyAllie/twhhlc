@@ -1,4 +1,4 @@
-// Push notification service worker for TW Housekeeping.
+// Push notification service worker for The Hotel Hub.
 // Tiny: push + notificationclick only. No app-shell caching.
 
 self.addEventListener("install", (event) => {
@@ -14,9 +14,9 @@ self.addEventListener("push", (event) => {
   try {
     data = event.data ? event.data.json() : {};
   } catch (_e) {
-    data = { title: "TW Housekeeping", body: event.data ? event.data.text() : "" };
+    data = { title: "The Hotel Hub", body: event.data ? event.data.text() : "" };
   }
-  const title = data.title || "TW Housekeeping";
+  const title = data.title || "The Hotel Hub";
   const options = {
     body: data.body || "",
     icon: "/apple-touch-icon.png",
