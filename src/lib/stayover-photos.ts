@@ -2,7 +2,7 @@ import imageCompression from "browser-image-compression";
 import { supabase } from "@/integrations/supabase/client";
 
 const BUCKET = "entry-photos";
-const RETENTION_MS = 14 * 24 * 60 * 60 * 1000;
+const RETENTION_MS = 48 * 60 * 60 * 1000;
 
 export type StayoverPhoto = {
   id: string;
