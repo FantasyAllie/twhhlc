@@ -264,6 +264,31 @@ function AppPage() {
   const [authUser, setAuthUser] = useState(() => getStoredUser());
   const currentHotelQ = useCurrentHotel();
   const hotelName = currentHotelQ.data?.name ?? DEFAULT_HOTEL_NAME;
+  const listHotelsFn = useServerFn(listHotels);
+  const setActiveHotelFn = useServerFn(setActiveHotel);
+  const hotelsQ = useQuery({
+    queryKey: ["my-hotels"],
+    enabled: !!authUser,
+    queryFn: () => listHotelsFn() as Promise<HotelOption[]>,
+  });
+  const availableHotels = hotelsQ.data ?? [];
+  const canSwitchHotel = availableHotels.length > 1;
+  const [hotelSwitcherOpen, setHotelSwitcherOpen] = useState(false);
+  const [switchingHotelId, setSwitchingHotelId] = useState<string | null>(null);
+  async function switchHotel(hotelId: string) {
+    if (switchingHotelId) return;
+    setSwitchingHotelId(hotelId);
+    try {
+      await setActiveHotelFn({ data: { hotelId } });
+      await qc.invalidateQueries();
+      toast.success("Workspace switched");
+      setHotelSwitcherOpen(false);
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : "Failed to switch workspace");
+    } finally {
+      setSwitchingHotelId(null);
+    }
+  }
   // Admin/Manager "view as" overlay — see definition further below for full context.
 type ViewRole = "admin" | "manager" | "user" | "reception" | "fnb" | "maintenance";
   const [viewAsRole, setViewAsRole] = useState<ViewRole | null>(() => {
