@@ -59,7 +59,7 @@ import {
 } from "@/components/ui/sheet";
 import { useTheme } from "@/components/theme-provider";
 import { useCurrentHotel, DEFAULT_HOTEL_NAME } from "@/lib/hotels";
-// Workspace selection moved to /login; no in-app switcher.
+import { listHotels, setActiveHotel, type HotelOption } from "@/lib/auth.functions";
 
 export const Route = createFileRoute("/app")({
   ssr: false,
