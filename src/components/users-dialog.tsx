@@ -384,18 +384,30 @@ export function UsersDialog({
                   </select>
                 </div>
                 <div className="space-y-1 sm:col-span-2">
-                  <label className="text-xs font-medium">Hotel workspace</label>
-                  <select
-                    className="w-full h-9 rounded-md border bg-background px-3 text-sm"
-                    value={newHotelId}
-                    onChange={(e) => setNewHotelId(e.target.value)}
-                    disabled={hotels.length <= 1}
-                    required
-                  >
-                    {hotels.map((h) => (
-                      <option key={h.id} value={h.id}>{h.name}</option>
-                    ))}
-                  </select>
+                  <label className="text-xs font-medium">Hotel workspaces</label>
+                  {isRegionalAdmin ? (
+                    <div className="flex flex-wrap gap-3 rounded-md border bg-background px-3 py-2">
+                      {hotels.map((h) => (
+                        <label key={h.id} className="flex items-center gap-2 text-sm">
+                          <input
+                            type="checkbox"
+                            checked={newHotelIds.includes(h.id)}
+                            onChange={() =>
+                              setNewHotelIds((prev) => toggleHotel(prev, h.id))
+                            }
+                          />
+                          {h.name}
+                        </label>
+                      ))}
+                      {hotels.length === 0 && (
+                        <span className="text-xs text-muted-foreground">No hotels yet.</span>
+                      )}
+                    </div>
+                  ) : (
+                    <p className="text-xs text-muted-foreground">
+                      New users are added to your active hotel workspace.
+                    </p>
+                  )}
                 </div>
                 <div className="space-y-1 sm:col-span-2">
                   <label className="text-xs font-medium">Departments</label>
