@@ -160,6 +160,24 @@ function LoginPage() {
     }
   }
 
+  async function onApple() {
+    setBusy(true);
+    try {
+      const result = await lovable.auth.signInWithOAuth("apple", {
+        redirect_uri: window.location.origin,
+      });
+      if (result.error) {
+        toast.error(result.error.message ?? "Apple sign-in failed");
+        return;
+      }
+      if (result.redirected) return;
+      await refreshSession();
+      await proceedAfterAuth();
+    } finally {
+      setBusy(false);
+    }
+  }
+
   return (
     <div className="min-h-screen flex items-center justify-center bg-background p-6">
       {hotelChoices ? (
@@ -213,6 +231,15 @@ function LoginPage() {
               disabled={busy}
             >
               Continue with Google
+            </Button>
+            <Button
+              type="button"
+              variant="outline"
+              className="w-full"
+              onClick={onApple}
+              disabled={busy}
+            >
+              Continue with Apple
             </Button>
             <div className="relative">
               <div className="absolute inset-0 flex items-center"><div className="w-full border-t" /></div>
