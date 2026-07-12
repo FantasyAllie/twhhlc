@@ -203,25 +203,34 @@ export const listUsers = createServerFn({ method: "POST" })
  */
 export const updateUserAssignment = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
-  .inputValidator((d: { id: string; position: "regional_admin" | "admin" | "manager" | "user"; subRoles: SubRole[]; hotelId?: string }) => d)
+  .inputValidator((d: { id: string; position: "regional_admin" | "admin" | "manager" | "user"; subRoles: SubRole[]; hotelIds?: string[] }) => d)
   .handler(async ({ data, context }) => {
-    const { supabaseAdmin, isRegionalAdmin, homeHotelId } = await getAdminAccess(context);
+    const { supabaseAdmin, isRegionalAdmin, activeHotelId } = await getAdminAccess(context);
     const position = validatePosition(data.position);
     const subRoles = validateSubRoles(data.subRoles);
     if (position === "regional_admin" && !isRegionalAdmin) {
       throw new Error("Regional admin access required");
     }
 
+    // Non-regional admins may only manage users who are members of their
+    // currently active hotel, and may only (re)assign that same hotel.
+    let nextHotelIds: string[] | undefined = data.hotelIds
+      ? Array.from(new Set(data.hotelIds.filter(Boolean)))
+      : undefined;
     if (!isRegionalAdmin) {
-      const { data: targetMembership } = await supabaseAdmin
+      if (!activeHotelId) throw new Error("Pick a hotel workspace first");
+      const { data: targetMemberships } = await supabaseAdmin
         .from("hotel_members")
         .select("hotel_id")
-        .eq("user_id", data.id)
-        .maybeSingle();
-      const targetHotelId = (targetMembership as { hotel_id: string } | null)?.hotel_id ?? data.hotelId ?? null;
-      if (!homeHotelId || targetHotelId !== homeHotelId || (data.hotelId && data.hotelId !== homeHotelId)) {
-        throw new Error("You can only manage users in your hotel");
+        .eq("user_id", data.id);
+      const targetHotelIds = ((targetMemberships ?? []) as { hotel_id: string }[]).map((r) => r.hotel_id);
+      if (!targetHotelIds.includes(activeHotelId)) {
+        throw new Error("You can only manage users in your active hotel");
       }
+      if (nextHotelIds && nextHotelIds.some((h) => h !== activeHotelId)) {
+        throw new Error("You can only assign your active hotel");
+      }
+      if (!nextHotelIds) nextHotelIds = [activeHotelId];
     }
 
     if (position !== "admin" && position !== "regional_admin") {
@@ -235,19 +244,33 @@ export const updateUserAssignment = createServerFn({ method: "POST" })
       }
     }
 
-    if (data.hotelId) {
-      const { data: hotel, error: hErr } = await supabaseAdmin
+    // Replace the user's full hotel membership set when a list was provided.
+    if (nextHotelIds) {
+      if (nextHotelIds.length === 0) throw new Error("Assign at least one hotel");
+      const { data: hotels, error: hErr } = await supabaseAdmin
         .from("hotels")
         .select("id")
-        .eq("id", data.hotelId)
-        .maybeSingle();
-      if (hErr || !hotel) throw new Error("Hotel not found");
+        .in("id", nextHotelIds);
+      if (hErr) throw new Error(hErr.message);
+      const validIds = new Set(((hotels ?? []) as { id: string }[]).map((h) => h.id));
+      if (validIds.size !== nextHotelIds.length) throw new Error("Hotel not found");
+
+      await supabaseAdmin.from("hotel_members").delete().eq("user_id", data.id);
       await supabaseAdmin
         .from("hotel_members")
-        .upsert({ user_id: data.id, hotel_id: data.hotelId }, { onConflict: "user_id" });
-      await supabaseAdmin
+        .insert(nextHotelIds.map((h) => ({ user_id: data.id, hotel_id: h })));
+
+      // Ensure the user's active hotel is still one they can access. If not,
+      // clear it so they must pick again next sign-in.
+      const { data: active } = await supabaseAdmin
         .from("user_active_hotel")
-        .upsert({ user_id: data.id, hotel_id: data.hotelId }, { onConflict: "user_id" });
+        .select("hotel_id")
+        .eq("user_id", data.id)
+        .maybeSingle();
+      const activeId = (active as { hotel_id: string } | null)?.hotel_id ?? null;
+      if (!activeId || !nextHotelIds.includes(activeId)) {
+        await supabaseAdmin.from("user_active_hotel").delete().eq("user_id", data.id);
+      }
     }
 
     // Rewrite all role rows for this user.
@@ -275,9 +298,9 @@ export const deleteUser = createServerFn({ method: "POST" })
 
 export const createUser = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
-  .inputValidator((d: { email: string; password: string; displayName?: string; position: "regional_admin" | "admin" | "manager" | "user"; subRoles: SubRole[]; hotelId?: string }) => d)
+  .inputValidator((d: { email: string; password: string; displayName?: string; position: "regional_admin" | "admin" | "manager" | "user"; subRoles: SubRole[]; hotelIds?: string[] }) => d)
   .handler(async ({ data, context }) => {
-    const { supabaseAdmin, isRegionalAdmin, homeHotelId } = await getAdminAccess(context);
+    const { supabaseAdmin, isRegionalAdmin, activeHotelId } = await getAdminAccess(context);
     const position = validatePosition(data.position);
     const subRoles = validateSubRoles(data.subRoles);
     if (position === "regional_admin" && !isRegionalAdmin) {
@@ -286,51 +309,103 @@ export const createUser = createServerFn({ method: "POST" })
     validatePassword(data.password);
     const email = String(data.email).trim().toLowerCase();
     if (!email.includes("@")) throw new Error("Valid email is required");
-    const hotelId = isRegionalAdmin ? data.hotelId : homeHotelId;
-    if (!hotelId) throw new Error("Choose a hotel for this user");
-    const { data: hotel, error: hErr } = await supabaseAdmin
+    const requested = Array.from(new Set((data.hotelIds ?? []).filter(Boolean)));
+    const hotelIds = isRegionalAdmin
+      ? requested
+      : activeHotelId
+      ? [activeHotelId]
+      : [];
+    if (hotelIds.length === 0) throw new Error("Choose at least one hotel for this user");
+    if (!isRegionalAdmin && requested.some((h) => h !== activeHotelId)) {
+      throw new Error("You can only assign your active hotel");
+    }
+    const { data: hotels, error: hErr } = await supabaseAdmin
       .from("hotels")
       .select("id")
-      .eq("id", hotelId)
-      .maybeSingle();
-    if (hErr || !hotel) throw new Error("Hotel not found");
+      .in("id", hotelIds);
+    if (hErr) throw new Error(hErr.message);
+    if (((hotels ?? []) as { id: string }[]).length !== hotelIds.length) {
+      throw new Error("Hotel not found");
+    }
+    const primaryHotel = hotelIds[0];
     const { data: created, error } = await supabaseAdmin.auth.admin.createUser({
       email,
       password: data.password,
       email_confirm: true,
-      user_metadata: { ...(data.displayName ? { display_name: data.displayName } : {}), hotel_id: hotelId },
+      user_metadata: { ...(data.displayName ? { display_name: data.displayName } : {}), hotel_id: primaryHotel },
     });
     if (error || !created.user) throw new Error(error?.message ?? "Failed to create user");
-    // Trigger inserted role 'pending' (or admin if magic email). Override.
     await supabaseAdmin.from("user_roles").delete().eq("user_id", created.user.id);
     await supabaseAdmin.from("user_roles").insert([
       { user_id: created.user.id, role: position },
       ...subRoles.map((r) => ({ user_id: created.user.id, role: r })),
     ]);
+    await supabaseAdmin.from("hotel_members").delete().eq("user_id", created.user.id);
     await supabaseAdmin
       .from("hotel_members")
-      .upsert({ user_id: created.user.id, hotel_id: hotelId }, { onConflict: "user_id" });
-    await supabaseAdmin
-      .from("user_active_hotel")
-      .upsert({ user_id: created.user.id, hotel_id: hotelId }, { onConflict: "user_id" });
+      .insert(hotelIds.map((h) => ({ user_id: created.user.id, hotel_id: h })));
+    // If the user has exactly one hotel, seed their active hotel so they land
+    // straight in the workspace without needing to pick.
+    if (hotelIds.length === 1) {
+      await supabaseAdmin
+        .from("user_active_hotel")
+        .upsert({ user_id: created.user.id, hotel_id: hotelIds[0] }, { onConflict: "user_id" });
+    } else {
+      await supabaseAdmin.from("user_active_hotel").delete().eq("user_id", created.user.id);
+    }
     return { ok: true };
   });
 
 export const listHotels = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .handler(async ({ context }): Promise<HotelOption[]> => {
-    const { supabaseAdmin, isRegionalAdmin, homeHotelId } = await getAdminAccess(context);
+    const { supabaseAdmin, isRegionalAdmin, activeHotelId } = await getAdminAccess(context);
     const query = supabaseAdmin
       .from("hotels")
       .select("id, name, slug")
       .order("name", { ascending: true });
     const { data, error } = isRegionalAdmin
       ? await query
-      : homeHotelId
-      ? await query.eq("id", homeHotelId)
+      : activeHotelId
+      ? await query.eq("id", activeHotelId)
       : { data: [], error: null };
     if (error) throw new Error(error.message);
     return ((data ?? []) as HotelOption[]).map((h) => ({ id: h.id, name: h.name, slug: h.slug }));
+  });
+
+/**
+ * The hotels the current signed-in user personally belongs to. Used by the
+ * login page workspace picker — available to every authenticated user, not
+ * only admins.
+ */
+export const listMyHotels = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .handler(async ({ context }): Promise<HotelOption[]> => {
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    const { data: roleRows } = await supabaseAdmin
+      .from("user_roles")
+      .select("role")
+      .eq("user_id", context.userId);
+    const roles = ((roleRows ?? []) as { role: string }[]).map((r) => r.role);
+    const isRegionalAdmin = roles.includes("regional_admin");
+    if (isRegionalAdmin) {
+      const { data, error } = await supabaseAdmin
+        .from("hotels")
+        .select("id, name, slug")
+        .order("name", { ascending: true });
+      if (error) throw new Error(error.message);
+      return ((data ?? []) as HotelOption[]).map((h) => ({ id: h.id, name: h.name, slug: h.slug }));
+    }
+    const { data, error } = await supabaseAdmin
+      .from("hotel_members")
+      .select("hotels ( id, name, slug )")
+      .eq("user_id", context.userId);
+    if (error) throw new Error(error.message);
+    const rows = (data ?? []) as Array<{ hotels: { id: string; name: string; slug: string } | null }>;
+    return rows
+      .map((r) => r.hotels)
+      .filter((h): h is { id: string; name: string; slug: string } => !!h)
+      .sort((a, b) => a.name.localeCompare(b.name));
   });
 
 export const createHotel = createServerFn({ method: "POST" })
@@ -369,16 +444,31 @@ export const setActiveHotel = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .inputValidator((d: { hotelId: string }) => d)
   .handler(async ({ data, context }) => {
-    const { supabaseAdmin, isRegionalAdmin, homeHotelId } = await getAdminAccess(context);
-    if (!isRegionalAdmin && data.hotelId !== homeHotelId) {
-      throw new Error("You can only open your assigned hotel");
+    // Any signed-in user may set their active hotel — but only to a hotel
+    // they're actually a member of (regional admins can pick any hotel).
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    const { data: roleRows } = await supabaseAdmin
+      .from("user_roles")
+      .select("role")
+      .eq("user_id", context.userId);
+    const roles = ((roleRows ?? []) as { role: string }[]).map((r) => r.role);
+    const isRegionalAdmin = roles.includes("regional_admin");
+    if (!isRegionalAdmin) {
+      const { data: membership } = await supabaseAdmin
+        .from("hotel_members")
+        .select("hotel_id")
+        .eq("user_id", context.userId)
+        .eq("hotel_id", data.hotelId)
+        .maybeSingle();
+      if (!membership) throw new Error("You are not a member of that hotel");
+    } else {
+      const { data: hotel } = await supabaseAdmin
+        .from("hotels")
+        .select("id")
+        .eq("id", data.hotelId)
+        .maybeSingle();
+      if (!hotel) throw new Error("Hotel not found");
     }
-    const { data: hotel, error: hErr } = await supabaseAdmin
-      .from("hotels")
-      .select("id")
-      .eq("id", data.hotelId)
-      .maybeSingle();
-    if (hErr || !hotel) throw new Error("Hotel not found");
     const { error } = await supabaseAdmin
       .from("user_active_hotel")
       .upsert({ user_id: context.userId, hotel_id: data.hotelId }, { onConflict: "user_id" });
