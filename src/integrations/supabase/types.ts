@@ -27,7 +27,7 @@ export type Database = {
         Insert: {
           created_at?: string
           grand_total?: number
-          hotel_id: string
+          hotel_id?: string
           id?: string
           kind?: string
           totals: Json
@@ -61,7 +61,7 @@ export type Database = {
         }
         Insert: {
           count?: number
-          hotel_id: string
+          hotel_id?: string
           template_item_id: string
           updated_at?: string
         }
@@ -162,7 +162,7 @@ export type Database = {
           created_by_role?: string | null
           created_by_username?: string | null
           deleted_at?: string | null
-          hotel_id: string
+          hotel_id?: string
           id?: string
           message: string
           photo_paths?: string[]
@@ -221,7 +221,7 @@ export type Database = {
           done?: boolean
           done_at?: string | null
           done_by_username?: string | null
-          hotel_id: string
+          hotel_id?: string
           id?: string
           message: string
           origin_department?: string | null
@@ -368,7 +368,7 @@ export type Database = {
         }
         Insert: {
           created_at?: string
-          hotel_id: string
+          hotel_id?: string
           id?: string
           kind: string
           label: string
@@ -407,7 +407,7 @@ export type Database = {
         }
         Insert: {
           count?: number
-          hotel_id: string
+          hotel_id?: string
           id?: string
           template_item_id: string
           updated_at?: string
@@ -442,7 +442,7 @@ export type Database = {
         }
         Insert: {
           created_at?: string
-          hotel_id: string
+          hotel_id?: string
           id?: string
           name: string
           room_number: number
@@ -478,7 +478,7 @@ export type Database = {
         Insert: {
           created_at?: string
           feature_id: string
-          hotel_id: string
+          hotel_id?: string
           id?: string
           room_number: number
           user_id?: string
@@ -521,7 +521,7 @@ export type Database = {
         }
         Insert: {
           created_at?: string
-          hotel_id: string
+          hotel_id?: string
           id?: string
           label: string
           sort_order?: number | null
@@ -562,7 +562,7 @@ export type Database = {
         }
         Insert: {
           count?: number
-          hotel_id: string
+          hotel_id?: string
           id?: string
           item_id: string
           item_kind: string
@@ -616,7 +616,7 @@ export type Database = {
           deleted_at?: string | null
           dismissed?: boolean
           done_at?: string | null
-          hotel_id: string
+          hotel_id?: string
           id?: string
           message: string
           reply_to_id?: string | null
@@ -675,7 +675,7 @@ export type Database = {
         }
         Insert: {
           created_at?: string
-          hotel_id: string
+          hotel_id?: string
           id?: string
           label: string
           sort_order?: number | null
@@ -730,7 +730,7 @@ export type Database = {
           done_reception?: boolean
           early_check_in?: boolean
           guest_vacated?: boolean
-          hotel_id: string
+          hotel_id?: string
           housekeeping_note?: string | null
           id?: string
           needs_maintenance?: boolean
@@ -790,7 +790,7 @@ export type Database = {
         Insert: {
           created_at?: string
           created_by_username?: string | null
-          hotel_id: string
+          hotel_id?: string
           id?: string
           path: string
           room_number: number
@@ -824,7 +824,7 @@ export type Database = {
         }
         Insert: {
           created_at?: string
-          hotel_id: string
+          hotel_id?: string
           id?: string
           room_number: number
           template_item_id: string
@@ -866,7 +866,7 @@ export type Database = {
           color?: string | null
           created_at?: string
           default_count?: number
-          hotel_id: string
+          hotel_id?: string
           id?: string
           list_type?: string
           name: string
