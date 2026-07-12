@@ -2012,10 +2012,10 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
     });
     const heading =
       kind === "rejects"
-        ? "Three Ways House Hotel Linen Rejects"
+        ? `${hotelName} Linen Rejects`
         : kind === "fnb_totals"
-        ? "Three Ways House Hotel F&B Linen"
-        : "Three Ways House Hotel Linen";
+        ? `${hotelName} F&B Linen`
+        : `${hotelName} Linen`;
     const win = window.open("", "_blank");
     if (!win) {
       toast.error("Pop-up blocked");
