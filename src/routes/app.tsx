@@ -971,7 +971,7 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
         needs_maintenance: value,
         updated_at: new Date().toISOString(),
       } as never,
-      { onConflict: "user_id,room_number" },
+      { onConflict: "user_id,hotel_id,room_number" },
     );
     if (error) toast.error(error.message);
     qc.invalidateQueries({ queryKey: ["rooms"] });
@@ -1042,7 +1042,7 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
       .from("reject_counts" as never)
       .upsert(
         { template_item_id: templateItemId, count: next, updated_at: new Date().toISOString() } as never,
-        { onConflict: "user_id,template_item_id" },
+        { onConflict: "user_id,hotel_id,template_item_id" },
       );
     if (error) {
       toast.error(error.message);
@@ -1259,7 +1259,7 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
     });
     const { error } = await supabase.from("rooms").upsert(
       { room_number: roomNumber, done_reception: next, updated_at: new Date().toISOString() },
-      { onConflict: "user_id,room_number" },
+      { onConflict: "user_id,hotel_id,room_number" },
     );
     if (error) toast.error(error.message);
     qc.invalidateQueries({ queryKey: ["rooms"] });
@@ -1503,7 +1503,7 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
  count: next,
  updated_at: new Date().toISOString(),
  },
- { onConflict: "user_id,room_number,item_kind,item_id" },
+ { onConflict: "user_id,hotel_id,room_number,item_kind,item_id" },
  );
  if (error) {
  toast.error(error.message);
@@ -1523,7 +1523,7 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
   });
   const { error: roomErr } = await supabase.from("rooms").upsert(
   { room_number: roomNumber, done: true, updated_at: new Date().toISOString() },
-  { onConflict: "user_id,room_number" },
+  { onConflict: "user_id,hotel_id,room_number" },
   );
   if (roomErr) toast.error(roomErr.message);
   qc.invalidateQueries({ queryKey: ["rooms"] });
@@ -1545,7 +1545,7 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
   });
   const { error: roomErr } = await supabase.from("rooms").upsert(
   { room_number: roomNumber, done: false, updated_at: new Date().toISOString() },
-  { onConflict: "user_id,room_number" },
+  { onConflict: "user_id,hotel_id,room_number" },
   );
   if (roomErr) toast.error(roomErr.message);
   qc.invalidateQueries({ queryKey: ["rooms"] });
@@ -1584,7 +1584,7 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
       });
       const { error: roomErr } = await supabase.from("rooms").upsert(
         { room_number: roomNumber, done: false, updated_at: new Date().toISOString() },
-        { onConflict: "user_id,room_number" },
+        { onConflict: "user_id,hotel_id,room_number" },
       );
       if (roomErr) toast.error(roomErr.message);
       qc.invalidateQueries({ queryKey: ["rooms"] });
@@ -1672,7 +1672,7 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
     });
     const { error } = await supabase.from("rooms").upsert(
       { room_number: n, sort_order: nextSort, done: false, done_reception: false, updated_at: new Date().toISOString() },
-      { onConflict: "user_id,room_number" },
+      { onConflict: "user_id,hotel_id,room_number" },
     );
     if (error) {
       toast.error(error.message);
@@ -2200,7 +2200,7 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
  category,
  updated_at: new Date().toISOString(),
  },
- { onConflict: "user_id,room_number" },
+ { onConflict: "user_id,hotel_id,room_number" },
  );
  if (error) toast.error(error.message);
  qc.invalidateQueries({ queryKey: ["rooms"] });
@@ -2233,7 +2233,7 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
        default_status: status,
        updated_at: new Date().toISOString(),
      } as never,
-      { onConflict: "user_id,room_number" },
+      { onConflict: "user_id,hotel_id,room_number" },
     );
     if (error) toast.error(error.message);
     qc.invalidateQueries({ queryKey: ["rooms"] });
@@ -2267,7 +2267,7 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
         [field]: value,
         updated_at: new Date().toISOString(),
       } as never,
-      { onConflict: "user_id,room_number" },
+      { onConflict: "user_id,hotel_id,room_number" },
     );
     if (error) toast.error(error.message);
     qc.invalidateQueries({ queryKey: ["rooms"] });
@@ -2305,7 +2305,7 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
         housekeeping_note: next,
         updated_at: new Date().toISOString(),
       } as never,
-      { onConflict: "user_id,room_number" },
+      { onConflict: "user_id,hotel_id,room_number" },
     );
     if (error) toast.error(error.message);
     qc.invalidateQueries({ queryKey: ["rooms"] });
@@ -2337,7 +2337,7 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
         needs_maintenance: value,
         updated_at: new Date().toISOString(),
       } as never,
-      { onConflict: "user_id,room_number" },
+      { onConflict: "user_id,hotel_id,room_number" },
     );
     if (error) toast.error(error.message);
     qc.invalidateQueries({ queryKey: ["rooms"] });
@@ -2406,7 +2406,7 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
         guest_vacated: value,
         updated_at: new Date().toISOString(),
       } as never,
-      { onConflict: "user_id,room_number" },
+      { onConflict: "user_id,hotel_id,room_number" },
     );
     if (error) toast.error(error.message);
     qc.invalidateQueries({ queryKey: ["rooms"] });
@@ -2441,7 +2441,7 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
         early_check_in: value,
         updated_at: new Date().toISOString(),
       } as never,
-      { onConflict: "user_id,room_number" },
+      { onConflict: "user_id,hotel_id,room_number" },
     );
     if (error) toast.error(error.message);
     qc.invalidateQueries({ queryKey: ["rooms"] });
@@ -4265,7 +4265,7 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
         done_reception: true,
         updated_at: new Date().toISOString(),
       } as never,
-      { onConflict: "user_id,room_number" },
+      { onConflict: "user_id,hotel_id,room_number" },
     );
     qc.invalidateQueries({ queryKey: ["rooms"] });
     qc.invalidateQueries({ queryKey: ["stayover_photos"] });
