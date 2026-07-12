@@ -330,10 +330,11 @@ export const createUser = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .inputValidator((d: { email: string; password: string; displayName?: string; position: "regional_admin" | "admin" | "manager" | "user"; subRoles: SubRole[]; hotelIds?: string[] }) => d)
   .handler(async ({ data, context }) => {
-    const { supabaseAdmin, isRegionalAdmin, activeHotelId } = await getAdminAccess(context);
+    const access = await getAdminAccess(context);
+    const { supabaseAdmin, isRegionalAdmin, activeHotelId } = access;
     const position = validatePosition(data.position);
     const subRoles = validateSubRoles(data.subRoles);
-    // Enforced above via assertCanAssignPosition
+    assertCanAssignPosition(access, position);
     validatePassword(data.password);
     const email = String(data.email).trim().toLowerCase();
     if (!email.includes("@")) throw new Error("Valid email is required");
