@@ -3129,42 +3129,42 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
                 </p>
               </>
             )}
+            {canViewAs && (
+              <div className="mt-3 inline-flex flex-wrap rounded-md border p-0.5 bg-background items-center">
+                {availableViews.map((r) => {
+                  const active = (safeViewAs ?? defaultView) === r;
+                  const label =
+                    r === "user"
+                      ? "Housekeeping"
+                      : r === "fnb"
+                      ? "F&B"
+                      : r === "reception"
+                      ? "Reception"
+                      : r === "admin"
+                      ? "Admin"
+                      : r === "maintenance"
+                      ? "Maintenance"
+                      : "Manager";
+                  return (
+                    <button
+                      key={r}
+                      type="button"
+                      onClick={() => setViewAsRole(active ? null : r)}
+                      className={cn(
+                        "px-3 h-8 text-xs sm:text-sm rounded-[0.3rem] transition-colors whitespace-nowrap",
+                        active
+                          ? "bg-primary text-primary-foreground shadow-sm font-medium"
+                          : "text-muted-foreground hover:text-foreground",
+                      )}
+                    >
+                      {label}
+                    </button>
+                  );
+                })}
+              </div>
+            )}
           </div>
  <div className="flex items-center gap-2">
-    {!isMobile && canViewAs && (
-      <div className="inline-flex rounded-md border p-0.5 bg-background h-9 items-center">
-        {availableViews.map((r) => {
-          const active = (safeViewAs ?? defaultView) === r;
-          const label =
-            r === "user"
-              ? "Housekeeping"
-              : r === "fnb"
-              ? "F&B"
-              : r === "reception"
-              ? "Reception"
-              : r === "admin"
-              ? "Admin"
-              : r === "maintenance"
-              ? "Maintenance"
-              : "Manager";
-          return (
-            <button
-              key={r}
-              type="button"
-              onClick={() => setViewAsRole(active ? null : r)}
-              className={cn(
-                "px-3 h-8 text-xs sm:text-sm rounded-[0.3rem] transition-colors whitespace-nowrap",
-                active
-                  ? "bg-primary text-primary-foreground shadow-sm font-medium"
-                  : "text-muted-foreground hover:text-foreground",
-              )}
-            >
-              {label}
-            </button>
-          );
-        })}
-      </div>
-    )}
     {!isMobile && isAdmin && !isReception && (isMobile ? (
       <Sheet open={exportSheetOpen} onOpenChange={setExportSheetOpen}>
         <SheetTrigger asChild>
