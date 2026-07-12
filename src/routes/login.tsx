@@ -6,6 +6,8 @@ import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { lovable } from "@/integrations/lovable";
 import { refreshSession } from "@/lib/auth-client";
+import { useServerFn } from "@tanstack/react-start";
+import { listHotels, setActiveHotel, type HotelOption } from "@/lib/auth.functions";
 import logoUrl from "@/assets/logo.png";
 
 export const Route = createFileRoute("/login")({
@@ -37,6 +39,36 @@ function LoginPage() {
   const [password, setPassword] = useState("");
   const [displayName, setDisplayName] = useState("");
   const [busy, setBusy] = useState(false);
+  const [hotelChoices, setHotelChoices] = useState<HotelOption[] | null>(null);
+  const listHotelsFn = useServerFn(listHotels);
+  const setActiveHotelFn = useServerFn(setActiveHotel);
+
+  async function proceedAfterAuth() {
+    // Regional admins pick a workspace to enter; everyone else goes straight in.
+    try {
+      const hotels = (await listHotelsFn()) as HotelOption[];
+      if (hotels.length > 1) {
+        setHotelChoices(hotels);
+        return;
+      }
+    } catch {
+      /* non-admins throw; ignore and continue */
+    }
+    navigate({ to: "/app", replace: true });
+  }
+
+  async function chooseWorkspace(hotelId: string) {
+    if (busy) return;
+    setBusy(true);
+    try {
+      await setActiveHotelFn({ data: { hotelId } });
+      navigate({ to: "/app", replace: true });
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : "Failed to open workspace");
+    } finally {
+      setBusy(false);
+    }
+  }
 
   // If already signed in, route to /app.
   useEffect(() => {
@@ -56,7 +88,7 @@ function LoginPage() {
       });
       if (error) throw error;
       await refreshSession();
-      navigate({ to: "/app", replace: true });
+      await proceedAfterAuth();
     } catch (err) {
       toast.error(err instanceof Error ? err.message : "Sign in failed");
     } finally {
@@ -118,7 +150,7 @@ function LoginPage() {
       }
       if (result.redirected) return;
       await refreshSession();
-      navigate({ to: "/app", replace: true });
+      await proceedAfterAuth();
     } finally {
       setBusy(false);
     }
@@ -126,6 +158,30 @@ function LoginPage() {
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-background p-6">
+      {hotelChoices ? (
+        <div className="w-full max-w-sm space-y-4 rounded-lg border bg-card p-6 shadow-sm">
+          <div className="space-y-2 text-center">
+            <img src={logoUrl} alt="The Hotel Hub" className="mx-auto h-16 w-16 object-contain" />
+            <h1 className="text-xl font-semibold">Choose a workspace</h1>
+            <p className="text-sm text-muted-foreground">
+              Select the hotel you want to open. You'll need to sign out to switch.
+            </p>
+          </div>
+          <div className="space-y-2">
+            {hotelChoices.map((h) => (
+              <Button
+                key={h.id}
+                variant="outline"
+                className="w-full justify-start"
+                disabled={busy}
+                onClick={() => void chooseWorkspace(h.id)}
+              >
+                {h.name}
+              </Button>
+            ))}
+          </div>
+        </div>
+      ) : (
       <div className="w-full max-w-sm space-y-4 rounded-lg border bg-card p-6 shadow-sm">
         <div className="space-y-2 text-center">
           <img
@@ -243,6 +299,7 @@ function LoginPage() {
           </p>
         )}
       </div>
+      )}
     </div>
   );
 }
