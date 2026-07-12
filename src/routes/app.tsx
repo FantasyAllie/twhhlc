@@ -4429,6 +4429,9 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
           <div className="space-y-2">
             <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">Account</p>
             <div className="space-y-1.5">
+              {canSwitchHotel && (
+                <Row icon={RotateCcw} label="Switch hotel" onClick={() => { close(); setHotelSwitcherOpen(true); }} />
+              )}
               {realIsAdmin && !isMaintenance && (
                 <Row icon={Users} label="Users" onClick={() => { close(); setUsersOpen(true); }} />
               )}
