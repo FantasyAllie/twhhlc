@@ -3,10 +3,10 @@ import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 
 // A user has exactly one Position and zero or more Sub-roles.
 // Positions live alongside sub-role rows in public.user_roles.
-export type Position = "admin" | "manager" | "user" | "pending";
+export type Position = "regional_admin" | "admin" | "manager" | "user" | "pending";
 export type SubRole = "reception" | "housekeeper" | "fnb" | "maintenance";
 // Compat role used by legacy UI paths — derived from position + sub-roles.
-export type AppRole = "admin" | "manager" | "user" | "reception" | "fnb" | "maintenance" | "pending";
+export type AppRole = "regional_admin" | "admin" | "manager" | "user" | "reception" | "fnb" | "maintenance" | "pending";
 export type SessionUser = {
   id: string;
   username: string;
@@ -22,15 +22,18 @@ export type AppUserRow = {
   email: string;
   position: Position;
   subRoles: SubRole[];
+  hotelId: string | null;
+  hotelName: string | null;
   created_at: string;
   disabled: boolean;
 };
+export type HotelOption = { id: string; name: string; slug: string };
 
-const POSITIONS: ReadonlyArray<Position> = ["admin", "manager", "user", "pending"];
+const POSITIONS: ReadonlyArray<Position> = ["regional_admin", "admin", "manager", "user", "pending"];
 const SUB_ROLES: ReadonlyArray<SubRole> = ["reception", "housekeeper", "fnb", "maintenance"];
 
 function validatePosition(p: string): Exclude<Position, "pending"> {
-  if (p !== "admin" && p !== "manager" && p !== "user") throw new Error("Invalid position");
+  if (p !== "regional_admin" && p !== "admin" && p !== "manager" && p !== "user") throw new Error("Invalid position");
   return p;
 }
 function validateSubRoles(rs: unknown): SubRole[] {
@@ -51,15 +54,34 @@ function validatePassword(p: string) {
   }
 }
 
-async function assertAdmin(ctx: { userId: string }) {
+async function getAdminAccess(ctx: { userId: string }) {
   const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
-  const { data, error } = await supabaseAdmin
+  const { data: roles, error } = await supabaseAdmin
     .from("user_roles")
-    .select("user_id")
+    .select("role")
     .eq("user_id", ctx.userId)
-    .eq("role", "admin")
+    .in("role", ["admin", "regional_admin"]);
+  if (error) throw new Error(error.message);
+  const roleList = ((roles ?? []) as { role: string }[]).map((r) => r.role);
+  const isRegionalAdmin = roleList.includes("regional_admin");
+  const isAdmin = roleList.includes("admin") || isRegionalAdmin;
+  if (!isAdmin) throw new Error("Admin access required");
+
+  const { data: membership } = await supabaseAdmin
+    .from("hotel_members")
+    .select("hotel_id")
+    .eq("user_id", ctx.userId)
     .maybeSingle();
-  if (error || !data) throw new Error("Admin access required");
+
+  return {
+    supabaseAdmin,
+    isRegionalAdmin,
+    homeHotelId: (membership as { hotel_id: string } | null)?.hotel_id ?? null,
+  };
+}
+
+async function assertAdmin(ctx: { userId: string }) {
+  await getAdminAccess(ctx);
 }
 
 async function assertAdminOrManager(ctx: { userId: string }) {
@@ -75,7 +97,7 @@ async function assertAdminOrManager(ctx: { userId: string }) {
 function splitRoles(rows: Array<{ role: string }>): { position: Position; subRoles: SubRole[] } {
   let position: Position = "pending";
   const subRoles: SubRole[] = [];
-  const priority: Record<Position, number> = { admin: 4, manager: 3, user: 2, pending: 1 };
+  const priority: Record<Position, number> = { regional_admin: 5, admin: 4, manager: 3, user: 2, pending: 1 };
   for (const r of rows) {
     if (r.role === "reception" || r.role === "housekeeper" || r.role === "fnb" || r.role === "maintenance") {
       if (!subRoles.includes(r.role)) subRoles.push(r.role);
@@ -90,12 +112,38 @@ function splitRoles(rows: Array<{ role: string }>): { position: Position; subRol
 export const listUsers = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .handler(async ({ context }): Promise<AppUserRow[]> => {
-    await assertAdmin(context);
-    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
-    const { data: profiles, error } = await supabaseAdmin
+    const { supabaseAdmin, isRegionalAdmin, homeHotelId } = await getAdminAccess(context);
+
+    const membershipQuery = supabaseAdmin
+      .from("hotel_members")
+      .select("user_id, hotel_id, hotels ( id, name, slug )");
+    const { data: memberships, error: mErr } = isRegionalAdmin
+      ? await membershipQuery
+      : homeHotelId
+      ? await membershipQuery.eq("hotel_id", homeHotelId)
+      : { data: [], error: null };
+    if (mErr) throw new Error(mErr.message);
+
+    const membershipRows = (memberships ?? []) as Array<{
+      user_id: string;
+      hotel_id: string;
+      hotels: { id: string; name: string; slug: string } | null;
+    }>;
+    const membershipByUser = new Map<string, { hotelId: string; hotelName: string | null }>();
+    for (const row of membershipRows) {
+      membershipByUser.set(row.user_id, { hotelId: row.hotel_id, hotelName: row.hotels?.name ?? null });
+    }
+
+    const profileQuery = supabaseAdmin
       .from("profiles")
       .select("id, email, display_name, created_at")
       .order("created_at", { ascending: true });
+    const scopedIds = membershipRows.map((m) => m.user_id);
+    const { data: profiles, error } = isRegionalAdmin
+      ? await profileQuery
+      : scopedIds.length > 0
+      ? await profileQuery.in("id", scopedIds)
+      : { data: [], error: null };
     if (error) throw new Error(error.message);
     const { data: roleRows } = await supabaseAdmin
       .from("user_roles")
@@ -133,6 +181,8 @@ export const listUsers = createServerFn({ method: "POST" })
         username: p.display_name || (p.email ?? "").split("@")[0] || "user",
         position,
         subRoles,
+        hotelId: membershipByUser.get(p.id)?.hotelId ?? null,
+        hotelName: membershipByUser.get(p.id)?.hotelName ?? null,
         created_at: p.created_at,
         disabled: disabledMap.get(p.id) ?? false,
       };
@@ -145,21 +195,52 @@ export const listUsers = createServerFn({ method: "POST" })
  */
 export const updateUserAssignment = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
-  .inputValidator((d: { id: string; position: "admin" | "manager" | "user"; subRoles: SubRole[] }) => d)
+  .inputValidator((d: { id: string; position: "regional_admin" | "admin" | "manager" | "user"; subRoles: SubRole[]; hotelId?: string }) => d)
   .handler(async ({ data, context }) => {
-    await assertAdmin(context);
+    const { supabaseAdmin, isRegionalAdmin, homeHotelId } = await getAdminAccess(context);
     const position = validatePosition(data.position);
     const subRoles = validateSubRoles(data.subRoles);
-    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
-    if (position !== "admin") {
+    if (position === "regional_admin" && !isRegionalAdmin) {
+      throw new Error("Regional admin access required");
+    }
+
+    if (!isRegionalAdmin) {
+      const { data: targetMembership } = await supabaseAdmin
+        .from("hotel_members")
+        .select("hotel_id")
+        .eq("user_id", data.id)
+        .maybeSingle();
+      const targetHotelId = (targetMembership as { hotel_id: string } | null)?.hotel_id ?? data.hotelId ?? null;
+      if (!homeHotelId || targetHotelId !== homeHotelId || (data.hotelId && data.hotelId !== homeHotelId)) {
+        throw new Error("You can only manage users in your hotel");
+      }
+    }
+
+    if (position !== "admin" && position !== "regional_admin") {
       const { count } = await supabaseAdmin
         .from("user_roles")
         .select("user_id", { count: "exact", head: true })
-        .eq("role", "admin");
+        .in("role", ["admin", "regional_admin"]);
       if ((count ?? 0) <= 1 && context.userId === data.id) {
         throw new Error("Cannot demote the only remaining admin");
       }
     }
+
+    if (data.hotelId) {
+      const { data: hotel, error: hErr } = await supabaseAdmin
+        .from("hotels")
+        .select("id")
+        .eq("id", data.hotelId)
+        .maybeSingle();
+      if (hErr || !hotel) throw new Error("Hotel not found");
+      await supabaseAdmin
+        .from("hotel_members")
+        .upsert({ user_id: data.id, hotel_id: data.hotelId }, { onConflict: "user_id" });
+      await supabaseAdmin
+        .from("user_active_hotel")
+        .upsert({ user_id: data.id, hotel_id: data.hotelId }, { onConflict: "user_id" });
+    }
+
     // Rewrite all role rows for this user.
     await supabaseAdmin.from("user_roles").delete().eq("user_id", data.id);
     const insertRows = [
@@ -185,20 +266,30 @@ export const deleteUser = createServerFn({ method: "POST" })
 
 export const createUser = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
-  .inputValidator((d: { email: string; password: string; displayName?: string; position: "admin" | "manager" | "user"; subRoles: SubRole[] }) => d)
+  .inputValidator((d: { email: string; password: string; displayName?: string; position: "regional_admin" | "admin" | "manager" | "user"; subRoles: SubRole[]; hotelId?: string }) => d)
   .handler(async ({ data, context }) => {
-    await assertAdmin(context);
+    const { supabaseAdmin, isRegionalAdmin, homeHotelId } = await getAdminAccess(context);
     const position = validatePosition(data.position);
     const subRoles = validateSubRoles(data.subRoles);
+    if (position === "regional_admin" && !isRegionalAdmin) {
+      throw new Error("Regional admin access required");
+    }
     validatePassword(data.password);
     const email = String(data.email).trim().toLowerCase();
     if (!email.includes("@")) throw new Error("Valid email is required");
-    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    const hotelId = isRegionalAdmin ? data.hotelId : homeHotelId;
+    if (!hotelId) throw new Error("Choose a hotel for this user");
+    const { data: hotel, error: hErr } = await supabaseAdmin
+      .from("hotels")
+      .select("id")
+      .eq("id", hotelId)
+      .maybeSingle();
+    if (hErr || !hotel) throw new Error("Hotel not found");
     const { data: created, error } = await supabaseAdmin.auth.admin.createUser({
       email,
       password: data.password,
       email_confirm: true,
-      user_metadata: data.displayName ? { display_name: data.displayName } : {},
+      user_metadata: { ...(data.displayName ? { display_name: data.displayName } : {}), hotel_id: hotelId },
     });
     if (error || !created.user) throw new Error(error?.message ?? "Failed to create user");
     // Trigger inserted role 'pending' (or admin if magic email). Override.
@@ -207,6 +298,82 @@ export const createUser = createServerFn({ method: "POST" })
       { user_id: created.user.id, role: position },
       ...subRoles.map((r) => ({ user_id: created.user.id, role: r })),
     ]);
+    await supabaseAdmin
+      .from("hotel_members")
+      .upsert({ user_id: created.user.id, hotel_id: hotelId }, { onConflict: "user_id" });
+    await supabaseAdmin
+      .from("user_active_hotel")
+      .upsert({ user_id: created.user.id, hotel_id: hotelId }, { onConflict: "user_id" });
+    return { ok: true };
+  });
+
+export const listHotels = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .handler(async ({ context }): Promise<HotelOption[]> => {
+    const { supabaseAdmin, isRegionalAdmin, homeHotelId } = await getAdminAccess(context);
+    const query = supabaseAdmin
+      .from("hotels")
+      .select("id, name, slug")
+      .order("name", { ascending: true });
+    const { data, error } = isRegionalAdmin
+      ? await query
+      : homeHotelId
+      ? await query.eq("id", homeHotelId)
+      : { data: [], error: null };
+    if (error) throw new Error(error.message);
+    return ((data ?? []) as HotelOption[]).map((h) => ({ id: h.id, name: h.name, slug: h.slug }));
+  });
+
+export const createHotel = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((d: { name: string }) => d)
+  .handler(async ({ data, context }): Promise<HotelOption> => {
+    const { supabaseAdmin, isRegionalAdmin } = await getAdminAccess(context);
+    if (!isRegionalAdmin) throw new Error("Regional admin access required");
+    const name = String(data.name ?? "").trim();
+    if (name.length < 2 || name.length > 80) throw new Error("Hotel name must be 2-80 characters");
+    const baseSlug = name
+      .toLowerCase()
+      .replace(/&/g, "and")
+      .replace(/[^a-z0-9]+/g, "-")
+      .replace(/^-+|-+$/g, "") || "hotel";
+    let slug = baseSlug;
+    for (let i = 2; i < 100; i += 1) {
+      const { data: existing } = await supabaseAdmin
+        .from("hotels")
+        .select("id")
+        .eq("slug", slug)
+        .maybeSingle();
+      if (!existing) break;
+      slug = `${baseSlug}-${i}`;
+    }
+    const { data: hotel, error } = await supabaseAdmin
+      .from("hotels")
+      .insert({ name, slug })
+      .select("id, name, slug")
+      .single();
+    if (error) throw new Error(error.message);
+    return hotel as HotelOption;
+  });
+
+export const setActiveHotel = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((d: { hotelId: string }) => d)
+  .handler(async ({ data, context }) => {
+    const { supabaseAdmin, isRegionalAdmin, homeHotelId } = await getAdminAccess(context);
+    if (!isRegionalAdmin && data.hotelId !== homeHotelId) {
+      throw new Error("You can only open your assigned hotel");
+    }
+    const { data: hotel, error: hErr } = await supabaseAdmin
+      .from("hotels")
+      .select("id")
+      .eq("id", data.hotelId)
+      .maybeSingle();
+    if (hErr || !hotel) throw new Error("Hotel not found");
+    const { error } = await supabaseAdmin
+      .from("user_active_hotel")
+      .upsert({ user_id: context.userId, hotel_id: data.hotelId }, { onConflict: "user_id" });
+    if (error) throw new Error(error.message);
     return { ok: true };
   });
 
