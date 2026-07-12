@@ -92,7 +92,7 @@ export function UsersDialog({
   const [newPassword, setNewPassword] = useState("");
   const [newPosition, setNewPosition] = useState<AssignablePosition>("user");
   const [newSubRoles, setNewSubRoles] = useState<SubRole[]>(["housekeeper"]);
-  const [newHotelId, setNewHotelId] = useState("");
+  const [newHotelIds, setNewHotelIds] = useState<string[]>([]);
   const [newHotelName, setNewHotelName] = useState("");
   const [busy, setBusy] = useState(false);
   const [hotelBusy, setHotelBusy] = useState(false);
@@ -103,10 +103,13 @@ export function UsersDialog({
   const [editUser, setEditUser] = useState<AppUserRow | null>(null);
   const [editPosition, setEditPosition] = useState<AssignablePosition>("user");
   const [editSubRoles, setEditSubRoles] = useState<SubRole[]>([]);
-  const [editHotelId, setEditHotelId] = useState("");
+  const [editHotelIds, setEditHotelIds] = useState<string[]>([]);
   const [editPw, setEditPw] = useState("");
   const [editBusy, setEditBusy] = useState(false);
   const [disableBusy, setDisableBusy] = useState(false);
+
+  // Sort/filter Accounts by hotel. "" = show every hotel.
+  const [accountsFilterHotelId, setAccountsFilterHotelId] = useState<string>("");
 
   const isRegionalAdmin = me?.position === "regional_admin";
   const assignablePositions: AssignablePosition[] = isRegionalAdmin
@@ -115,14 +118,14 @@ export function UsersDialog({
 
   useEffect(() => {
     const firstHotelId = hotelsQ.data?.[0]?.id ?? "";
-    if (!newHotelId && firstHotelId) setNewHotelId(firstHotelId);
-  }, [hotelsQ.data, newHotelId]);
+    if (newHotelIds.length === 0 && firstHotelId) setNewHotelIds([firstHotelId]);
+  }, [hotelsQ.data, newHotelIds.length]);
 
   function openEdit(u: AppUserRow) {
     setEditUser(u);
     setEditPosition((u.position === "pending" ? "user" : u.position) as AssignablePosition);
     setEditSubRoles([...u.subRoles]);
-    setEditHotelId(u.hotelId ?? hotelsQ.data?.[0]?.id ?? "");
+    setEditHotelIds(u.hotelIds.length > 0 ? [...u.hotelIds] : hotelsQ.data?.[0]?.id ? [hotelsQ.data[0].id] : []);
     setEditPw("");
   }
   function closeEdit() {
@@ -131,6 +134,14 @@ export function UsersDialog({
   }
   function toggleSubRole(list: SubRole[], role: SubRole): SubRole[] {
     return list.includes(role) ? list.filter((r) => r !== role) : [...list, role];
+  }
+  function toggleHotel(list: string[], id: string): string[] {
+    return list.includes(id) ? list.filter((h) => h !== id) : [...list, id];
+  }
+  function sameSet(a: string[], b: string[]): boolean {
+    if (a.length !== b.length) return false;
+    const s = new Set(a);
+    return b.every((v) => s.has(v));
   }
 
   async function onSaveEdit(e: React.FormEvent) {
@@ -142,9 +153,9 @@ export function UsersDialog({
         editPosition !== editUser.position ||
         editSubRoles.length !== editUser.subRoles.length ||
         editSubRoles.some((r) => !editUser.subRoles.includes(r)) ||
-        editHotelId !== (editUser.hotelId ?? "");
+        !sameSet(editHotelIds, editUser.hotelIds);
       if (assignmentChanged) {
-        await assignFn({ data: { id: editUser.id, position: editPosition, subRoles: editSubRoles, hotelId: editHotelId || undefined } });
+        await assignFn({ data: { id: editUser.id, position: editPosition, subRoles: editSubRoles, hotelIds: editHotelIds } });
       }
       if (editPw.trim().length > 0) {
         await pwFn({ data: { id: editUser.id, password: editPw } });
