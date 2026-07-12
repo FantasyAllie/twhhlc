@@ -648,7 +648,7 @@ export function UsersDialog({
                     {editUser.hotelNames.length > 0
                       ? editUser.hotelNames.join(", ")
                       : "No hotels assigned"}
-                    . Only regional admins can change hotel assignments.
+                    . Only admins and regional managers can change hotel assignments.
                   </p>
                 )}
               </div>
