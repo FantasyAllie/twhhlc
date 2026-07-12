@@ -6668,6 +6668,7 @@ function AccountDialog({
   const [confirmPw, setConfirmPw] = useState("");
   const [currentPw, setCurrentPw] = useState("");
   const [busy, setBusy] = useState(false);
+  const [hasPassword, setHasPassword] = useState(true);
 
   useEffect(() => {
     if (open) {
@@ -6676,6 +6677,10 @@ function AccountDialog({
       setNewPw("");
       setConfirmPw("");
       setCurrentPw("");
+      void supabase.auth.getUser().then(({ data }) => {
+        const identities = data.user?.identities ?? [];
+        setHasPassword(identities.some((i) => i.provider === "email"));
+      });
     }
   }, [open, currentUsername]);
 
@@ -6699,18 +6704,21 @@ function AccountDialog({
       toast.error("New passwords do not match");
       return;
     }
-    if (!currentPw) {
+    const needsCurrentPw = hasPassword && (wantsEmail || wantsPassword);
+    if (needsCurrentPw && !currentPw) {
       toast.error("Enter your current password to save changes");
       return;
     }
 
     setBusy(true);
     try {
-      const { error: signErr } = await supabase.auth.signInWithPassword({
-        email: user.email,
-        password: currentPw,
-      });
-      if (signErr) throw new Error("Current password is incorrect");
+      if (needsCurrentPw) {
+        const { error: signErr } = await supabase.auth.signInWithPassword({
+          email: user.email,
+          password: currentPw,
+        });
+        if (signErr) throw new Error("Current password is incorrect");
+      }
 
       const messages: string[] = [];
 
@@ -6736,7 +6744,7 @@ function AccountDialog({
       if (wantsPassword) {
         const { error } = await supabase.auth.updateUser({ password: newPw });
         if (error) throw error;
-        messages.push("Password updated");
+        messages.push(hasPassword ? "Password updated" : "Password set");
       }
 
       toast.success(messages.join(" · "));
@@ -6757,7 +6765,7 @@ function AccountDialog({
         <DialogHeader>
           <DialogTitle>Account</DialogTitle>
           <DialogDescription>
-            Update your username, email, or password. Enter your current password once at the bottom to save any changes.
+            Update your username, email, or password.{hasPassword ? " Enter your current password once at the bottom to save email or password changes." : ""}
           </DialogDescription>
         </DialogHeader>
         <form onSubmit={saveAll} className="space-y-6">
@@ -6788,7 +6796,12 @@ function AccountDialog({
           </div>
           <div className="border-t" />
           <div className="space-y-2">
-            <h3 className="text-sm font-semibold">New password</h3>
+            <h3 className="text-sm font-semibold">{hasPassword ? "New password" : "Set a password"}</h3>
+            {!hasPassword && (
+              <p className="text-xs text-muted-foreground">
+                You signed in with Google. Setting a password lets you also sign in with email.
+              </p>
+            )}
             <div className="space-y-1">
               <label className="text-xs font-medium">New password</label>
               <Input
@@ -6808,18 +6821,23 @@ function AccountDialog({
               />
             </div>
           </div>
-          <div className="border-t" />
-          <div className="space-y-2">
-            <label className="text-xs font-medium">Enter existing password to save changes</label>
-            <Input
-              type="password"
-              value={currentPw}
-              onChange={(e) => setCurrentPw(e.target.value)}
-              autoComplete="current-password"
-            />
-            <div className="flex justify-end pt-1">
-              <Button type="submit" size="sm" disabled={busy}>Save changes</Button>
-            </div>
+          {hasPassword && (
+            <>
+              <div className="border-t" />
+              <div className="space-y-2">
+                <label className="text-xs font-medium">Enter existing password to save changes</label>
+                <p className="text-xs text-muted-foreground">Only required when changing your email or password.</p>
+                <Input
+                  type="password"
+                  value={currentPw}
+                  onChange={(e) => setCurrentPw(e.target.value)}
+                  autoComplete="current-password"
+                />
+              </div>
+            </>
+          )}
+          <div className="flex justify-end pt-1">
+            <Button type="submit" size="sm" disabled={busy}>Save changes</Button>
           </div>
         </form>
       </DialogContent>
