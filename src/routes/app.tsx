@@ -3348,11 +3348,6 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
        </DropdownMenuItem>
        <DropdownMenuSeparator />
        <DropdownMenuLabel>Account</DropdownMenuLabel>
-          {isMobile && canViewAs && (
-            <DropdownMenuItem onClick={() => setRolePickerSheetOpen(true)}>
-              <LayoutGrid className="h-4 w-4 mr-2" /> Department
-            </DropdownMenuItem>
-          )}
          {canSwitchHotel && (
            <DropdownMenuItem onClick={() => setHotelSwitcherOpen(true)}>
              <RotateCcw className="h-4 w-4 mr-2" /> Switch hotel
