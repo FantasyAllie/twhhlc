@@ -92,7 +92,7 @@ export function UsersDialog({
   const [newPassword, setNewPassword] = useState("");
   const [newPosition, setNewPosition] = useState<AssignablePosition>("user");
   const [newSubRoles, setNewSubRoles] = useState<SubRole[]>(["housekeeper"]);
-  const [newHotelId, setNewHotelId] = useState("");
+  const [newHotelIds, setNewHotelIds] = useState<string[]>([]);
   const [newHotelName, setNewHotelName] = useState("");
   const [busy, setBusy] = useState(false);
   const [hotelBusy, setHotelBusy] = useState(false);
@@ -103,10 +103,13 @@ export function UsersDialog({
   const [editUser, setEditUser] = useState<AppUserRow | null>(null);
   const [editPosition, setEditPosition] = useState<AssignablePosition>("user");
   const [editSubRoles, setEditSubRoles] = useState<SubRole[]>([]);
-  const [editHotelId, setEditHotelId] = useState("");
+  const [editHotelIds, setEditHotelIds] = useState<string[]>([]);
   const [editPw, setEditPw] = useState("");
   const [editBusy, setEditBusy] = useState(false);
   const [disableBusy, setDisableBusy] = useState(false);
+
+  // Sort/filter Accounts by hotel. "" = show every hotel.
+  const [accountsFilterHotelId, setAccountsFilterHotelId] = useState<string>("");
 
   const isRegionalAdmin = me?.position === "regional_admin";
   const assignablePositions: AssignablePosition[] = isRegionalAdmin
@@ -115,14 +118,14 @@ export function UsersDialog({
 
   useEffect(() => {
     const firstHotelId = hotelsQ.data?.[0]?.id ?? "";
-    if (!newHotelId && firstHotelId) setNewHotelId(firstHotelId);
-  }, [hotelsQ.data, newHotelId]);
+    if (newHotelIds.length === 0 && firstHotelId) setNewHotelIds([firstHotelId]);
+  }, [hotelsQ.data, newHotelIds.length]);
 
   function openEdit(u: AppUserRow) {
     setEditUser(u);
     setEditPosition((u.position === "pending" ? "user" : u.position) as AssignablePosition);
     setEditSubRoles([...u.subRoles]);
-    setEditHotelId(u.hotelId ?? hotelsQ.data?.[0]?.id ?? "");
+    setEditHotelIds(u.hotelIds.length > 0 ? [...u.hotelIds] : hotelsQ.data?.[0]?.id ? [hotelsQ.data[0].id] : []);
     setEditPw("");
   }
   function closeEdit() {
@@ -131,6 +134,14 @@ export function UsersDialog({
   }
   function toggleSubRole(list: SubRole[], role: SubRole): SubRole[] {
     return list.includes(role) ? list.filter((r) => r !== role) : [...list, role];
+  }
+  function toggleHotel(list: string[], id: string): string[] {
+    return list.includes(id) ? list.filter((h) => h !== id) : [...list, id];
+  }
+  function sameSet(a: string[], b: string[]): boolean {
+    if (a.length !== b.length) return false;
+    const s = new Set(a);
+    return b.every((v) => s.has(v));
   }
 
   async function onSaveEdit(e: React.FormEvent) {
@@ -142,9 +153,9 @@ export function UsersDialog({
         editPosition !== editUser.position ||
         editSubRoles.length !== editUser.subRoles.length ||
         editSubRoles.some((r) => !editUser.subRoles.includes(r)) ||
-        editHotelId !== (editUser.hotelId ?? "");
+        !sameSet(editHotelIds, editUser.hotelIds);
       if (assignmentChanged) {
-        await assignFn({ data: { id: editUser.id, position: editPosition, subRoles: editSubRoles, hotelId: editHotelId || undefined } });
+        await assignFn({ data: { id: editUser.id, position: editPosition, subRoles: editSubRoles, hotelIds: editHotelIds } });
       }
       if (editPw.trim().length > 0) {
         await pwFn({ data: { id: editUser.id, password: editPw } });
@@ -201,7 +212,7 @@ export function UsersDialog({
       const hotel = await createHotelFn({ data: { name: newHotelName } }) as HotelOption;
       toast.success("Hotel created");
       setNewHotelName("");
-      setNewHotelId(hotel.id);
+      setNewHotelIds((prev) => (prev.includes(hotel.id) ? prev : [...prev, hotel.id]));
       qc.invalidateQueries({ queryKey: ["hotels"] });
     } catch (err) {
       toast.error(err instanceof Error ? err.message : "Failed to create hotel");
@@ -222,7 +233,7 @@ export function UsersDialog({
           password: newPassword,
           position: newPosition,
           subRoles: newSubRoles,
-          hotelId: newHotelId || undefined,
+          hotelIds: newHotelIds,
         },
       });
       toast.success("User created");
@@ -373,18 +384,30 @@ export function UsersDialog({
                   </select>
                 </div>
                 <div className="space-y-1 sm:col-span-2">
-                  <label className="text-xs font-medium">Hotel workspace</label>
-                  <select
-                    className="w-full h-9 rounded-md border bg-background px-3 text-sm"
-                    value={newHotelId}
-                    onChange={(e) => setNewHotelId(e.target.value)}
-                    disabled={hotels.length <= 1}
-                    required
-                  >
-                    {hotels.map((h) => (
-                      <option key={h.id} value={h.id}>{h.name}</option>
-                    ))}
-                  </select>
+                  <label className="text-xs font-medium">Hotel workspaces</label>
+                  {isRegionalAdmin ? (
+                    <div className="flex flex-wrap gap-3 rounded-md border bg-background px-3 py-2">
+                      {hotels.map((h) => (
+                        <label key={h.id} className="flex items-center gap-2 text-sm">
+                          <input
+                            type="checkbox"
+                            checked={newHotelIds.includes(h.id)}
+                            onChange={() =>
+                              setNewHotelIds((prev) => toggleHotel(prev, h.id))
+                            }
+                          />
+                          {h.name}
+                        </label>
+                      ))}
+                      {hotels.length === 0 && (
+                        <span className="text-xs text-muted-foreground">No hotels yet.</span>
+                      )}
+                    </div>
+                  ) : (
+                    <p className="text-xs text-muted-foreground">
+                      New users are added to your active hotel workspace.
+                    </p>
+                  )}
                 </div>
                 <div className="space-y-1 sm:col-span-2">
                   <label className="text-xs font-medium">Departments</label>
@@ -438,12 +461,43 @@ export function UsersDialog({
             )}
 
             <section className="rounded-lg border bg-card">
-              <div className="px-4 py-3 border-b text-sm font-semibold">Approved users</div>
+              <div className="px-4 py-3 border-b flex items-center justify-between gap-2">
+                <div className="text-sm font-semibold">Accounts</div>
+                {hotels.length > 1 && (
+                  <DropdownMenu>
+                    <DropdownMenuTrigger asChild>
+                      <Button size="sm" variant="outline">
+                        <Building2 className="h-4 w-4 mr-1" />
+                        {accountsFilterHotelId
+                          ? hotels.find((h) => h.id === accountsFilterHotelId)?.name ?? "Hotel"
+                          : "All hotels"}
+                        <ChevronDown className="h-4 w-4 ml-1" />
+                      </Button>
+                    </DropdownMenuTrigger>
+                    <DropdownMenuContent align="end" className="w-56">
+                      <DropdownMenuLabel>Sort by hotel workspace</DropdownMenuLabel>
+                      <DropdownMenuSeparator />
+                      <DropdownMenuItem onClick={() => setAccountsFilterHotelId("")}>
+                        All hotels
+                      </DropdownMenuItem>
+                      {hotels.map((h) => (
+                        <DropdownMenuItem key={h.id} onClick={() => setAccountsFilterHotelId(h.id)}>
+                          {h.name}
+                        </DropdownMenuItem>
+                      ))}
+                    </DropdownMenuContent>
+                  </DropdownMenu>
+                )}
+              </div>
               {usersQ.isLoading ? (
                 <div className="p-4 text-sm text-muted-foreground">Loading…</div>
               ) : (
                 <ul className="divide-y">
-                  {approved.map((u) => (
+                  {approved
+                    .filter((u) =>
+                      accountsFilterHotelId ? u.hotelIds.includes(accountsFilterHotelId) : true,
+                    )
+                    .map((u) => (
                     <li key={u.id} className="px-4 py-3 flex items-center justify-between gap-2">
                       <div className="min-w-0">
                         <div className="font-medium truncate flex items-center gap-2">
@@ -455,7 +509,7 @@ export function UsersDialog({
                           )}
                         </div>
                         <div className="text-xs text-muted-foreground truncate">
-                          {summariseRoles(u)} · {u.hotelName ?? "No hotel"} · {u.email}{me && u.id === me.id ? " · you" : ""}
+                          {summariseRoles(u)} · {u.hotelNames.length > 0 ? u.hotelNames.join(", ") : "No hotel"}{me && u.id === me.id ? " · you" : ""}
                         </div>
                       </div>
                       <div className="flex items-center gap-1">
@@ -525,18 +579,38 @@ export function UsersDialog({
                 </select>
               </div>
               <div className="space-y-1">
-                <label className="text-xs font-medium">Hotel workspace</label>
-                <select
-                  className="w-full h-9 rounded-md border bg-background px-3 text-sm"
-                  value={editHotelId}
-                  onChange={(e) => setEditHotelId(e.target.value)}
-                  disabled={hotels.length <= 1}
-                  required
-                >
-                  {hotels.map((h) => (
-                    <option key={h.id} value={h.id}>{h.name}</option>
-                  ))}
-                </select>
+                <div className="text-xs text-muted-foreground">
+                  Email: <span className="text-foreground">{editUser.email}</span>
+                </div>
+              </div>
+              <div className="space-y-1">
+                <label className="text-xs font-medium">Hotel workspaces</label>
+                {isRegionalAdmin ? (
+                  <div className="flex flex-wrap gap-3 rounded-md border bg-background px-3 py-2">
+                    {hotels.map((h) => (
+                      <label key={h.id} className="flex items-center gap-2 text-sm">
+                        <input
+                          type="checkbox"
+                          checked={editHotelIds.includes(h.id)}
+                          onChange={() =>
+                            setEditHotelIds((prev) => toggleHotel(prev, h.id))
+                          }
+                        />
+                        {h.name}
+                      </label>
+                    ))}
+                    {hotels.length === 0 && (
+                      <span className="text-xs text-muted-foreground">No hotels yet.</span>
+                    )}
+                  </div>
+                ) : (
+                  <p className="text-xs text-muted-foreground">
+                    {editUser.hotelNames.length > 0
+                      ? editUser.hotelNames.join(", ")
+                      : "No hotels assigned"}
+                    . Only regional admins can change hotel assignments.
+                  </p>
+                )}
               </div>
               <div className="space-y-1">
                 <label className="text-xs font-medium">Departments</label>
