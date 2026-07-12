@@ -4454,7 +4454,6 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
 
 {/* History sheet (Admin) */}
 <Sheet open={maintenanceLogOpen} onOpenChange={setMaintenanceLogOpen}>
-</Sheet>
   <SheetContent side="bottom" className="max-h-[90vh] overflow-hidden rounded-t-2xl p-4 sm:p-6 flex flex-col">
     <SheetHeader className="text-left">
       <SheetTitle className="flex items-center gap-2">
