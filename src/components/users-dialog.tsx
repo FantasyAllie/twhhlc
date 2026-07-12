@@ -461,12 +461,43 @@ export function UsersDialog({
             )}
 
             <section className="rounded-lg border bg-card">
-              <div className="px-4 py-3 border-b text-sm font-semibold">Approved users</div>
+              <div className="px-4 py-3 border-b flex items-center justify-between gap-2">
+                <div className="text-sm font-semibold">Accounts</div>
+                {hotels.length > 1 && (
+                  <DropdownMenu>
+                    <DropdownMenuTrigger asChild>
+                      <Button size="sm" variant="outline">
+                        <Building2 className="h-4 w-4 mr-1" />
+                        {accountsFilterHotelId
+                          ? hotels.find((h) => h.id === accountsFilterHotelId)?.name ?? "Hotel"
+                          : "All hotels"}
+                        <ChevronDown className="h-4 w-4 ml-1" />
+                      </Button>
+                    </DropdownMenuTrigger>
+                    <DropdownMenuContent align="end" className="w-56">
+                      <DropdownMenuLabel>Sort by hotel workspace</DropdownMenuLabel>
+                      <DropdownMenuSeparator />
+                      <DropdownMenuItem onClick={() => setAccountsFilterHotelId("")}>
+                        All hotels
+                      </DropdownMenuItem>
+                      {hotels.map((h) => (
+                        <DropdownMenuItem key={h.id} onClick={() => setAccountsFilterHotelId(h.id)}>
+                          {h.name}
+                        </DropdownMenuItem>
+                      ))}
+                    </DropdownMenuContent>
+                  </DropdownMenu>
+                )}
+              </div>
               {usersQ.isLoading ? (
                 <div className="p-4 text-sm text-muted-foreground">Loading…</div>
               ) : (
                 <ul className="divide-y">
-                  {approved.map((u) => (
+                  {approved
+                    .filter((u) =>
+                      accountsFilterHotelId ? u.hotelIds.includes(accountsFilterHotelId) : true,
+                    )
+                    .map((u) => (
                     <li key={u.id} className="px-4 py-3 flex items-center justify-between gap-2">
                       <div className="min-w-0">
                         <div className="font-medium truncate flex items-center gap-2">
@@ -478,7 +509,7 @@ export function UsersDialog({
                           )}
                         </div>
                         <div className="text-xs text-muted-foreground truncate">
-                          {summariseRoles(u)} · {u.hotelName ?? "No hotel"} · {u.email}{me && u.id === me.id ? " · you" : ""}
+                          {summariseRoles(u)} · {u.hotelNames.length > 0 ? u.hotelNames.join(", ") : "No hotel"}{me && u.id === me.id ? " · you" : ""}
                         </div>
                       </div>
                       <div className="flex items-center gap-1">
@@ -548,18 +579,38 @@ export function UsersDialog({
                 </select>
               </div>
               <div className="space-y-1">
-                <label className="text-xs font-medium">Hotel workspace</label>
-                <select
-                  className="w-full h-9 rounded-md border bg-background px-3 text-sm"
-                  value={editHotelId}
-                  onChange={(e) => setEditHotelId(e.target.value)}
-                  disabled={hotels.length <= 1}
-                  required
-                >
-                  {hotels.map((h) => (
-                    <option key={h.id} value={h.id}>{h.name}</option>
-                  ))}
-                </select>
+                <div className="text-xs text-muted-foreground">
+                  Email: <span className="text-foreground">{editUser.email}</span>
+                </div>
+              </div>
+              <div className="space-y-1">
+                <label className="text-xs font-medium">Hotel workspaces</label>
+                {isRegionalAdmin ? (
+                  <div className="flex flex-wrap gap-3 rounded-md border bg-background px-3 py-2">
+                    {hotels.map((h) => (
+                      <label key={h.id} className="flex items-center gap-2 text-sm">
+                        <input
+                          type="checkbox"
+                          checked={editHotelIds.includes(h.id)}
+                          onChange={() =>
+                            setEditHotelIds((prev) => toggleHotel(prev, h.id))
+                          }
+                        />
+                        {h.name}
+                      </label>
+                    ))}
+                    {hotels.length === 0 && (
+                      <span className="text-xs text-muted-foreground">No hotels yet.</span>
+                    )}
+                  </div>
+                ) : (
+                  <p className="text-xs text-muted-foreground">
+                    {editUser.hotelNames.length > 0
+                      ? editUser.hotelNames.join(", ")
+                      : "No hotels assigned"}
+                    . Only regional admins can change hotel assignments.
+                  </p>
+                )}
               </div>
               <div className="space-y-1">
                 <label className="text-xs font-medium">Departments</label>
