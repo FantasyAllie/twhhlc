@@ -6916,6 +6916,49 @@ function AccountDialog({
               </div>
             </>
           )}
+          <div className="border-t" />
+          <div className="space-y-3">
+            <div>
+              <h3 className="text-sm font-semibold">Linked sign-in methods</h3>
+              <p className="text-xs text-muted-foreground">
+                Connect Google or Apple to sign in to this same account with either provider.
+              </p>
+            </div>
+            {(["google", "apple"] as const).map((provider) => {
+              const linked = identities.find((i) => i.provider === provider);
+              const label = provider === "google" ? "Google" : "Apple";
+              return (
+                <div key={provider} className="flex items-center justify-between gap-2 rounded-md border p-2">
+                  <div className="text-sm">
+                    <span className="font-medium">{label}</span>
+                    <span className={`ml-2 text-xs ${linked ? "text-emerald-600 dark:text-emerald-400" : "text-muted-foreground"}`}>
+                      {linked ? "Connected" : "Not connected"}
+                    </span>
+                  </div>
+                  {linked ? (
+                    <Button
+                      type="button"
+                      size="sm"
+                      variant="outline"
+                      disabled={linkingProvider === provider || identities.length <= 1}
+                      onClick={() => void unlinkProvider(linked)}
+                    >
+                      {linkingProvider === provider ? "…" : "Disconnect"}
+                    </Button>
+                  ) : (
+                    <Button
+                      type="button"
+                      size="sm"
+                      disabled={linkingProvider !== null}
+                      onClick={() => void linkProvider(provider)}
+                    >
+                      {linkingProvider === provider ? "Redirecting…" : "Connect"}
+                    </Button>
+                  )}
+                </div>
+              );
+            })}
+          </div>
           <div className="flex justify-end pt-1">
             <Button type="submit" size="sm" disabled={busy}>Save changes</Button>
           </div>
