@@ -59,7 +59,7 @@ import {
 } from "@/components/ui/sheet";
 import { useTheme } from "@/components/theme-provider";
 import { useCurrentHotel, DEFAULT_HOTEL_NAME } from "@/lib/hotels";
-import { listHotels, setActiveHotel, type HotelOption } from "@/lib/auth.functions";
+import { listHotels, setActiveHotel, createHotel, type HotelOption } from "@/lib/auth.functions";
 
 export const Route = createFileRoute("/app")({
   ssr: false,
@@ -266,15 +266,17 @@ function AppPage() {
   const hotelName = currentHotelQ.data?.name ?? DEFAULT_HOTEL_NAME;
   const listHotelsFn = useServerFn(listHotels);
   const setActiveHotelFn = useServerFn(setActiveHotel);
+  const createHotelFn = useServerFn(createHotel);
   const hotelsQ = useQuery({
     queryKey: ["my-hotels"],
     enabled: !!authUser,
     queryFn: () => listHotelsFn() as Promise<HotelOption[]>,
   });
   const availableHotels = hotelsQ.data ?? [];
-  const canSwitchHotel = availableHotels.length > 1;
   const [hotelSwitcherOpen, setHotelSwitcherOpen] = useState(false);
   const [switchingHotelId, setSwitchingHotelId] = useState<string | null>(null);
+  const [newHotelName, setNewHotelName] = useState("");
+  const [creatingHotel, setCreatingHotel] = useState(false);
   async function switchHotel(hotelId: string) {
     if (switchingHotelId) return;
     setSwitchingHotelId(hotelId);
@@ -3348,7 +3350,7 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
        </DropdownMenuItem>
        <DropdownMenuSeparator />
        <DropdownMenuLabel>Account</DropdownMenuLabel>
-         {canSwitchHotel && (
+         {(availableHotels.length > 1 || realIsAdmin) && (
            <DropdownMenuItem onClick={() => setHotelSwitcherOpen(true)}>
              <RotateCcw className="h-4 w-4 mr-2" /> Switch hotel
            </DropdownMenuItem>
@@ -4431,7 +4433,7 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
           <div className="space-y-2">
             <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">Account</p>
             <div className="space-y-1.5">
-              {canSwitchHotel && (
+              {(availableHotels.length > 1 || realIsAdmin) && (
                 <Row icon={RotateCcw} label="Switch hotel" onClick={() => { close(); setHotelSwitcherOpen(true); }} />
               )}
               {(realIsAdmin || realIsManager) && !isMaintenance && (
@@ -4478,6 +4480,43 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
         );
       })}
     </div>
+    {realIsAdmin && (
+      <div className="mt-6 border-t pt-4">
+        <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground mb-2">
+          Create new hotel workspace
+        </p>
+        <div className="flex gap-2">
+          <Input
+            placeholder="Hotel name"
+            value={newHotelName}
+            onChange={(e) => setNewHotelName(e.target.value)}
+            disabled={creatingHotel}
+          />
+          <Button
+            type="button"
+            disabled={creatingHotel || newHotelName.trim().length < 2}
+            onClick={async () => {
+              setCreatingHotel(true);
+              try {
+                await createHotelFn({ data: { name: newHotelName.trim() } });
+                setNewHotelName("");
+                await qc.invalidateQueries({ queryKey: ["my-hotels"] });
+                toast.success("Hotel created");
+              } catch (err) {
+                toast.error(err instanceof Error ? err.message : "Failed to create hotel");
+              } finally {
+                setCreatingHotel(false);
+              }
+            }}
+          >
+            {creatingHotel ? "Creating…" : "Create"}
+          </Button>
+        </div>
+        <p className="mt-2 text-xs text-muted-foreground">
+          Only admins and regional managers can create hotel workspaces.
+        </p>
+      </div>
+    )}
   </SheetContent>
 </Sheet>
 
