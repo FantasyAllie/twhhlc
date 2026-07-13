@@ -266,15 +266,17 @@ function AppPage() {
   const hotelName = currentHotelQ.data?.name ?? DEFAULT_HOTEL_NAME;
   const listHotelsFn = useServerFn(listHotels);
   const setActiveHotelFn = useServerFn(setActiveHotel);
+  const createHotelFn = useServerFn(createHotel);
   const hotelsQ = useQuery({
     queryKey: ["my-hotels"],
     enabled: !!authUser,
     queryFn: () => listHotelsFn() as Promise<HotelOption[]>,
   });
   const availableHotels = hotelsQ.data ?? [];
-  const canSwitchHotel = availableHotels.length > 1;
   const [hotelSwitcherOpen, setHotelSwitcherOpen] = useState(false);
   const [switchingHotelId, setSwitchingHotelId] = useState<string | null>(null);
+  const [newHotelName, setNewHotelName] = useState("");
+  const [creatingHotel, setCreatingHotel] = useState(false);
   async function switchHotel(hotelId: string) {
     if (switchingHotelId) return;
     setSwitchingHotelId(hotelId);
