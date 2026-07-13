@@ -6708,6 +6708,15 @@ function AccountDialog({
   const [currentPw, setCurrentPw] = useState("");
   const [busy, setBusy] = useState(false);
   const [hasPassword, setHasPassword] = useState(true);
+  const [identities, setIdentities] = useState<Array<{ identity_id: string; provider: string }>>([]);
+  const [linkingProvider, setLinkingProvider] = useState<string | null>(null);
+
+  async function refreshIdentities() {
+    const { data } = await supabase.auth.getUserIdentities();
+    const list = (data?.identities ?? []).map((i) => ({ identity_id: i.identity_id, provider: i.provider }));
+    setIdentities(list);
+    setHasPassword(list.some((i) => i.provider === "email"));
+  }
 
   useEffect(() => {
     if (open) {
@@ -6716,12 +6725,44 @@ function AccountDialog({
       setNewPw("");
       setConfirmPw("");
       setCurrentPw("");
-      void supabase.auth.getUser().then(({ data }) => {
-        const identities = data.user?.identities ?? [];
-        setHasPassword(identities.some((i) => i.provider === "email"));
-      });
+      void refreshIdentities();
     }
   }, [open, currentUsername]);
+
+  async function linkProvider(provider: "google" | "apple") {
+    if (linkingProvider) return;
+    setLinkingProvider(provider);
+    try {
+      const { error } = await supabase.auth.linkIdentity({
+        provider,
+        options: { redirectTo: `${window.location.origin}/app` },
+      });
+      if (error) throw error;
+      // Browser will redirect to the provider; nothing else to do here.
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : `Failed to link ${provider}`);
+      setLinkingProvider(null);
+    }
+  }
+
+  async function unlinkProvider(identity: { identity_id: string; provider: string }) {
+    if (linkingProvider) return;
+    if (identities.length <= 1) {
+      toast.error("Add another sign-in method before removing this one");
+      return;
+    }
+    setLinkingProvider(identity.provider);
+    try {
+      const { error } = await supabase.auth.unlinkIdentity(identity as never);
+      if (error) throw error;
+      toast.success(`Disconnected ${identity.provider}`);
+      await refreshIdentities();
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : `Failed to disconnect ${identity.provider}`);
+    } finally {
+      setLinkingProvider(null);
+    }
+  }
 
   async function saveAll(e: React.FormEvent) {
     e.preventDefault();
