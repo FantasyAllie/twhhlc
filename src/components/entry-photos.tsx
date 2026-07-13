@@ -24,6 +24,7 @@ export function PhotoComposer({
   max?: number;
 }) {
   const inputRef = useRef<HTMLInputElement | null>(null);
+  const cameraInputRef = useRef<HTMLInputElement | null>(null);
   const [pending, setPending] = useState<Pending[]>([]);
 
   useEffect(() => {
@@ -77,6 +78,14 @@ export function PhotoComposer({
         className="hidden"
         onChange={onPick}
       />
+      <input
+        ref={cameraInputRef}
+        type="file"
+        accept="image/*"
+        capture="environment"
+        className="hidden"
+        onChange={onPick}
+      />
       <div className="flex flex-wrap gap-2">
         {pending.map((p, idx) => (
           <div key={p.id} className="relative h-16 w-16 overflow-hidden rounded-md border bg-muted">
@@ -92,14 +101,24 @@ export function PhotoComposer({
           </div>
         ))}
         {value.length < max && (
-          <button
-            type="button"
-            onClick={() => inputRef.current?.click()}
-            className="flex h-16 w-16 flex-col items-center justify-center gap-0.5 rounded-md border border-dashed text-muted-foreground hover:bg-muted"
-          >
-            <ImagePlus className="h-4 w-4" />
-            <span className="text-[10px]">Photo</span>
-          </button>
+          <>
+            <button
+              type="button"
+              onClick={() => cameraInputRef.current?.click()}
+              className="flex h-16 w-16 flex-col items-center justify-center gap-0.5 rounded-md border border-dashed text-muted-foreground hover:bg-muted"
+            >
+              <Camera className="h-4 w-4" />
+              <span className="text-[10px]">Camera</span>
+            </button>
+            <button
+              type="button"
+              onClick={() => inputRef.current?.click()}
+              className="flex h-16 w-16 flex-col items-center justify-center gap-0.5 rounded-md border border-dashed text-muted-foreground hover:bg-muted"
+            >
+              <ImagePlus className="h-4 w-4" />
+              <span className="text-[10px]">Library</span>
+            </button>
+          </>
         )}
       </div>
     </div>
@@ -122,6 +141,7 @@ export function PhotoAttachments({
   max?: number;
 }) {
   const inputRef = useRef<HTMLInputElement | null>(null);
+  const cameraInputRef = useRef<HTMLInputElement | null>(null);
   const [urls, setUrls] = useState<Record<string, string>>({});
   const [loading, setLoading] = useState(false);
   const [uploading, setUploading] = useState(false);
@@ -185,6 +205,14 @@ export function PhotoAttachments({
         className="hidden"
         onChange={(e) => void handlePick(e)}
       />
+      <input
+        ref={cameraInputRef}
+        type="file"
+        accept="image/*"
+        capture="environment"
+        className="hidden"
+        onChange={(e) => void handlePick(e)}
+      />
       <div className="flex flex-wrap gap-1.5">
         {paths.map((p) => {
           const url = urls[p];
@@ -219,25 +247,40 @@ export function PhotoAttachments({
           );
         })}
         {canEdit && paths.length < max && (
-          <button
-            type="button"
-            onClick={() => inputRef.current?.click()}
-            disabled={uploading}
-            className={cn(
-              "flex h-14 w-14 flex-col items-center justify-center gap-0.5 rounded-md border border-dashed text-muted-foreground hover:bg-muted",
-              uploading && "opacity-60",
-            )}
-            aria-label="Add photo"
-          >
-            {uploading ? (
-              <Loader2 className="h-4 w-4 animate-spin" />
-            ) : (
-              <>
-                <Camera className="h-4 w-4" />
-                <span className="text-[10px]">Add</span>
-              </>
-            )}
-          </button>
+          <>
+            <button
+              type="button"
+              onClick={() => cameraInputRef.current?.click()}
+              disabled={uploading}
+              className={cn(
+                "flex h-14 w-14 flex-col items-center justify-center gap-0.5 rounded-md border border-dashed text-muted-foreground hover:bg-muted",
+                uploading && "opacity-60",
+              )}
+              aria-label="Take photo"
+            >
+              {uploading ? (
+                <Loader2 className="h-4 w-4 animate-spin" />
+              ) : (
+                <>
+                  <Camera className="h-4 w-4" />
+                  <span className="text-[10px]">Camera</span>
+                </>
+              )}
+            </button>
+            <button
+              type="button"
+              onClick={() => inputRef.current?.click()}
+              disabled={uploading}
+              className={cn(
+                "flex h-14 w-14 flex-col items-center justify-center gap-0.5 rounded-md border border-dashed text-muted-foreground hover:bg-muted",
+                uploading && "opacity-60",
+              )}
+              aria-label="Add from library"
+            >
+              <ImagePlus className="h-4 w-4" />
+              <span className="text-[10px]">Library</span>
+            </button>
+          </>
         )}
       </div>
       <Dialog open={!!lightboxUrl} onOpenChange={(o) => !o && setLightboxUrl(null)}>
