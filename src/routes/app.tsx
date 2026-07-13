@@ -3172,7 +3172,7 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
         <SheetTrigger asChild>
           <Button variant="outline" size="sm">Export</Button>
         </SheetTrigger>
-        <SheetContent side="bottom" className="max-h-[85vh] overflow-y-auto rounded-t-2xl p-4 sm:p-6">
+        <SheetContent side="bottom" className="max-h-[85dvh] overflow-y-auto rounded-t-2xl p-4 sm:p-6">
           <SheetHeader className="text-left">
             <SheetTitle>Export</SheetTitle>
             <SheetDescription>Choose what to export.</SheetDescription>
@@ -3380,7 +3380,7 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
  {/* Mobile role-picker sheet (triggered from the burger menu). */}
  {isMobile && canViewAs && (
    <Sheet open={rolePickerSheetOpen} onOpenChange={setRolePickerSheetOpen}>
-     <SheetContent side="bottom" className="max-h-[85vh] overflow-y-auto rounded-t-2xl p-4 sm:p-6">
+     <SheetContent side="bottom" className="max-h-[85dvh] overflow-y-auto rounded-t-2xl p-4 sm:p-6">
        <SheetHeader className="text-left">
          <SheetTitle>Department</SheetTitle>
          <SheetDescription>Switch between your assigned departments.</SheetDescription>
@@ -3415,7 +3415,7 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
  {/* Mobile export sheet (triggered from the burger menu). */}
  {isMobile && isAdmin && !isReception && (
    <Sheet open={exportSheetOpen} onOpenChange={setExportSheetOpen}>
-     <SheetContent side="bottom" className="max-h-[85vh] overflow-y-auto rounded-t-2xl p-4 sm:p-6">
+     <SheetContent side="bottom" className="max-h-[85dvh] overflow-y-auto rounded-t-2xl p-4 sm:p-6">
        <SheetHeader className="text-left">
          <SheetTitle>Export</SheetTitle>
          <SheetDescription>Choose what to export.</SheetDescription>
@@ -3497,7 +3497,7 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
        return listItems.length === 0 ? (
          <p className="text-sm text-muted-foreground">No items yet.</p>
        ) : (
-        <ul className="divide-y border-t max-h-[60vh] overflow-y-auto -mx-4 sm:-mx-6 px-4 sm:px-6">
+        <ul className="divide-y border-t max-h-[60dvh] overflow-y-auto -mx-4 sm:-mx-6 px-4 sm:px-6">
           <li className="flex items-center gap-1.5 py-1.5 text-xs font-medium text-muted-foreground uppercase tracking-wide">
             <span className="h-3 w-3 shrink-0" aria-hidden />
             <span className="flex-1 min-w-0">Item</span>
@@ -3534,7 +3534,7 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
                       <Pencil className="h-4 w-4" />
                     </Button>
                   </SheetTrigger>
-                  <SheetContent side="bottom" className="max-h-[85vh] overflow-y-auto rounded-t-2xl p-4 sm:p-6">
+                  <SheetContent side="bottom" className="max-h-[85dvh] overflow-y-auto rounded-t-2xl p-4 sm:p-6">
                     <SheetHeader className="text-left">
                       <SheetTitle>Edit item</SheetTitle>
                       <SheetDescription>{item.name}</SheetDescription>
@@ -3667,7 +3667,7 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
 
  {/* Notes sheet (User/Admin + Reception) */}
  <Sheet open={notesSheetRoom !== null} onOpenChange={(o) => { if (!o) setNotesSheetRoom(null); }}>
-   <SheetContent side="bottom" className="max-h-[85vh] overflow-y-auto rounded-t-2xl p-4 sm:p-6">
+   <SheetContent side="bottom" className="max-h-[85dvh] overflow-y-auto rounded-t-2xl p-4 sm:p-6">
      {notesSheetRoom !== null && (() => {
        const n = notesSheetRoom;
        const room = rooms.find((r) => r.room_number === n);
@@ -3898,7 +3898,7 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
 
  {/* Reception sheet (Admin/User): Done + Status + Bed */}
  <Sheet open={receptionSheetRoom !== null} onOpenChange={(o) => { if (!o) setReceptionSheetRoom(null); }}>
-   <SheetContent side="bottom" className="max-h-[85vh] overflow-y-auto rounded-t-2xl p-4 sm:p-6">
+   <SheetContent side="bottom" className="max-h-[85dvh] overflow-y-auto rounded-t-2xl p-4 sm:p-6">
      {receptionSheetRoom !== null && (() => {
        const n = receptionSheetRoom;
        const room = rooms.find((r) => r.room_number === n);
@@ -4456,7 +4456,7 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
 {/* History sheet (Admin) */}
 {/* Hotel switcher sheet */}
 <Sheet open={hotelSwitcherOpen} onOpenChange={setHotelSwitcherOpen}>
-  <SheetContent side="bottom" className="max-h-[85vh] overflow-y-auto rounded-t-2xl p-4 sm:p-6">
+  <SheetContent side="bottom" className="max-h-[85dvh] overflow-y-auto rounded-t-2xl p-4 sm:p-6">
     <SheetHeader className="text-left">
       <SheetTitle>Switch hotel</SheetTitle>
       <SheetDescription>Choose which hotel workspace to work in.</SheetDescription>
@@ -4521,7 +4521,7 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
 </Sheet>
 
 <Sheet open={maintenanceLogOpen} onOpenChange={setMaintenanceLogOpen}>
-  <SheetContent side="bottom" className="max-h-[90vh] overflow-hidden rounded-t-2xl p-4 sm:p-6 flex flex-col">
+  <SheetContent side="bottom" className="max-h-[90dvh] overflow-hidden rounded-t-2xl p-4 sm:p-6 flex flex-col">
     <SheetHeader className="text-left">
       <SheetTitle className="flex items-center gap-2">
         <Wrench className="h-4 w-4" />
@@ -4731,7 +4731,7 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
 </Sheet>
 
 <Sheet open={historySheetOpen} onOpenChange={setHistorySheetOpen}>
-   <SheetContent side="bottom" className="max-h-[90vh] overflow-hidden rounded-t-2xl p-4 sm:p-6">
+   <SheetContent side="bottom" className="max-h-[90dvh] overflow-hidden rounded-t-2xl p-4 sm:p-6">
     <SheetHeader className="text-left">
       <SheetTitle className="flex items-center gap-2">
         <History className="h-4 w-4" />
@@ -4823,7 +4823,7 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
 </Sheet>
 
  <Sheet open={editDefaultsSheetRoom !== null} onOpenChange={(o) => { if (!o) setEditDefaultsSheetRoom(null); }}>
-   <SheetContent side="bottom" className="max-h-[85vh] overflow-y-auto rounded-t-2xl p-4 sm:p-6">
+   <SheetContent side="bottom" className="max-h-[85dvh] overflow-y-auto rounded-t-2xl p-4 sm:p-6">
      {editDefaultsSheetRoom !== null && (() => {
        const n = editDefaultsSheetRoom;
        return (
@@ -4866,7 +4866,7 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
 
  {/* Room Types sheet (Admin) */}
  <Sheet open={roomTypesSheetOpen} onOpenChange={setRoomTypesSheetOpen}>
-  <SheetContent side="bottom" className="max-h-[85vh] overflow-y-auto p-4 sm:p-6">
+  <SheetContent side="bottom" className="max-h-[85dvh] overflow-y-auto p-4 sm:p-6">
      <SheetHeader className="text-left">
        <SheetTitle className="flex items-center gap-2">
          <Bed className="h-4 w-4" />
@@ -4906,7 +4906,7 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
 
  {/* Room Features sheet (Admin) */}
  <Sheet open={roomFeaturesSheetOpen} onOpenChange={setRoomFeaturesSheetOpen}>
-  <SheetContent side="bottom" className="max-h-[85vh] overflow-y-auto p-4 sm:p-6">
+  <SheetContent side="bottom" className="max-h-[85dvh] overflow-y-auto p-4 sm:p-6">
      <SheetHeader className="text-left">
        <SheetTitle className="flex items-center gap-2">
          <List className="h-4 w-4" />
@@ -4946,7 +4946,7 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
 
  {/* Reception items sheet (Admin) */}
  <Sheet open={receptionItemsSheetOpen} onOpenChange={setReceptionItemsSheetOpen}>
-  <SheetContent side="bottom" className="max-h-[85vh] overflow-y-auto p-4 sm:p-6">
+  <SheetContent side="bottom" className="max-h-[85dvh] overflow-y-auto p-4 sm:p-6">
      <SheetHeader className="text-left">
        <SheetTitle className="flex items-center gap-2">
          <ConciergeBell className="h-4 w-4" />
@@ -5019,7 +5019,7 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
 
   {/* Edit room sheet (Admin) */}
   <Sheet open={editRoomSheetNumber !== null} onOpenChange={(o) => { if (!o) setEditRoomSheetNumber(null); }}>
-    <SheetContent side="bottom" className="max-h-[85vh] overflow-y-auto p-4 sm:p-6">
+    <SheetContent side="bottom" className="max-h-[85dvh] overflow-y-auto p-4 sm:p-6">
       {editRoomSheetNumber !== null && (() => {
         const n = editRoomSheetNumber;
         const r = rooms.find((x) => x.room_number === n);
@@ -5271,7 +5271,7 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
 
  {/* Rejects dialog */}
  <Dialog open={rejectsOpen} onOpenChange={setRejectsOpen}>
-    <DialogContent className="max-w-md w-[calc(100vw-1.5rem)] sm:w-full p-4 sm:p-6 h-[90vh] sm:h-auto sm:max-h-[85vh] flex flex-col gap-3">
+    <DialogContent className="max-w-md w-[calc(100vw-1.5rem)] sm:w-full p-4 sm:p-6 h-[90dvh] sm:h-auto sm:max-h-[85dvh] flex flex-col gap-3">
       <DialogHeader className="shrink-0">
        <DialogTitle>Rejects</DialogTitle>
         <DialogDescription>
@@ -5403,7 +5403,7 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
         <div className="text-xs text-muted-foreground">
           {rooms.length} room{rooms.length === 1 ? "" : "s"} total
         </div>
-        <ul className="divide-y rounded-md border max-h-[50vh] overflow-y-auto">
+        <ul className="divide-y rounded-md border max-h-[50dvh] overflow-y-auto">
           {rooms
             .slice()
             .sort((a, b) => (a.sort_order ?? a.room_number) - (b.sort_order ?? b.room_number))
@@ -5778,7 +5778,7 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
               {totalSelected === 0 ? "Filters" : `Filters · ${totalSelected}`}
             </Button>
           </PopoverTrigger>
-          <PopoverContent align="end" className="w-72 max-h-[70vh] overflow-y-auto p-3">
+          <PopoverContent align="end" className="w-72 max-h-[70dvh] overflow-y-auto p-3">
             <div className="space-y-1 pb-2">
               <p className="text-sm font-semibold">Filters</p>
               <p className="text-xs text-muted-foreground">
@@ -6156,7 +6156,7 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
                 const progress = eligible.filter((r) => r.done || r.done_reception).length;
                 const pct = total > 0 ? Math.min(100, (progress / total) * 100) : 0;
                  return (
-                    <div className="mt-3 space-y-1 max-lg:fixed max-lg:inset-x-0 max-lg:bottom-0 max-lg:z-40 max-lg:mt-0 max-lg:border-t max-lg:border-border max-lg:bg-background/95 max-lg:backdrop-blur max-lg:pl-[calc(env(safe-area-inset-left,0px)+1.5rem)] max-lg:pr-[calc(env(safe-area-inset-right,0px)+1.5rem)] max-lg:pt-2 max-lg:pb-[calc(env(safe-area-inset-bottom,0px)+0.75rem)] max-lg:shadow-[0_-2px_8px_rgba(0,0,0,0.06)] max-lg:transform-gpu max-lg:will-change-transform max-lg:[backface-visibility:hidden]">
+                     <div className="mt-3 space-y-1 max-lg:fixed max-lg:inset-x-0 max-lg:bottom-0 max-lg:z-40 max-lg:mt-0 max-lg:border-t max-lg:border-border max-lg:bg-background/95 max-lg:backdrop-blur max-lg:pl-[calc(env(safe-area-inset-left,0px)+1.5rem)] max-lg:pr-[calc(env(safe-area-inset-right,0px)+1.5rem)] max-lg:pt-2 max-lg:pb-[calc(env(safe-area-inset-bottom,0px)+0.75rem)] max-lg:shadow-[0_-2px_8px_rgba(0,0,0,0.06)]">
                     <div className="flex items-center justify-between text-xs text-muted-foreground">
                       <span>Rooms progress</span>
                       <span className="tabular-nums">{progress} of {total}</span>
@@ -6179,7 +6179,7 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
  </div>
 
  <Sheet open={openRoom !== null} onOpenChange={(o) => { if (!o) { if (openRoom !== null) setShowAllLinen(prev => ({ ...prev, [openRoom]: false })); setOpenRoom(null); setNewMessageText(""); } }}>
-   <SheetContent side="bottom" className="h-[90vh] max-h-[90vh] flex flex-col overflow-hidden rounded-t-2xl p-4 sm:p-6">
+   <SheetContent side="bottom" className="h-[90dvh] max-h-[90dvh] flex flex-col overflow-hidden rounded-t-2xl p-4 sm:p-6">
      <SheetHeader className="text-left space-y-0">
        <SheetTitle>Room {openRoom} — {categoryLabel(roomCategory(openRoom ?? 0), roomTypes)}</SheetTitle>
      </SheetHeader>
@@ -6323,7 +6323,7 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
        );
        return (
          <div className="space-y-4">
-           <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 max-h-[60vh] overflow-y-auto">
+           <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 max-h-[60dvh] overflow-y-auto">
              {renderTable(left)}
              {renderTable(right)}
            </div>
@@ -6364,7 +6364,7 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
           {viewingSnapshot.totals.length === 0 ? (
             <p className="text-sm text-muted-foreground py-4">No rooms in this snapshot.</p>
           ) : (
-            <div className="rounded-md border max-h-[60vh] overflow-y-auto">
+            <div className="rounded-md border max-h-[60dvh] overflow-y-auto">
               <table className="w-full text-sm">
                 <thead className="bg-muted/50 sticky top-0">
                   <tr>
@@ -6422,7 +6422,7 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
           {viewingSnapshot.totals.length === 0 ? (
             <p className="text-sm text-muted-foreground py-4">No rooms in this snapshot.</p>
           ) : (
-            <div className="rounded-md border max-h-[60vh] overflow-y-auto">
+            <div className="rounded-md border max-h-[60dvh] overflow-y-auto">
               <table className="w-full text-sm">
                 <thead className="bg-muted/50 sticky top-0">
                   <tr>
@@ -6482,7 +6482,7 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
          {viewingSnapshot.totals.length === 0 ? (
            <p className="text-sm text-muted-foreground py-4">No items in this snapshot.</p>
          ) : (
-           <ul className="divide-y rounded-md border max-h-[60vh] overflow-y-auto">
+           <ul className="divide-y rounded-md border max-h-[60dvh] overflow-y-auto">
               {(viewingSnapshot.totals as SnapshotRow[]).map((r) => (
                <li
                  key={r.name}

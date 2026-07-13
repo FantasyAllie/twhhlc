@@ -64,7 +64,7 @@ export function UserApprovalDialog({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-lg w-[calc(100vw-1.5rem)] sm:w-full max-h-[85vh] overflow-y-auto p-4 sm:p-6">
+      <DialogContent className="max-w-lg w-[calc(100vw-1.5rem)] sm:w-full max-h-[85dvh] overflow-y-auto p-4 sm:p-6">
         <DialogHeader>
           <DialogTitle>User Approval</DialogTitle>
           <DialogDescription>

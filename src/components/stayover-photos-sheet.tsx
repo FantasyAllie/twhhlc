@@ -66,7 +66,7 @@ export function StayoverPhotosSheet({
 
   return (
     <Sheet open={open} onOpenChange={onOpenChange}>
-      <SheetContent side="bottom" className="max-h-[90vh] overflow-hidden rounded-t-2xl p-4 sm:p-6 flex flex-col">
+      <SheetContent side="bottom" className="max-h-[90dvh] overflow-hidden rounded-t-2xl p-4 sm:p-6 flex flex-col">
         <SheetHeader className="text-left">
           <SheetTitle className="flex items-center gap-2">
             <Camera className="h-4 w-4" />
@@ -131,7 +131,7 @@ export function StayoverPhotosSheet({
         <Dialog open={!!lightbox} onOpenChange={(o) => !o && setLightbox(null)}>
           <DialogContent className="max-w-3xl p-0 bg-transparent border-0 shadow-none">
             {lightbox && (
-              <img src={lightbox} alt="" className="w-full h-auto max-h-[85vh] object-contain rounded-md" />
+              <img src={lightbox} alt="" className="w-full h-auto max-h-[85dvh] object-contain rounded-md" />
             )}
           </DialogContent>
         </Dialog>

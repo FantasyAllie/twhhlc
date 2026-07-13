@@ -93,7 +93,7 @@ export function QuickReceptionSheet({
     <Sheet open={open} onOpenChange={onOpenChange}>
       <SheetContent
         side="bottom"
-        className="max-h-[90vh] overflow-hidden rounded-t-2xl p-4 sm:p-6"
+        className="max-h-[90dvh] overflow-hidden rounded-t-2xl p-4 sm:p-6"
       >
         <SheetHeader className="text-left">
           <SheetTitle className="flex items-center gap-2">
