@@ -4480,6 +4480,43 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
         );
       })}
     </div>
+    {realIsAdmin && (
+      <div className="mt-6 border-t pt-4">
+        <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground mb-2">
+          Create new hotel workspace
+        </p>
+        <div className="flex gap-2">
+          <Input
+            placeholder="Hotel name"
+            value={newHotelName}
+            onChange={(e) => setNewHotelName(e.target.value)}
+            disabled={creatingHotel}
+          />
+          <Button
+            type="button"
+            disabled={creatingHotel || newHotelName.trim().length < 2}
+            onClick={async () => {
+              setCreatingHotel(true);
+              try {
+                await createHotelFn({ data: { name: newHotelName.trim() } });
+                setNewHotelName("");
+                await qc.invalidateQueries({ queryKey: ["my-hotels"] });
+                toast.success("Hotel created");
+              } catch (err) {
+                toast.error(err instanceof Error ? err.message : "Failed to create hotel");
+              } finally {
+                setCreatingHotel(false);
+              }
+            }}
+          >
+            {creatingHotel ? "Creating…" : "Create"}
+          </Button>
+        </div>
+        <p className="mt-2 text-xs text-muted-foreground">
+          Only admins and regional managers can create hotel workspaces.
+        </p>
+      </div>
+    )}
   </SheetContent>
 </Sheet>
 
