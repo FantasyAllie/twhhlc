@@ -3350,7 +3350,7 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
        </DropdownMenuItem>
        <DropdownMenuSeparator />
        <DropdownMenuLabel>Account</DropdownMenuLabel>
-         {canSwitchHotel && (
+         {(availableHotels.length > 1 || realIsAdmin) && (
            <DropdownMenuItem onClick={() => setHotelSwitcherOpen(true)}>
              <RotateCcw className="h-4 w-4 mr-2" /> Switch hotel
            </DropdownMenuItem>
@@ -4433,7 +4433,7 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
           <div className="space-y-2">
             <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">Account</p>
             <div className="space-y-1.5">
-              {canSwitchHotel && (
+              {(availableHotels.length > 1 || realIsAdmin) && (
                 <Row icon={RotateCcw} label="Switch hotel" onClick={() => { close(); setHotelSwitcherOpen(true); }} />
               )}
               {(realIsAdmin || realIsManager) && !isMaintenance && (
