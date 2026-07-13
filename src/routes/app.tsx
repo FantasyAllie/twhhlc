@@ -59,7 +59,7 @@ import {
 } from "@/components/ui/sheet";
 import { useTheme } from "@/components/theme-provider";
 import { useCurrentHotel, DEFAULT_HOTEL_NAME } from "@/lib/hotels";
-import { listHotels, setActiveHotel, type HotelOption } from "@/lib/auth.functions";
+import { listHotels, setActiveHotel, createHotel, type HotelOption } from "@/lib/auth.functions";
 
 export const Route = createFileRoute("/app")({
   ssr: false,
