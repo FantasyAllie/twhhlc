@@ -527,7 +527,14 @@ export function MessagesSheet({
                 <label className="ml-auto flex items-center gap-2 text-xs font-medium">
                   <Wrench className={cn("h-3.5 w-3.5", alsoMaintenance ? "text-amber-600 dark:text-amber-400" : "text-muted-foreground")} />
                   <span>Maintenance</span>
-                  <Switch checked={alsoMaintenance} onCheckedChange={setAlsoMaintenance} disabled={typeof room !== "number"} />
+                  <Switch
+                    checked={alsoMaintenance}
+                    onCheckedChange={(v) => {
+                      setAlsoMaintenance(v);
+                      if (v) setAlsoLostProperty(false);
+                    }}
+                    disabled={typeof room !== "number"}
+                  />
                 </label>
               )}
             </div>
@@ -539,7 +546,10 @@ export function MessagesSheet({
                 <span>Lost Property</span>
                 <Switch
                   checked={alsoLostProperty}
-                  onCheckedChange={setAlsoLostProperty}
+                  onCheckedChange={(v) => {
+                    setAlsoLostProperty(v);
+                    if (v) setAlsoMaintenance(false);
+                  }}
                   disabled={
                     myDepartments.includes("housekeeping") && !myDepartments.includes("reception")
                       ? typeof room !== "number"
