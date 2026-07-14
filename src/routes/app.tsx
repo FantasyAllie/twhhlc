@@ -6257,7 +6257,12 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
                       <span>Rooms progress</span>
                       <span className="tabular-nums">{progress} of {total}</span>
                     </div>
-                    <div className="h-2 w-full overflow-hidden rounded-full bg-muted">
+                    <div
+                      role="button"
+                      tabIndex={-1}
+                      onClick={handleProgressTap}
+                      className="h-2 w-full overflow-hidden rounded-full bg-muted cursor-pointer select-none"
+                    >
                       <div
                         className="h-full rounded-full bg-primary transition-[width] duration-300"
                         style={{ width: `${pct}%` }}
