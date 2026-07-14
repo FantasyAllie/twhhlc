@@ -471,6 +471,26 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
   const [newMaintenanceText, setNewMaintenanceText] = useState<string>("");
   const [maintenanceComposerOpen, setMaintenanceComposerOpen] = useState(false);
   const [lostPropertyOpen, setLostPropertyOpen] = useState(false);
+  // Progress-bar easter egg (10 taps → confirm → full reset + broom burst)
+  const [progressTapCount, setProgressTapCount] = useState(0);
+  const progressTapTimerRef = useRef<number | null>(null);
+  const [broomEggConfirmOpen, setBroomEggConfirmOpen] = useState(false);
+  const [broomBurstActive, setBroomBurstActive] = useState(false);
+  const handleProgressTap = () => {
+    if (progressTapTimerRef.current) {
+      window.clearTimeout(progressTapTimerRef.current);
+    }
+    const next = progressTapCount + 1;
+    if (next >= 10) {
+      setProgressTapCount(0);
+      setBroomEggConfirmOpen(true);
+      return;
+    }
+    setProgressTapCount(next);
+    progressTapTimerRef.current = window.setTimeout(() => {
+      setProgressTapCount(0);
+    }, 700);
+  };
   // Stayover / DND photo state
   const [stayoverPhotosOpen, setStayoverPhotosOpen] = useState(false);
   const [stayoverPhotosRoomFilter, setStayoverPhotosRoomFilter] = useState<number | undefined>(undefined);
