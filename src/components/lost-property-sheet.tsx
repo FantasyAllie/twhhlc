@@ -366,6 +366,25 @@ export function LostPropertySheet({
                         <Check className="h-3.5 w-3.5 mr-1" />
                         Collected
                       </Button>
+                      {onReply && (
+                        <Button
+                          type="button"
+                          size="sm"
+                          variant="outline"
+                          className="h-8 text-xs"
+                          onClick={() =>
+                            onReply({
+                              id: r.id,
+                              roomNumber: r.room_number,
+                              message: r.message,
+                              sender: r.created_by_username,
+                            })
+                          }
+                        >
+                          <MessageSquare className="h-3.5 w-3.5 mr-1" />
+                          Reply
+                        </Button>
+                      )}
                       {canDiscard(r.created_at) ? (
                         <Button
                           type="button"
