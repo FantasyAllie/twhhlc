@@ -40,6 +40,7 @@ export function LostPropertySheet({
   requireRoom,
   roomNumbers,
   onAdd,
+  onReply,
 }: {
   open: boolean;
   onOpenChange: (o: boolean) => void;
@@ -54,6 +55,12 @@ export function LostPropertySheet({
     message: string,
     photos: File[],
   ) => Promise<{ ok: boolean; error?: string }>;
+  onReply?: (item: {
+    id: string;
+    roomNumber: number | null;
+    message: string;
+    sender: string | null;
+  }) => void;
 }) {
   const qc = useQueryClient();
 
