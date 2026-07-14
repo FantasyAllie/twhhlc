@@ -6100,17 +6100,18 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
           {!isStaff && (state === "done" || state === "complete") && (
             <Check aria-label="Done" className="h-3.5 w-3.5 opacity-80" />
           )}
+           {isDnd && !isStaff && (
+             <span
+               aria-label="DND"
+               className="rounded-sm bg-red-600 text-white text-[8px] font-bold px-1 py-px leading-none tracking-wide"
+             >
+               DND
+             </span>
+           )}
          </span>
           <span className="text-[9px] sm:text-[10px] md:text-xs font-medium leading-none opacity-90 whitespace-pre-line pr-4">
             {isStaff ? "Staff" : meta.label}
           </span>
-          {isDnd && !isStaff && (
-           <span
-               className="absolute right-1.5 top-2 text-xs sm:text-sm font-bold leading-none"
-           >
-             DND
-           </span>
-         )}
           {hasActiveMessage(n) && (
             <span
               aria-label="Message"
