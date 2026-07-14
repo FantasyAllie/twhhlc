@@ -1596,6 +1596,10 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
 
   const resetAll = async () => {
     if (!confirm("Reset done state, counts, and quick status setup for all rooms?")) return;
+    await performResetAll();
+  };
+
+  const performResetAll = async () => {
     qc.setQueryData<Room[]>(["rooms"], (old) =>
       old?.map((r) => ({
         ...r,
@@ -1617,8 +1621,20 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
     if (r1.error) toast.error(r1.error.message);
     const r2 = await supabase.from("room_item_counts").delete().neq("room_number", -1);
     if (r2.error) toast.error(r2.error.message);
+    // Clear pinned room messages from the tiles WITHOUT deleting them —
+    // marking them dismissed + done removes the amber dot / peek but keeps
+    // them visible in the corresponding chat thread (Messages window).
+    const nowIso = new Date().toISOString();
+    const r3 = await supabase
+      .from("room_messages" as never)
+      .update({ dismissed: true, done_at: nowIso, updated_at: nowIso } as never)
+      .not("room_number", "is", null)
+      .is("deleted_at", null)
+      .eq("dismissed", false);
+    if (r3.error) toast.error(r3.error.message);
     qc.invalidateQueries({ queryKey: ["rooms"] });
     qc.invalidateQueries({ queryKey: ["room_counts"] });
+    qc.invalidateQueries({ queryKey: ["room_messages"] });
   };
 
   const resetReceptionAll = async () => {
