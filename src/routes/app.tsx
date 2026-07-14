@@ -4304,6 +4304,35 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
     setMessagesSheetOpen(true);
   }}
 />
+<Dialog open={broomEggConfirmOpen} onOpenChange={setBroomEggConfirmOpen}>
+  <DialogContent className="max-w-sm">
+    <DialogHeader>
+      <DialogTitle>Full reset?</DialogTitle>
+      <DialogDescription>
+        Tapping the progress bar 10 times triggers a full "Reset all". Confirm
+        to clear done state, counts and quick statuses for every room.
+      </DialogDescription>
+    </DialogHeader>
+    <div className="mt-2 flex justify-end gap-2">
+      <Button variant="outline" onClick={() => setBroomEggConfirmOpen(false)}>
+        Deny
+      </Button>
+      <Button
+        onClick={async () => {
+          setBroomEggConfirmOpen(false);
+          setBroomBurstActive(true);
+          await performResetAll();
+        }}
+      >
+        Approve
+      </Button>
+    </div>
+  </DialogContent>
+</Dialog>
+<BroomBurst
+  active={broomBurstActive}
+  onDone={() => setBroomBurstActive(false)}
+/>
 <StayoverPhotosSheet
   open={stayoverPhotosOpen}
   onOpenChange={(o) => {
