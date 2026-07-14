@@ -3924,8 +3924,19 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
                             size="sm"
                             className="h-7 text-xs"
                             onClick={() => {
+                              const first = msgs[0];
                               setNotesSheetRoom(null);
-                              setMessagesInitial({ thread: "hk_reception", room: n });
+                              setMessagesInitial({
+                                thread: "hk_reception",
+                                room: n,
+                                replyTo: first
+                                  ? {
+                                      id: first.id,
+                                      sender: first.created_by_username ?? "Reception",
+                                      snippet: first.message.slice(0, 280),
+                                    }
+                                  : undefined,
+                              });
                               setMessagesSheetOpen(true);
                             }}
                           >
