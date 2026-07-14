@@ -2978,6 +2978,37 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
         })()}
       </div>
     )}
+    {/* Compact message peek — shows the latest active room message directly
+        under the action row. Tap to open the notifications panel to
+        dismiss/confirm. */}
+    {!isReception && (() => {
+      const room = rooms.find((r) => r.room_number === n);
+      const msgs = activeMessagesByRoom(n);
+      if (msgs.length === 0 && !room?.housekeeping_note) return null;
+      const latest = msgs[msgs.length - 1];
+      const preview = latest?.message ?? room?.housekeeping_note ?? "";
+      const sender = latest?.created_by_username
+        ? latest.created_by_username
+        : latest
+          ? "Reception"
+          : "Note";
+      return (
+        <button
+          type="button"
+          onClick={() => setNotesSheetRoom(n)}
+          className="mt-2 flex w-full items-center gap-2 rounded-md border border-amber-400/60 bg-amber-50 px-3 py-2 text-left text-xs hover:bg-amber-100 dark:bg-amber-950/40 dark:hover:bg-amber-950/60"
+          aria-label="Open room message"
+        >
+          <MessageSquare className="h-3.5 w-3.5 shrink-0 text-amber-600 dark:text-amber-400" />
+          <span className="font-semibold text-amber-800 dark:text-amber-200 shrink-0">
+            {sender}:
+          </span>
+          <span className="truncate text-amber-900/90 dark:text-amber-100/90">
+            {preview}
+          </span>
+        </button>
+      );
+    })()}
     </div>
 
     {isReception ? null : (
