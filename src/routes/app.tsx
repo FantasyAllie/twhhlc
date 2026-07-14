@@ -4270,6 +4270,19 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
   requireRoom={hasHousekeeperRole && !hasReceptionRole}
   roomNumbers={rooms.map((r) => r.room_number).sort((a, b) => a - b)}
   onAdd={logLostProperty}
+  onReply={(item) => {
+    setLostPropertyOpen(false);
+    setMessagesInitial({
+      thread: "hk_reception",
+      room: item.roomNumber,
+      replyTo: {
+        id: item.id,
+        sender: item.sender ?? "Housekeeping",
+        snippet: item.message.slice(0, 280),
+      },
+    });
+    setMessagesSheetOpen(true);
+  }}
 />
 <StayoverPhotosSheet
   open={stayoverPhotosOpen}
