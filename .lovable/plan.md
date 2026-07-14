@@ -1,94 +1,41 @@
 
-# Multi-Hotel Workspaces
+## 1. No overlapping tile icons
+In both reception and housekeeping room-tile branches (`src/routes/app.tsx` ~5979–6132), the amber notification dot (`right-1 top-1/top-5`), the DND label (`right-1.5 top-2`), the OUT badge (`top-0.5 right-0.5`) and the maintenance wrench (`bottom-0.5 right-0.5`) share corners. I'll:
+- Move the DND label to the top-left of the tile (below the room number) or center-top so it doesn't collide with the right-corner icons.
+- Stack the amber message dot / OUT badge / wrench on distinct anchors:
+  - OUT: top-right corner
+  - Amber dot: top-right but shifted down when OUT badge is present (already done — extend to also shift down when DND label exists in reception branch)
+  - Wrench: bottom-right (unchanged)
+  - DND text: moved to top-left inline area so it never overlaps the amber dot.
 
-The cleanest approach is **row-level multi-tenancy**: one database, every tenant-scoped table gains a `hotel_id` column, and RLS enforces that users only see rows for their hotel. No separate databases, no duplicated code. This scales to dozens of hotels with negligible overhead — Postgres just adds `WHERE hotel_id = ...` to every query via policy.
+## 2. Reception room-message → also posted in HK↔Reception chat
+When Reception writes a room-tagged message (the "communications"/note flow that inserts into `room_messages`, ~lines 820, 852, 883), if the sender is Reception the message is stored with `thread: 'hk_reception'` and `room_number: <n>` so it appears in both the room's peek and the HK↔Reception chat feed. Right now some inserts use a non-thread scope; I'll ensure Reception's room note inserts include `thread: 'hk_reception'`. HK-originated room messages already thread into `hk_reception`, so they'll continue to appear in both places.
 
-## Concepts
+## 3. Reset all preserves chat messages
+In `resetAll` (~line 1596), line 1696 deletes from `room_messages` per room. I'll change that so it deletes only room-scoped notes that are NOT part of a chat thread (i.e. `thread is null`), and leaves `thread='hk_reception'` etc. rows intact. The chat feed remains, and the room-tile amber dot clears because the peek query (`hasActiveMessage`) is already scoped to room-tagged notes only.
 
-- **Hotel (workspace)**: a self-contained tenant. Has its own rooms, room types, templates, messages, lost property, maintenance, photos, features, etc.
-- **Membership**: a user belongs to exactly one hotel (simple model) — or to many (if you want staff who float between properties). Recommend starting with one-hotel-per-user; easy to widen later.
-- **Regional admin**: a new global role that bypasses the hotel filter and can see/manage all hotels and all users.
-- **Existing roles** (admin, manager, user + sub-roles) stay exactly as they are — but now they're scoped *within* a hotel. A "hotel admin" only administers their own property.
+## 4. Maintenance / Lost Property toggles in `MessagesSheet`
+In `src/components/messages-sheet.tsx`:
+- Make the two switches mutually exclusive: turning one on turns the other off.
+- When either toggle is on, `send()` short-circuits: it does NOT insert into `room_messages`, does NOT push to chat. It only calls `onLogMaintenance` / `onLogLostProperty`, then toasts "Maintenance request has been sent to the Maintenance Log" or "Item has been logged to Lost Property", clears the composer, and closes/reset toggles.
+- Keep existing validation (room required for maintenance; room required for HK-only lost property).
 
-## Data model changes
+## 5. Room panel: compact message peek
+In the open-room detail panel (below the status/extra-linen/edit/communications button row), render a compact strip showing the latest active `hasActiveMessage` text (single line, truncated) with a small icon. Tapping it opens the notifications sheet (same UX as the amber dot). No inline dismiss/confirm — user opens notifications for that. I'll find the room-panel JSX in `app.tsx` (right after the action button row for the opened room) and add a `RoomMessagePeek` block.
 
-New tables:
-- `hotels` — id, name, slug, timezone, created_at
-- `hotel_members` — user_id, hotel_id, unique(user_id) if single-hotel; drop unique if multi-hotel later
+## 6. Sitewide reply-to
+Maintenance already opens `MessagesSheet` with `initialReplyTo`. Same wiring exists for HK-notifications and lost-property. I'll:
+- Add a "Reply in Messages" action to the notifications-sheet items for housekeeping / reception / F&B (mirroring the maintenance action), passing `{ id, sender, snippet }` and the correct thread.
+- Add a "Reply" action to lost-property items (in `LostPropertySheet`) so reception can reply into the appropriate thread (HK↔Reception by default) with the item text as reply-to snippet.
 
-New role value: extend `app_role` enum with `regional_admin` (global, cross-hotel).
+## 7. 10-tap easter egg on the rooms progress bar
+In the progress-bar JSX (~line 6159), attach an `onClick`/`onPointerDown` counter (with a 700ms reset window between taps). On the 10th tap in a row:
+- Open a `Confirm` dialog: "Reset everything? Approve to trigger a full reset."
+- On approve: call the same `resetAll()` used by the Reset all button, then trigger a `<BroomBurst />` overlay: a fixed full-screen pointer-events-none layer that renders ~40 🧹 emoji at random positions with `animate-fade-in` + a scatter transform, auto-unmounting after 4s.
+- On deny: close dialog.
+Normal Reset all button behavior unchanged.
 
-Add `hotel_id uuid not null references hotels(id)` to every tenant table:
-rooms, room_types, room_features, room_feature_rooms, template_items, template_item_rooms, room_extra_items, room_item_counts, reject_counts, room_messages, lost_property, maintenance_requests, reception_items, fnb_linen_counts, stayover_photos, export_snapshots, notification_preferences (optional), push_subscriptions (optional per-hotel routing).
-
-Backfill: assign every existing row to a single default hotel ("The Winston" or whatever you call the current property). One-time migration — zero data loss.
-
-## RLS pattern
-
-Add a security-definer helper:
-
-```sql
-create function public.current_hotel_id() returns uuid
-  language sql stable security definer set search_path = public as $$
-  select hotel_id from public.hotel_members where user_id = auth.uid()
-$$;
-
-create function public.is_regional_admin(_uid uuid) returns boolean
-  language sql stable security definer set search_path = public as $$
-  select exists(select 1 from public.user_roles
-                where user_id = _uid and role = 'regional_admin')
-$$;
-```
-
-Every existing policy on tenant tables gets AND'd with:
-```
-(hotel_id = public.current_hotel_id() OR public.is_regional_admin(auth.uid()))
-```
-
-Regional admins see everything. Everyone else sees only their hotel. No app-code filtering needed — the DB enforces it.
-
-## User visibility
-
-The `listUsers` / `listPendingUsers` server functions become hotel-scoped: they join `hotel_members` and filter to the caller's hotel unless the caller is a regional admin. Hotel admins/managers see and approve only their own hotel's staff.
-
-`createUser` requires a `hotelId` — regional admins can create users in any hotel, hotel admins can only create in their own. The `handle_new_user` trigger inserts into `hotel_members` from a `raw_user_meta_data.hotel_id` claim set at signup / admin-create time.
-
-## Onboarding new hotels
-
-Regional admin flow:
-1. Create hotel (name, slug, timezone).
-2. Invite the first hotel admin with `hotelId` set.
-3. That admin approves their own staff and configures rooms/templates like today.
-
-Each hotel gets its own room list, templates, messages, photos — fully isolated. Users signing in see only their property.
-
-## UI changes (small)
-
-- Login unchanged.
-- Header shows current hotel name for context.
-- Regional admin gets a hotel switcher (dropdown) and cross-hotel views in the users dialog.
-- New "Hotels" settings page (regional-admin only) to create/rename hotels.
-- Hotel admins see their existing settings unchanged.
-
-## Performance
-
-Adding `hotel_id` + an index on it costs nothing meaningful — every query already filters by user or room. Postgres RLS is a query rewrite, not a runtime tax. Systems with hundreds of tenants run this pattern comfortably; you'll have single digits.
-
-## Migration order (one-way, safe)
-
-1. Create `hotels`, `hotel_members`, `regional_admin` enum value, helper functions.
-2. Seed one hotel and assign all existing users to it.
-3. Add nullable `hotel_id` to every tenant table, backfill from that seed hotel, then set NOT NULL.
-4. Rewrite policies to include the hotel filter.
-5. Update `handle_new_user`, `listUsers`, `createUser`, `approvePendingUser`, `listPendingUsers` to be hotel-aware.
-6. Add hotel switcher + Hotels admin page.
-7. (Later) if needed, drop the unique constraint on `hotel_members.user_id` to support multi-hotel staff.
-
-## Open questions before I plan the implementation
-
-1. **Single-hotel vs multi-hotel users**: start with one hotel per user (simpler, matches your description), or allow staff to belong to multiple from day one?
-2. **What is the current hotel called?** — I need a name/slug to backfill existing data into.
-3. **Regional admin scope**: full cross-hotel edit access, or view-only across hotels + edit only in a "current" hotel they've switched into?
-4. **Push notifications**: keep them per-user (current), or scope subscriptions to hotel so a user changing hotels stops getting the old hotel's alerts?
-
-Answer those and I'll produce the concrete migration + code plan.
+## Technical notes
+- Files: `src/routes/app.tsx` (most changes), `src/components/messages-sheet.tsx` (toggles), `src/components/notifications-sheet.tsx` (reply buttons), `src/components/lost-property-sheet.tsx` (reply button), new `src/components/broom-burst.tsx`.
+- No DB migrations needed. `room_messages.thread` is already nullable, so filtering `thread is null` in reset deletion is safe.
+- Existing `notifyDepartmentMessage`/`notifyMaintenanceRequest` calls unchanged.
