@@ -19,6 +19,7 @@ import { LostPropertySheet } from "@/components/lost-property-sheet";
 import { PhotoAttachments, PhotoComposer } from "@/components/entry-photos";
 import { StayoverPhotosSheet } from "@/components/stayover-photos-sheet";
 import { DndDoorPhoto } from "@/components/dnd-door-photo";
+import { BroomBurst } from "@/components/broom-burst";
 import {
   deleteTodayStayoverPhotosForRoom,
   purgeExpiredStayoverPhotos,
