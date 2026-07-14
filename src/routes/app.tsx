@@ -19,6 +19,7 @@ import { LostPropertySheet } from "@/components/lost-property-sheet";
 import { PhotoAttachments, PhotoComposer } from "@/components/entry-photos";
 import { StayoverPhotosSheet } from "@/components/stayover-photos-sheet";
 import { DndDoorPhoto } from "@/components/dnd-door-photo";
+import { BroomBurst } from "@/components/broom-burst";
 import {
   deleteTodayStayoverPhotosForRoom,
   purgeExpiredStayoverPhotos,
@@ -470,6 +471,26 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
   const [newMaintenanceText, setNewMaintenanceText] = useState<string>("");
   const [maintenanceComposerOpen, setMaintenanceComposerOpen] = useState(false);
   const [lostPropertyOpen, setLostPropertyOpen] = useState(false);
+  // Progress-bar easter egg (10 taps → confirm → full reset + broom burst)
+  const [progressTapCount, setProgressTapCount] = useState(0);
+  const progressTapTimerRef = useRef<number | null>(null);
+  const [broomEggConfirmOpen, setBroomEggConfirmOpen] = useState(false);
+  const [broomBurstActive, setBroomBurstActive] = useState(false);
+  const handleProgressTap = () => {
+    if (progressTapTimerRef.current) {
+      window.clearTimeout(progressTapTimerRef.current);
+    }
+    const next = progressTapCount + 1;
+    if (next >= 10) {
+      setProgressTapCount(0);
+      setBroomEggConfirmOpen(true);
+      return;
+    }
+    setProgressTapCount(next);
+    progressTapTimerRef.current = window.setTimeout(() => {
+      setProgressTapCount(0);
+    }, 700);
+  };
   // Stayover / DND photo state
   const [stayoverPhotosOpen, setStayoverPhotosOpen] = useState(false);
   const [stayoverPhotosRoomFilter, setStayoverPhotosRoomFilter] = useState<number | undefined>(undefined);
@@ -1595,6 +1616,10 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
 
   const resetAll = async () => {
     if (!confirm("Reset done state, counts, and quick status setup for all rooms?")) return;
+    await performResetAll();
+  };
+
+  const performResetAll = async () => {
     qc.setQueryData<Room[]>(["rooms"], (old) =>
       old?.map((r) => ({
         ...r,
@@ -1616,8 +1641,20 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
     if (r1.error) toast.error(r1.error.message);
     const r2 = await supabase.from("room_item_counts").delete().neq("room_number", -1);
     if (r2.error) toast.error(r2.error.message);
+    // Clear pinned room messages from the tiles WITHOUT deleting them —
+    // marking them dismissed + done removes the amber dot / peek but keeps
+    // them visible in the corresponding chat thread (Messages window).
+    const nowIso = new Date().toISOString();
+    const r3 = await supabase
+      .from("room_messages" as never)
+      .update({ dismissed: true, done_at: nowIso, updated_at: nowIso } as never)
+      .not("room_number", "is", null)
+      .is("deleted_at", null)
+      .eq("dismissed", false);
+    if (r3.error) toast.error(r3.error.message);
     qc.invalidateQueries({ queryKey: ["rooms"] });
     qc.invalidateQueries({ queryKey: ["room_counts"] });
+    qc.invalidateQueries({ queryKey: ["room_messages"] });
   };
 
   const resetReceptionAll = async () => {
@@ -2961,6 +2998,37 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
         })()}
       </div>
     )}
+    {/* Compact message peek — shows the latest active room message directly
+        under the action row. Tap to open the notifications panel to
+        dismiss/confirm. */}
+    {!isReception && (() => {
+      const room = rooms.find((r) => r.room_number === n);
+      const msgs = activeMessagesByRoom(n);
+      if (msgs.length === 0 && !room?.housekeeping_note) return null;
+      const latest = msgs[msgs.length - 1];
+      const preview = latest?.message ?? room?.housekeeping_note ?? "";
+      const sender = latest?.created_by_username
+        ? latest.created_by_username
+        : latest
+          ? "Reception"
+          : "Note";
+      return (
+        <button
+          type="button"
+          onClick={() => setNotesSheetRoom(n)}
+          className="mt-2 flex w-full items-center gap-2 rounded-md border border-amber-400/60 bg-amber-50 px-3 py-2 text-left text-xs hover:bg-amber-100 dark:bg-amber-950/40 dark:hover:bg-amber-950/60"
+          aria-label="Open room message"
+        >
+          <MessageSquare className="h-3.5 w-3.5 shrink-0 text-amber-600 dark:text-amber-400" />
+          <span className="font-semibold text-amber-800 dark:text-amber-200 shrink-0">
+            {sender}:
+          </span>
+          <span className="truncate text-amber-900/90 dark:text-amber-100/90">
+            {preview}
+          </span>
+        </button>
+      );
+    })()}
     </div>
 
     {isReception ? null : (
@@ -3876,8 +3944,19 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
                             size="sm"
                             className="h-7 text-xs"
                             onClick={() => {
+                              const first = msgs[0];
                               setNotesSheetRoom(null);
-                              setMessagesInitial({ thread: "hk_reception", room: n });
+                              setMessagesInitial({
+                                thread: "hk_reception",
+                                room: n,
+                                replyTo: first
+                                  ? {
+                                      id: first.id,
+                                      sender: first.created_by_username ?? "Reception",
+                                      snippet: first.message.slice(0, 280),
+                                    }
+                                  : undefined,
+                              });
                               setMessagesSheetOpen(true);
                             }}
                           >
@@ -4211,6 +4290,48 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
   requireRoom={hasHousekeeperRole && !hasReceptionRole}
   roomNumbers={rooms.map((r) => r.room_number).sort((a, b) => a - b)}
   onAdd={logLostProperty}
+  onReply={(item) => {
+    setLostPropertyOpen(false);
+    setMessagesInitial({
+      thread: "hk_reception",
+      room: item.roomNumber,
+      replyTo: {
+        id: item.id,
+        sender: item.sender ?? "Housekeeping",
+        snippet: item.message.slice(0, 280),
+      },
+    });
+    setMessagesSheetOpen(true);
+  }}
+/>
+<Dialog open={broomEggConfirmOpen} onOpenChange={setBroomEggConfirmOpen}>
+  <DialogContent className="max-w-sm">
+    <DialogHeader>
+      <DialogTitle>Full reset?</DialogTitle>
+      <DialogDescription>
+        Tapping the progress bar 10 times triggers a full "Reset all". Confirm
+        to clear done state, counts and quick statuses for every room.
+      </DialogDescription>
+    </DialogHeader>
+    <div className="mt-2 flex justify-end gap-2">
+      <Button variant="outline" onClick={() => setBroomEggConfirmOpen(false)}>
+        Deny
+      </Button>
+      <Button
+        onClick={async () => {
+          setBroomEggConfirmOpen(false);
+          setBroomBurstActive(true);
+          await performResetAll();
+        }}
+      >
+        Approve
+      </Button>
+    </div>
+  </DialogContent>
+</Dialog>
+<BroomBurst
+  active={broomBurstActive}
+  onDone={() => setBroomBurstActive(false)}
 />
 <StayoverPhotosSheet
   open={stayoverPhotosOpen}
@@ -5978,17 +6099,20 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
       >
          {!isStaffRoom && (
            <>
-              <span className="text-sm sm:text-base font-bold leading-none">{n}</span>
+              <span className="text-sm sm:text-base font-bold leading-none inline-flex items-center gap-1">
+                {n}
+                {isDnd && (
+                  <span
+                    aria-label="DND"
+                    className="rounded-sm bg-red-600 text-white text-[8px] font-bold px-1 py-px leading-none tracking-wide"
+                  >
+                    DND
+                  </span>
+                )}
+              </span>
               <span className="text-[9px] sm:text-[10px] md:text-xs font-medium leading-none opacity-90 whitespace-pre-line pr-4">
                  {meta.label}
                </span>
-             {isDnd && (
-               <span
-                   className="absolute right-1.5 top-2 text-xs sm:text-sm font-bold leading-none"
-               >
-                 DND
-               </span>
-             )}
            </>
          )}
          {isStaffRoom && (
@@ -6096,17 +6220,18 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
           {!isStaff && (state === "done" || state === "complete") && (
             <Check aria-label="Done" className="h-3.5 w-3.5 opacity-80" />
           )}
+           {isDnd && !isStaff && (
+             <span
+               aria-label="DND"
+               className="rounded-sm bg-red-600 text-white text-[8px] font-bold px-1 py-px leading-none tracking-wide"
+             >
+               DND
+             </span>
+           )}
          </span>
           <span className="text-[9px] sm:text-[10px] md:text-xs font-medium leading-none opacity-90 whitespace-pre-line pr-4">
             {isStaff ? "Staff" : meta.label}
           </span>
-          {isDnd && !isStaff && (
-           <span
-               className="absolute right-1.5 top-2 text-xs sm:text-sm font-bold leading-none"
-           >
-             DND
-           </span>
-         )}
           {hasActiveMessage(n) && (
             <span
               aria-label="Message"
@@ -6161,7 +6286,12 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
                       <span>Rooms progress</span>
                       <span className="tabular-nums">{progress} of {total}</span>
                     </div>
-                    <div className="h-2 w-full overflow-hidden rounded-full bg-muted">
+                    <div
+                      role="button"
+                      tabIndex={-1}
+                      onClick={handleProgressTap}
+                      className="h-2 w-full overflow-hidden rounded-full bg-muted cursor-pointer select-none"
+                    >
                       <div
                         className="h-full rounded-full bg-primary transition-[width] duration-300"
                         style={{ width: `${pct}%` }}

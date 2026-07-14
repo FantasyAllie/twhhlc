@@ -11,7 +11,7 @@ import {
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
-import { PackageSearch, Check, Trash2, Plus, ChevronDown, X } from "lucide-react";
+import { PackageSearch, Check, Trash2, Plus, ChevronDown, X, MessageSquare } from "lucide-react";
 import { toast } from "sonner";
 import { PhotoAttachments, PhotoComposer } from "@/components/entry-photos";
 import { supabase as sb } from "@/integrations/supabase/client";
@@ -40,6 +40,7 @@ export function LostPropertySheet({
   requireRoom,
   roomNumbers,
   onAdd,
+  onReply,
 }: {
   open: boolean;
   onOpenChange: (o: boolean) => void;
@@ -54,6 +55,12 @@ export function LostPropertySheet({
     message: string,
     photos: File[],
   ) => Promise<{ ok: boolean; error?: string }>;
+  onReply?: (item: {
+    id: string;
+    roomNumber: number | null;
+    message: string;
+    sender: string | null;
+  }) => void;
 }) {
   const qc = useQueryClient();
 
@@ -359,6 +366,25 @@ export function LostPropertySheet({
                         <Check className="h-3.5 w-3.5 mr-1" />
                         Collected
                       </Button>
+                      {onReply && (
+                        <Button
+                          type="button"
+                          size="sm"
+                          variant="outline"
+                          className="h-8 text-xs"
+                          onClick={() =>
+                            onReply({
+                              id: r.id,
+                              roomNumber: r.room_number,
+                              message: r.message,
+                              sender: r.created_by_username,
+                            })
+                          }
+                        >
+                          <MessageSquare className="h-3.5 w-3.5 mr-1" />
+                          Reply
+                        </Button>
+                      )}
                       {canDiscard(r.created_at) ? (
                         <Button
                           type="button"

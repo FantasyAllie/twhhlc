@@ -239,6 +239,51 @@ export function MessagesSheet({
     const body = text.trim();
     if (!body) return;
     const roomNumber = supportsRoomTag(thread) && typeof room === "number" ? room : null;
+    // If a "log-only" toggle is on, skip the chat insert entirely and route the
+    // message to the correct destination (maintenance log or lost property).
+    if (alsoMaintenance) {
+      if (!canLogMaintenance) {
+        toast.error("Maintenance can only be logged from the Housekeeping ↔ Reception thread");
+        return;
+      }
+      if (roomNumber === null) {
+        toast.error("Pick a room to log as maintenance");
+        return;
+      }
+      const res = await onLogMaintenance!(roomNumber, body);
+      if (!res.ok) {
+        toast.error(res.error ?? "Could not log maintenance request");
+        return;
+      }
+      toast.success("Maintenance request has been sent to the Maintenance Log");
+      setText("");
+      setReplyTo(null);
+      setAlsoMaintenance(false);
+      return;
+    }
+    if (alsoLostProperty) {
+      if (!canLogLostProperty) {
+        toast.error("Lost Property can only be logged from the Housekeeping ↔ Reception thread");
+        return;
+      }
+      const senderIsHkOnly =
+        myDepartments.includes("housekeeping") && !myDepartments.includes("reception");
+      if (senderIsHkOnly && roomNumber === null) {
+        toast.error("Pick a room to log as lost property");
+        return;
+      }
+      const res = await onLogLostProperty!(roomNumber, body);
+      if (!res.ok) {
+        toast.error(res.error ?? "Could not log lost property");
+        return;
+      }
+      toast.success("Item has been logged to Lost Property");
+      setText("");
+      setReplyTo(null);
+      setAlsoLostProperty(false);
+      return;
+    }
+    // Legacy dead-code check kept as no-op after early returns above.
     if (alsoMaintenance && (!canLogMaintenance || roomNumber === null)) {
       toast.error("Pick a room to also log as maintenance");
       return;
@@ -266,22 +311,8 @@ export function MessagesSheet({
       toast.error(error.message);
       return;
     }
-    if (alsoMaintenance && canLogMaintenance && roomNumber !== null && onLogMaintenance) {
-      const res = await onLogMaintenance(roomNumber, body);
-      if (!res.ok) {
-        toast.error(res.error ?? "Message sent but maintenance log failed");
-      } else {
-        toast.success("Message sent and logged for maintenance");
-      }
-    }
-    if (alsoLostProperty && canLogLostProperty && onLogLostProperty) {
-      const res = await onLogLostProperty(roomNumber, body);
-      if (!res.ok) {
-        toast.error(res.error ?? "Message sent but lost property log failed");
-      } else {
-        toast.success("Message sent and logged as lost property");
-      }
-    }
+    // (Toggle-driven maintenance/lost-property logging is handled up-front and
+    // returns early — chat inserts are skipped in those cases.)
     // Fire push notifications to the receiving department(s).
     // Sender department: the thread half the user belongs to, when unambiguous.
     const pair: [Department, Department] =
@@ -496,7 +527,14 @@ export function MessagesSheet({
                 <label className="ml-auto flex items-center gap-2 text-xs font-medium">
                   <Wrench className={cn("h-3.5 w-3.5", alsoMaintenance ? "text-amber-600 dark:text-amber-400" : "text-muted-foreground")} />
                   <span>Maintenance</span>
-                  <Switch checked={alsoMaintenance} onCheckedChange={setAlsoMaintenance} disabled={typeof room !== "number"} />
+                  <Switch
+                    checked={alsoMaintenance}
+                    onCheckedChange={(v) => {
+                      setAlsoMaintenance(v);
+                      if (v) setAlsoLostProperty(false);
+                    }}
+                    disabled={typeof room !== "number"}
+                  />
                 </label>
               )}
             </div>
@@ -508,7 +546,10 @@ export function MessagesSheet({
                 <span>Lost Property</span>
                 <Switch
                   checked={alsoLostProperty}
-                  onCheckedChange={setAlsoLostProperty}
+                  onCheckedChange={(v) => {
+                    setAlsoLostProperty(v);
+                    if (v) setAlsoMaintenance(false);
+                  }}
                   disabled={
                     myDepartments.includes("housekeeping") && !myDepartments.includes("reception")
                       ? typeof room !== "number"
