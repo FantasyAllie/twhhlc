@@ -5979,17 +5979,20 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
       >
          {!isStaffRoom && (
            <>
-              <span className="text-sm sm:text-base font-bold leading-none">{n}</span>
+              <span className="text-sm sm:text-base font-bold leading-none inline-flex items-center gap-1">
+                {n}
+                {isDnd && (
+                  <span
+                    aria-label="DND"
+                    className="rounded-sm bg-red-600 text-white text-[8px] font-bold px-1 py-px leading-none tracking-wide"
+                  >
+                    DND
+                  </span>
+                )}
+              </span>
               <span className="text-[9px] sm:text-[10px] md:text-xs font-medium leading-none opacity-90 whitespace-pre-line pr-4">
                  {meta.label}
                </span>
-             {isDnd && (
-               <span
-                   className="absolute right-1.5 top-2 text-xs sm:text-sm font-bold leading-none"
-               >
-                 DND
-               </span>
-             )}
            </>
          )}
          {isStaffRoom && (
