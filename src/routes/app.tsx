@@ -479,17 +479,20 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
   const handleProgressTap = () => {
     if (progressTapTimerRef.current) {
       window.clearTimeout(progressTapTimerRef.current);
+      progressTapTimerRef.current = null;
     }
-    const next = progressTapCount + 1;
-    if (next >= 10) {
-      setProgressTapCount(0);
-      setBroomEggConfirmOpen(true);
-      return;
-    }
-    setProgressTapCount(next);
-    progressTapTimerRef.current = window.setTimeout(() => {
-      setProgressTapCount(0);
-    }, 700);
+    setProgressTapCount((prev) => {
+      const next = prev + 1;
+      if (next >= 10) {
+        setBroomEggConfirmOpen(true);
+        return 0;
+      }
+      progressTapTimerRef.current = window.setTimeout(() => {
+        setProgressTapCount(0);
+        progressTapTimerRef.current = null;
+      }, 700);
+      return next;
+    });
   };
   // Stayover / DND photo state
   const [stayoverPhotosOpen, setStayoverPhotosOpen] = useState(false);
