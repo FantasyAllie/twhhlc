@@ -6104,7 +6104,7 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
                 {isDnd && (
                   <span
                     aria-label="DND"
-                    className="rounded-sm bg-red-600 text-white text-[8px] font-bold px-1 py-px leading-none tracking-wide"
+                    className="text-sm sm:text-base font-bold leading-none"
                   >
                     DND
                   </span>
@@ -6223,7 +6223,7 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
            {isDnd && !isStaff && (
              <span
                aria-label="DND"
-               className="rounded-sm bg-red-600 text-white text-[8px] font-bold px-1 py-px leading-none tracking-wide"
+                className="text-sm sm:text-base md:text-xl font-bold leading-none"
              >
                DND
              </span>
