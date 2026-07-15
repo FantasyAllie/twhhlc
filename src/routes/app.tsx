@@ -4324,7 +4324,14 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
         onClick={async () => {
           setBroomEggConfirmOpen(false);
           setBroomBurstActive(true);
-          await performResetAll();
+          try {
+            await performResetAll();
+          } catch (err) {
+            console.error("Easter-egg reset failed", err);
+            toast.error(
+              err instanceof Error ? err.message : "Reset failed",
+            );
+          }
         }}
       >
         Approve
