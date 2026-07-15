@@ -1,4 +1,13 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useState } from "react";
+
+type Piece = {
+  id: number;
+  left: number;
+  top: number;
+  delay: number;
+  rotate: number;
+  size: number;
+};
 
 export function BroomBurst({
   active,
@@ -11,31 +20,28 @@ export function BroomBurst({
   durationMs?: number;
   onDone?: () => void;
 }) {
-  const [visible, setVisible] = useState(false);
+  const [pieces, setPieces] = useState<Piece[] | null>(null);
 
   useEffect(() => {
     if (!active) return;
-    setVisible(true);
+    setPieces(
+      Array.from({ length: count }).map((_, i) => ({
+        id: i,
+        left: Math.random() * 100,
+        top: Math.random() * 100,
+        delay: Math.random() * 400,
+        rotate: Math.floor(Math.random() * 720) - 360,
+        size: 24 + Math.random() * 24,
+      })),
+    );
     const t = window.setTimeout(() => {
-      setVisible(false);
+      setPieces(null);
       onDone?.();
     }, durationMs);
     return () => window.clearTimeout(t);
-  }, [active, durationMs, onDone]);
+  }, [active, count, durationMs, onDone]);
 
-  const pieces = useMemo(() => {
-    return Array.from({ length: count }).map((_, i) => ({
-      id: i,
-      left: Math.random() * 100,
-      top: Math.random() * 100,
-      delay: Math.random() * 400,
-      rotate: Math.floor(Math.random() * 720) - 360,
-      size: 24 + Math.random() * 40,
-    }));
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [active, count]);
-
-  if (!visible) return null;
+  if (!pieces) return null;
 
   return (
     <div

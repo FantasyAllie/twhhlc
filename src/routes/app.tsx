@@ -479,17 +479,20 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
   const handleProgressTap = () => {
     if (progressTapTimerRef.current) {
       window.clearTimeout(progressTapTimerRef.current);
+      progressTapTimerRef.current = null;
     }
-    const next = progressTapCount + 1;
-    if (next >= 10) {
-      setProgressTapCount(0);
-      setBroomEggConfirmOpen(true);
-      return;
-    }
-    setProgressTapCount(next);
-    progressTapTimerRef.current = window.setTimeout(() => {
-      setProgressTapCount(0);
-    }, 700);
+    setProgressTapCount((prev) => {
+      const next = prev + 1;
+      if (next >= 10) {
+        setBroomEggConfirmOpen(true);
+        return 0;
+      }
+      progressTapTimerRef.current = window.setTimeout(() => {
+        setProgressTapCount(0);
+        progressTapTimerRef.current = null;
+      }, 700);
+      return next;
+    });
   };
   // Stayover / DND photo state
   const [stayoverPhotosOpen, setStayoverPhotosOpen] = useState(false);
@@ -4321,7 +4324,14 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
         onClick={async () => {
           setBroomEggConfirmOpen(false);
           setBroomBurstActive(true);
-          await performResetAll();
+          try {
+            await performResetAll();
+          } catch (err) {
+            console.error("Easter-egg reset failed", err);
+            toast.error(
+              err instanceof Error ? err.message : "Reset failed",
+            );
+          }
         }}
       >
         Approve
@@ -6104,7 +6114,7 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
                 {isDnd && (
                   <span
                     aria-label="DND"
-                    className="rounded-sm bg-red-600 text-white text-[8px] font-bold px-1 py-px leading-none tracking-wide"
+                    className="text-sm sm:text-base font-bold leading-none"
                   >
                     DND
                   </span>
@@ -6223,7 +6233,7 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
            {isDnd && !isStaff && (
              <span
                aria-label="DND"
-               className="rounded-sm bg-red-600 text-white text-[8px] font-bold px-1 py-px leading-none tracking-wide"
+                className="text-sm sm:text-base md:text-xl font-bold leading-none"
              >
                DND
              </span>
