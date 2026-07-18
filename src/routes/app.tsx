@@ -471,8 +471,10 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
   const [newMaintenanceText, setNewMaintenanceText] = useState<string>("");
   const [maintenanceComposerOpen, setMaintenanceComposerOpen] = useState(false);
   const [lostPropertyOpen, setLostPropertyOpen] = useState(false);
-  // Progress-bar easter egg (10 taps → confirm → full reset + broom burst)
-  const [progressTapCount, setProgressTapCount] = useState(0);
+  // Progress-bar easter egg: 5 taps within a 2-second rolling window → confirm
+  // → full reset + broom burst. If more than 2 seconds elapses between taps,
+  // the counter resets and the user starts again.
+  const progressTapCountRef = useRef(0);
   const progressTapTimerRef = useRef<number | null>(null);
   const [broomEggConfirmOpen, setBroomEggConfirmOpen] = useState(false);
   const [broomBurstActive, setBroomBurstActive] = useState(false);
@@ -481,18 +483,17 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
       window.clearTimeout(progressTapTimerRef.current);
       progressTapTimerRef.current = null;
     }
-    setProgressTapCount((prev) => {
-      const next = prev + 1;
-      if (next >= 10) {
-        setBroomEggConfirmOpen(true);
-        return 0;
-      }
-      progressTapTimerRef.current = window.setTimeout(() => {
-        setProgressTapCount(0);
-        progressTapTimerRef.current = null;
-      }, 700);
-      return next;
-    });
+    const next = progressTapCountRef.current + 1;
+    if (next >= 5) {
+      progressTapCountRef.current = 0;
+      setBroomEggConfirmOpen(true);
+      return;
+    }
+    progressTapCountRef.current = next;
+    progressTapTimerRef.current = window.setTimeout(() => {
+      progressTapCountRef.current = 0;
+      progressTapTimerRef.current = null;
+    }, 2000);
   };
   // Stayover / DND photo state
   const [stayoverPhotosOpen, setStayoverPhotosOpen] = useState(false);
