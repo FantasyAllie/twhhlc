@@ -471,12 +471,11 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
   const [newMaintenanceText, setNewMaintenanceText] = useState<string>("");
   const [maintenanceComposerOpen, setMaintenanceComposerOpen] = useState(false);
   const [lostPropertyOpen, setLostPropertyOpen] = useState(false);
-  // Progress-bar easter egg: 5 taps within a 2-second rolling window → confirm
-  // → full reset + broom burst. If more than 2 seconds elapses between taps,
-  // the counter resets and the user starts again.
+   // Progress-bar easter egg: 7 taps within a 2-second rolling window →
+   // immediate full reset + fancy broom-burst animation. If more than 2 seconds
+   // elapses between taps, the counter resets and the user starts again.
   const progressTapCountRef = useRef(0);
   const progressTapTimerRef = useRef<number | null>(null);
-  const [broomEggConfirmOpen, setBroomEggConfirmOpen] = useState(false);
   const [broomBurstActive, setBroomBurstActive] = useState(false);
   const handleProgressTap = () => {
     if (progressTapTimerRef.current) {
@@ -484,11 +483,19 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
       progressTapTimerRef.current = null;
     }
     const next = progressTapCountRef.current + 1;
-    if (next >= 5) {
-      progressTapCountRef.current = 0;
-      setBroomEggConfirmOpen(true);
-      return;
-    }
+     if (next >= 7) {
+       progressTapCountRef.current = 0;
+       setBroomBurstActive(true);
+       void (async () => {
+         try {
+           await performResetAll();
+         } catch (err) {
+           console.error("Easter-egg reset failed", err);
+           toast.error(err instanceof Error ? err.message : "Reset failed");
+         }
+       })();
+       return;
+     }
     progressTapCountRef.current = next;
     progressTapTimerRef.current = window.setTimeout(() => {
       progressTapCountRef.current = 0;
@@ -4308,38 +4315,6 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
     setMessagesSheetOpen(true);
   }}
 />
-<Dialog open={broomEggConfirmOpen} onOpenChange={setBroomEggConfirmOpen}>
-  <DialogContent className="max-w-sm">
-    <DialogHeader>
-      <DialogTitle>Full reset?</DialogTitle>
-      <DialogDescription>
-        Tapping the progress bar 10 times triggers a full "Reset all". Confirm
-        to clear done state, counts and quick statuses for every room.
-      </DialogDescription>
-    </DialogHeader>
-    <div className="mt-2 flex justify-end gap-2">
-      <Button variant="outline" onClick={() => setBroomEggConfirmOpen(false)}>
-        Deny
-      </Button>
-      <Button
-        onClick={async () => {
-          setBroomEggConfirmOpen(false);
-          setBroomBurstActive(true);
-          try {
-            await performResetAll();
-          } catch (err) {
-            console.error("Easter-egg reset failed", err);
-            toast.error(
-              err instanceof Error ? err.message : "Reset failed",
-            );
-          }
-        }}
-      >
-        Approve
-      </Button>
-    </div>
-  </DialogContent>
-</Dialog>
 <BroomBurst
   active={broomBurstActive}
   onDone={() => setBroomBurstActive(false)}
