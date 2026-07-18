@@ -1270,7 +1270,7 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
     qc.setQueryData<Room[]>(["rooms"], (old) => {
       const list = old ? [...old] : [];
       const idx = list.findIndex((r) => r.room_number === roomNumber);
-      if (idx >= 0) list[idx] = { ...list[idx], done_reception: next };
+      if (idx >= 0) list[idx] = { ...list[idx], done_reception: next, guest_vacated: next ? false : list[idx].guest_vacated };
       else
         list.push({
           id: `temp-${roomNumber}`,
@@ -1285,7 +1285,7 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
       return list;
     });
     const { error } = await supabase.from("rooms").upsert(
-      { room_number: roomNumber, done_reception: next, updated_at: new Date().toISOString() },
+      { room_number: roomNumber, done_reception: next, ...(next ? { guest_vacated: false } : {}), updated_at: new Date().toISOString() },
       { onConflict: "user_id,hotel_id,room_number" },
     );
     if (error) toast.error(error.message);
@@ -1544,12 +1544,12 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
   qc.setQueryData<Room[]>(["rooms"], (old) => {
   const list = old ? [...old] : [];
   const idx = list.findIndex((r) => r.room_number === roomNumber);
-  if (idx >= 0) list[idx] = { ...list[idx], done: true };
+  if (idx >= 0) list[idx] = { ...list[idx], done: true, guest_vacated: false };
   else list.push({ id: `temp-${roomNumber}`, room_number: roomNumber, done: true, done_reception: false, category: null, default_status: null, reception_status_id: null, reception_bed_id: null, housekeeping_note: null, needs_maintenance: false, guest_vacated: false, early_check_in: false });
   return list;
   });
   const { error: roomErr } = await supabase.from("rooms").upsert(
-  { room_number: roomNumber, done: true, updated_at: new Date().toISOString() },
+  { room_number: roomNumber, done: true, guest_vacated: false, updated_at: new Date().toISOString() },
   { onConflict: "user_id,hotel_id,room_number" },
   );
   if (roomErr) toast.error(roomErr.message);
@@ -6286,11 +6286,14 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
                  const eligible = rooms.filter((r) => {
                    const sid = r.reception_status_id ?? r.default_status;
                    const statusLabel = sid ? (statusLabelById.get(sid) ?? sid).toLowerCase() : "";
-                   return !excludedProgressStatuses.has(statusLabel);
+                    if (excludedProgressStatuses.has(statusLabel)) return false;
+                    if (statusLabel === "dnd") return false;
+                    return true;
                  });
                 const total = eligible.length;
                 const progress = eligible.filter((r) => r.done || r.done_reception).length;
                 const pct = total > 0 ? Math.min(100, (progress / total) * 100) : 0;
+                const isComplete = total > 0 && progress >= total;
                  return (
                      <div className="mt-3 space-y-1 max-lg:fixed max-lg:inset-x-0 max-lg:bottom-0 max-lg:z-40 max-lg:mt-0 max-lg:border-t max-lg:border-border max-lg:bg-background/95 max-lg:backdrop-blur max-lg:pl-[calc(env(safe-area-inset-left,0px)+1.5rem)] max-lg:pr-[calc(env(safe-area-inset-right,0px)+1.5rem)] max-lg:pt-2 max-lg:pb-[calc(env(safe-area-inset-bottom,0px)+0.75rem)] max-lg:shadow-[0_-2px_8px_rgba(0,0,0,0.06)]">
                     <div className="flex items-center justify-between text-xs text-muted-foreground">
@@ -6301,12 +6304,20 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
                       role="button"
                       tabIndex={-1}
                       onClick={handleProgressTap}
-                      className="h-2 w-full overflow-hidden rounded-full bg-muted cursor-pointer select-none"
+                      className="relative h-4 w-full overflow-hidden rounded-full bg-muted cursor-pointer select-none"
                     >
                       <div
-                        className="h-full rounded-full bg-primary transition-[width] duration-300"
+                        className={cn(
+                          "h-full rounded-full transition-[width,background-color] duration-300",
+                          isComplete ? "bg-green-600" : "bg-primary",
+                        )}
                         style={{ width: `${pct}%` }}
                       />
+                      {isComplete && (
+                        <div className="pointer-events-none absolute inset-0 flex items-center justify-center text-[10px] font-bold uppercase tracking-widest text-white">
+                          Complete
+                        </div>
+                      )}
                     </div>
                   </div>
                 );
