@@ -1270,7 +1270,7 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
     qc.setQueryData<Room[]>(["rooms"], (old) => {
       const list = old ? [...old] : [];
       const idx = list.findIndex((r) => r.room_number === roomNumber);
-      if (idx >= 0) list[idx] = { ...list[idx], done_reception: next };
+      if (idx >= 0) list[idx] = { ...list[idx], done_reception: next, guest_vacated: next ? false : list[idx].guest_vacated };
       else
         list.push({
           id: `temp-${roomNumber}`,
@@ -1285,7 +1285,7 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
       return list;
     });
     const { error } = await supabase.from("rooms").upsert(
-      { room_number: roomNumber, done_reception: next, updated_at: new Date().toISOString() },
+      { room_number: roomNumber, done_reception: next, ...(next ? { guest_vacated: false } : {}), updated_at: new Date().toISOString() },
       { onConflict: "user_id,hotel_id,room_number" },
     );
     if (error) toast.error(error.message);
