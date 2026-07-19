@@ -6284,9 +6284,11 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
                       <div
                         className={cn(
                           "h-full rounded-full transition-[width,background-color] duration-300",
-                          isComplete ? "bg-green-600" : "bg-primary",
                         )}
-                        style={{ width: `${pct}%` }}
+                        style={{
+                          width: `${pct}%`,
+                          backgroundColor: `hsl(${(pct / 100) * 120}, 85%, 45%)`,
+                        }}
                       />
                       {isComplete && (
                         <div className="pointer-events-none absolute inset-0 flex items-center justify-center text-[10px] font-bold uppercase tracking-widest text-white">
