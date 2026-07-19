@@ -18,14 +18,28 @@ self.addEventListener("push", (event) => {
   }
   const title = data.title || "The Hotel Hub";
   const options = {
-    body: data.body || "",
-    icon: "/apple-touch-icon.png",
-    badge: "/apple-touch-icon.png",
+    body: data.body || " ",
+    icon: "/favicon-192.png",
+    badge: "/favicon-192.png",
     tag: data.tag || undefined,
     renotify: !!data.tag,
+    requireInteraction: false,
+    silent: false,
+    vibrate: [120, 60, 120],
     data: { url: data.url || "/app" },
   };
-  event.waitUntil(self.registration.showNotification(title, options));
+  event.waitUntil(
+    self.registration.showNotification(title, options).catch((err) => {
+      // Fall back to a minimal notification if the browser rejected the options
+      // (e.g. bad icon path on some Android builds).
+      return self.registration.showNotification(title, {
+        body: data.body || " ",
+        data: { url: data.url || "/app" },
+      }).catch(() => {
+        console.error("[sw] showNotification failed", err);
+      });
+    }),
+  );
 });
 
 self.addEventListener("notificationclick", (event) => {
