@@ -710,11 +710,14 @@ export type Database = {
           done: boolean
           done_reception: boolean
           early_check_in: boolean
+          early_check_in_at: string | null
           guest_vacated: boolean
+          guest_vacated_at: string | null
           hotel_id: string
           housekeeping_note: string | null
           id: string
           needs_maintenance: boolean
+          needs_maintenance_at: string | null
           reception_bed_id: string | null
           reception_status_id: string | null
           reception_status_secondary_id: string | null
@@ -729,11 +732,14 @@ export type Database = {
           done?: boolean
           done_reception?: boolean
           early_check_in?: boolean
+          early_check_in_at?: string | null
           guest_vacated?: boolean
+          guest_vacated_at?: string | null
           hotel_id?: string
           housekeeping_note?: string | null
           id?: string
           needs_maintenance?: boolean
+          needs_maintenance_at?: string | null
           reception_bed_id?: string | null
           reception_status_id?: string | null
           reception_status_secondary_id?: string | null
@@ -748,11 +754,14 @@ export type Database = {
           done?: boolean
           done_reception?: boolean
           early_check_in?: boolean
+          early_check_in_at?: string | null
           guest_vacated?: boolean
+          guest_vacated_at?: string | null
           hotel_id?: string
           housekeeping_note?: string | null
           id?: string
           needs_maintenance?: boolean
+          needs_maintenance_at?: string | null
           reception_bed_id?: string | null
           reception_status_id?: string | null
           reception_status_secondary_id?: string | null
