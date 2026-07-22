@@ -219,7 +219,7 @@ type RoomCount = {
  item_id: string;
  count: number;
 };
-type Room = { id: string; room_number: number; sort_order?: number; done: boolean; done_reception: boolean; category: Category | null; default_status: string | null; reception_status_id: string | null; reception_bed_id: string | null; housekeeping_note: string | null; needs_maintenance: boolean; guest_vacated: boolean; early_check_in?: boolean };
+type Room = { id: string; room_number: number; sort_order?: number; done: boolean; done_reception: boolean; category: Category | null; default_status: string | null; reception_status_id: string | null; reception_bed_id: string | null; housekeeping_note: string | null; needs_maintenance: boolean; guest_vacated: boolean; early_check_in?: boolean; guest_vacated_at?: string | null; early_check_in_at?: string | null; needs_maintenance_at?: string | null };
 type TemplateItemRoom = { id: string; template_item_id: string; room_number: number };
 type SnapshotRow = { name: string; count: number };
 type RoomStatusRow = { room: number; status: string; bed: string; maintenance?: boolean };
@@ -659,7 +659,7 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
     queryFn: async (): Promise<Room[]> => {
       const { data, error } = await supabase
         .from("rooms")
-        .select("id,room_number,sort_order,done,done_reception,category,default_status,reception_status_id,reception_bed_id,housekeeping_note,needs_maintenance,guest_vacated,early_check_in")
+        .select("id,room_number,sort_order,done,done_reception,category,default_status,reception_status_id,reception_bed_id,housekeeping_note,needs_maintenance,guest_vacated,early_check_in,guest_vacated_at,early_check_in_at,needs_maintenance_at")
         .order("sort_order", { ascending: true });
       if (error) throw error;
       return (data ?? []) as Room[];
@@ -1277,7 +1277,7 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
     qc.setQueryData<Room[]>(["rooms"], (old) => {
       const list = old ? [...old] : [];
       const idx = list.findIndex((r) => r.room_number === roomNumber);
-      if (idx >= 0) list[idx] = { ...list[idx], done_reception: next, guest_vacated: next ? false : list[idx].guest_vacated };
+      if (idx >= 0) list[idx] = { ...list[idx], done_reception: next, guest_vacated: next ? false : list[idx].guest_vacated, guest_vacated_at: next ? null : list[idx].guest_vacated_at };
       else
         list.push({
           id: `temp-${roomNumber}`,
@@ -1292,7 +1292,7 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
       return list;
     });
     const { error } = await supabase.from("rooms").upsert(
-      { room_number: roomNumber, done_reception: next, ...(next ? { guest_vacated: false } : {}), updated_at: new Date().toISOString() },
+      { room_number: roomNumber, done_reception: next, ...(next ? { guest_vacated: false, guest_vacated_at: null } : {}), updated_at: new Date().toISOString() },
       { onConflict: "user_id,hotel_id,room_number" },
     );
     if (error) toast.error(error.message);
@@ -1551,12 +1551,12 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
   qc.setQueryData<Room[]>(["rooms"], (old) => {
   const list = old ? [...old] : [];
   const idx = list.findIndex((r) => r.room_number === roomNumber);
-  if (idx >= 0) list[idx] = { ...list[idx], done: true, guest_vacated: false };
+  if (idx >= 0) list[idx] = { ...list[idx], done: true, guest_vacated: false, guest_vacated_at: null };
   else list.push({ id: `temp-${roomNumber}`, room_number: roomNumber, done: true, done_reception: false, category: null, default_status: null, reception_status_id: null, reception_bed_id: null, housekeeping_note: null, needs_maintenance: false, guest_vacated: false, early_check_in: false });
   return list;
   });
   const { error: roomErr } = await supabase.from("rooms").upsert(
-  { room_number: roomNumber, done: true, guest_vacated: false, updated_at: new Date().toISOString() },
+  { room_number: roomNumber, done: true, guest_vacated: false, guest_vacated_at: null, updated_at: new Date().toISOString() },
   { onConflict: "user_id,hotel_id,room_number" },
   );
   if (roomErr) toast.error(roomErr.message);
@@ -1626,30 +1626,103 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
   };
 
   const resetAll = async () => {
-    if (!confirm("Reset done state, counts, and quick status setup for all rooms?")) return;
+    if (!confirm("Reset all rooms? Reception flags added after 4pm will stay.")) return;
     await performResetAll();
   };
 
   const performResetAll = async () => {
+    // Preserve reception flags (guest_vacated / early_check_in / needs_maintenance)
+    // that were set after the most recent 4pm cutoff so morning resets don't
+    // wipe overnight/early-morning reception work.
+    const now = new Date();
+    const cutoff = new Date(now);
+    cutoff.setHours(16, 0, 0, 0);
+    if (now.getTime() < cutoff.getTime()) cutoff.setDate(cutoff.getDate() - 1);
+    const cutoffMs = cutoff.getTime();
+    const isFresh = (iso: string | null | undefined) =>
+      !!iso && new Date(iso).getTime() >= cutoffMs;
+
+    const currentRooms = qc.getQueryData<Room[]>(["rooms"]) ?? [];
+    const preserveMap = new Map<
+      number,
+      { guest_vacated: boolean; early_check_in: boolean; needs_maintenance: boolean;
+        guest_vacated_at: string | null; early_check_in_at: string | null; needs_maintenance_at: string | null }
+    >();
+    for (const r of currentRooms) {
+      const gv = isFresh(r.guest_vacated_at) && r.guest_vacated;
+      const ec = isFresh(r.early_check_in_at) && !!r.early_check_in;
+      const nm = isFresh(r.needs_maintenance_at) && r.needs_maintenance;
+      if (gv || ec || nm) {
+        preserveMap.set(r.room_number, {
+          guest_vacated: gv,
+          early_check_in: ec,
+          needs_maintenance: nm,
+          guest_vacated_at: gv ? r.guest_vacated_at ?? null : null,
+          early_check_in_at: ec ? r.early_check_in_at ?? null : null,
+          needs_maintenance_at: nm ? r.needs_maintenance_at ?? null : null,
+        });
+      }
+    }
+
     qc.setQueryData<Room[]>(["rooms"], (old) =>
-      old?.map((r) => ({
-        ...r,
-        done: false,
-        done_reception: false,
-        housekeeping_note: null, needs_maintenance: false, guest_vacated: false, early_check_in: false,
-        reception_status_id: null,
-        reception_bed_id: null,
-      })) ?? [],
+      old?.map((r) => {
+        const keep = preserveMap.get(r.room_number);
+        return {
+          ...r,
+          done: false,
+          done_reception: false,
+          housekeeping_note: null,
+          reception_status_id: null,
+          reception_bed_id: null,
+          guest_vacated: keep?.guest_vacated ?? false,
+          early_check_in: keep?.early_check_in ?? false,
+          needs_maintenance: keep?.needs_maintenance ?? false,
+          guest_vacated_at: keep?.guest_vacated_at ?? null,
+          early_check_in_at: keep?.early_check_in_at ?? null,
+          needs_maintenance_at: keep?.needs_maintenance_at ?? null,
+        };
+      }) ?? [],
     );
     qc.setQueryData<RoomCount[]>(["room_counts"], () => []);
-    const r1 = await supabase.from("rooms").update({
+
+    const preservedNumbers = Array.from(preserveMap.keys());
+    // Full reset for rooms with no fresh flags.
+    let q1 = supabase.from("rooms").update({
       done: false,
       done_reception: false,
-      housekeeping_note: null, needs_maintenance: false, guest_vacated: false, early_check_in: false,
+      housekeeping_note: null,
+      needs_maintenance: false,
+      needs_maintenance_at: null,
+      guest_vacated: false,
+      guest_vacated_at: null,
+      early_check_in: false,
+      early_check_in_at: null,
       reception_status_id: null,
       reception_bed_id: null,
-    }).neq("room_number", -1);
+    } as never).neq("room_number", -1);
+    if (preservedNumbers.length > 0) q1 = q1.not("room_number", "in", `(${preservedNumbers.join(",")})`);
+    const r1 = await q1;
     if (r1.error) toast.error(r1.error.message);
+
+    // Partial reset for preserved rooms — clear housekeeping-side state only,
+    // and only clear each reception flag if it isn't fresh.
+    for (const [rn, keep] of preserveMap) {
+      const r = await supabase.from("rooms").update({
+        done: false,
+        done_reception: false,
+        housekeeping_note: null,
+        reception_status_id: null,
+        reception_bed_id: null,
+        guest_vacated: keep.guest_vacated,
+        guest_vacated_at: keep.guest_vacated_at,
+        early_check_in: keep.early_check_in,
+        early_check_in_at: keep.early_check_in_at,
+        needs_maintenance: keep.needs_maintenance,
+        needs_maintenance_at: keep.needs_maintenance_at,
+      } as never).eq("room_number", rn);
+      if (r.error) toast.error(r.error.message);
+    }
+
     const r2 = await supabase.from("room_item_counts").delete().neq("room_number", -1);
     if (r2.error) toast.error(r2.error.message);
     // Clear pinned room messages from the tiles WITHOUT deleting them —
@@ -2362,10 +2435,11 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
   };
 
   const setRoomNeedsMaintenance = async (roomNumber: number, value: boolean) => {
+    const nowIso = new Date().toISOString();
     qc.setQueryData<Room[]>(["rooms"], (old) => {
       const list = old ? [...old] : [];
       const idx = list.findIndex((r) => r.room_number === roomNumber);
-      if (idx >= 0) list[idx] = { ...list[idx], needs_maintenance: value };
+      if (idx >= 0) list[idx] = { ...list[idx], needs_maintenance: value, needs_maintenance_at: value ? nowIso : null };
       else
         list.push({
           id: `temp-${roomNumber}`,
@@ -2377,7 +2451,7 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
           reception_status_id: null,
           reception_bed_id: null,
           housekeeping_note: null,
-          needs_maintenance: value, guest_vacated: false, early_check_in: false,
+          needs_maintenance: value, needs_maintenance_at: value ? nowIso : null, guest_vacated: false, early_check_in: false,
         });
       return list;
     });
@@ -2385,7 +2459,8 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
       {
         room_number: roomNumber,
         needs_maintenance: value,
-        updated_at: new Date().toISOString(),
+        needs_maintenance_at: value ? nowIso : null,
+        updated_at: nowIso,
       } as never,
       { onConflict: "user_id,hotel_id,room_number" },
     );
@@ -2430,10 +2505,11 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
   };
 
   const setRoomGuestVacated = async (roomNumber: number, value: boolean) => {
+    const nowIso = new Date().toISOString();
     qc.setQueryData<Room[]>(["rooms"], (old) => {
       const list = old ? [...old] : [];
       const idx = list.findIndex((r) => r.room_number === roomNumber);
-      if (idx >= 0) list[idx] = { ...list[idx], guest_vacated: value };
+      if (idx >= 0) list[idx] = { ...list[idx], guest_vacated: value, guest_vacated_at: value ? nowIso : null };
       else
         list.push({
           id: `temp-${roomNumber}`,
@@ -2447,6 +2523,7 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
           housekeeping_note: null,
           needs_maintenance: false,
           guest_vacated: value,
+          guest_vacated_at: value ? nowIso : null,
         });
       return list;
     });
@@ -2454,7 +2531,8 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
       {
         room_number: roomNumber,
         guest_vacated: value,
-        updated_at: new Date().toISOString(),
+        guest_vacated_at: value ? nowIso : null,
+        updated_at: nowIso,
       } as never,
       { onConflict: "user_id,hotel_id,room_number" },
     );
@@ -2464,10 +2542,11 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
   };
 
   const setRoomEarlyCheckIn = async (roomNumber: number, value: boolean) => {
+    const nowIso = new Date().toISOString();
     qc.setQueryData<Room[]>(["rooms"], (old) => {
       const list = old ? [...old] : [];
       const idx = list.findIndex((r) => r.room_number === roomNumber);
-      if (idx >= 0) list[idx] = { ...list[idx], early_check_in: value };
+      if (idx >= 0) list[idx] = { ...list[idx], early_check_in: value, early_check_in_at: value ? nowIso : null };
       else
         list.push({
           id: `temp-${roomNumber}`,
@@ -2482,6 +2561,7 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
           needs_maintenance: false,
           guest_vacated: false,
           early_check_in: value,
+          early_check_in_at: value ? nowIso : null,
         });
       return list;
     });
@@ -2489,7 +2569,8 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
       {
         room_number: roomNumber,
         early_check_in: value,
-        updated_at: new Date().toISOString(),
+        early_check_in_at: value ? nowIso : null,
+        updated_at: nowIso,
       } as never,
       { onConflict: "user_id,hotel_id,room_number" },
     );
