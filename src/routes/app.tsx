@@ -659,7 +659,7 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
     queryFn: async (): Promise<Room[]> => {
       const { data, error } = await supabase
         .from("rooms")
-        .select("id,room_number,sort_order,done,done_reception,category,default_status,reception_status_id,reception_bed_id,housekeeping_note,needs_maintenance,guest_vacated,early_check_in")
+        .select("id,room_number,sort_order,done,done_reception,category,default_status,reception_status_id,reception_bed_id,housekeeping_note,needs_maintenance,guest_vacated,early_check_in,guest_vacated_at,early_check_in_at,needs_maintenance_at")
         .order("sort_order", { ascending: true });
       if (error) throw error;
       return (data ?? []) as Room[];
