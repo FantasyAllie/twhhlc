@@ -2362,10 +2362,11 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
   };
 
   const setRoomNeedsMaintenance = async (roomNumber: number, value: boolean) => {
+    const nowIso = new Date().toISOString();
     qc.setQueryData<Room[]>(["rooms"], (old) => {
       const list = old ? [...old] : [];
       const idx = list.findIndex((r) => r.room_number === roomNumber);
-      if (idx >= 0) list[idx] = { ...list[idx], needs_maintenance: value };
+      if (idx >= 0) list[idx] = { ...list[idx], needs_maintenance: value, needs_maintenance_at: value ? nowIso : null };
       else
         list.push({
           id: `temp-${roomNumber}`,
@@ -2377,7 +2378,7 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
           reception_status_id: null,
           reception_bed_id: null,
           housekeeping_note: null,
-          needs_maintenance: value, guest_vacated: false, early_check_in: false,
+          needs_maintenance: value, needs_maintenance_at: value ? nowIso : null, guest_vacated: false, early_check_in: false,
         });
       return list;
     });
@@ -2385,7 +2386,8 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
       {
         room_number: roomNumber,
         needs_maintenance: value,
-        updated_at: new Date().toISOString(),
+        needs_maintenance_at: value ? nowIso : null,
+        updated_at: nowIso,
       } as never,
       { onConflict: "user_id,hotel_id,room_number" },
     );
