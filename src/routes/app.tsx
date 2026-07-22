@@ -1626,30 +1626,103 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
   };
 
   const resetAll = async () => {
-    if (!confirm("Reset done state, counts, and quick status setup for all rooms?")) return;
+    if (!confirm("Reset all rooms? Reception flags added after 4pm will stay.")) return;
     await performResetAll();
   };
 
   const performResetAll = async () => {
+    // Preserve reception flags (guest_vacated / early_check_in / needs_maintenance)
+    // that were set after the most recent 4pm cutoff so morning resets don't
+    // wipe overnight/early-morning reception work.
+    const now = new Date();
+    const cutoff = new Date(now);
+    cutoff.setHours(16, 0, 0, 0);
+    if (now.getTime() < cutoff.getTime()) cutoff.setDate(cutoff.getDate() - 1);
+    const cutoffMs = cutoff.getTime();
+    const isFresh = (iso: string | null | undefined) =>
+      !!iso && new Date(iso).getTime() >= cutoffMs;
+
+    const currentRooms = qc.getQueryData<Room[]>(["rooms"]) ?? [];
+    const preserveMap = new Map<
+      number,
+      { guest_vacated: boolean; early_check_in: boolean; needs_maintenance: boolean;
+        guest_vacated_at: string | null; early_check_in_at: string | null; needs_maintenance_at: string | null }
+    >();
+    for (const r of currentRooms) {
+      const gv = isFresh(r.guest_vacated_at) && r.guest_vacated;
+      const ec = isFresh(r.early_check_in_at) && !!r.early_check_in;
+      const nm = isFresh(r.needs_maintenance_at) && r.needs_maintenance;
+      if (gv || ec || nm) {
+        preserveMap.set(r.room_number, {
+          guest_vacated: gv,
+          early_check_in: ec,
+          needs_maintenance: nm,
+          guest_vacated_at: gv ? r.guest_vacated_at ?? null : null,
+          early_check_in_at: ec ? r.early_check_in_at ?? null : null,
+          needs_maintenance_at: nm ? r.needs_maintenance_at ?? null : null,
+        });
+      }
+    }
+
     qc.setQueryData<Room[]>(["rooms"], (old) =>
-      old?.map((r) => ({
-        ...r,
-        done: false,
-        done_reception: false,
-        housekeeping_note: null, needs_maintenance: false, guest_vacated: false, early_check_in: false,
-        reception_status_id: null,
-        reception_bed_id: null,
-      })) ?? [],
+      old?.map((r) => {
+        const keep = preserveMap.get(r.room_number);
+        return {
+          ...r,
+          done: false,
+          done_reception: false,
+          housekeeping_note: null,
+          reception_status_id: null,
+          reception_bed_id: null,
+          guest_vacated: keep?.guest_vacated ?? false,
+          early_check_in: keep?.early_check_in ?? false,
+          needs_maintenance: keep?.needs_maintenance ?? false,
+          guest_vacated_at: keep?.guest_vacated_at ?? null,
+          early_check_in_at: keep?.early_check_in_at ?? null,
+          needs_maintenance_at: keep?.needs_maintenance_at ?? null,
+        };
+      }) ?? [],
     );
     qc.setQueryData<RoomCount[]>(["room_counts"], () => []);
-    const r1 = await supabase.from("rooms").update({
+
+    const preservedNumbers = Array.from(preserveMap.keys());
+    // Full reset for rooms with no fresh flags.
+    let q1 = supabase.from("rooms").update({
       done: false,
       done_reception: false,
-      housekeeping_note: null, needs_maintenance: false, guest_vacated: false, early_check_in: false,
+      housekeeping_note: null,
+      needs_maintenance: false,
+      needs_maintenance_at: null,
+      guest_vacated: false,
+      guest_vacated_at: null,
+      early_check_in: false,
+      early_check_in_at: null,
       reception_status_id: null,
       reception_bed_id: null,
-    }).neq("room_number", -1);
+    } as never).neq("room_number", -1);
+    if (preservedNumbers.length > 0) q1 = q1.not("room_number", "in", `(${preservedNumbers.join(",")})`);
+    const r1 = await q1;
     if (r1.error) toast.error(r1.error.message);
+
+    // Partial reset for preserved rooms — clear housekeeping-side state only,
+    // and only clear each reception flag if it isn't fresh.
+    for (const [rn, keep] of preserveMap) {
+      const r = await supabase.from("rooms").update({
+        done: false,
+        done_reception: false,
+        housekeeping_note: null,
+        reception_status_id: null,
+        reception_bed_id: null,
+        guest_vacated: keep.guest_vacated,
+        guest_vacated_at: keep.guest_vacated_at,
+        early_check_in: keep.early_check_in,
+        early_check_in_at: keep.early_check_in_at,
+        needs_maintenance: keep.needs_maintenance,
+        needs_maintenance_at: keep.needs_maintenance_at,
+      } as never).eq("room_number", rn);
+      if (r.error) toast.error(r.error.message);
+    }
+
     const r2 = await supabase.from("room_item_counts").delete().neq("room_number", -1);
     if (r2.error) toast.error(r2.error.message);
     // Clear pinned room messages from the tiles WITHOUT deleting them —
