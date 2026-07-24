@@ -6979,6 +6979,66 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
     onUsernameChanged={(u) => setAuthUser((prev) => prev ? { ...prev, username: u } : prev)}
   />
   <UsersDialog open={usersOpen} onOpenChange={setUsersOpen} />
+  <Sheet open={linenDeliveryOpen} onOpenChange={setLinenDeliveryOpen}>
+    <SheetContent side="bottom" className="max-h-[85dvh] overflow-y-auto rounded-t-2xl p-4 sm:p-6">
+      <SheetHeader className="text-left">
+        <SheetTitle>Linen delivery days</SheetTitle>
+        <SheetDescription>
+          Pick the days your linen delivery arrives. On those days, an extra
+          "Delivery linen totals" option appears in Export that adds up the
+          daily linen totals since the previous delivery day.
+        </SheetDescription>
+      </SheetHeader>
+      <div className="mt-4 grid grid-cols-2 sm:grid-cols-4 gap-2">
+        {[
+          { d: 1, label: "Monday" },
+          { d: 2, label: "Tuesday" },
+          { d: 3, label: "Wednesday" },
+          { d: 4, label: "Thursday" },
+          { d: 5, label: "Friday" },
+          { d: 6, label: "Saturday" },
+          { d: 0, label: "Sunday" },
+        ].map(({ d, label }) => {
+          const active = linenDeliveryDays.includes(d);
+          return (
+            <Button
+              key={d}
+              variant={active ? "default" : "outline"}
+              size="lg"
+              className="justify-center h-12"
+              disabled={savingDeliveryDays || !currentHotelQ.data?.id}
+              onClick={async () => {
+                const hotelId = currentHotelQ.data?.id;
+                if (!hotelId) return;
+                const next = active
+                  ? linenDeliveryDays.filter((x) => x !== d)
+                  : [...linenDeliveryDays, d].sort((a, b) => a - b);
+                setSavingDeliveryDays(true);
+                const { error } = await supabase
+                  .from("hotels")
+                  .update({ linen_delivery_days: next } as never)
+                  .eq("id", hotelId);
+                setSavingDeliveryDays(false);
+                if (error) {
+                  toast.error(error.message);
+                  return;
+                }
+                await qc.invalidateQueries({ queryKey: ["current-hotel"] });
+              }}
+            >
+              {label}
+              {active && <Check className="h-4 w-4 ml-2" />}
+            </Button>
+          );
+        })}
+      </div>
+      {linenDeliveryDays.length === 0 && (
+        <p className="mt-4 text-xs text-muted-foreground">
+          No delivery days selected. The Delivery linen totals button will stay hidden.
+        </p>
+      )}
+    </SheetContent>
+  </Sheet>
   <UserApprovalDialog open={userApprovalOpen} onOpenChange={setUserApprovalOpen} />
   <QuickReceptionSheet
     open={quickReceptionOpen}
