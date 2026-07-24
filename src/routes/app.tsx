@@ -1928,6 +1928,71 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
     await proceedExport("totals");
   };
 
+  // Compute the "delivery window": snapshots from the day AFTER the previous
+  // delivery day up to (and including) today. If no previous delivery day is
+  // configured, fall back to the last 7 days.
+  const deliveryWindowStart = (today: Date): Date => {
+    const start = new Date(today);
+    start.setHours(0, 0, 0, 0);
+    if (linenDeliveryDays.length === 0) {
+      start.setDate(start.getDate() - 6);
+      return start;
+    }
+    const todayDow = today.getDay();
+    // Walk back day by day, up to 14 days, until we find the previous delivery day.
+    for (let offset = 1; offset <= 14; offset++) {
+      const dow = (todayDow - offset + 7) % 7;
+      if (linenDeliveryDays.includes(dow)) {
+        // Window starts the day AFTER that delivery day.
+        start.setDate(start.getDate() - (offset - 1));
+        return start;
+      }
+    }
+    start.setDate(start.getDate() - 6);
+    return start;
+  };
+
+  const computeDeliveryLinenTotals = (): {
+    rows: SnapshotRow[];
+    grand: number;
+    start: Date;
+    end: Date;
+  } => {
+    const now = new Date();
+    const start = deliveryWindowStart(now);
+    const end = new Date(now);
+    end.setHours(23, 59, 59, 999);
+    const map = new Map<string, number>();
+    for (const s of snapshots) {
+      if (s.kind !== "totals") continue;
+      const ts = new Date(s.created_at).getTime();
+      if (ts < start.getTime() || ts > end.getTime()) continue;
+      const list = (s.totals as SnapshotRow[] | null) ?? [];
+      for (const r of list) {
+        const key = (r.name ?? "").trim();
+        if (!key) continue;
+        map.set(key, (map.get(key) ?? 0) + (r.count ?? 0));
+      }
+    }
+    const rows = Array.from(map.entries())
+      .sort((a, b) => a[0].localeCompare(b[0], undefined, { sensitivity: "base" }))
+      .map(([name, count]) => ({ name, count }));
+    const grand = rows.reduce((s, r) => s + r.count, 0);
+    return { rows, grand, start, end: now };
+  };
+
+  const openDeliveryLinenTotals = () => {
+    const { rows, grand, start, end } = computeDeliveryLinenTotals();
+    if (rows.length === 0) {
+      toast.error("No linen totals recorded since the last delivery day");
+      return;
+    }
+    const fmt = (d: Date) =>
+      d.toLocaleDateString(undefined, { month: "short", day: "numeric" });
+    const sub = `Delivery total, ${fmt(start)} – ${fmt(end)}`;
+    printTotals(rows, grand, end, "totals", sub);
+  };
+
   const proceedExport = async (
     kind: "totals" | "rejects" | "room_status" | "maintenance" | "fnb_totals",
   ) => {
