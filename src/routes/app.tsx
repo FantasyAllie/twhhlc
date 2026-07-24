@@ -582,6 +582,8 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
   const [rejectExportOpen, setRejectExportOpen] = useState(false);
   const [roomStatusExportOpen, setRoomStatusExportOpen] = useState(false);
   const [manageRoomsOpen, setManageRoomsOpen] = useState(false);
+  const [linenDeliveryOpen, setLinenDeliveryOpen] = useState(false);
+  const [savingDeliveryDays, setSavingDeliveryDays] = useState(false);
   const [receptionHelpOpen, setReceptionHelpOpen] = useState(false);
   const [confirmOverwrite, setConfirmOverwrite] = useState<
     { kind: "totals" | "rejects" | "room_status" | "maintenance" | "fnb_totals" } | null
