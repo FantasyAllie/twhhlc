@@ -4659,6 +4659,13 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
                   <Row icon={ConciergeBell} label="Bulk Room Status Setup" onClick={() => { close(); setQuickReceptionOpen(true); }} />
                 </>
               )}
+              {(realIsAdmin || (realIsManager && hasHousekeeperRole)) && !isMaintenance && (
+                <Row
+                  icon={List}
+                  label="Linen delivery days"
+                  onClick={() => { close(); setLinenDeliveryOpen(true); }}
+                />
+              )}
             </Section>
           ) : null}
           {((!menuIsFnbOnly && !isMaintenance) || (menuCanUseLostProperty && !isMaintenance) || canUseMessages) && (
