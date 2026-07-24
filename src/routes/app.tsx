@@ -3417,6 +3417,17 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
               <List className="h-5 w-5 mr-2" />
               Linen totals
             </Button>
+            {todayIsDeliveryDay && (
+              <Button
+                variant="outline"
+                size="lg"
+                className="justify-start h-12"
+                onClick={() => { setExportSheetOpen(false); openDeliveryLinenTotals(); }}
+              >
+                <List className="h-5 w-5 mr-2" />
+                Delivery linen totals
+              </Button>
+            )}
             <Button
               variant="outline"
               size="lg"
@@ -3450,6 +3461,12 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
             <List className="h-4 w-4 mr-2" />
             Linen totals
           </DropdownMenuItem>
+          {todayIsDeliveryDay && (
+            <DropdownMenuItem onClick={() => openDeliveryLinenTotals()}>
+              <List className="h-4 w-4 mr-2" />
+              Delivery linen totals
+            </DropdownMenuItem>
+          )}
           <DropdownMenuItem onClick={() => openRoomStatusExport()}>
             <ClipboardList className="h-4 w-4 mr-2" />
             Room status
@@ -3655,6 +3672,12 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
            <List className="h-5 w-5 mr-2" />
            Linen totals
          </Button>
+         {todayIsDeliveryDay && (
+           <Button variant="outline" size="lg" className="justify-start h-12" onClick={() => { setExportSheetOpen(false); openDeliveryLinenTotals(); }}>
+             <List className="h-5 w-5 mr-2" />
+             Delivery linen totals
+           </Button>
+         )}
          <Button variant="outline" size="lg" className="justify-start h-12" onClick={() => { setExportSheetOpen(false); openRoomStatusExport(); }}>
            <ClipboardList className="h-5 w-5 mr-2" />
            Room status
