@@ -1,35 +1,58 @@
 ## Goal
-When housekeeping presses **Reset all** in the morning, preserve any reception-set flags that were added after **4pm the previous day** — specifically `guest_vacated`, `early_check_in`, and the per-room `needs_maintenance` flag. Maintenance log entries themselves already survive reset (the `maintenance_requests` table isn't touched), so this is only about the flags shown on room tiles.
 
-## How "after 4pm" is decided
-On each reset, compute a cutoff:
-- If current time is **before 4pm** → cutoff = yesterday 16:00 (local).
-- If current time is **after 4pm** → cutoff = today 16:00 (local).
+Restrict the printable "Linen totals" export to configured delivery days, and on those days produce a **totalled** linen list that rolls up the daily linen counts from the days since the previous delivery day.
 
-Any flag set at ≥ cutoff is preserved; anything older is cleared. This means:
-- A morning reset keeps everything reception logged since 4pm the day before.
-- A reset in the evening (after 4pm) would only preserve flags from *today's* 4pm onward — matches the user's "for the following reset" framing.
+Daily linen totals stay available every day — the new delivery roll-up appears as an additional option only on delivery days.
 
-## Database changes (single migration)
-Add nullable timestamps to `public.rooms`:
-- `guest_vacated_at timestamptz`
-- `early_check_in_at timestamptz`
-- `needs_maintenance_at timestamptz`
+## How it will work day-to-day
 
-Set them when the corresponding flag is turned **on** (cleared when turned off). Backfill existing `true` rows with `now()` so they aren't wiped by the very next reset.
+1. Admin / Regional Manager / Manager-with-Housekeeping opens **Settings → Linen delivery days** and ticks the weekdays that goods are delivered (e.g. Mon + Fri).
+2. Every night an auto-snapshot captures that day's linen totals per hotel, so no day gets missed even if nobody hits export.
+3. On a delivery day the Export sheet shows an extra button: **"Delivery linen totals"**. Tapping it sums every daily snapshot from the day after the previous delivery day up to and including today, and opens the printable sheet.
+   - Example with Mon + Fri delivery:
+     - **Friday's** delivery total = Mon + Tue + Wed + Thu + Fri
+     - **Monday's** delivery total = Fri + Sat + Sun + Mon
+4. On non-delivery days the button is hidden; the normal daily "Linen totals" is unchanged.
 
-## App changes (`src/routes/app.tsx`)
-1. Wherever reception toggles these three flags (checkout mark, early check-in, maintenance flag), also write the matching `_at` timestamp — `now()` when set true, `null` when set false. Optimistic cache updates mirror this.
-2. Rewrite `performResetAll` to be **selective** instead of a blanket wipe:
-   - Compute the 4pm cutoff in JS.
-   - Split rooms into two groups:
-     - **Preserve group** — any room where at least one `_at` timestamp is ≥ cutoff. For these, keep the "fresh" flags (and their `_at`) intact, clear only the housekeeping-side fields (`done`, `done_reception`, `housekeeping_note`, `reception_status_id`, `reception_bed_id`) and stale `_at` flags that are older than the cutoff.
-     - **Full-reset group** — everything else clears exactly as today.
-   - `room_item_counts` and pinned `room_messages` behavior is unchanged (counts wiped, messages dismissed-but-kept).
-3. Update the confirmation copy on the Reset-all button to: *"Reset all rooms? Reception flags added after 4pm will stay."*
-4. The 7-tap easter-egg reset uses the same `performResetAll`, so it inherits this behavior automatically.
+## Details for the technical bits
 
-## Out of scope
-- No changes to `resetReceptionAll` (that button is explicitly a reception-side wipe).
-- No changes to the maintenance log, lost property, chat messages, or stayover photos.
-- No new UI beyond the confirmation text tweak.
+### Data
+
+- New column `hotels.linen_delivery_days int[]` (0=Sun … 6=Sat). Empty/null = no delivery-day restriction, feature dormant.
+- Reuse existing `export_snapshots` (kind = `totals`) as the per-day source of truth. Roll-up sums by item name across snapshots whose `created_at::date` falls in the range.
+- Range end: today (hotel local time). Range start: day after the most recent earlier delivery weekday in `linen_delivery_days`, walking back up to 13 days. If none found, fall back to the last 7 days.
+
+### Auto-snapshot at end of day
+
+- New TanStack server route `src/routes/api/public/hooks/linen-daily-snapshot.ts`, auth'd via `apikey` header, service-role client.
+- For each hotel: compute today's linen totals from `room_item_counts` + templates/extras and upsert one `export_snapshots` row per hotel per day with `kind='totals'`. Skip hotels that already have a manual snapshot for today so we don't stomp on it.
+- `pg_cron` runs it daily at 23:55 UTC (adjustable). Retention: keep 21 days of `totals` snapshots (widen the current `pruneSnapshots` window from 6 to 21 for `totals` only).
+
+### UI
+
+- **Settings sheet** (both mobile and desktop): new "Linen delivery days" section — 7 weekday toggles, visible only to eligible roles/department. Save writes to `hotels.linen_delivery_days` for the current hotel.
+- **Export sheet** (`src/routes/app.tsx` around lines 3331–3370): add a **"Delivery linen totals"** button that renders only when `today ∈ hotel.linen_delivery_days`. Uses the existing print layout, header changes to "`{hotel} Linen — Delivery ({rangeStart}–{today})`".
+- Roll-up computation lives client-side alongside `computeTotals`: fetch snapshots in range for this hotel, merge rows by trimmed name, sum counts, sort A→Z, compute grand total. Print via the existing `printTotals` helper with a new `kind`-agnostic header string (no schema change to snapshot kinds).
+
+### Permissions
+
+- Setting is editable when user is Admin, Regional Manager, or (Manager AND has Housekeeping in `departments`). Read-only visible to everyone in the same hotel so staff know the schedule.
+- RLS on `hotels` already scopes by membership; the new column inherits it. Add a policy note that only the roles above may UPDATE `linen_delivery_days` (enforced via a security-definer function used in the UPDATE policy).
+
+### Edge cases handled
+
+- Missing day (no snapshot exists): treated as 0 contribution, roll-up still succeeds.
+- Multiple snapshots per day: use the most recent one for that day.
+- Delivery days list empty: hide the delivery button entirely.
+- Hotel switching: everything scopes to `hotel_id` from `useCurrentHotel`.
+- Timezone: use the browser's local date for "today" and for bucketing snapshot dates so the day matches what staff see on screen.
+
+## Deliverables
+
+1. Migration: `hotels.linen_delivery_days`, UPDATE policy, and widen `totals` snapshot retention.
+2. Server route + `pg_cron` schedule for nightly auto-snapshot.
+3. Settings UI for delivery days (mobile + desktop).
+4. Export sheet: conditional "Delivery linen totals" button + roll-up compute + print.
+5. Read-only display of the schedule next to the button (e.g. "Deliveries: Mon, Fri").
+
+No changes to existing daily "Linen totals" behaviour.

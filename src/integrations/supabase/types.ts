@@ -118,6 +118,7 @@ export type Database = {
         Row: {
           created_at: string
           id: string
+          linen_delivery_days: number[]
           name: string
           slug: string
           timezone: string
@@ -126,6 +127,7 @@ export type Database = {
         Insert: {
           created_at?: string
           id?: string
+          linen_delivery_days?: number[]
           name: string
           slug: string
           timezone?: string
@@ -134,6 +136,7 @@ export type Database = {
         Update: {
           created_at?: string
           id?: string
+          linen_delivery_days?: number[]
           name?: string
           slug?: string
           timezone?: string

@@ -265,6 +265,8 @@ function AppPage() {
   const [authUser, setAuthUser] = useState(() => getStoredUser());
   const currentHotelQ = useCurrentHotel();
   const hotelName = currentHotelQ.data?.name ?? DEFAULT_HOTEL_NAME;
+  const linenDeliveryDays: number[] = currentHotelQ.data?.linen_delivery_days ?? [];
+  const todayIsDeliveryDay = linenDeliveryDays.includes(new Date().getDay());
   const listHotelsFn = useServerFn(listHotels);
   const setActiveHotelFn = useServerFn(setActiveHotel);
   const createHotelFn = useServerFn(createHotel);
@@ -580,6 +582,8 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
   const [rejectExportOpen, setRejectExportOpen] = useState(false);
   const [roomStatusExportOpen, setRoomStatusExportOpen] = useState(false);
   const [manageRoomsOpen, setManageRoomsOpen] = useState(false);
+  const [linenDeliveryOpen, setLinenDeliveryOpen] = useState(false);
+  const [savingDeliveryDays, setSavingDeliveryDays] = useState(false);
   const [receptionHelpOpen, setReceptionHelpOpen] = useState(false);
   const [confirmOverwrite, setConfirmOverwrite] = useState<
     { kind: "totals" | "rejects" | "room_status" | "maintenance" | "fnb_totals" } | null
@@ -1926,6 +1930,71 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
     await proceedExport("totals");
   };
 
+  // Compute the "delivery window": snapshots from the day AFTER the previous
+  // delivery day up to (and including) today. If no previous delivery day is
+  // configured, fall back to the last 7 days.
+  const deliveryWindowStart = (today: Date): Date => {
+    const start = new Date(today);
+    start.setHours(0, 0, 0, 0);
+    if (linenDeliveryDays.length === 0) {
+      start.setDate(start.getDate() - 6);
+      return start;
+    }
+    const todayDow = today.getDay();
+    // Walk back day by day, up to 14 days, until we find the previous delivery day.
+    for (let offset = 1; offset <= 14; offset++) {
+      const dow = (todayDow - offset + 7) % 7;
+      if (linenDeliveryDays.includes(dow)) {
+        // Window starts the day AFTER that delivery day.
+        start.setDate(start.getDate() - (offset - 1));
+        return start;
+      }
+    }
+    start.setDate(start.getDate() - 6);
+    return start;
+  };
+
+  const computeDeliveryLinenTotals = (): {
+    rows: SnapshotRow[];
+    grand: number;
+    start: Date;
+    end: Date;
+  } => {
+    const now = new Date();
+    const start = deliveryWindowStart(now);
+    const end = new Date(now);
+    end.setHours(23, 59, 59, 999);
+    const map = new Map<string, number>();
+    for (const s of snapshots) {
+      if (s.kind !== "totals") continue;
+      const ts = new Date(s.created_at).getTime();
+      if (ts < start.getTime() || ts > end.getTime()) continue;
+      const list = (s.totals as SnapshotRow[] | null) ?? [];
+      for (const r of list) {
+        const key = (r.name ?? "").trim();
+        if (!key) continue;
+        map.set(key, (map.get(key) ?? 0) + (r.count ?? 0));
+      }
+    }
+    const rows = Array.from(map.entries())
+      .sort((a, b) => a[0].localeCompare(b[0], undefined, { sensitivity: "base" }))
+      .map(([name, count]) => ({ name, count }));
+    const grand = rows.reduce((s, r) => s + r.count, 0);
+    return { rows, grand, start, end: now };
+  };
+
+  const openDeliveryLinenTotals = () => {
+    const { rows, grand, start, end } = computeDeliveryLinenTotals();
+    if (rows.length === 0) {
+      toast.error("No linen totals recorded since the last delivery day");
+      return;
+    }
+    const fmt = (d: Date) =>
+      d.toLocaleDateString(undefined, { month: "short", day: "numeric" });
+    const sub = `Delivery total, ${fmt(start)} – ${fmt(end)}`;
+    printTotals(rows, grand, end, "totals", sub);
+  };
+
   const proceedExport = async (
     kind: "totals" | "rejects" | "room_status" | "maintenance" | "fnb_totals",
   ) => {
@@ -2155,6 +2224,7 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
     grand: number,
     when: Date,
     kind: "totals" | "rejects" | "fnb_totals" = "totals",
+    subheading?: string,
   ) => {
     const dateStr = when.toLocaleDateString(undefined, {
       year: "numeric",
@@ -2188,7 +2258,7 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
       @media print{body{padding:0;}}
     </style></head><body>
       <h1>${esc(heading)}</h1>
-      <p class="date">${dateStr}</p>
+      <p class="date">${dateStr}${subheading ? ` &middot; ${esc(subheading)}` : ""}</p>
       <table>
         <thead><tr><th>Item</th><th class="num">Count</th></tr></thead>
         <tbody>${tableRows}</tbody>
@@ -3347,6 +3417,17 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
               <List className="h-5 w-5 mr-2" />
               Linen totals
             </Button>
+            {todayIsDeliveryDay && (
+              <Button
+                variant="outline"
+                size="lg"
+                className="justify-start h-12"
+                onClick={() => { setExportSheetOpen(false); openDeliveryLinenTotals(); }}
+              >
+                <List className="h-5 w-5 mr-2" />
+                Delivery linen totals
+              </Button>
+            )}
             <Button
               variant="outline"
               size="lg"
@@ -3380,6 +3461,12 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
             <List className="h-4 w-4 mr-2" />
             Linen totals
           </DropdownMenuItem>
+          {todayIsDeliveryDay && (
+            <DropdownMenuItem onClick={() => openDeliveryLinenTotals()}>
+              <List className="h-4 w-4 mr-2" />
+              Delivery linen totals
+            </DropdownMenuItem>
+          )}
           <DropdownMenuItem onClick={() => openRoomStatusExport()}>
             <ClipboardList className="h-4 w-4 mr-2" />
             Room status
@@ -3585,6 +3672,12 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
            <List className="h-5 w-5 mr-2" />
            Linen totals
          </Button>
+         {todayIsDeliveryDay && (
+           <Button variant="outline" size="lg" className="justify-start h-12" onClick={() => { setExportSheetOpen(false); openDeliveryLinenTotals(); }}>
+             <List className="h-5 w-5 mr-2" />
+             Delivery linen totals
+           </Button>
+         )}
          <Button variant="outline" size="lg" className="justify-start h-12" onClick={() => { setExportSheetOpen(false); openRoomStatusExport(); }}>
            <ClipboardList className="h-5 w-5 mr-2" />
            Room status
@@ -4565,6 +4658,13 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
                   )}
                   <Row icon={ConciergeBell} label="Bulk Room Status Setup" onClick={() => { close(); setQuickReceptionOpen(true); }} />
                 </>
+              )}
+              {(realIsAdmin || (realIsManager && hasHousekeeperRole)) && !isMaintenance && (
+                <Row
+                  icon={List}
+                  label="Linen delivery days"
+                  onClick={() => { close(); setLinenDeliveryOpen(true); }}
+                />
               )}
             </Section>
           ) : null}
@@ -6879,6 +6979,66 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
     onUsernameChanged={(u) => setAuthUser((prev) => prev ? { ...prev, username: u } : prev)}
   />
   <UsersDialog open={usersOpen} onOpenChange={setUsersOpen} />
+  <Sheet open={linenDeliveryOpen} onOpenChange={setLinenDeliveryOpen}>
+    <SheetContent side="bottom" className="max-h-[85dvh] overflow-y-auto rounded-t-2xl p-4 sm:p-6">
+      <SheetHeader className="text-left">
+        <SheetTitle>Linen delivery days</SheetTitle>
+        <SheetDescription>
+          Pick the days your linen delivery arrives. On those days, an extra
+          "Delivery linen totals" option appears in Export that adds up the
+          daily linen totals since the previous delivery day.
+        </SheetDescription>
+      </SheetHeader>
+      <div className="mt-4 grid grid-cols-2 sm:grid-cols-4 gap-2">
+        {[
+          { d: 1, label: "Monday" },
+          { d: 2, label: "Tuesday" },
+          { d: 3, label: "Wednesday" },
+          { d: 4, label: "Thursday" },
+          { d: 5, label: "Friday" },
+          { d: 6, label: "Saturday" },
+          { d: 0, label: "Sunday" },
+        ].map(({ d, label }) => {
+          const active = linenDeliveryDays.includes(d);
+          return (
+            <Button
+              key={d}
+              variant={active ? "default" : "outline"}
+              size="lg"
+              className="justify-center h-12"
+              disabled={savingDeliveryDays || !currentHotelQ.data?.id}
+              onClick={async () => {
+                const hotelId = currentHotelQ.data?.id;
+                if (!hotelId) return;
+                const next = active
+                  ? linenDeliveryDays.filter((x) => x !== d)
+                  : [...linenDeliveryDays, d].sort((a, b) => a - b);
+                setSavingDeliveryDays(true);
+                const { error } = await supabase
+                  .from("hotels")
+                  .update({ linen_delivery_days: next } as never)
+                  .eq("id", hotelId);
+                setSavingDeliveryDays(false);
+                if (error) {
+                  toast.error(error.message);
+                  return;
+                }
+                await qc.invalidateQueries({ queryKey: ["current-hotel"] });
+              }}
+            >
+              {label}
+              {active && <Check className="h-4 w-4 ml-2" />}
+            </Button>
+          );
+        })}
+      </div>
+      {linenDeliveryDays.length === 0 && (
+        <p className="mt-4 text-xs text-muted-foreground">
+          No delivery days selected. The Delivery linen totals button will stay hidden.
+        </p>
+      )}
+    </SheetContent>
+  </Sheet>
   <UserApprovalDialog open={userApprovalOpen} onOpenChange={setUserApprovalOpen} />
   <QuickReceptionSheet
     open={quickReceptionOpen}
