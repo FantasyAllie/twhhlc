@@ -425,6 +425,14 @@ type ViewRole = "admin" | "manager" | "user" | "reception" | "fnb" | "maintenanc
           qc.invalidateQueries({ queryKey: ["maintenance_requests"] });
         },
       )
+      .on(
+        "postgres_changes",
+        { event: "*", schema: "public", table: "lost_property" },
+        () => {
+          qc.invalidateQueries({ queryKey: ["lost_property"] });
+          qc.invalidateQueries({ queryKey: ["lost_property_lite"] });
+        },
+      )
       .subscribe();
     return () => {
       supabase.removeChannel(channel);
