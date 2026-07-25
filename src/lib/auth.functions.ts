@@ -242,7 +242,7 @@ export const listUsers = createServerFn({ method: "POST" })
  */
 export const updateUserAssignment = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
-  .inputValidator((d: { id: string; position: "regional_admin" | "admin" | "manager" | "user"; subRoles: SubRole[]; hotelIds?: string[] }) => d)
+  .inputValidator((d: { id: string; position: Exclude<Position, "pending">; subRoles: SubRole[]; hotelIds?: string[] }) => d)
   .handler(async ({ data, context }) => {
     const access = await getAdminAccess(context);
     const { supabaseAdmin, isRegionalAdmin, activeHotelId } = access;
@@ -336,7 +336,7 @@ export const deleteUser = createServerFn({ method: "POST" })
 
 export const createUser = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
-  .inputValidator((d: { email: string; password: string; displayName?: string; position: "regional_admin" | "admin" | "manager" | "user"; subRoles: SubRole[]; hotelIds?: string[] }) => d)
+  .inputValidator((d: { email: string; password: string; displayName?: string; position: Exclude<Position, "pending">; subRoles: SubRole[]; hotelIds?: string[] }) => d)
   .handler(async ({ data, context }) => {
     const access = await getAdminAccess(context);
     const { supabaseAdmin, isRegionalAdmin, activeHotelId } = access;
