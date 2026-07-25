@@ -3218,6 +3218,17 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
                     <div className="mt-1 text-[11px] text-muted-foreground">
                       Logged {fmt(lp.created_at)}
                     </div>
+                    {Array.isArray(lp.photo_paths) && lp.photo_paths.length > 0 && (
+                      <div className="mt-2">
+                        <PhotoAttachments
+                          kind="lost_property"
+                          entryId={lp.id}
+                          paths={lp.photo_paths}
+                          canEdit={false}
+                          onChange={() => {}}
+                        />
+                      </div>
+                    )}
                   </li>
                 ))}
               </ul>
@@ -6159,6 +6170,22 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
                      </span>
                    </div>
                    <p className="mt-2 text-sm whitespace-pre-wrap break-words">{it.message}</p>
+                    {it.source === "req" && (() => {
+                      const req = openReqs.find((r) => r.id === rawId(it.id));
+                      const paths = req && Array.isArray(req.photo_paths) ? req.photo_paths : [];
+                      if (paths.length === 0) return null;
+                      return (
+                        <div className="mt-2">
+                          <PhotoAttachments
+                            kind="maintenance"
+                            entryId={rawId(it.id)}
+                            paths={paths}
+                            canEdit={false}
+                            onChange={() => {}}
+                          />
+                        </div>
+                      );
+                    })()}
                    <div className="mt-3 flex flex-wrap justify-end gap-2">
                      <Button type="button" size="sm" variant="outline" className="h-8 text-xs" onClick={() => void replyToItem(it)}>
                        <MessageSquare className="h-3.5 w-3.5 mr-1" /> Reply
