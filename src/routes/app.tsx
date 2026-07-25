@@ -6696,7 +6696,7 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
         : isRos
           ? { bg: "var(--room-staff)", fg: "var(--room-staff-fg)", accent: "var(--room-staff-accent)", label: "ROS" }
          : isNR
-           ? { bg: "var(--room-stayover)", fg: "var(--room-stayover-fg)", accent: "var(--room-stayover-accent)", label: "Not Required" }
+           ? { bg: "var(--room-stayover)", fg: "var(--room-stayover-fg)", accent: "var(--room-stayover-accent)", label: "Stayover - Service Declined" }
         : (isStayover || isDnd)
           ? { bg: "var(--room-stayover)", fg: "var(--room-stayover-fg)", accent: "var(--room-stayover-accent)", label: "Stayover" }
         : (state === "done" || state === "complete")
@@ -6745,7 +6745,7 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
               style={{ color: meta.accent }}
             />
           )}
-         <span className="text-sm sm:text-base md:text-xl font-bold leading-none inline-flex items-center gap-1">
+         <span className="text-sm sm:text-base font-bold leading-none inline-flex items-center gap-1">
            {n}
           {!isStaff && (state === "done" || state === "complete") && (
             <Check aria-label="Done" className="h-3.5 w-3.5 opacity-80" />
@@ -6753,7 +6753,7 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
            {isDnd && !isStaff && (
              <span
                aria-label="DND"
-                className="text-sm sm:text-base md:text-xl font-bold leading-none"
+                 className="text-sm sm:text-base font-bold leading-none"
              >
                DND
              </span>
@@ -6761,7 +6761,7 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
             {isNR && !isStaff && (
               <span
                 aria-label="Not Required"
-                className="text-sm sm:text-base md:text-xl font-bold leading-none"
+                 className="text-sm sm:text-base font-bold leading-none"
               >
                 NR
               </span>
