@@ -28,8 +28,8 @@ export function DndDoorPhoto({ roomNumber }: { roomNumber: number }) {
   }, [latest]);
 
   return (
-    <div className="space-y-2 rounded-md border bg-background p-3">
-      <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground flex items-center gap-1.5">
+    <div className="space-y-2 rounded-md border border-sky-400/60 bg-sky-50 dark:bg-sky-950/40 p-3">
+      <p className="flex items-center gap-1.5 text-xs font-semibold uppercase tracking-wide text-sky-700 dark:text-sky-300">
         <Camera className="h-3.5 w-3.5" />
         DND door photo
       </p>

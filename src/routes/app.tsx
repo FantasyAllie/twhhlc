@@ -457,6 +457,7 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
   const [rolePickerSheetOpen, setRolePickerSheetOpen] = useState(false);
   const [editItemSheetId, setEditItemSheetId] = useState<string | null>(null);
   const [filtersSheetOpen, setFiltersSheetOpen] = useState(false);
+  const [hideCompletedRooms, setHideCompletedRooms] = useState(false);
   const [addRoomTypeOpen, setAddRoomTypeOpen] = useState(false);
   const [newRoomTypeLabel, setNewRoomTypeLabel] = useState("");
   const [addRoomFeatureOpen, setAddRoomFeatureOpen] = useState(false);
@@ -3206,8 +3207,8 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
             </div>
           )}
           {openLp.length > 0 && (
-            <div className="space-y-2 rounded-md border border-sky-400/60 bg-sky-50 dark:bg-sky-950/40 p-3">
-              <p className="flex items-center gap-1.5 text-xs font-semibold uppercase tracking-wide text-sky-700 dark:text-sky-300">
+            <div className="space-y-2 rounded-md border border-rose-400/60 bg-rose-50 dark:bg-rose-950/40 p-3">
+              <p className="flex items-center gap-1.5 text-xs font-semibold uppercase tracking-wide text-rose-700 dark:text-rose-300">
                 <PackageSearch className="h-3.5 w-3.5" />
                 Lost property ({openLp.length})
               </p>
@@ -6457,13 +6458,25 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
       );
     })()}
     {!isReception && (
-     <button
-       type="button"
-       onClick={resetAll}
-       className="text-xs text-muted-foreground hover:text-foreground underline underline-offset-4"
-     >
-       Reset all
-     </button>
+     <div className="flex items-center gap-2">
+       <Button
+         variant="outline"
+         size="sm"
+         className="h-7 gap-1.5 text-xs"
+         onClick={() => setHideCompletedRooms((v) => !v)}
+         aria-pressed={hideCompletedRooms}
+       >
+         {hideCompletedRooms ? <EyeOff className="h-3.5 w-3.5" /> : <Eye className="h-3.5 w-3.5" />}
+         {hideCompletedRooms ? "Show completed" : "Hide completed"}
+       </Button>
+       <button
+         type="button"
+         onClick={resetAll}
+         className="text-xs text-muted-foreground hover:text-foreground underline underline-offset-4"
+       >
+         Reset all
+       </button>
+     </div>
    )}
     {isReception && (() => {
       // Reception can reset their own selections (status/bed) once per day
@@ -6493,7 +6506,7 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
  <div className="grid grid-cols-4 sm:grid-cols-6 md:grid-cols-7 lg:grid-cols-8 xl:grid-cols-10 gap-2 md:gap-3">
  {(() => {
   const allRooms = rooms.map((r) => r.room_number);
-    const visibleRooms = (isReception && (receptionFeatureFilter.length > 0 || receptionStatusFilter.length > 0 || receptionRoomTypeFilter.length > 0 || receptionDoneOnlyFilter))
+    let visibleRooms = (isReception && (receptionFeatureFilter.length > 0 || receptionStatusFilter.length > 0 || receptionRoomTypeFilter.length > 0 || receptionDoneOnlyFilter))
     ? allRooms.filter((n) => {
          const rd = rooms.find((x) => x.room_number === n);
          if (receptionDoneOnlyFilter) {
@@ -6516,6 +6529,9 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
         return statusId !== null && receptionStatusFilter.includes(statusId);
       })
     : allRooms;
+   if (!isReception && hideCompletedRooms) {
+     visibleRooms = visibleRooms.filter((n) => !doneSet.has(n));
+   }
   const nodes: React.ReactNode[] = [];
    const dndStatusId = receptionStatuses.find((s) => s.label === "DND")?.id ?? null;
     const staffStatusIdGlobal = receptionStatuses.find(
@@ -6562,7 +6578,7 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
         : isRos
           ? { bg: "var(--room-staff)", fg: "var(--room-staff-fg)", accent: "var(--room-staff-accent)", label: "ROS" }
          : isNR
-           ? { bg: "var(--room-stayover)", fg: "var(--room-stayover-fg)", accent: "var(--room-stayover-accent)", label: "Not Required" }
+           ? { bg: "var(--room-stayover)", fg: "var(--room-stayover-fg)", accent: "var(--room-stayover-accent)", label: "Stayover - Service Declined" }
         : (isStayover || isDnd)
           ? { bg: "var(--room-stayover)", fg: "var(--room-stayover-fg)", accent: "var(--room-stayover-accent)", label: "Stayover" }
         : (state === "done" || state === "complete")
@@ -6599,20 +6615,26 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
               <span className="text-sm sm:text-base font-bold leading-none inline-flex items-center gap-1">
                 {n}
                 {isDnd && (
-                  <span
-                    aria-label="DND"
-                    className="text-sm sm:text-base font-bold leading-none"
-                  >
-                    DND
-                  </span>
+                   <>
+                     <span aria-hidden className="text-sm sm:text-base font-bold leading-none opacity-70">-</span>
+                     <span
+                       aria-label="DND"
+                       className="text-sm sm:text-base font-bold leading-none"
+                     >
+                       DND
+                     </span>
+                   </>
                 )}
                   {isNR && (
-                    <span
-                      aria-label="Not Required"
-                      className="text-sm sm:text-base font-bold leading-none"
-                    >
-                      NR
-                    </span>
+                     <>
+                       <span aria-hidden className="text-sm sm:text-base font-bold leading-none opacity-70">-</span>
+                       <span
+                         aria-label="Not Required"
+                         className="text-sm sm:text-base font-bold leading-none"
+                       >
+                         NR
+                       </span>
+                     </>
                   )}
               </span>
               <span className="text-[9px] sm:text-[10px] md:text-xs font-medium leading-none opacity-90 whitespace-pre-line pr-4">
@@ -6674,7 +6696,7 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
         : isRos
           ? { bg: "var(--room-staff)", fg: "var(--room-staff-fg)", accent: "var(--room-staff-accent)", label: "ROS" }
          : isNR
-           ? { bg: "var(--room-stayover)", fg: "var(--room-stayover-fg)", accent: "var(--room-stayover-accent)", label: "Not Required" }
+           ? { bg: "var(--room-stayover)", fg: "var(--room-stayover-fg)", accent: "var(--room-stayover-accent)", label: "Stayover - Service Declined" }
         : (isStayover || isDnd)
           ? { bg: "var(--room-stayover)", fg: "var(--room-stayover-fg)", accent: "var(--room-stayover-accent)", label: "Stayover" }
         : (state === "done" || state === "complete")
@@ -6723,7 +6745,7 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
               style={{ color: meta.accent }}
             />
           )}
-         <span className="text-sm sm:text-base md:text-xl font-bold leading-none inline-flex items-center gap-1">
+         <span className="text-sm sm:text-base font-bold leading-none inline-flex items-center gap-1">
            {n}
           {!isStaff && (state === "done" || state === "complete") && (
             <Check aria-label="Done" className="h-3.5 w-3.5 opacity-80" />
@@ -6731,7 +6753,7 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
            {isDnd && !isStaff && (
              <span
                aria-label="DND"
-                className="text-sm sm:text-base md:text-xl font-bold leading-none"
+                 className="text-sm sm:text-base font-bold leading-none"
              >
                DND
              </span>
@@ -6739,7 +6761,7 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
             {isNR && !isStaff && (
               <span
                 aria-label="Not Required"
-                className="text-sm sm:text-base md:text-xl font-bold leading-none"
+                 className="text-sm sm:text-base font-bold leading-none"
               >
                 NR
               </span>
