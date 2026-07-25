@@ -457,6 +457,7 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
   const [rolePickerSheetOpen, setRolePickerSheetOpen] = useState(false);
   const [editItemSheetId, setEditItemSheetId] = useState<string | null>(null);
   const [filtersSheetOpen, setFiltersSheetOpen] = useState(false);
+  const [hideCompletedRooms, setHideCompletedRooms] = useState(false);
   const [addRoomTypeOpen, setAddRoomTypeOpen] = useState(false);
   const [newRoomTypeLabel, setNewRoomTypeLabel] = useState("");
   const [addRoomFeatureOpen, setAddRoomFeatureOpen] = useState(false);
