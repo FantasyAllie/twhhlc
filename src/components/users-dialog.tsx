@@ -39,6 +39,7 @@ import {
 
 type AssignablePosition = Exclude<Position, "pending">;
 const POSITION_LABELS: Record<AssignablePosition, string> = {
+  developer: "Developer",
   regional_admin: "Regional Manager",
   admin: "Admin",
   manager: "Manager",
