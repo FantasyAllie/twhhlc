@@ -6493,13 +6493,15 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
         if (hk.getTime() >= startOfToday.getTime()) return null;
       }
       return (
-        <button
-          type="button"
+        <Button
+          variant="outline"
+          size="sm"
+          className="h-7 gap-1.5 text-xs"
           onClick={resetReceptionAll}
-          className="text-xs text-muted-foreground hover:text-foreground underline underline-offset-4"
         >
+          <RotateCcw className="h-3.5 w-3.5" />
           Reset all
-        </button>
+        </Button>
       );
     })()}
  </div>
