@@ -7399,7 +7399,9 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
       reception_bed_id: r.reception_bed_id,
       default_status: r.default_status,
     }))}
-    statuses={receptionStatuses.map((s) => ({ id: s.id, label: s.label }))}
+    statuses={receptionStatuses
+      .filter((s) => s.label !== "Staff" && s.label !== "DND")
+      .map((s) => ({ id: s.id, label: s.label }))}
     beds={receptionBeds.map((b) => ({ id: b.id, label: b.label }))}
     onChangeStatus={setRoomReceptionStatus}
     onChangeBed={setRoomReceptionBed}
