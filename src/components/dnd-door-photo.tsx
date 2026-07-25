@@ -40,19 +40,33 @@ export function DndDoorPhoto({ roomNumber }: { roomNumber: number }) {
       ) : !latest ? (
         <p className="text-xs text-muted-foreground">No photo captured.</p>
       ) : (
-        <button
-          type="button"
-          className="block w-full max-w-xs aspect-video bg-muted rounded overflow-hidden"
-          onClick={() => url && setOpen(true)}
-        >
-          {url ? (
-            <img src={url} alt="DND door" className="h-full w-full object-cover" />
-          ) : (
-            <div className="flex h-full w-full items-center justify-center">
-              <Loader2 className="h-4 w-4 animate-spin text-muted-foreground" />
+        <div className="flex items-start gap-3">
+          <button
+            type="button"
+            className="block h-20 w-20 shrink-0 bg-muted rounded overflow-hidden"
+            onClick={() => url && setOpen(true)}
+          >
+            {url ? (
+              <img src={url} alt="DND door" className="h-full w-full object-cover" />
+            ) : (
+              <div className="flex h-full w-full items-center justify-center">
+                <Loader2 className="h-4 w-4 animate-spin text-muted-foreground" />
+              </div>
+            )}
+          </button>
+          <div className="text-xs text-muted-foreground leading-tight">
+            <div className="font-medium text-foreground">Taken</div>
+            <div>
+              {new Date(latest.created_at).toLocaleString(undefined, {
+                weekday: "short",
+                month: "short",
+                day: "numeric",
+                hour: "numeric",
+                minute: "2-digit",
+              })}
             </div>
-          )}
-        </button>
+          </div>
+        </div>
       )}
       <Dialog open={open} onOpenChange={setOpen}>
         <DialogContent className="max-w-3xl p-0 bg-transparent border-0 shadow-none">

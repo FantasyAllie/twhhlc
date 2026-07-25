@@ -1,6 +1,4 @@
-import { useState } from "react";
 import { Bed, Wrench, Bell, MessageSquare, DoorOpen, Camera } from "lucide-react";
-import { cn } from "@/lib/utils";
 
 type Entry = {
   key: string;
@@ -44,11 +42,11 @@ const TILE_COLOURS: {
     swatch: "bg-violet-500",
   },
   {
-    key: "amber",
-    label: "Amber",
+    key: "brown",
+    label: "Brown",
     description:
       "Dirty — the room is checked out but has not yet been cleaned.",
-    swatch: "bg-amber-500",
+    swatch: "bg-amber-800",
   },
   {
     key: "slate",
@@ -154,7 +152,6 @@ const ENTRIES: Entry[] = [
 ];
 
 export function ReceptionIconGuide() {
-  const [openKey, setOpenKey] = useState<string | null>(null);
   return (
     <div className="mt-2 space-y-4">
       <section>
@@ -162,35 +159,19 @@ export function ReceptionIconGuide() {
           Tile colours
         </p>
         <ul className="divide-y rounded-md border bg-card">
-          {TILE_COLOURS.map((c) => {
-            const open = openKey === `col-${c.key}`;
-            return (
-              <li key={c.key}>
-                <button
-                  type="button"
-                  onClick={() => setOpenKey(open ? null : `col-${c.key}`)}
-                  className={cn(
-                    "w-full flex items-center gap-3 px-3 py-2.5 text-left hover:bg-accent transition-colors",
-                    open && "bg-accent",
-                  )}
-                  aria-expanded={open}
-                >
-                  <span
-                    className={cn(
-                      "inline-flex h-6 w-10 items-center justify-center shrink-0 rounded-md border",
-                      c.swatch,
-                    )}
-                  />
-                  <span className="text-sm font-medium flex-1">{c.label}</span>
-                </button>
-                {open && (
-                  <p className="px-3 pb-3 -mt-1 text-xs text-muted-foreground">
-                    {c.description}
-                  </p>
-                )}
-              </li>
-            );
-          })}
+          {TILE_COLOURS.map((c) => (
+            <li key={c.key} className="px-3 py-2.5">
+              <div className="flex items-center gap-3">
+                <span
+                  className={`inline-flex h-6 w-10 items-center justify-center shrink-0 rounded-md border ${c.swatch}`}
+                />
+                <span className="text-sm font-medium flex-1">{c.label}</span>
+              </div>
+              <p className="mt-1 pl-[3.25rem] text-xs text-muted-foreground">
+                {c.description}
+              </p>
+            </li>
+          ))}
         </ul>
       </section>
       <section>
@@ -198,32 +179,19 @@ export function ReceptionIconGuide() {
           Icons &amp; symbols
         </p>
         <ul className="divide-y rounded-md border bg-card">
-          {ENTRIES.map((e) => {
-            const open = openKey === `icon-${e.key}`;
-            return (
-              <li key={e.key}>
-                <button
-                  type="button"
-                  onClick={() => setOpenKey(open ? null : `icon-${e.key}`)}
-                  className={cn(
-                    "w-full flex items-center gap-3 px-3 py-2.5 text-left hover:bg-accent transition-colors",
-                    open && "bg-accent",
-                  )}
-                  aria-expanded={open}
-                >
-                  <span className="inline-flex h-8 w-8 items-center justify-center shrink-0">
-                    {e.render()}
-                  </span>
-                  <span className="text-sm font-medium flex-1">{e.label}</span>
-                </button>
-                {open && (
-                  <p className="px-3 pb-3 -mt-1 text-xs text-muted-foreground">
-                    {e.description}
-                  </p>
-                )}
-              </li>
-            );
-          })}
+          {ENTRIES.map((e) => (
+            <li key={e.key} className="px-3 py-2.5">
+              <div className="flex items-center gap-3">
+                <span className="inline-flex h-8 w-8 items-center justify-center shrink-0">
+                  {e.render()}
+                </span>
+                <span className="text-sm font-medium flex-1">{e.label}</span>
+              </div>
+              <p className="mt-1 pl-11 text-xs text-muted-foreground">
+                {e.description}
+              </p>
+            </li>
+          ))}
         </ul>
       </section>
     </div>

@@ -513,6 +513,23 @@ export function MessagesSheet({
                         )}
                         <p className="whitespace-pre-wrap break-words">{m.message}</p>
                         <div className="mt-1.5 flex justify-end gap-1">
+                          {!done && (
+                            <Button
+                              type="button"
+                              variant="ghost"
+                              size="sm"
+                              className="h-6 text-[11px]"
+                              onClick={() =>
+                                setReplyTo({
+                                  id: m.id,
+                                  sender: m.created_by_username ?? "Someone",
+                                  snippet: m.message.slice(0, 280),
+                                })
+                              }
+                            >
+                              <MessageSquare className="h-3 w-3 mr-1" /> Reply
+                            </Button>
+                          )}
                           {done ? (
                             <Button type="button" variant="ghost" size="sm" className="h-6 text-[11px]" onClick={() => undoDone(m.id)}>
                               <RotateCcw className="h-3 w-3 mr-1" /> Undo

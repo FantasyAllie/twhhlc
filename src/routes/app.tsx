@@ -796,13 +796,14 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
     message: string;
     status: "open" | "collected" | "discarded";
     created_at: string;
+    photo_paths?: string[] | null;
   };
   const lostPropertyQ = useQuery({
     queryKey: ["lost_property_lite"],
     queryFn: async (): Promise<LostPropertyLite[]> => {
       const { data, error } = await supabase
         .from("lost_property" as never)
-        .select("id,room_number,message,status,created_at,deleted_at")
+        .select("id,room_number,message,status,created_at,deleted_at,photo_paths")
         .is("deleted_at", null)
         .eq("status", "open")
         .order("created_at", { ascending: false });
@@ -3217,6 +3218,17 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
                     <div className="mt-1 text-[11px] text-muted-foreground">
                       Logged {fmt(lp.created_at)}
                     </div>
+                    {Array.isArray(lp.photo_paths) && lp.photo_paths.length > 0 && (
+                      <div className="mt-2">
+                        <PhotoAttachments
+                          kind="lost_property"
+                          entryId={lp.id}
+                          paths={lp.photo_paths}
+                          canEdit={false}
+                          onChange={() => {}}
+                        />
+                      </div>
+                    )}
                   </li>
                 ))}
               </ul>
@@ -6158,6 +6170,22 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
                      </span>
                    </div>
                    <p className="mt-2 text-sm whitespace-pre-wrap break-words">{it.message}</p>
+                    {it.source === "req" && (() => {
+                      const req = openReqs.find((r) => r.id === rawId(it.id));
+                      const paths = req && Array.isArray(req.photo_paths) ? req.photo_paths : [];
+                      if (paths.length === 0) return null;
+                      return (
+                        <div className="mt-2">
+                          <PhotoAttachments
+                            kind="maintenance"
+                            entryId={rawId(it.id)}
+                            paths={paths}
+                            canEdit={false}
+                            onChange={() => {}}
+                          />
+                        </div>
+                      );
+                    })()}
                    <div className="mt-3 flex flex-wrap justify-end gap-2">
                      <Button type="button" size="sm" variant="outline" className="h-8 text-xs" onClick={() => void replyToItem(it)}>
                        <MessageSquare className="h-3.5 w-3.5 mr-1" /> Reply
@@ -7371,7 +7399,9 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
       reception_bed_id: r.reception_bed_id,
       default_status: r.default_status,
     }))}
-    statuses={receptionStatuses.map((s) => ({ id: s.id, label: s.label }))}
+    statuses={receptionStatuses
+      .filter((s) => s.label !== "Staff" && s.label !== "DND")
+      .map((s) => ({ id: s.id, label: s.label }))}
     beds={receptionBeds.map((b) => ({ id: b.id, label: b.label }))}
     onChangeStatus={setRoomReceptionStatus}
     onChangeBed={setRoomReceptionBed}
