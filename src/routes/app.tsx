@@ -449,6 +449,7 @@ type ViewRole = "admin" | "manager" | "user" | "reception" | "fnb" | "maintenanc
  const [templateOpen, setTemplateOpen] = useState(false);
 const [linenListType, setLinenListType] = useState<"housekeeping" | "fnb">("housekeeping");
 const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
+  const [nrOffRooms, setNrOffRooms] = useState<Set<number>>(new Set());
   const [newTemplateName, setNewTemplateName] = useState("");
   const [editingItemId, setEditingItemId] = useState<string | null>(null);
   const [editingItemName, setEditingItemName] = useState("");
