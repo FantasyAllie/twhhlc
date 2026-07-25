@@ -1,4 +1,4 @@
-import { Bed, Wrench, Bell, MessageSquare, DoorOpen, Camera } from "lucide-react";
+import { Wrench, Bell, MessageSquare, DoorOpen, Camera } from "lucide-react";
 
 type Entry = {
   key: string;
@@ -58,13 +58,6 @@ const TILE_COLOURS: {
 ];
 
 const ENTRIES: Entry[] = [
-  {
-    key: "bed",
-    label: "Bed icon",
-    description:
-      "The room is clean and ready, but no bed type has been selected yet. Might need to ask Housekeeping what the bed was made as, or check the room",
-    render: () => <Bed className="h-5 w-5" />,
-  },
   {
     key: "wrench",
     label: "Wrench",
