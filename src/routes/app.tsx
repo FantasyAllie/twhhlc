@@ -425,6 +425,14 @@ type ViewRole = "admin" | "manager" | "user" | "reception" | "fnb" | "maintenanc
           qc.invalidateQueries({ queryKey: ["maintenance_requests"] });
         },
       )
+      .on(
+        "postgres_changes",
+        { event: "*", schema: "public", table: "lost_property" },
+        () => {
+          qc.invalidateQueries({ queryKey: ["lost_property"] });
+          qc.invalidateQueries({ queryKey: ["lost_property_lite"] });
+        },
+      )
       .subscribe();
     return () => {
       supabase.removeChannel(channel);
@@ -457,6 +465,7 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
   const [receptionFeatureFilter, setReceptionFeatureFilter] = useState<string[]>([]);
   const [receptionStatusFilter, setReceptionStatusFilter] = useState<string[]>([]);
   const [receptionDoneOnlyFilter, setReceptionDoneOnlyFilter] = useState(false);
+  const [receptionRoomTypeFilter, setReceptionRoomTypeFilter] = useState<string[]>([]);
   const [noteDraft, setNoteDraft] = useState<Record<number, string>>({});
   const [notesSheetRoom, setNotesSheetRoom] = useState<number | null>(null);
   const [receptionSheetRoom, setReceptionSheetRoom] = useState<number | null>(null);
@@ -779,6 +788,28 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
       return (data ?? []) as MaintenanceRequest[];
     },
   });
+
+  type LostPropertyLite = {
+    id: string;
+    room_number: number | null;
+    message: string;
+    status: "open" | "collected" | "discarded";
+    created_at: string;
+  };
+  const lostPropertyQ = useQuery({
+    queryKey: ["lost_property_lite"],
+    queryFn: async (): Promise<LostPropertyLite[]> => {
+      const { data, error } = await supabase
+        .from("lost_property" as never)
+        .select("id,room_number,message,status,created_at,deleted_at")
+        .is("deleted_at", null)
+        .eq("status", "open")
+        .order("created_at", { ascending: false });
+      if (error) throw error;
+      return (data ?? []) as LostPropertyLite[];
+    },
+  });
+  const lostPropertyOpenItems = (lostPropertyQ.data ?? []) as LostPropertyLite[];
 
   const templateAll = templateQ.data ?? [];
   const template = templateAll.filter((t) => (t.list_type ?? "housekeeping") === "housekeeping");
@@ -1275,6 +1306,7 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
         }
       }
       qc.invalidateQueries({ queryKey: ["lost_property"] });
+      qc.invalidateQueries({ queryKey: ["lost_property_lite"] });
       return { ok: true as const };
     };
   const doneSet = new Set(
@@ -1771,6 +1803,18 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
       .is("deleted_at", null)
       .eq("dismissed", false);
     if (r3.error) toast.error(r3.error.message);
+    // Record the housekeeping reset on the active hotel so Reception's own
+    // "Reset all" button (visible after 7am) can hide itself for the rest of
+    // the day.
+    const activeHotelId = currentHotelQ.data?.id;
+    if (activeHotelId) {
+      const { error: hErr } = await supabase
+        .from("hotels")
+        .update({ last_hk_reset_at: nowIso } as never)
+        .eq("id", activeHotelId);
+      if (hErr) toast.error(hErr.message);
+      qc.invalidateQueries({ queryKey: ["current-hotel"] });
+    }
     qc.invalidateQueries({ queryKey: ["rooms"] });
     qc.invalidateQueries({ queryKey: ["room_counts"] });
     qc.invalidateQueries({ queryKey: ["room_messages"] });
@@ -3111,6 +3155,61 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
       const dndId = receptionStatuses.find((x) => x.label === "DND")?.id ?? null;
       if (!dndId || occ !== dndId) return null;
       return <DndDoorPhoto roomNumber={n} />;
+    })()}
+
+    {isReception && (() => {
+      const openMaint = (maintenanceRequestsQ.data ?? []).filter(
+        (m) => m.room_number === n && !m.done,
+      );
+      const openLp = lostPropertyOpenItems.filter((lp) => lp.room_number === n);
+      if (openMaint.length === 0 && openLp.length === 0) return null;
+      const fmt = (iso: string) =>
+        new Date(iso).toLocaleString(undefined, {
+          month: "short",
+          day: "numeric",
+          hour: "numeric",
+          minute: "2-digit",
+        });
+      return (
+        <div className="space-y-3">
+          {openMaint.length > 0 && (
+            <div className="space-y-2 rounded-md border border-amber-400/60 bg-amber-50 dark:bg-amber-950/40 p-3">
+              <p className="flex items-center gap-1.5 text-xs font-semibold uppercase tracking-wide text-amber-700 dark:text-amber-300">
+                <Wrench className="h-3.5 w-3.5" />
+                Open maintenance ({openMaint.length})
+              </p>
+              <ul className="space-y-1.5">
+                {openMaint.map((m) => (
+                  <li key={m.id} className="rounded bg-background/70 p-2 text-sm">
+                    <div className="whitespace-pre-wrap break-words">{m.message}</div>
+                    <div className="mt-1 text-[11px] text-muted-foreground">
+                      {m.created_by_username ?? "Unknown"} · {fmt(m.created_at)}
+                    </div>
+                  </li>
+                ))}
+              </ul>
+            </div>
+          )}
+          {openLp.length > 0 && (
+            <div className="space-y-2 rounded-md border border-sky-400/60 bg-sky-50 dark:bg-sky-950/40 p-3">
+              <p className="flex items-center gap-1.5 text-xs font-semibold uppercase tracking-wide text-sky-700 dark:text-sky-300">
+                <PackageSearch className="h-3.5 w-3.5" />
+                Lost property ({openLp.length})
+              </p>
+              <ul className="space-y-1.5">
+                {openLp.map((lp) => (
+                  <li key={lp.id} className="rounded bg-background/70 p-2 text-sm">
+                    <div className="whitespace-pre-wrap break-words">{lp.message}</div>
+                    <div className="mt-1 text-[11px] text-muted-foreground">
+                      Logged {fmt(lp.created_at)}
+                    </div>
+                  </li>
+                ))}
+              </ul>
+            </div>
+          )}
+        </div>
+      );
     })()}
 
     {!isReception && (
@@ -6116,7 +6215,11 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
  Rooms
  </h2>
      {isReception && (() => {
-         const totalSelected = receptionFeatureFilter.length + receptionStatusFilter.length + (receptionDoneOnlyFilter ? 1 : 0);
+          const totalSelected =
+            receptionFeatureFilter.length +
+            receptionStatusFilter.length +
+            receptionRoomTypeFilter.length +
+            (receptionDoneOnlyFilter ? 1 : 0);
          const statusFilterLabels: string[] = ["Stayover", "Arrival", "Dirty", "Clean"];
          const statusFilterOptions = statusFilterLabels
            .map((label) => {
@@ -6126,7 +6229,14 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
              return match ? { id: match.id, label } : null;
            })
            .filter((v): v is { id: string; label: string } => v !== null);
+          const clearAllFilters = () => {
+            setReceptionFeatureFilter([]);
+            setReceptionStatusFilter([]);
+            setReceptionRoomTypeFilter([]);
+            setReceptionDoneOnlyFilter(false);
+          };
        return (
+          <div className="flex items-center gap-2">
         <Popover open={filtersSheetOpen} onOpenChange={setFiltersSheetOpen}>
           <PopoverTrigger asChild>
             <Button variant="outline" size="sm" className="h-7 gap-1.5 text-xs">
@@ -6178,6 +6288,32 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
                   </div>
                 </div>
               )}
+                {roomTypes.length > 0 && (
+                  <div className="space-y-2">
+                    <p className="text-xs font-medium text-muted-foreground uppercase tracking-wide">Room type</p>
+                    <div className="grid gap-1">
+                      {roomTypes.map((rt) => {
+                        const checked = receptionRoomTypeFilter.includes(rt.value);
+                        return (
+                          <label
+                            key={rt.id}
+                            className="flex items-center gap-2 py-1.5 px-2 rounded-md hover:bg-muted cursor-pointer"
+                          >
+                            <Checkbox
+                              checked={checked}
+                              onCheckedChange={(c) => {
+                                setReceptionRoomTypeFilter((prev) =>
+                                  c ? [...prev, rt.value] : prev.filter((v) => v !== rt.value),
+                                );
+                              }}
+                            />
+                            <span className="text-sm flex-1">{rt.label}</span>
+                          </label>
+                        );
+                      })}
+                    </div>
+                  </div>
+                )}
               {roomFeatures.length > 0 && (
                 <div className="space-y-2">
                   <p className="text-xs font-medium text-muted-foreground uppercase tracking-wide">Features</p>
@@ -6206,47 +6342,74 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
                   </div>
                 </div>
               )}
-              {totalSelected > 0 && (
-                <Button
-                  variant="outline"
-                  size="sm"
-                  className="w-full"
-                  onClick={() => {
-                    setReceptionFeatureFilter([]);
-                    setReceptionStatusFilter([]);
-                    setReceptionDoneOnlyFilter(false);
-                  }}
-                >
-                  <X className="h-4 w-4 mr-2" />
-                  Clear filters
-                </Button>
-              )}
             </div>
           </PopoverContent>
         </Popover>
+          {totalSelected > 0 && (
+            <Button
+              variant="ghost"
+              size="sm"
+              className="h-7 gap-1 text-xs text-muted-foreground hover:text-foreground"
+              onClick={clearAllFilters}
+              aria-label="Clear filters"
+            >
+              <X className="h-3.5 w-3.5" />
+              Clear
+            </Button>
+          )}
+          </div>
       );
     })()}
-   {!isReception && (
-    <button
-      type="button"
-      onClick={resetAll}
-      className="text-xs text-muted-foreground hover:text-foreground underline underline-offset-4"
-    >
-      Reset all
-    </button>
-  )}
+    {!isReception && (
+     <button
+       type="button"
+       onClick={resetAll}
+       className="text-xs text-muted-foreground hover:text-foreground underline underline-offset-4"
+     >
+       Reset all
+     </button>
+   )}
+    {isReception && (() => {
+      // Reception can reset their own selections (status/bed) once per day
+      // after 7am, but only if Housekeeping hasn't already done a full reset.
+      const now = new Date();
+      if (now.getHours() < 7) return null;
+      const hkResetIso = currentHotelQ.data?.last_hk_reset_at ?? null;
+      if (hkResetIso) {
+        const hk = new Date(hkResetIso);
+        const startOfToday = new Date();
+        startOfToday.setHours(0, 0, 0, 0);
+        if (hk.getTime() >= startOfToday.getTime()) return null;
+      }
+      return (
+        <button
+          type="button"
+          onClick={resetReceptionAll}
+          className="text-xs text-muted-foreground hover:text-foreground underline underline-offset-4"
+        >
+          Reset all
+        </button>
+      );
+    })()}
  </div>
 
  {/* On-screen interactive accordion */}
  <div className="grid grid-cols-4 sm:grid-cols-6 md:grid-cols-7 lg:grid-cols-8 xl:grid-cols-10 gap-2 md:gap-3">
  {(() => {
   const allRooms = rooms.map((r) => r.room_number);
-   const visibleRooms = (isReception && (receptionFeatureFilter.length > 0 || receptionStatusFilter.length > 0 || receptionDoneOnlyFilter))
+    const visibleRooms = (isReception && (receptionFeatureFilter.length > 0 || receptionStatusFilter.length > 0 || receptionRoomTypeFilter.length > 0 || receptionDoneOnlyFilter))
     ? allRooms.filter((n) => {
-        if (receptionDoneOnlyFilter) {
-          const rd = rooms.find((x) => x.room_number === n);
-          if (!rd?.done) return false;
-        }
+         const rd = rooms.find((x) => x.room_number === n);
+         if (receptionDoneOnlyFilter) {
+           // Reception considers a room "done" if reception has confirmed it,
+           // OR housekeeping has marked it done. Previously this only checked
+           // `done` which missed rooms reception had just confirmed.
+           if (!(rd?.done_reception || rd?.done)) return false;
+         }
+         if (receptionRoomTypeFilter.length > 0) {
+           const cats = parseCats(rd?.category);
+           if (!receptionRoomTypeFilter.some((v) => cats.includes(v as Category))) return false;
+         }
         const featuresOk = receptionFeatureFilter.every((fid) =>
           roomFeatureAssignments.some((a) => a.feature_id === fid && a.room_number === n),
         );

@@ -118,6 +118,7 @@ export type Database = {
         Row: {
           created_at: string
           id: string
+          last_hk_reset_at: string | null
           linen_delivery_days: number[]
           name: string
           slug: string
@@ -127,6 +128,7 @@ export type Database = {
         Insert: {
           created_at?: string
           id?: string
+          last_hk_reset_at?: string | null
           linen_delivery_days?: number[]
           name: string
           slug: string
@@ -136,6 +138,7 @@ export type Database = {
         Update: {
           created_at?: string
           id?: string
+          last_hk_reset_at?: string | null
           linen_delivery_days?: number[]
           name?: string
           slug?: string
