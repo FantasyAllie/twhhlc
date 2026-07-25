@@ -831,6 +831,26 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
   const openMaintenanceCount = maintenanceRequests.filter((m) => !m.done).length;
   const hasOpenMaintenance = openMaintenanceCount > 0;
 
+  // Whether the housekeeping shift is complete — all eligible rooms are done.
+  // Used to reveal the "Mark shift as finished" shortcut and to hide the now
+  // redundant Linen totals / Room status items from the Export menu.
+  const isShiftComplete = (() => {
+    const statusLabelById = new Map(
+      receptionStatuses.map((s) => [s.id, s.label.toLowerCase()]),
+    );
+    const excluded = new Set(["staff", "ros", "staff/ros", "ros - staff"]);
+    const eligible = rooms.filter((r) => {
+      const sid = r.reception_status_id ?? r.default_status;
+      const lbl = sid ? (statusLabelById.get(sid) ?? sid).toLowerCase() : "";
+      if (excluded.has(lbl)) return false;
+      if (lbl === "dnd") return false;
+      return true;
+    });
+    const total = eligible.length;
+    const done = eligible.filter((r) => r.done || r.done_reception).length;
+    return total > 0 && done >= total;
+  })();
+
   const [newMessageText, setNewMessageText] = useState("");
 
   // Auto-assign the Double bed type to Double rooms so exports/status reflect the
