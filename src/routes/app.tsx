@@ -1945,8 +1945,9 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
     for (let offset = 1; offset <= 14; offset++) {
       const dow = (todayDow - offset + 7) % 7;
       if (linenDeliveryDays.includes(dow)) {
-        // Window starts the day AFTER that delivery day.
-        start.setDate(start.getDate() - (offset - 1));
+        // Window starts ON the previous delivery day (inclusive) and ends
+        // on the day before today (yesterday, inclusive).
+        start.setDate(start.getDate() - offset);
         return start;
       }
     }
@@ -1962,7 +1963,10 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
   } => {
     const now = new Date();
     const start = deliveryWindowStart(now);
+    // End at the end of YESTERDAY — today's linen isn't yet delivered against.
     const end = new Date(now);
+    end.setHours(0, 0, 0, 0);
+    end.setDate(end.getDate() - 1);
     end.setHours(23, 59, 59, 999);
     const map = new Map<string, number>();
     for (const s of snapshots) {
@@ -1980,7 +1984,7 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
       .sort((a, b) => a[0].localeCompare(b[0], undefined, { sensitivity: "base" }))
       .map(([name, count]) => ({ name, count }));
     const grand = rows.reduce((s, r) => s + r.count, 0);
-    return { rows, grand, start, end: now };
+    return { rows, grand, start, end };
   };
 
   const openDeliveryLinenTotals = () => {
