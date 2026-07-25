@@ -6578,7 +6578,7 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
         : isRos
           ? { bg: "var(--room-staff)", fg: "var(--room-staff-fg)", accent: "var(--room-staff-accent)", label: "ROS" }
          : isNR
-           ? { bg: "var(--room-stayover)", fg: "var(--room-stayover-fg)", accent: "var(--room-stayover-accent)", label: "Not Required" }
+           ? { bg: "var(--room-stayover)", fg: "var(--room-stayover-fg)", accent: "var(--room-stayover-accent)", label: "Stayover - Service Declined" }
         : (isStayover || isDnd)
           ? { bg: "var(--room-stayover)", fg: "var(--room-stayover-fg)", accent: "var(--room-stayover-accent)", label: "Stayover" }
         : (state === "done" || state === "complete")
