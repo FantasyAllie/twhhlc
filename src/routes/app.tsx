@@ -4444,37 +4444,16 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
                   const stayIdLocal = receptionStatuses.find((x) => x.label === "Stayover")?.id ?? null;
                   const isDoneLocal = receptionDoneSet.has(n);
                   const isStayoverLocal = !!stayIdLocal && occ === stayIdLocal;
-                  const isNR = isDoneLocal && isStayoverLocal;
-                  return (
-                    <div className="grid grid-cols-2 gap-1.5">
-                      <Row
-                        label="Mark as Done"
-                        selected={isDoneLocal && !isNR}
-                        onClick={() => {
-                          if (isNR) {
-                            // Clearing NR: drop the auto-applied Stayover status too.
-                            setRoomReceptionStatus(n, null);
-                          }
-                          void toggleReceptionDone(n);
-                        }}
-                      />
-                      <Row
-                        label="Not Required"
-                        selected={isNR}
-                        onClick={() => {
-                          if (isNR) {
-                            setRoomReceptionStatus(n, null);
-                            void toggleReceptionDone(n);
-                            return;
-                          }
-                          if (stayIdLocal && !isStayoverLocal) {
-                            setRoomReceptionStatus(n, stayIdLocal);
-                          }
-                          if (!isDoneLocal) void toggleReceptionDone(n);
-                        }}
-                      />
-                    </div>
-                  );
+                   void stayIdLocal; void isStayoverLocal;
+                   return (
+                     <Row
+                       label="Mark as Done"
+                       selected={isDoneLocal}
+                       onClick={() => {
+                         void toggleReceptionDone(n);
+                       }}
+                     />
+                   );
                 })()}
              </div>
              <div className="space-y-2">
