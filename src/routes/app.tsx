@@ -4469,22 +4469,16 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
                       const rosId = receptionStatuses.find((x) => x.label === "ROS")?.id ?? null;
                      const dndActive = !!dndId && occ === dndId;
                       const dirtyActive = !!dirtyId && occ === dirtyId;
-                     const pairLabels: [string, string][] = [
-                       ["DND", "Stayover"],
-                     ];
                       const topLabels = ["Arrival", "Clean"];
                       const tripleLabels = ["Dirty", "Staff", "ROS"];
                      const findStatus = (lbl: string) =>
                        receptionStatuses.find(
                          (x) => x.label.toLowerCase() === lbl.toLowerCase(),
                        ) ?? null;
-                     const pairedIds = new Set<string>();
-                     pairLabels.forEach(([a, b]) => {
-                       const sa = findStatus(a);
-                       const sb = findStatus(b);
-                       if (sa) pairedIds.add(sa.id);
-                       if (sb) pairedIds.add(sb.id);
-                     });
+                      const dndStayIds = new Set<string>();
+                      [findStatus("DND"), findStatus("Stayover")].forEach((s) => {
+                        if (s) dndStayIds.add(s.id);
+                      });
                       const tripleIds = new Set<string>();
                       tripleLabels.forEach((lbl) => {
                         const s = findStatus(lbl);
@@ -4543,17 +4537,51 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
                        const s = findStatus(lbl);
                        if (s) nodes.push(renderRow(s));
                      });
-                     pairLabels.forEach(([a, b]) => {
-                       const sa = findStatus(a);
-                       const sb = findStatus(b);
-                       if (!sa && !sb) return;
-                       nodes.push(
-                         <div key={`pair-${a}-${b}`} className="grid grid-cols-2 gap-1.5">
-                           {sa ? renderRow(sa) : <div />}
-                           {sb ? renderRow(sb) : <div />}
-                         </div>,
-                       );
-                     });
+                      {
+                        const sDnd = findStatus("DND");
+                        const sStay = findStatus("Stayover");
+                        const stayIdLocal = sStay?.id ?? null;
+                        const isDoneLocal = receptionDoneSet.has(n);
+                        const isStayoverLocal = !!stayIdLocal && occ === stayIdLocal;
+                        const nrOff = nrOffRooms.has(n);
+                        const isNR = isDoneLocal && isStayoverLocal && !nrOff;
+                        const onNrClick = () => {
+                          if (isNR) {
+                            // Uncheck NR indicator only — keep Mark as Done and
+                            // Stayover flags in place.
+                            setNrOffRooms((prev) => {
+                              const next = new Set(prev);
+                              next.add(n);
+                              return next;
+                            });
+                            return;
+                          }
+                          // Enable Stayover + Mark as Done, clear any nr-off override.
+                          setNrOffRooms((prev) => {
+                            if (!prev.has(n)) return prev;
+                            const next = new Set(prev);
+                            next.delete(n);
+                            return next;
+                          });
+                          if (stayIdLocal && !isStayoverLocal) {
+                            setRoomReceptionStatus(n, stayIdLocal);
+                          }
+                          if (!isDoneLocal) void toggleReceptionDone(n);
+                        };
+                        if (sDnd || sStay) {
+                          nodes.push(
+                            <div key="triple-dnd-nr-stay" className="grid grid-cols-3 gap-1.5">
+                              {sDnd ? renderRow(sDnd) : <div />}
+                              <Row
+                                label="Not Required"
+                                selected={isNR}
+                                onClick={onNrClick}
+                              />
+                              {sStay ? renderRow(sStay) : <div />}
+                            </div>,
+                          );
+                        }
+                      }
                       {
                         const tripleNodes = tripleLabels.map((lbl) => findStatus(lbl));
                         if (tripleNodes.some((s) => s)) {
@@ -4567,7 +4595,7 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
                         }
                       }
                      receptionStatuses.forEach((s) => {
-                        if (pairedIds.has(s.id) || topIds.has(s.id) || tripleIds.has(s.id)) return;
+                         if (dndStayIds.has(s.id) || topIds.has(s.id) || tripleIds.has(s.id)) return;
                        nodes.push(renderRow(s));
                      });
                      return nodes;
