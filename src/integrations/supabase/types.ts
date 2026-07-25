@@ -150,6 +150,7 @@ export type Database = {
           created_by_role: string | null
           created_by_username: string | null
           deleted_at: string | null
+          found_by_department: string | null
           hotel_id: string
           id: string
           message: string
@@ -165,6 +166,7 @@ export type Database = {
           created_by_role?: string | null
           created_by_username?: string | null
           deleted_at?: string | null
+          found_by_department?: string | null
           hotel_id?: string
           id?: string
           message: string
@@ -180,6 +182,7 @@ export type Database = {
           created_by_role?: string | null
           created_by_username?: string | null
           deleted_at?: string | null
+          found_by_department?: string | null
           hotel_id?: string
           id?: string
           message?: string
