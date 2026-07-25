@@ -6458,13 +6458,25 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
       );
     })()}
     {!isReception && (
-     <button
-       type="button"
-       onClick={resetAll}
-       className="text-xs text-muted-foreground hover:text-foreground underline underline-offset-4"
-     >
-       Reset all
-     </button>
+     <div className="flex items-center gap-2">
+       <Button
+         variant="outline"
+         size="sm"
+         className="h-7 gap-1.5 text-xs"
+         onClick={() => setHideCompletedRooms((v) => !v)}
+         aria-pressed={hideCompletedRooms}
+       >
+         {hideCompletedRooms ? <EyeOff className="h-3.5 w-3.5" /> : <Eye className="h-3.5 w-3.5" />}
+         {hideCompletedRooms ? "Show completed" : "Hide completed"}
+       </Button>
+       <button
+         type="button"
+         onClick={resetAll}
+         className="text-xs text-muted-foreground hover:text-foreground underline underline-offset-4"
+       >
+         Reset all
+       </button>
+     </div>
    )}
     {isReception && (() => {
       // Reception can reset their own selections (status/bed) once per day
