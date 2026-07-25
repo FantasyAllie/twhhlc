@@ -6615,20 +6615,26 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
               <span className="text-sm sm:text-base font-bold leading-none inline-flex items-center gap-1">
                 {n}
                 {isDnd && (
-                  <span
-                    aria-label="DND"
-                    className="text-sm sm:text-base font-bold leading-none"
-                  >
-                    DND
-                  </span>
+                   <>
+                     <span aria-hidden className="text-sm sm:text-base font-bold leading-none opacity-70">-</span>
+                     <span
+                       aria-label="DND"
+                       className="text-sm sm:text-base font-bold leading-none"
+                     >
+                       DND
+                     </span>
+                   </>
                 )}
                   {isNR && (
-                    <span
-                      aria-label="Not Required"
-                      className="text-sm sm:text-base font-bold leading-none"
-                    >
-                      NR
-                    </span>
+                     <>
+                       <span aria-hidden className="text-sm sm:text-base font-bold leading-none opacity-70">-</span>
+                       <span
+                         aria-label="Not Required"
+                         className="text-sm sm:text-base font-bold leading-none"
+                       >
+                         NR
+                       </span>
+                     </>
                   )}
               </span>
               <span className="text-[9px] sm:text-[10px] md:text-xs font-medium leading-none opacity-90 whitespace-pre-line pr-4">
