@@ -457,6 +457,7 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
   const [receptionFeatureFilter, setReceptionFeatureFilter] = useState<string[]>([]);
   const [receptionStatusFilter, setReceptionStatusFilter] = useState<string[]>([]);
   const [receptionDoneOnlyFilter, setReceptionDoneOnlyFilter] = useState(false);
+  const [receptionRoomTypeFilter, setReceptionRoomTypeFilter] = useState<string[]>([]);
   const [noteDraft, setNoteDraft] = useState<Record<number, string>>({});
   const [notesSheetRoom, setNotesSheetRoom] = useState<number | null>(null);
   const [receptionSheetRoom, setReceptionSheetRoom] = useState<number | null>(null);
