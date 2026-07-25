@@ -796,13 +796,14 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
     message: string;
     status: "open" | "collected" | "discarded";
     created_at: string;
+    photo_paths?: string[] | null;
   };
   const lostPropertyQ = useQuery({
     queryKey: ["lost_property_lite"],
     queryFn: async (): Promise<LostPropertyLite[]> => {
       const { data, error } = await supabase
         .from("lost_property" as never)
-        .select("id,room_number,message,status,created_at,deleted_at")
+        .select("id,room_number,message,status,created_at,deleted_at,photo_paths")
         .is("deleted_at", null)
         .eq("status", "open")
         .order("created_at", { ascending: false });
