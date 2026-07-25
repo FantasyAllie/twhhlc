@@ -286,9 +286,9 @@ export function UsersDialog({
     }
   }
 
-  async function onApprovePending(u: AppUserRow, subRoles: SubRole[]) {
+  async function onApprovePending(u: AppUserRow, sr: SubRole[]) {
     try {
-      await assignFn({ data: { id: u.id, position: "user", subRoles } });
+      await assignFn({ data: { id: u.id, position: "user", subRoles: sr } });
       toast.success("User approved");
       qc.invalidateQueries({ queryKey: ["app_users"] });
     } catch (err) {
