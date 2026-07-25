@@ -599,13 +599,25 @@ export const listPendingUsers = createServerFn({ method: "POST" })
  */
 export const approvePendingUser = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
-  .inputValidator((d: { id: string; subRole: SubRole }) => d)
+  .inputValidator(
+    (d: {
+      id: string;
+      subRoles: SubRole[];
+      position?: Exclude<Position, "pending">;
+      hotelIds?: string[];
+    }) => d,
+  )
   .handler(async ({ data, context }) => {
-    await assertAdminOrManager(context);
-    if (data.subRole !== "reception" && data.subRole !== "housekeeper" && data.subRole !== "fnb" && data.subRole !== "maintenance") {
-      throw new Error("Invalid sub-role");
-    }
-    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    const access = await getAdminAccess(context);
+    const { supabaseAdmin, isRegionalAdmin, activeHotelId } = access;
+    const subRoles = validateSubRoles(data.subRoles);
+    if (subRoles.length === 0) throw new Error("Pick at least one department");
+    const position: Exclude<Position, "pending"> = data.position
+      ? validatePosition(data.position)
+      : "user";
+    assertCanAssignPosition(access, position);
+
+    // Verify the target account is currently pending.
     const { data: existing, error: eErr } = await supabaseAdmin
       .from("user_roles")
       .select("role")
@@ -615,10 +627,41 @@ export const approvePendingUser = createServerFn({ method: "POST" })
     if (!roles.includes("pending")) {
       throw new Error("This account is not pending approval");
     }
+
+    // Scope hotel assignment: regional admins/developers may set any list;
+    // everyone else is locked to their own active hotel.
+    let nextHotelIds = Array.from(new Set((data.hotelIds ?? []).filter(Boolean)));
+    if (!isRegionalAdmin) {
+      if (!activeHotelId) throw new Error("Pick a hotel workspace first");
+      if (nextHotelIds.length > 0 && nextHotelIds.some((h) => h !== activeHotelId)) {
+        throw new Error("You can only assign your active hotel");
+      }
+      nextHotelIds = [activeHotelId];
+    }
+    if (nextHotelIds.length === 0) throw new Error("Assign at least one hotel");
+    const { data: hotels, error: hErr } = await supabaseAdmin
+      .from("hotels")
+      .select("id")
+      .in("id", nextHotelIds);
+    if (hErr) throw new Error(hErr.message);
+    if (((hotels ?? []) as { id: string }[]).length !== nextHotelIds.length) {
+      throw new Error("Hotel not found");
+    }
+
+    await supabaseAdmin.from("hotel_members").delete().eq("user_id", data.id);
+    await supabaseAdmin
+      .from("hotel_members")
+      .insert(nextHotelIds.map((h) => ({ user_id: data.id, hotel_id: h })));
+    if (nextHotelIds.length === 1) {
+      await supabaseAdmin
+        .from("user_active_hotel")
+        .upsert({ user_id: data.id, hotel_id: nextHotelIds[0] }, { onConflict: "user_id" });
+    }
+
     await supabaseAdmin.from("user_roles").delete().eq("user_id", data.id);
     const { error } = await supabaseAdmin.from("user_roles").insert([
-      { user_id: data.id, role: "user" },
-      { user_id: data.id, role: data.subRole },
+      { user_id: data.id, role: position },
+      ...subRoles.map((r) => ({ user_id: data.id, role: r })),
     ]);
     if (error) throw new Error(error.message);
     return { ok: true };
