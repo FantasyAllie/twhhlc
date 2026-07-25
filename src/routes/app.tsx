@@ -6528,7 +6528,7 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
      const baseMeta = roomStateMeta[state];
      const hasStatus = !!(room?.reception_status_id ?? room?.default_status);
       const hasLinenCount = counts.some((c) => c.room_number === n && (c.count ?? 0) > 0);
-       const isNR = isStayover && receptionDoneSet.has(n);
+       const isNR = nrOnRooms.has(n);
       const meta = isStaffRoom
         ? { bg: "var(--room-staff)", fg: "var(--room-staff-fg)", accent: "var(--room-staff-accent)", label: "Staff" }
         : isRos
@@ -6640,7 +6640,7 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
         : roomStateMeta[state];
      const hasStatus = !!(room?.reception_status_id ?? room?.default_status);
       const hasLinenCount = counts.some((c) => c.room_number === n && (c.count ?? 0) > 0);
-       const isNR = isStayover && receptionDoneSet.has(n);
+       const isNR = nrOnRooms.has(n);
       const meta = isStaff
         ? { bg: "var(--room-staff)", fg: "var(--room-staff-fg)", accent: "var(--room-staff-accent)", label: "Staff" }
         : isRos
