@@ -3185,6 +3185,17 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
                     <div className="mt-1 text-[11px] text-muted-foreground">
                       {m.created_by_username ?? "Unknown"} · {fmt(m.created_at)}
                     </div>
+                    {Array.isArray(m.photo_paths) && m.photo_paths.length > 0 && (
+                      <div className="mt-2">
+                        <PhotoAttachments
+                          kind="maintenance"
+                          entryId={m.id}
+                          paths={m.photo_paths}
+                          canEdit={false}
+                          onChange={() => {}}
+                        />
+                      </div>
+                    )}
                   </li>
                 ))}
               </ul>
