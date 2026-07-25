@@ -1153,7 +1153,9 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
    const position = authUser?.position;
    const subRoles = authUser?.subRoles ?? [];
    const realIsRegionalAdmin = position === "regional_admin";
-   const realIsAdmin = position === "admin" || realIsRegionalAdmin;
+   const realIsDeveloper = position === "developer";
+   // Developers get full admin/regional rights everywhere.
+   const realIsAdmin = position === "admin" || realIsRegionalAdmin || realIsDeveloper;
    const realIsManager = position === "manager";
    const hasReceptionRole = subRoles.includes("reception");
    const hasHousekeeperRole = subRoles.includes("housekeeper");
