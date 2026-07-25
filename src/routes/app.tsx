@@ -4439,11 +4439,42 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
              )}
            <div className="mt-4 space-y-4">
              <div className="space-y-2">
-               <Row
-                 label="Mark as Done"
-                 selected={receptionDoneSet.has(n)}
-                 onClick={() => toggleReceptionDone(n)}
-               />
+                {(() => {
+                  const stayIdLocal = receptionStatuses.find((x) => x.label === "Stayover")?.id ?? null;
+                  const isDoneLocal = receptionDoneSet.has(n);
+                  const isStayoverLocal = !!stayIdLocal && occ === stayIdLocal;
+                  const isNR = isDoneLocal && isStayoverLocal;
+                  return (
+                    <div className="grid grid-cols-2 gap-1.5">
+                      <Row
+                        label="Mark as Done"
+                        selected={isDoneLocal && !isNR}
+                        onClick={() => {
+                          if (isNR) {
+                            // Clearing NR: drop the auto-applied Stayover status too.
+                            setRoomReceptionStatus(n, null);
+                          }
+                          void toggleReceptionDone(n);
+                        }}
+                      />
+                      <Row
+                        label="Not Required"
+                        selected={isNR}
+                        onClick={() => {
+                          if (isNR) {
+                            setRoomReceptionStatus(n, null);
+                            void toggleReceptionDone(n);
+                            return;
+                          }
+                          if (stayIdLocal && !isStayoverLocal) {
+                            setRoomReceptionStatus(n, stayIdLocal);
+                          }
+                          if (!isDoneLocal) void toggleReceptionDone(n);
+                        }}
+                      />
+                    </div>
+                  );
+                })()}
              </div>
              <div className="space-y-2">
                <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">Status</p>
@@ -4460,9 +4491,9 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
                       const dirtyActive = !!dirtyId && occ === dirtyId;
                      const pairLabels: [string, string][] = [
                        ["DND", "Stayover"],
-                       ["Dirty", "ROS"],
                      ];
-                     const topLabels = ["Arrival", "Clean", "Staff"];
+                      const topLabels = ["Arrival", "Clean"];
+                      const tripleLabels = ["Dirty", "Staff", "ROS"];
                      const findStatus = (lbl: string) =>
                        receptionStatuses.find(
                          (x) => x.label.toLowerCase() === lbl.toLowerCase(),
@@ -4474,6 +4505,11 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
                        if (sa) pairedIds.add(sa.id);
                        if (sb) pairedIds.add(sb.id);
                      });
+                      const tripleIds = new Set<string>();
+                      tripleLabels.forEach((lbl) => {
+                        const s = findStatus(lbl);
+                        if (s) tripleIds.add(s.id);
+                      });
                      const topIds = new Set<string>();
                      topLabels.forEach((lbl) => {
                        const s = findStatus(lbl);
@@ -4538,8 +4574,20 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
                          </div>,
                        );
                      });
+                      {
+                        const tripleNodes = tripleLabels.map((lbl) => findStatus(lbl));
+                        if (tripleNodes.some((s) => s)) {
+                          nodes.push(
+                            <div key="triple-dirty-staff-ros" className="grid grid-cols-3 gap-1.5">
+                              {tripleNodes.map((s, i) =>
+                                s ? renderRow(s) : <div key={`triple-empty-${i}`} />,
+                              )}
+                            </div>,
+                          );
+                        }
+                      }
                      receptionStatuses.forEach((s) => {
-                       if (pairedIds.has(s.id) || topIds.has(s.id)) return;
+                        if (pairedIds.has(s.id) || topIds.has(s.id) || tripleIds.has(s.id)) return;
                        nodes.push(renderRow(s));
                      });
                      return nodes;
@@ -6471,10 +6519,13 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
      const baseMeta = roomStateMeta[state];
      const hasStatus = !!(room?.reception_status_id ?? room?.default_status);
       const hasLinenCount = counts.some((c) => c.room_number === n && (c.count ?? 0) > 0);
+       const isNR = isStayover && receptionDoneSet.has(n);
       const meta = isStaffRoom
         ? { bg: "var(--room-staff)", fg: "var(--room-staff-fg)", accent: "var(--room-staff-accent)", label: "Staff" }
         : isRos
           ? { bg: "var(--room-staff)", fg: "var(--room-staff-fg)", accent: "var(--room-staff-accent)", label: "ROS" }
+         : isNR
+           ? { bg: "var(--room-stayover)", fg: "var(--room-stayover-fg)", accent: "var(--room-stayover-accent)", label: "Not Required" }
         : (isStayover || isDnd)
           ? { bg: "var(--room-stayover)", fg: "var(--room-stayover-fg)", accent: "var(--room-stayover-accent)", label: "Stayover" }
         : (state === "done" || state === "complete")
@@ -6518,6 +6569,14 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
                     DND
                   </span>
                 )}
+                  {isNR && (
+                    <span
+                      aria-label="Not Required"
+                      className="text-sm sm:text-base font-bold leading-none"
+                    >
+                      NR
+                    </span>
+                  )}
               </span>
               <span className="text-[9px] sm:text-[10px] md:text-xs font-medium leading-none opacity-90 whitespace-pre-line pr-4">
                  {meta.label}
@@ -6572,10 +6631,13 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
         : roomStateMeta[state];
      const hasStatus = !!(room?.reception_status_id ?? room?.default_status);
       const hasLinenCount = counts.some((c) => c.room_number === n && (c.count ?? 0) > 0);
+       const isNR = isStayover && receptionDoneSet.has(n);
       const meta = isStaff
         ? { bg: "var(--room-staff)", fg: "var(--room-staff-fg)", accent: "var(--room-staff-accent)", label: "Staff" }
         : isRos
           ? { bg: "var(--room-staff)", fg: "var(--room-staff-fg)", accent: "var(--room-staff-accent)", label: "ROS" }
+         : isNR
+           ? { bg: "var(--room-stayover)", fg: "var(--room-stayover-fg)", accent: "var(--room-stayover-accent)", label: "Not Required" }
         : (isStayover || isDnd)
           ? { bg: "var(--room-stayover)", fg: "var(--room-stayover-fg)", accent: "var(--room-stayover-accent)", label: "Stayover" }
         : (state === "done" || state === "complete")
@@ -6637,6 +6699,14 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
                DND
              </span>
            )}
+            {isNR && !isStaff && (
+              <span
+                aria-label="Not Required"
+                className="text-sm sm:text-base md:text-xl font-bold leading-none"
+              >
+                NR
+              </span>
+            )}
          </span>
           <span className="text-[9px] sm:text-[10px] md:text-xs font-medium leading-none opacity-90 whitespace-pre-line pr-4">
             {isStaff ? "Staff" : meta.label}
