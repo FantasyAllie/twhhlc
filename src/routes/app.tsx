@@ -801,7 +801,7 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
       return (data ?? []) as LostPropertyLite[];
     },
   });
-  const lostPropertyOpen = (lostPropertyQ.data ?? []) as LostPropertyLite[];
+  const lostPropertyOpenItems = (lostPropertyQ.data ?? []) as LostPropertyLite[];
 
   const templateAll = templateQ.data ?? [];
   const template = templateAll.filter((t) => (t.list_type ?? "housekeeping") === "housekeeping");
