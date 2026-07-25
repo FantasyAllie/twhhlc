@@ -831,6 +831,26 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
   const openMaintenanceCount = maintenanceRequests.filter((m) => !m.done).length;
   const hasOpenMaintenance = openMaintenanceCount > 0;
 
+  // Whether the housekeeping shift is complete — all eligible rooms are done.
+  // Used to reveal the "Mark shift as finished" shortcut and to hide the now
+  // redundant Linen totals / Room status items from the Export menu.
+  const isShiftComplete = (() => {
+    const statusLabelById = new Map(
+      receptionStatuses.map((s) => [s.id, s.label.toLowerCase()]),
+    );
+    const excluded = new Set(["staff", "ros", "staff/ros", "ros - staff"]);
+    const eligible = rooms.filter((r) => {
+      const sid = r.reception_status_id ?? r.default_status;
+      const lbl = sid ? (statusLabelById.get(sid) ?? sid).toLowerCase() : "";
+      if (excluded.has(lbl)) return false;
+      if (lbl === "dnd") return false;
+      return true;
+    });
+    const total = eligible.length;
+    const done = eligible.filter((r) => r.done || r.done_reception).length;
+    return total > 0 && done >= total;
+  })();
+
   const [newMessageText, setNewMessageText] = useState("");
 
   // Auto-assign the Double bed type to Double rooms so exports/status reflect the
@@ -3401,24 +3421,8 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
             )}
           </div>
  <div className="flex items-center gap-2">
-    {!isMobile && !isReception && !isMaintenance && !menuIsFnbOnly && (realIsAdmin || (realIsManager && hasHousekeeperRole)) && (() => {
-      const statusLabelById = new Map(
-        receptionStatuses.map((s) => [s.id, s.label.toLowerCase()]),
-      );
-      const excluded = new Set(["staff", "ros", "staff/ros", "ros - staff"]);
-      const eligible = rooms.filter((r) => {
-        const sid = r.reception_status_id ?? r.default_status;
-        const lbl = sid ? (statusLabelById.get(sid) ?? sid).toLowerCase() : "";
-        if (excluded.has(lbl)) return false;
-        if (lbl === "dnd") return false;
-        return true;
-      });
-      const total = eligible.length;
-      const done = eligible.filter((r) => r.done || r.done_reception).length;
-      const isShiftComplete = total > 0 && done >= total;
-      if (!isShiftComplete) return null;
-      return (
-        <Button
+    {!isMobile && !isReception && !isMaintenance && !menuIsFnbOnly && isShiftComplete && (realIsAdmin || (realIsManager && hasHousekeeperRole)) && (
+      <Button
           size="sm"
           className="bg-emerald-600 hover:bg-emerald-700 text-white"
           onClick={async () => {
@@ -3431,9 +3435,8 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
         >
           <Check className="h-4 w-4 mr-2" />
           Mark shift as finished
-        </Button>
-      );
-    })()}
+      </Button>
+    )}
     {!isMobile && isAdmin && !isReception && (isMobile ? (
       <Sheet open={exportSheetOpen} onOpenChange={setExportSheetOpen}>
         <SheetTrigger asChild>
@@ -3445,15 +3448,17 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
             <SheetDescription>Choose what to export.</SheetDescription>
           </SheetHeader>
           <div className="mt-4 grid gap-2">
-            <Button
-              variant="outline"
-              size="lg"
-              className="justify-start h-12"
-              onClick={() => { setExportSheetOpen(false); openExport(); }}
-            >
-              <List className="h-5 w-5 mr-2" />
-              Linen totals
-            </Button>
+            {!isShiftComplete && (
+              <Button
+                variant="outline"
+                size="lg"
+                className="justify-start h-12"
+                onClick={() => { setExportSheetOpen(false); openExport(); }}
+              >
+                <List className="h-5 w-5 mr-2" />
+                Linen totals
+              </Button>
+            )}
             {todayIsDeliveryDay && (
               <Button
                 variant="outline"
@@ -3465,15 +3470,17 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
                 Delivery linen totals
               </Button>
             )}
-            <Button
-              variant="outline"
-              size="lg"
-              className="justify-start h-12"
-              onClick={() => { setExportSheetOpen(false); openRoomStatusExport(); }}
-            >
-              <ClipboardList className="h-5 w-5 mr-2" />
-              Room status
-            </Button>
+            {!isShiftComplete && (
+              <Button
+                variant="outline"
+                size="lg"
+                className="justify-start h-12"
+                onClick={() => { setExportSheetOpen(false); openRoomStatusExport(); }}
+              >
+                <ClipboardList className="h-5 w-5 mr-2" />
+                Room status
+              </Button>
+            )}
             <Button
               variant="outline"
               size="lg"
@@ -3494,20 +3501,24 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
         <DropdownMenuContent align="end" className="w-56">
           <DropdownMenuLabel>Export</DropdownMenuLabel>
           <DropdownMenuSeparator />
-          <DropdownMenuItem onClick={() => openExport()}>
-            <List className="h-4 w-4 mr-2" />
-            Linen totals
-          </DropdownMenuItem>
+          {!isShiftComplete && (
+            <DropdownMenuItem onClick={() => openExport()}>
+              <List className="h-4 w-4 mr-2" />
+              Linen totals
+            </DropdownMenuItem>
+          )}
           {todayIsDeliveryDay && (
             <DropdownMenuItem onClick={() => openDeliveryLinenTotals()}>
               <List className="h-4 w-4 mr-2" />
               Delivery linen totals
             </DropdownMenuItem>
           )}
-          <DropdownMenuItem onClick={() => openRoomStatusExport()}>
-            <ClipboardList className="h-4 w-4 mr-2" />
-            Room status
-          </DropdownMenuItem>
+          {!isShiftComplete && (
+            <DropdownMenuItem onClick={() => openRoomStatusExport()}>
+              <ClipboardList className="h-4 w-4 mr-2" />
+              Room status
+            </DropdownMenuItem>
+          )}
           <DropdownMenuItem onClick={() => void openFnbExport()}>
             <List className="h-4 w-4 mr-2" />
             F&amp;B Linen totals
@@ -3543,15 +3554,130 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
         Help
       </Button>
     )}
-  <Button variant="ghost" size="sm" aria-label="Menu" onClick={() => setMenuSheetOpen(true)} className="relative">
-    <Menu className="h-4 w-4" />
-    {hasOpenMaintenance && (
-      <span
-        aria-label={`${openMaintenanceCount} open maintenance request${openMaintenanceCount === 1 ? "" : "s"}`}
-        className="absolute -top-0.5 -right-0.5 h-2.5 w-2.5 rounded-full bg-amber-500 ring-2 ring-background"
-      />
-    )}
-  </Button>
+  {isMobile ? (
+    <Button variant="ghost" size="sm" aria-label="Menu" onClick={() => setMenuSheetOpen(true)} className="relative">
+      <Menu className="h-4 w-4" />
+      {hasOpenMaintenance && (
+        <span
+          aria-label={`${openMaintenanceCount} open maintenance request${openMaintenanceCount === 1 ? "" : "s"}`}
+          className="absolute -top-0.5 -right-0.5 h-2.5 w-2.5 rounded-full bg-amber-500 ring-2 ring-background"
+        />
+      )}
+    </Button>
+  ) : (
+    <DropdownMenu>
+      <DropdownMenuTrigger asChild>
+        <Button variant="ghost" size="sm" aria-label="Menu" className="relative">
+          <Menu className="h-4 w-4" />
+          {hasOpenMaintenance && (
+            <span
+              aria-label={`${openMaintenanceCount} open maintenance request${openMaintenanceCount === 1 ? "" : "s"}`}
+              className="absolute -top-0.5 -right-0.5 h-2.5 w-2.5 rounded-full bg-amber-500 ring-2 ring-background"
+            />
+          )}
+        </Button>
+      </DropdownMenuTrigger>
+      <DropdownMenuContent align="end" className="w-64">
+        {(((menuHasHk || menuHasFnb) && !isMaintenance) || (menuIsAdmin && !isMaintenance) || ((realIsAdmin || (realIsManager && hasHousekeeperRole)) && !isMaintenance)) && (
+          <>
+            <DropdownMenuLabel>Manage</DropdownMenuLabel>
+            {(menuHasHk || menuHasFnb) && !isMaintenance && (
+              <DropdownMenuItem onClick={() => setTemplateOpen(true)}>
+                <List className="h-4 w-4 mr-2" /> Linen List
+              </DropdownMenuItem>
+            )}
+            {menuIsAdmin && !isMaintenance && (
+              <>
+                <DropdownMenuItem onClick={() => setManageRoomsOpen(true)}>
+                  <Hash className="h-4 w-4 mr-2" /> Manage Rooms
+                </DropdownMenuItem>
+                <DropdownMenuItem onClick={() => setRejectsOpen(true)}>
+                  <Ban className="h-4 w-4 mr-2" /> Rejects
+                </DropdownMenuItem>
+                {!isReception && (
+                  <DropdownMenuItem onClick={() => setHistorySheetOpen(true)}>
+                    <History className="h-4 w-4 mr-2" /> History
+                  </DropdownMenuItem>
+                )}
+                <DropdownMenuItem onClick={() => setQuickReceptionOpen(true)}>
+                  <ConciergeBell className="h-4 w-4 mr-2" /> Bulk Room Status Setup
+                </DropdownMenuItem>
+              </>
+            )}
+            {(realIsAdmin || (realIsManager && hasHousekeeperRole)) && !isMaintenance && (
+              <DropdownMenuItem onClick={() => setLinenDeliveryOpen(true)}>
+                <List className="h-4 w-4 mr-2" /> Linen delivery days
+              </DropdownMenuItem>
+            )}
+            <DropdownMenuSeparator />
+          </>
+        )}
+        {((!menuIsFnbOnly && !isMaintenance) || (menuCanUseLostProperty && !isMaintenance) || canUseMessages || ((menuIsAdmin || hasHousekeeperRole || hasReceptionRole) && !isMaintenance)) && (
+          <>
+            <DropdownMenuLabel>Utilities</DropdownMenuLabel>
+            {!menuIsFnbOnly && !isMaintenance && (
+              <DropdownMenuItem onClick={() => setMaintenanceLogOpen(true)}>
+                <Wrench className="h-4 w-4 mr-2" />
+                <span className="flex-1">Maintenance Log</span>
+                {hasOpenMaintenance && (
+                  <span className="ml-2 h-2 w-2 rounded-full bg-amber-500" aria-hidden />
+                )}
+              </DropdownMenuItem>
+            )}
+            {menuCanUseLostProperty && !isMaintenance && (
+              <DropdownMenuItem onClick={() => setLostPropertyOpen(true)}>
+                <PackageSearch className="h-4 w-4 mr-2" /> Lost Property
+              </DropdownMenuItem>
+            )}
+            {(menuIsAdmin || hasHousekeeperRole || hasReceptionRole) && !isMaintenance && (
+              <DropdownMenuItem
+                onClick={() => {
+                  setStayoverPhotosRoomFilter(undefined);
+                  setStayoverPhotosOpen(true);
+                }}
+              >
+                <Camera className="h-4 w-4 mr-2" /> Stayover Photos
+              </DropdownMenuItem>
+            )}
+            {canUseMessages && (
+              <DropdownMenuItem onClick={() => { setMessagesInitial({}); setMessagesSheetOpen(true); }}>
+                <MessageSquare className="h-4 w-4 mr-2" /> Messages
+              </DropdownMenuItem>
+            )}
+            <DropdownMenuSeparator />
+          </>
+        )}
+        <DropdownMenuLabel>Appearance</DropdownMenuLabel>
+        <DropdownMenuItem onClick={() => toggleTheme()}>
+          {theme === "dark" ? <Sun className="h-4 w-4 mr-2" /> : <Moon className="h-4 w-4 mr-2" />}
+          {theme === "dark" ? "Light mode" : "Dark mode"}
+        </DropdownMenuItem>
+        <DropdownMenuSeparator />
+        <DropdownMenuLabel>Account</DropdownMenuLabel>
+        {(availableHotels.length > 1 || realIsAdmin) && (
+          <DropdownMenuItem onClick={() => setHotelSwitcherOpen(true)}>
+            <RotateCcw className="h-4 w-4 mr-2" /> Switch hotel
+          </DropdownMenuItem>
+        )}
+        {(realIsAdmin || realIsManager) && !isMaintenance && (
+          <DropdownMenuItem onClick={() => setUsersOpen(true)}>
+            <Users className="h-4 w-4 mr-2" /> Users
+          </DropdownMenuItem>
+        )}
+        {!menuIsFnbOnly && (
+          <DropdownMenuItem onClick={() => setNotificationsSheetOpen(true)}>
+            <Bell className="h-4 w-4 mr-2" /> Notifications
+          </DropdownMenuItem>
+        )}
+        <DropdownMenuItem onClick={() => setAccountOpen(true)}>
+          <User className="h-4 w-4 mr-2" /> Account
+        </DropdownMenuItem>
+        <DropdownMenuItem onClick={() => void signOut()} className="text-destructive focus:text-destructive">
+          <LogOut className="h-4 w-4 mr-2" /> Sign out
+        </DropdownMenuItem>
+      </DropdownMenuContent>
+    </DropdownMenu>
+  )}
  </div>
  </header>
 
