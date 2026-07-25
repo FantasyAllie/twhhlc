@@ -6494,7 +6494,7 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
  <div className="grid grid-cols-4 sm:grid-cols-6 md:grid-cols-7 lg:grid-cols-8 xl:grid-cols-10 gap-2 md:gap-3">
  {(() => {
   const allRooms = rooms.map((r) => r.room_number);
-    const visibleRooms = (isReception && (receptionFeatureFilter.length > 0 || receptionStatusFilter.length > 0 || receptionRoomTypeFilter.length > 0 || receptionDoneOnlyFilter))
+    let visibleRooms = (isReception && (receptionFeatureFilter.length > 0 || receptionStatusFilter.length > 0 || receptionRoomTypeFilter.length > 0 || receptionDoneOnlyFilter))
     ? allRooms.filter((n) => {
          const rd = rooms.find((x) => x.room_number === n);
          if (receptionDoneOnlyFilter) {
@@ -6517,6 +6517,9 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
         return statusId !== null && receptionStatusFilter.includes(statusId);
       })
     : allRooms;
+   if (!isReception && hideCompletedRooms) {
+     visibleRooms = visibleRooms.filter((n) => !doneSet.has(n));
+   }
   const nodes: React.ReactNode[] = [];
    const dndStatusId = receptionStatuses.find((s) => s.label === "DND")?.id ?? null;
     const staffStatusIdGlobal = receptionStatuses.find(
