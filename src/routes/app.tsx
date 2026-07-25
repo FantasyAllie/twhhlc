@@ -449,6 +449,7 @@ type ViewRole = "admin" | "manager" | "user" | "reception" | "fnb" | "maintenanc
  const [templateOpen, setTemplateOpen] = useState(false);
 const [linenListType, setLinenListType] = useState<"housekeeping" | "fnb">("housekeeping");
 const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
+  const [nrOffRooms, setNrOffRooms] = useState<Set<number>>(new Set());
   const [newTemplateName, setNewTemplateName] = useState("");
   const [editingItemId, setEditingItemId] = useState<string | null>(null);
   const [editingItemName, setEditingItemName] = useState("");
@@ -3006,7 +3007,7 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
   };
   return (
   <div className="border rounded-md bg-muted/30 flex flex-col min-h-0 flex-1 overflow-hidden">
-    <div className="p-4 space-y-4 flex-1 min-h-0 overflow-y-auto">
+    <div className={cn("p-4 space-y-4", isReception ? "flex-1 min-h-0 overflow-y-auto" : "shrink-0")}>
 
     {/* Reception messages */}
     {(() => {
@@ -4443,37 +4444,16 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
                   const stayIdLocal = receptionStatuses.find((x) => x.label === "Stayover")?.id ?? null;
                   const isDoneLocal = receptionDoneSet.has(n);
                   const isStayoverLocal = !!stayIdLocal && occ === stayIdLocal;
-                  const isNR = isDoneLocal && isStayoverLocal;
-                  return (
-                    <div className="grid grid-cols-2 gap-1.5">
-                      <Row
-                        label="Mark as Done"
-                        selected={isDoneLocal && !isNR}
-                        onClick={() => {
-                          if (isNR) {
-                            // Clearing NR: drop the auto-applied Stayover status too.
-                            setRoomReceptionStatus(n, null);
-                          }
-                          void toggleReceptionDone(n);
-                        }}
-                      />
-                      <Row
-                        label="Not Required"
-                        selected={isNR}
-                        onClick={() => {
-                          if (isNR) {
-                            setRoomReceptionStatus(n, null);
-                            void toggleReceptionDone(n);
-                            return;
-                          }
-                          if (stayIdLocal && !isStayoverLocal) {
-                            setRoomReceptionStatus(n, stayIdLocal);
-                          }
-                          if (!isDoneLocal) void toggleReceptionDone(n);
-                        }}
-                      />
-                    </div>
-                  );
+                   void stayIdLocal; void isStayoverLocal;
+                   return (
+                     <Row
+                       label="Mark as Done"
+                       selected={isDoneLocal}
+                       onClick={() => {
+                         void toggleReceptionDone(n);
+                       }}
+                     />
+                   );
                 })()}
              </div>
              <div className="space-y-2">
@@ -4489,22 +4469,16 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
                       const rosId = receptionStatuses.find((x) => x.label === "ROS")?.id ?? null;
                      const dndActive = !!dndId && occ === dndId;
                       const dirtyActive = !!dirtyId && occ === dirtyId;
-                     const pairLabels: [string, string][] = [
-                       ["DND", "Stayover"],
-                     ];
                       const topLabels = ["Arrival", "Clean"];
                       const tripleLabels = ["Dirty", "Staff", "ROS"];
                      const findStatus = (lbl: string) =>
                        receptionStatuses.find(
                          (x) => x.label.toLowerCase() === lbl.toLowerCase(),
                        ) ?? null;
-                     const pairedIds = new Set<string>();
-                     pairLabels.forEach(([a, b]) => {
-                       const sa = findStatus(a);
-                       const sb = findStatus(b);
-                       if (sa) pairedIds.add(sa.id);
-                       if (sb) pairedIds.add(sb.id);
-                     });
+                      const dndStayIds = new Set<string>();
+                      [findStatus("DND"), findStatus("Stayover")].forEach((s) => {
+                        if (s) dndStayIds.add(s.id);
+                      });
                       const tripleIds = new Set<string>();
                       tripleLabels.forEach((lbl) => {
                         const s = findStatus(lbl);
@@ -4563,17 +4537,51 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
                        const s = findStatus(lbl);
                        if (s) nodes.push(renderRow(s));
                      });
-                     pairLabels.forEach(([a, b]) => {
-                       const sa = findStatus(a);
-                       const sb = findStatus(b);
-                       if (!sa && !sb) return;
-                       nodes.push(
-                         <div key={`pair-${a}-${b}`} className="grid grid-cols-2 gap-1.5">
-                           {sa ? renderRow(sa) : <div />}
-                           {sb ? renderRow(sb) : <div />}
-                         </div>,
-                       );
-                     });
+                      {
+                        const sDnd = findStatus("DND");
+                        const sStay = findStatus("Stayover");
+                        const stayIdLocal = sStay?.id ?? null;
+                        const isDoneLocal = receptionDoneSet.has(n);
+                        const isStayoverLocal = !!stayIdLocal && occ === stayIdLocal;
+                        const nrOff = nrOffRooms.has(n);
+                        const isNR = isDoneLocal && isStayoverLocal && !nrOff;
+                        const onNrClick = () => {
+                          if (isNR) {
+                            // Uncheck NR indicator only — keep Mark as Done and
+                            // Stayover flags in place.
+                            setNrOffRooms((prev) => {
+                              const next = new Set(prev);
+                              next.add(n);
+                              return next;
+                            });
+                            return;
+                          }
+                          // Enable Stayover + Mark as Done, clear any nr-off override.
+                          setNrOffRooms((prev) => {
+                            if (!prev.has(n)) return prev;
+                            const next = new Set(prev);
+                            next.delete(n);
+                            return next;
+                          });
+                          if (stayIdLocal && !isStayoverLocal) {
+                            setRoomReceptionStatus(n, stayIdLocal);
+                          }
+                          if (!isDoneLocal) void toggleReceptionDone(n);
+                        };
+                        if (sDnd || sStay) {
+                          nodes.push(
+                            <div key="triple-dnd-nr-stay" className="grid grid-cols-3 gap-1.5">
+                              {sDnd ? renderRow(sDnd) : <div />}
+                              <Row
+                                label="Not Required"
+                                selected={isNR}
+                                onClick={onNrClick}
+                              />
+                              {sStay ? renderRow(sStay) : <div />}
+                            </div>,
+                          );
+                        }
+                      }
                       {
                         const tripleNodes = tripleLabels.map((lbl) => findStatus(lbl));
                         if (tripleNodes.some((s) => s)) {
@@ -4587,7 +4595,7 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
                         }
                       }
                      receptionStatuses.forEach((s) => {
-                        if (pairedIds.has(s.id) || topIds.has(s.id) || tripleIds.has(s.id)) return;
+                         if (dndStayIds.has(s.id) || topIds.has(s.id) || tripleIds.has(s.id)) return;
                        nodes.push(renderRow(s));
                      });
                      return nodes;
