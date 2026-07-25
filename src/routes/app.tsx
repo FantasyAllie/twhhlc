@@ -3007,7 +3007,7 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
   };
   return (
   <div className="border rounded-md bg-muted/30 flex flex-col min-h-0 flex-1 overflow-hidden">
-    <div className="p-4 space-y-4 flex-1 min-h-0 overflow-y-auto">
+    <div className={cn("p-4 space-y-4", isReception ? "flex-1 min-h-0 overflow-y-auto" : "shrink-0")}>
 
     {/* Reception messages */}
     {(() => {
