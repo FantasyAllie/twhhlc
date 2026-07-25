@@ -6519,10 +6519,13 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
      const baseMeta = roomStateMeta[state];
      const hasStatus = !!(room?.reception_status_id ?? room?.default_status);
       const hasLinenCount = counts.some((c) => c.room_number === n && (c.count ?? 0) > 0);
+       const isNR = isStayover && receptionDoneSet.has(n);
       const meta = isStaffRoom
         ? { bg: "var(--room-staff)", fg: "var(--room-staff-fg)", accent: "var(--room-staff-accent)", label: "Staff" }
         : isRos
           ? { bg: "var(--room-staff)", fg: "var(--room-staff-fg)", accent: "var(--room-staff-accent)", label: "ROS" }
+         : isNR
+           ? { bg: "var(--room-stayover)", fg: "var(--room-stayover-fg)", accent: "var(--room-stayover-accent)", label: "Not Required" }
         : (isStayover || isDnd)
           ? { bg: "var(--room-stayover)", fg: "var(--room-stayover-fg)", accent: "var(--room-stayover-accent)", label: "Stayover" }
         : (state === "done" || state === "complete")
@@ -6566,6 +6569,14 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
                     DND
                   </span>
                 )}
+                  {isNR && (
+                    <span
+                      aria-label="Not Required"
+                      className="text-sm sm:text-base font-bold leading-none"
+                    >
+                      NR
+                    </span>
+                  )}
               </span>
               <span className="text-[9px] sm:text-[10px] md:text-xs font-medium leading-none opacity-90 whitespace-pre-line pr-4">
                  {meta.label}
