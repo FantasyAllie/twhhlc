@@ -6151,7 +6151,11 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
  Rooms
  </h2>
      {isReception && (() => {
-         const totalSelected = receptionFeatureFilter.length + receptionStatusFilter.length + (receptionDoneOnlyFilter ? 1 : 0);
+          const totalSelected =
+            receptionFeatureFilter.length +
+            receptionStatusFilter.length +
+            receptionRoomTypeFilter.length +
+            (receptionDoneOnlyFilter ? 1 : 0);
          const statusFilterLabels: string[] = ["Stayover", "Arrival", "Dirty", "Clean"];
          const statusFilterOptions = statusFilterLabels
            .map((label) => {
@@ -6161,7 +6165,14 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
              return match ? { id: match.id, label } : null;
            })
            .filter((v): v is { id: string; label: string } => v !== null);
+          const clearAllFilters = () => {
+            setReceptionFeatureFilter([]);
+            setReceptionStatusFilter([]);
+            setReceptionRoomTypeFilter([]);
+            setReceptionDoneOnlyFilter(false);
+          };
        return (
+          <div className="flex items-center gap-2">
         <Popover open={filtersSheetOpen} onOpenChange={setFiltersSheetOpen}>
           <PopoverTrigger asChild>
             <Button variant="outline" size="sm" className="h-7 gap-1.5 text-xs">
@@ -6213,6 +6224,32 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
                   </div>
                 </div>
               )}
+                {roomTypes.length > 0 && (
+                  <div className="space-y-2">
+                    <p className="text-xs font-medium text-muted-foreground uppercase tracking-wide">Room type</p>
+                    <div className="grid gap-1">
+                      {roomTypes.map((rt) => {
+                        const checked = receptionRoomTypeFilter.includes(rt.value);
+                        return (
+                          <label
+                            key={rt.id}
+                            className="flex items-center gap-2 py-1.5 px-2 rounded-md hover:bg-muted cursor-pointer"
+                          >
+                            <Checkbox
+                              checked={checked}
+                              onCheckedChange={(c) => {
+                                setReceptionRoomTypeFilter((prev) =>
+                                  c ? [...prev, rt.value] : prev.filter((v) => v !== rt.value),
+                                );
+                              }}
+                            />
+                            <span className="text-sm flex-1">{rt.label}</span>
+                          </label>
+                        );
+                      })}
+                    </div>
+                  </div>
+                )}
               {roomFeatures.length > 0 && (
                 <div className="space-y-2">
                   <p className="text-xs font-medium text-muted-foreground uppercase tracking-wide">Features</p>
@@ -6241,47 +6278,74 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
                   </div>
                 </div>
               )}
-              {totalSelected > 0 && (
-                <Button
-                  variant="outline"
-                  size="sm"
-                  className="w-full"
-                  onClick={() => {
-                    setReceptionFeatureFilter([]);
-                    setReceptionStatusFilter([]);
-                    setReceptionDoneOnlyFilter(false);
-                  }}
-                >
-                  <X className="h-4 w-4 mr-2" />
-                  Clear filters
-                </Button>
-              )}
             </div>
           </PopoverContent>
         </Popover>
+          {totalSelected > 0 && (
+            <Button
+              variant="ghost"
+              size="sm"
+              className="h-7 gap-1 text-xs text-muted-foreground hover:text-foreground"
+              onClick={clearAllFilters}
+              aria-label="Clear filters"
+            >
+              <X className="h-3.5 w-3.5" />
+              Clear
+            </Button>
+          )}
+          </div>
       );
     })()}
-   {!isReception && (
-    <button
-      type="button"
-      onClick={resetAll}
-      className="text-xs text-muted-foreground hover:text-foreground underline underline-offset-4"
-    >
-      Reset all
-    </button>
-  )}
+    {!isReception && (
+     <button
+       type="button"
+       onClick={resetAll}
+       className="text-xs text-muted-foreground hover:text-foreground underline underline-offset-4"
+     >
+       Reset all
+     </button>
+   )}
+    {isReception && (() => {
+      // Reception can reset their own selections (status/bed) once per day
+      // after 7am, but only if Housekeeping hasn't already done a full reset.
+      const now = new Date();
+      if (now.getHours() < 7) return null;
+      const hkResetIso = currentHotelQ.data?.last_hk_reset_at ?? null;
+      if (hkResetIso) {
+        const hk = new Date(hkResetIso);
+        const startOfToday = new Date();
+        startOfToday.setHours(0, 0, 0, 0);
+        if (hk.getTime() >= startOfToday.getTime()) return null;
+      }
+      return (
+        <button
+          type="button"
+          onClick={resetReceptionAll}
+          className="text-xs text-muted-foreground hover:text-foreground underline underline-offset-4"
+        >
+          Reset all
+        </button>
+      );
+    })()}
  </div>
 
  {/* On-screen interactive accordion */}
  <div className="grid grid-cols-4 sm:grid-cols-6 md:grid-cols-7 lg:grid-cols-8 xl:grid-cols-10 gap-2 md:gap-3">
  {(() => {
   const allRooms = rooms.map((r) => r.room_number);
-   const visibleRooms = (isReception && (receptionFeatureFilter.length > 0 || receptionStatusFilter.length > 0 || receptionDoneOnlyFilter))
+    const visibleRooms = (isReception && (receptionFeatureFilter.length > 0 || receptionStatusFilter.length > 0 || receptionRoomTypeFilter.length > 0 || receptionDoneOnlyFilter))
     ? allRooms.filter((n) => {
-        if (receptionDoneOnlyFilter) {
-          const rd = rooms.find((x) => x.room_number === n);
-          if (!rd?.done) return false;
-        }
+         const rd = rooms.find((x) => x.room_number === n);
+         if (receptionDoneOnlyFilter) {
+           // Reception considers a room "done" if reception has confirmed it,
+           // OR housekeeping has marked it done. Previously this only checked
+           // `done` which missed rooms reception had just confirmed.
+           if (!(rd?.done_reception || rd?.done)) return false;
+         }
+         if (receptionRoomTypeFilter.length > 0) {
+           const cats = parseCats(rd?.category);
+           if (!receptionRoomTypeFilter.some((v) => cats.includes(v as Category))) return false;
+         }
         const featuresOk = receptionFeatureFilter.every((fid) =>
           roomFeatureAssignments.some((a) => a.feature_id === fid && a.room_number === n),
         );
