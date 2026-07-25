@@ -3401,6 +3401,39 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
             )}
           </div>
  <div className="flex items-center gap-2">
+    {!isMobile && !isReception && !isMaintenance && !menuIsFnbOnly && (realIsAdmin || (realIsManager && hasHousekeeperRole)) && (() => {
+      const statusLabelById = new Map(
+        receptionStatuses.map((s) => [s.id, s.label.toLowerCase()]),
+      );
+      const excluded = new Set(["staff", "ros", "staff/ros", "ros - staff"]);
+      const eligible = rooms.filter((r) => {
+        const sid = r.reception_status_id ?? r.default_status;
+        const lbl = sid ? (statusLabelById.get(sid) ?? sid).toLowerCase() : "";
+        if (excluded.has(lbl)) return false;
+        if (lbl === "dnd") return false;
+        return true;
+      });
+      const total = eligible.length;
+      const done = eligible.filter((r) => r.done || r.done_reception).length;
+      const isShiftComplete = total > 0 && done >= total;
+      if (!isShiftComplete) return null;
+      return (
+        <Button
+          size="sm"
+          className="bg-emerald-600 hover:bg-emerald-700 text-white"
+          onClick={async () => {
+            const { rows: linenRows } = computeTotals();
+            if (linenRows.length > 0) {
+              await proceedExport("totals");
+            }
+            await proceedExport("room_status");
+          }}
+        >
+          <Check className="h-4 w-4 mr-2" />
+          Mark shift as finished
+        </Button>
+      );
+    })()}
     {!isMobile && isAdmin && !isReception && (isMobile ? (
       <Sheet open={exportSheetOpen} onOpenChange={setExportSheetOpen}>
         <SheetTrigger asChild>
