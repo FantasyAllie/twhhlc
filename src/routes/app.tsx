@@ -6307,7 +6307,7 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
    </section>
  ) : (
  <section className="space-y-4">
- <div className="flex items-baseline justify-between">
+ <div className="relative flex items-center justify-between">
  <h2 className="text-sm font-medium text-muted-foreground uppercase tracking-wide">
  Rooms
  </h2>
@@ -6458,25 +6458,27 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
       );
     })()}
     {!isReception && (
-     <div className="flex items-center gap-2">
+     <>
        <Button
          variant="outline"
          size="sm"
-         className="h-7 gap-1.5 text-xs"
+         className="h-7 gap-1.5 text-xs absolute left-1/2 -translate-x-1/2"
          onClick={() => setHideCompletedRooms((v) => !v)}
          aria-pressed={hideCompletedRooms}
        >
          {hideCompletedRooms ? <EyeOff className="h-3.5 w-3.5" /> : <Eye className="h-3.5 w-3.5" />}
          {hideCompletedRooms ? "Show completed" : "Hide completed"}
        </Button>
-       <button
-         type="button"
+       <Button
+         variant="outline"
+         size="sm"
+         className="h-7 gap-1.5 text-xs"
          onClick={resetAll}
-         className="text-xs text-muted-foreground hover:text-foreground underline underline-offset-4"
        >
+         <RotateCcw className="h-3.5 w-3.5" />
          Reset all
-       </button>
-     </div>
+       </Button>
+     </>
    )}
     {isReception && (() => {
       // Reception can reset their own selections (status/bed) once per day
