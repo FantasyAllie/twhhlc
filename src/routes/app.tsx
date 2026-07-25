@@ -4643,7 +4643,7 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
   //   "reception" → hide the housekeeping "marked done" toggle
   //   "user"      → hide the reception message/checkout toggles
   let bucket: "admin" | "user" | "reception" | "maintenance" = "admin";
-  if (authUser.position === "regional_admin" || authUser.position === "admin" || authUser.position === "manager") bucket = "admin";
+  if (authUser.position === "developer" || authUser.position === "regional_admin" || authUser.position === "admin" || authUser.position === "manager") bucket = "admin";
   else if (hasReceptionRole && hasHousekeeperRole) bucket = "admin";
   else if (hasReceptionRole) bucket = "reception";
   else if (hasHousekeeperRole) bucket = "user";
