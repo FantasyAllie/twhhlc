@@ -4439,11 +4439,42 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
              )}
            <div className="mt-4 space-y-4">
              <div className="space-y-2">
-               <Row
-                 label="Mark as Done"
-                 selected={receptionDoneSet.has(n)}
-                 onClick={() => toggleReceptionDone(n)}
-               />
+                {(() => {
+                  const stayIdLocal = receptionStatuses.find((x) => x.label === "Stayover")?.id ?? null;
+                  const isDoneLocal = receptionDoneSet.has(n);
+                  const isStayoverLocal = !!stayIdLocal && occ === stayIdLocal;
+                  const isNR = isDoneLocal && isStayoverLocal;
+                  return (
+                    <div className="grid grid-cols-2 gap-1.5">
+                      <Row
+                        label="Mark as Done"
+                        selected={isDoneLocal && !isNR}
+                        onClick={() => {
+                          if (isNR) {
+                            // Clearing NR: drop the auto-applied Stayover status too.
+                            setRoomReceptionStatus(n, null);
+                          }
+                          void toggleReceptionDone(n);
+                        }}
+                      />
+                      <Row
+                        label="Not Required"
+                        selected={isNR}
+                        onClick={() => {
+                          if (isNR) {
+                            setRoomReceptionStatus(n, null);
+                            void toggleReceptionDone(n);
+                            return;
+                          }
+                          if (stayIdLocal && !isStayoverLocal) {
+                            setRoomReceptionStatus(n, stayIdLocal);
+                          }
+                          if (!isDoneLocal) void toggleReceptionDone(n);
+                        }}
+                      />
+                    </div>
+                  );
+                })()}
              </div>
              <div className="space-y-2">
                <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">Status</p>
@@ -4460,9 +4491,9 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
                       const dirtyActive = !!dirtyId && occ === dirtyId;
                      const pairLabels: [string, string][] = [
                        ["DND", "Stayover"],
-                       ["Dirty", "ROS"],
                      ];
-                     const topLabels = ["Arrival", "Clean", "Staff"];
+                      const topLabels = ["Arrival", "Clean"];
+                      const tripleLabels = ["Dirty", "Staff", "ROS"];
                      const findStatus = (lbl: string) =>
                        receptionStatuses.find(
                          (x) => x.label.toLowerCase() === lbl.toLowerCase(),
@@ -4474,6 +4505,11 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
                        if (sa) pairedIds.add(sa.id);
                        if (sb) pairedIds.add(sb.id);
                      });
+                      const tripleIds = new Set<string>();
+                      tripleLabels.forEach((lbl) => {
+                        const s = findStatus(lbl);
+                        if (s) tripleIds.add(s.id);
+                      });
                      const topIds = new Set<string>();
                      topLabels.forEach((lbl) => {
                        const s = findStatus(lbl);
@@ -4538,8 +4574,20 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
                          </div>,
                        );
                      });
+                      {
+                        const tripleNodes = tripleLabels.map((lbl) => findStatus(lbl));
+                        if (tripleNodes.some((s) => s)) {
+                          nodes.push(
+                            <div key="triple-dirty-staff-ros" className="grid grid-cols-3 gap-1.5">
+                              {tripleNodes.map((s, i) =>
+                                s ? renderRow(s) : <div key={`triple-empty-${i}`} />,
+                              )}
+                            </div>,
+                          );
+                        }
+                      }
                      receptionStatuses.forEach((s) => {
-                       if (pairedIds.has(s.id) || topIds.has(s.id)) return;
+                        if (pairedIds.has(s.id) || topIds.has(s.id) || tripleIds.has(s.id)) return;
                        nodes.push(renderRow(s));
                      });
                      return nodes;
