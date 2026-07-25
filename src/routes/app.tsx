@@ -781,6 +781,28 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
     },
   });
 
+  type LostPropertyLite = {
+    id: string;
+    room_number: number | null;
+    message: string;
+    status: "open" | "collected" | "discarded";
+    created_at: string;
+  };
+  const lostPropertyQ = useQuery({
+    queryKey: ["lost_property_lite"],
+    queryFn: async (): Promise<LostPropertyLite[]> => {
+      const { data, error } = await supabase
+        .from("lost_property" as never)
+        .select("id,room_number,message,status,created_at,deleted_at")
+        .is("deleted_at", null)
+        .eq("status", "open")
+        .order("created_at", { ascending: false });
+      if (error) throw error;
+      return (data ?? []) as LostPropertyLite[];
+    },
+  });
+  const lostPropertyOpen = (lostPropertyQ.data ?? []) as LostPropertyLite[];
+
   const templateAll = templateQ.data ?? [];
   const template = templateAll.filter((t) => (t.list_type ?? "housekeeping") === "housekeeping");
   const templateFnbList = templateAll.filter((t) => t.list_type === "fnb");
