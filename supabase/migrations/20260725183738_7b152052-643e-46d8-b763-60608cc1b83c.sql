@@ -1,0 +1,1 @@
+ALTER TABLE public.lost_property ADD COLUMN IF NOT EXISTS found_by_department text;

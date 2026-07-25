@@ -28,6 +28,7 @@ type LostPropertyRow = {
   deleted_at: string | null;
   created_at: string;
   photo_paths: string[];
+  found_by_department: string | null;
 };
 
 export function LostPropertySheet({
@@ -127,6 +128,30 @@ export function LostPropertySheet({
     const monthsElapsed = (Date.now() - created) / (1000 * 60 * 60 * 24 * 30.44);
     return Math.max(0, retentionMonths - monthsElapsed);
   };
+  // Milliseconds until an item becomes discardable. Zero when already
+  // over the retention window (or when retention is disabled).
+  const msUntilDiscardable = (iso: string) => {
+    if (retentionMonths <= 0) return 0;
+    const created = new Date(iso).getTime();
+    const deadline = created + retentionMonths * 30.44 * 24 * 60 * 60 * 1000;
+    return Math.max(0, deadline - Date.now());
+  };
+  const formatCountdown = (ms: number) => {
+    const totalMinutes = Math.floor(ms / (60 * 1000));
+    const days = Math.floor(totalMinutes / (60 * 24));
+    const hours = Math.floor((totalMinutes % (60 * 24)) / 60);
+    const minutes = totalMinutes % 60;
+    if (days >= 1) return `${days}d ${hours}h left`;
+    if (hours >= 1) return `${hours}h ${minutes}m left`;
+    return `${Math.max(1, minutes)}m left`;
+  };
+  // Re-render every minute so countdowns tick.
+  const [, setTick] = useState(0);
+  useEffect(() => {
+    if (!open) return;
+    const t = window.setInterval(() => setTick((n) => n + 1), 60_000);
+    return () => window.clearInterval(t);
+  }, [open]);
 
   const q = useQuery({
     queryKey: ["lost_property"],
@@ -134,7 +159,7 @@ export function LostPropertySheet({
     queryFn: async (): Promise<LostPropertyRow[]> => {
       const { data, error } = await supabase
         .from("lost_property" as never)
-          .select("id,room_number,message,created_by_username,created_by_role,status,resolved_by_username,resolved_at,deleted_at,created_at,photo_paths")
+          .select("id,room_number,message,created_by_username,created_by_role,status,resolved_by_username,resolved_at,deleted_at,created_at,photo_paths,found_by_department")
         .is("deleted_at", null)
         .order("created_at", { ascending: false })
         .limit(500);
@@ -343,6 +368,11 @@ export function LostPropertySheet({
                       </span>
                     </div>
                     <p className="mt-1 text-sm whitespace-pre-wrap break-words">{r.message}</p>
+                    {r.found_by_department && (
+                      <span className="mt-1 inline-flex h-5 items-center rounded-full bg-muted text-muted-foreground px-2 text-[10px] font-semibold uppercase tracking-wide">
+                        Found by {r.found_by_department}
+                      </span>
+                    )}
                     <PhotoAttachments
                       kind="lost_property"
                       entryId={r.id}
@@ -397,17 +427,26 @@ export function LostPropertySheet({
                           Throw away
                         </Button>
                       ) : (
-                        <span className="text-[10px] text-muted-foreground text-center leading-tight">
-                          {(() => {
-                            const rem = monthsRemaining(r.created_at);
-                            if (rem >= 1) {
-                              const m = Math.ceil(rem);
-                              return `${m} month${m === 1 ? "" : "s"} left`;
-                            }
-                            const days = Math.max(1, Math.ceil(rem * 30.44));
-                            return `${days} day${days === 1 ? "" : "s"} left`;
-                          })()}
-                        </span>
+                        (() => {
+                          const ms = msUntilDiscardable(r.created_at);
+                          const urgent = ms > 0 && ms <= 24 * 60 * 60 * 1000;
+                          return (
+                            <span
+                              title={`Disposable ${new Date(
+                                new Date(r.created_at).getTime() +
+                                  retentionMonths * 30.44 * 24 * 60 * 60 * 1000,
+                              ).toLocaleString()}`}
+                              className={
+                                "text-[10px] text-center leading-tight " +
+                                (urgent
+                                  ? "text-destructive font-semibold"
+                                  : "text-muted-foreground")
+                              }
+                            >
+                              {formatCountdown(ms)}
+                            </span>
+                          );
+                        })()
                       )}
                     </div>
                   ) : (

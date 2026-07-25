@@ -112,6 +112,9 @@ export function UsersDialog({
 
   // Sort/filter Accounts by hotel. "" = show every hotel.
   const [accountsFilterHotelId, setAccountsFilterHotelId] = useState<string>("");
+  // Sort order for the Accounts list.
+  type AccountsSort = "newest" | "oldest" | "az" | "za";
+  const [accountsSort, setAccountsSort] = useState<AccountsSort>("newest");
 
   const myPos = me?.position;
   const isSuperAdmin = myPos === "admin";
@@ -505,7 +508,19 @@ export function UsersDialog({
             <section className="rounded-lg border bg-card">
               <div className="px-4 py-3 border-b flex items-center justify-between gap-2">
                 <div className="text-sm font-semibold">Accounts</div>
-                {hotels.length > 1 && (
+                <div className="flex items-center gap-2">
+                  <select
+                    aria-label="Sort accounts"
+                    className="h-8 rounded-md border bg-background px-2 text-xs"
+                    value={accountsSort}
+                    onChange={(e) => setAccountsSort(e.target.value as AccountsSort)}
+                  >
+                    <option value="newest">Newest → Oldest</option>
+                    <option value="oldest">Oldest → Newest</option>
+                    <option value="az">A → Z</option>
+                    <option value="za">Z → A</option>
+                  </select>
+                  {hotels.length > 1 && (
                   <DropdownMenu>
                     <DropdownMenuTrigger asChild>
                       <Button size="sm" variant="outline">
@@ -529,7 +544,8 @@ export function UsersDialog({
                       ))}
                     </DropdownMenuContent>
                   </DropdownMenu>
-                )}
+                  )}
+                </div>
               </div>
               {usersQ.isLoading ? (
                 <div className="p-4 text-sm text-muted-foreground">Loading…</div>
@@ -539,6 +555,20 @@ export function UsersDialog({
                     .filter((u) =>
                       accountsFilterHotelId ? u.hotelIds.includes(accountsFilterHotelId) : true,
                     )
+                    .slice()
+                    .sort((a, b) => {
+                      switch (accountsSort) {
+                        case "oldest":
+                          return new Date(a.created_at).getTime() - new Date(b.created_at).getTime();
+                        case "az":
+                          return (a.username ?? "").localeCompare(b.username ?? "", undefined, { sensitivity: "base" });
+                        case "za":
+                          return (b.username ?? "").localeCompare(a.username ?? "", undefined, { sensitivity: "base" });
+                        case "newest":
+                        default:
+                          return new Date(b.created_at).getTime() - new Date(a.created_at).getTime();
+                      }
+                    })
                     .map((u) => (
                     <li key={u.id} className="px-4 py-3 flex items-center justify-between gap-2">
                       <div className="min-w-0">
