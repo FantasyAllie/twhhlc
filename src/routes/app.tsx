@@ -1306,6 +1306,7 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
         }
       }
       qc.invalidateQueries({ queryKey: ["lost_property"] });
+      qc.invalidateQueries({ queryKey: ["lost_property_lite"] });
       return { ok: true as const };
     };
   const doneSet = new Set(
