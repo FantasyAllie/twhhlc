@@ -3079,8 +3079,8 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
                 <p className="text-sm text-muted-foreground">No notes from Housekeeping.</p>
               )}
             </div>
-            <div className="space-y-2 rounded-md border border-amber-400/60 bg-amber-50 dark:bg-amber-950/40 p-3">
-              <p className="text-xs font-semibold uppercase tracking-wide text-amber-700 dark:text-amber-300">
+            <div className="space-y-2 rounded-md border border-emerald-400/60 bg-emerald-50 dark:bg-emerald-950/40 p-3">
+              <p className="text-xs font-semibold uppercase tracking-wide text-emerald-700 dark:text-emerald-300">
                 Leave a message for housekeeping
               </p>
               {hasMsg && (
@@ -4203,10 +4203,10 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
                      <p className="text-sm text-muted-foreground">No notes from Housekeeping.</p>
                    )}
                  </div>
-                 <div className="space-y-2 rounded-md border border-amber-400/60 bg-amber-50 dark:bg-amber-950/40 p-3">
-                   <p className="text-xs font-semibold uppercase tracking-wide text-amber-700 dark:text-amber-300">
-                     Leave a message for housekeeping
-                   </p>
+                   <div className="space-y-2 rounded-md border border-emerald-400/60 bg-emerald-50 dark:bg-emerald-950/40 p-3">
+                    <p className="text-xs font-semibold uppercase tracking-wide text-emerald-700 dark:text-emerald-300">
+                      Leave a message for housekeeping
+                    </p>
                    {msgs.length > 0 && (
                      <ul className="space-y-1">
                        {msgs.map((m) => (
@@ -6530,7 +6530,13 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
       })
     : allRooms;
    if (!isReception && hideCompletedRooms) {
-     visibleRooms = visibleRooms.filter((n) => !doneSet.has(n));
+     // On the housekeeping view, the tile's "done" indicator is driven by the
+     // union of r.done and r.done_reception (see room-tile state calc + shift-
+     // complete metric). Match that here so the filter hides everything the
+     // user visually recognises as completed.
+     visibleRooms = visibleRooms.filter(
+       (n) => !doneSet.has(n) && !receptionDoneSet.has(n),
+     );
    }
   const nodes: React.ReactNode[] = [];
    const dndStatusId = receptionStatuses.find((s) => s.label === "DND")?.id ?? null;
