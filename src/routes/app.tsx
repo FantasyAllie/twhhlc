@@ -3079,8 +3079,8 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
                 <p className="text-sm text-muted-foreground">No notes from Housekeeping.</p>
               )}
             </div>
-            <div className="space-y-2 rounded-md border border-amber-400/60 bg-amber-50 dark:bg-amber-950/40 p-3">
-              <p className="text-xs font-semibold uppercase tracking-wide text-amber-700 dark:text-amber-300">
+            <div className="space-y-2 rounded-md border border-emerald-400/60 bg-emerald-50 dark:bg-emerald-950/40 p-3">
+              <p className="text-xs font-semibold uppercase tracking-wide text-emerald-700 dark:text-emerald-300">
                 Leave a message for housekeeping
               </p>
               {hasMsg && (
