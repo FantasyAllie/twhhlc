@@ -3148,6 +3148,61 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
       return <DndDoorPhoto roomNumber={n} />;
     })()}
 
+    {isReception && (() => {
+      const openMaint = (maintenanceRequestsQ.data ?? []).filter(
+        (m) => m.room_number === n && !m.done,
+      );
+      const openLp = lostPropertyOpenItems.filter((lp) => lp.room_number === n);
+      if (openMaint.length === 0 && openLp.length === 0) return null;
+      const fmt = (iso: string) =>
+        new Date(iso).toLocaleString(undefined, {
+          month: "short",
+          day: "numeric",
+          hour: "numeric",
+          minute: "2-digit",
+        });
+      return (
+        <div className="space-y-3">
+          {openMaint.length > 0 && (
+            <div className="space-y-2 rounded-md border border-amber-400/60 bg-amber-50 dark:bg-amber-950/40 p-3">
+              <p className="flex items-center gap-1.5 text-xs font-semibold uppercase tracking-wide text-amber-700 dark:text-amber-300">
+                <Wrench className="h-3.5 w-3.5" />
+                Open maintenance ({openMaint.length})
+              </p>
+              <ul className="space-y-1.5">
+                {openMaint.map((m) => (
+                  <li key={m.id} className="rounded bg-background/70 p-2 text-sm">
+                    <div className="whitespace-pre-wrap break-words">{m.message}</div>
+                    <div className="mt-1 text-[11px] text-muted-foreground">
+                      {m.created_by_username ?? "Unknown"} · {fmt(m.created_at)}
+                    </div>
+                  </li>
+                ))}
+              </ul>
+            </div>
+          )}
+          {openLp.length > 0 && (
+            <div className="space-y-2 rounded-md border border-sky-400/60 bg-sky-50 dark:bg-sky-950/40 p-3">
+              <p className="flex items-center gap-1.5 text-xs font-semibold uppercase tracking-wide text-sky-700 dark:text-sky-300">
+                <PackageSearch className="h-3.5 w-3.5" />
+                Lost property ({openLp.length})
+              </p>
+              <ul className="space-y-1.5">
+                {openLp.map((lp) => (
+                  <li key={lp.id} className="rounded bg-background/70 p-2 text-sm">
+                    <div className="whitespace-pre-wrap break-words">{lp.message}</div>
+                    <div className="mt-1 text-[11px] text-muted-foreground">
+                      Logged {fmt(lp.created_at)}
+                    </div>
+                  </li>
+                ))}
+              </ul>
+            </div>
+          )}
+        </div>
+      );
+    })()}
+
     {!isReception && (
       <div className="flex flex-row gap-2">
         <button
