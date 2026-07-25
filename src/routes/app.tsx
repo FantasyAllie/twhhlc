@@ -449,7 +449,7 @@ type ViewRole = "admin" | "manager" | "user" | "reception" | "fnb" | "maintenanc
  const [templateOpen, setTemplateOpen] = useState(false);
 const [linenListType, setLinenListType] = useState<"housekeeping" | "fnb">("housekeeping");
 const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
-  const [nrOffRooms, setNrOffRooms] = useState<Set<number>>(new Set());
+  const [nrOnRooms, setNrOnRooms] = useState<Set<number>>(new Set());
   const [newTemplateName, setNewTemplateName] = useState("");
   const [editingItemId, setEditingItemId] = useState<string | null>(null);
   const [editingItemName, setEditingItemName] = useState("");
@@ -4545,24 +4545,23 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
                         const stayIdLocal = sStay?.id ?? null;
                         const isDoneLocal = receptionDoneSet.has(n);
                         const isStayoverLocal = !!stayIdLocal && occ === stayIdLocal;
-                        const nrOff = nrOffRooms.has(n);
-                        const isNR = isDoneLocal && isStayoverLocal && !nrOff;
+                        const isNR = nrOnRooms.has(n);
                         const onNrClick = () => {
                           if (isNR) {
                             // Uncheck NR indicator only — keep Mark as Done and
                             // Stayover flags in place.
-                            setNrOffRooms((prev) => {
+                            setNrOnRooms((prev) => {
                               const next = new Set(prev);
-                              next.add(n);
+                              next.delete(n);
                               return next;
                             });
                             return;
                           }
-                          // Enable Stayover + Mark as Done, clear any nr-off override.
-                          setNrOffRooms((prev) => {
-                            if (!prev.has(n)) return prev;
+                          // Turn NR on and enable Stayover + Mark as Done.
+                          setNrOnRooms((prev) => {
+                            if (prev.has(n)) return prev;
                             const next = new Set(prev);
-                            next.delete(n);
+                            next.add(n);
                             return next;
                           });
                           if (stayIdLocal && !isStayoverLocal) {
@@ -6529,7 +6528,7 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
      const baseMeta = roomStateMeta[state];
      const hasStatus = !!(room?.reception_status_id ?? room?.default_status);
       const hasLinenCount = counts.some((c) => c.room_number === n && (c.count ?? 0) > 0);
-       const isNR = isStayover && receptionDoneSet.has(n);
+       const isNR = nrOnRooms.has(n);
       const meta = isStaffRoom
         ? { bg: "var(--room-staff)", fg: "var(--room-staff-fg)", accent: "var(--room-staff-accent)", label: "Staff" }
         : isRos
@@ -6641,7 +6640,7 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
         : roomStateMeta[state];
      const hasStatus = !!(room?.reception_status_id ?? room?.default_status);
       const hasLinenCount = counts.some((c) => c.room_number === n && (c.count ?? 0) > 0);
-       const isNR = isStayover && receptionDoneSet.has(n);
+       const isNR = nrOnRooms.has(n);
       const meta = isStaff
         ? { bg: "var(--room-staff)", fg: "var(--room-staff-fg)", accent: "var(--room-staff-accent)", label: "Staff" }
         : isRos
