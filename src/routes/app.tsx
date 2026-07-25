@@ -6530,7 +6530,13 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
       })
     : allRooms;
    if (!isReception && hideCompletedRooms) {
-     visibleRooms = visibleRooms.filter((n) => !doneSet.has(n));
+     // On the housekeeping view, the tile's "done" indicator is driven by the
+     // union of r.done and r.done_reception (see room-tile state calc + shift-
+     // complete metric). Match that here so the filter hides everything the
+     // user visually recognises as completed.
+     visibleRooms = visibleRooms.filter(
+       (n) => !doneSet.has(n) && !receptionDoneSet.has(n),
+     );
    }
   const nodes: React.ReactNode[] = [];
    const dndStatusId = receptionStatuses.find((s) => s.label === "DND")?.id ?? null;
