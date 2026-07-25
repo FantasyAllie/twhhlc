@@ -6,6 +6,7 @@ export type CurrentHotel = {
   name: string;
   slug: string | null;
   linen_delivery_days: number[];
+  last_hk_reset_at: string | null;
 } | null;
 
 export const DEFAULT_HOTEL_NAME = "The Hotel Hub";
@@ -19,7 +20,7 @@ export function useCurrentHotel() {
       if (!uid) return null;
       const { data: activeData } = await supabase
         .from("user_active_hotel")
-        .select("hotels ( id, name, slug, linen_delivery_days )")
+        .select("hotels ( id, name, slug, linen_delivery_days, last_hk_reset_at )")
         .eq("user_id", uid)
         .maybeSingle();
       const activeHotel = (activeData as {
@@ -28,6 +29,7 @@ export function useCurrentHotel() {
           name: string;
           slug: string | null;
           linen_delivery_days: number[] | null;
+          last_hk_reset_at: string | null;
         } | null;
       } | null)?.hotels;
       if (!activeHotel) return null;
@@ -36,6 +38,7 @@ export function useCurrentHotel() {
         name: activeHotel.name,
         slug: activeHotel.slug,
         linen_delivery_days: activeHotel.linen_delivery_days ?? [],
+        last_hk_reset_at: activeHotel.last_hk_reset_at ?? null,
       };
     },
     staleTime: 5 * 60 * 1000,
