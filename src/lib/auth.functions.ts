@@ -3,10 +3,10 @@ import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 
 // A user has exactly one Position and zero or more Sub-roles.
 // Positions live alongside sub-role rows in public.user_roles.
-export type Position = "regional_admin" | "admin" | "manager" | "user" | "pending";
+export type Position = "developer" | "regional_admin" | "admin" | "manager" | "user" | "pending";
 export type SubRole = "reception" | "housekeeper" | "fnb" | "maintenance";
 // Compat role used by legacy UI paths — derived from position + sub-roles.
-export type AppRole = "regional_admin" | "admin" | "manager" | "user" | "reception" | "fnb" | "maintenance" | "pending";
+export type AppRole = "developer" | "regional_admin" | "admin" | "manager" | "user" | "reception" | "fnb" | "maintenance" | "pending";
 export type SessionUser = {
   id: string;
   username: string;
@@ -30,11 +30,11 @@ export type AppUserRow = {
 };
 export type HotelOption = { id: string; name: string; slug: string };
 
-const POSITIONS: ReadonlyArray<Position> = ["regional_admin", "admin", "manager", "user", "pending"];
+const POSITIONS: ReadonlyArray<Position> = ["developer", "regional_admin", "admin", "manager", "user", "pending"];
 const SUB_ROLES: ReadonlyArray<SubRole> = ["reception", "housekeeper", "fnb", "maintenance"];
 
 function validatePosition(p: string): Exclude<Position, "pending"> {
-  if (p !== "regional_admin" && p !== "admin" && p !== "manager" && p !== "user") throw new Error("Invalid position");
+  if (p !== "developer" && p !== "regional_admin" && p !== "admin" && p !== "manager" && p !== "user") throw new Error("Invalid position");
   return p;
 }
 function validateSubRoles(rs: unknown): SubRole[] {
@@ -61,10 +61,12 @@ async function getAdminAccess(ctx: { userId: string }) {
     .from("user_roles")
     .select("role")
     .eq("user_id", ctx.userId)
-    .in("role", ["admin", "regional_admin", "manager"]);
+    .in("role", ["developer", "admin", "regional_admin", "manager"]);
   if (error) throw new Error(error.message);
   const roleList = ((roles ?? []) as { role: string }[]).map((r) => r.role);
-  const isSuperAdmin = roleList.includes("admin");
+  const isDeveloper = roleList.includes("developer");
+  // Developers get full admin capabilities; treat as super admin everywhere.
+  const isSuperAdmin = roleList.includes("admin") || isDeveloper;
   const isRegionalManager = roleList.includes("regional_admin");
   const isManagerOnly = !isSuperAdmin && !isRegionalManager && roleList.includes("manager");
   if (!isSuperAdmin && !isRegionalManager && !isManagerOnly) {
@@ -84,6 +86,7 @@ async function getAdminAccess(ctx: { userId: string }) {
   return {
     supabaseAdmin,
     isSuperAdmin,
+    isDeveloper,
     isRegionalManager,
     isManagerOnly,
     isCrossHotel,
@@ -94,10 +97,15 @@ async function getAdminAccess(ctx: { userId: string }) {
 
 /** Enforce the "who can assign which position" ladder. */
 function assertCanAssignPosition(
-  caller: { isSuperAdmin: boolean; isRegionalManager: boolean; isManagerOnly: boolean },
+  caller: { isSuperAdmin: boolean; isDeveloper: boolean; isRegionalManager: boolean; isManagerOnly: boolean },
   target: Exclude<Position, "pending">,
 ) {
-  if (caller.isSuperAdmin) return; // admin can assign anything
+  // Only developers can mint another developer.
+  if (target === "developer") {
+    if (caller.isDeveloper) return;
+    throw new Error("Only developers can assign the developer position");
+  }
+  if (caller.isSuperAdmin) return; // admin/developer can assign anything else
   if (caller.isRegionalManager) {
     if (target === "admin") throw new Error("Only admins can assign the admin position");
     return; // regional_admin/manager/user OK
@@ -122,14 +130,14 @@ async function assertAdminOrManager(ctx: { userId: string }) {
     .from("user_roles")
     .select("role")
     .eq("user_id", ctx.userId)
-    .in("role", ["admin", "manager"]);
+    .in("role", ["developer", "admin", "regional_admin", "manager"]);
   if (error || !data || data.length === 0) throw new Error("Admin or manager access required");
 }
 
 function splitRoles(rows: Array<{ role: string }>): { position: Position; subRoles: SubRole[] } {
   let position: Position = "pending";
   const subRoles: SubRole[] = [];
-  const priority: Record<Position, number> = { admin: 5, regional_admin: 4, manager: 3, user: 2, pending: 1 };
+  const priority: Record<Position, number> = { developer: 6, admin: 5, regional_admin: 4, manager: 3, user: 2, pending: 1 };
   for (const r of rows) {
     if (r.role === "reception" || r.role === "housekeeper" || r.role === "fnb" || r.role === "maintenance") {
       if (!subRoles.includes(r.role)) subRoles.push(r.role);
