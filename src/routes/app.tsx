@@ -1794,6 +1794,18 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
       .is("deleted_at", null)
       .eq("dismissed", false);
     if (r3.error) toast.error(r3.error.message);
+    // Record the housekeeping reset on the active hotel so Reception's own
+    // "Reset all" button (visible after 7am) can hide itself for the rest of
+    // the day.
+    const activeHotelId = currentHotelQ.data?.id;
+    if (activeHotelId) {
+      const { error: hErr } = await supabase
+        .from("hotels")
+        .update({ last_hk_reset_at: nowIso } as never)
+        .eq("id", activeHotelId);
+      if (hErr) toast.error(hErr.message);
+      qc.invalidateQueries({ queryKey: ["current-hotel"] });
+    }
     qc.invalidateQueries({ queryKey: ["rooms"] });
     qc.invalidateQueries({ queryKey: ["room_counts"] });
     qc.invalidateQueries({ queryKey: ["room_messages"] });
