@@ -39,6 +39,7 @@ import {
 
 type AssignablePosition = Exclude<Position, "pending">;
 const POSITION_LABELS: Record<AssignablePosition, string> = {
+  developer: "Developer",
   regional_admin: "Regional Manager",
   admin: "Admin",
   manager: "Manager",
@@ -117,7 +118,8 @@ export function UsersDialog({
   const [accountsSort, setAccountsSort] = useState<AccountsSort>("newest");
 
   const myPos = me?.position;
-  const isSuperAdmin = myPos === "admin";
+  const isDeveloper = myPos === "developer";
+  const isSuperAdmin = myPos === "admin" || isDeveloper;
   const isRegionalManager = myPos === "regional_admin";
   const isManagerOnly = myPos === "manager";
   // Admins and Regional Managers manage across every hotel; Managers only
@@ -125,7 +127,9 @@ export function UsersDialog({
   const canManageHotels = isSuperAdmin || isRegionalManager;
   // Kept as the old name because it's referenced in the JSX below.
   const isRegionalAdmin = canManageHotels;
-  const assignablePositions: AssignablePosition[] = isSuperAdmin
+  const assignablePositions: AssignablePosition[] = isDeveloper
+    ? ["developer", "admin", "regional_admin", "manager", "user"]
+    : isSuperAdmin
     ? ["admin", "regional_admin", "manager", "user"]
     : isRegionalManager
     ? ["regional_admin", "manager", "user"]
@@ -282,9 +286,9 @@ export function UsersDialog({
     }
   }
 
-  async function onApprovePending(u: AppUserRow, subRoles: SubRole[]) {
+  async function onApprovePending(u: AppUserRow, sr: SubRole[]) {
     try {
-      await assignFn({ data: { id: u.id, position: "user", subRoles } });
+      await assignFn({ data: { id: u.id, position: "user", subRoles: sr } });
       toast.success("User approved");
       qc.invalidateQueries({ queryKey: ["app_users"] });
     } catch (err) {
