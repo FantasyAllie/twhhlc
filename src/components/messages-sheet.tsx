@@ -298,15 +298,41 @@ export function MessagesSheet({
       toast.error("Pick a room to also log as lost property");
       return;
     }
-    const { error } = await supabase.from("room_messages" as never).insert({
+    // Guard against stale/invalid reply targets that would violate the FK.
+    // We only send reply_to_id when it looks like a real UUID; if the insert
+    // still fails due to the FK (message deleted or from another hotel), we
+    // retry once without the reply metadata so the user's message still lands.
+    const uuidRe = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+    const safeReplyId = replyTo?.id && uuidRe.test(replyTo.id) ? replyTo.id : null;
+    const basePayload = {
       thread,
       room_number: roomNumber,
       message: body,
       created_by_username: currentUsername ?? null,
-      reply_to_id: replyTo?.id ?? null,
-      reply_to_sender: replyTo?.sender ?? null,
-      reply_to_snippet: replyTo?.snippet ?? null,
+    };
+    let { error } = await supabase.from("room_messages" as never).insert({
+      ...basePayload,
+      reply_to_id: safeReplyId,
+      reply_to_sender: safeReplyId ? replyTo?.sender ?? null : null,
+      reply_to_snippet: safeReplyId ? replyTo?.snippet ?? null : null,
     } as never);
+    if (
+      error &&
+      safeReplyId &&
+      /reply_to_id|foreign key/i.test(error.message ?? "")
+    ) {
+      // Retry without the reply reference.
+      const retry = await supabase.from("room_messages" as never).insert({
+        ...basePayload,
+        reply_to_id: null,
+        reply_to_sender: null,
+        reply_to_snippet: null,
+      } as never);
+      error = retry.error;
+      if (!error) {
+        toast.message("Original message is no longer available — reply sent without quote.");
+      }
+    }
     if (error) {
       toast.error(error.message);
       return;

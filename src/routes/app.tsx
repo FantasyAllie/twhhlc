@@ -1240,6 +1240,16 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
           : myMessageDepartments.includes("reception")
           ? "reception"
           : myMessageDepartments[0] ?? null;
+    const foundByDepartment =
+      senderRole === "housekeeping"
+        ? "HK"
+        : senderRole === "fnb"
+        ? "F&B"
+        : senderRole === "maintenance"
+        ? "MNT"
+        : senderRole === "reception"
+        ? "Reception"
+        : null;
       const { data, error } = await supabase
         .from("lost_property" as never)
         .insert({
@@ -1247,6 +1257,7 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
           message,
           created_by_username: authUser?.username ?? null,
           created_by_role: senderRole,
+        found_by_department: foundByDepartment,
         } as never)
         .select("id")
         .single();
@@ -1921,9 +1932,9 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
     for (const r of data) {
       const day = new Date(r.created_at).toDateString();
       const seen = byDay.get(day);
-      if (seen === undefined && byDay.size >= 6) continue;
+      if (seen === undefined && byDay.size >= 7) continue;
       const next = (seen ?? 0) + 1;
-      if (next > 6) continue;
+      if (next > 7) continue;
       byDay.set(day, next);
       keep.add(r.id);
     }
