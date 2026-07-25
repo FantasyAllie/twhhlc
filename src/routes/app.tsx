@@ -1945,8 +1945,9 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
     for (let offset = 1; offset <= 14; offset++) {
       const dow = (todayDow - offset + 7) % 7;
       if (linenDeliveryDays.includes(dow)) {
-        // Window starts the day AFTER that delivery day.
-        start.setDate(start.getDate() - (offset - 1));
+        // Window starts ON the previous delivery day (inclusive) and ends
+        // on the day before today (yesterday, inclusive).
+        start.setDate(start.getDate() - offset);
         return start;
       }
     }
@@ -1962,7 +1963,10 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
   } => {
     const now = new Date();
     const start = deliveryWindowStart(now);
+    // End at the end of YESTERDAY — today's linen isn't yet delivered against.
     const end = new Date(now);
+    end.setHours(0, 0, 0, 0);
+    end.setDate(end.getDate() - 1);
     end.setHours(23, 59, 59, 999);
     const map = new Map<string, number>();
     for (const s of snapshots) {
@@ -1980,7 +1984,7 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
       .sort((a, b) => a[0].localeCompare(b[0], undefined, { sensitivity: "base" }))
       .map(([name, count]) => ({ name, count }));
     const grand = rows.reduce((s, r) => s + r.count, 0);
-    return { rows, grand, start, end: now };
+    return { rows, grand, start, end };
   };
 
   const openDeliveryLinenTotals = () => {
@@ -3397,6 +3401,39 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
             )}
           </div>
  <div className="flex items-center gap-2">
+    {!isMobile && !isReception && !isMaintenance && !menuIsFnbOnly && (realIsAdmin || (realIsManager && hasHousekeeperRole)) && (() => {
+      const statusLabelById = new Map(
+        receptionStatuses.map((s) => [s.id, s.label.toLowerCase()]),
+      );
+      const excluded = new Set(["staff", "ros", "staff/ros", "ros - staff"]);
+      const eligible = rooms.filter((r) => {
+        const sid = r.reception_status_id ?? r.default_status;
+        const lbl = sid ? (statusLabelById.get(sid) ?? sid).toLowerCase() : "";
+        if (excluded.has(lbl)) return false;
+        if (lbl === "dnd") return false;
+        return true;
+      });
+      const total = eligible.length;
+      const done = eligible.filter((r) => r.done || r.done_reception).length;
+      const isShiftComplete = total > 0 && done >= total;
+      if (!isShiftComplete) return null;
+      return (
+        <Button
+          size="sm"
+          className="bg-emerald-600 hover:bg-emerald-700 text-white"
+          onClick={async () => {
+            const { rows: linenRows } = computeTotals();
+            if (linenRows.length > 0) {
+              await proceedExport("totals");
+            }
+            await proceedExport("room_status");
+          }}
+        >
+          <Check className="h-4 w-4 mr-2" />
+          Mark shift as finished
+        </Button>
+      );
+    })()}
     {!isMobile && isAdmin && !isReception && (isMobile ? (
       <Sheet open={exportSheetOpen} onOpenChange={setExportSheetOpen}>
         <SheetTrigger asChild>
@@ -3506,121 +3543,15 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
         Help
       </Button>
     )}
- {isMobile ? (
-   <Button variant="ghost" size="sm" aria-label="Menu" onClick={() => setMenuSheetOpen(true)} className="relative">
-     <Menu className="h-4 w-4" />
-     {hasOpenMaintenance && (
-       <span
-         aria-label={`${openMaintenanceCount} open maintenance request${openMaintenanceCount === 1 ? "" : "s"}`}
-         className="absolute -top-0.5 -right-0.5 h-2.5 w-2.5 rounded-full bg-amber-500 ring-2 ring-background"
-       />
-     )}
-   </Button>
- ) : (
-   <DropdownMenu>
-     <DropdownMenuTrigger asChild>
-       <Button variant="ghost" size="sm" aria-label="Menu" className="relative">
-         <Menu className="h-4 w-4" />
-         {hasOpenMaintenance && (
-           <span
-             aria-label={`${openMaintenanceCount} open maintenance request${openMaintenanceCount === 1 ? "" : "s"}`}
-             className="absolute -top-0.5 -right-0.5 h-2.5 w-2.5 rounded-full bg-amber-500 ring-2 ring-background"
-           />
-         )}
-       </Button>
-     </DropdownMenuTrigger>
-     <DropdownMenuContent align="end" className="w-64">
-          {(menuHasHk || menuHasFnb) && !isMaintenance && (
-           <>
-             <DropdownMenuLabel>Manage</DropdownMenuLabel>
-             <DropdownMenuItem onClick={() => setTemplateOpen(true)}>
-               <List className="h-4 w-4 mr-2" /> Linen List
-             </DropdownMenuItem>
-           </>
-         )}
-          {menuIsAdmin && !isMaintenance && (
-          <>
-            <DropdownMenuItem onClick={() => setManageRoomsOpen(true)}>
-             <Hash className="h-4 w-4 mr-2" /> Manage Rooms
-           </DropdownMenuItem>
-           <DropdownMenuItem onClick={() => setRejectsOpen(true)}>
-             <Ban className="h-4 w-4 mr-2" /> Rejects
-           </DropdownMenuItem>
-            {!isReception && (
-              <DropdownMenuItem onClick={() => setHistorySheetOpen(true)}>
-                <History className="h-4 w-4 mr-2" /> History
-              </DropdownMenuItem>
-            )}
-           <DropdownMenuItem onClick={() => setQuickReceptionOpen(true)}>
-             <ConciergeBell className="h-4 w-4 mr-2" /> Bulk Room Status Setup
-           </DropdownMenuItem>
-           <DropdownMenuSeparator />
-         </>
-       )}
-             {!menuIsFnbOnly && !isMaintenance && (
-           <DropdownMenuItem onClick={() => setMaintenanceLogOpen(true)}>
-             <Wrench className="h-4 w-4 mr-2" />
-             <span className="flex-1">Maintenance Log</span>
-             {hasOpenMaintenance && (
-               <span className="ml-2 h-2 w-2 rounded-full bg-amber-500" aria-hidden />
-             )}
-           </DropdownMenuItem>
-         )}
-           {menuCanUseLostProperty && !isMaintenance && (
-             <DropdownMenuItem onClick={() => setLostPropertyOpen(true)}>
-               <PackageSearch className="h-4 w-4 mr-2" />
-               Lost Property
-             </DropdownMenuItem>
-           )}
-          {(menuIsAdmin || hasHousekeeperRole || hasReceptionRole) && !isMaintenance && (
-            <DropdownMenuItem
-              onClick={() => {
-                setStayoverPhotosRoomFilter(undefined);
-                setStayoverPhotosOpen(true);
-              }}
-            >
-              <Camera className="h-4 w-4 mr-2" />
-              Stayover Photos
-            </DropdownMenuItem>
-          )}
-          {canUseMessages && (
-            <DropdownMenuItem onClick={() => { setMessagesInitial({}); setMessagesSheetOpen(true); }}>
-              <MessageSquare className="h-4 w-4 mr-2" />
-              Messages
-            </DropdownMenuItem>
-          )}
-         <DropdownMenuSeparator />
-       <DropdownMenuLabel>Appearance</DropdownMenuLabel>
-       <DropdownMenuItem onClick={() => toggleTheme()}>
-         {theme === "dark" ? <Sun className="h-4 w-4 mr-2" /> : <Moon className="h-4 w-4 mr-2" />}
-         {theme === "dark" ? "Light mode" : "Dark mode"}
-       </DropdownMenuItem>
-       <DropdownMenuSeparator />
-       <DropdownMenuLabel>Account</DropdownMenuLabel>
-         {(availableHotels.length > 1 || realIsAdmin) && (
-           <DropdownMenuItem onClick={() => setHotelSwitcherOpen(true)}>
-             <RotateCcw className="h-4 w-4 mr-2" /> Switch hotel
-           </DropdownMenuItem>
-         )}
-         {(realIsAdmin || realIsManager) && !isMaintenance && (
-          <DropdownMenuItem onClick={() => setUsersOpen(true)}>
-            <Users className="h-4 w-4 mr-2" /> Users
-          </DropdownMenuItem>
-        )}
-         {!menuIsFnbOnly && (
-          <DropdownMenuItem onClick={() => setNotificationsSheetOpen(true)}>
-            <Bell className="h-4 w-4 mr-2" /> Notifications
-          </DropdownMenuItem>
-        )}
-       <DropdownMenuItem onClick={() => setAccountOpen(true)}>
-         <User className="h-4 w-4 mr-2" /> Account
-       </DropdownMenuItem>
-       <DropdownMenuItem onClick={() => void signOut()} className="text-destructive focus:text-destructive">
-         <LogOut className="h-4 w-4 mr-2" /> Sign out
-       </DropdownMenuItem>
-     </DropdownMenuContent>
-   </DropdownMenu>
- )}
+  <Button variant="ghost" size="sm" aria-label="Menu" onClick={() => setMenuSheetOpen(true)} className="relative">
+    <Menu className="h-4 w-4" />
+    {hasOpenMaintenance && (
+      <span
+        aria-label={`${openMaintenanceCount} open maintenance request${openMaintenanceCount === 1 ? "" : "s"}`}
+        className="absolute -top-0.5 -right-0.5 h-2.5 w-2.5 rounded-full bg-amber-500 ring-2 ring-background"
+      />
+    )}
+  </Button>
  </div>
  </header>
 
