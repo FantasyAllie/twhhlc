@@ -1,0 +1,1 @@
+ALTER TABLE public.hotels ADD COLUMN IF NOT EXISTS last_hk_reset_at timestamptz;
