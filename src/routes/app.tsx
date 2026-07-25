@@ -6333,13 +6333,13 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
             setReceptionDoneOnlyFilter(false);
           };
        return (
-          <div className="inline-flex items-center rounded-md border border-input bg-background shadow-xs overflow-hidden">
+          <div className="inline-flex items-center rounded-full border border-input bg-background shadow-xs overflow-hidden">
         <Popover open={filtersSheetOpen} onOpenChange={setFiltersSheetOpen}>
           <PopoverTrigger asChild>
             <Button
               variant="ghost"
               size="sm"
-              className={`h-7 gap-1.5 text-xs rounded-none border-0 ${totalSelected > 0 ? "border-r border-input" : ""}`}
+              className={`h-7 gap-1.5 text-xs rounded-none border-0 px-3 ${totalSelected > 0 ? "border-r border-input" : ""}`}
             >
               <Filter className="h-3.5 w-3.5" />
               {totalSelected === 0 ? "Filters" : `Filters · ${totalSelected}`}
@@ -6450,7 +6450,7 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
             <Button
               variant="ghost"
               size="sm"
-              className="h-7 gap-1 text-xs rounded-none border-0 text-muted-foreground hover:text-foreground"
+              className="h-7 gap-1 text-xs rounded-none border-0 px-3 text-muted-foreground hover:text-foreground"
               onClick={clearAllFilters}
               aria-label="Clear filters"
             >
