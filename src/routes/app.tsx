@@ -6464,27 +6464,143 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
       );
     })()}
     {!isReception && (
-     <>
-       <Button
-         variant="outline"
-         size="sm"
-         className="h-7 gap-1.5 text-xs absolute left-1/2 -translate-x-1/2"
-         onClick={() => setHideCompletedRooms((v) => !v)}
-         aria-pressed={hideCompletedRooms}
-       >
-         {hideCompletedRooms ? <EyeOff className="h-3.5 w-3.5" /> : <Eye className="h-3.5 w-3.5" />}
-         {hideCompletedRooms ? "Show completed" : "Hide completed"}
-       </Button>
-       <Button
-         variant="outline"
-         size="sm"
-         className="h-7 gap-1.5 text-xs"
-         onClick={resetAll}
-       >
-         <RotateCcw className="h-3.5 w-3.5" />
-         Reset all
-       </Button>
-     </>
+     (() => {
+        // Compute per-room primary status bucket for HK filter counts.
+        const statusLabelById = new Map(
+          receptionStatuses.map((s) => [s.id, s.label.toLowerCase()]),
+        );
+        const bucketFor = (n: number): string => {
+          const r = rooms.find((x) => x.room_number === n);
+          if (!r) return "not_started";
+          if (nrOnRooms.has(n)) return "nr";
+          const sid = r.reception_status_id ?? r.default_status;
+          const label = sid ? (statusLabelById.get(sid) ?? "") : "";
+          if (label === "staff") return "staff";
+          if (label === "ros") return "ros";
+          if (label === "dnd") return "dnd";
+          if (label === "stayover") return "stayover";
+          if (label === "arrival") return "arrival";
+          if (label === "dirty") return "dirty";
+          if (label === "clean") return "clean";
+          if (label) return "progress";
+          const hasLinen = counts.some((c) => c.room_number === n && (c.count ?? 0) > 0);
+          if (hasLinen) return "progress";
+          return "not_started";
+        };
+        const isRoomDone = (n: number) => doneSet.has(n) || receptionDoneSet.has(n);
+        const roomBuckets = rooms.map((r) => ({
+          n: r.room_number,
+          bucket: bucketFor(r.room_number),
+          done: isRoomDone(r.room_number),
+        }));
+        const statusOptions: { key: string; label: string }[] = [
+          { key: "done", label: "Done" },
+          { key: "not_started", label: "Not started" },
+          { key: "progress", label: "In progress" },
+          { key: "dirty", label: "Dirty" },
+          { key: "clean", label: "Clean" },
+          { key: "arrival", label: "Arrival" },
+          { key: "stayover", label: "Stayover" },
+          { key: "dnd", label: "DND" },
+          { key: "nr", label: "Service Declined" },
+          { key: "staff", label: "Staff" },
+          { key: "ros", label: "ROS" },
+        ];
+        const countFor = (key: string) =>
+          key === "done"
+            ? roomBuckets.filter((r) => r.done).length
+            : roomBuckets.filter((r) => r.bucket === key).length;
+        const totalActive = hkStatusFilter.length + (hideCompletedRooms ? 1 : 0);
+        const clearHkFilters = () => {
+          setHkStatusFilter([]);
+          setHideCompletedRooms(false);
+        };
+        return (
+          <div className="absolute left-1/2 -translate-x-1/2 inline-flex items-center rounded-full border border-input bg-background shadow-xs overflow-hidden">
+            <Popover open={hkFiltersOpen} onOpenChange={setHkFiltersOpen}>
+              <PopoverTrigger asChild>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  className={`h-7 gap-1.5 text-xs rounded-none border-0 px-3 ${totalActive > 0 ? "border-r border-input" : ""}`}
+                >
+                  <Filter className="h-3.5 w-3.5" />
+                  {totalActive === 0 ? "Filters" : `Filters · ${totalActive}`}
+                </Button>
+              </PopoverTrigger>
+              <PopoverContent align="center" className="w-64 max-h-[70dvh] overflow-y-auto p-3">
+                <div className="space-y-1 pb-2">
+                  <p className="text-sm font-semibold">Filter rooms</p>
+                  <p className="text-xs text-muted-foreground">
+                    {totalActive === 0 ? "Filter by status. Select multiple." : `${totalActive} active`}
+                  </p>
+                </div>
+                <div className="space-y-4">
+                  <div className="space-y-2">
+                    <p className="text-xs font-medium text-muted-foreground uppercase tracking-wide">Visibility</p>
+                    <label className="flex items-center gap-2 py-1.5 px-2 rounded-md hover:bg-muted cursor-pointer">
+                      <Checkbox
+                        checked={hideCompletedRooms}
+                        onCheckedChange={(c) => setHideCompletedRooms(!!c)}
+                      />
+                      <span className="text-sm flex-1">Hide completed rooms</span>
+                    </label>
+                  </div>
+                  <div className="space-y-2">
+                    <p className="text-xs font-medium text-muted-foreground uppercase tracking-wide">Status</p>
+                    <div className="grid gap-1">
+                      {statusOptions.map((s) => {
+                        const checked = hkStatusFilter.includes(s.key);
+                        const count = countFor(s.key);
+                        return (
+                          <label
+                            key={s.key}
+                            className="flex items-center gap-2 py-1.5 px-2 rounded-md hover:bg-muted cursor-pointer"
+                          >
+                            <Checkbox
+                              checked={checked}
+                              onCheckedChange={(c) => {
+                                setHkStatusFilter((prev) =>
+                                  c ? [...prev, s.key] : prev.filter((k) => k !== s.key),
+                                );
+                              }}
+                            />
+                            <span className="text-sm flex-1">{s.label}</span>
+                            <span className="text-xs tabular-nums text-muted-foreground">{count}</span>
+                          </label>
+                        );
+                      })}
+                    </div>
+                  </div>
+                </div>
+              </PopoverContent>
+            </Popover>
+            {totalActive > 0 && (
+              <Button
+                variant="ghost"
+                size="sm"
+                className="h-7 gap-1 text-xs rounded-none border-0 px-3 text-muted-foreground hover:text-foreground"
+                onClick={clearHkFilters}
+                aria-label="Clear filters"
+              >
+                <X className="h-3.5 w-3.5" />
+                Clear
+              </Button>
+            )}
+          </div>
+        );
+      })()
+    )}
+    {!isReception && (
+      <Button
+        variant="outline"
+        size="sm"
+        className="h-7 gap-1.5 text-xs"
+        onClick={resetAll}
+      >
+        <RotateCcw className="h-3.5 w-3.5" />
+        Reset all
+      </Button>
    )}
     {isReception && (() => {
       // Reception can reset their own selections (status/bed) once per day
