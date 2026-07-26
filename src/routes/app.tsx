@@ -6664,6 +6664,34 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
        (n) => !doneSet.has(n) && !receptionDoneSet.has(n),
      );
    }
+    if (!isReception && hkStatusFilter.length > 0) {
+      const statusLabelById2 = new Map(
+        receptionStatuses.map((s) => [s.id, s.label.toLowerCase()]),
+      );
+      const bucketForRoom = (n: number): string => {
+        const r = rooms.find((x) => x.room_number === n);
+        if (!r) return "not_started";
+        if (nrOnRooms.has(n)) return "nr";
+        const sid = r.reception_status_id ?? r.default_status;
+        const label = sid ? (statusLabelById2.get(sid) ?? "") : "";
+        if (label === "staff") return "staff";
+        if (label === "ros") return "ros";
+        if (label === "dnd") return "dnd";
+        if (label === "stayover") return "stayover";
+        if (label === "arrival") return "arrival";
+        if (label === "dirty") return "dirty";
+        if (label === "clean") return "clean";
+        if (label) return "progress";
+        const hasLinen = counts.some((c) => c.room_number === n && (c.count ?? 0) > 0);
+        if (hasLinen) return "progress";
+        return "not_started";
+      };
+      visibleRooms = visibleRooms.filter((n) => {
+        const bucket = bucketForRoom(n);
+        const isDone = doneSet.has(n) || receptionDoneSet.has(n);
+        return hkStatusFilter.some((k) => (k === "done" ? isDone : k === bucket));
+      });
+    }
   const nodes: React.ReactNode[] = [];
    const dndStatusId = receptionStatuses.find((s) => s.label === "DND")?.id ?? null;
     const staffStatusIdGlobal = receptionStatuses.find(
