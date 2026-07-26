@@ -6517,8 +6517,8 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
         };
         return (
           <div className="absolute left-1/2 -translate-x-1/2 inline-flex items-center rounded-full border border-input bg-background shadow-xs overflow-hidden">
-            <Popover open={hkFiltersOpen} onOpenChange={setHkFiltersOpen}>
-              <PopoverTrigger asChild>
+            {(() => {
+              const triggerBtn = (
                 <Button
                   variant="ghost"
                   size="sm"
@@ -6527,14 +6527,8 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
                   <Filter className="h-3.5 w-3.5" />
                   {totalActive === 0 ? "Filters" : `Filters · ${totalActive}`}
                 </Button>
-              </PopoverTrigger>
-              <PopoverContent align="center" className="w-64 max-h-[70dvh] overflow-y-auto p-3">
-                <div className="space-y-1 pb-2">
-                  <p className="text-sm font-semibold">Filter rooms</p>
-                  <p className="text-xs text-muted-foreground">
-                    {totalActive === 0 ? "Filter by status. Select multiple." : `${totalActive} active`}
-                  </p>
-                </div>
+              );
+              const body = (
                 <div className="space-y-4">
                   <div className="space-y-2">
                     <p className="text-xs font-medium text-muted-foreground uppercase tracking-wide">Visibility</p>
@@ -6573,8 +6567,35 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
                     </div>
                   </div>
                 </div>
-              </PopoverContent>
-            </Popover>
+              );
+              return isMobile ? (
+                <Sheet open={hkFiltersOpen} onOpenChange={setHkFiltersOpen}>
+                  <SheetTrigger asChild>{triggerBtn}</SheetTrigger>
+                  <SheetContent side="bottom" className="max-h-[85dvh] overflow-y-auto rounded-t-2xl p-4 sm:p-6">
+                    <SheetHeader className="text-left px-0">
+                      <SheetTitle>Filter rooms</SheetTitle>
+                      <SheetDescription>
+                        {totalActive === 0 ? "Filter by status. Select multiple." : `${totalActive} active`}
+                      </SheetDescription>
+                    </SheetHeader>
+                    <div className="pt-2">{body}</div>
+                  </SheetContent>
+                </Sheet>
+              ) : (
+                <Popover open={hkFiltersOpen} onOpenChange={setHkFiltersOpen}>
+                  <PopoverTrigger asChild>{triggerBtn}</PopoverTrigger>
+                  <PopoverContent align="center" className="w-64 max-h-[70dvh] overflow-y-auto p-3">
+                    <div className="space-y-1 pb-2">
+                      <p className="text-sm font-semibold">Filter rooms</p>
+                      <p className="text-xs text-muted-foreground">
+                        {totalActive === 0 ? "Filter by status. Select multiple." : `${totalActive} active`}
+                      </p>
+                    </div>
+                    {body}
+                  </PopoverContent>
+                </Popover>
+              );
+            })()}
             {totalActive > 0 && (
               <Button
                 variant="ghost"
