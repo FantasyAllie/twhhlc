@@ -6501,14 +6501,14 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
           { key: "clean", label: "Clean" },
           { key: "arrival", label: "Arrival" },
           { key: "stayover", label: "Stayover" },
-          { key: "dnd", label: "DND" },
-          { key: "nr", label: "Service Declined" },
           { key: "staff", label: "Staff" },
           { key: "ros", label: "ROS" },
         ];
         const countFor = (key: string) =>
           key === "done"
             ? roomBuckets.filter((r) => r.done).length
+            : key === "stayover"
+            ? roomBuckets.filter((r) => r.bucket === "stayover" || r.bucket === "dnd" || r.bucket === "nr").length
             : roomBuckets.filter((r) => r.bucket === key).length;
         const totalActive = hkStatusFilter.length + (hideCompletedRooms ? 1 : 0);
         const clearHkFilters = () => {
@@ -6689,7 +6689,11 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
       visibleRooms = visibleRooms.filter((n) => {
         const bucket = bucketForRoom(n);
         const isDone = doneSet.has(n) || receptionDoneSet.has(n);
-        return hkStatusFilter.some((k) => (k === "done" ? isDone : k === bucket));
+        return hkStatusFilter.some((k) => {
+          if (k === "done") return isDone;
+          if (k === "stayover") return bucket === "stayover" || bucket === "dnd" || bucket === "nr";
+          return k === bucket;
+        });
       });
     }
   const nodes: React.ReactNode[] = [];
