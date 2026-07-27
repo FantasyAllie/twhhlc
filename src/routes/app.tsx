@@ -5081,133 +5081,19 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
       };
       return (
         <div className="space-y-4">
-          {(canViewAs || (isAdmin && !isReception) || isReception) && (
-            <Section id="actions" title="Actions">
-                {canViewAs && (
-                  <Row
-                    icon={LayoutGrid}
-                    label="Departments"
-                    onClick={() => { close(); setRolePickerSheetOpen(true); }}
-                  />
-                )}
-                {isAdmin && !isReception && (
-                  <Row
-                    icon={ClipboardList}
-                    label="Export"
-                    onClick={() => { close(); setExportSheetOpen(true); }}
-                  />
-                )}
-                {isReception && (
-                  <Row
-                    icon={Printer}
-                    label="Print"
-                    onClick={() => {
-                      close();
-                      const { rows } = computeRoomStatus();
-                      if (rows.length === 0) { toast.error("No rooms to print"); return; }
-                      printRoomStatus(rows, new Date());
-                    }}
-                  />
-                )}
-                {isReception && (
-                  <Row
-                    icon={HelpCircle}
-                    label="Help"
-                    onClick={() => { close(); setReceptionHelpOpen(true); }}
-                  />
-                )}
+          {menuGroups.map((group) => (
+            <Section key={group.id} id={group.id} title={group.title}>
+              {group.items.map((item) => (
+                <Row
+                  key={item.key}
+                  icon={item.icon}
+                  label={item.label}
+                  destructive={item.destructive}
+                  onClick={() => { close(); item.onClick(); }}
+                />
+              ))}
             </Section>
-          )}
-          {((menuHasHk || menuHasFnb) && !isMaintenance) || (menuIsAdmin && !isMaintenance) ? (
-            <Section id="manage" title="Manage">
-              {(menuHasHk || menuHasFnb) && !isMaintenance && (
-                <Row icon={List} label="Linen List" onClick={() => { close(); setTemplateOpen(true); }} />
-              )}
-              {menuIsAdmin && !isMaintenance && (
-                <>
-                  <Row icon={Hash} label="Manage Rooms" onClick={() => { close(); setManageRoomsOpen(true); }} />
-                  <Row icon={Ban} label="Rejects" onClick={() => { close(); setRejectsOpen(true); }} />
-                  {!isReception && (
-                    <Row icon={History} label="History" onClick={() => { close(); setHistorySheetOpen(true); }} />
-                  )}
-                  <Row icon={ConciergeBell} label="Bulk Room Status Setup" onClick={() => { close(); setQuickReceptionOpen(true); }} />
-                </>
-              )}
-              {(realIsAdmin || (realIsManager && hasHousekeeperRole)) && !isMaintenance && (
-                <Row
-                  icon={List}
-                  label="Linen delivery days"
-                  onClick={() => { close(); setLinenDeliveryOpen(true); }}
-                />
-              )}
-            </Section>
-          ) : null}
-          {((!menuIsFnbOnly && !isMaintenance) || (menuCanUseLostProperty && !isMaintenance) || canUseMessages) && (
-            <Section id="utilities" title="Utilities">
-              {!menuIsFnbOnly && !isMaintenance && (
-                <Row
-                  icon={Wrench}
-                  label={
-                    <span className="flex items-center gap-2">
-                      Maintenance Log
-                      {hasOpenMaintenance && (
-                        <span className="h-2 w-2 rounded-full bg-amber-500" aria-hidden />
-                      )}
-                    </span>
-                  }
-                  onClick={() => { close(); setMaintenanceLogOpen(true); }}
-                />
-              )}
-              {menuCanUseLostProperty && !isMaintenance && (
-                <Row
-                  icon={PackageSearch}
-                  label="Lost Property"
-                  onClick={() => { close(); setLostPropertyOpen(true); }}
-                />
-              )}
-              {(menuIsAdmin || hasHousekeeperRole || hasReceptionRole) && !isMaintenance && (
-                <Row
-                  icon={Camera}
-                  label="Stayover Photos"
-                  onClick={() => {
-                    close();
-                    setStayoverPhotosRoomFilter(undefined);
-                    setStayoverPhotosOpen(true);
-                  }}
-                />
-              )}
-              {canUseMessages && (
-                <Row
-                  icon={MessageSquare}
-                  label="Messages"
-                  onClick={() => { close(); setMessagesInitial({}); setMessagesSheetOpen(true); }}
-                />
-              )}
-            </Section>
-          )}
-          <Section id="appearance" title="Appearance">
-            <Row
-              icon={theme === "dark" ? Sun : Moon}
-              label={theme === "dark" ? "Light mode" : "Dark mode"}
-              onClick={() => toggleTheme()}
-            />
-          </Section>
-          <div className="space-y-2">
-            <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">Account</p>
-            <div className="space-y-1.5">
-              {(availableHotels.length > 1 || realIsAdmin) && (
-                <Row icon={RotateCcw} label="Switch hotel" onClick={() => { close(); setHotelSwitcherOpen(true); }} />
-              )}
-              {(realIsAdmin || realIsManager) && !isMaintenance && (
-                <Row icon={Users} label="Users" onClick={() => { close(); setUsersOpen(true); }} />
-              )}
-              {!menuIsFnbOnly && (
-                <Row icon={Bell} label="Notifications" onClick={() => { close(); setNotificationsSheetOpen(true); }} />
-              )}
-              <Row icon={User} label="Account" onClick={() => { close(); setAccountOpen(true); }} />
-              <Row icon={LogOut} label="Sign out" destructive onClick={() => { close(); void signOut(); }} />
-            </div>
-          </div>
+          ))}
         </div>
       );
     })()}
