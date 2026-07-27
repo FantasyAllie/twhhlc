@@ -1984,7 +1984,9 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
     for (const r of data) {
       const day = new Date(r.created_at).toDateString();
       const seen = byDay.get(day);
-      if (seen === undefined && byDay.size >= 7) continue;
+      // Keep ~60 days of snapshots so weekly F&B roll-ups and multi-day
+      // linen delivery windows always have complete data.
+      if (seen === undefined && byDay.size >= 60) continue;
       const next = (seen ?? 0) + 1;
       if (next > 7) continue;
       byDay.set(day, next);
