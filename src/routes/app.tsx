@@ -3674,15 +3674,15 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
     const actions: MenuAction[] = [];
     // Export/Print/Help only in settings on mobile — desktop/tablet expose these on the home header.
     if (isMobile) {
+      if ((realIsAdmin || (realIsManager && hasHousekeeperRole)) && !isReception && !menuIsFnbOnly && !isMaintenance) {
+        actions.push({
+          key: "end-of-shift",
+          icon: ClipboardList,
+          label: "End of shift",
+          onClick: () => void runEndOfShiftBackup(),
+        });
+      }
       if (isAdmin && !isReception) {
-        if (!menuIsFnbOnly && !isMaintenance) {
-          actions.push({
-            key: "end-of-shift",
-            icon: ClipboardList,
-            label: "End of shift",
-            onClick: () => void runEndOfShiftBackup(),
-          });
-        }
         actions.push({ key: "export", icon: ClipboardList, label: "Export", onClick: () => setExportSheetOpen(true) });
       }
       if (isReception) {
