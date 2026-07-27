@@ -2353,10 +2353,9 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
     }
     qc.invalidateQueries({ queryKey: ["export_snapshots"] });
     toast.success(`Backup saved (${jobs.length} ${jobs.length === 1 ? "item" : "items"})`);
-    // Offer to print the room status sheet if we captured one.
-    if (jobs.some((j) => j.kind === "room_status")) {
-      setEndShiftPrintOpen(true);
-    }
+    // Offer to print any of the reports that were just backed up.
+    setEndShiftPrintKinds(jobs.map((j) => j.kind));
+    setEndShiftPrintOpen(true);
   };
 
   // --- Opportunistic auto-snapshot ---
