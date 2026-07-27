@@ -2095,8 +2095,9 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
         : `${weekday} ${ord(d.getDate())} ${month}`;
     };
     const now = new Date();
-    const sub = `Date Printed: ${fmtLong(now, true)}. Printed Range: ${fmtLong(start, false)} - ${fmtLong(end, false)}`;
-    printTotals(rows, grand, end, "totals", sub);
+    const sub = `Printed Range: ${fmtLong(start, false)} - ${fmtLong(end, false)}`;
+    const footer = `Date Printed: ${fmtLong(now, true)}`;
+    printTotals(rows, grand, end, "totals", sub, footer);
   };
 
   const proceedExport = async (
@@ -2483,6 +2484,7 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
     when: Date,
     kind: "totals" | "rejects" | "fnb_totals" = "totals",
     subheading?: string,
+    footer?: string,
   ) => {
     const dateStr = when.toLocaleDateString(undefined, {
       year: "numeric",
@@ -2522,6 +2524,7 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
         <tbody>${tableRows}</tbody>
         <tfoot><tr><td>Total</td><td class="num">${grand}</td></tr></tfoot>
       </table>
+      ${footer ? `<p class="date" style="margin-top:1.5rem;">${esc(footer)}</p>` : ""}
       <script>window.onload=()=>{window.print();}</script>
     </body></html>`);
     win.document.close();
