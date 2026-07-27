@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import { createFileRoute, useNavigate, Link } from "@tanstack/react-router";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
@@ -3663,7 +3663,107 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
    );
  }
 
- return (
+  type MenuAction = {
+    key: string;
+    icon: React.ComponentType<{ className?: string }>;
+    label: React.ReactNode;
+    onClick: () => void;
+    destructive?: boolean;
+  };
+  const menuGroups: { id: string; title: string; items: MenuAction[] }[] = (() => {
+    const actions: MenuAction[] = [];
+    // Export/Print/Help only in settings on mobile — desktop/tablet expose these on the home header.
+    if (isMobile) {
+      if (isAdmin && !isReception) {
+        actions.push({ key: "export", icon: ClipboardList, label: "Export", onClick: () => setExportSheetOpen(true) });
+      }
+      if (isReception) {
+        actions.push({
+          key: "print", icon: Printer, label: "Print",
+          onClick: () => {
+            const { rows } = computeRoomStatus();
+            if (rows.length === 0) { toast.error("No rooms to print"); return; }
+            printRoomStatus(rows, new Date());
+          },
+        });
+        actions.push({ key: "help", icon: HelpCircle, label: "Help", onClick: () => setReceptionHelpOpen(true) });
+      }
+    }
+    const utilities: MenuAction[] = [];
+    if (!menuIsFnbOnly && !isMaintenance) {
+      utilities.push({
+        key: "maintenance-log", icon: Wrench,
+        label: (
+          <span className="flex items-center gap-2">
+            Maintenance Log
+            {hasOpenMaintenance && (<span className="h-2 w-2 rounded-full bg-amber-500" aria-hidden />)}
+          </span>
+        ),
+        onClick: () => setMaintenanceLogOpen(true),
+      });
+    }
+    if (menuCanUseLostProperty && !isMaintenance) {
+      utilities.push({ key: "lost-property", icon: PackageSearch, label: "Lost Property", onClick: () => setLostPropertyOpen(true) });
+    }
+    if ((menuIsAdmin || hasHousekeeperRole || hasReceptionRole) && !isMaintenance) {
+      utilities.push({
+        key: "stayover-photos", icon: Camera, label: "Stayover Photos",
+        onClick: () => { setStayoverPhotosRoomFilter(undefined); setStayoverPhotosOpen(true); },
+      });
+    }
+    if (canUseMessages) {
+      utilities.push({
+        key: "messages", icon: MessageSquare, label: "Messages",
+        onClick: () => { setMessagesInitial({}); setMessagesSheetOpen(true); },
+      });
+    }
+    const manage: MenuAction[] = [];
+    if ((menuHasHk || menuHasFnb) && !isMaintenance) {
+      manage.push({ key: "linen-list", icon: List, label: "Linen List", onClick: () => setTemplateOpen(true) });
+    }
+    if (menuIsAdmin && !isMaintenance) {
+      manage.push({ key: "manage-rooms", icon: Hash, label: "Manage Rooms", onClick: () => setManageRoomsOpen(true) });
+      manage.push({ key: "rejects", icon: Ban, label: "Rejects", onClick: () => setRejectsOpen(true) });
+      if (!isReception) {
+        manage.push({ key: "history", icon: History, label: "History", onClick: () => setHistorySheetOpen(true) });
+      }
+      manage.push({ key: "bulk", icon: ConciergeBell, label: "Bulk Room Status Setup", onClick: () => setQuickReceptionOpen(true) });
+    }
+    if ((realIsAdmin || (realIsManager && hasHousekeeperRole)) && !isMaintenance) {
+      manage.push({ key: "linen-days", icon: List, label: "Linen delivery days", onClick: () => setLinenDeliveryOpen(true) });
+    }
+    const account: MenuAction[] = [];
+    // Departments picker only shown here on mobile — desktop/tablet expose department pills on the home header.
+    if (isMobile && canViewAs) {
+      account.push({ key: "departments", icon: LayoutGrid, label: "Departments", onClick: () => setRolePickerSheetOpen(true) });
+    }
+    if (availableHotels.length > 1 || realIsAdmin) {
+      account.push({ key: "switch-hotel", icon: RotateCcw, label: "Switch hotel", onClick: () => setHotelSwitcherOpen(true) });
+    }
+    if ((realIsAdmin || realIsManager) && !isMaintenance) {
+      account.push({ key: "users", icon: Users, label: "Users", onClick: () => setUsersOpen(true) });
+    }
+    if (!menuIsFnbOnly) {
+      account.push({ key: "notifications", icon: Bell, label: "Notifications", onClick: () => setNotificationsSheetOpen(true) });
+    }
+    account.push({ key: "account", icon: User, label: "Account", onClick: () => setAccountOpen(true) });
+    account.push({ key: "signout", icon: LogOut, label: "Sign out", destructive: true, onClick: () => void signOut() });
+    const appearance: MenuAction[] = [{
+      key: "theme",
+      icon: theme === "dark" ? Sun : Moon,
+      label: theme === "dark" ? "Light mode" : "Dark mode",
+      onClick: () => toggleTheme(),
+    }];
+    return [
+      { id: "actions", title: "Actions", items: actions },
+      { id: "utilities", title: "Utilities", items: utilities },
+      { id: "manage", title: "Manage", items: manage },
+      { id: "account", title: "Account", items: account },
+      { id: "appearance", title: "Appearance", items: appearance },
+    ].filter((g) => g.items.length > 0);
+  })();
+
+  return (
 <main
   className="min-h-[100dvh] bg-background"
   style={{ paddingBottom: "max(1.5rem, env(safe-area-inset-bottom))" }}
@@ -3814,103 +3914,33 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
         </Button>
       </DropdownMenuTrigger>
       <DropdownMenuContent align="end" className="w-64">
-        {(((menuHasHk || menuHasFnb) && !isMaintenance) || (menuIsAdmin && !isMaintenance) || ((realIsAdmin || (realIsManager && hasHousekeeperRole)) && !isMaintenance)) && (
-          <>
-            <DropdownMenuLabel>Manage</DropdownMenuLabel>
-            {(menuHasHk || menuHasFnb) && !isMaintenance && (
-              <DropdownMenuItem onClick={() => setTemplateOpen(true)}>
-                <List className="h-4 w-4 mr-2" /> Linen List
-              </DropdownMenuItem>
-            )}
-            {menuIsAdmin && !isMaintenance && (
-              <>
-                <DropdownMenuItem onClick={() => setManageRoomsOpen(true)}>
-                  <Hash className="h-4 w-4 mr-2" /> Manage Rooms
-                </DropdownMenuItem>
-                <DropdownMenuItem onClick={() => setRejectsOpen(true)}>
-                  <Ban className="h-4 w-4 mr-2" /> Rejects
-                </DropdownMenuItem>
-                {!isReception && (
-                  <DropdownMenuItem onClick={() => setHistorySheetOpen(true)}>
-                    <History className="h-4 w-4 mr-2" /> History
-                  </DropdownMenuItem>
-                )}
-                <DropdownMenuItem onClick={() => setQuickReceptionOpen(true)}>
-                  <ConciergeBell className="h-4 w-4 mr-2" /> Bulk Room Status Setup
-                </DropdownMenuItem>
-              </>
-            )}
-            {(realIsAdmin || (realIsManager && hasHousekeeperRole)) && !isMaintenance && (
-              <DropdownMenuItem onClick={() => setLinenDeliveryOpen(true)}>
-                <List className="h-4 w-4 mr-2" /> Linen delivery days
-              </DropdownMenuItem>
-            )}
-            <DropdownMenuSeparator />
-          </>
-        )}
-        {((!menuIsFnbOnly && !isMaintenance) || (menuCanUseLostProperty && !isMaintenance) || canUseMessages || ((menuIsAdmin || hasHousekeeperRole || hasReceptionRole) && !isMaintenance)) && (
-          <>
-            <DropdownMenuLabel>Utilities</DropdownMenuLabel>
-            {!menuIsFnbOnly && !isMaintenance && (
-              <DropdownMenuItem onClick={() => setMaintenanceLogOpen(true)}>
-                <Wrench className="h-4 w-4 mr-2" />
-                <span className="flex-1">Maintenance Log</span>
-                {hasOpenMaintenance && (
-                  <span className="ml-2 h-2 w-2 rounded-full bg-amber-500" aria-hidden />
-                )}
-              </DropdownMenuItem>
-            )}
-            {menuCanUseLostProperty && !isMaintenance && (
-              <DropdownMenuItem onClick={() => setLostPropertyOpen(true)}>
-                <PackageSearch className="h-4 w-4 mr-2" /> Lost Property
-              </DropdownMenuItem>
-            )}
-            {(menuIsAdmin || hasHousekeeperRole || hasReceptionRole) && !isMaintenance && (
-              <DropdownMenuItem
-                onClick={() => {
-                  setStayoverPhotosRoomFilter(undefined);
-                  setStayoverPhotosOpen(true);
-                }}
-              >
-                <Camera className="h-4 w-4 mr-2" /> Stayover Photos
-              </DropdownMenuItem>
-            )}
-            {canUseMessages && (
-              <DropdownMenuItem onClick={() => { setMessagesInitial({}); setMessagesSheetOpen(true); }}>
-                <MessageSquare className="h-4 w-4 mr-2" /> Messages
-              </DropdownMenuItem>
-            )}
-            <DropdownMenuSeparator />
-          </>
-        )}
-        <DropdownMenuLabel>Appearance</DropdownMenuLabel>
-        <DropdownMenuItem onClick={() => toggleTheme()}>
-          {theme === "dark" ? <Sun className="h-4 w-4 mr-2" /> : <Moon className="h-4 w-4 mr-2" />}
-          {theme === "dark" ? "Light mode" : "Dark mode"}
-        </DropdownMenuItem>
-        <DropdownMenuSeparator />
-        <DropdownMenuLabel>Account</DropdownMenuLabel>
-        {(availableHotels.length > 1 || realIsAdmin) && (
-          <DropdownMenuItem onClick={() => setHotelSwitcherOpen(true)}>
-            <RotateCcw className="h-4 w-4 mr-2" /> Switch hotel
-          </DropdownMenuItem>
-        )}
-        {(realIsAdmin || realIsManager) && !isMaintenance && (
-          <DropdownMenuItem onClick={() => setUsersOpen(true)}>
-            <Users className="h-4 w-4 mr-2" /> Users
-          </DropdownMenuItem>
-        )}
-        {!menuIsFnbOnly && (
-          <DropdownMenuItem onClick={() => setNotificationsSheetOpen(true)}>
-            <Bell className="h-4 w-4 mr-2" /> Notifications
-          </DropdownMenuItem>
-        )}
-        <DropdownMenuItem onClick={() => setAccountOpen(true)}>
-          <User className="h-4 w-4 mr-2" /> Account
-        </DropdownMenuItem>
-        <DropdownMenuItem onClick={() => void signOut()} className="text-destructive focus:text-destructive">
-          <LogOut className="h-4 w-4 mr-2" /> Sign out
-        </DropdownMenuItem>
+        {menuGroups.map((group, gi) => (
+          <React.Fragment key={group.id}>
+            {gi > 0 && <DropdownMenuSeparator />}
+            <DropdownMenuSub>
+              <DropdownMenuSubTrigger>
+                <span className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+                  {group.title}
+                </span>
+              </DropdownMenuSubTrigger>
+              <DropdownMenuSubContent className="w-56">
+                {group.items.map((item) => {
+                  const Icon = item.icon;
+                  return (
+                    <DropdownMenuItem
+                      key={item.key}
+                      onClick={item.onClick}
+                      className={item.destructive ? "text-destructive focus:text-destructive" : undefined}
+                    >
+                      <Icon className="h-4 w-4 mr-2" />
+                      <span className="flex-1">{item.label}</span>
+                    </DropdownMenuItem>
+                  );
+                })}
+              </DropdownMenuSubContent>
+            </DropdownMenuSub>
+          </React.Fragment>
+        ))}
       </DropdownMenuContent>
     </DropdownMenu>
   )}
@@ -5051,133 +5081,19 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
       };
       return (
         <div className="space-y-4">
-          {(canViewAs || (isAdmin && !isReception) || isReception) && (
-            <Section id="actions" title="Actions">
-                {canViewAs && (
-                  <Row
-                    icon={LayoutGrid}
-                    label="Departments"
-                    onClick={() => { close(); setRolePickerSheetOpen(true); }}
-                  />
-                )}
-                {isAdmin && !isReception && (
-                  <Row
-                    icon={ClipboardList}
-                    label="Export"
-                    onClick={() => { close(); setExportSheetOpen(true); }}
-                  />
-                )}
-                {isReception && (
-                  <Row
-                    icon={Printer}
-                    label="Print"
-                    onClick={() => {
-                      close();
-                      const { rows } = computeRoomStatus();
-                      if (rows.length === 0) { toast.error("No rooms to print"); return; }
-                      printRoomStatus(rows, new Date());
-                    }}
-                  />
-                )}
-                {isReception && (
-                  <Row
-                    icon={HelpCircle}
-                    label="Help"
-                    onClick={() => { close(); setReceptionHelpOpen(true); }}
-                  />
-                )}
+          {menuGroups.map((group) => (
+            <Section key={group.id} id={group.id} title={group.title}>
+              {group.items.map((item) => (
+                <Row
+                  key={item.key}
+                  icon={item.icon}
+                  label={item.label}
+                  destructive={item.destructive}
+                  onClick={() => { close(); item.onClick(); }}
+                />
+              ))}
             </Section>
-          )}
-          {((menuHasHk || menuHasFnb) && !isMaintenance) || (menuIsAdmin && !isMaintenance) ? (
-            <Section id="manage" title="Manage">
-              {(menuHasHk || menuHasFnb) && !isMaintenance && (
-                <Row icon={List} label="Linen List" onClick={() => { close(); setTemplateOpen(true); }} />
-              )}
-              {menuIsAdmin && !isMaintenance && (
-                <>
-                  <Row icon={Hash} label="Manage Rooms" onClick={() => { close(); setManageRoomsOpen(true); }} />
-                  <Row icon={Ban} label="Rejects" onClick={() => { close(); setRejectsOpen(true); }} />
-                  {!isReception && (
-                    <Row icon={History} label="History" onClick={() => { close(); setHistorySheetOpen(true); }} />
-                  )}
-                  <Row icon={ConciergeBell} label="Bulk Room Status Setup" onClick={() => { close(); setQuickReceptionOpen(true); }} />
-                </>
-              )}
-              {(realIsAdmin || (realIsManager && hasHousekeeperRole)) && !isMaintenance && (
-                <Row
-                  icon={List}
-                  label="Linen delivery days"
-                  onClick={() => { close(); setLinenDeliveryOpen(true); }}
-                />
-              )}
-            </Section>
-          ) : null}
-          {((!menuIsFnbOnly && !isMaintenance) || (menuCanUseLostProperty && !isMaintenance) || canUseMessages) && (
-            <Section id="utilities" title="Utilities">
-              {!menuIsFnbOnly && !isMaintenance && (
-                <Row
-                  icon={Wrench}
-                  label={
-                    <span className="flex items-center gap-2">
-                      Maintenance Log
-                      {hasOpenMaintenance && (
-                        <span className="h-2 w-2 rounded-full bg-amber-500" aria-hidden />
-                      )}
-                    </span>
-                  }
-                  onClick={() => { close(); setMaintenanceLogOpen(true); }}
-                />
-              )}
-              {menuCanUseLostProperty && !isMaintenance && (
-                <Row
-                  icon={PackageSearch}
-                  label="Lost Property"
-                  onClick={() => { close(); setLostPropertyOpen(true); }}
-                />
-              )}
-              {(menuIsAdmin || hasHousekeeperRole || hasReceptionRole) && !isMaintenance && (
-                <Row
-                  icon={Camera}
-                  label="Stayover Photos"
-                  onClick={() => {
-                    close();
-                    setStayoverPhotosRoomFilter(undefined);
-                    setStayoverPhotosOpen(true);
-                  }}
-                />
-              )}
-              {canUseMessages && (
-                <Row
-                  icon={MessageSquare}
-                  label="Messages"
-                  onClick={() => { close(); setMessagesInitial({}); setMessagesSheetOpen(true); }}
-                />
-              )}
-            </Section>
-          )}
-          <Section id="appearance" title="Appearance">
-            <Row
-              icon={theme === "dark" ? Sun : Moon}
-              label={theme === "dark" ? "Light mode" : "Dark mode"}
-              onClick={() => toggleTheme()}
-            />
-          </Section>
-          <div className="space-y-2">
-            <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">Account</p>
-            <div className="space-y-1.5">
-              {(availableHotels.length > 1 || realIsAdmin) && (
-                <Row icon={RotateCcw} label="Switch hotel" onClick={() => { close(); setHotelSwitcherOpen(true); }} />
-              )}
-              {(realIsAdmin || realIsManager) && !isMaintenance && (
-                <Row icon={Users} label="Users" onClick={() => { close(); setUsersOpen(true); }} />
-              )}
-              {!menuIsFnbOnly && (
-                <Row icon={Bell} label="Notifications" onClick={() => { close(); setNotificationsSheetOpen(true); }} />
-              )}
-              <Row icon={User} label="Account" onClick={() => { close(); setAccountOpen(true); }} />
-              <Row icon={LogOut} label="Sign out" destructive onClick={() => { close(); void signOut(); }} />
-            </div>
-          </div>
+          ))}
         </div>
       );
     })()}
