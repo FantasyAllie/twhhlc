@@ -3937,6 +3937,37 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
    </Sheet>
  )}
  {/* Mobile export sheet (triggered from the burger menu). */}
+  {/* End-of-shift: after backup, offer to print the room status sheet. */}
+  <Dialog open={endShiftPrintOpen} onOpenChange={setEndShiftPrintOpen}>
+    <DialogContent className="max-w-sm">
+      <DialogHeader>
+        <DialogTitle>Print room status sheet?</DialogTitle>
+        <DialogDescription>
+          Backup saved. Would you like to print today's room status sheet for the next shift?
+        </DialogDescription>
+      </DialogHeader>
+      <div className="mt-2 flex justify-end gap-2">
+        <Button variant="outline" onClick={() => setEndShiftPrintOpen(false)}>
+          Not now
+        </Button>
+        <Button
+          onClick={() => {
+            const { rows } = computeRoomStatus();
+            setEndShiftPrintOpen(false);
+            if (rows.length === 0) {
+              toast.error("No rooms to print");
+              return;
+            }
+            printRoomStatus(rows, new Date());
+          }}
+        >
+          <Printer className="h-4 w-4 mr-2" />
+          Print
+        </Button>
+      </div>
+    </DialogContent>
+  </Dialog>
+
  {isMobile && isAdmin && !isReception && (
    <Sheet open={exportSheetOpen} onOpenChange={setExportSheetOpen}>
      <SheetContent side="bottom" className="max-h-[85dvh] overflow-y-auto rounded-t-2xl p-4 sm:p-6">
