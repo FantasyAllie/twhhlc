@@ -6328,6 +6328,19 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
              return match ? { id: match.id, label } : null;
            })
            .filter((v): v is { id: string; label: string } => v !== null);
+          const doneOnlyCount = rooms.filter((r) => r.done_reception || r.done).length;
+          const statusCountFor = (statusId: string) =>
+            rooms.filter(
+              (r) => (r.reception_status_id ?? r.default_status) === statusId,
+            ).length;
+          const roomTypeCountFor = (val: string) =>
+            rooms.filter((r) => parseCats(r.category).includes(val as Category)).length;
+          const featureCountFor = (featureId: string) =>
+            new Set(
+              roomFeatureAssignments
+                .filter((a) => a.feature_id === featureId)
+                .map((a) => a.room_number),
+            ).size;
           const clearAllFilters = () => {
             setReceptionFeatureFilter([]);
             setReceptionStatusFilter([]);
@@ -6363,6 +6376,7 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
                     onCheckedChange={(c) => setReceptionDoneOnlyFilter(!!c)}
                   />
                   <span className="text-sm flex-1">Only show rooms marked done</span>
+                   <span className="text-xs text-muted-foreground tabular-nums">{doneOnlyCount}</span>
                 </label>
               </div>
               {statusFilterOptions.length > 0 && (
@@ -6371,6 +6385,7 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
                   <div className="grid gap-1">
                     {statusFilterOptions.map((s) => {
                       const checked = receptionStatusFilter.includes(s.id);
+                       const count = statusCountFor(s.id);
                       return (
                         <label
                           key={s.id}
@@ -6385,6 +6400,7 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
                             }}
                           />
                           <span className="text-sm flex-1">{s.label}</span>
+                           <span className="text-xs text-muted-foreground tabular-nums">{count}</span>
                         </label>
                       );
                     })}
@@ -6397,6 +6413,7 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
                     <div className="grid gap-1">
                       {roomTypes.map((rt) => {
                         const checked = receptionRoomTypeFilter.includes(rt.value);
+                         const count = roomTypeCountFor(rt.value);
                         return (
                           <label
                             key={rt.id}
@@ -6411,6 +6428,7 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
                               }}
                             />
                             <span className="text-sm flex-1">{rt.label}</span>
+                             <span className="text-xs text-muted-foreground tabular-nums">{count}</span>
                           </label>
                         );
                       })}
@@ -6425,6 +6443,7 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
                       .sort((a, b) => a.label.localeCompare(b.label))
                       .map((f) => {
                         const checked = receptionFeatureFilter.includes(f.id);
+                         const count = featureCountFor(f.id);
                         return (
                           <label
                             key={f.id}
@@ -6439,6 +6458,7 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
                               }}
                             />
                             <span className="text-sm flex-1">{f.label}</span>
+                             <span className="text-xs text-muted-foreground tabular-nums">{count}</span>
                           </label>
                         );
                       })}
