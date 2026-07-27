@@ -267,6 +267,7 @@ function AppPage() {
   const hotelName = currentHotelQ.data?.name ?? DEFAULT_HOTEL_NAME;
   const linenDeliveryDays: number[] = currentHotelQ.data?.linen_delivery_days ?? [];
   const todayIsDeliveryDay = linenDeliveryDays.includes(new Date().getDay());
+  const todayIsMonday = new Date().getDay() === 1;
   const listHotelsFn = useServerFn(listHotels);
   const setActiveHotelFn = useServerFn(setActiveHotel);
   const createHotelFn = useServerFn(createHotel);
@@ -1983,7 +1984,9 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
     for (const r of data) {
       const day = new Date(r.created_at).toDateString();
       const seen = byDay.get(day);
-      if (seen === undefined && byDay.size >= 7) continue;
+      // Keep ~60 days of snapshots so weekly F&B roll-ups and multi-day
+      // linen delivery windows always have complete data.
+      if (seen === undefined && byDay.size >= 60) continue;
       const next = (seen ?? 0) + 1;
       if (next > 7) continue;
       byDay.set(day, next);
@@ -2250,6 +2253,109 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
     }
     await proceedExport("fnb_totals");
   };
+
+  // Roll up daily F&B linen snapshots for the previous ISO week (last Mon 00:00
+  // through last Sun 23:59). Only meaningful on Mondays; the button is gated
+  // to Monday elsewhere.
+  const computeWeeklyFnbTotals = (): {
+    rows: SnapshotRow[];
+    grand: number;
+    start: Date;
+    end: Date;
+  } => {
+    const now = new Date();
+    const start = new Date(now);
+    start.setHours(0, 0, 0, 0);
+    const dow = start.getDay(); // 0 = Sun, 1 = Mon
+    const daysSinceMonday = dow === 0 ? 6 : dow - 1;
+    // Start of THIS week's Monday, then step back 7 days = last Monday.
+    start.setDate(start.getDate() - daysSinceMonday - 7);
+    const end = new Date(start);
+    end.setDate(end.getDate() + 6);
+    end.setHours(23, 59, 59, 999);
+    const map = new Map<string, number>();
+    for (const s of snapshots) {
+      if (s.kind !== "fnb_totals") continue;
+      const ts = new Date(s.created_at).getTime();
+      if (ts < start.getTime() || ts > end.getTime()) continue;
+      const list = (s.totals as SnapshotRow[] | null) ?? [];
+      for (const r of list) {
+        const key = (r.name ?? "").trim();
+        if (!key) continue;
+        map.set(key, (map.get(key) ?? 0) + (r.count ?? 0));
+      }
+    }
+    const rows = Array.from(map.entries())
+      .sort((a, b) => a[0].localeCompare(b[0], undefined, { sensitivity: "base" }))
+      .map(([name, count]) => ({ name, count }));
+    const grand = rows.reduce((s, r) => s + r.count, 0);
+    return { rows, grand, start, end };
+  };
+
+  const openWeeklyFnbTotals = () => {
+    const { rows, grand, start, end } = computeWeeklyFnbTotals();
+    if (rows.length === 0) {
+      toast.error("No F&B linen recorded last week");
+      return;
+    }
+    const fmt = (d: Date) =>
+      d.toLocaleDateString(undefined, { month: "short", day: "numeric" });
+    printTotals(rows, grand, end, "fnb_totals", `Weekly total, ${fmt(start)} – ${fmt(end)}`);
+  };
+
+  // --- Opportunistic auto-snapshot ---
+  // Ensures a daily snapshot exists for every kind even if nobody manually
+  // prints, so weekly and multi-day roll-ups never see missing days. Fires
+  // once per mount when the app is open past the appropriate cutoff, and
+  // relies on same-day dedup for kind to avoid double-writes.
+  const autoSnapshotDoneRef = useRef<string>("");
+  useEffect(() => {
+    if (!authUser) return;
+    if (rooms.length === 0) return;
+    const now = new Date();
+    const today = now.toDateString();
+    // Reset guard on day change so a long-open tab still snapshots the next day.
+    if (autoSnapshotDoneRef.current !== today) {
+      autoSnapshotDoneRef.current = "";
+    }
+    const guardKey = `${today}:${now.getHours() >= 23 ? "eod" : "afternoon"}`;
+    if (autoSnapshotDoneRef.current === guardKey) return;
+    const hasKind = (k: string) =>
+      snapshots.some(
+        (s) => s.kind === k && new Date(s.created_at).toDateString() === today,
+      );
+    const writeIfMissing = async (
+      kind: "totals" | "room_status" | "fnb_totals" | "maintenance",
+      rows: unknown[],
+      grand: number,
+    ) => {
+      if (hasKind(kind)) return;
+      if (rows.length === 0) return;
+      const { error } = await supabase
+        .from("export_snapshots")
+        .insert({ totals: rows, grand_total: grand, kind } as never);
+      if (!error) {
+        qc.invalidateQueries({ queryKey: ["export_snapshots"] });
+      }
+    };
+    // Room status: shift ends at 3pm — snapshot from then on.
+    if (now.getHours() >= 15) {
+      const { rows, grand } = computeRoomStatus();
+      void writeIfMissing("room_status", rows, grand);
+    }
+    // End-of-day: capture linen and F&B totals + maintenance so the next
+    // day's delivery/weekly roll-ups always find complete data.
+    if (now.getHours() >= 23) {
+      const t = computeTotals();
+      void writeIfMissing("totals", t.rows, t.grand);
+      const f = computeFnbTotals();
+      void writeIfMissing("fnb_totals", f.rows, f.grand);
+      const m = computeMaintenance();
+      void writeIfMissing("maintenance", m.rows, m.grand);
+    }
+    autoSnapshotDoneRef.current = guardKey;
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [authUser, rooms.length, snapshots.length, counts.length, fnbCounts.length]);
 
   const openMaintenanceExport = async () => {
     const { rows } = computeMaintenance();
@@ -3620,15 +3726,17 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
                 Room status
               </Button>
             )}
-            <Button
-              variant="outline"
-              size="lg"
-              className="justify-start h-12"
-              onClick={() => { setExportSheetOpen(false); void openFnbExport(); }}
-            >
-              <List className="h-5 w-5 mr-2" />
-              F&amp;B Linen totals
-            </Button>
+            {todayIsMonday && (
+              <Button
+                variant="outline"
+                size="lg"
+                className="justify-start h-12"
+                onClick={() => { setExportSheetOpen(false); openWeeklyFnbTotals(); }}
+              >
+                <List className="h-5 w-5 mr-2" />
+                Weekly F&amp;B linen totals
+              </Button>
+            )}
           </div>
         </SheetContent>
       </Sheet>
@@ -3658,10 +3766,12 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
               Room status
             </DropdownMenuItem>
           )}
-          <DropdownMenuItem onClick={() => void openFnbExport()}>
-            <List className="h-4 w-4 mr-2" />
-            F&amp;B Linen totals
-          </DropdownMenuItem>
+          {todayIsMonday && (
+            <DropdownMenuItem onClick={() => openWeeklyFnbTotals()}>
+              <List className="h-4 w-4 mr-2" />
+              Weekly F&amp;B linen totals
+            </DropdownMenuItem>
+          )}
         </DropdownMenuContent>
       </DropdownMenu>
     ))}
@@ -3878,10 +3988,12 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
            <ClipboardList className="h-5 w-5 mr-2" />
            Room status
          </Button>
-         <Button variant="outline" size="lg" className="justify-start h-12" onClick={() => { setExportSheetOpen(false); void openFnbExport(); }}>
-           <List className="h-5 w-5 mr-2" />
-           F&amp;B Linen totals
-         </Button>
+          {todayIsMonday && (
+            <Button variant="outline" size="lg" className="justify-start h-12" onClick={() => { setExportSheetOpen(false); openWeeklyFnbTotals(); }}>
+              <List className="h-5 w-5 mr-2" />
+              Weekly F&amp;B linen totals
+            </Button>
+          )}
        </div>
      </SheetContent>
    </Sheet>
