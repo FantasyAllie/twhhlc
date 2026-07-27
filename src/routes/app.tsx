@@ -2505,7 +2505,7 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
       @media print{body{padding:0;}}
     </style></head><body>
       <h1>${esc(heading)}</h1>
-      <p class="date">${dateStr}${subheading ? ` &middot; ${esc(subheading)}` : ""}</p>
+      <p class="date">${subheading ? esc(subheading) : dateStr}</p>
       <table>
         <thead><tr><th>Item</th><th class="num">Count</th></tr></thead>
         <tbody>${tableRows}</tbody>
