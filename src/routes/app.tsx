@@ -4034,12 +4034,12 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
        <div className="mt-4 grid gap-2">
          <Button variant="outline" size="lg" className="justify-start h-12" onClick={() => { setExportSheetOpen(false); openExport(); }}>
            <List className="h-5 w-5 mr-2" />
-           Linen totals
+          Daily Linen Totals
          </Button>
          {todayIsDeliveryDay && (
            <Button variant="outline" size="lg" className="justify-start h-12" onClick={() => { setExportSheetOpen(false); openDeliveryLinenTotals(); }}>
              <List className="h-5 w-5 mr-2" />
-             Delivery linen totals
+            Linen removed since last delivery
            </Button>
          )}
          <Button variant="outline" size="lg" className="justify-start h-12" onClick={() => { setExportSheetOpen(false); openRoomStatusExport(); }}>
