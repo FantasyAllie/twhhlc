@@ -2304,6 +2304,58 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
     printTotals(rows, grand, end, "fnb_totals", `Weekly total, ${fmt(start)} – ${fmt(end)}`);
   };
 
+  // End-of-shift backup: silently snapshot every kind that has data (replacing
+  // any same-day snapshot of that kind), then offer to print the room status
+  // sheet. Replaces the multi-item Export dropdown on the home screen; the
+  // per-kind manual exports remain available in Settings → Actions → Export.
+  const runEndOfShiftBackup = async () => {
+    const today = new Date().toDateString();
+    type Kind = "totals" | "fnb_totals" | "room_status" | "maintenance";
+    const jobs: Array<{ kind: Kind; rows: unknown[]; grand: number }> = [];
+    const t = computeTotals();
+    if (t.rows.length) jobs.push({ kind: "totals", rows: t.rows, grand: t.grand });
+    const f = computeFnbTotals();
+    if (f.rows.length) jobs.push({ kind: "fnb_totals", rows: f.rows, grand: f.grand });
+    const rs = computeRoomStatus();
+    if (rs.rows.length) jobs.push({ kind: "room_status", rows: rs.rows, grand: rs.grand });
+    const m = computeMaintenance();
+    if (m.rows.length) jobs.push({ kind: "maintenance", rows: m.rows, grand: m.grand });
+    if (jobs.length === 0) {
+      toast.error("Nothing to back up yet");
+      return;
+    }
+    for (const job of jobs) {
+      const todays = snapshots.filter(
+        (s) => s.kind === job.kind && new Date(s.created_at).toDateString() === today,
+      );
+      if (todays.length > 0) {
+        const ids = todays.map((s) => s.id);
+        const { error: delErr } = await supabase
+          .from("export_snapshots")
+          .delete()
+          .in("id", ids);
+        if (delErr) {
+          toast.error(delErr.message);
+          return;
+        }
+      }
+      const { error } = await supabase
+        .from("export_snapshots")
+        .insert({ totals: job.rows, grand_total: job.grand, kind: job.kind } as never);
+      if (error) {
+        toast.error(error.message);
+        return;
+      }
+      await pruneSnapshots(job.kind);
+    }
+    qc.invalidateQueries({ queryKey: ["export_snapshots"] });
+    toast.success(`Backup saved (${jobs.length} ${jobs.length === 1 ? "item" : "items"})`);
+    // Offer to print the room status sheet if we captured one.
+    if (jobs.some((j) => j.kind === "room_status")) {
+      setEndShiftPrintOpen(true);
+    }
+  };
+
   // --- Opportunistic auto-snapshot ---
   // Ensures a daily snapshot exists for every kind even if nobody manually
   // prints, so weekly and multi-day roll-ups never see missing days. Fires
