@@ -2254,6 +2254,55 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
     await proceedExport("fnb_totals");
   };
 
+  // Roll up daily F&B linen snapshots for the previous ISO week (last Mon 00:00
+  // through last Sun 23:59). Only meaningful on Mondays; the button is gated
+  // to Monday elsewhere.
+  const computeWeeklyFnbTotals = (): {
+    rows: SnapshotRow[];
+    grand: number;
+    start: Date;
+    end: Date;
+  } => {
+    const now = new Date();
+    const start = new Date(now);
+    start.setHours(0, 0, 0, 0);
+    const dow = start.getDay(); // 0 = Sun, 1 = Mon
+    const daysSinceMonday = dow === 0 ? 6 : dow - 1;
+    // Start of THIS week's Monday, then step back 7 days = last Monday.
+    start.setDate(start.getDate() - daysSinceMonday - 7);
+    const end = new Date(start);
+    end.setDate(end.getDate() + 6);
+    end.setHours(23, 59, 59, 999);
+    const map = new Map<string, number>();
+    for (const s of snapshots) {
+      if (s.kind !== "fnb_totals") continue;
+      const ts = new Date(s.created_at).getTime();
+      if (ts < start.getTime() || ts > end.getTime()) continue;
+      const list = (s.totals as SnapshotRow[] | null) ?? [];
+      for (const r of list) {
+        const key = (r.name ?? "").trim();
+        if (!key) continue;
+        map.set(key, (map.get(key) ?? 0) + (r.count ?? 0));
+      }
+    }
+    const rows = Array.from(map.entries())
+      .sort((a, b) => a[0].localeCompare(b[0], undefined, { sensitivity: "base" }))
+      .map(([name, count]) => ({ name, count }));
+    const grand = rows.reduce((s, r) => s + r.count, 0);
+    return { rows, grand, start, end };
+  };
+
+  const openWeeklyFnbTotals = () => {
+    const { rows, grand, start, end } = computeWeeklyFnbTotals();
+    if (rows.length === 0) {
+      toast.error("No F&B linen recorded last week");
+      return;
+    }
+    const fmt = (d: Date) =>
+      d.toLocaleDateString(undefined, { month: "short", day: "numeric" });
+    printTotals(rows, grand, end, "fnb_totals", `Weekly total, ${fmt(start)} – ${fmt(end)}`);
+  };
+
   const openMaintenanceExport = async () => {
     const { rows } = computeMaintenance();
     if (rows.length === 0) {
