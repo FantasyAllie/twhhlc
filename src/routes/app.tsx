@@ -3675,6 +3675,14 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
     // Export/Print/Help only in settings on mobile — desktop/tablet expose these on the home header.
     if (isMobile) {
       if (isAdmin && !isReception) {
+        if (!menuIsFnbOnly && !isMaintenance) {
+          actions.push({
+            key: "end-of-shift",
+            icon: ClipboardList,
+            label: "End of shift",
+            onClick: () => void runEndOfShiftBackup(),
+          });
+        }
         actions.push({ key: "export", icon: ClipboardList, label: "Export", onClick: () => setExportSheetOpen(true) });
       }
       if (isReception) {
@@ -3917,28 +3925,22 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
         {menuGroups.map((group, gi) => (
           <React.Fragment key={group.id}>
             {gi > 0 && <DropdownMenuSeparator />}
-            <DropdownMenuSub>
-              <DropdownMenuSubTrigger>
-                <span className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
-                  {group.title}
-                </span>
-              </DropdownMenuSubTrigger>
-              <DropdownMenuSubContent className="w-56">
-                {group.items.map((item) => {
-                  const Icon = item.icon;
-                  return (
-                    <DropdownMenuItem
-                      key={item.key}
-                      onClick={item.onClick}
-                      className={item.destructive ? "text-destructive focus:text-destructive" : undefined}
-                    >
-                      <Icon className="h-4 w-4 mr-2" />
-                      <span className="flex-1">{item.label}</span>
-                    </DropdownMenuItem>
-                  );
-                })}
-              </DropdownMenuSubContent>
-            </DropdownMenuSub>
+            <DropdownMenuLabel className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+              {group.title}
+            </DropdownMenuLabel>
+            {group.items.map((item) => {
+              const Icon = item.icon;
+              return (
+                <DropdownMenuItem
+                  key={item.key}
+                  onClick={item.onClick}
+                  className={item.destructive ? "text-destructive focus:text-destructive" : undefined}
+                >
+                  <Icon className="h-4 w-4 mr-2" />
+                  <span className="flex-1">{item.label}</span>
+                </DropdownMenuItem>
+              );
+            })}
           </React.Fragment>
         ))}
       </DropdownMenuContent>
