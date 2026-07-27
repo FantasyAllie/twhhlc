@@ -2082,9 +2082,20 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
       toast.error("No linen totals recorded since the last delivery day");
       return;
     }
-    const fmt = (d: Date) =>
-      d.toLocaleDateString(undefined, { month: "short", day: "numeric" });
-    const sub = `Linen removed since last delivery, ${fmt(start)} – ${fmt(end)}`;
+    const ord = (n: number) => {
+      const s = ["th", "st", "nd", "rd"];
+      const v = n % 100;
+      return `${n}${s[(v - 20) % 10] ?? s[v] ?? s[0]}`;
+    };
+    const fmtLong = (d: Date, withYear: boolean) => {
+      const weekday = d.toLocaleDateString(undefined, { weekday: "long" });
+      const month = d.toLocaleDateString(undefined, { month: "long" });
+      return withYear
+        ? `${weekday} ${ord(d.getDate())} ${month}, ${d.getFullYear()}`
+        : `${weekday} ${ord(d.getDate())} ${month}`;
+    };
+    const now = new Date();
+    const sub = `Date Printed: ${fmtLong(now, true)}. Printed Range: ${fmtLong(start, false)} - ${fmtLong(end, false)}`;
     printTotals(rows, grand, end, "totals", sub);
   };
 
@@ -2505,7 +2516,7 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
       @media print{body{padding:0;}}
     </style></head><body>
       <h1>${esc(heading)}</h1>
-      <p class="date">${dateStr}${subheading ? ` &middot; ${esc(subheading)}` : ""}</p>
+      <p class="date">${subheading ? esc(subheading) : dateStr}</p>
       <table>
         <thead><tr><th>Item</th><th class="num">Count</th></tr></thead>
         <tbody>${tableRows}</tbody>
