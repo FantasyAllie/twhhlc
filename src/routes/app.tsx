@@ -2502,6 +2502,7 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
     }
     const esc = (s: string) =>
       s.replace(/[<>&]/g, (ch) => ({ "<": "&lt;", ">": "&gt;", "&": "&amp;" }[ch]!));
+    const isFooterSub = !!subheading && subheading.startsWith("Date Printed");
     const tableRows = rows
       .map((r) => `<tr><td>${esc(r.name)}</td><td class="num">${r.count}</td></tr>`)
       .join("");
@@ -2509,6 +2510,7 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
       body{font-family:system-ui,-apple-system,sans-serif;color:#000;background:#fff;padding:2rem;max-width:640px;margin:0 auto;}
       h1{font-size:1.5rem;margin:0 0 .25rem;}
       .date{color:#444;margin:0 0 1.5rem;font-size:.95rem;}
+      .footer-date{color:#444;margin:1.25rem 0 0;font-size:.95rem;}
       table{width:100%;border-collapse:collapse;font-size:1rem;}
       th,td{text-align:left;padding:.5rem .75rem;border-bottom:1px solid #ccc;}
       th.num,td.num{text-align:right;font-variant-numeric:tabular-nums;}
@@ -2516,12 +2518,13 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
       @media print{body{padding:0;}}
     </style></head><body>
       <h1>${esc(heading)}</h1>
-      <p class="date">${subheading ? esc(subheading) : dateStr}</p>
+      <p class="date">${subheading && !isFooterSub ? esc(subheading) : dateStr}</p>
       <table>
         <thead><tr><th>Item</th><th class="num">Count</th></tr></thead>
         <tbody>${tableRows}</tbody>
         <tfoot><tr><td>Total</td><td class="num">${grand}</td></tr></tfoot>
       </table>
+      ${isFooterSub ? `<p class="footer-date">${esc(subheading!)}</p>` : ""}
       <script>window.onload=()=>{window.print();}</script>
     </body></html>`);
     win.document.close();
