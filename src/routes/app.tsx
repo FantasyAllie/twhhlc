@@ -2084,7 +2084,7 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
     }
     const fmt = (d: Date) =>
       d.toLocaleDateString(undefined, { month: "short", day: "numeric" });
-    const sub = `Delivery total, ${fmt(start)} – ${fmt(end)}`;
+    const sub = `Linen removed since last delivery, ${fmt(start)} – ${fmt(end)}`;
     printTotals(rows, grand, end, "totals", sub);
   };
 
