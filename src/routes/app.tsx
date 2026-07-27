@@ -455,6 +455,7 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
   const [editingItemId, setEditingItemId] = useState<string | null>(null);
   const [editingItemName, setEditingItemName] = useState("");
   const [exportSheetOpen, setExportSheetOpen] = useState(false);
+  const [endShiftPrintOpen, setEndShiftPrintOpen] = useState(false);
   const [rolePickerSheetOpen, setRolePickerSheetOpen] = useState(false);
   const [editItemSheetId, setEditItemSheetId] = useState<string | null>(null);
   const [filtersSheetOpen, setFiltersSheetOpen] = useState(false);
@@ -2303,6 +2304,58 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
     printTotals(rows, grand, end, "fnb_totals", `Weekly total, ${fmt(start)} – ${fmt(end)}`);
   };
 
+  // End-of-shift backup: silently snapshot every kind that has data (replacing
+  // any same-day snapshot of that kind), then offer to print the room status
+  // sheet. Replaces the multi-item Export dropdown on the home screen; the
+  // per-kind manual exports remain available in Settings → Actions → Export.
+  const runEndOfShiftBackup = async () => {
+    const today = new Date().toDateString();
+    type Kind = "totals" | "fnb_totals" | "room_status" | "maintenance";
+    const jobs: Array<{ kind: Kind; rows: unknown[]; grand: number }> = [];
+    const t = computeTotals();
+    if (t.rows.length) jobs.push({ kind: "totals", rows: t.rows, grand: t.grand });
+    const f = computeFnbTotals();
+    if (f.rows.length) jobs.push({ kind: "fnb_totals", rows: f.rows, grand: f.grand });
+    const rs = computeRoomStatus();
+    if (rs.rows.length) jobs.push({ kind: "room_status", rows: rs.rows, grand: rs.grand });
+    const m = computeMaintenance();
+    if (m.rows.length) jobs.push({ kind: "maintenance", rows: m.rows, grand: m.grand });
+    if (jobs.length === 0) {
+      toast.error("Nothing to back up yet");
+      return;
+    }
+    for (const job of jobs) {
+      const todays = snapshots.filter(
+        (s) => s.kind === job.kind && new Date(s.created_at).toDateString() === today,
+      );
+      if (todays.length > 0) {
+        const ids = todays.map((s) => s.id);
+        const { error: delErr } = await supabase
+          .from("export_snapshots")
+          .delete()
+          .in("id", ids);
+        if (delErr) {
+          toast.error(delErr.message);
+          return;
+        }
+      }
+      const { error } = await supabase
+        .from("export_snapshots")
+        .insert({ totals: job.rows, grand_total: job.grand, kind: job.kind } as never);
+      if (error) {
+        toast.error(error.message);
+        return;
+      }
+      await pruneSnapshots(job.kind);
+    }
+    qc.invalidateQueries({ queryKey: ["export_snapshots"] });
+    toast.success(`Backup saved (${jobs.length} ${jobs.length === 1 ? "item" : "items"})`);
+    // Offer to print the room status sheet if we captured one.
+    if (jobs.some((j) => j.kind === "room_status")) {
+      setEndShiftPrintOpen(true);
+    }
+  };
+
   // --- Opportunistic auto-snapshot ---
   // Ensures a daily snapshot exists for every kind even if nobody manually
   // prints, so weekly and multi-day roll-ups never see missing days. Fires
@@ -3682,99 +3735,17 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
           Mark shift as finished
       </Button>
     )}
-    {!isMobile && isAdmin && !isReception && (isMobile ? (
-      <Sheet open={exportSheetOpen} onOpenChange={setExportSheetOpen}>
-        <SheetTrigger asChild>
-          <Button variant="outline" size="sm">Export</Button>
-        </SheetTrigger>
-        <SheetContent side="bottom" className="max-h-[85dvh] overflow-y-auto rounded-t-2xl p-4 sm:p-6">
-          <SheetHeader className="text-left">
-            <SheetTitle>Export</SheetTitle>
-            <SheetDescription>Choose what to export.</SheetDescription>
-          </SheetHeader>
-          <div className="mt-4 grid gap-2">
-            {!isShiftComplete && (
-              <Button
-                variant="outline"
-                size="lg"
-                className="justify-start h-12"
-                onClick={() => { setExportSheetOpen(false); openExport(); }}
-              >
-                <List className="h-5 w-5 mr-2" />
-                Linen totals
-              </Button>
-            )}
-            {todayIsDeliveryDay && (
-              <Button
-                variant="outline"
-                size="lg"
-                className="justify-start h-12"
-                onClick={() => { setExportSheetOpen(false); openDeliveryLinenTotals(); }}
-              >
-                <List className="h-5 w-5 mr-2" />
-                Delivery linen totals
-              </Button>
-            )}
-            {!isShiftComplete && (
-              <Button
-                variant="outline"
-                size="lg"
-                className="justify-start h-12"
-                onClick={() => { setExportSheetOpen(false); openRoomStatusExport(); }}
-              >
-                <ClipboardList className="h-5 w-5 mr-2" />
-                Room status
-              </Button>
-            )}
-            {todayIsMonday && (
-              <Button
-                variant="outline"
-                size="lg"
-                className="justify-start h-12"
-                onClick={() => { setExportSheetOpen(false); openWeeklyFnbTotals(); }}
-              >
-                <List className="h-5 w-5 mr-2" />
-                Weekly F&amp;B linen totals
-              </Button>
-            )}
-          </div>
-        </SheetContent>
-      </Sheet>
-    ) : (
-      <DropdownMenu>
-        <DropdownMenuTrigger asChild>
-          <Button variant="outline" size="sm">Export</Button>
-        </DropdownMenuTrigger>
-        <DropdownMenuContent align="end" className="w-56">
-          <DropdownMenuLabel>Export</DropdownMenuLabel>
-          <DropdownMenuSeparator />
-          {!isShiftComplete && (
-            <DropdownMenuItem onClick={() => openExport()}>
-              <List className="h-4 w-4 mr-2" />
-              Linen totals
-            </DropdownMenuItem>
-          )}
-          {todayIsDeliveryDay && (
-            <DropdownMenuItem onClick={() => openDeliveryLinenTotals()}>
-              <List className="h-4 w-4 mr-2" />
-              Delivery linen totals
-            </DropdownMenuItem>
-          )}
-          {!isShiftComplete && (
-            <DropdownMenuItem onClick={() => openRoomStatusExport()}>
-              <ClipboardList className="h-4 w-4 mr-2" />
-              Room status
-            </DropdownMenuItem>
-          )}
-          {todayIsMonday && (
-            <DropdownMenuItem onClick={() => openWeeklyFnbTotals()}>
-              <List className="h-4 w-4 mr-2" />
-              Weekly F&amp;B linen totals
-            </DropdownMenuItem>
-          )}
-        </DropdownMenuContent>
-      </DropdownMenu>
-    ))}
+    {!isMobile && isAdmin && !isReception && (
+      <Button
+        variant="outline"
+        size="sm"
+        onClick={() => void runEndOfShiftBackup()}
+        title="Save today's totals, F&B, room status and maintenance snapshots"
+      >
+        <ClipboardList className="h-4 w-4 mr-2" />
+        End of shift
+      </Button>
+    )}
     {!isMobile && isReception && (
       <Button
         variant="outline"
@@ -3966,6 +3937,37 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
    </Sheet>
  )}
  {/* Mobile export sheet (triggered from the burger menu). */}
+  {/* End-of-shift: after backup, offer to print the room status sheet. */}
+  <Dialog open={endShiftPrintOpen} onOpenChange={setEndShiftPrintOpen}>
+    <DialogContent className="max-w-sm">
+      <DialogHeader>
+        <DialogTitle>Print room status sheet?</DialogTitle>
+        <DialogDescription>
+          Backup saved. Would you like to print today's room status sheet for the next shift?
+        </DialogDescription>
+      </DialogHeader>
+      <div className="mt-2 flex justify-end gap-2">
+        <Button variant="outline" onClick={() => setEndShiftPrintOpen(false)}>
+          Not now
+        </Button>
+        <Button
+          onClick={() => {
+            const { rows } = computeRoomStatus();
+            setEndShiftPrintOpen(false);
+            if (rows.length === 0) {
+              toast.error("No rooms to print");
+              return;
+            }
+            printRoomStatus(rows, new Date());
+          }}
+        >
+          <Printer className="h-4 w-4 mr-2" />
+          Print
+        </Button>
+      </div>
+    </DialogContent>
+  </Dialog>
+
  {isMobile && isAdmin && !isReception && (
    <Sheet open={exportSheetOpen} onOpenChange={setExportSheetOpen}>
      <SheetContent side="bottom" className="max-h-[85dvh] overflow-y-auto rounded-t-2xl p-4 sm:p-6">
