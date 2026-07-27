@@ -3963,6 +3963,16 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
             Room Status Sheet
           </Button>
         )}
+        {todayIsDeliveryDay && (
+          <Button
+            variant="outline"
+            className="justify-start h-12"
+            onClick={() => openDeliveryLinenTotals()}
+          >
+            <Printer className="h-4 w-4 mr-2" />
+            Linen Totals
+          </Button>
+        )}
         {endShiftPrintKinds.includes("totals") && (
           <Button
             variant="outline"
