@@ -1,122 +1,82 @@
 
-This plan groups your 16 items by area so schema/role changes land first (they unblock the UI work), then UI/feature work, then polish. Nothing else is changed.
+# Reworked exports: automatic snapshots + one-tap prints
 
-## 1. Data model & permissions (must land first)
+## Goal
 
-**New "Developer" role (item 15)**
-- Add `'developer'` to the `app_role` enum.
-- Update `roleRank()` in `src/lib/auth-client.ts` / `auth.functions.ts` so Developer = Admin tier (rank 5+); Admin stays 5, Regional Manager 4, Manager 3.
-- Every `has_role(..., 'admin')` RLS check gets an OR `has_role(..., 'developer')` (via a new `private.is_admin_like()` helper) so Developer sees/modifies everything.
+Cut manual exporting to almost zero without ever losing a day of data. A daily backend job takes a snapshot of everything that could be printed later; the export UI turns into simple day-gated print buttons that just print from those snapshots.
 
-**Room messages reply FK bug (item 4)**
-- `room_messages_reply_to_id_fkey` currently blocks replies. Change it to `ON DELETE SET NULL` and confirm both messages share the same `hotel_id`. Also ensure the client sends a real UUID (not a client-side temp id) as `reply_to_id`.
+## How it works
 
-**Maintenance photos not visible to Maintenance dept (item 2)**
-- Storage policies on `entry-photos` currently require author OR admin. Extend the SELECT policy so users whose `sub_role` includes `'maintenance'` can read objects under `maintenance/**`. Same shape for `lost-property/**` staying author+admin.
+### 1. Nightly snapshot job (per hotel)
 
-**DND photo cleanup when DND removed (item 16)**
-- Client-side: whenever we transition a room OUT of `DND` on the same calendar day the photo was taken, call `deleteTodayStayoverPhotosForRoom(roomNumber)` (already exists in `src/lib/stayover-photos.ts`). Wired into the same code path that already handles DND selection.
+A single scheduled backend job runs once a day (per hotel timezone, end-of-day) and writes one row per hotel per kind into the existing `export_snapshots` table:
 
-**Export history retention → 7 days (item 1)**
-- `pruneSnapshots` currently keeps 6 days of `totals`; change to keep 7 days for all `kind`s in `export_snapshots`.
+- `totals` — housekeeping linen totals for the day (from `room_item_counts` rolled up per item)
+- `fnb_totals` — F&B linen totals for the day (from `fnb_linen_counts`)
+- `room_status` — room list with status, bed, maintenance flag
+- `maintenance` — rooms flagged for maintenance
 
-## 2. Room status panel & tile (items 3, 16)
+This means: even if nobody presses anything, every day is captured. When someone prints, we always print from stored snapshots.
 
-- Add third pill **"Not Required"** between DND and Stayover.
-- Rules:
-  - Tapping "Not Required" → also sets `Stayover` and `Mark as Done`.
-  - Untapping "Not Required" → leaves Stayover/Done alone.
-  - Adds a distinct visual on the tile (a small "NR" pill in the same slot as the existing DND pill; different color, e.g. muted amber) so it's obvious room service was declined.
-- Move the **Staff** status button between **Dirty** and **ROS** in the status grid.
-- DND-off-same-day photo purge (item 16) hooks in here.
+Retention on `export_snapshots` gets extended from 7 days to ~60 days per kind so the weekly F&B roll-up and the multi-day linen delivery window always have complete data.
 
-## 3. Reception home-screen (items 10, 13, 11, 12)
+### 2. Room status — auto at 3pm shift end
 
-**Reset all for Reception (item 10)**
-- Show the Reset-all affordance to Reception only when: local time ≥ 07:00 AND Housekeeping has NOT already reset today.
-- "Already reset today" is detected via a new `hotels.last_reset_at timestamptz` column set by `performResetAll`. If `last_reset_at::date = today (hotel tz)`, hide it for Reception.
+- The backend job also runs an early snapshot per hotel at 3pm local time for `room_status` (this is the shift end).
+- The existing "Mark shift as finished" button on the housekeeping home screen keeps working — pressing it prints the 3pm snapshot (or takes a fresh one if the cron hasn't fired yet).
+- If nobody presses the button, the data still exists — anyone can open Exports and print "Today's room status" until midnight, always from the 3pm snapshot.
 
-**Filters (item 13)**
-- Bug: "Done" filter uses stale `receptionStatuses`; fix the predicate so it counts every `status === 'done'` regardless of secondary flags (DND/Stayover/NR).
-- Move **Clear filters** button next to **Filters** on the header row; remove it from the filter sheet.
-- Add **Room type** multi-select to the filter sheet (source: `room_types` for current hotel).
+### 3. Housekeeping linen — delivery days only
 
-**Reception help sheet (item 11)**
-- Rewrite `src/components/reception-icon-guide.tsx` (rename intent, keep component) to include:
-  - **Tile colors**: Red = not started, Green = serviced & ready for arrival, Blue = stayover, Purple = serviced non-arrival, Amber = staff/ROS, Grey = out-of-service, etc. (I'll match the actual palette in `app.tsx`.)
-  - **Icons**: DND pill, NR pill (new), OUT badge, orange dot (message/maintenance), Bed (no bedtype yet), Wrench (maintenance flagged), Bell (notifications). Point users to Stayover Photos for the DND door image.
+- The "Delivery linen totals" button in HK exports is only visible on days listed in the hotel's `linen_delivery_days`.
+- One tap: it sums stored `totals` snapshots from the previous delivery day up to yesterday (the logic already exists — it just runs on stored snapshots instead of hoping the user pressed export each day).
+- No daily print, no daily prompt — HK only ever sees a print button on the days it matters.
 
-**Reception tile detail: pull lost property + maintenance (item 12)**
-- When Reception opens a room's panel, also render:
-  - Open maintenance requests for that `room_number` where `resolved_at IS NULL`.
-  - Lost property items for that `room_number` where `collected_at IS NULL` (or whatever the current "not collected" predicate is).
-  - If `status === 'DND'`, embed today's DND door photo via the existing `DndDoorPhoto` component.
+### 4. F&B linen — Mondays only
 
-## 4. Messages & logs (items 4, 5)
+- The F&B "Weekly linen totals" button is only visible on Mondays.
+- One tap: it sums stored `fnb_totals` snapshots from Monday of last week through Sunday.
+- On any other day the F&B export screen just shows "Next print: Monday" — nothing to do.
 
-- Fix reply FK (covered above).
-- **Reply to maintenance log from Reception/Housekeeping (item 5)**: today only Maintenance sees a reply affordance in the maintenance log; move that button to be visible to all departments that can view the log. The reply flow reuses the existing "Reply in Messages" composer, quoting the original message and posting into the maintenance thread.
+### 5. Manual safety net
 
-## 5. Lost property (items 6, 9)
+If the cron job ever misses a day (backend outage), the client-side print path falls back to computing a fresh snapshot from live data before printing, and writes it into `export_snapshots` for that day. So the worst case is one day looking slightly different — never missing.
 
-- **Countdown (item 6)**: replace the coarse label with a precise line like `Disposable in 6d 4h` (or `2h 15m` when < 1 day), using the existing `disposed_at`/retention window. Turns red in the last 24h.
-- **Found-in department (item 9)**: on new-entry submit, stamp `found_by_department` derived from the current user's `sub_role`:
-  - `housekeeper` → `HK`, `fnb` → `F&B`, `maintenance` → `MNT`, `reception` → `Reception`.
-  - Render as a small badge on each row. Adds one nullable column `lost_property.found_by_department text`.
+## What changes for users
 
-## 6. Settings menu visibility (item 8)
-
-- In the settings sheet + dropdown, hide **Stayover Photos**, **Manage Rooms**, **Rejects**, and **Linen delivery days** when the user is F&B AND not an Admin/Manager/Regional Manager/Developer. All other roles keep current visibility.
-
-## 7. Users panel (items 7, 14)
-
-**Sort (item 7)**
-- Add a `Select` next to the search box: Newest → Oldest (default), Oldest → Newest, A→Z, Z→A. Sort happens client-side on the already-fetched list.
-
-**Approval flow revamp (item 14)**
-- `UserApprovalDialog` today only asks for department. Replace approve action with a small form per pending user:
-  - Hotel(s) — multi-select
-  - Department(s) — multi-select
-  - Position — single select (`user`, `manager`, `regional_manager`, `admin`, `developer`)
-- Server function `approvePendingUser` gains: `hotelIds: string[]`, `departments: SubRole[]`, `position: AppRole`.
-- Authorization inside the handler:
-  - Admin / Regional Manager / Developer: unrestricted.
-  - Manager: hotels limited to their own memberships, departments limited to their own, position limited to `<=` their own rank.
-  - Anyone else: forbidden.
-- Writes: `user_roles` (position), `hotel_members` (rows), `profiles.sub_role` (departments as array).
+| Role | Before | After |
+|---|---|---|
+| HK on delivery day | Remember to press export daily, then press "Delivery totals" | Press "Delivery totals" once — nothing else |
+| HK on non-delivery day | Delivery button shown but produced partial data | Button hidden — nothing to press |
+| Reception / HK end of shift | Press "Mark shift as finished" to snapshot + print | Same button, but data is already snapshotted at 3pm |
+| F&B | Remember to press export weekly | Print button only appears Monday, one tap |
 
 ## Technical details
 
-- Migration bundle:
-  1. `alter type app_role add value 'developer'`
-  2. `alter table hotels add column last_reset_at timestamptz`
-  3. `alter table lost_property add column found_by_department text`
-  4. `alter constraint room_messages_reply_to_id_fkey` → drop + recreate `on delete set null`
-  5. Storage policy update for `entry-photos` maintenance path
-  6. RLS updates: every `has_role(..., 'admin')` → `private.is_admin_like(auth.uid())` where `is_admin_like` returns true for admin OR developer OR regional_manager (only where the original policy allowed regional_manager, otherwise admin OR developer)
-  7. `pruneSnapshots` retention → 7 days (code, not SQL)
+### Backend
+- New public server route `src/routes/api/public/hooks/daily-snapshot.ts` that:
+  - Iterates hotels (loops through `hotels`).
+  - For each hotel: computes `totals`, `fnb_totals`, `room_status`, `maintenance` and upserts one row per (hotel, kind) for today into `export_snapshots` (dedup on same-day + kind, matching current overwrite logic).
+  - Prunes rows older than 60 days.
+- Auth: verified with the shared apikey/anon-key header pattern used by other cron endpoints.
+- Two `pg_cron` schedules:
+  - `0 15 * * *` — room status shift-end snapshot.
+  - `55 23 * * *` — full end-of-day snapshot for all kinds.
 
-- Types regenerate after migration; TS callers for new columns/enum come after.
+### Migration
+- No schema change to `export_snapshots` needed (kind, hotel_id, created_at, totals, grand_total already exist).
+- Bump snapshot retention in `pruneSnapshots` from 7 days to 60 days (client) and mirror in the cron job.
 
-- Reception Reset-all reuses `performResetAll` unchanged; only the visibility guard is new.
+### Client (`src/routes/app.tsx`)
+- Show the HK "Delivery linen totals" button only when `linenDeliveryDays.includes(new Date().getDay())`.
+- Show the F&B "Weekly linen totals" button only when today is Monday; add a new `computeWeeklyFnbTotals()` that sums stored `fnb_totals` snapshots for the previous Mon–Sun.
+- Replace "Room status" print's live compute with "load today's `room_status` snapshot; if missing, snapshot now, then print".
+- Keep existing manual export panel as a fallback but simplify it to just these gated buttons.
 
-- The room tile "NR" indicator uses the same absolute-positioned slot as the DND pill; they are mutually exclusive on the tile since NR implies Stayover but not DND.
+## Open question
 
-## Out of scope / not doing
+Where should the daily snapshot fire relative to the hotel's timezone? Two options:
+- (a) Fire once at a fixed UTC time (simple, off by a few hours for hotels in other zones).
+- (b) Fire per-hotel using `hotels.timezone` (accurate, needs the job to skip hotels whose local time hasn't hit 3pm/23:55 yet — job runs hourly and checks each hotel).
 
-- I will not rework broader RBAC beyond what items 14/15 require.
-- Lost property retention window itself isn't changed — only the countdown display.
-- No changes to push notifications, cron, or edge-side logic beyond what item 1 needs.
-
-## Order of execution
-
-1. Migration + role helper + attach types.
-2. Reply FK, maintenance photo policy, DND cleanup wiring, snapshot retention.
-3. Room status panel (NR button + staff reordering + tile pill).
-4. Reception home: filters bug + clear-filters placement + room-type filter + reset-all guard + tile detail expansion + help sheet rewrite.
-5. Messages: maintenance reply for Reception/HK.
-6. Lost property: countdown + found-in badge.
-7. Settings visibility for F&B.
-8. Users: sort + approval revamp.
-
-Anything you want to drop, defer, or reprioritize before I start?
+For a single-hotel or same-region multi-hotel setup (a) is fine. If regional expansion is imminent, go with (b).
