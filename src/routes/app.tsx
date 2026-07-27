@@ -456,6 +456,9 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
   const [editingItemName, setEditingItemName] = useState("");
   const [exportSheetOpen, setExportSheetOpen] = useState(false);
   const [endShiftPrintOpen, setEndShiftPrintOpen] = useState(false);
+  const [endShiftPrintKinds, setEndShiftPrintKinds] = useState<
+    Array<"totals" | "fnb_totals" | "room_status" | "maintenance">
+  >([]);
   const [rolePickerSheetOpen, setRolePickerSheetOpen] = useState(false);
   const [editItemSheetId, setEditItemSheetId] = useState<string | null>(null);
   const [filtersSheetOpen, setFiltersSheetOpen] = useState(false);
@@ -2081,7 +2084,7 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
     }
     const fmt = (d: Date) =>
       d.toLocaleDateString(undefined, { month: "short", day: "numeric" });
-    const sub = `Delivery total, ${fmt(start)} – ${fmt(end)}`;
+    const sub = `Linen removed since last delivery, ${fmt(start)} – ${fmt(end)}`;
     printTotals(rows, grand, end, "totals", sub);
   };
 
@@ -2350,10 +2353,9 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
     }
     qc.invalidateQueries({ queryKey: ["export_snapshots"] });
     toast.success(`Backup saved (${jobs.length} ${jobs.length === 1 ? "item" : "items"})`);
-    // Offer to print the room status sheet if we captured one.
-    if (jobs.some((j) => j.kind === "room_status")) {
-      setEndShiftPrintOpen(true);
-    }
+    // Offer to print any of the reports that were just backed up.
+    setEndShiftPrintKinds(jobs.map((j) => j.kind));
+    setEndShiftPrintOpen(true);
   };
 
   // --- Opportunistic auto-snapshot ---
@@ -3941,28 +3943,82 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
   <Dialog open={endShiftPrintOpen} onOpenChange={setEndShiftPrintOpen}>
     <DialogContent className="max-w-sm">
       <DialogHeader>
-        <DialogTitle>Print room status sheet?</DialogTitle>
+        <DialogTitle>Print reports?</DialogTitle>
         <DialogDescription>
-          Backup saved. Would you like to print today's room status sheet for the next shift?
+          Backup saved. Print any of the reports that were just captured.
         </DialogDescription>
       </DialogHeader>
-      <div className="mt-2 flex justify-end gap-2">
-        <Button variant="outline" onClick={() => setEndShiftPrintOpen(false)}>
-          Not now
-        </Button>
-        <Button
-          onClick={() => {
-            const { rows } = computeRoomStatus();
-            setEndShiftPrintOpen(false);
-            if (rows.length === 0) {
-              toast.error("No rooms to print");
-              return;
-            }
-            printRoomStatus(rows, new Date());
-          }}
-        >
-          <Printer className="h-4 w-4 mr-2" />
-          Print
+      <div className="mt-2 grid gap-2">
+        {endShiftPrintKinds.includes("room_status") && (
+          <Button
+            variant="outline"
+            className="justify-start h-12"
+            onClick={() => {
+              const { rows } = computeRoomStatus();
+              if (rows.length === 0) { toast.error("No rooms to print"); return; }
+              printRoomStatus(rows, new Date());
+            }}
+          >
+            <Printer className="h-4 w-4 mr-2" />
+            Room Status Sheet
+          </Button>
+        )}
+        {endShiftPrintKinds.includes("totals") && (
+          <Button
+            variant="outline"
+            className="justify-start h-12"
+            onClick={() => {
+              const { rows, grand } = computeTotals();
+              if (rows.length === 0) { toast.error("No linen counted"); return; }
+              printTotals(rows, grand, new Date(), "totals");
+            }}
+          >
+            <Printer className="h-4 w-4 mr-2" />
+            Daily Linen Totals
+          </Button>
+        )}
+        {endShiftPrintKinds.includes("fnb_totals") && (
+          <Button
+            variant="outline"
+            className="justify-start h-12"
+            onClick={() => {
+              const { rows, grand } = computeFnbTotals();
+              if (rows.length === 0) { toast.error("No F&B linen counted"); return; }
+              printTotals(rows, grand, new Date(), "fnb_totals");
+            }}
+          >
+            <Printer className="h-4 w-4 mr-2" />
+            F&amp;B Linen Totals (today)
+          </Button>
+        )}
+        {todayIsMonday && (
+          <Button
+            variant="outline"
+            className="justify-start h-12"
+            onClick={() => openWeeklyFnbTotals()}
+          >
+            <Printer className="h-4 w-4 mr-2" />
+            F&amp;B Linen Totals (previous week)
+          </Button>
+        )}
+        {endShiftPrintKinds.includes("maintenance") && (
+          <Button
+            variant="outline"
+            className="justify-start h-12"
+            onClick={() => {
+              const { rows } = computeMaintenance();
+              if (rows.length === 0) { toast.error("No maintenance items"); return; }
+              printMaintenance(new Date(), rows);
+            }}
+          >
+            <Printer className="h-4 w-4 mr-2" />
+            Maintenance Log
+          </Button>
+        )}
+      </div>
+      <div className="mt-4 flex justify-end">
+        <Button variant="ghost" onClick={() => setEndShiftPrintOpen(false)}>
+          Done
         </Button>
       </div>
     </DialogContent>
@@ -3978,12 +4034,12 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
        <div className="mt-4 grid gap-2">
          <Button variant="outline" size="lg" className="justify-start h-12" onClick={() => { setExportSheetOpen(false); openExport(); }}>
            <List className="h-5 w-5 mr-2" />
-           Linen totals
+          Daily Linen Totals
          </Button>
          {todayIsDeliveryDay && (
            <Button variant="outline" size="lg" className="justify-start h-12" onClick={() => { setExportSheetOpen(false); openDeliveryLinenTotals(); }}>
              <List className="h-5 w-5 mr-2" />
-             Delivery linen totals
+            Linen removed since last delivery
            </Button>
          )}
          <Button variant="outline" size="lg" className="justify-start h-12" onClick={() => { setExportSheetOpen(false); openRoomStatusExport(); }}>
@@ -7675,8 +7731,8 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
         <SheetTitle>Linen delivery days</SheetTitle>
         <SheetDescription>
           Pick the days your linen delivery arrives. On those days, an extra
-          "Delivery linen totals" option appears in Export that adds up the
-          daily linen totals since the previous delivery day.
+          "Linen removed since last delivery" option appears in Export that
+          adds up the daily linen totals since the previous delivery day.
         </SheetDescription>
       </SheetHeader>
       <div className="mt-4 grid grid-cols-2 sm:grid-cols-4 gap-2">
@@ -7724,7 +7780,7 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
       </div>
       {linenDeliveryDays.length === 0 && (
         <p className="mt-4 text-xs text-muted-foreground">
-          No delivery days selected. The Delivery linen totals button will stay hidden.
+          No delivery days selected. The "Linen removed since last delivery" button will stay hidden.
         </p>
       )}
     </SheetContent>
