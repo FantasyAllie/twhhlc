@@ -3726,15 +3726,17 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
                 Room status
               </Button>
             )}
-            <Button
-              variant="outline"
-              size="lg"
-              className="justify-start h-12"
-              onClick={() => { setExportSheetOpen(false); void openFnbExport(); }}
-            >
-              <List className="h-5 w-5 mr-2" />
-              F&amp;B Linen totals
-            </Button>
+            {todayIsMonday && (
+              <Button
+                variant="outline"
+                size="lg"
+                className="justify-start h-12"
+                onClick={() => { setExportSheetOpen(false); openWeeklyFnbTotals(); }}
+              >
+                <List className="h-5 w-5 mr-2" />
+                Weekly F&amp;B linen totals
+              </Button>
+            )}
           </div>
         </SheetContent>
       </Sheet>
@@ -3764,10 +3766,12 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
               Room status
             </DropdownMenuItem>
           )}
-          <DropdownMenuItem onClick={() => void openFnbExport()}>
-            <List className="h-4 w-4 mr-2" />
-            F&amp;B Linen totals
-          </DropdownMenuItem>
+          {todayIsMonday && (
+            <DropdownMenuItem onClick={() => openWeeklyFnbTotals()}>
+              <List className="h-4 w-4 mr-2" />
+              Weekly F&amp;B linen totals
+            </DropdownMenuItem>
+          )}
         </DropdownMenuContent>
       </DropdownMenu>
     ))}
@@ -3984,10 +3988,12 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
            <ClipboardList className="h-5 w-5 mr-2" />
            Room status
          </Button>
-         <Button variant="outline" size="lg" className="justify-start h-12" onClick={() => { setExportSheetOpen(false); void openFnbExport(); }}>
-           <List className="h-5 w-5 mr-2" />
-           F&amp;B Linen totals
-         </Button>
+          {todayIsMonday && (
+            <Button variant="outline" size="lg" className="justify-start h-12" onClick={() => { setExportSheetOpen(false); openWeeklyFnbTotals(); }}>
+              <List className="h-5 w-5 mr-2" />
+              Weekly F&amp;B linen totals
+            </Button>
+          )}
        </div>
      </SheetContent>
    </Sheet>
