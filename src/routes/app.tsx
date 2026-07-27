@@ -3735,99 +3735,17 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
           Mark shift as finished
       </Button>
     )}
-    {!isMobile && isAdmin && !isReception && (isMobile ? (
-      <Sheet open={exportSheetOpen} onOpenChange={setExportSheetOpen}>
-        <SheetTrigger asChild>
-          <Button variant="outline" size="sm">Export</Button>
-        </SheetTrigger>
-        <SheetContent side="bottom" className="max-h-[85dvh] overflow-y-auto rounded-t-2xl p-4 sm:p-6">
-          <SheetHeader className="text-left">
-            <SheetTitle>Export</SheetTitle>
-            <SheetDescription>Choose what to export.</SheetDescription>
-          </SheetHeader>
-          <div className="mt-4 grid gap-2">
-            {!isShiftComplete && (
-              <Button
-                variant="outline"
-                size="lg"
-                className="justify-start h-12"
-                onClick={() => { setExportSheetOpen(false); openExport(); }}
-              >
-                <List className="h-5 w-5 mr-2" />
-                Linen totals
-              </Button>
-            )}
-            {todayIsDeliveryDay && (
-              <Button
-                variant="outline"
-                size="lg"
-                className="justify-start h-12"
-                onClick={() => { setExportSheetOpen(false); openDeliveryLinenTotals(); }}
-              >
-                <List className="h-5 w-5 mr-2" />
-                Delivery linen totals
-              </Button>
-            )}
-            {!isShiftComplete && (
-              <Button
-                variant="outline"
-                size="lg"
-                className="justify-start h-12"
-                onClick={() => { setExportSheetOpen(false); openRoomStatusExport(); }}
-              >
-                <ClipboardList className="h-5 w-5 mr-2" />
-                Room status
-              </Button>
-            )}
-            {todayIsMonday && (
-              <Button
-                variant="outline"
-                size="lg"
-                className="justify-start h-12"
-                onClick={() => { setExportSheetOpen(false); openWeeklyFnbTotals(); }}
-              >
-                <List className="h-5 w-5 mr-2" />
-                Weekly F&amp;B linen totals
-              </Button>
-            )}
-          </div>
-        </SheetContent>
-      </Sheet>
-    ) : (
-      <DropdownMenu>
-        <DropdownMenuTrigger asChild>
-          <Button variant="outline" size="sm">Export</Button>
-        </DropdownMenuTrigger>
-        <DropdownMenuContent align="end" className="w-56">
-          <DropdownMenuLabel>Export</DropdownMenuLabel>
-          <DropdownMenuSeparator />
-          {!isShiftComplete && (
-            <DropdownMenuItem onClick={() => openExport()}>
-              <List className="h-4 w-4 mr-2" />
-              Linen totals
-            </DropdownMenuItem>
-          )}
-          {todayIsDeliveryDay && (
-            <DropdownMenuItem onClick={() => openDeliveryLinenTotals()}>
-              <List className="h-4 w-4 mr-2" />
-              Delivery linen totals
-            </DropdownMenuItem>
-          )}
-          {!isShiftComplete && (
-            <DropdownMenuItem onClick={() => openRoomStatusExport()}>
-              <ClipboardList className="h-4 w-4 mr-2" />
-              Room status
-            </DropdownMenuItem>
-          )}
-          {todayIsMonday && (
-            <DropdownMenuItem onClick={() => openWeeklyFnbTotals()}>
-              <List className="h-4 w-4 mr-2" />
-              Weekly F&amp;B linen totals
-            </DropdownMenuItem>
-          )}
-        </DropdownMenuContent>
-      </DropdownMenu>
-    ))}
+    {!isMobile && isAdmin && !isReception && (
+      <Button
+        variant="outline"
+        size="sm"
+        onClick={() => void runEndOfShiftBackup()}
+        title="Save today's totals, F&B, room status and maintenance snapshots"
+      >
+        <ClipboardList className="h-4 w-4 mr-2" />
+        End of shift
+      </Button>
+    )}
     {!isMobile && isReception && (
       <Button
         variant="outline"
