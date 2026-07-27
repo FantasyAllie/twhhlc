@@ -3663,7 +3663,107 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
    );
  }
 
- return (
+  type MenuAction = {
+    key: string;
+    icon: React.ComponentType<{ className?: string }>;
+    label: React.ReactNode;
+    onClick: () => void;
+    destructive?: boolean;
+  };
+  const menuGroups: { id: string; title: string; items: MenuAction[] }[] = (() => {
+    const actions: MenuAction[] = [];
+    // Export/Print/Help only in settings on mobile — desktop/tablet expose these on the home header.
+    if (isMobile) {
+      if (isAdmin && !isReception) {
+        actions.push({ key: "export", icon: ClipboardList, label: "Export", onClick: () => setExportSheetOpen(true) });
+      }
+      if (isReception) {
+        actions.push({
+          key: "print", icon: Printer, label: "Print",
+          onClick: () => {
+            const { rows } = computeRoomStatus();
+            if (rows.length === 0) { toast.error("No rooms to print"); return; }
+            printRoomStatus(rows, new Date());
+          },
+        });
+        actions.push({ key: "help", icon: HelpCircle, label: "Help", onClick: () => setReceptionHelpOpen(true) });
+      }
+    }
+    const utilities: MenuAction[] = [];
+    if (!menuIsFnbOnly && !isMaintenance) {
+      utilities.push({
+        key: "maintenance-log", icon: Wrench,
+        label: (
+          <span className="flex items-center gap-2">
+            Maintenance Log
+            {hasOpenMaintenance && (<span className="h-2 w-2 rounded-full bg-amber-500" aria-hidden />)}
+          </span>
+        ),
+        onClick: () => setMaintenanceLogOpen(true),
+      });
+    }
+    if (menuCanUseLostProperty && !isMaintenance) {
+      utilities.push({ key: "lost-property", icon: PackageSearch, label: "Lost Property", onClick: () => setLostPropertyOpen(true) });
+    }
+    if ((menuIsAdmin || hasHousekeeperRole || hasReceptionRole) && !isMaintenance) {
+      utilities.push({
+        key: "stayover-photos", icon: Camera, label: "Stayover Photos",
+        onClick: () => { setStayoverPhotosRoomFilter(undefined); setStayoverPhotosOpen(true); },
+      });
+    }
+    if (canUseMessages) {
+      utilities.push({
+        key: "messages", icon: MessageSquare, label: "Messages",
+        onClick: () => { setMessagesInitial({}); setMessagesSheetOpen(true); },
+      });
+    }
+    const manage: MenuAction[] = [];
+    if ((menuHasHk || menuHasFnb) && !isMaintenance) {
+      manage.push({ key: "linen-list", icon: List, label: "Linen List", onClick: () => setTemplateOpen(true) });
+    }
+    if (menuIsAdmin && !isMaintenance) {
+      manage.push({ key: "manage-rooms", icon: Hash, label: "Manage Rooms", onClick: () => setManageRoomsOpen(true) });
+      manage.push({ key: "rejects", icon: Ban, label: "Rejects", onClick: () => setRejectsOpen(true) });
+      if (!isReception) {
+        manage.push({ key: "history", icon: History, label: "History", onClick: () => setHistorySheetOpen(true) });
+      }
+      manage.push({ key: "bulk", icon: ConciergeBell, label: "Bulk Room Status Setup", onClick: () => setQuickReceptionOpen(true) });
+    }
+    if ((realIsAdmin || (realIsManager && hasHousekeeperRole)) && !isMaintenance) {
+      manage.push({ key: "linen-days", icon: List, label: "Linen delivery days", onClick: () => setLinenDeliveryOpen(true) });
+    }
+    const account: MenuAction[] = [];
+    // Departments picker only shown here on mobile — desktop/tablet expose department pills on the home header.
+    if (isMobile && canViewAs) {
+      account.push({ key: "departments", icon: LayoutGrid, label: "Departments", onClick: () => setRolePickerSheetOpen(true) });
+    }
+    if (availableHotels.length > 1 || realIsAdmin) {
+      account.push({ key: "switch-hotel", icon: RotateCcw, label: "Switch hotel", onClick: () => setHotelSwitcherOpen(true) });
+    }
+    if ((realIsAdmin || realIsManager) && !isMaintenance) {
+      account.push({ key: "users", icon: Users, label: "Users", onClick: () => setUsersOpen(true) });
+    }
+    if (!menuIsFnbOnly) {
+      account.push({ key: "notifications", icon: Bell, label: "Notifications", onClick: () => setNotificationsSheetOpen(true) });
+    }
+    account.push({ key: "account", icon: User, label: "Account", onClick: () => setAccountOpen(true) });
+    account.push({ key: "signout", icon: LogOut, label: "Sign out", destructive: true, onClick: () => void signOut() });
+    const appearance: MenuAction[] = [{
+      key: "theme",
+      icon: theme === "dark" ? Sun : Moon,
+      label: theme === "dark" ? "Light mode" : "Dark mode",
+      onClick: () => toggleTheme(),
+    }];
+    return [
+      { id: "actions", title: "Actions", items: actions },
+      { id: "utilities", title: "Utilities", items: utilities },
+      { id: "manage", title: "Manage", items: manage },
+      { id: "account", title: "Account", items: account },
+      { id: "appearance", title: "Appearance", items: appearance },
+    ].filter((g) => g.items.length > 0);
+  })();
+
+  return (
 <main
   className="min-h-[100dvh] bg-background"
   style={{ paddingBottom: "max(1.5rem, env(safe-area-inset-bottom))" }}
