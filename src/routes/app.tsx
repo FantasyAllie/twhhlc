@@ -4377,6 +4377,35 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
               )}
              {isReception ? (
                <>
+                  {room?.done && (() => {
+                    const statusId = room?.reception_status_id ?? room?.default_status ?? null;
+                    const rawStatus = statusId ? receptionStatuses.find((s) => s.id === statusId)?.label ?? null : null;
+                    const statusText = rawStatus === "DND"
+                      ? "Stayover"
+                      : rawStatus?.toLowerCase() === "staff"
+                        ? "ROS - Staff"
+                        : rawStatus?.toLowerCase() === "dirty"
+                          ? "ROS - Dirty"
+                          : rawStatus;
+                    const bedText = room?.reception_bed_id
+                      ? receptionBeds.find((b) => b.id === room.reception_bed_id)?.label ?? null
+                      : null;
+                    return (
+                      <div className="rounded-md border border-emerald-500/60 bg-emerald-50 dark:bg-emerald-950/40 p-3 space-y-1 text-sm">
+                        <p className="text-xs font-semibold uppercase tracking-wide text-emerald-800 dark:text-emerald-200">
+                          Ready — set by Housekeeping
+                        </p>
+                        <p className="text-emerald-900 dark:text-emerald-100">
+                          <span className="font-medium">Status:</span>{" "}
+                          {statusText ?? <span className="text-muted-foreground">Not set</span>}
+                        </p>
+                        <p className="text-emerald-900 dark:text-emerald-100">
+                          <span className="font-medium">Bed:</span>{" "}
+                          {bedText ?? <span className="text-muted-foreground">Not set</span>}
+                        </p>
+                      </div>
+                    );
+                  })()}
                   <div className="flex items-center justify-between gap-2 rounded-md border bg-background p-3">
                     <span className="flex items-center gap-2 text-sm font-medium">
                       <DoorOpen className={cn("h-4 w-4", room?.early_check_in ? "text-amber-600 dark:text-amber-400" : "text-muted-foreground")} />
