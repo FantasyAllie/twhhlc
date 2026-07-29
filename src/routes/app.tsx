@@ -7021,12 +7021,10 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
             />
           )}
           {room?.guest_vacated && !isStaffRoom && (
-            <span
+            <DoorOpen
               aria-label="Guest vacated"
-              className="absolute top-0.5 right-0.5 rounded-sm bg-emerald-600 px-1 py-px text-[8px] font-bold leading-none tracking-wide text-white shadow-sm dark:bg-emerald-500 dark:text-emerald-950"
-            >
-              OUT
-            </span>
+              className="absolute top-0.5 right-0.5 h-3.5 w-3.5 text-emerald-600 dark:text-emerald-400"
+            />
           )}
         </button>,
     );
@@ -7141,10 +7139,12 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
             />
           )}
           {room?.guest_vacated && (
-            <DoorOpen
+            <span
               aria-label="Guest vacated"
-              className="absolute top-0.5 right-0.5 h-3.5 w-3.5 text-emerald-600 dark:text-emerald-400"
-            />
+              className="absolute top-0.5 right-0.5 rounded-sm bg-emerald-600 px-1 py-px text-[8px] font-bold leading-none tracking-wide text-white shadow-sm dark:bg-emerald-500 dark:text-emerald-950"
+            >
+              OUT
+            </span>
           )}
       </button>,
     );
