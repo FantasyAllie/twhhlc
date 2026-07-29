@@ -3218,32 +3218,22 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
                 ? receptionBeds.find((b) => b.id === room.reception_bed_id)?.label ?? null
                 : null;
               const hasAny = !!statusText || !!bedText;
-              const isDone = !!room?.done;
-              const tone = isDone
-                ? "border-emerald-500/60 bg-emerald-50 dark:bg-emerald-950/40"
-                : "bg-muted/40";
-              const labelTone = isDone
-                ? "text-emerald-800 dark:text-emerald-200"
-                : "text-muted-foreground";
-              const textTone = isDone
-                ? "text-emerald-900 dark:text-emerald-100"
-                : "text-foreground";
               return (
-                <div className={cn("rounded-md border p-3 space-y-1 text-sm", tone)}>
-                  <p className={cn("text-xs font-semibold uppercase tracking-wide", labelTone)}>
-                    {isDone ? "Ready — set by Housekeeping" : "Room status"}
+                <div className="rounded-md border bg-muted/40 p-3 space-y-2 text-sm">
+                  <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+                    Room status
                   </p>
                   {hasAny ? (
-                    <>
-                      <p className={textTone}>
+                    <div className="grid grid-cols-2 gap-3">
+                      <p className="text-foreground">
                         <span className="font-medium">Status:</span>{" "}
                         {statusText ?? <span className="text-muted-foreground">Not set</span>}
                       </p>
-                      <p className={textTone}>
+                      <p className="text-foreground">
                         <span className="font-medium">Bed:</span>{" "}
                         {bedText ?? <span className="text-muted-foreground">Not set</span>}
                       </p>
-                    </>
+                    </div>
                   ) : (
                     <p className="text-muted-foreground">Status not currently set</p>
                   )}
