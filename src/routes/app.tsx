@@ -3202,7 +3202,7 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
       if (isReception) {
         return (
           <div className="space-y-3">
-            {room?.done && (() => {
+            {(() => {
               const statusId = room?.reception_status_id ?? room?.default_status ?? null;
               const rawStatus = statusId
                 ? receptionStatuses.find((s) => s.id === statusId)?.label ?? null
@@ -3217,19 +3217,36 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
               const bedText = room?.reception_bed_id
                 ? receptionBeds.find((b) => b.id === room.reception_bed_id)?.label ?? null
                 : null;
+              const hasAny = !!statusText || !!bedText;
+              const isDone = !!room?.done;
+              const tone = isDone
+                ? "border-emerald-500/60 bg-emerald-50 dark:bg-emerald-950/40"
+                : "bg-muted/40";
+              const labelTone = isDone
+                ? "text-emerald-800 dark:text-emerald-200"
+                : "text-muted-foreground";
+              const textTone = isDone
+                ? "text-emerald-900 dark:text-emerald-100"
+                : "text-foreground";
               return (
-                <div className="rounded-md border border-emerald-500/60 bg-emerald-50 dark:bg-emerald-950/40 p-3 space-y-1 text-sm">
-                  <p className="text-xs font-semibold uppercase tracking-wide text-emerald-800 dark:text-emerald-200">
-                    Ready — set by Housekeeping
+                <div className={cn("rounded-md border p-3 space-y-1 text-sm", tone)}>
+                  <p className={cn("text-xs font-semibold uppercase tracking-wide", labelTone)}>
+                    {isDone ? "Ready — set by Housekeeping" : "Room status"}
                   </p>
-                  <p className="text-emerald-900 dark:text-emerald-100">
-                    <span className="font-medium">Status:</span>{" "}
-                    {statusText ?? <span className="text-muted-foreground">Not set</span>}
-                  </p>
-                  <p className="text-emerald-900 dark:text-emerald-100">
-                    <span className="font-medium">Bed:</span>{" "}
-                    {bedText ?? <span className="text-muted-foreground">Not set</span>}
-                  </p>
+                  {hasAny ? (
+                    <>
+                      <p className={textTone}>
+                        <span className="font-medium">Status:</span>{" "}
+                        {statusText ?? <span className="text-muted-foreground">Not set</span>}
+                      </p>
+                      <p className={textTone}>
+                        <span className="font-medium">Bed:</span>{" "}
+                        {bedText ?? <span className="text-muted-foreground">Not set</span>}
+                      </p>
+                    </>
+                  ) : (
+                    <p className="text-muted-foreground">Status not currently set</p>
+                  )}
                 </div>
               );
             })()}
