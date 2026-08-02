@@ -3881,22 +3881,6 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
             )}
           </div>
  <div className="flex items-center gap-2">
-    {!isMobile && !isReception && !isMaintenance && !menuIsFnbOnly && isShiftComplete && (realIsAdmin || (realIsManager && hasHousekeeperRole)) && (
-      <Button
-          size="sm"
-          className="bg-emerald-600 hover:bg-emerald-700 text-white"
-          onClick={async () => {
-            const { rows: linenRows } = computeTotals();
-            if (linenRows.length > 0) {
-              await proceedExport("totals");
-            }
-            await proceedExport("room_status");
-          }}
-        >
-          <Check className="h-4 w-4 mr-2" />
-          Mark shift as finished
-      </Button>
-    )}
     {!isMobile && isAdmin && !isReception && (
       <Button
         variant="outline"
