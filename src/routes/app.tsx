@@ -1833,38 +1833,10 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
   };
 
   const resetReceptionAll = async () => {
-    if (!confirm("Reset reception status and bed selections for all rooms?")) return;
-    const dndId = receptionStatuses.find((x) => x.label === "DND")?.id ?? null;
-    const stayId = receptionStatuses.find((x) => x.label === "Stayover")?.id ?? null;
-    const dndRoomNumbers = dndId
-      ? rooms.filter((r) => r.reception_status_id === dndId).map((r) => r.room_number)
-      : [];
-    qc.setQueryData<Room[]>(["rooms"], (old) =>
-      old?.map((r) => ({
-        ...r,
-        done: false,
-        done_reception: false,
-        housekeeping_note: null,
-        needs_maintenance: false,
-        guest_vacated: false, early_check_in: false,
-        reception_status_id:
-          dndId && r.reception_status_id === dndId && stayId ? stayId : null,
-        reception_bed_id: null,
-      })) ?? [],
-    );
-    const { error } = await supabase
-      .from("rooms")
-      .update({ done: false, done_reception: false, reception_status_id: null, reception_bed_id: null, housekeeping_note: null, needs_maintenance: false, guest_vacated: false, early_check_in: false })
-      .neq("room_number", -1)
-    if (error) toast.error(error.message);
-    if (dndRoomNumbers.length > 0) {
-      const { error: e2 } = await supabase
-        .from("rooms")
-        .update({ done: false, done_reception: false, reception_status_id: stayId ?? null, reception_bed_id: null, housekeeping_note: null, needs_maintenance: false, guest_vacated: false, early_check_in: false })
-        .in("room_number", dndRoomNumbers);
-      if (e2) toast.error(e2.message);
-    }
-    qc.invalidateQueries({ queryKey: ["rooms"] });
+    // Reception's "Reset all" now resets exactly the same content as the
+    // housekeeping reset (same preservation rules, counts, and pinned messages).
+    if (!confirm("Reset all rooms? Reception flags added after 4pm will stay.")) return;
+    await performResetAll();
   };
 
   // --- Export totals + snapshots ---
