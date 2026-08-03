@@ -2343,28 +2343,8 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
       return;
     }
     for (const job of jobs) {
-      const todays = snapshots.filter(
-        (s) => s.kind === job.kind && new Date(s.created_at).toDateString() === today,
-      );
-      if (todays.length > 0) {
-        const ids = todays.map((s) => s.id);
-        const { error: delErr } = await supabase
-          .from("export_snapshots")
-          .delete()
-          .in("id", ids);
-        if (delErr) {
-          toast.error(delErr.message);
-          return;
-        }
-      }
-      const { error } = await supabase
-        .from("export_snapshots")
-        .insert({ totals: job.rows, grand_total: job.grand, kind: job.kind } as never);
-      if (error) {
-        toast.error(error.message);
-        return;
-      }
-      await pruneSnapshots(job.kind);
+      const ok = await saveSnapshot(job.kind, job.rows, job.grand);
+      if (!ok) return;
     }
     qc.invalidateQueries({ queryKey: ["export_snapshots"] });
     toast.success(`Backup saved (${jobs.length} ${jobs.length === 1 ? "item" : "items"})`);
