@@ -5388,6 +5388,12 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
                     {s.kind === "rejects" && (
                       <span className="text-xs uppercase tracking-wide text-muted-foreground">Rejects</span>
                     )}
+                    {(s.kind === "totals" || !s.kind) && (
+                      <span className="text-xs uppercase tracking-wide text-muted-foreground">Daily linen</span>
+                    )}
+                    {s.kind === "totals_range" && (
+                      <span className="text-xs uppercase tracking-wide text-muted-foreground">Linen — ranged</span>
+                    )}
                     {s.kind === "room_status" && (
                       <span className="text-xs uppercase tracking-wide text-muted-foreground">Room status</span>
                     )}
