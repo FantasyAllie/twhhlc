@@ -6465,7 +6465,7 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
             setReceptionDoneOnlyFilter(false);
           };
        return (
-          <div className="inline-flex items-center rounded-full border border-input bg-background shadow-xs overflow-hidden">
+          <div className="absolute left-1/2 -translate-x-1/2 inline-flex items-center rounded-full border border-input bg-background shadow-xs overflow-hidden">
         <Popover open={filtersSheetOpen} onOpenChange={setFiltersSheetOpen}>
           <PopoverTrigger asChild>
             <Button
@@ -6477,7 +6477,7 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
               {totalSelected === 0 ? "Filters" : `Filters · ${totalSelected}`}
             </Button>
           </PopoverTrigger>
-          <PopoverContent align="end" className="w-72 max-h-[70dvh] overflow-y-auto p-3">
+          <PopoverContent align="center" className="w-72 max-h-[70dvh] overflow-y-auto p-3">
             <div className="space-y-1 pb-2">
               <p className="text-sm font-semibold">Filters</p>
               <p className="text-xs text-muted-foreground">
