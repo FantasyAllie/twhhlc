@@ -1722,13 +1722,20 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
       !!iso && new Date(iso).getTime() >= cutoffMs;
 
     const currentRooms = qc.getQueryData<Room[]>(["rooms"]) ?? [];
+    // Rooms currently marked Dirty keep their "Guest has checked out" flag so
+    // housekeeping can spot rooms needing cleaning first thing in the morning.
+    const dirtyStatusIdReset =
+      receptionStatuses.find((s) => s.label.toLowerCase() === "dirty")?.id ?? null;
+    const isDirtyRoom = (r: Room) =>
+      !!dirtyStatusIdReset &&
+      (r.reception_status_id ?? r.default_status) === dirtyStatusIdReset;
     const preserveMap = new Map<
       number,
       { guest_vacated: boolean; early_check_in: boolean; needs_maintenance: boolean;
         guest_vacated_at: string | null; early_check_in_at: string | null; needs_maintenance_at: string | null }
     >();
     for (const r of currentRooms) {
-      const gv = isFresh(r.guest_vacated_at) && r.guest_vacated;
+      const gv = r.guest_vacated && (isFresh(r.guest_vacated_at) || isDirtyRoom(r));
       const ec = isFresh(r.early_check_in_at) && !!r.early_check_in;
       const nm = isFresh(r.needs_maintenance_at) && r.needs_maintenance;
       if (gv || ec || nm) {
