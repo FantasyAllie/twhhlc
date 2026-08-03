@@ -2327,7 +2327,6 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
   // sheet. Replaces the multi-item Export dropdown on the home screen; the
   // per-kind manual exports remain available in Settings → Actions → Export.
   const runEndOfShiftBackup = async () => {
-    const today = new Date().toDateString();
     type Kind = "totals" | "fnb_totals" | "room_status" | "maintenance";
     const jobs: Array<{ kind: Kind; rows: unknown[]; grand: number }> = [];
     const t = computeTotals();
@@ -2352,60 +2351,6 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
     setEndShiftPrintKinds(jobs.map((j) => j.kind));
     setEndShiftPrintOpen(true);
   };
-
-  // --- Opportunistic auto-snapshot ---
-  // Ensures a daily snapshot exists for every kind even if nobody manually
-  // prints, so weekly and multi-day roll-ups never see missing days. Fires
-  // once per mount when the app is open past the appropriate cutoff, and
-  // relies on same-day dedup for kind to avoid double-writes.
-  const autoSnapshotDoneRef = useRef<string>("");
-  useEffect(() => {
-    if (!authUser) return;
-    if (rooms.length === 0) return;
-    const now = new Date();
-    const today = now.toDateString();
-    // Reset guard on day change so a long-open tab still snapshots the next day.
-    if (autoSnapshotDoneRef.current !== today) {
-      autoSnapshotDoneRef.current = "";
-    }
-    const guardKey = `${today}:${now.getHours() >= 23 ? "eod" : "afternoon"}`;
-    if (autoSnapshotDoneRef.current === guardKey) return;
-    const hasKind = (k: string) =>
-      snapshots.some(
-        (s) => s.kind === k && new Date(s.created_at).toDateString() === today,
-      );
-    const writeIfMissing = async (
-      kind: "totals" | "room_status" | "fnb_totals" | "maintenance",
-      rows: unknown[],
-      grand: number,
-    ) => {
-      if (hasKind(kind)) return;
-      if (rows.length === 0) return;
-      const { error } = await supabase
-        .from("export_snapshots")
-        .insert({ totals: rows, grand_total: grand, kind } as never);
-      if (!error) {
-        qc.invalidateQueries({ queryKey: ["export_snapshots"] });
-      }
-    };
-    // Room status: shift ends at 3pm — snapshot from then on.
-    if (now.getHours() >= 15) {
-      const { rows, grand } = computeRoomStatus();
-      void writeIfMissing("room_status", rows, grand);
-    }
-    // End-of-day: capture linen and F&B totals + maintenance so the next
-    // day's delivery/weekly roll-ups always find complete data.
-    if (now.getHours() >= 23) {
-      const t = computeTotals();
-      void writeIfMissing("totals", t.rows, t.grand);
-      const f = computeFnbTotals();
-      void writeIfMissing("fnb_totals", f.rows, f.grand);
-      const m = computeMaintenance();
-      void writeIfMissing("maintenance", m.rows, m.grand);
-    }
-    autoSnapshotDoneRef.current = guardKey;
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [authUser, rooms.length, snapshots.length, counts.length, fnbCounts.length]);
 
   const openMaintenanceExport = async () => {
     const { rows } = computeMaintenance();
