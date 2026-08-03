@@ -1952,9 +1952,19 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
     return { rows, grand };
   };
 
-  const pruneSnapshots = async (
-    kind: "totals" | "rejects" | "room_status" | "maintenance" | "fnb_totals",
-  ) => {
+  type SnapshotKind =
+    | "totals"
+    | "rejects"
+    | "room_status"
+    | "maintenance"
+    | "fnb_totals"
+    | "totals_range";
+
+  // Retention: one snapshot per day, per kind. History keeps 7 days; F&B linen
+  // keeps longer because the Monday roll-up sums the whole previous week.
+  const retentionDaysFor = (kind: SnapshotKind) => (kind === "fnb_totals" ? 16 : 7);
+
+  const pruneSnapshots = async (kind: SnapshotKind) => {
     const { data } = await supabase
       .from("export_snapshots")
       .select("id,created_at")
@@ -1962,23 +1972,61 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
       .order("created_at", { ascending: false })
       .limit(500);
     if (!data) return;
-    const byDay = new Map<string, number>();
+    const maxDays = retentionDaysFor(kind);
+    const days = new Set<string>();
     const keep = new Set<string>();
     for (const r of data) {
       const day = new Date(r.created_at).toDateString();
-      const seen = byDay.get(day);
-      // Keep ~60 days of snapshots so weekly F&B roll-ups and multi-day
-      // linen delivery windows always have complete data.
-      if (seen === undefined && byDay.size >= 60) continue;
-      const next = (seen ?? 0) + 1;
-      if (next > 7) continue;
-      byDay.set(day, next);
+      // Only the most recent snapshot of each day survives.
+      if (days.has(day)) continue;
+      if (days.size >= maxDays) continue;
+      days.add(day);
       keep.add(r.id);
     }
     const remove = data.filter((r) => !keep.has(r.id)).map((r) => r.id);
     if (remove.length > 0) {
       await supabase.from("export_snapshots").delete().in("id", remove);
     }
+  };
+
+  // Writes today's snapshot for a kind, replacing any snapshot of that kind
+  // already stored today (queried straight from the database so a stale cache
+  // can never leave duplicates behind), then prunes old days.
+  const saveSnapshot = async (
+    kind: SnapshotKind,
+    rows: unknown[],
+    grand: number,
+  ): Promise<boolean> => {
+    const startOfToday = new Date();
+    startOfToday.setHours(0, 0, 0, 0);
+    const { data: existing } = await supabase
+      .from("export_snapshots")
+      .select("id")
+      .eq("kind", kind)
+      .gte("created_at", startOfToday.toISOString());
+    if (existing && existing.length > 0) {
+      const ids = existing.map((r) => r.id);
+      qc.setQueryData<ExportSnapshot[]>(["export_snapshots"], (old) =>
+        old?.filter((s) => !ids.includes(s.id)) ?? [],
+      );
+      const { error: delErr } = await supabase
+        .from("export_snapshots")
+        .delete()
+        .in("id", ids);
+      if (delErr) {
+        toast.error(delErr.message);
+        return false;
+      }
+    }
+    const { error } = await supabase
+      .from("export_snapshots")
+      .insert({ totals: rows, grand_total: grand, kind } as never);
+    if (error) {
+      toast.error(error.message);
+      return false;
+    }
+    await pruneSnapshots(kind);
+    return true;
   };
 
   const openExport = async () => {
