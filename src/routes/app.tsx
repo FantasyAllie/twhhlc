@@ -4754,6 +4754,10 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
                             dndFileInputRef.current?.click();
                           } else {
                             setRoomReceptionStatus(n, s.id);
+                            // Marking a room Dirty implies the guest has left.
+                            if (s.id === dirtyId && !rooms.find((r) => r.room_number === n)?.guest_vacated) {
+                              void setRoomGuestVacated(n, true);
+                            }
                             if (occ === dndId) {
                               void deleteTodayStayoverPhotosForRoom(n).then(() => {
                                 qc.invalidateQueries({ queryKey: ["stayover_photos"] });
