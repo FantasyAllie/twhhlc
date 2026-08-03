@@ -109,6 +109,20 @@ const SheetContent = React.forwardRef<
           e.preventDefault();
         }}
         {...props}
+        onPointerDownOutside={(e) => {
+          if (isToastEventTarget(e.target)) {
+            e.preventDefault();
+            return;
+          }
+          props.onPointerDownOutside?.(e);
+        }}
+        onInteractOutside={(e) => {
+          if (isToastEventTarget(e.target)) {
+            e.preventDefault();
+            return;
+          }
+          props.onInteractOutside?.(e);
+        }}
       >
         {isDraggable && (
           <div
