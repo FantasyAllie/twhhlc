@@ -6465,7 +6465,7 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
             setReceptionDoneOnlyFilter(false);
           };
        return (
-          <div className="inline-flex items-center rounded-full border border-input bg-background shadow-xs overflow-hidden">
+          <div className="absolute left-1/2 -translate-x-1/2 inline-flex items-center rounded-full border border-input bg-background shadow-xs overflow-hidden">
         <Popover open={filtersSheetOpen} onOpenChange={setFiltersSheetOpen}>
           <PopoverTrigger asChild>
             <Button
