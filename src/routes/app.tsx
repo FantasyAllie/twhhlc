@@ -229,7 +229,7 @@ type ExportSnapshot = {
   created_at: string;
   totals: SnapshotRow[] | RoomStatusRow[] | MaintenanceRow[];
   grand_total: number;
-  kind?: "totals" | "rejects" | "room_status" | "maintenance" | "fnb_totals";
+  kind?: "totals" | "rejects" | "room_status" | "maintenance" | "fnb_totals" | "totals_range";
 };
 type RejectCount = { id: string; template_item_id: string; count: number };
 type RoomMessage = {
@@ -1952,9 +1952,19 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
     return { rows, grand };
   };
 
-  const pruneSnapshots = async (
-    kind: "totals" | "rejects" | "room_status" | "maintenance" | "fnb_totals",
-  ) => {
+  type SnapshotKind =
+    | "totals"
+    | "rejects"
+    | "room_status"
+    | "maintenance"
+    | "fnb_totals"
+    | "totals_range";
+
+  // Retention: one snapshot per day, per kind. History keeps 7 days; F&B linen
+  // keeps longer because the Monday roll-up sums the whole previous week.
+  const retentionDaysFor = (kind: SnapshotKind) => (kind === "fnb_totals" ? 16 : 7);
+
+  const pruneSnapshots = async (kind: SnapshotKind) => {
     const { data } = await supabase
       .from("export_snapshots")
       .select("id,created_at")
@@ -1962,23 +1972,61 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
       .order("created_at", { ascending: false })
       .limit(500);
     if (!data) return;
-    const byDay = new Map<string, number>();
+    const maxDays = retentionDaysFor(kind);
+    const days = new Set<string>();
     const keep = new Set<string>();
     for (const r of data) {
       const day = new Date(r.created_at).toDateString();
-      const seen = byDay.get(day);
-      // Keep ~60 days of snapshots so weekly F&B roll-ups and multi-day
-      // linen delivery windows always have complete data.
-      if (seen === undefined && byDay.size >= 60) continue;
-      const next = (seen ?? 0) + 1;
-      if (next > 7) continue;
-      byDay.set(day, next);
+      // Only the most recent snapshot of each day survives.
+      if (days.has(day)) continue;
+      if (days.size >= maxDays) continue;
+      days.add(day);
       keep.add(r.id);
     }
     const remove = data.filter((r) => !keep.has(r.id)).map((r) => r.id);
     if (remove.length > 0) {
       await supabase.from("export_snapshots").delete().in("id", remove);
     }
+  };
+
+  // Writes today's snapshot for a kind, replacing any snapshot of that kind
+  // already stored today (queried straight from the database so a stale cache
+  // can never leave duplicates behind), then prunes old days.
+  const saveSnapshot = async (
+    kind: SnapshotKind,
+    rows: unknown[],
+    grand: number,
+  ): Promise<boolean> => {
+    const startOfToday = new Date();
+    startOfToday.setHours(0, 0, 0, 0);
+    const { data: existing } = await supabase
+      .from("export_snapshots")
+      .select("id")
+      .eq("kind", kind)
+      .gte("created_at", startOfToday.toISOString());
+    if (existing && existing.length > 0) {
+      const ids = existing.map((r) => r.id);
+      qc.setQueryData<ExportSnapshot[]>(["export_snapshots"], (old) =>
+        old?.filter((s) => !ids.includes(s.id)) ?? [],
+      );
+      const { error: delErr } = await supabase
+        .from("export_snapshots")
+        .delete()
+        .in("id", ids);
+      if (delErr) {
+        toast.error(delErr.message);
+        return false;
+      }
+    }
+    const { error } = await supabase
+      .from("export_snapshots")
+      .insert({ totals: rows, grand_total: grand, kind } as never);
+    if (error) {
+      toast.error(error.message);
+      return false;
+    }
+    await pruneSnapshots(kind);
+    return true;
   };
 
   const openExport = async () => {
@@ -2055,7 +2103,7 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
     return { rows, grand, start, end };
   };
 
-  const openDeliveryLinenTotals = () => {
+  const openDeliveryLinenTotals = async () => {
     const { rows, grand, start, end } = computeDeliveryLinenTotals();
     if (rows.length === 0) {
       toast.error("No linen totals recorded since the last delivery day");
@@ -2077,6 +2125,10 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
     const sub = `Printed Range: ${fmtLong(start, false)} - ${fmtLong(end, false)}`;
     const footer = `Date Printed: ${fmtLong(now, true)}`;
     printTotals(rows, grand, end, "totals", sub, footer);
+    // Ranged (delivery-window) linen counts are stored under their own kind so
+    // history can label them separately and they never pollute daily roll-ups.
+    const ok = await saveSnapshot("totals_range", rows, grand);
+    if (ok) qc.invalidateQueries({ queryKey: ["export_snapshots"] });
   };
 
   const proceedExport = async (
@@ -2102,37 +2154,13 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
       else toast.error("No rooms marked for maintenance");
       return;
     }
-    const today = new Date().toDateString();
-    const todays = snapshots.filter(
-      (s) => s.kind === kind && new Date(s.created_at).toDateString() === today,
-    );
-    if (todays.length > 0) {
-      const ids = todays.map((s) => s.id);
-      qc.setQueryData<ExportSnapshot[]>(["export_snapshots"], (old) =>
-        old?.filter((s) => !ids.includes(s.id)) ?? [],
-      );
-      const { error: delErr } = await supabase
-        .from("export_snapshots")
-        .delete()
-        .in("id", ids);
-      if (delErr) {
-        toast.error(delErr.message);
-        return;
-      }
-    }
     if (kind === "totals") setExportOpen(true);
     else if (kind === "rejects") setRejectExportOpen(true);
     else if (kind === "room_status") setRoomStatusExportOpen(true);
     else if (kind === "fnb_totals") printTotals(rows as SnapshotRow[], grand, new Date(), "fnb_totals");
     else printMaintenance(new Date(), rows as MaintenanceRow[]);
-    const { error } = await supabase
-      .from("export_snapshots")
-      .insert({ totals: rows, grand_total: grand, kind } as never);
-    if (error) {
-      toast.error(error.message);
-      return;
-    }
-    await pruneSnapshots(kind);
+    const ok = await saveSnapshot(kind, rows, grand);
+    if (!ok) return;
     qc.invalidateQueries({ queryKey: ["export_snapshots"] });
   };
 
@@ -2303,7 +2331,6 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
   // sheet. Replaces the multi-item Export dropdown on the home screen; the
   // per-kind manual exports remain available in Settings → Actions → Export.
   const runEndOfShiftBackup = async () => {
-    const today = new Date().toDateString();
     type Kind = "totals" | "fnb_totals" | "room_status" | "maintenance";
     const jobs: Array<{ kind: Kind; rows: unknown[]; grand: number }> = [];
     const t = computeTotals();
@@ -2319,28 +2346,8 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
       return;
     }
     for (const job of jobs) {
-      const todays = snapshots.filter(
-        (s) => s.kind === job.kind && new Date(s.created_at).toDateString() === today,
-      );
-      if (todays.length > 0) {
-        const ids = todays.map((s) => s.id);
-        const { error: delErr } = await supabase
-          .from("export_snapshots")
-          .delete()
-          .in("id", ids);
-        if (delErr) {
-          toast.error(delErr.message);
-          return;
-        }
-      }
-      const { error } = await supabase
-        .from("export_snapshots")
-        .insert({ totals: job.rows, grand_total: job.grand, kind: job.kind } as never);
-      if (error) {
-        toast.error(error.message);
-        return;
-      }
-      await pruneSnapshots(job.kind);
+      const ok = await saveSnapshot(job.kind, job.rows, job.grand);
+      if (!ok) return;
     }
     qc.invalidateQueries({ queryKey: ["export_snapshots"] });
     toast.success(`Backup saved (${jobs.length} ${jobs.length === 1 ? "item" : "items"})`);
@@ -2348,60 +2355,6 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
     setEndShiftPrintKinds(jobs.map((j) => j.kind));
     setEndShiftPrintOpen(true);
   };
-
-  // --- Opportunistic auto-snapshot ---
-  // Ensures a daily snapshot exists for every kind even if nobody manually
-  // prints, so weekly and multi-day roll-ups never see missing days. Fires
-  // once per mount when the app is open past the appropriate cutoff, and
-  // relies on same-day dedup for kind to avoid double-writes.
-  const autoSnapshotDoneRef = useRef<string>("");
-  useEffect(() => {
-    if (!authUser) return;
-    if (rooms.length === 0) return;
-    const now = new Date();
-    const today = now.toDateString();
-    // Reset guard on day change so a long-open tab still snapshots the next day.
-    if (autoSnapshotDoneRef.current !== today) {
-      autoSnapshotDoneRef.current = "";
-    }
-    const guardKey = `${today}:${now.getHours() >= 23 ? "eod" : "afternoon"}`;
-    if (autoSnapshotDoneRef.current === guardKey) return;
-    const hasKind = (k: string) =>
-      snapshots.some(
-        (s) => s.kind === k && new Date(s.created_at).toDateString() === today,
-      );
-    const writeIfMissing = async (
-      kind: "totals" | "room_status" | "fnb_totals" | "maintenance",
-      rows: unknown[],
-      grand: number,
-    ) => {
-      if (hasKind(kind)) return;
-      if (rows.length === 0) return;
-      const { error } = await supabase
-        .from("export_snapshots")
-        .insert({ totals: rows, grand_total: grand, kind } as never);
-      if (!error) {
-        qc.invalidateQueries({ queryKey: ["export_snapshots"] });
-      }
-    };
-    // Room status: shift ends at 3pm — snapshot from then on.
-    if (now.getHours() >= 15) {
-      const { rows, grand } = computeRoomStatus();
-      void writeIfMissing("room_status", rows, grand);
-    }
-    // End-of-day: capture linen and F&B totals + maintenance so the next
-    // day's delivery/weekly roll-ups always find complete data.
-    if (now.getHours() >= 23) {
-      const t = computeTotals();
-      void writeIfMissing("totals", t.rows, t.grand);
-      const f = computeFnbTotals();
-      void writeIfMissing("fnb_totals", f.rows, f.grand);
-      const m = computeMaintenance();
-      void writeIfMissing("maintenance", m.rows, m.grand);
-    }
-    autoSnapshotDoneRef.current = guardKey;
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [authUser, rooms.length, snapshots.length, counts.length, fnbCounts.length]);
 
   const openMaintenanceExport = async () => {
     const { rows } = computeMaintenance();
@@ -5434,6 +5387,12 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
                     </span>
                     {s.kind === "rejects" && (
                       <span className="text-xs uppercase tracking-wide text-muted-foreground">Rejects</span>
+                    )}
+                    {(s.kind === "totals" || !s.kind) && (
+                      <span className="text-xs uppercase tracking-wide text-muted-foreground">Daily linen</span>
+                    )}
+                    {s.kind === "totals_range" && (
+                      <span className="text-xs uppercase tracking-wide text-muted-foreground">Linen — ranged</span>
                     )}
                     {s.kind === "room_status" && (
                       <span className="text-xs uppercase tracking-wide text-muted-foreground">Room status</span>
