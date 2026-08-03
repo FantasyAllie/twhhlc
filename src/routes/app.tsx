@@ -2103,7 +2103,7 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
     return { rows, grand, start, end };
   };
 
-  const openDeliveryLinenTotals = () => {
+  const openDeliveryLinenTotals = async () => {
     const { rows, grand, start, end } = computeDeliveryLinenTotals();
     if (rows.length === 0) {
       toast.error("No linen totals recorded since the last delivery day");
@@ -2125,6 +2125,10 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
     const sub = `Printed Range: ${fmtLong(start, false)} - ${fmtLong(end, false)}`;
     const footer = `Date Printed: ${fmtLong(now, true)}`;
     printTotals(rows, grand, end, "totals", sub, footer);
+    // Ranged (delivery-window) linen counts are stored under their own kind so
+    // history can label them separately and they never pollute daily roll-ups.
+    const ok = await saveSnapshot("totals_range", rows, grand);
+    if (ok) qc.invalidateQueries({ queryKey: ["export_snapshots"] });
   };
 
   const proceedExport = async (
