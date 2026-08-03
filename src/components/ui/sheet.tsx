@@ -22,6 +22,11 @@ type SheetDragCtx = {
 };
 const SheetDragContext = React.createContext<SheetDragCtx | null>(null);
 
+// Clicks on an in-app toast (e.g. its dismiss button) must not be treated as
+// an "outside interaction" that closes the open panel underneath it.
+const isToastEventTarget = (target: EventTarget | null) =>
+  target instanceof Element && !!target.closest("[data-sonner-toaster],[data-sonner-toast]");
+
 const SheetOverlay = React.forwardRef<
   React.ElementRef<typeof SheetPrimitive.Overlay>,
   React.ComponentPropsWithoutRef<typeof SheetPrimitive.Overlay>
@@ -109,6 +114,20 @@ const SheetContent = React.forwardRef<
           e.preventDefault();
         }}
         {...props}
+        onPointerDownOutside={(e) => {
+          if (isToastEventTarget(e.target)) {
+            e.preventDefault();
+            return;
+          }
+          props.onPointerDownOutside?.(e);
+        }}
+        onInteractOutside={(e) => {
+          if (isToastEventTarget(e.target)) {
+            e.preventDefault();
+            return;
+          }
+          props.onInteractOutside?.(e);
+        }}
       >
         {isDraggable && (
           <div
