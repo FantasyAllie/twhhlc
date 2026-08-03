@@ -229,7 +229,7 @@ type ExportSnapshot = {
   created_at: string;
   totals: SnapshotRow[] | RoomStatusRow[] | MaintenanceRow[];
   grand_total: number;
-  kind?: "totals" | "rejects" | "room_status" | "maintenance" | "fnb_totals";
+  kind?: "totals" | "rejects" | "room_status" | "maintenance" | "fnb_totals" | "totals_range";
 };
 type RejectCount = { id: string; template_item_id: string; count: number };
 type RoomMessage = {
