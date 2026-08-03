@@ -20,6 +20,11 @@ type DialogDragCtx = {
 };
 const DialogDragContext = React.createContext<DialogDragCtx | null>(null);
 
+// Clicks on an in-app toast (e.g. its dismiss button) must not be treated as
+// an "outside interaction" that closes the open panel underneath it.
+const isToastEventTarget = (target: EventTarget | null) =>
+  target instanceof Element && !!target.closest("[data-sonner-toaster],[data-sonner-toast]");
+
 const DialogOverlay = React.forwardRef<
   React.ElementRef<typeof DialogPrimitive.Overlay>,
   React.ComponentPropsWithoutRef<typeof DialogPrimitive.Overlay>
@@ -71,6 +76,20 @@ const DialogContent = React.forwardRef<
         e.preventDefault();
       }}
       {...props}
+      onPointerDownOutside={(e) => {
+        if (isToastEventTarget(e.target)) {
+          e.preventDefault();
+          return;
+        }
+        props.onPointerDownOutside?.(e);
+      }}
+      onInteractOutside={(e) => {
+        if (isToastEventTarget(e.target)) {
+          e.preventDefault();
+          return;
+        }
+        props.onInteractOutside?.(e);
+      }}
     >
       <div
         aria-hidden
