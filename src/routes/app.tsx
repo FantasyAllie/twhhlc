@@ -2150,37 +2150,13 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
       else toast.error("No rooms marked for maintenance");
       return;
     }
-    const today = new Date().toDateString();
-    const todays = snapshots.filter(
-      (s) => s.kind === kind && new Date(s.created_at).toDateString() === today,
-    );
-    if (todays.length > 0) {
-      const ids = todays.map((s) => s.id);
-      qc.setQueryData<ExportSnapshot[]>(["export_snapshots"], (old) =>
-        old?.filter((s) => !ids.includes(s.id)) ?? [],
-      );
-      const { error: delErr } = await supabase
-        .from("export_snapshots")
-        .delete()
-        .in("id", ids);
-      if (delErr) {
-        toast.error(delErr.message);
-        return;
-      }
-    }
     if (kind === "totals") setExportOpen(true);
     else if (kind === "rejects") setRejectExportOpen(true);
     else if (kind === "room_status") setRoomStatusExportOpen(true);
     else if (kind === "fnb_totals") printTotals(rows as SnapshotRow[], grand, new Date(), "fnb_totals");
     else printMaintenance(new Date(), rows as MaintenanceRow[]);
-    const { error } = await supabase
-      .from("export_snapshots")
-      .insert({ totals: rows, grand_total: grand, kind } as never);
-    if (error) {
-      toast.error(error.message);
-      return;
-    }
-    await pruneSnapshots(kind);
+    const ok = await saveSnapshot(kind, rows, grand);
+    if (!ok) return;
     qc.invalidateQueries({ queryKey: ["export_snapshots"] });
   };
 
