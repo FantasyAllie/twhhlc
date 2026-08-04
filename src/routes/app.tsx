@@ -7131,7 +7131,7 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
               aria-label="Guest vacated"
               className="absolute top-0.5 right-0.5 rounded-sm bg-emerald-600 px-1 py-px text-[8px] font-bold leading-none tracking-wide text-white shadow-sm dark:bg-emerald-500 dark:text-emerald-950"
             >
-              OUT
+              Vacant
             </span>
           )}
       </button>,
