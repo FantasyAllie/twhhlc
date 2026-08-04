@@ -4033,7 +4033,7 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
     </DialogContent>
   </Dialog>
 
- {isMobile && isAdmin && !isReception && (
+ {isAdmin && !isReception && (
    <Sheet open={exportSheetOpen} onOpenChange={setExportSheetOpen}>
      <SheetContent side="bottom" className="max-h-[85dvh] overflow-y-auto rounded-t-2xl p-4 sm:p-6">
        <SheetHeader className="text-left">
@@ -4045,12 +4045,10 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
            <List className="h-5 w-5 mr-2" />
           Daily Linen Totals
          </Button>
-         {todayIsDeliveryDay && (
-           <Button variant="outline" size="lg" className="justify-start h-12" onClick={() => { setExportSheetOpen(false); openDeliveryLinenTotals(); }}>
-             <List className="h-5 w-5 mr-2" />
-            Linen removed since last delivery
-           </Button>
-         )}
+         <Button variant="outline" size="lg" className="justify-start h-12" onClick={() => { setExportSheetOpen(false); openDeliveryLinenTotals(); }}>
+           <List className="h-5 w-5 mr-2" />
+           Linen removed since last delivery
+         </Button>
          <Button variant="outline" size="lg" className="justify-start h-12" onClick={() => { setExportSheetOpen(false); openRoomStatusExport(); }}>
            <ClipboardList className="h-5 w-5 mr-2" />
            Room status
