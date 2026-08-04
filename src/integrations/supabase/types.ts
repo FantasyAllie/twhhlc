@@ -727,6 +727,8 @@ export type Database = {
           id: string
           needs_maintenance: boolean
           needs_maintenance_at: string | null
+          not_required: boolean
+          not_required_at: string | null
           reception_bed_id: string | null
           reception_status_id: string | null
           reception_status_secondary_id: string | null
@@ -749,6 +751,8 @@ export type Database = {
           id?: string
           needs_maintenance?: boolean
           needs_maintenance_at?: string | null
+          not_required?: boolean
+          not_required_at?: string | null
           reception_bed_id?: string | null
           reception_status_id?: string | null
           reception_status_secondary_id?: string | null
@@ -771,6 +775,8 @@ export type Database = {
           id?: string
           needs_maintenance?: boolean
           needs_maintenance_at?: string | null
+          not_required?: boolean
+          not_required_at?: string | null
           reception_bed_id?: string | null
           reception_status_id?: string | null
           reception_status_secondary_id?: string | null
