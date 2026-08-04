@@ -3697,16 +3697,7 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
     if (isReception) {
       actions.push({
         key: "print", icon: Printer, label: "Print",
-        onClick: () => {
-          const { rows } = computeRoomStatus();
-          if (rows.length === 0) { toast.error("No rooms to print"); return; }
-          printRoomStatus(rows, new Date());
-        },
-      });
-      // Reception can always print the current delivery-window linen roll-up.
-      actions.push({
-        key: "ranged-linen-totals", icon: Printer, label: "Ranged Linen Totals",
-        onClick: () => void openDeliveryLinenTotals(),
+        onClick: () => setReceptionPrintOpen(true),
       });
       actions.push({ key: "help", icon: HelpCircle, label: "Help", onClick: () => setReceptionHelpOpen(true) });
     }
