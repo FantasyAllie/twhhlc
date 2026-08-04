@@ -1776,6 +1776,8 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
           guest_vacated_at: keep?.guest_vacated_at ?? null,
           early_check_in_at: keep?.early_check_in_at ?? null,
           needs_maintenance_at: keep?.needs_maintenance_at ?? null,
+          not_required: false,
+          not_required_at: null,
         };
       }) ?? [],
     );
@@ -1795,6 +1797,8 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
       early_check_in_at: null,
       reception_status_id: null,
       reception_bed_id: null,
+      not_required: false,
+      not_required_at: null,
     } as never).neq("room_number", -1);
     if (preservedNumbers.length > 0) q1 = q1.not("room_number", "in", `(${preservedNumbers.join(",")})`);
     const r1 = await q1;
@@ -1815,6 +1819,8 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
         early_check_in_at: keep.early_check_in_at,
         needs_maintenance: keep.needs_maintenance,
         needs_maintenance_at: keep.needs_maintenance_at,
+        not_required: false,
+        not_required_at: null,
       } as never).eq("room_number", rn);
       if (r.error) toast.error(r.error.message);
     }
