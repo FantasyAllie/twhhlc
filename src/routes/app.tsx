@@ -3642,30 +3642,29 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
   };
   const menuGroups: { id: string; title: string; items: MenuAction[] }[] = (() => {
     const actions: MenuAction[] = [];
-    // Export/Print/Help only in settings on mobile — desktop/tablet expose these on the home header.
-    if (isMobile) {
-      if ((realIsAdmin || (realIsManager && hasHousekeeperRole)) && !isReception && !menuIsFnbOnly && !isMaintenance) {
-        actions.push({
-          key: "end-of-shift",
-          icon: ClipboardList,
-          label: "End of shift",
-          onClick: () => void runEndOfShiftBackup(),
-        });
-      }
-      if (isAdmin && !isReception) {
-        actions.push({ key: "export", icon: ClipboardList, label: "Export", onClick: () => setExportSheetOpen(true) });
-      }
-      if (isReception) {
-        actions.push({
-          key: "print", icon: Printer, label: "Print",
-          onClick: () => {
-            const { rows } = computeRoomStatus();
-            if (rows.length === 0) { toast.error("No rooms to print"); return; }
-            printRoomStatus(rows, new Date());
-          },
-        });
-        actions.push({ key: "help", icon: HelpCircle, label: "Help", onClick: () => setReceptionHelpOpen(true) });
-      }
+    // Settings menu content is uniform across screen sizes. Larger screens also
+    // surface End of shift / Departments on the home header, but they stay here too.
+    if ((realIsAdmin || (realIsManager && hasHousekeeperRole)) && !isReception && !menuIsFnbOnly && !isMaintenance) {
+      actions.push({
+        key: "end-of-shift",
+        icon: ClipboardList,
+        label: "End of shift",
+        onClick: () => void runEndOfShiftBackup(),
+      });
+    }
+    if (isAdmin && !isReception) {
+      actions.push({ key: "export", icon: ClipboardList, label: "Export", onClick: () => setExportSheetOpen(true) });
+    }
+    if (isReception) {
+      actions.push({
+        key: "print", icon: Printer, label: "Print",
+        onClick: () => {
+          const { rows } = computeRoomStatus();
+          if (rows.length === 0) { toast.error("No rooms to print"); return; }
+          printRoomStatus(rows, new Date());
+        },
+      });
+      actions.push({ key: "help", icon: HelpCircle, label: "Help", onClick: () => setReceptionHelpOpen(true) });
     }
     const utilities: MenuAction[] = [];
     if (!menuIsFnbOnly && !isMaintenance) {
@@ -3711,8 +3710,8 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
       manage.push({ key: "linen-days", icon: List, label: "Linen delivery days", onClick: () => setLinenDeliveryOpen(true) });
     }
     const account: MenuAction[] = [];
-    // Departments picker only shown here on mobile — desktop/tablet expose department pills on the home header.
-    if (isMobile && canViewAs) {
+    // Also exposed as pills on the home header where the screen is wide enough.
+    if (canViewAs) {
       account.push({ key: "departments", icon: LayoutGrid, label: "Departments", onClick: () => setRolePickerSheetOpen(true) });
     }
     if (availableHotels.length > 1 || realIsAdmin) {
