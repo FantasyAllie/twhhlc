@@ -2046,29 +2046,56 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
     await proceedExport("totals");
   };
 
-  // Compute the "delivery window": snapshots from the day AFTER the previous
-  // delivery day up to (and including) today. If no previous delivery day is
-  // configured, fall back to the last 7 days.
-  const deliveryWindowStart = (today: Date): Date => {
-    const start = new Date(today);
-    start.setHours(0, 0, 0, 0);
+  // Compute the completed delivery window: the period between the two most
+  // recent delivery days. e.g. delivery days Mon + Fri, today Tuesday →
+  // Friday (inclusive) to Sunday (inclusive), and the same result on Wed/Thu.
+  const deliveryWindow = (today: Date): { start: Date; end: Date } => {
+    const midnight = (d: Date) => {
+      const x = new Date(d);
+      x.setHours(0, 0, 0, 0);
+      return x;
+    };
     if (linenDeliveryDays.length === 0) {
-      start.setDate(start.getDate() - 6);
-      return start;
+      const end = midnight(today);
+      end.setDate(end.getDate() - 1);
+      end.setHours(23, 59, 59, 999);
+      const start = midnight(today);
+      start.setDate(start.getDate() - 7);
+      return { start, end };
     }
     const todayDow = today.getDay();
-    // Walk back day by day, up to 14 days, until we find the previous delivery day.
-    for (let offset = 1; offset <= 14; offset++) {
-      const dow = (todayDow - offset + 7) % 7;
-      if (linenDeliveryDays.includes(dow)) {
-        // Window starts ON the previous delivery day (inclusive) and ends
-        // on the day before today (yesterday, inclusive).
-        start.setDate(start.getDate() - offset);
-        return start;
+    // Most recent delivery day at or before today.
+    let anchorOffset: number | null = null;
+    for (let offset = 0; offset <= 13; offset++) {
+      if (linenDeliveryDays.includes((todayDow - offset + 7) % 7)) {
+        anchorOffset = offset;
+        break;
       }
     }
-    start.setDate(start.getDate() - 6);
-    return start;
+    // Delivery day before that anchor.
+    let prevOffset: number | null = null;
+    if (anchorOffset !== null) {
+      for (let offset = anchorOffset + 1; offset <= anchorOffset + 14; offset++) {
+        if (linenDeliveryDays.includes((todayDow - offset + 7) % 7)) {
+          prevOffset = offset;
+          break;
+        }
+      }
+    }
+    if (anchorOffset === null || prevOffset === null) {
+      const end = midnight(today);
+      end.setDate(end.getDate() - 1);
+      end.setHours(23, 59, 59, 999);
+      const start = midnight(today);
+      start.setDate(start.getDate() - 7);
+      return { start, end };
+    }
+    const start = midnight(today);
+    start.setDate(start.getDate() - prevOffset);
+    const end = midnight(today);
+    end.setDate(end.getDate() - anchorOffset - 1);
+    end.setHours(23, 59, 59, 999);
+    return { start, end };
   };
 
   const computeDeliveryLinenTotals = (): {
@@ -2078,12 +2105,7 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
     end: Date;
   } => {
     const now = new Date();
-    const start = deliveryWindowStart(now);
-    // End at the end of YESTERDAY — today's linen isn't yet delivered against.
-    const end = new Date(now);
-    end.setHours(0, 0, 0, 0);
-    end.setDate(end.getDate() - 1);
-    end.setHours(23, 59, 59, 999);
+    const { start, end } = deliveryWindow(now);
     const map = new Map<string, number>();
     for (const s of snapshots) {
       if (s.kind !== "totals") continue;
