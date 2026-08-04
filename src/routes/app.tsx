@@ -6927,7 +6927,7 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
         : (state === "done" || state === "complete")
           ? (isClean
               ? { bg: "var(--room-cleandone)", fg: "var(--room-cleandone-fg)", accent: "var(--room-cleandone-accent)", label: "Clean" }
-              : { bg: "var(--room-complete)", fg: "var(--room-complete-fg)", accent: "var(--room-complete-accent)", label: "Clean & Ready for Guests" })
+              : { bg: "var(--room-complete)", fg: "var(--room-complete-fg)", accent: "var(--room-complete-accent)", label: "Arrival" })
         : isDirty
           ? { bg: "var(--room-dirty)", fg: "var(--room-dirty-fg)", accent: "var(--room-dirty-accent)", label: "ROS - Dirty" }
           : (hasStatus || hasLinenCount)
@@ -7043,7 +7043,7 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
         : (state === "done" || state === "complete")
           ? (isClean
               ? { bg: "var(--room-cleandone)", fg: "var(--room-cleandone-fg)", accent: "var(--room-cleandone-accent)", label: "Clean" }
-              : { bg: "var(--room-complete)", fg: "var(--room-complete-fg)", accent: "var(--room-complete-accent)", label: "Clean & Ready for Guests" })
+              : { bg: "var(--room-complete)", fg: "var(--room-complete-fg)", accent: "var(--room-complete-accent)", label: "Arrival" })
           : isDirty
             ? { bg: "var(--room-dirty)", fg: "var(--room-dirty-fg)", accent: "var(--room-dirty-accent)", label: "Dirty" }
           : (hasStatus || hasLinenCount || state === "progress")
