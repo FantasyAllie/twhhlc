@@ -455,6 +455,7 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
   const [editingItemName, setEditingItemName] = useState("");
   const [exportSheetOpen, setExportSheetOpen] = useState(false);
   const [endShiftPrintOpen, setEndShiftPrintOpen] = useState(false);
+  const [receptionPrintOpen, setReceptionPrintOpen] = useState(false);
   const [endShiftPrintKinds, setEndShiftPrintKinds] = useState<
     Array<"totals" | "fnb_totals" | "room_status" | "maintenance">
   >([]);
