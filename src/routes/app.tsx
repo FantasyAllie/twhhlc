@@ -1809,8 +1809,24 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
       if (r.error) toast.error(r.error.message);
     }
 
-    const r2 = await supabase.from("room_item_counts").delete().neq("room_number", -1);
+    // Clear every linen count source so the reset zeroes rooms for all
+    // departments (reception's reset runs the same path as housekeeping's).
+    qc.setQueryData(["reject_counts"], () => []);
+    const [r2, rRej] = await Promise.all([
+      supabase.from("room_item_counts").delete().neq("room_number", -1),
+      supabase.from("reject_counts").delete().neq("count", -1),
+    ]);
     if (r2.error) toast.error(r2.error.message);
+    if (rRej.error) toast.error(rRej.error.message);
+    // Verify the linen counts actually cleared (RLS or a partial failure would
+    // otherwise leave stale counts showing after the cache refetches).
+    const { data: leftover } = await supabase
+      .from("room_item_counts")
+      .select("id")
+      .limit(1);
+    if (leftover && leftover.length > 0) {
+      toast.error("Some linen counts could not be cleared.");
+    }
     // Clear pinned room messages from the tiles WITHOUT deleting them —
     // marking them dismissed + done removes the amber dot / peek but keeps
     // them visible in the corresponding chat thread (Messages window).
@@ -1835,7 +1851,8 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
       qc.invalidateQueries({ queryKey: ["current-hotel"] });
     }
     qc.invalidateQueries({ queryKey: ["rooms"] });
-    qc.invalidateQueries({ queryKey: ["room_counts"] });
+    await qc.refetchQueries({ queryKey: ["room_counts"] });
+    qc.invalidateQueries({ queryKey: ["reject_counts"] });
     qc.invalidateQueries({ queryKey: ["room_messages"] });
   };
 
