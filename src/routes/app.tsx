@@ -4685,16 +4685,6 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
              </SheetTitle>
             <SheetDescription>
               Mark status and bed configuration
-              {(() => {
-                const bedLabel =
-                  receptionBeds.find((b) => b.id === currentBed)?.label ??
-                  (onlyDouble ? "Double" : null);
-                return bedLabel ? (
-                  <span className="mt-1 block font-medium text-foreground">
-                    Bed: {bedLabel}
-                  </span>
-                ) : null;
-              })()}
             </SheetDescription>
            </SheetHeader>
               {!isReception && !!room?.guest_vacated && (
@@ -7240,6 +7230,20 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
    <SheetContent side="bottom" className="h-[90dvh] max-h-[90dvh] flex flex-col overflow-hidden rounded-t-2xl p-4 sm:p-6">
      <SheetHeader className="text-left space-y-0">
        <SheetTitle>Room {openRoom} — {categoryLabel(roomCategory(openRoom ?? 0), roomTypes)}</SheetTitle>
+      {(() => {
+        if (openRoom === null) return null;
+        const r = rooms.find((x) => x.room_number === openRoom);
+        const norm = (s: string) => s.toLowerCase().replace(/[^a-z0-9]/g, "");
+        const cats = parseCats(r?.category).map(norm);
+        const onlyDouble = cats.includes("double") && !cats.includes("superking");
+        const bedLabel =
+          receptionBeds.find((b) => b.id === r?.reception_bed_id)?.label ??
+          (onlyDouble ? "Double" : null);
+        if (!bedLabel) return null;
+        return (
+          <SheetDescription className="mt-0.5">Bed: {bedLabel}</SheetDescription>
+        );
+      })()}
      </SheetHeader>
      <div className="flex flex-col flex-1 min-h-0 mt-3">
        {openRoom !== null && renderRoomPanel(openRoom)}
