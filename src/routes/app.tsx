@@ -219,7 +219,7 @@ type RoomCount = {
  item_id: string;
  count: number;
 };
-type Room = { id: string; room_number: number; sort_order?: number; done: boolean; done_reception: boolean; category: Category | null; default_status: string | null; reception_status_id: string | null; reception_bed_id: string | null; housekeeping_note: string | null; needs_maintenance: boolean; guest_vacated: boolean; early_check_in?: boolean; guest_vacated_at?: string | null; early_check_in_at?: string | null; needs_maintenance_at?: string | null };
+type Room = { id: string; room_number: number; sort_order?: number; done: boolean; done_reception: boolean; category: Category | null; default_status: string | null; reception_status_id: string | null; reception_bed_id: string | null; housekeeping_note: string | null; needs_maintenance: boolean; guest_vacated: boolean; early_check_in?: boolean; not_required?: boolean; guest_vacated_at?: string | null; early_check_in_at?: string | null; needs_maintenance_at?: string | null; not_required_at?: string | null };
 type TemplateItemRoom = { id: string; template_item_id: string; room_number: number };
 type SnapshotRow = { name: string; count: number };
 type RoomStatusRow = { room: number; status: string; bed: string; maintenance?: boolean };
@@ -680,12 +680,19 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
     queryFn: async (): Promise<Room[]> => {
       const { data, error } = await supabase
         .from("rooms")
-        .select("id,room_number,sort_order,done,done_reception,category,default_status,reception_status_id,reception_bed_id,housekeeping_note,needs_maintenance,guest_vacated,early_check_in,guest_vacated_at,early_check_in_at,needs_maintenance_at")
+        .select("id,room_number,sort_order,done,done_reception,category,default_status,reception_status_id,reception_bed_id,housekeeping_note,needs_maintenance,guest_vacated,early_check_in,not_required,guest_vacated_at,early_check_in_at,needs_maintenance_at,not_required_at")
         .order("sort_order", { ascending: true });
       if (error) throw error;
       return (data ?? []) as Room[];
     },
   });
+
+  // "Not Required" (Stayover - Service Declined) is persisted on the room row so
+  // it survives reloads, just like the other reception flags.
+  const nrOnRooms = useMemo(
+    () => new Set((roomsQ.data ?? []).filter((r) => r.not_required).map((r) => r.room_number)),
+    [roomsQ.data],
+  );
 
   const roomTypesQ = useQuery({
     queryKey: ["room_types"],
