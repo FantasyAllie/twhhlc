@@ -7651,9 +7651,9 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
       <SheetHeader className="text-left">
         <SheetTitle>Linen delivery days</SheetTitle>
         <SheetDescription>
-          Pick the days your linen delivery arrives. On those days, an extra
-          "Linen removed since last delivery" option appears in Export that
-          adds up the daily linen totals since the previous delivery day.
+          Pick the days your linen delivery arrives. The "Ranged Linen Totals"
+          print adds up the daily linen totals for the period between your two
+          most recent delivery days.
         </SheetDescription>
       </SheetHeader>
       <div className="mt-4 grid grid-cols-2 sm:grid-cols-4 gap-2">
@@ -7701,7 +7701,7 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
       </div>
       {linenDeliveryDays.length === 0 && (
         <p className="mt-4 text-xs text-muted-foreground">
-          No delivery days selected. The "Linen removed since last delivery" button will stay hidden.
+          No delivery days selected. "Ranged Linen Totals" will fall back to the last 7 days.
         </p>
       )}
     </SheetContent>
