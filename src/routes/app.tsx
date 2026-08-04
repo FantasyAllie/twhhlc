@@ -455,6 +455,7 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
   const [editingItemName, setEditingItemName] = useState("");
   const [exportSheetOpen, setExportSheetOpen] = useState(false);
   const [endShiftPrintOpen, setEndShiftPrintOpen] = useState(false);
+  const [receptionPrintOpen, setReceptionPrintOpen] = useState(false);
   const [endShiftPrintKinds, setEndShiftPrintKinds] = useState<
     Array<"totals" | "fnb_totals" | "room_status" | "maintenance">
   >([]);
@@ -3696,16 +3697,7 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
     if (isReception) {
       actions.push({
         key: "print", icon: Printer, label: "Print",
-        onClick: () => {
-          const { rows } = computeRoomStatus();
-          if (rows.length === 0) { toast.error("No rooms to print"); return; }
-          printRoomStatus(rows, new Date());
-        },
-      });
-      // Reception can always print the current delivery-window linen roll-up.
-      actions.push({
-        key: "ranged-linen-totals", icon: Printer, label: "Ranged Linen Totals",
-        onClick: () => void openDeliveryLinenTotals(),
+        onClick: () => setReceptionPrintOpen(true),
       });
       actions.push({ key: "help", icon: HelpCircle, label: "Help", onClick: () => setReceptionHelpOpen(true) });
     }
@@ -3870,14 +3862,7 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
       <Button
         variant="outline"
         size="sm"
-        onClick={() => {
-          const { rows } = computeRoomStatus();
-          if (rows.length === 0) {
-            toast.error("No rooms to print");
-            return;
-          }
-          printRoomStatus(rows, new Date());
-        }}
+        onClick={() => setReceptionPrintOpen(true)}
       >
         <Printer className="h-4 w-4 mr-2" />
         Print
@@ -3982,6 +3967,45 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
  )}
  {/* Mobile export sheet (triggered from the burger menu). */}
   {/* End-of-shift: after backup, offer to print the room status sheet. */}
+  {isReception && (
+    <Dialog open={receptionPrintOpen} onOpenChange={setReceptionPrintOpen}>
+      <DialogContent className="max-w-sm">
+        <DialogHeader>
+          <DialogTitle>Print</DialogTitle>
+          <DialogDescription>Choose which report to print.</DialogDescription>
+        </DialogHeader>
+        <div className="mt-2 grid gap-2">
+          <Button
+            variant="outline"
+            className="justify-start h-12"
+            onClick={() => {
+              const { rows } = computeRoomStatus();
+              if (rows.length === 0) { toast.error("No rooms to print"); return; }
+              setReceptionPrintOpen(false);
+              printRoomStatus(rows, new Date());
+            }}
+          >
+            <Printer className="h-4 w-4 mr-2" />
+            Room Status Sheet
+          </Button>
+          <Button
+            variant="outline"
+            className="justify-start h-12"
+            onClick={() => {
+              setReceptionPrintOpen(false);
+              void openDeliveryLinenTotals();
+            }}
+          >
+            <Printer className="h-4 w-4 mr-2" />
+            Ranged Linen Totals
+          </Button>
+        </div>
+        <div className="mt-4 flex justify-end">
+          <Button variant="ghost" onClick={() => setReceptionPrintOpen(false)}>Close</Button>
+        </div>
+      </DialogContent>
+    </Dialog>
+  )}
   <Dialog open={endShiftPrintOpen} onOpenChange={setEndShiftPrintOpen}>
     <DialogContent className="max-w-sm">
       <DialogHeader>
