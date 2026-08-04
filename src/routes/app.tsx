@@ -4669,12 +4669,11 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
            disabled={disabled}
            onClick={onClick}
            className={cn(
-             "w-full flex items-center justify-between gap-3 rounded-full border bg-background px-4 min-h-12 text-sm font-medium transition-colors hover:bg-accent disabled:opacity-60 disabled:cursor-not-allowed",
+            "w-full flex items-center justify-center text-center gap-3 rounded-full border bg-background px-4 min-h-12 text-sm font-medium transition-colors hover:bg-accent disabled:opacity-60 disabled:cursor-not-allowed",
              selected && "border-primary bg-primary/10 text-primary",
            )}
          >
-           <span className="text-left">{label}</span>
-           {selected ? <Check className="h-5 w-5" /> : <span className="h-5 w-5" />}
+          <span className="text-center">{label}</span>
          </button>
        );
        return (
@@ -4684,11 +4683,23 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
                 <ConciergeBell className="h-4 w-4" />
                 Status — Room {n}
              </SheetTitle>
-             <SheetDescription>Mark status and bed configuration</SheetDescription>
+            <SheetDescription>
+              Mark status and bed configuration
+              {(() => {
+                const bedLabel =
+                  receptionBeds.find((b) => b.id === currentBed)?.label ??
+                  (onlyDouble ? "Double" : null);
+                return bedLabel ? (
+                  <span className="mt-1 block font-medium text-foreground">
+                    Bed: {bedLabel}
+                  </span>
+                ) : null;
+              })()}
+            </SheetDescription>
            </SheetHeader>
               {!isReception && !!room?.guest_vacated && (
-                <div className="mt-3 flex items-center justify-between gap-2 rounded-md border bg-background p-3">
-                  <span className="flex items-center gap-2 text-sm font-medium">
+                <div className="mt-3 flex flex-col items-center gap-2 rounded-md border bg-background p-3 text-center">
+                  <span className="flex items-center justify-center gap-2 text-sm font-medium">
                     <DoorOpen className="h-4 w-4 text-emerald-600 dark:text-emerald-400" />
                     Guest has checked out
                   </span>
@@ -4754,9 +4765,9 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
                 })()}
              </div>
              <div className="space-y-2">
-               <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">Status</p>
+               <p className="text-center text-xs font-semibold uppercase tracking-wide text-muted-foreground">Status</p>
                {receptionStatuses.length === 0 && (
-                 <p className="text-sm text-muted-foreground">No statuses</p>
+                 <p className="text-center text-sm text-muted-foreground">No statuses</p>
                )}
                 <div className="space-y-1.5">
                    {(() => {
@@ -4890,9 +4901,9 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
                 </div>
              </div>
              <div className="space-y-2">
-               <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">Bed</p>
+               <p className="text-center text-xs font-semibold uppercase tracking-wide text-muted-foreground">Bed</p>
                {filteredBeds.length === 0 && (
-                 <p className="text-sm text-muted-foreground">No bed types</p>
+                 <p className="text-center text-sm text-muted-foreground">No bed types</p>
                )}
                 <div className="grid grid-cols-2 gap-1.5">
                   {filteredBeds.map((b) => {
