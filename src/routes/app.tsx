@@ -266,7 +266,6 @@ function AppPage() {
   const currentHotelQ = useCurrentHotel();
   const hotelName = currentHotelQ.data?.name ?? DEFAULT_HOTEL_NAME;
   const linenDeliveryDays: number[] = currentHotelQ.data?.linen_delivery_days ?? [];
-  const todayIsDeliveryDay = linenDeliveryDays.includes(new Date().getDay());
   const todayIsMonday = new Date().getDay() === 1;
   const listHotelsFn = useServerFn(listHotels);
   const setActiveHotelFn = useServerFn(setActiveHotel);
