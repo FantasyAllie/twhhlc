@@ -266,7 +266,6 @@ function AppPage() {
   const currentHotelQ = useCurrentHotel();
   const hotelName = currentHotelQ.data?.name ?? DEFAULT_HOTEL_NAME;
   const linenDeliveryDays: number[] = currentHotelQ.data?.linen_delivery_days ?? [];
-  const todayIsDeliveryDay = linenDeliveryDays.includes(new Date().getDay());
   const todayIsMonday = new Date().getDay() === 1;
   const listHotelsFn = useServerFn(listHotels);
   const setActiveHotelFn = useServerFn(setActiveHotel);
@@ -3703,13 +3702,11 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
           printRoomStatus(rows, new Date());
         },
       });
-      // On delivery days only, reception can also print the delivery-window linen roll-up.
-      if (todayIsDeliveryDay) {
-        actions.push({
-          key: "ranged-linen-totals", icon: Printer, label: "Ranged Linen Totals",
-          onClick: () => void openDeliveryLinenTotals(),
-        });
-      }
+      // Reception can always print the current delivery-window linen roll-up.
+      actions.push({
+        key: "ranged-linen-totals", icon: Printer, label: "Ranged Linen Totals",
+        onClick: () => void openDeliveryLinenTotals(),
+      });
       actions.push({ key: "help", icon: HelpCircle, label: "Help", onClick: () => setReceptionHelpOpen(true) });
     }
     const utilities: MenuAction[] = [];
