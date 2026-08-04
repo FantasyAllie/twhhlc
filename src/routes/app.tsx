@@ -1,4 +1,4 @@
-import React, { useEffect, useRef, useState } from "react";
+import React, { useEffect, useMemo, useRef, useState } from "react";
 import { createFileRoute, useNavigate, Link } from "@tanstack/react-router";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
@@ -219,7 +219,7 @@ type RoomCount = {
  item_id: string;
  count: number;
 };
-type Room = { id: string; room_number: number; sort_order?: number; done: boolean; done_reception: boolean; category: Category | null; default_status: string | null; reception_status_id: string | null; reception_bed_id: string | null; housekeeping_note: string | null; needs_maintenance: boolean; guest_vacated: boolean; early_check_in?: boolean; guest_vacated_at?: string | null; early_check_in_at?: string | null; needs_maintenance_at?: string | null };
+type Room = { id: string; room_number: number; sort_order?: number; done: boolean; done_reception: boolean; category: Category | null; default_status: string | null; reception_status_id: string | null; reception_bed_id: string | null; housekeeping_note: string | null; needs_maintenance: boolean; guest_vacated: boolean; early_check_in?: boolean; not_required?: boolean; guest_vacated_at?: string | null; early_check_in_at?: string | null; needs_maintenance_at?: string | null; not_required_at?: string | null };
 type TemplateItemRoom = { id: string; template_item_id: string; room_number: number };
 type SnapshotRow = { name: string; count: number };
 type RoomStatusRow = { room: number; status: string; bed: string; maintenance?: boolean };
@@ -449,7 +449,6 @@ type ViewRole = "admin" | "manager" | "user" | "reception" | "fnb" | "maintenanc
  const [templateOpen, setTemplateOpen] = useState(false);
 const [linenListType, setLinenListType] = useState<"housekeeping" | "fnb">("housekeeping");
 const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
-  const [nrOnRooms, setNrOnRooms] = useState<Set<number>>(new Set());
   const [newTemplateName, setNewTemplateName] = useState("");
   const [editingItemId, setEditingItemId] = useState<string | null>(null);
   const [editingItemName, setEditingItemName] = useState("");
@@ -681,12 +680,19 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
     queryFn: async (): Promise<Room[]> => {
       const { data, error } = await supabase
         .from("rooms")
-        .select("id,room_number,sort_order,done,done_reception,category,default_status,reception_status_id,reception_bed_id,housekeeping_note,needs_maintenance,guest_vacated,early_check_in,guest_vacated_at,early_check_in_at,needs_maintenance_at")
+        .select("id,room_number,sort_order,done,done_reception,category,default_status,reception_status_id,reception_bed_id,housekeeping_note,needs_maintenance,guest_vacated,early_check_in,not_required,guest_vacated_at,early_check_in_at,needs_maintenance_at,not_required_at")
         .order("sort_order", { ascending: true });
       if (error) throw error;
       return (data ?? []) as Room[];
     },
   });
+
+  // "Not Required" (Stayover - Service Declined) is persisted on the room row so
+  // it survives reloads, just like the other reception flags.
+  const nrOnRooms = useMemo(
+    () => new Set((roomsQ.data ?? []).filter((r) => r.not_required).map((r) => r.room_number)),
+    [roomsQ.data],
+  );
 
   const roomTypesQ = useQuery({
     queryKey: ["room_types"],
@@ -1770,6 +1776,8 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
           guest_vacated_at: keep?.guest_vacated_at ?? null,
           early_check_in_at: keep?.early_check_in_at ?? null,
           needs_maintenance_at: keep?.needs_maintenance_at ?? null,
+          not_required: false,
+          not_required_at: null,
         };
       }) ?? [],
     );
@@ -1789,6 +1797,8 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
       early_check_in_at: null,
       reception_status_id: null,
       reception_bed_id: null,
+      not_required: false,
+      not_required_at: null,
     } as never).neq("room_number", -1);
     if (preservedNumbers.length > 0) q1 = q1.not("room_number", "in", `(${preservedNumbers.join(",")})`);
     const r1 = await q1;
@@ -1809,6 +1819,8 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
         early_check_in_at: keep.early_check_in_at,
         needs_maintenance: keep.needs_maintenance,
         needs_maintenance_at: keep.needs_maintenance_at,
+        not_required: false,
+        not_required_at: null,
       } as never).eq("room_number", rn);
       if (r.error) toast.error(r.error.message);
     }
@@ -2845,6 +2857,28 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
     if (error) toast.error(error.message);
     qc.invalidateQueries({ queryKey: ["rooms"] });
     if (value) fireRoomNotification("checkout", roomNumber);
+  };
+
+  const setRoomNotRequired = async (roomNumber: number, value: boolean) => {
+    const nowIso = new Date().toISOString();
+    qc.setQueryData<Room[]>(["rooms"], (old) => {
+      const list = old ? [...old] : [];
+      const idx = list.findIndex((r) => r.room_number === roomNumber);
+      if (idx >= 0)
+        list[idx] = { ...list[idx], not_required: value, not_required_at: value ? nowIso : null };
+      return list;
+    });
+    const { error } = await supabase.from("rooms").upsert(
+      {
+        room_number: roomNumber,
+        not_required: value,
+        not_required_at: value ? nowIso : null,
+        updated_at: nowIso,
+      } as never,
+      { onConflict: "user_id,hotel_id,room_number" },
+    );
+    if (error) toast.error(error.message);
+    qc.invalidateQueries({ queryKey: ["rooms"] });
   };
 
   const setRoomEarlyCheckIn = async (roomNumber: number, value: boolean) => {
@@ -4811,20 +4845,11 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
                           if (isNR) {
                             // Uncheck NR indicator only — keep Mark as Done and
                             // Stayover flags in place.
-                            setNrOnRooms((prev) => {
-                              const next = new Set(prev);
-                              next.delete(n);
-                              return next;
-                            });
+                             void setRoomNotRequired(n, false);
                             return;
                           }
                           // Turn NR on and enable Stayover + Mark as Done.
-                          setNrOnRooms((prev) => {
-                            if (prev.has(n)) return prev;
-                            const next = new Set(prev);
-                            next.add(n);
-                            return next;
-                          });
+                           void setRoomNotRequired(n, true);
                           if (stayIdLocal && !isStayoverLocal) {
                             setRoomReceptionStatus(n, stayIdLocal);
                           }
