@@ -3686,6 +3686,13 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
           printRoomStatus(rows, new Date());
         },
       });
+      // On delivery days only, reception can also print the delivery-window linen roll-up.
+      if (todayIsDeliveryDay) {
+        actions.push({
+          key: "ranged-linen-totals", icon: Printer, label: "Ranged Linen Totals",
+          onClick: () => void openDeliveryLinenTotals(),
+        });
+      }
       actions.push({ key: "help", icon: HelpCircle, label: "Help", onClick: () => setReceptionHelpOpen(true) });
     }
     const utilities: MenuAction[] = [];
