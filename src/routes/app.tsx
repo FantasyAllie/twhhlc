@@ -1722,8 +1722,9 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
       !!iso && new Date(iso).getTime() >= cutoffMs;
 
     const currentRooms = qc.getQueryData<Room[]>(["rooms"]) ?? [];
-    // Rooms currently marked Dirty keep their "Guest has checked out" flag so
-    // housekeeping can spot rooms needing cleaning first thing in the morning.
+    // Rooms currently marked Dirty get reset like any other room, but the
+    // "Guest has checked out" flag is switched on so housekeeping can spot
+    // rooms needing cleaning first thing in the morning.
     const dirtyStatusIdReset =
       receptionStatuses.find((s) => s.label.toLowerCase() === "dirty")?.id ?? null;
     const isDirtyRoom = (r: Room) =>
@@ -1735,7 +1736,8 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
         guest_vacated_at: string | null; early_check_in_at: string | null; needs_maintenance_at: string | null }
     >();
     for (const r of currentRooms) {
-      const gv = r.guest_vacated && (isFresh(r.guest_vacated_at) || isDirtyRoom(r));
+      const dirty = isDirtyRoom(r);
+      const gv = dirty || (r.guest_vacated && isFresh(r.guest_vacated_at));
       const ec = isFresh(r.early_check_in_at) && !!r.early_check_in;
       const nm = isFresh(r.needs_maintenance_at) && r.needs_maintenance;
       if (gv || ec || nm) {
@@ -1743,7 +1745,9 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
           guest_vacated: gv,
           early_check_in: ec,
           needs_maintenance: nm,
-          guest_vacated_at: gv ? r.guest_vacated_at ?? null : null,
+          guest_vacated_at: gv
+            ? (dirty ? now.toISOString() : r.guest_vacated_at ?? null)
+            : null,
           early_check_in_at: ec ? r.early_check_in_at ?? null : null,
           needs_maintenance_at: nm ? r.needs_maintenance_at ?? null : null,
         });
@@ -4769,10 +4773,6 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
                             dndFileInputRef.current?.click();
                           } else {
                             setRoomReceptionStatus(n, s.id);
-                            // Marking a room Dirty implies the guest has left.
-                            if (s.id === dirtyId && !rooms.find((r) => r.room_number === n)?.guest_vacated) {
-                              void setRoomGuestVacated(n, true);
-                            }
                             if (occ === dndId) {
                               void deleteTodayStayoverPhotosForRoom(n).then(() => {
                                 qc.invalidateQueries({ queryKey: ["stayover_photos"] });
