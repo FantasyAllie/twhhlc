@@ -4685,16 +4685,6 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
              </SheetTitle>
             <SheetDescription>
               Mark status and bed configuration
-              {(() => {
-                const bedLabel =
-                  receptionBeds.find((b) => b.id === currentBed)?.label ??
-                  (onlyDouble ? "Double" : null);
-                return bedLabel ? (
-                  <span className="mt-1 block font-medium text-foreground">
-                    Bed: {bedLabel}
-                  </span>
-                ) : null;
-              })()}
             </SheetDescription>
            </SheetHeader>
               {!isReception && !!room?.guest_vacated && (
