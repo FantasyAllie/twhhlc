@@ -1811,7 +1811,7 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
 
     // Clear every linen count source so the reset zeroes rooms for all
     // departments (reception's reset runs the same path as housekeeping's).
-    qc.setQueryData(["rejects"], () => []);
+    qc.setQueryData(["reject_counts"], () => []);
     const [r2, rRej] = await Promise.all([
       supabase.from("room_item_counts").delete().neq("room_number", -1),
       supabase.from("reject_counts").delete().neq("count", -1),
@@ -1851,7 +1851,8 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
       qc.invalidateQueries({ queryKey: ["current-hotel"] });
     }
     qc.invalidateQueries({ queryKey: ["rooms"] });
-    qc.invalidateQueries({ queryKey: ["room_counts"] });
+    await qc.refetchQueries({ queryKey: ["room_counts"] });
+    qc.invalidateQueries({ queryKey: ["reject_counts"] });
     qc.invalidateQueries({ queryKey: ["room_messages"] });
   };
 
