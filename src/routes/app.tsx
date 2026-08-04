@@ -3984,16 +3984,14 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
             Room Status Sheet
           </Button>
         )}
-        {todayIsDeliveryDay && (
-          <Button
-            variant="outline"
-            className="justify-start h-12"
-            onClick={() => openDeliveryLinenTotals()}
-          >
-            <Printer className="h-4 w-4 mr-2" />
-            Linen Totals
-          </Button>
-        )}
+        <Button
+          variant="outline"
+          className="justify-start h-12"
+          onClick={() => openDeliveryLinenTotals()}
+        >
+          <Printer className="h-4 w-4 mr-2" />
+          Ranged Linen Totals
+        </Button>
         {endShiftPrintKinds.includes("totals") && (
           <Button
             variant="outline"
@@ -4069,7 +4067,7 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
          </Button>
          <Button variant="outline" size="lg" className="justify-start h-12" onClick={() => { setExportSheetOpen(false); openDeliveryLinenTotals(); }}>
            <List className="h-5 w-5 mr-2" />
-           Linen removed since last delivery
+            Ranged Linen Totals
          </Button>
          <Button variant="outline" size="lg" className="justify-start h-12" onClick={() => { setExportSheetOpen(false); openRoomStatusExport(); }}>
            <ClipboardList className="h-5 w-5 mr-2" />
@@ -7653,9 +7651,9 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
       <SheetHeader className="text-left">
         <SheetTitle>Linen delivery days</SheetTitle>
         <SheetDescription>
-          Pick the days your linen delivery arrives. On those days, an extra
-          "Linen removed since last delivery" option appears in Export that
-          adds up the daily linen totals since the previous delivery day.
+          Pick the days your linen delivery arrives. The "Ranged Linen Totals"
+          print adds up the daily linen totals for the period between your two
+          most recent delivery days.
         </SheetDescription>
       </SheetHeader>
       <div className="mt-4 grid grid-cols-2 sm:grid-cols-4 gap-2">
@@ -7703,7 +7701,7 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
       </div>
       {linenDeliveryDays.length === 0 && (
         <p className="mt-4 text-xs text-muted-foreground">
-          No delivery days selected. The "Linen removed since last delivery" button will stay hidden.
+          No delivery days selected. "Ranged Linen Totals" will fall back to the last 7 days.
         </p>
       )}
     </SheetContent>
