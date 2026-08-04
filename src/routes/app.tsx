@@ -3984,16 +3984,14 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
             Room Status Sheet
           </Button>
         )}
-        {todayIsDeliveryDay && (
-          <Button
-            variant="outline"
-            className="justify-start h-12"
-            onClick={() => openDeliveryLinenTotals()}
-          >
-            <Printer className="h-4 w-4 mr-2" />
-            Linen Totals
-          </Button>
-        )}
+        <Button
+          variant="outline"
+          className="justify-start h-12"
+          onClick={() => openDeliveryLinenTotals()}
+        >
+          <Printer className="h-4 w-4 mr-2" />
+          Ranged Linen Totals
+        </Button>
         {endShiftPrintKinds.includes("totals") && (
           <Button
             variant="outline"
@@ -4069,7 +4067,7 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
          </Button>
          <Button variant="outline" size="lg" className="justify-start h-12" onClick={() => { setExportSheetOpen(false); openDeliveryLinenTotals(); }}>
            <List className="h-5 w-5 mr-2" />
-           Linen removed since last delivery
+            Ranged Linen Totals
          </Button>
          <Button variant="outline" size="lg" className="justify-start h-12" onClick={() => { setExportSheetOpen(false); openRoomStatusExport(); }}>
            <ClipboardList className="h-5 w-5 mr-2" />
