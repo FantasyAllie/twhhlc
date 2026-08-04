@@ -3862,14 +3862,7 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
       <Button
         variant="outline"
         size="sm"
-        onClick={() => {
-          const { rows } = computeRoomStatus();
-          if (rows.length === 0) {
-            toast.error("No rooms to print");
-            return;
-          }
-          printRoomStatus(rows, new Date());
-        }}
+        onClick={() => setReceptionPrintOpen(true)}
       >
         <Printer className="h-4 w-4 mr-2" />
         Print
