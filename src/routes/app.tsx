@@ -2853,6 +2853,28 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
     if (value) fireRoomNotification("checkout", roomNumber);
   };
 
+  const setRoomNotRequired = async (roomNumber: number, value: boolean) => {
+    const nowIso = new Date().toISOString();
+    qc.setQueryData<Room[]>(["rooms"], (old) => {
+      const list = old ? [...old] : [];
+      const idx = list.findIndex((r) => r.room_number === roomNumber);
+      if (idx >= 0)
+        list[idx] = { ...list[idx], not_required: value, not_required_at: value ? nowIso : null };
+      return list;
+    });
+    const { error } = await supabase.from("rooms").upsert(
+      {
+        room_number: roomNumber,
+        not_required: value,
+        not_required_at: value ? nowIso : null,
+        updated_at: nowIso,
+      } as never,
+      { onConflict: "user_id,hotel_id,room_number" },
+    );
+    if (error) toast.error(error.message);
+    qc.invalidateQueries({ queryKey: ["rooms"] });
+  };
+
   const setRoomEarlyCheckIn = async (roomNumber: number, value: boolean) => {
     const nowIso = new Date().toISOString();
     qc.setQueryData<Room[]>(["rooms"], (old) => {
@@ -4817,20 +4839,11 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
                           if (isNR) {
                             // Uncheck NR indicator only — keep Mark as Done and
                             // Stayover flags in place.
-                            setNrOnRooms((prev) => {
-                              const next = new Set(prev);
-                              next.delete(n);
-                              return next;
-                            });
+                             void setRoomNotRequired(n, false);
                             return;
                           }
                           // Turn NR on and enable Stayover + Mark as Done.
-                          setNrOnRooms((prev) => {
-                            if (prev.has(n)) return prev;
-                            const next = new Set(prev);
-                            next.add(n);
-                            return next;
-                          });
+                           void setRoomNotRequired(n, true);
                           if (stayIdLocal && !isStayoverLocal) {
                             setRoomReceptionStatus(n, stayIdLocal);
                           }
