@@ -244,7 +244,6 @@ function AppPage() {
     }
   }
   // Admin/Manager "view as" overlay — see definition further below for full context.
-type ViewRole = "admin" | "manager" | "user" | "reception" | "fnb" | "maintenance";
   const [viewAsRole, setViewAsRole] = useState<ViewRole | null>(() => {
     if (typeof window === "undefined") return null;
     const v = window.localStorage.getItem("tw_view_as_role");
