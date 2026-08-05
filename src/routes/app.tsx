@@ -83,7 +83,7 @@ import type {
   MaintenanceRequest,
   ViewRole,
 } from "@/lib/app-types";
-import * as X from "@/lib/exports";
+import * as Exp from "@/lib/exports";
 import type { SnapshotKind } from "@/lib/exports";
 
 export const Route = createFileRoute("/app")({
@@ -1914,17 +1914,17 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
     qc.invalidateQueries({ queryKey: ["rooms"] });
   };
 
-  const computeTotals = () => X.computeTotals(counts, template, extras);
-  const computeRejectTotals = () => X.computeRejectTotals(rejects, template);
-  const computeRoomStatus = () => X.computeRoomStatus(rooms, receptionStatuses, receptionBeds);
-  const computeMaintenance = () => X.computeMaintenance(rooms);
-  const computeFnbTotals = () => X.computeFnbTotals(templateFnbList, fnbCountByItem);
+  const computeTotals = () => Exp.computeTotals(counts, template, extras);
+  const computeRejectTotals = () => Exp.computeRejectTotals(rejects, template);
+  const computeRoomStatus = () => Exp.computeRoomStatus(rooms, receptionStatuses, receptionBeds);
+  const computeMaintenance = () => Exp.computeMaintenance(rooms);
+  const computeFnbTotals = () => Exp.computeFnbTotals(templateFnbList, fnbCountByItem);
   const computeDeliveryLinenTotals = () =>
-    X.computeDeliveryLinenTotals(snapshots, linenDeliveryDays);
-  const computeWeeklyFnbTotals = () => X.computeWeeklyFnbTotals(snapshots);
+    Exp.computeDeliveryLinenTotals(snapshots, linenDeliveryDays);
+  const computeWeeklyFnbTotals = () => Exp.computeWeeklyFnbTotals(snapshots);
 
   const saveSnapshot = (kind: SnapshotKind, rows: unknown[], grand: number) =>
-    X.saveSnapshot(qc, kind, rows, grand);
+    Exp.saveSnapshot(qc, kind, rows, grand);
 
   const printTotals = (
     rows: SnapshotRow[],
@@ -1933,10 +1933,10 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
     kind: "totals" | "rejects" | "fnb_totals" = "totals",
     subheading?: string,
     footer?: string,
-  ) => X.printTotals(hotelName, rows, grand, when, kind, subheading, footer);
-  const printRoomStatus = X.printRoomStatus;
+  ) => Exp.printTotals(hotelName, rows, grand, when, kind, subheading, footer);
+  const printRoomStatus = Exp.printRoomStatus;
   const printMaintenance = (when: Date, presetList?: MaintenanceRow[]) =>
-    X.printMaintenance(when, presetList ?? computeMaintenance().rows);
+    Exp.printMaintenance(when, presetList ?? computeMaintenance().rows);
 
   const openExport = async () => {
     const { rows } = computeTotals();
@@ -1961,8 +1961,8 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
       toast.error("No linen totals recorded since the last delivery day");
       return;
     }
-    const sub = `Printed Range: ${X.formatLongDate(start, false)} - ${X.formatLongDate(end, false)}`;
-    const footer = `Date Printed: ${X.formatLongDate(new Date(), true)}`;
+    const sub = `Printed Range: ${Exp.formatLongDate(start, false)} - ${Exp.formatLongDate(end, false)}`;
+    const footer = `Date Printed: ${Exp.formatLongDate(new Date(), true)}`;
     printTotals(rows, grand, end, "totals", sub, footer);
     // Ranged (delivery-window) linen counts are stored under their own kind so
     // history can label them separately and they never pollute daily roll-ups.
@@ -2067,7 +2067,7 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
       grand,
       end,
       "fnb_totals",
-      `Weekly total, ${X.formatShortDate(start)} – ${X.formatShortDate(end)}`,
+      `Weekly total, ${Exp.formatShortDate(start)} – ${Exp.formatShortDate(end)}`,
     );
   };
 
