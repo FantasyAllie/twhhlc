@@ -83,6 +83,8 @@ import type {
   MaintenanceRequest,
   ViewRole,
 } from "@/lib/app-types";
+import * as X from "@/lib/exports";
+import type { SnapshotKind } from "@/lib/exports";
 
 export const Route = createFileRoute("/app")({
   ssr: false,
