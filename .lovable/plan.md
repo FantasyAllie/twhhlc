@@ -1,82 +1,77 @@
+# Staged refactor of the main app screen
 
-# Reworked exports: automatic snapshots + one-tap prints
+## Why
 
-## Goal
+`src/routes/app.tsx` is 8,092 lines, and almost all of it is one component (`AppPage`, lines 260–7817) holding 86 pieces of screen state, 17 data queries, ~120 handler functions, and 33 sheets/dialogs in a single scope. That single scope is why unrelated features break each other, why fixes sometimes need two rounds, and why every linen tap re-renders the whole screen.
 
-Cut manual exporting to almost zero without ever losing a day of data. A daily backend job takes a snapshot of everything that could be printed later; the export UI turns into simple day-gated print buttons that just print from those snapshots.
+This is a pure restructuring. No visual change, no behaviour change, no database change. Every stage ends with the app working exactly as it does now.
 
-## How it works
+## Ground rules for every stage
 
-### 1. Nightly snapshot job (per hotel)
+- Move code, don't rewrite it. Logic gets relocated as-is unless a duplicate is being merged into one shared version.
+- Verify after each stage before starting the next: home screen loads for housekeeping and reception, room tiles and progress bar render, room detail and status sheets open, linen counting saves, Reset all works, print/export dialogs open.
+- If a stage turns out to be messier than expected, it stops there rather than being forced through — the previous stages still stand on their own.
 
-A single scheduled backend job runs once a day (per hotel timezone, end-of-day) and writes one row per hotel per kind into the existing `export_snapshots` table:
+## Stage 1 — Types and pure helpers
 
-- `totals` — housekeeping linen totals for the day (from `room_item_counts` rolled up per item)
-- `fnb_totals` — F&B linen totals for the day (from `fnb_linen_counts`)
-- `room_status` — room list with status, bed, maintenance flag
-- `maintenance` — rooms flagged for maintenance
+Move the shared type definitions (`Room`, `TemplateItem`, `RoomCount`, `SnapshotRow`, `RoomMessage`, `MaintenanceRequest`, and friends) plus the small pure helpers into `src/lib/app-types.ts` and `src/lib/app-format.ts`.
 
-This means: even if nobody presses anything, every day is captured. When someone prints, we always print from stored snapshots.
+Lowest-risk stage, and it makes the later stages readable.
 
-Retention on `export_snapshots` gets extended from 7 days to ~60 days per kind so the weekly F&B roll-up and the multi-day linen delivery window always have complete data.
+## Stage 2 — Export and print logic
 
-### 2. Room status — auto at 3pm shift end
+Extract into `src/lib/exports.ts`:
 
-- The backend job also runs an early snapshot per hotel at 3pm local time for `room_status` (this is the shift end).
-- The existing "Mark shift as finished" button on the housekeeping home screen keeps working — pressing it prints the 3pm snapshot (or takes a fresh one if the cron hasn't fired yet).
-- If nobody presses the button, the data still exists — anyone can open Exports and print "Today's room status" until midnight, always from the 3pm snapshot.
+- `computeTotals`, `computeRejectTotals`, `computeRoomStatus`, `computeDeliveryLinenTotals`
+- `deliveryWindow`, `retentionDaysFor`, `pruneSnapshots`, `saveSnapshot`
+- the print HTML builders and date/ordinal formatting
 
-### 3. Housekeeping linen — delivery days only
+These are mostly data-in/data-out functions and have been the single most repeatedly-edited area. Getting them into one tested module is the biggest immediate win.
 
-- The "Delivery linen totals" button in HK exports is only visible on days listed in the hotel's `linen_delivery_days`.
-- One tap: it sums stored `totals` snapshots from the previous delivery day up to yesterday (the logic already exists — it just runs on stored snapshots instead of hoping the user pressed export each day).
-- No daily print, no daily prompt — HK only ever sees a print button on the days it matters.
+## Stage 3 — Room status rules
 
-### 4. F&B linen — Mondays only
+Extract into `src/lib/rooms.ts`:
 
-- The F&B "Weekly linen totals" button is only visible on Mondays.
-- One tap: it sums stored `fnb_totals` snapshots from Monday of last week through Sunday.
-- On any other day the F&B export screen just shows "Next print: Monday" — nothing to do.
+- the DND / Dirty / Not Required / done / checkout-flag rules
+- `getRoomTileState`, tile colour and label logic
+- `performResetAll`'s decision logic, so housekeeping and reception share one definition instead of two near-copies
 
-### 5. Manual safety net
+This is where the divergence between the two roles has caused the most confusion, so it becomes one set of rules with role passed in as a parameter.
 
-If the cron job ever misses a day (backend outage), the client-side print path falls back to computing a fresh snapshot from live data before printing, and writes it into `export_snapshots` for that day. So the worst case is one day looking slightly different — never missing.
+## Stage 4 — Data hooks
 
-## What changes for users
+Split the 17 `useQuery` calls into per-domain hooks under `src/hooks/`:
 
-| Role | Before | After |
+- `use-rooms.ts` (rooms, room types, features, feature assignments)
+- `use-linen.ts` (template items, room counts, fnb counts, rejects, extras, assignments)
+- `use-messages.ts`, `use-maintenance.ts`, `use-lost-property.ts`, `use-snapshots.ts`
+
+Query keys and invalidation behaviour stay identical — only their location changes.
+
+## Stage 5 — Component extraction
+
+Move UI out of the route file, in this order (most self-contained first):
+
+1. `src/components/rooms/room-tile.tsx`, `room-grid.tsx`
+2. `src/components/rooms/room-detail-sheet.tsx`, `room-status-sheet.tsx`
+3. `src/components/settings/` — the settings menu and its sub-dialogs (export, print, manage rooms, manage items, linen delivery days)
+4. `src/components/linen/` — housekeeping and F&B counting panels
+
+Per the project's routing rules these are plain component files (never exported from the route file), so code splitting keeps working.
+
+## Stage 6 — Route file cleanup
+
+What's left in `src/routes/app.tsx` is role resolution, layout, and wiring — targeting a few hundred lines. Also confirms no stray module-scope references to route components were introduced, since that pattern crashes every route at runtime while still passing typecheck.
+
+## Expected outcome
+
+| | Before | After |
 |---|---|---|
-| HK on delivery day | Remember to press export daily, then press "Delivery totals" | Press "Delivery totals" once — nothing else |
-| HK on non-delivery day | Delivery button shown but produced partial data | Button hidden — nothing to press |
-| Reception / HK end of shift | Press "Mark shift as finished" to snapshot + print | Same button, but data is already snapshotted at 3pm |
-| F&B | Remember to press export weekly | Print button only appears Monday, one tap |
+| Largest file | 8,092 lines | ~400 lines |
+| Room status rules | scattered, duplicated per role | one module, one definition |
+| Export logic | inline in the route | one module |
+| Re-render on a linen tap | whole screen, all 33 sheets | the counting panel |
 
-## Technical details
+## Risk
 
-### Backend
-- New public server route `src/routes/api/public/hooks/daily-snapshot.ts` that:
-  - Iterates hotels (loops through `hotels`).
-  - For each hotel: computes `totals`, `fnb_totals`, `room_status`, `maintenance` and upserts one row per (hotel, kind) for today into `export_snapshots` (dedup on same-day + kind, matching current overwrite logic).
-  - Prunes rows older than 60 days.
-- Auth: verified with the shared apikey/anon-key header pattern used by other cron endpoints.
-- Two `pg_cron` schedules:
-  - `0 15 * * *` — room status shift-end snapshot.
-  - `55 23 * * *` — full end-of-day snapshot for all kinds.
-
-### Migration
-- No schema change to `export_snapshots` needed (kind, hotel_id, created_at, totals, grand_total already exist).
-- Bump snapshot retention in `pruneSnapshots` from 7 days to 60 days (client) and mirror in the cron job.
-
-### Client (`src/routes/app.tsx`)
-- Show the HK "Delivery linen totals" button only when `linenDeliveryDays.includes(new Date().getDay())`.
-- Show the F&B "Weekly linen totals" button only when today is Monday; add a new `computeWeeklyFnbTotals()` that sums stored `fnb_totals` snapshots for the previous Mon–Sun.
-- Replace "Room status" print's live compute with "load today's `room_status` snapshot; if missing, snapshot now, then print".
-- Keep existing manual export panel as a fallback but simplify it to just these gated buttons.
-
-## Open question
-
-Where should the daily snapshot fire relative to the hotel's timezone? Two options:
-- (a) Fire once at a fixed UTC time (simple, off by a few hours for hotels in other zones).
-- (b) Fire per-hotel using `hotels.timezone` (accurate, needs the job to skip hotels whose local time hasn't hit 3pm/23:55 yet — job runs hourly and checks each hotel).
-
-For a single-hotel or same-region multi-hotel setup (a) is fine. If regional expansion is imminent, go with (b).
+The honest risk is a moved handler losing a subtle detail — a specific `invalidateQueries` call, an ordering dependency, a role check. Mitigation is the staged approach with verification between stages, and moving code verbatim rather than rewriting it. Nothing in this plan touches the database, RLS, or auth.
