@@ -61,6 +61,30 @@ import {
 import { useTheme } from "@/components/theme-provider";
 import { useCurrentHotel, DEFAULT_HOTEL_NAME } from "@/lib/hotels";
 import { listHotels, setActiveHotel, createHotel, type HotelOption } from "@/lib/auth.functions";
+import { parseCats, categoryLabel, valueFromLabel, COLOR_SWATCHES } from "@/lib/app-format";
+import type {
+  Category,
+  ItemColor,
+  RoomType,
+  RoomFeature,
+  RoomFeatureAssignment,
+  ReceptionItem,
+  TemplateItem,
+  RoomExtra,
+  RoomCount,
+  Room,
+  TemplateItemRoom,
+  SnapshotRow,
+  RoomStatusRow,
+  MaintenanceRow,
+  ExportSnapshot,
+  RejectCount,
+  RoomMessage,
+  MaintenanceRequest,
+  ViewRole,
+} from "@/lib/app-types";
+import * as Exp from "@/lib/exports";
+import type { SnapshotKind } from "@/lib/exports";
 
 export const Route = createFileRoute("/app")({
   ssr: false,
@@ -72,12 +96,6 @@ export const Route = createFileRoute("/app")({
   }),
   component: AppPage,
 });
-
-type Category = string;
-type RoomType = { id: string; user_id: string; value: Category; label: string; sort_order: number | null; created_at: string; updated_at: string };
-type RoomFeature = { id: string; user_id: string; value: string; label: string; sort_order: number | null; created_at: string; updated_at: string };
-type RoomFeatureAssignment = { id: string; feature_id: string; room_number: number };
-type ReceptionItem = { id: string; user_id: string; kind: "status" | "bed"; label: string; sort_order: number | null; created_at: string; updated_at: string };
 
 function ManageEditableRow({
   label,
@@ -190,73 +208,6 @@ function ManageEditableRow({
   );
 }
 
-const parseCats = (c: string | null | undefined): Category[] =>
-  (c ?? "").split(",").map((s) => s.trim()).filter(Boolean);
-
-const categoryLabel = (c: Category | null | undefined, types: RoomType[]) => {
-  const vals = parseCats(c);
-  if (vals.length === 0) return "Uncategorised";
-  return vals.map((v) => types.find((t) => t.value === v)?.label ?? v).join(" / ");
-};
-
-const valueFromLabel = (label: string): Category =>
-  label.toLowerCase().trim().replace(/\s+/g, "_").replace(/[^a-z0-9_]/g, "");
-
-const COLOR_SWATCHES: Record<"green" | "yellow" | "red" | "blue", { bg: string; darkBg: string; border: string; solid: string; label: string }> = {
-  green:  { bg: "#dcfce7", darkBg: "#14532d", border: "#86efac", solid: "#22c55e", label: "Green" },
-  yellow: { bg: "#fef9c3", darkBg: "#713f12", border: "#fde047", solid: "#eab308", label: "Yellow" },
-  red:    { bg: "#fee2e2", darkBg: "#7f1d1d", border: "#fca5a5", solid: "#ef4444", label: "Red" },
-  blue:   { bg: "#dbeafe", darkBg: "#1e3a8a", border: "#93c5fd", solid: "#3b82f6", label: "Blue" },
-};
-
-type ItemColor = "green" | "yellow" | "red" | "blue";
-type TemplateItem = { id: string; name: string; created_at: string; category: Category; position: number; default_count: number; color: ItemColor | null; list_type: "housekeeping" | "fnb" };
-type RoomExtra = { id: string; room_number: number; name: string; created_at: string };
-type RoomCount = {
- id: string;
- room_number: number;
- item_kind: "template" | "extra";
- item_id: string;
- count: number;
-};
-type Room = { id: string; room_number: number; sort_order?: number; done: boolean; done_reception: boolean; category: Category | null; default_status: string | null; reception_status_id: string | null; reception_bed_id: string | null; housekeeping_note: string | null; needs_maintenance: boolean; guest_vacated: boolean; early_check_in?: boolean; not_required?: boolean; guest_vacated_at?: string | null; early_check_in_at?: string | null; needs_maintenance_at?: string | null; not_required_at?: string | null };
-type TemplateItemRoom = { id: string; template_item_id: string; room_number: number };
-type SnapshotRow = { name: string; count: number };
-type RoomStatusRow = { room: number; status: string; bed: string; maintenance?: boolean };
-type MaintenanceRow = { room: number; note: string };
-type ExportSnapshot = {
-  id: string;
-  created_at: string;
-  totals: SnapshotRow[] | RoomStatusRow[] | MaintenanceRow[];
-  grand_total: number;
-  kind?: "totals" | "rejects" | "room_status" | "maintenance" | "fnb_totals" | "totals_range";
-};
-type RejectCount = { id: string; template_item_id: string; count: number };
-type RoomMessage = {
-  id: string;
-  room_number: number | null;
-  message: string;
-  created_by_username: string | null;
-  created_by_role: string | null;
-  reply_to_id: string | null;
-  dismissed: boolean;
-  thread: "hk_reception" | "hk_fnb" | "reception_fnb" | "hk_maintenance" | "reception_maintenance";
-  done_at: string | null;
-  deleted_at: string | null;
-  created_at: string;
-};
-type MaintenanceRequest = {
-  id: string;
-  room_number: number;
-  message: string;
-  created_by_username: string | null;
-  done: boolean;
-  done_by_username: string | null;
-  done_at: string | null;
-  created_at: string;
-  photo_paths: string[];
-};
-
 function AppPage() {
  const qc = useQueryClient();
   const navigate = useNavigate();
@@ -295,7 +246,6 @@ function AppPage() {
     }
   }
   // Admin/Manager "view as" overlay — see definition further below for full context.
-type ViewRole = "admin" | "manager" | "user" | "reception" | "fnb" | "maintenance";
   const [viewAsRole, setViewAsRole] = useState<ViewRole | null>(() => {
     if (typeof window === "undefined") return null;
     const v = window.localStorage.getItem("tw_view_as_role");
@@ -1964,103 +1914,29 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
     qc.invalidateQueries({ queryKey: ["rooms"] });
   };
 
-  const computeTotals = (): { rows: SnapshotRow[]; grand: number } => {
-    const totals = new Map<string, number>();
-    const nameFor = (c: RoomCount) => {
-      if (c.item_kind === "template") return template.find((t) => t.id === c.item_id)?.name;
-      return extras.find((e) => e.id === c.item_id)?.name;
-    };
-    for (const c of counts) {
-      if (c.count <= 0) continue;
-      const raw = nameFor(c);
-      if (!raw) continue;
-      const key = raw.trim();
-      if (!key) continue;
-      totals.set(key, (totals.get(key) ?? 0) + c.count);
-    }
-    const rows = Array.from(totals.entries())
-      .sort((a, b) => a[0].localeCompare(b[0], undefined, { sensitivity: "base" }))
-      .map(([name, count]) => ({ name, count }));
-    const grand = rows.reduce((s, r) => s + r.count, 0);
-    return { rows, grand };
-  };
+  const computeTotals = () => Exp.computeTotals(counts, template, extras);
+  const computeRejectTotals = () => Exp.computeRejectTotals(rejects, template);
+  const computeRoomStatus = () => Exp.computeRoomStatus(rooms, receptionStatuses, receptionBeds);
+  const computeMaintenance = () => Exp.computeMaintenance(rooms);
+  const computeFnbTotals = () => Exp.computeFnbTotals(templateFnbList, fnbCountByItem);
+  const computeDeliveryLinenTotals = () =>
+    Exp.computeDeliveryLinenTotals(snapshots, linenDeliveryDays);
+  const computeWeeklyFnbTotals = () => Exp.computeWeeklyFnbTotals(snapshots);
 
-  type SnapshotKind =
-    | "totals"
-    | "rejects"
-    | "room_status"
-    | "maintenance"
-    | "fnb_totals"
-    | "totals_range";
+  const saveSnapshot = (kind: SnapshotKind, rows: unknown[], grand: number) =>
+    Exp.saveSnapshot(qc, kind, rows, grand);
 
-  // Retention: one snapshot per day, per kind. History keeps 7 days; F&B linen
-  // keeps longer because the Monday roll-up sums the whole previous week.
-  const retentionDaysFor = (kind: SnapshotKind) => (kind === "fnb_totals" ? 16 : 7);
-
-  const pruneSnapshots = async (kind: SnapshotKind) => {
-    const { data } = await supabase
-      .from("export_snapshots")
-      .select("id,created_at")
-      .eq("kind", kind)
-      .order("created_at", { ascending: false })
-      .limit(500);
-    if (!data) return;
-    const maxDays = retentionDaysFor(kind);
-    const days = new Set<string>();
-    const keep = new Set<string>();
-    for (const r of data) {
-      const day = new Date(r.created_at).toDateString();
-      // Only the most recent snapshot of each day survives.
-      if (days.has(day)) continue;
-      if (days.size >= maxDays) continue;
-      days.add(day);
-      keep.add(r.id);
-    }
-    const remove = data.filter((r) => !keep.has(r.id)).map((r) => r.id);
-    if (remove.length > 0) {
-      await supabase.from("export_snapshots").delete().in("id", remove);
-    }
-  };
-
-  // Writes today's snapshot for a kind, replacing any snapshot of that kind
-  // already stored today (queried straight from the database so a stale cache
-  // can never leave duplicates behind), then prunes old days.
-  const saveSnapshot = async (
-    kind: SnapshotKind,
-    rows: unknown[],
+  const printTotals = (
+    rows: SnapshotRow[],
     grand: number,
-  ): Promise<boolean> => {
-    const startOfToday = new Date();
-    startOfToday.setHours(0, 0, 0, 0);
-    const { data: existing } = await supabase
-      .from("export_snapshots")
-      .select("id")
-      .eq("kind", kind)
-      .gte("created_at", startOfToday.toISOString());
-    if (existing && existing.length > 0) {
-      const ids = existing.map((r) => r.id);
-      qc.setQueryData<ExportSnapshot[]>(["export_snapshots"], (old) =>
-        old?.filter((s) => !ids.includes(s.id)) ?? [],
-      );
-      const { error: delErr } = await supabase
-        .from("export_snapshots")
-        .delete()
-        .in("id", ids);
-      if (delErr) {
-        toast.error(delErr.message);
-        return false;
-      }
-    }
-    const { error } = await supabase
-      .from("export_snapshots")
-      .insert({ totals: rows, grand_total: grand, kind } as never);
-    if (error) {
-      toast.error(error.message);
-      return false;
-    }
-    await pruneSnapshots(kind);
-    return true;
-  };
+    when: Date,
+    kind: "totals" | "rejects" | "fnb_totals" = "totals",
+    subheading?: string,
+    footer?: string,
+  ) => Exp.printTotals(hotelName, rows, grand, when, kind, subheading, footer);
+  const printRoomStatus = Exp.printRoomStatus;
+  const printMaintenance = (when: Date, presetList?: MaintenanceRow[]) =>
+    Exp.printMaintenance(when, presetList ?? computeMaintenance().rows);
 
   const openExport = async () => {
     const { rows } = computeTotals();
@@ -2079,106 +1955,14 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
     await proceedExport("totals");
   };
 
-  // Compute the completed delivery window: the period between the two most
-  // recent delivery days. e.g. delivery days Mon + Fri, today Tuesday →
-  // Friday (inclusive) to Sunday (inclusive), and the same result on Wed/Thu.
-  const deliveryWindow = (today: Date): { start: Date; end: Date } => {
-    const midnight = (d: Date) => {
-      const x = new Date(d);
-      x.setHours(0, 0, 0, 0);
-      return x;
-    };
-    if (linenDeliveryDays.length === 0) {
-      const end = midnight(today);
-      end.setDate(end.getDate() - 1);
-      end.setHours(23, 59, 59, 999);
-      const start = midnight(today);
-      start.setDate(start.getDate() - 7);
-      return { start, end };
-    }
-    const todayDow = today.getDay();
-    // Most recent delivery day at or before today.
-    let anchorOffset: number | null = null;
-    for (let offset = 0; offset <= 13; offset++) {
-      if (linenDeliveryDays.includes((todayDow - offset + 7) % 7)) {
-        anchorOffset = offset;
-        break;
-      }
-    }
-    // Delivery day before that anchor.
-    let prevOffset: number | null = null;
-    if (anchorOffset !== null) {
-      for (let offset = anchorOffset + 1; offset <= anchorOffset + 14; offset++) {
-        if (linenDeliveryDays.includes((todayDow - offset + 7) % 7)) {
-          prevOffset = offset;
-          break;
-        }
-      }
-    }
-    if (anchorOffset === null || prevOffset === null) {
-      const end = midnight(today);
-      end.setDate(end.getDate() - 1);
-      end.setHours(23, 59, 59, 999);
-      const start = midnight(today);
-      start.setDate(start.getDate() - 7);
-      return { start, end };
-    }
-    const start = midnight(today);
-    start.setDate(start.getDate() - prevOffset);
-    const end = midnight(today);
-    end.setDate(end.getDate() - anchorOffset - 1);
-    end.setHours(23, 59, 59, 999);
-    return { start, end };
-  };
-
-  const computeDeliveryLinenTotals = (): {
-    rows: SnapshotRow[];
-    grand: number;
-    start: Date;
-    end: Date;
-  } => {
-    const now = new Date();
-    const { start, end } = deliveryWindow(now);
-    const map = new Map<string, number>();
-    for (const s of snapshots) {
-      if (s.kind !== "totals") continue;
-      const ts = new Date(s.created_at).getTime();
-      if (ts < start.getTime() || ts > end.getTime()) continue;
-      const list = (s.totals as SnapshotRow[] | null) ?? [];
-      for (const r of list) {
-        const key = (r.name ?? "").trim();
-        if (!key) continue;
-        map.set(key, (map.get(key) ?? 0) + (r.count ?? 0));
-      }
-    }
-    const rows = Array.from(map.entries())
-      .sort((a, b) => a[0].localeCompare(b[0], undefined, { sensitivity: "base" }))
-      .map(([name, count]) => ({ name, count }));
-    const grand = rows.reduce((s, r) => s + r.count, 0);
-    return { rows, grand, start, end };
-  };
-
   const openDeliveryLinenTotals = async () => {
     const { rows, grand, start, end } = computeDeliveryLinenTotals();
     if (rows.length === 0) {
       toast.error("No linen totals recorded since the last delivery day");
       return;
     }
-    const ord = (n: number) => {
-      const s = ["th", "st", "nd", "rd"];
-      const v = n % 100;
-      return `${n}${s[(v - 20) % 10] ?? s[v] ?? s[0]}`;
-    };
-    const fmtLong = (d: Date, withYear: boolean) => {
-      const weekday = d.toLocaleDateString(undefined, { weekday: "long" });
-      const month = d.toLocaleDateString(undefined, { month: "long" });
-      return withYear
-        ? `${weekday} ${ord(d.getDate())} ${month}, ${d.getFullYear()}`
-        : `${weekday} ${ord(d.getDate())} ${month}`;
-    };
-    const now = new Date();
-    const sub = `Printed Range: ${fmtLong(start, false)} - ${fmtLong(end, false)}`;
-    const footer = `Date Printed: ${fmtLong(now, true)}`;
+    const sub = `Printed Range: ${Exp.formatLongDate(start, false)} - ${Exp.formatLongDate(end, false)}`;
+    const footer = `Date Printed: ${Exp.formatLongDate(new Date(), true)}`;
     printTotals(rows, grand, end, "totals", sub, footer);
     // Ranged (delivery-window) linen counts are stored under their own kind so
     // history can label them separately and they never pollute daily roll-ups.
@@ -2219,21 +2003,6 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
     qc.invalidateQueries({ queryKey: ["export_snapshots"] });
   };
 
-  const computeRejectTotals = (): { rows: SnapshotRow[]; grand: number } => {
-    const totals = new Map<string, number>();
-    for (const r of rejects) {
-      if (r.count <= 0) continue;
-      const name = template.find((t) => t.id === r.template_item_id)?.name?.trim();
-      if (!name) continue;
-      totals.set(name, (totals.get(name) ?? 0) + r.count);
-    }
-    const rows = Array.from(totals.entries())
-      .sort((a, b) => a[0].localeCompare(b[0], undefined, { sensitivity: "base" }))
-      .map(([name, count]) => ({ name, count }));
-    const grand = rows.reduce((s, r) => s + r.count, 0);
-    return { rows, grand };
-  };
-
   const openRejectExport = async () => {
     const { rows } = computeRejectTotals();
     if (rows.length === 0) {
@@ -2249,31 +2018,6 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
       return;
     }
     await proceedExport("rejects");
-  };
-
-  const computeRoomStatus = (): {
-    rows: RoomStatusRow[];
-    grand: number;
-  } => {
-    const statusLabel = (id: string | null | undefined) => {
-      if (!id) return "";
-      const lbl = receptionStatuses.find((s) => s.id === id)?.label ?? "";
-      if (lbl === "DND") return "Stayover";
-      if (lbl.toLowerCase() === "staff") return "ROS - Staff";
-      if (lbl.toLowerCase() === "dirty") return "ROS - Dirty";
-      return lbl;
-    };
-    const bedLabel = (id: string | null | undefined) =>
-      id ? receptionBeds.find((b) => b.id === id)?.label ?? "" : "";
-    const rows: RoomStatusRow[] = [...rooms]
-      .sort((a, b) => a.room_number - b.room_number)
-      .map((r) => ({
-        room: r.room_number,
-        status: statusLabel(r.reception_status_id ?? r.default_status),
-        bed: bedLabel(r.reception_bed_id),
-        maintenance: !!r.needs_maintenance,
-      }));
-    return { rows, grand: rows.length };
   };
 
   const openRoomStatusExport = async () => {
@@ -2295,26 +2039,6 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
     await proceedExport("room_status");
   };
 
-  const computeMaintenance = (): { rows: MaintenanceRow[]; grand: number } => {
-    const rows: MaintenanceRow[] = [...rooms]
-      .filter((r) => r.needs_maintenance)
-      .sort((a, b) => a.room_number - b.room_number)
-      .map((r) => ({ room: r.room_number, note: (r.housekeeping_note ?? "").trim() }));
-    return { rows, grand: rows.length };
-  };
-
-  const computeFnbTotals = (): { rows: SnapshotRow[]; grand: number } => {
-    const rows: SnapshotRow[] = [];
-    for (const item of templateFnbList) {
-      const count = fnbCountByItem.get(item.id) ?? 0;
-      if (count <= 0) continue;
-      rows.push({ name: item.name.trim(), count });
-    }
-    rows.sort((a, b) => a.name.localeCompare(b.name, undefined, { sensitivity: "base" }));
-    const grand = rows.reduce((s, r) => s + r.count, 0);
-    return { rows, grand };
-  };
-
   const openFnbExport = async () => {
     const { rows } = computeFnbTotals();
     if (rows.length === 0) {
@@ -2332,53 +2056,19 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
     await proceedExport("fnb_totals");
   };
 
-  // Roll up daily F&B linen snapshots for the previous ISO week (last Mon 00:00
-  // through last Sun 23:59). Only meaningful on Mondays; the button is gated
-  // to Monday elsewhere.
-  const computeWeeklyFnbTotals = (): {
-    rows: SnapshotRow[];
-    grand: number;
-    start: Date;
-    end: Date;
-  } => {
-    const now = new Date();
-    const start = new Date(now);
-    start.setHours(0, 0, 0, 0);
-    const dow = start.getDay(); // 0 = Sun, 1 = Mon
-    const daysSinceMonday = dow === 0 ? 6 : dow - 1;
-    // Start of THIS week's Monday, then step back 7 days = last Monday.
-    start.setDate(start.getDate() - daysSinceMonday - 7);
-    const end = new Date(start);
-    end.setDate(end.getDate() + 6);
-    end.setHours(23, 59, 59, 999);
-    const map = new Map<string, number>();
-    for (const s of snapshots) {
-      if (s.kind !== "fnb_totals") continue;
-      const ts = new Date(s.created_at).getTime();
-      if (ts < start.getTime() || ts > end.getTime()) continue;
-      const list = (s.totals as SnapshotRow[] | null) ?? [];
-      for (const r of list) {
-        const key = (r.name ?? "").trim();
-        if (!key) continue;
-        map.set(key, (map.get(key) ?? 0) + (r.count ?? 0));
-      }
-    }
-    const rows = Array.from(map.entries())
-      .sort((a, b) => a[0].localeCompare(b[0], undefined, { sensitivity: "base" }))
-      .map(([name, count]) => ({ name, count }));
-    const grand = rows.reduce((s, r) => s + r.count, 0);
-    return { rows, grand, start, end };
-  };
-
   const openWeeklyFnbTotals = () => {
     const { rows, grand, start, end } = computeWeeklyFnbTotals();
     if (rows.length === 0) {
       toast.error("No F&B linen recorded last week");
       return;
     }
-    const fmt = (d: Date) =>
-      d.toLocaleDateString(undefined, { month: "short", day: "numeric" });
-    printTotals(rows, grand, end, "fnb_totals", `Weekly total, ${fmt(start)} – ${fmt(end)}`);
+    printTotals(
+      rows,
+      grand,
+      end,
+      "fnb_totals",
+      `Weekly total, ${Exp.formatShortDate(start)} – ${Exp.formatShortDate(end)}`,
+    );
   };
 
   // End-of-shift backup: silently snapshot every kind that has data (replacing
@@ -2465,151 +2155,6 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
     }
   };
 
-  const printTotals = (
-    rows: SnapshotRow[],
-    grand: number,
-    when: Date,
-    kind: "totals" | "rejects" | "fnb_totals" = "totals",
-    subheading?: string,
-    footer?: string,
-  ) => {
-    const dateStr = when.toLocaleDateString(undefined, {
-      year: "numeric",
-      month: "long",
-      day: "numeric",
-    });
-    const heading =
-      kind === "rejects"
-        ? `${hotelName} Linen Rejects`
-        : kind === "fnb_totals"
-        ? `${hotelName} F&B Linen`
-        : `${hotelName} Linen`;
-    const win = window.open("", "_blank");
-    if (!win) {
-      toast.error("Pop-up blocked");
-      return;
-    }
-    const esc = (s: string) =>
-      s.replace(/[<>&]/g, (ch) => ({ "<": "&lt;", ">": "&gt;", "&": "&amp;" }[ch]!));
-    const tableRows = rows
-      .map((r) => `<tr><td>${esc(r.name)}</td><td class="num">${r.count}</td></tr>`)
-      .join("");
-    win.document.write(`<!doctype html><html><head><title>${esc(heading)} - ${dateStr}</title><style>
-      body{font-family:system-ui,-apple-system,sans-serif;color:#000;background:#fff;padding:2rem;max-width:640px;margin:0 auto;}
-      h1{font-size:1.5rem;margin:0 0 .25rem;}
-      .date{color:#444;margin:0 0 1.5rem;font-size:.95rem;}
-      table{width:100%;border-collapse:collapse;font-size:1rem;}
-      th,td{text-align:left;padding:.5rem .75rem;border-bottom:1px solid #ccc;}
-      th.num,td.num{text-align:right;font-variant-numeric:tabular-nums;}
-      tfoot td{font-weight:600;border-top:2px solid #000;border-bottom:none;padding-top:.75rem;}
-      @media print{body{padding:0;}}
-    </style></head><body>
-      <h1>${esc(heading)}</h1>
-      <p class="date">${subheading ? esc(subheading) : dateStr}</p>
-      <table>
-        <thead><tr><th>Item</th><th class="num">Count</th></tr></thead>
-        <tbody>${tableRows}</tbody>
-        <tfoot><tr><td>Total</td><td class="num">${grand}</td></tr></tfoot>
-      </table>
-      ${footer ? `<p class="date" style="margin-top:1.5rem;">${esc(footer)}</p>` : ""}
-      <script>window.onload=()=>{window.print();}</script>
-    </body></html>`);
-    win.document.close();
-  };
-
-  const printRoomStatus = (rows: RoomStatusRow[], when: Date) => {
-    const dateStr = when.toLocaleDateString(undefined, {
-      year: "numeric",
-      month: "long",
-      day: "numeric",
-    });
-    const win = window.open("", "_blank");
-    if (!win) {
-      toast.error("Pop-up blocked");
-      return;
-    }
-    const esc = (s: string) =>
-      s.replace(/[<>&]/g, (ch) => ({ "<": "&lt;", ">": "&gt;", "&": "&amp;" }[ch]!));
-    const half = Math.ceil(rows.length / 2);
-    const left = rows.slice(0, half);
-    const right = rows.slice(half);
-    const trs = (list: RoomStatusRow[]) =>
-      list
-        .map(
-          (r) =>
-            `<tr><td class="num">${r.room}</td><td>${esc(r.status)}</td><td>${esc(r.bed)}</td></tr>`,
-        )
-        .join("");
-    const tableHead = `<thead><tr><th>Room</th><th>Status</th><th>Set As</th></tr></thead>`;
-    win.document.write(`<!doctype html><html><head><title>Room Status Sheet - ${dateStr}</title><style>
-      body{font-family:system-ui,-apple-system,sans-serif;color:#000;background:#fff;padding:1.5rem;max-width:900px;margin:0 auto;}
-      h1{font-size:1.5rem;margin:0 0 .25rem;text-align:center;text-decoration:underline;}
-      .date{margin:0 0 1.25rem;font-size:.95rem;text-align:center;}
-      .grid{display:grid;grid-template-columns:1fr 1fr;gap:1rem;}
-      table{width:100%;border-collapse:collapse;font-size:.95rem;}
-      th,td{text-align:center;padding:.35rem .5rem;border:1px solid #444;}
-      th.num,td.num{text-align:center;font-variant-numeric:tabular-nums;width:3rem;}
-      th{background:#eee;}
-      @media print{body{padding:0;}}
-    </style></head><body>
-      <h1>Room Status Sheet</h1>
-      <p class="date">${dateStr}</p>
-      <div class="grid">
-        <table>${tableHead}<tbody>${trs(left)}</tbody></table>
-        <table>${tableHead}<tbody>${trs(right)}</tbody></table>
-      </div>
-      <script>window.onload=()=>{window.print();}</script>
-    </body></html>`);
-    win.document.close();
-  };
-
-  const printMaintenance = (when: Date, presetList?: MaintenanceRow[]) => {
-    const list =
-      presetList ??
-      [...rooms]
-        .filter((r) => r.needs_maintenance)
-        .sort((a, b) => a.room_number - b.room_number)
-        .map((r) => ({ room: r.room_number, note: (r.housekeeping_note ?? "").trim() }));
-    if (list.length === 0) {
-      toast.error("No rooms marked for maintenance");
-      return;
-    }
-    const dateStr = when.toLocaleDateString(undefined, {
-      year: "numeric",
-      month: "long",
-      day: "numeric",
-    });
-    const win = window.open("", "_blank");
-    if (!win) {
-      toast.error("Pop-up blocked");
-      return;
-    }
-    const esc = (s: string) =>
-      s.replace(/[<>&]/g, (ch) => ({ "<": "&lt;", ">": "&gt;", "&": "&amp;" }[ch]!));
-    const trs = list
-      .map(
-        (r) =>
-          `<tr><td class="num">${r.room}</td><td>${r.note ? esc(r.note) : '<span class="muted">—</span>'}</td></tr>`,
-      )
-      .join("");
-    win.document.write(`<!doctype html><html><head><title>Maintenance List - ${dateStr}</title><style>
-      body{font-family:system-ui,-apple-system,sans-serif;color:#000;background:#fff;padding:1.5rem;max-width:900px;margin:0 auto;}
-      h1{font-size:1.5rem;margin:0 0 .25rem;text-align:center;text-decoration:underline;}
-      .date{margin:0 0 1.25rem;font-size:.95rem;text-align:center;}
-      table{width:100%;border-collapse:collapse;font-size:.95rem;}
-      th,td{text-align:left;padding:.45rem .6rem;border:1px solid #444;vertical-align:top;}
-      th.num,td.num{text-align:center;font-variant-numeric:tabular-nums;width:4rem;}
-      th{background:#eee;}
-      .muted{color:#666;}
-      @media print{body{padding:0;}}
-    </style></head><body>
-      <h1>Maintenance List</h1>
-      <p class="date">${dateStr}</p>
-      <table><thead><tr><th class="num">Room</th><th>Maintenance note</th></tr></thead><tbody>${trs}</tbody></table>
-      <script>window.onload=()=>{window.print();}</script>
-    </body></html>`);
-    win.document.close();
-  };
 
  // --- Room category ---
  const toggleRoomCategory = async (roomNumber: number, value: Category) => {
