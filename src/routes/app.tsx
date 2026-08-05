@@ -61,6 +61,28 @@ import {
 import { useTheme } from "@/components/theme-provider";
 import { useCurrentHotel, DEFAULT_HOTEL_NAME } from "@/lib/hotels";
 import { listHotels, setActiveHotel, createHotel, type HotelOption } from "@/lib/auth.functions";
+import { parseCats, categoryLabel, valueFromLabel, COLOR_SWATCHES } from "@/lib/app-format";
+import type {
+  Category,
+  ItemColor,
+  RoomType,
+  RoomFeature,
+  RoomFeatureAssignment,
+  ReceptionItem,
+  TemplateItem,
+  RoomExtra,
+  RoomCount,
+  Room,
+  TemplateItemRoom,
+  SnapshotRow,
+  RoomStatusRow,
+  MaintenanceRow,
+  ExportSnapshot,
+  RejectCount,
+  RoomMessage,
+  MaintenanceRequest,
+  ViewRole,
+} from "@/lib/app-types";
 
 export const Route = createFileRoute("/app")({
   ssr: false,
@@ -72,12 +94,6 @@ export const Route = createFileRoute("/app")({
   }),
   component: AppPage,
 });
-
-type Category = string;
-type RoomType = { id: string; user_id: string; value: Category; label: string; sort_order: number | null; created_at: string; updated_at: string };
-type RoomFeature = { id: string; user_id: string; value: string; label: string; sort_order: number | null; created_at: string; updated_at: string };
-type RoomFeatureAssignment = { id: string; feature_id: string; room_number: number };
-type ReceptionItem = { id: string; user_id: string; kind: "status" | "bed"; label: string; sort_order: number | null; created_at: string; updated_at: string };
 
 function ManageEditableRow({
   label,
