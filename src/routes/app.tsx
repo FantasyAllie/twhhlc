@@ -1,6 +1,6 @@
 import React, { useEffect, useMemo, useRef, useState } from "react";
 import { createFileRoute, useNavigate, Link } from "@tanstack/react-router";
-import { useQueryClient } from "@tanstack/react-query";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import {
   useReceptionItemsQuery,
   useRoomFeatureAssignmentsQuery,
@@ -103,6 +103,8 @@ import type {
   RoomMessage,
   MaintenanceRequest,
   ViewRole,
+  FnbCount,
+  LostPropertyLite,
 } from "@/lib/app-types";
 import * as Exp from "@/lib/exports";
 import type { SnapshotKind } from "@/lib/exports";
