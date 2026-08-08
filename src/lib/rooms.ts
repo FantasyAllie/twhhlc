@@ -1,0 +1,79 @@
+// Room status rules: tile state derivation and the "Reset all" decision logic.
+// Extracted verbatim from src/routes/app.tsx (stage 3 of the staged refactor).
+import type { ReceptionItem, Room } from "./app-types";
+
+export type RoomTileState = "todo" | "progress" | "done" | "complete";
+
+export const getRoomTileState = (isDone: boolean, hasCounts: boolean): RoomTileState => {
+  if (isDone && hasCounts) return "complete";
+  if (isDone) return "done";
+  if (hasCounts) return "progress";
+  return "todo";
+};
+
+export const roomStateMeta: Record<
+  RoomTileState,
+  { bg: string; fg: string; accent: string; label: string }
+> = {
+  todo:     { bg: "var(--room-todo)",     fg: "var(--room-todo-fg)",     accent: "var(--room-todo-accent)",     label: "Stayover\n" },
+  progress: { bg: "var(--room-progress)", fg: "var(--room-progress-fg)", accent: "var(--room-progress-accent)", label: "Cleaning in progress" },
+  done:     { bg: "var(--room-done)", fg: "var(--room-done-fg)", accent: "var(--room-done-accent)", label: "Clean" },
+  complete: { bg: "var(--room-done)", fg: "var(--room-done-fg)", accent: "var(--room-done-accent)", label: "Cleaned & Ready for Guest" },
+};
+
+// --- Reset all: decision logic (shared by housekeeping and reception) -------
+
+export type PreservedFlags = {
+  guest_vacated: boolean;
+  early_check_in: boolean;
+  needs_maintenance: boolean;
+  guest_vacated_at: string | null;
+  early_check_in_at: string | null;
+  needs_maintenance_at: string | null;
+};
+
+// Reception flags set after the most recent 4pm cutoff survive a morning reset.
+export const resetCutoff = (now: Date): Date => {
+  const cutoff = new Date(now);
+  cutoff.setHours(16, 0, 0, 0);
+  if (now.getTime() < cutoff.getTime()) cutoff.setDate(cutoff.getDate() - 1);
+  return cutoff;
+};
+
+export const dirtyStatusId = (receptionStatuses: ReceptionItem[]): string | null =>
+  receptionStatuses.find((s) => s.label.toLowerCase() === "dirty")?.id ?? null;
+
+// Rooms currently marked Dirty get reset like any other room, but the
+// "Guest has checked out" flag is switched on so housekeeping can spot rooms
+// needing cleaning first thing in the morning.
+export const computeResetPreserveMap = (
+  rooms: Room[],
+  receptionStatuses: ReceptionItem[],
+  now: Date,
+): Map<number, PreservedFlags> => {
+  const cutoffMs = resetCutoff(now).getTime();
+  const isFresh = (iso: string | null | undefined) =>
+    !!iso && new Date(iso).getTime() >= cutoffMs;
+  const dirtyId = dirtyStatusId(receptionStatuses);
+  const isDirtyRoom = (r: Room) =>
+    !!dirtyId && (r.reception_status_id ?? r.default_status) === dirtyId;
+
+  const preserveMap = new Map<number, PreservedFlags>();
+  for (const r of rooms) {
+    const dirty = isDirtyRoom(r);
+    const gv = dirty || (r.guest_vacated && isFresh(r.guest_vacated_at));
+    const ec = isFresh(r.early_check_in_at) && !!r.early_check_in;
+    const nm = isFresh(r.needs_maintenance_at) && r.needs_maintenance;
+    if (gv || ec || nm) {
+      preserveMap.set(r.room_number, {
+        guest_vacated: gv,
+        early_check_in: ec,
+        needs_maintenance: nm,
+        guest_vacated_at: gv ? (dirty ? now.toISOString() : r.guest_vacated_at ?? null) : null,
+        early_check_in_at: ec ? r.early_check_in_at ?? null : null,
+        needs_maintenance_at: nm ? r.needs_maintenance_at ?? null : null,
+      });
+    }
+  }
+  return preserveMap;
+};
