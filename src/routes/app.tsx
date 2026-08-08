@@ -85,6 +85,12 @@ import type {
 } from "@/lib/app-types";
 import * as Exp from "@/lib/exports";
 import type { SnapshotKind } from "@/lib/exports";
+import {
+  computeResetPreserveMap,
+  getRoomTileState as computeRoomTileState,
+  roomStateMeta,
+} from "@/lib/rooms";
+import type { RoomTileState } from "@/lib/rooms";
 
 export const Route = createFileRoute("/app")({
   ssr: false,
