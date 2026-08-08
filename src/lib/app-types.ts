@@ -130,3 +130,14 @@ export type MaintenanceRequest = {
 };
 
 export type ViewRole = "admin" | "manager" | "user" | "reception" | "fnb" | "maintenance";
+
+export type FnbCount = { template_item_id: string; count: number };
+
+export type LostPropertyLite = {
+  id: string;
+  room_number: number | null;
+  message: string;
+  status: "open" | "collected" | "discarded";
+  created_at: string;
+  photo_paths?: string[] | null;
+};

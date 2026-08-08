@@ -1,6 +1,27 @@
 import React, { useEffect, useMemo, useRef, useState } from "react";
 import { createFileRoute, useNavigate, Link } from "@tanstack/react-router";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
+import {
+  useReceptionItemsQuery,
+  useRoomFeatureAssignmentsQuery,
+  useRoomFeaturesQuery,
+  useRoomTypesQuery,
+  useRoomsQuery,
+} from "@/hooks/use-rooms";
+import {
+  useFnbCountsQuery,
+  useRejectCountsQuery,
+  useRoomCountsQuery,
+  useRoomExtrasQuery,
+  useTemplateItemRoomsQuery,
+  useTemplateItemsQuery,
+} from "@/hooks/use-linen";
+import {
+  useExportSnapshotsQuery,
+  useLostPropertyOpenQuery,
+  useMaintenanceRequestsQuery,
+  useRoomMessagesQuery,
+} from "@/hooks/use-ops-log";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -82,6 +103,8 @@ import type {
   RoomMessage,
   MaintenanceRequest,
   ViewRole,
+  FnbCount,
+  LostPropertyLite,
 } from "@/lib/app-types";
 import * as Exp from "@/lib/exports";
 import type { SnapshotKind } from "@/lib/exports";
@@ -583,65 +606,11 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
  };
  }, []);
 
- const templateQ = useQuery({
- queryKey: ["template_items"],
- queryFn: async (): Promise<TemplateItem[]> => {
- const { data, error } = await supabase
- .from("template_items")
-  .select("id,name,created_at,category,position,default_count,color,list_type")
- .order("position", { ascending: true })
- .order("created_at", { ascending: true });
- if (error) throw error;
- return (data ?? []) as TemplateItem[];
- },
- });
-
- const extrasQ = useQuery({
- queryKey: ["room_extras"],
- queryFn: async (): Promise<RoomExtra[]> => {
- const { data, error } = await supabase
- .from("room_extra_items")
- .select("id,room_number,name,created_at")
- .order("created_at", { ascending: true });
- if (error) throw error;
- return data ?? [];
- },
- });
-
- const countsQ = useQuery({
- queryKey: ["room_counts"],
- queryFn: async (): Promise<RoomCount[]> => {
- const { data, error } = await supabase
- .from("room_item_counts")
- .select("id,room_number,item_kind,item_id,count");
- if (error) throw error;
- return (data ?? []) as RoomCount[];
- },
- });
-
- type FnbCount = { template_item_id: string; count: number };
- const fnbCountsQ = useQuery({
-   queryKey: ["fnb_linen_counts"],
-   queryFn: async (): Promise<FnbCount[]> => {
-     const { data, error } = await supabase
-       .from("fnb_linen_counts" as never)
-       .select("template_item_id,count");
-     if (error) throw error;
-     return (data ?? []) as FnbCount[];
-   },
- });
-
-  const roomsQ = useQuery({
-    queryKey: ["rooms"],
-    queryFn: async (): Promise<Room[]> => {
-      const { data, error } = await supabase
-        .from("rooms")
-        .select("id,room_number,sort_order,done,done_reception,category,default_status,reception_status_id,reception_bed_id,housekeeping_note,needs_maintenance,guest_vacated,early_check_in,not_required,guest_vacated_at,early_check_in_at,needs_maintenance_at,not_required_at")
-        .order("sort_order", { ascending: true });
-      if (error) throw error;
-      return (data ?? []) as Room[];
-    },
-  });
+  const templateQ = useTemplateItemsQuery();
+  const extrasQ = useRoomExtrasQuery();
+  const countsQ = useRoomCountsQuery();
+  const fnbCountsQ = useFnbCountsQuery();
+  const roomsQ = useRoomsQuery();
 
   // "Not Required" (Stayover - Service Declined) is persisted on the room row so
   // it survives reloads, just like the other reception flags.
@@ -650,137 +619,16 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
     [roomsQ.data],
   );
 
-  const roomTypesQ = useQuery({
-    queryKey: ["room_types"],
-    queryFn: async (): Promise<RoomType[]> => {
-      const { data, error } = await supabase
-        .from("room_types")
-        .select("id,user_id,value,label,sort_order,created_at,updated_at")
-        .order("sort_order", { ascending: true, nullsFirst: false })
-        .order("created_at", { ascending: true });
-      if (error) throw error;
-      return (data ?? []) as RoomType[];
-    },
-  });
-
-  const roomFeaturesQ = useQuery({
-    queryKey: ["room_features"],
-    queryFn: async (): Promise<RoomFeature[]> => {
-      const { data, error } = await supabase
-        .from("room_features" as never)
-        .select("id,user_id,value,label,sort_order,created_at,updated_at")
-        .order("sort_order", { ascending: true, nullsFirst: false })
-        .order("created_at", { ascending: true });
-      if (error) throw error;
-      return (data ?? []) as RoomFeature[];
-    },
-  });
-
-  const roomFeatureAssignmentsQ = useQuery({
-    queryKey: ["room_feature_rooms"],
-    queryFn: async (): Promise<RoomFeatureAssignment[]> => {
-      const { data, error } = await supabase
-        .from("room_feature_rooms" as never)
-        .select("id,feature_id,room_number");
-      if (error) throw error;
-      return (data ?? []) as RoomFeatureAssignment[];
-    },
-  });
-
-  const receptionItemsQ = useQuery({
-    queryKey: ["reception_items"],
-    queryFn: async (): Promise<ReceptionItem[]> => {
-      const { data, error } = await supabase
-        .from("reception_items" as never)
-        .select("id,user_id,kind,label,sort_order,created_at,updated_at")
-        .order("sort_order", { ascending: true, nullsFirst: false })
-        .order("created_at", { ascending: true });
-      if (error) throw error;
-      return (data ?? []) as ReceptionItem[];
-    },
-  });
-
-  const assignmentsQ = useQuery({
-    queryKey: ["template_item_rooms"],
-    queryFn: async (): Promise<TemplateItemRoom[]> => {
-      const { data, error } = await supabase
-        .from("template_item_rooms")
-        .select("id,template_item_id,room_number");
-      if (error) throw error;
-      return (data ?? []) as TemplateItemRoom[];
-    },
-  });
-
-  const snapshotsQ = useQuery({
-    queryKey: ["export_snapshots"],
-    queryFn: async (): Promise<ExportSnapshot[]> => {
-      const { data, error } = await supabase
-        .from("export_snapshots")
-          .select("id,created_at,totals,grand_total,kind")
-        .order("created_at", { ascending: false })
-        .limit(100);
-      if (error) throw error;
-      return (data ?? []) as ExportSnapshot[];
-    },
-  });
-
-  const rejectsQ = useQuery({
-    queryKey: ["reject_counts"],
-    queryFn: async (): Promise<RejectCount[]> => {
-      const { data, error } = await supabase
-        .from("reject_counts" as never)
-        .select("id,template_item_id,count");
-      if (error) throw error;
-      return (data ?? []) as RejectCount[];
-    },
-  });
-
-  const messagesQ = useQuery({
-    queryKey: ["room_messages"],
-    queryFn: async (): Promise<RoomMessage[]> => {
-      const { data, error } = await supabase
-        .from("room_messages" as never)
-        .select("id,room_number,message,created_by_username,created_by_role,reply_to_id,dismissed,thread,done_at,deleted_at,created_at")
-        .is("deleted_at", null)
-        .order("created_at", { ascending: false });
-      if (error) throw error;
-      return (data ?? []) as RoomMessage[];
-    },
-  });
-
-  const maintenanceRequestsQ = useQuery({
-    queryKey: ["maintenance_requests"],
-    queryFn: async (): Promise<MaintenanceRequest[]> => {
-      const { data, error } = await supabase
-        .from("maintenance_requests" as never)
-        .select("id,room_number,message,created_by_username,done,done_by_username,done_at,created_at,photo_paths")
-        .order("created_at", { ascending: false });
-      if (error) throw error;
-      return (data ?? []) as MaintenanceRequest[];
-    },
-  });
-
-  type LostPropertyLite = {
-    id: string;
-    room_number: number | null;
-    message: string;
-    status: "open" | "collected" | "discarded";
-    created_at: string;
-    photo_paths?: string[] | null;
-  };
-  const lostPropertyQ = useQuery({
-    queryKey: ["lost_property_lite"],
-    queryFn: async (): Promise<LostPropertyLite[]> => {
-      const { data, error } = await supabase
-        .from("lost_property" as never)
-        .select("id,room_number,message,status,created_at,deleted_at,photo_paths")
-        .is("deleted_at", null)
-        .eq("status", "open")
-        .order("created_at", { ascending: false });
-      if (error) throw error;
-      return (data ?? []) as LostPropertyLite[];
-    },
-  });
+  const roomTypesQ = useRoomTypesQuery();
+  const roomFeaturesQ = useRoomFeaturesQuery();
+  const roomFeatureAssignmentsQ = useRoomFeatureAssignmentsQuery();
+  const receptionItemsQ = useReceptionItemsQuery();
+  const assignmentsQ = useTemplateItemRoomsQuery();
+  const snapshotsQ = useExportSnapshotsQuery();
+  const rejectsQ = useRejectCountsQuery();
+  const messagesQ = useRoomMessagesQuery();
+  const maintenanceRequestsQ = useMaintenanceRequestsQuery();
+  const lostPropertyQ = useLostPropertyOpenQuery();
   const lostPropertyOpenItems = (lostPropertyQ.data ?? []) as LostPropertyLite[];
 
   const templateAll = templateQ.data ?? [];
