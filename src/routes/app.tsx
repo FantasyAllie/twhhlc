@@ -1657,49 +1657,11 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
   };
 
   const performResetAll = async () => {
-    // Preserve reception flags (guest_vacated / early_check_in / needs_maintenance)
-    // that were set after the most recent 4pm cutoff so morning resets don't
-    // wipe overnight/early-morning reception work.
     const now = new Date();
-    const cutoff = new Date(now);
-    cutoff.setHours(16, 0, 0, 0);
-    if (now.getTime() < cutoff.getTime()) cutoff.setDate(cutoff.getDate() - 1);
-    const cutoffMs = cutoff.getTime();
-    const isFresh = (iso: string | null | undefined) =>
-      !!iso && new Date(iso).getTime() >= cutoffMs;
-
     const currentRooms = qc.getQueryData<Room[]>(["rooms"]) ?? [];
-    // Rooms currently marked Dirty get reset like any other room, but the
-    // "Guest has checked out" flag is switched on so housekeeping can spot
-    // rooms needing cleaning first thing in the morning.
-    const dirtyStatusIdReset =
-      receptionStatuses.find((s) => s.label.toLowerCase() === "dirty")?.id ?? null;
-    const isDirtyRoom = (r: Room) =>
-      !!dirtyStatusIdReset &&
-      (r.reception_status_id ?? r.default_status) === dirtyStatusIdReset;
-    const preserveMap = new Map<
-      number,
-      { guest_vacated: boolean; early_check_in: boolean; needs_maintenance: boolean;
-        guest_vacated_at: string | null; early_check_in_at: string | null; needs_maintenance_at: string | null }
-    >();
-    for (const r of currentRooms) {
-      const dirty = isDirtyRoom(r);
-      const gv = dirty || (r.guest_vacated && isFresh(r.guest_vacated_at));
-      const ec = isFresh(r.early_check_in_at) && !!r.early_check_in;
-      const nm = isFresh(r.needs_maintenance_at) && r.needs_maintenance;
-      if (gv || ec || nm) {
-        preserveMap.set(r.room_number, {
-          guest_vacated: gv,
-          early_check_in: ec,
-          needs_maintenance: nm,
-          guest_vacated_at: gv
-            ? (dirty ? now.toISOString() : r.guest_vacated_at ?? null)
-            : null,
-          early_check_in_at: ec ? r.early_check_in_at ?? null : null,
-          needs_maintenance_at: nm ? r.needs_maintenance_at ?? null : null,
-        });
-      }
-    }
+    // Preserve reception flags (guest_vacated / early_check_in / needs_maintenance)
+    // set after the most recent 4pm cutoff; Dirty rooms get the checkout flag.
+    const preserveMap = computeResetPreserveMap(currentRooms, receptionStatuses, now);
 
     qc.setQueryData<Room[]>(["rooms"], (old) =>
       old?.map((r) => {
