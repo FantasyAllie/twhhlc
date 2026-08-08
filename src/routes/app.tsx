@@ -1288,23 +1288,8 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
   const roomsWithCounts = new Set<number>(
     counts.filter((c) => (c.count ?? 0) > 0).map((c) => c.room_number),
   );
-  type RoomTileState = "todo" | "progress" | "done" | "complete";
-  const getRoomTileState = (n: number, isDone: boolean): RoomTileState => {
-    const hasCounts = roomsWithCounts.has(n);
-    if (isDone && hasCounts) return "complete";
-    if (isDone) return "done";
-    if (hasCounts) return "progress";
-    return "todo";
-  };
-  const roomStateMeta: Record<
-    RoomTileState,
-    { bg: string; fg: string; accent: string; label: string }
-  > = {
-    todo:     { bg: "var(--room-todo)",     fg: "var(--room-todo-fg)",     accent: "var(--room-todo-accent)",     label: "Stayover\n" },
-    progress: { bg: "var(--room-progress)", fg: "var(--room-progress-fg)", accent: "var(--room-progress-accent)", label: "Cleaning in progress" },
-    done:     { bg: "var(--room-done)", fg: "var(--room-done-fg)", accent: "var(--room-done-accent)", label: "Clean" },
-    complete: { bg: "var(--room-done)", fg: "var(--room-done-fg)", accent: "var(--room-done-accent)", label: "Cleaned & Ready for Guest" },
-  };
+  const getRoomTileState = (n: number, isDone: boolean): RoomTileState =>
+    computeRoomTileState(isDone, roomsWithCounts.has(n));
 
   const toggleReceptionDone = async (roomNumber: number) => {
     const current = receptionDoneSet.has(roomNumber);
