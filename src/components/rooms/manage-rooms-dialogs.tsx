@@ -19,7 +19,7 @@ type Props = {
   setEditRoomSheetNumber: (n: number) => void;
   addRoom: (n: number) => void;
   removeRoom: (n: number) => void;
-  moveRoom: (n: number, dir: number) => void;
+  moveRoom: (n: number, dir: -1 | 1) => void;
 };
 
 export function ManageRoomsDialogs({
