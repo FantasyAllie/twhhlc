@@ -3404,9 +3404,13 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
            <List className="h-5 w-5 mr-2" />
           Daily Linen Totals
          </Button>
-         <Button variant="outline" size="lg" className="justify-start h-12" onClick={() => { setExportSheetOpen(false); openDeliveryLinenTotals(); }}>
-           <List className="h-5 w-5 mr-2" />
-            Ranged Linen Totals
+         <Button variant="outline" size="lg" className="justify-start h-12" onClick={() => { setExportSheetOpen(false); setLinenPrintOpen(true); }}>
+           <Printer className="h-5 w-5 mr-2" />
+           Linen Count (by date)
+         </Button>
+         <Button variant="outline" size="lg" className="justify-start h-12" onClick={() => { setExportSheetOpen(false); setRoomStatusPrintOpen(true); }}>
+           <Printer className="h-5 w-5 mr-2" />
+           Room Status Sheet (by date)
          </Button>
          <Button variant="outline" size="lg" className="justify-start h-12" onClick={() => { setExportSheetOpen(false); openRoomStatusExport(); }}>
            <ClipboardList className="h-5 w-5 mr-2" />
