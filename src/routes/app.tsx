@@ -765,8 +765,8 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
     setNewMaintenanceText("");
     setNewMaintenancePhotos([]);
     qc.invalidateQueries({ queryKey: ["maintenance_requests"] });
-    await writeRoomMaintenanceFlag(roomNumber, true);
-    void notifyMaintenanceRequest({ data: { roomNumber, message: text } });
+    if (roomNumber != null) await writeRoomMaintenanceFlag(roomNumber, true);
+    void notifyMaintenanceRequest({ data: { roomNumber, areaLabel: areaLabel, message: text } });
     toast.success("Maintenance request logged");
   };
 
