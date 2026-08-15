@@ -40,6 +40,7 @@ import { LostPropertySheet } from "@/components/lost-property-sheet";
 import { PhotoAttachments, PhotoComposer } from "@/components/entry-photos";
 import { StayoverPhotosSheet } from "@/components/stayover-photos-sheet";
 import { DndDoorPhoto } from "@/components/dnd-door-photo";
+import { RoomTypesSheet, RoomFeaturesSheet, ReceptionItemsSheet } from "@/components/rooms/config-sheets";
 import { BroomBurst } from "@/components/broom-burst";
 import {
   deleteTodayStayoverPhotosForRoom,
@@ -127,117 +128,6 @@ export const Route = createFileRoute("/app")({
   }),
   component: AppPage,
 });
-
-function ManageEditableRow({
-  label,
-  canMoveUp,
-  canMoveDown,
-  onMoveUp,
-  onMoveDown,
-  onRename,
-  onDelete,
-}: {
-  label: string;
-  canMoveUp: boolean;
-  canMoveDown: boolean;
-  onMoveUp: () => void;
-  onMoveDown: () => void;
-  onRename: (v: string) => void | Promise<void>;
-  onDelete: () => void | Promise<void>;
-}) {
-  const [editing, setEditing] = useState(false);
-  const [draft, setDraft] = useState(label);
-  useEffect(() => {
-    if (!editing) setDraft(label);
-  }, [label, editing]);
-  const commit = () => {
-    const clean = draft.trim();
-    if (clean && clean !== label) void onRename(clean);
-    setEditing(false);
-  };
-  return (
-    <div className="flex items-center gap-1 rounded-full border bg-background min-h-12 pl-2 pr-1.5">
-      <div className="flex flex-col">
-        <Button
-          type="button"
-          variant="ghost"
-          size="icon"
-          className="h-5 w-7 text-muted-foreground"
-          onClick={onMoveUp}
-          disabled={!canMoveUp}
-          aria-label="Move up"
-        >
-          <ArrowUp className="h-3.5 w-3.5" />
-        </Button>
-        <Button
-          type="button"
-          variant="ghost"
-          size="icon"
-          className="h-5 w-7 text-muted-foreground"
-          onClick={onMoveDown}
-          disabled={!canMoveDown}
-          aria-label="Move down"
-        >
-          <ArrowDown className="h-3.5 w-3.5" />
-        </Button>
-      </div>
-      {editing ? (
-        <input
-          autoFocus
-          value={draft}
-          onChange={(e) => setDraft(e.target.value)}
-          onBlur={commit}
-          onKeyDown={(e) => {
-            if (e.key === "Enter") {
-              e.preventDefault();
-              commit();
-            } else if (e.key === "Escape") {
-              e.preventDefault();
-              setDraft(label);
-              setEditing(false);
-            }
-          }}
-          className="flex-1 min-w-0 bg-transparent text-sm font-medium outline-none px-2 py-1 rounded-md border border-input focus:ring-1 focus:ring-ring"
-        />
-      ) : (
-        <span className="flex-1 text-sm font-medium pl-2 truncate">{label}</span>
-      )}
-      {editing ? (
-        <Button
-          type="button"
-          variant="ghost"
-          size="icon"
-          className="h-9 w-9 text-muted-foreground"
-          onClick={commit}
-          aria-label="Save name"
-        >
-          <Check className="h-4 w-4" />
-        </Button>
-      ) : (
-        <Button
-          type="button"
-          variant="ghost"
-          size="icon"
-          className="h-9 w-9 text-muted-foreground"
-          onClick={() => setEditing(true)}
-          aria-label={`Rename ${label}`}
-        >
-          <Pencil className="h-4 w-4" />
-        </Button>
-      )}
-      <Button
-        type="button"
-        variant="ghost"
-        size="icon"
-        className="h-9 w-9 text-muted-foreground hover:text-destructive"
-        onClick={onDelete}
-        aria-label={`Remove ${label}`}
-      >
-        <X className="h-4 w-4" />
-      </Button>
-    </div>
-  );
-}
 
 function AppPage() {
  const qc = useQueryClient();
@@ -4915,157 +4805,39 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
  </Sheet>
 
  {/* Room Types sheet (Admin) */}
- <Sheet open={roomTypesSheetOpen} onOpenChange={setRoomTypesSheetOpen}>
-  <SheetContent side="bottom" className="max-h-[85dvh] overflow-y-auto p-4 sm:p-6">
-     <SheetHeader className="text-left">
-       <SheetTitle className="flex items-center gap-2">
-         <Bed className="h-4 w-4" />
-         Room types
-       </SheetTitle>
-       <SheetDescription>Manage the list of room types</SheetDescription>
-     </SheetHeader>
-     <div className="mt-4 space-y-1.5">
-       {roomTypes.length === 0 ? (
-         <p className="text-sm text-muted-foreground">No room types yet.</p>
-       ) : (
-          roomTypes.map((rt, idx) => (
-            <ManageEditableRow
-              key={rt.id}
-              label={rt.label}
-              canMoveUp={idx > 0}
-              canMoveDown={idx < roomTypes.length - 1}
-              onMoveUp={() => moveRoomType(rt.id, -1)}
-              onMoveDown={() => moveRoomType(rt.id, 1)}
-              onRename={(v: string) => renameRoomType(rt.id, v)}
-              onDelete={() => deleteRoomType(rt.id)}
-            />
-          ))
-       )}
-       <Button
-         type="button"
-         variant="outline"
-         className="w-full mt-2"
-         onClick={() => setAddRoomTypeOpen(true)}
-       >
-         <Plus className="h-4 w-4 mr-2" />
-         Add room type
-       </Button>
-     </div>
-   </SheetContent>
- </Sheet>
+  <RoomTypesSheet
+    open={roomTypesSheetOpen}
+    onOpenChange={setRoomTypesSheetOpen}
+    roomTypes={roomTypes}
+    onMove={moveRoomType}
+    onRename={renameRoomType}
+    onDelete={deleteRoomType}
+    onAdd={() => setAddRoomTypeOpen(true)}
+  />
 
- {/* Room Features sheet (Admin) */}
- <Sheet open={roomFeaturesSheetOpen} onOpenChange={setRoomFeaturesSheetOpen}>
-  <SheetContent side="bottom" className="max-h-[85dvh] overflow-y-auto p-4 sm:p-6">
-     <SheetHeader className="text-left">
-       <SheetTitle className="flex items-center gap-2">
-         <List className="h-4 w-4" />
-         Room features
-       </SheetTitle>
-       <SheetDescription>Manage the list of room features</SheetDescription>
-     </SheetHeader>
-     <div className="mt-4 space-y-1.5">
-       {roomFeatures.length === 0 ? (
-         <p className="text-sm text-muted-foreground">No features yet.</p>
-       ) : (
-          roomFeatures.map((f, idx) => (
-            <ManageEditableRow
-              key={f.id}
-              label={f.label}
-              canMoveUp={idx > 0}
-              canMoveDown={idx < roomFeatures.length - 1}
-              onMoveUp={() => moveRoomFeature(f.id, -1)}
-              onMoveDown={() => moveRoomFeature(f.id, 1)}
-              onRename={(v: string) => renameRoomFeature(f.id, v)}
-              onDelete={() => deleteRoomFeature(f.id)}
-            />
-          ))
-       )}
-       <Button
-         type="button"
-         variant="outline"
-         className="w-full mt-2"
-         onClick={() => setAddRoomFeatureOpen(true)}
-       >
-         <Plus className="h-4 w-4 mr-2" />
-         Add feature
-       </Button>
-     </div>
-   </SheetContent>
- </Sheet>
+  {/* Room Features sheet (Admin) */}
+  <RoomFeaturesSheet
+    open={roomFeaturesSheetOpen}
+    onOpenChange={setRoomFeaturesSheetOpen}
+    roomFeatures={roomFeatures}
+    onMove={moveRoomFeature}
+    onRename={renameRoomFeature}
+    onDelete={deleteRoomFeature}
+    onAdd={() => setAddRoomFeatureOpen(true)}
+  />
 
- {/* Reception items sheet (Admin) */}
- <Sheet open={receptionItemsSheetOpen} onOpenChange={setReceptionItemsSheetOpen}>
-  <SheetContent side="bottom" className="max-h-[85dvh] overflow-y-auto p-4 sm:p-6">
-     <SheetHeader className="text-left">
-       <SheetTitle className="flex items-center gap-2">
-         <ConciergeBell className="h-4 w-4" />
-         Reception
-       </SheetTitle>
-       <SheetDescription>Manage room statuses and bed types</SheetDescription>
-     </SheetHeader>
-     <div className="mt-4 space-y-5">
-       <div className="space-y-2">
-         <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">Room status</p>
-         <div className="space-y-1.5">
-           {receptionStatuses.length === 0 && (
-             <p className="text-sm text-muted-foreground">No statuses yet.</p>
-           )}
-            {receptionStatuses.map((s, idx) => (
-              <ManageEditableRow
-                key={s.id}
-                label={s.label}
-                canMoveUp={idx > 0}
-                canMoveDown={idx < receptionStatuses.length - 1}
-                onMoveUp={() => moveReceptionItem(s.id, -1)}
-                onMoveDown={() => moveReceptionItem(s.id, 1)}
-                onRename={(v: string) => renameReceptionItem(s.id, v)}
-                onDelete={() => deleteReceptionItem(s.id)}
-              />
-            ))}
-           <Button
-             type="button"
-             variant="outline"
-             className="w-full"
-             onClick={() => setAddReceptionItemKind("status")}
-           >
-             <Plus className="h-4 w-4 mr-2" />
-             Add status
-           </Button>
-         </div>
-       </div>
-       <div className="space-y-2">
-         <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">Bed set as</p>
-         <div className="space-y-1.5">
-           {receptionBeds.length === 0 && (
-             <p className="text-sm text-muted-foreground">No bed types yet.</p>
-           )}
-            {receptionBeds.map((b, idx) => (
-              <ManageEditableRow
-                key={b.id}
-                label={b.label}
-                canMoveUp={idx > 0}
-                canMoveDown={idx < receptionBeds.length - 1}
-                onMoveUp={() => moveReceptionItem(b.id, -1)}
-                onMoveDown={() => moveReceptionItem(b.id, 1)}
-                onRename={(v: string) => renameReceptionItem(b.id, v)}
-                onDelete={() => deleteReceptionItem(b.id)}
-              />
-            ))}
-           <Button
-             type="button"
-             variant="outline"
-             className="w-full"
-             onClick={() => setAddReceptionItemKind("bed")}
-           >
-             <Plus className="h-4 w-4 mr-2" />
-             Add bed type
-           </Button>
-         </div>
-       </div>
-     </div>
-   </SheetContent>
- </Sheet>
+  {/* Reception items sheet (Admin) */}
+  <ReceptionItemsSheet
+    open={receptionItemsSheetOpen}
+    onOpenChange={setReceptionItemsSheetOpen}
+    statuses={receptionStatuses}
+    beds={receptionBeds}
+    onMove={moveReceptionItem}
+    onRename={renameReceptionItem}
+    onDelete={deleteReceptionItem}
+    onAddStatus={() => setAddReceptionItemKind("status")}
+    onAddBed={() => setAddReceptionItemKind("bed")}
+  />
 
   {/* Edit room sheet (Admin) */}
   <Sheet open={editRoomSheetNumber !== null} onOpenChange={(o) => { if (!o) setEditRoomSheetNumber(null); }}>
