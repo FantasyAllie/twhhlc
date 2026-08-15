@@ -21,6 +21,7 @@ import {
   useExportSnapshotsQuery,
   useLostPropertyOpenQuery,
   useMaintenanceRequestsQuery,
+  useMaintenanceAreasQuery,
   useRoomMessagesQuery,
 } from "@/hooks/use-ops-log";
 import { supabase } from "@/integrations/supabase/client";
@@ -53,6 +54,7 @@ import { QuickReceptionSheet } from "@/components/quick-reception-sheet";
 import { LostPropertySheet } from "@/components/lost-property-sheet";
 import { PhotoAttachments, PhotoComposer } from "@/components/entry-photos";
 import { MaintenanceLogSheet } from "@/components/ops/maintenance-log-sheet";
+import { MaintenanceAreasSheet } from "@/components/ops/maintenance-areas-sheet";
 import { HistorySheet } from "@/components/exports/history-sheet";
 import { EditRoomDefaultsSheet, EditRoomSheet } from "@/components/rooms/edit-room-sheets";
 import { MaintenanceDashboard } from "@/components/ops/maintenance-dashboard";
@@ -121,6 +123,7 @@ import type {
   RejectCount,
   DeliveryCount,
   RoomMessage,
+  MaintenanceArea,
   MaintenanceRequest,
   ViewRole,
   FnbCount,
