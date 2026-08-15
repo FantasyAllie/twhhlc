@@ -336,13 +336,28 @@ export const saveSnapshot = async (
   rows: unknown[],
   grand: number,
 ): Promise<boolean> => {
+  // A stale/expired token makes PostgREST treat us as anonymous, which surfaces
+  // as "permission denied for table export_snapshots". Refresh first.
+  const { data: sessionData } = await supabase.auth.getSession();
+  if (!sessionData.session) {
+    toast.error("Your session expired — please sign in again to save exports.");
+    return false;
+  }
   const startOfToday = new Date();
   startOfToday.setHours(0, 0, 0, 0);
-  const { data: existing } = await supabase
+  const { data: existing, error: existingErr } = await supabase
     .from("export_snapshots")
     .select("id")
     .eq("kind", kind)
     .gte("created_at", startOfToday.toISOString());
+  if (existingErr) {
+    toast.error(
+      existingErr.code === "42501"
+        ? "Your session expired — please sign in again to save exports."
+        : existingErr.message,
+    );
+    return false;
+  }
   if (existing && existing.length > 0) {
     const ids = existing.map((r) => r.id);
     qc.setQueryData<ExportSnapshot[]>(["export_snapshots"], (old) =>
@@ -358,7 +373,11 @@ export const saveSnapshot = async (
     .from("export_snapshots")
     .insert({ totals: rows, grand_total: grand, kind } as never);
   if (error) {
-    toast.error(error.message);
+    toast.error(
+      error.code === "42501"
+        ? "Your session expired — please sign in again to save exports."
+        : error.message,
+    );
     return false;
   }
   await pruneSnapshots(kind);
