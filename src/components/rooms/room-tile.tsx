@@ -3,7 +3,6 @@
 import { memo } from "react";
 import { AlertCircle, Check, DoorOpen, Wrench } from "lucide-react";
 import { cn } from "@/lib/utils";
-import { useRipple } from "@/lib/ripple";
 import type { Room } from "@/lib/app-types";
 import {
   computeTileMeta,
@@ -65,7 +64,6 @@ function ReceptionRoomTileBase({
   onClick,
 }: BaseProps) {
   const flags = resolveRoomStatusFlags(room, statusIds);
-  const ripple = useRipple<HTMLButtonElement>();
   const isStaffRoom = flags.isStaff;
   // Done marker reflects housekeeping completion. Hide it only for rooms
   // that were never entered: DND, Service Declined (NR), ROS, or Staff.
@@ -88,7 +86,6 @@ function ReceptionRoomTileBase({
       type="button"
       disabled={isStaffRoom}
       onClick={onClick}
-      onPointerDown={ripple}
       className={cn(
         TILE_CLASS,
         isOpen && !isStaffRoom && "ring-2 ring-ring border-transparent bg-accent",
@@ -175,7 +172,6 @@ function HousekeepingRoomTileBase({
   done,
 }: BaseProps & { done: boolean }) {
   const flags = resolveRoomStatusFlags(room, statusIds);
-  const ripple = useRipple<HTMLButtonElement>();
   const isStaff = flags.isStaff;
   const meta = computeTileMeta({
     flags,
@@ -191,7 +187,6 @@ function HousekeepingRoomTileBase({
     <button
       type="button"
       onClick={onClick}
-      onPointerDown={ripple}
       className={cn(TILE_CLASS, isOpen && "ring-2 ring-ring border-transparent bg-accent")}
       style={
         isOpen
