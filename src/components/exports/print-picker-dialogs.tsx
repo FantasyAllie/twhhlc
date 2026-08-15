@@ -2,7 +2,7 @@
 // Past dates are served from the saved snapshot history (a rolling year);
 // today always prints the live figures.
 import { useState } from "react";
-import { CalendarIcon, Printer } from "lucide-react";
+import { ArrowLeft, CalendarIcon, Printer } from "lucide-react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Calendar } from "@/components/ui/calendar";
@@ -19,6 +19,18 @@ import type { ExportSnapshot, RoomStatusRow, SnapshotRow } from "@/lib/app-types
 import * as Exp from "@/lib/exports";
 
 const label = (d: Date | undefined) => (d ? Exp.formatLongDate(d, true) : "Pick a date");
+
+// Shared "back to the report chooser" affordance so users don't have to close
+// a picker and re-open the Reports menu.
+const BackRow = ({ onBack }: { onBack?: () => void }) =>
+  onBack ? (
+    <div className="mt-1 flex justify-start">
+      <Button variant="ghost" size="sm" onClick={onBack}>
+        <ArrowLeft className="h-4 w-4 mr-2" />
+        Back
+      </Button>
+    </div>
+  ) : null;
 
 const DateField = ({
   value,
@@ -112,6 +124,7 @@ export const SnapshotPrintDialog = ({
   description,
   liveRows = [],
   printTotals,
+  onBack,
 }: {
   open: boolean;
   onOpenChange: (v: boolean) => void;
@@ -121,6 +134,7 @@ export const SnapshotPrintDialog = ({
   description?: string;
   liveRows?: SnapshotRow[];
   printTotals: (rows: SnapshotRow[], grand: number, when: Date, footer?: string) => void;
+  onBack?: () => void;
 }) => {
   const [date, setDate] = useState<Date>(new Date());
   const available = savedDays(snapshots, kind);
@@ -171,6 +185,7 @@ export const SnapshotPrintDialog = ({
             <Printer className="h-4 w-4 mr-2" />
             Print
           </Button>
+          <BackRow onBack={onBack} />
         </div>
       </DialogContent>
     </Dialog>
@@ -183,12 +198,14 @@ export const RoomStatusPrintDialog = ({
   snapshots,
   liveRows,
   printRoomStatus,
+  onBack,
 }: {
   open: boolean;
   onOpenChange: (v: boolean) => void;
   snapshots: ExportSnapshot[];
   liveRows: RoomStatusRow[];
   printRoomStatus: (rows: RoomStatusRow[], when: Date) => void;
+  onBack?: () => void;
 }) => {
   const [date, setDate] = useState<Date>(new Date());
   const available = savedDays(snapshots, "room_status");
@@ -235,6 +252,7 @@ export const RoomStatusPrintDialog = ({
             <Printer className="h-4 w-4 mr-2" />
             Print
           </Button>
+          <BackRow onBack={onBack} />
         </div>
       </DialogContent>
     </Dialog>
@@ -248,6 +266,7 @@ export const LinenCountPrintDialog = ({
   liveRows,
   printTotals,
   linenDeliveryDays = [],
+  onBack,
 }: {
   open: boolean;
   onOpenChange: (v: boolean) => void;
@@ -261,6 +280,7 @@ export const LinenCountPrintDialog = ({
     subheading?: string,
     footer?: string,
   ) => void;
+  onBack?: () => void;
 }) => {
   const [mode, setMode] = useState<"single" | "range" | "delivery">("single");
   const [date, setDate] = useState<Date>(new Date());
@@ -431,6 +451,7 @@ export const LinenCountPrintDialog = ({
             </>
           )}
         </div>
+        <BackRow onBack={onBack} />
       </DialogContent>
     </Dialog>
   );
