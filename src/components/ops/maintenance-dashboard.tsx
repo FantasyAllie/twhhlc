@@ -6,7 +6,14 @@ import { Button } from "@/components/ui/button";
 import { PhotoAttachments } from "@/components/entry-photos";
 import { supabase } from "@/integrations/supabase/client";
 import type { MaintenanceRequest, RoomMessage } from "@/lib/app-types";
-import type { MessagesThread, MessagesInitial } from "@/components/messages-sheet";
+import type { MessagesThread } from "@/components/messages-sheet";
+
+type MessagesInitial = {
+  thread?: MessagesThread;
+  room?: number | null;
+  text?: string;
+  replyTo?: { id: string; sender: string; snippet: string };
+};
 
 export function MaintenanceDashboard({
   maintenanceRequests,
