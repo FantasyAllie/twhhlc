@@ -405,7 +405,8 @@ export const notifyMaintenanceRequest = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .inputValidator(
     (d: {
-      roomNumber: number;
+      roomNumber: number | null;
+      areaLabel?: string | null;
       message: string;
       originDepartment?: "housekeeping" | "reception" | "fnb" | null;
     }) => d,
@@ -448,11 +449,13 @@ export const notifyMaintenanceRequest = createServerFn({ method: "POST" })
       ? DEPT_LABEL[data.originDepartment]
       : sender.username;
     const body = (data.message?.slice(0, 240) || "New maintenance request");
+    const place =
+      data.roomNumber != null ? `Room ${data.roomNumber}` : (data.areaLabel || "Hotel");
     await sendToSubs(subs, {
-      title: `Maintenance — Room ${data.roomNumber} (${fromLabel})`,
+      title: `Maintenance — ${place} (${fromLabel})`,
       body,
       url: `/app`,
-      tag: `maintenance-${data.roomNumber}`,
+      tag: `maintenance-${data.roomNumber ?? data.areaLabel ?? "hotel"}`,
     });
     return { ok: true, recipients: subs.length };
   });
