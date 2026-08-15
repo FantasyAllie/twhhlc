@@ -3232,7 +3232,7 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
             )}
           </div>
  <div className="flex items-center gap-2">
-    {!isMobile && isAdmin && !isReception && (
+    {!isMobile && ((isAdmin && !isReception) || isMaintenance) && (
       <Button
         variant="outline"
         size="sm"
