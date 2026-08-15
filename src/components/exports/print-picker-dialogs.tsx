@@ -192,6 +192,7 @@ export const RoomStatusPrintDialog = ({
 }) => {
   const [date, setDate] = useState<Date>(new Date());
   const available = savedDays(snapshots, "room_status");
+  const todaySelectable = liveRows.length > 0 || available.has(new Date().toDateString());
   const doPrint = () => {
     if (Exp.isSameDay(date, new Date())) {
       if (liveRows.length === 0) {
@@ -221,9 +222,14 @@ export const RoomStatusPrintDialog = ({
           </DialogDescription>
         </DialogHeader>
         <div className="mt-2 grid gap-3">
-          <DateField value={date} onChange={(d) => d && setDate(d)} availableDays={available} />
+          <DateField
+            value={date}
+            onChange={(d) => d && setDate(d)}
+            availableDays={available}
+            allowToday={todaySelectable}
+          />
           <p className="text-xs text-muted-foreground">
-            Only dates with a saved sheet can be selected.
+            Days without a saved sheet are greyed out.
           </p>
           <Button className="h-12" onClick={doPrint}>
             <Printer className="h-4 w-4 mr-2" />
