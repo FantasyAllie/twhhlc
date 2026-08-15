@@ -103,6 +103,7 @@ import type {
   MaintenanceRow,
   ExportSnapshot,
   RejectCount,
+  DeliveryCount,
   RoomMessage,
   MaintenanceRequest,
   ViewRole,
