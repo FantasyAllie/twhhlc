@@ -1848,8 +1848,6 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
     }
     qc.invalidateQueries({ queryKey: ["export_snapshots"] });
     toast.success(`Backup saved (${jobs.length} ${jobs.length === 1 ? "item" : "items"})`);
-    // Offer to print any of the reports that were just backed up.
-    setEndShiftPrintKinds(jobs.map((j) => j.kind));
     setEndShiftPrintOpen(true);
   };
 
