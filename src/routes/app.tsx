@@ -4194,13 +4194,13 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
             setReceptionDoneOnlyFilter(false);
           };
        return (
-          <div className="absolute left-1/2 -translate-x-1/2 inline-flex items-center rounded-full border border-input bg-background shadow-xs overflow-hidden">
+          <div className="absolute left-1/2 -translate-x-1/2 inline-flex items-center rounded-lg border border-input bg-background shadow-sm overflow-hidden">
         <Popover open={filtersSheetOpen} onOpenChange={setFiltersSheetOpen}>
           <PopoverTrigger asChild>
             <Button
               variant="ghost"
               size="sm"
-              className={`h-7 gap-1.5 text-xs rounded-none border-0 px-3 ${totalSelected > 0 ? "border-r border-input" : ""}`}
+              className={`h-8 gap-1.5 text-xs font-medium rounded-none border-0 px-3 ${totalSelected > 0 ? "border-r border-input" : ""}`}
             >
               <Filter className="h-3.5 w-3.5" />
               {totalSelected === 0 ? "Filters" : `Filters · ${totalSelected}`}
@@ -4382,13 +4382,13 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
           setHideCompletedRooms(false);
         };
         return (
-          <div className="absolute left-1/2 -translate-x-1/2 inline-flex items-center rounded-full border border-input bg-background shadow-xs overflow-hidden">
+          <div className="absolute left-1/2 -translate-x-1/2 inline-flex items-center rounded-lg border border-input bg-background shadow-sm overflow-hidden">
             {(() => {
               const triggerBtn = (
                 <Button
                   variant="ghost"
                   size="sm"
-                  className={`h-7 gap-1.5 text-xs rounded-none border-0 px-3 ${totalActive > 0 ? "border-r border-input" : ""}`}
+                  className={`h-8 gap-1.5 text-xs font-medium rounded-none border-0 px-3 ${totalActive > 0 ? "border-r border-input" : ""}`}
                 >
                   <Filter className="h-3.5 w-3.5" />
                   {totalActive === 0 ? "Filters" : `Filters · ${totalActive}`}
@@ -4482,7 +4482,7 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
       <Button
         variant="outline"
         size="sm"
-        className="h-7 gap-1.5 text-xs"
+        className="h-8 gap-1.5 rounded-lg text-xs font-medium shadow-sm"
         onClick={resetAll}
       >
         <RotateCcw className="h-3.5 w-3.5" />
@@ -4505,7 +4505,7 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
         <Button
           variant="outline"
           size="sm"
-          className="h-7 gap-1.5 text-xs"
+          className="h-8 gap-1.5 rounded-lg text-xs font-medium shadow-sm"
           onClick={resetReceptionAll}
         >
           <RotateCcw className="h-3.5 w-3.5" />
@@ -4664,7 +4664,7 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
                       role="button"
                       tabIndex={-1}
                       onClick={handleProgressTap}
-                      className="relative h-4 w-full overflow-hidden rounded-full bg-muted cursor-pointer select-none"
+                      className="relative h-4 w-full overflow-hidden rounded-full bg-secondary shadow-inner cursor-pointer select-none"
                     >
                       <div
                         className={cn(
