@@ -3067,6 +3067,13 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
         label: "Reports",
         onClick: () => setEndShiftPrintOpen(true),
       });
+    } else if (isMaintenance) {
+      actions.push({
+        key: "end-of-shift",
+        icon: ClipboardList,
+        label: "Reports",
+        onClick: () => setEndShiftPrintOpen(true),
+      });
     }
     if (isAdmin && !isReception) {
       actions.push({ key: "export", icon: ClipboardList, label: "Export", onClick: () => setExportSheetOpen(true) });
