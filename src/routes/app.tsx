@@ -348,7 +348,6 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
   const [editingItemName, setEditingItemName] = useState("");
   const [exportSheetOpen, setExportSheetOpen] = useState(false);
   const [endShiftPrintOpen, setEndShiftPrintOpen] = useState(false);
-  const [receptionPrintOpen, setReceptionPrintOpen] = useState(false);
   const [rolePickerSheetOpen, setRolePickerSheetOpen] = useState(false);
   const [editItemSheetId, setEditItemSheetId] = useState<string | null>(null);
   const [filtersSheetOpen, setFiltersSheetOpen] = useState(false);
@@ -3075,7 +3074,7 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
     if (isReception) {
       actions.push({
         key: "print", icon: Printer, label: "Print",
-        onClick: () => setReceptionPrintOpen(true),
+        onClick: () => printRoomStatus(computeRoomStatus().rows, new Date()),
       });
       actions.push({ key: "help", icon: HelpCircle, label: "Help", onClick: () => setReceptionHelpOpen(true) });
     }
@@ -3241,7 +3240,7 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
       <Button
         variant="outline"
         size="sm"
-        onClick={() => setReceptionPrintOpen(true)}
+        onClick={() => printRoomStatus(computeRoomStatus().rows, new Date())}
       >
         <Printer className="h-4 w-4 mr-2" />
         Print
