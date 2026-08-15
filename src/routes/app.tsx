@@ -36,7 +36,6 @@ import { ReceptionStatusSheet } from "@/components/rooms/reception-status-sheet"
 import { AddConfigDialogs } from "@/components/rooms/add-config-dialogs";
 import { ManageRoomsDialogs } from "@/components/rooms/manage-rooms-dialogs";
 import { LinenListDialog } from "@/components/linen/linen-list-dialog";
-import { ReceptionIconGuide } from "@/components/reception-icon-guide";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
 import { getToken, getStoredUser, clearSession } from "@/lib/auth-client";
