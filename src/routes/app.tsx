@@ -3786,7 +3786,7 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
           type="button"
           onClick={onClick}
           className={cn(
-            "w-full flex items-center gap-3 rounded-full border bg-background px-4 min-h-12 text-sm font-medium transition-colors hover:bg-accent",
+            "w-full flex items-center gap-3 rounded-xl border bg-background px-4 min-h-12 text-sm font-medium shadow-sm transition-[transform,box-shadow,background-color] duration-150 hover:bg-accent active:scale-[0.985] active:shadow-none",
             destructive && "text-destructive hover:text-destructive",
           )}
         >
