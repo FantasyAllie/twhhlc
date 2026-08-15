@@ -33,6 +33,8 @@ import { RejectsDialog, DeliveryDialog } from "@/components/linen/counter-dialog
 import { AccountDialog } from "@/components/account-dialog";
 import { RoomNotesSheet } from "@/components/rooms/notes-sheet";
 import { ReceptionStatusSheet } from "@/components/rooms/reception-status-sheet";
+import { ManageRoomsDialogs } from "@/components/rooms/manage-rooms-dialogs";
+import { LinenListDialog } from "@/components/linen/linen-list-dialog";
 import { ReceptionIconGuide } from "@/components/reception-icon-guide";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
@@ -3432,232 +3434,34 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
    </Sheet>
  )}
 
- {/* Linen list dialog */}
-   <Dialog open={templateOpen} onOpenChange={(o) => {
-     setTemplateOpen(o);
-     if (o) {
-       const canHk = realIsAdmin || realIsManager || hasHousekeeperRole;
-       const canFn = realIsAdmin || realIsManager || hasFnbRole;
-       if (!canHk && canFn) setLinenListType("fnb");
-       else if (canHk && !canFn) setLinenListType("housekeeping");
-       else setLinenListType(isFnb ? "fnb" : "housekeeping");
-     }
-   }}>
-<DialogContent className="max-w-2xl w-[calc(100vw-1.5rem)] sm:w-full p-4 sm:p-6">
- <DialogHeader>
- <DialogTitle>Linen List</DialogTitle>
-   <DialogDescription>
-     Manage the shared list of linen items. Pick which items appear in each
-     room from that room's <Pencil className="inline h-3.5 w-3.5 align-[-2px]" /> button.
-   </DialogDescription>
- </DialogHeader>
-   <div className="space-y-3">
-      {(realIsAdmin || realIsManager || (hasHousekeeperRole && hasFnbRole)) && (
-      <div className="inline-flex rounded-md border p-0.5 bg-muted/40 self-start">
-       <button
-         type="button"
-         onClick={() => setLinenListType("housekeeping")}
-         className={cn(
-           "px-3 py-1.5 text-sm rounded-[0.3rem] transition-colors",
-           linenListType === "housekeeping" ? "bg-background shadow-sm font-medium" : "text-muted-foreground",
-         )}
-       >
-         Housekeeping
-       </button>
-       <button
-         type="button"
-         onClick={() => setLinenListType("fnb")}
-         className={cn(
-           "px-3 py-1.5 text-sm rounded-[0.3rem] transition-colors",
-           linenListType === "fnb" ? "bg-background shadow-sm font-medium" : "text-muted-foreground",
-         )}
-       >
-         F&amp;B
-       </button>
-      </div>
-      )}
-    <form onSubmit={addTemplateItem} className="flex gap-2">
-      <Input
-         placeholder={`Add an item to ${linenListType === "fnb" ? "F&B" : "Housekeeping"}…`}
-        value={newTemplateName}
-        onChange={(e) => setNewTemplateName(e.target.value)}
-      />
-       <Button type="submit" disabled={!newTemplateName.trim()}>
-        Add
-      </Button>
-    </form>
-     {(() => {
-       const listItems = templateAll.filter((t) => (t.list_type ?? "housekeeping") === linenListType);
-       return listItems.length === 0 ? (
-         <p className="text-sm text-muted-foreground">No items yet.</p>
-       ) : (
-        <ul className="divide-y border-t max-h-[60dvh] overflow-y-auto -mx-4 sm:-mx-6 px-4 sm:px-6">
-          <li className="flex items-center gap-1.5 py-1.5 text-xs font-medium text-muted-foreground uppercase tracking-wide">
-            <span className="h-3 w-3 shrink-0" aria-hidden />
-            <span className="flex-1 min-w-0">Item</span>
-            <span className="shrink-0 w-[88px] text-right">Actions</span>
-          </li>
-           {listItems.map((item, idx) => {
-          return (
-            <li key={item.id} className="flex items-center gap-1.5 py-2">
-              <span
-                className="h-3 w-3 rounded-full border-2 shrink-0"
-                style={{
-                  backgroundColor: item.color
-                    ? theme === "dark"
-                      ? COLOR_SWATCHES[item.color].darkBg
-                      : COLOR_SWATCHES[item.color].bg
-                    : "transparent",
-                  borderColor: item.color ? COLOR_SWATCHES[item.color].border : "hsl(var(--border))",
-                }}
-                aria-hidden
-              />
-              <span className="flex-1 min-w-0 break-words text-sm">{item.name}</span>
-              <div className="flex items-center gap-1 shrink-0">
-                <Sheet
-                  open={editItemSheetId === item.id}
-                  onOpenChange={(o) => setEditItemSheetId(o ? item.id : null)}
-                >
-                  <SheetTrigger asChild>
-                    <Button
-                      variant="ghost"
-                      size="icon"
-                      className="h-8 w-8 text-muted-foreground"
-                      aria-label={`Edit ${item.name}`}
-                    >
-                      <Pencil className="h-4 w-4" />
-                    </Button>
-                  </SheetTrigger>
-                  <SheetContent side="bottom" className="max-h-[85dvh] overflow-y-auto rounded-t-2xl p-4 sm:p-6">
-                    <SheetHeader className="text-left">
-                      <SheetTitle>Edit item</SheetTitle>
-                      <SheetDescription>{item.name}</SheetDescription>
-                    </SheetHeader>
-                    <div className="mt-4 space-y-4">
-                    <div className="space-y-1">
-                      <label className="text-xs font-medium text-muted-foreground">Name</label>
-                      <form
-                        onSubmit={(e) => {
-                          e.preventDefault();
-                          renameTemplateItem(item.id, editingItemName);
-                        }}
-                        className="flex items-center gap-2"
-                      >
-                        <Input
-                          autoFocus
-                          defaultValue={item.name}
-                          onFocus={(e) => {
-                            setEditingItemId(item.id);
-                            setEditingItemName(e.currentTarget.value);
-                          }}
-                          onChange={(e) => setEditingItemName(e.target.value)}
-                          onBlur={() => {
-                            if (editingItemId === item.id) renameTemplateItem(item.id, editingItemName);
-                          }}
-                          className="h-11 flex-1"
-                        />
-                        <Button
-                          type="submit"
-                          variant="ghost"
-                          size="icon"
-                          className="h-11 w-11 text-muted-foreground"
-                          aria-label="Save name"
-                        >
-                          <Check className="h-5 w-5" />
-                        </Button>
-                      </form>
-                    </div>
-                    <div className="space-y-1">
-                      <label className="text-xs font-medium text-muted-foreground">Default count</label>
-                      <Input
-                        type="number"
-                        min={0}
-                        value={item.default_count}
-                        onChange={(e) => setTemplateDefault(item.id, Number(e.target.value))}
-                        className="h-11 w-24"
-                      />
-                    </div>
-                    <div className="space-y-1">
-                      <label className="text-xs font-medium text-muted-foreground">Colour</label>
-                      <div className="flex items-center gap-2 flex-wrap">
-                        {(Object.keys(COLOR_SWATCHES) as ItemColor[]).map((key) => (
-                          <button
-                            key={key}
-                            type="button"
-                            onClick={() => setTemplateColor(item.id, key)}
-                            aria-label={COLOR_SWATCHES[key].label}
-                            title={COLOR_SWATCHES[key].label}
-                            className={cn(
-                              "h-9 w-9 rounded-full border-2 transition",
-                              item.color === key ? "ring-2 ring-offset-1 ring-foreground" : "",
-                            )}
-                            style={{
-                              backgroundColor: theme === "dark" ? COLOR_SWATCHES[key].darkBg : COLOR_SWATCHES[key].bg,
-                              borderColor: COLOR_SWATCHES[key].border,
-                            }}
-                          />
-                        ))}
-                        <button
-                          type="button"
-                          onClick={() => setTemplateColor(item.id, null)}
-                          aria-label="No colour"
-                          title="No colour"
-                          className={cn(
-                            "h-9 w-9 rounded-full border-2 flex items-center justify-center bg-background",
-                            item.color === null ? "ring-2 ring-offset-1 ring-foreground" : "",
-                          )}
-                        >
-                          <X className="h-4 w-4 text-muted-foreground" />
-                        </button>
-                      </div>
-                    </div>
-                    <div className="flex items-center justify-between pt-3 border-t">
-                      <span className="text-sm text-muted-foreground">Reorder</span>
-                      <div className="flex items-center gap-2">
-                        <Button
-                          variant="outline"
-                          size="icon"
-                          className="h-11 w-11"
-                          onClick={() => moveTemplateItem(item.id, -1)}
-                          disabled={idx === 0}
-                          aria-label="Move up"
-                        >
-                          <ArrowUp className="h-5 w-5" />
-                        </Button>
-                        <Button
-                          variant="outline"
-                          size="icon"
-                          className="h-11 w-11"
-                          onClick={() => moveTemplateItem(item.id, 1)}
-                          disabled={idx === listItems.length - 1}
-                          aria-label="Move down"
-                        >
-                          <ArrowDown className="h-5 w-5" />
-                        </Button>
-                      </div>
-                    </div>
-                    </div>
-                  </SheetContent>
-                </Sheet>
-                <Button
-                  variant="ghost"
-                  size="icon"
-                  className="h-8 w-8 text-muted-foreground hover:text-destructive"
-                  onClick={() => deleteTemplateItem(item.id)}
-                  aria-label={`Delete ${item.name}`}
-                >
-                  <X className="h-4 w-4" />
-                </Button>
-              </div>
-            </li>
-          );
-        })}
-      </ul>
-       );
-     })()}
-  </div>
- </DialogContent>
- </Dialog>
+  {/* Linen list dialog */}
+  <LinenListDialog
+    templateOpen={templateOpen}
+    setTemplateOpen={setTemplateOpen}
+    realIsAdmin={realIsAdmin}
+    realIsManager={realIsManager}
+    hasHousekeeperRole={hasHousekeeperRole}
+    hasFnbRole={hasFnbRole}
+    isFnb={isFnb}
+    linenListType={linenListType}
+    setLinenListType={setLinenListType}
+    templateAll={templateAll}
+    theme={theme}
+    newTemplateName={newTemplateName}
+    setNewTemplateName={setNewTemplateName}
+    addTemplateItem={addTemplateItem}
+    editItemSheetId={editItemSheetId}
+    setEditItemSheetId={setEditItemSheetId}
+    editingItemId={editingItemId}
+    setEditingItemId={setEditingItemId}
+    editingItemName={editingItemName}
+    setEditingItemName={setEditingItemName}
+    renameTemplateItem={renameTemplateItem}
+    setTemplateDefault={setTemplateDefault}
+    setTemplateColor={setTemplateColor}
+    moveTemplateItem={moveTemplateItem}
+    deleteTemplateItem={deleteTemplateItem}
+  />
 
   {/* Notes sheet (User/Admin + Reception) */}
   <RoomNotesSheet
@@ -4664,154 +4468,23 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
     onExport={() => void openDeliveryExport()}
   />
 
-  {/* Manage Rooms dialog */}
-  <Dialog open={manageRoomsOpen} onOpenChange={setManageRoomsOpen}>
-    <DialogContent className="max-w-md w-[calc(100vw-1.5rem)] sm:w-full p-4 sm:p-6">
-      <DialogHeader>
-        <DialogTitle>Manage Rooms</DialogTitle>
-        <DialogDescription>
-          Add or remove rooms. New rooms work like every other room — they
-          appear in the grid, share the Linen List, and support Room Types.
-          Rejects always stays at the end.
-        </DialogDescription>
-        <div className="mt-4 grid w-full grid-cols-2 gap-3">
-          <Button variant="outline" size="sm" className="min-w-0 justify-center gap-1.5 px-3 rounded-full" onClick={() => setRoomTypesSheetOpen(true)}>
-            <Bed className="h-4 w-4 shrink-0" />
-            <span className="truncate">Room Type</span>
-          </Button>
-          <Button variant="outline" size="sm" className="min-w-0 justify-center gap-1.5 px-3 rounded-full" onClick={() => setRoomFeaturesSheetOpen(true)}>
-            <List className="h-4 w-4 shrink-0" />
-            <span className="truncate">Features</span>
-          </Button>
-          <Button variant="outline" size="sm" className="min-w-0 justify-center gap-1.5 px-3 rounded-full" onClick={() => setReceptionItemsSheetOpen(true)}>
-            <ConciergeBell className="h-4 w-4 shrink-0" />
-            <span className="truncate">Reception</span>
-          </Button>
-          <Button
-            variant="outline"
-            size="sm"
-            className="min-w-0 justify-center gap-1.5 px-3 rounded-full"
-            onClick={() => {
-              const used = new Set(rooms.map((r) => r.room_number));
-              let suggested = 1;
-              while (used.has(suggested)) suggested++;
-              setNewRoomNumber(String(suggested));
-              setAddRoomConfirmOpen(true);
-            }}
-          >
-            <Plus className="h-4 w-4 shrink-0" />
-            <span className="truncate">Add Room</span>
-          </Button>
-        </div>
-      </DialogHeader>
-      <div className="space-y-3">
-        <div className="text-xs text-muted-foreground">
-          {rooms.length} room{rooms.length === 1 ? "" : "s"} total
-        </div>
-        <ul className="divide-y rounded-md border max-h-[50dvh] overflow-y-auto">
-          {rooms
-            .slice()
-            .sort((a, b) => (a.sort_order ?? a.room_number) - (b.sort_order ?? b.room_number))
-            .map((r, idx, arr) => (
-              <li key={r.id} className="flex items-center gap-3 px-3 py-2">
-                <span className="flex-1 text-sm font-medium tabular-nums">
-                  Room {r.room_number}
-                </span>
-                <Button
-                  variant="outline"
-                  size="sm"
-                  className="h-8"
-                  onClick={() => setEditRoomSheetNumber(r.room_number)}
-                >
-                  <Pencil className="h-3.5 w-3.5 mr-1" />
-                  Edit
-                </Button>
-                <Button
-                  variant="ghost"
-                  size="icon"
-                  className="h-8 w-8 text-destructive hover:text-destructive"
-                  onClick={() => removeRoom(r.room_number)}
-                  aria-label={`Remove Room ${r.room_number}`}
-                >
-                  <Trash2 className="h-4 w-4" />
-                </Button>
-                <Button
-                  variant="ghost"
-                  size="icon"
-                  className="h-8 w-8"
-                  disabled={idx === 0}
-                  onClick={() => moveRoom(r.room_number, -1)}
-                  aria-label={`Move Room ${r.room_number} up`}
-                >
-                  <ArrowUp className="h-4 w-4" />
-                </Button>
-                <Button
-                  variant="ghost"
-                  size="icon"
-                  className="h-8 w-8"
-                  disabled={idx === arr.length - 1}
-                  onClick={() => moveRoom(r.room_number, 1)}
-                  aria-label={`Move Room ${r.room_number} down`}
-                >
-                  <ArrowDown className="h-4 w-4" />
-                </Button>
-              </li>
-            ))}
-        </ul>
-      </div>
-    </DialogContent>
-  </Dialog>
-
-  <Dialog open={addRoomConfirmOpen} onOpenChange={setAddRoomConfirmOpen}>
-    <DialogContent className="max-w-sm w-[calc(100vw-1.5rem)] sm:w-full p-4 sm:p-6">
-      <DialogHeader>
-        <DialogTitle>Add room</DialogTitle>
-        <DialogDescription>
-          Enter a room number. The new room is added to the bottom of the list.
-        </DialogDescription>
-      </DialogHeader>
-      <div className="space-y-3">
-        <div>
-          <label className="text-xs text-muted-foreground">Room number</label>
-          <Input
-            type="number"
-            inputMode="numeric"
-            min={1}
-            max={999}
-            autoFocus
-            value={newRoomNumber}
-            onChange={(e) => setNewRoomNumber(e.target.value)}
-            onKeyDown={(e) => {
-              if (e.key === "Enter") {
-                const n = Number(newRoomNumber);
-                if (Number.isFinite(n)) {
-                  addRoom(n);
-                  setNewRoomNumber("");
-                  setAddRoomConfirmOpen(false);
-                }
-              }
-            }}
-          />
-        </div>
-        <Button
-          className="w-full"
-          onClick={() => {
-            const n = Number(newRoomNumber);
-            if (!Number.isFinite(n)) {
-              toast.error("Enter a valid room number.");
-              return;
-            }
-            addRoom(n);
-            setNewRoomNumber("");
-            setAddRoomConfirmOpen(false);
-          }}
-        >
-          <Check className="h-4 w-4 mr-1" />
-          Confirm
-        </Button>
-      </div>
-    </DialogContent>
-  </Dialog>
+  {/* Manage Rooms dialogs (Admin) */}
+  <ManageRoomsDialogs
+    manageRoomsOpen={manageRoomsOpen}
+    setManageRoomsOpen={setManageRoomsOpen}
+    addRoomConfirmOpen={addRoomConfirmOpen}
+    setAddRoomConfirmOpen={setAddRoomConfirmOpen}
+    rooms={rooms}
+    newRoomNumber={newRoomNumber}
+    setNewRoomNumber={setNewRoomNumber}
+    setRoomTypesSheetOpen={setRoomTypesSheetOpen}
+    setRoomFeaturesSheetOpen={setRoomFeaturesSheetOpen}
+    setReceptionItemsSheetOpen={setReceptionItemsSheetOpen}
+    setEditRoomSheetNumber={setEditRoomSheetNumber}
+    addRoom={addRoom}
+    removeRoom={removeRoom}
+    moveRoom={moveRoom}
+  />
 
  {/* Rooms */}
  {isMaintenance ? (
