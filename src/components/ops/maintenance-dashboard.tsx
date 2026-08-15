@@ -6,6 +6,7 @@ import { Button } from "@/components/ui/button";
 import { PhotoAttachments } from "@/components/entry-photos";
 import { supabase } from "@/integrations/supabase/client";
 import type { MaintenanceRequest, RoomMessage } from "@/lib/app-types";
+import { maintenanceLocation } from "@/lib/app-format";
 import type { MessagesThread } from "@/components/messages-sheet";
 
 type MessagesInitial = {
@@ -57,6 +58,7 @@ export function MaintenanceDashboard({
          id: string;
          source: "req" | "msg";
          roomNumber: number | null;
+         location: string | null;
          message: string;
          sender: string | null;
          createdAt: string;
@@ -68,6 +70,7 @@ export function MaintenanceDashboard({
            id: `req-${m.id}`,
            source: "req",
            roomNumber: m.room_number,
+          location: maintenanceLocation(m),
            message: m.message,
            sender: m.created_by_username,
            createdAt: m.created_at,
@@ -82,6 +85,7 @@ export function MaintenanceDashboard({
            id: `msg-${m.id}`,
            source: "msg",
            roomNumber: m.room_number,
+          location: m.room_number != null ? `Room ${m.room_number}` : null,
            message: m.message,
            sender: m.created_by_username,
            createdAt: m.created_at,
@@ -142,9 +146,9 @@ export function MaintenanceDashboard({
                {items.map((it) => (
                  <li key={it.id} className="rounded-lg border bg-background p-3">
                    <div className="flex items-center gap-2 flex-wrap text-xs text-muted-foreground">
-                     {typeof it.roomNumber === "number" && (
+                     {it.location && (
                        <span className="inline-flex h-6 items-center rounded-full bg-primary/10 text-primary px-2 font-semibold">
-                         Room {it.roomNumber}
+                         {it.location}
                        </span>
                      )}
                      {it.origin && (
@@ -195,7 +199,7 @@ export function MaintenanceDashboard({
                {doneReqs.map((m) => (
                  <div key={m.id} className="rounded-lg border bg-muted/40 p-3">
                    <div className="flex items-center gap-2 flex-wrap text-xs text-muted-foreground">
-                     <span className="inline-flex h-6 items-center rounded-full bg-muted px-2 font-semibold">Room {m.room_number}</span>
+                    <span className="inline-flex h-6 items-center rounded-full bg-muted px-2 font-semibold">{maintenanceLocation(m)}</span>
                      <span>
                        Done{m.done_by_username ? ` by ${m.done_by_username}` : ""}
                        {m.done_at ? ` · ${new Date(m.done_at).toLocaleString(undefined, { month: "short", day: "numeric", hour: "numeric", minute: "2-digit" })}` : ""}
