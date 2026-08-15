@@ -3682,7 +3682,6 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
   />
 
  {/* Reception sheet (Admin/User): Done + Status + Bed */}
-  {/* Reception sheet (Admin/User): Done + Status + Bed */}
   <ReceptionStatusSheet
     receptionSheetRoom={receptionSheetRoom}
     setReceptionSheetRoom={setReceptionSheetRoom}
@@ -3708,7 +3707,6 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
     setPendingDndRoom={setPendingDndRoom}
   />
 
- {/* Edit defaults sheet (Admin): which template items appear in this room */}
 {/* App menu sheet (burger) */}
 {authUser && (() => {
   // Map (position, subRoles) → the notification-visibility bucket:
