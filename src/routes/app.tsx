@@ -50,6 +50,8 @@ import { LostPropertySheet } from "@/components/lost-property-sheet";
 import { PhotoAttachments, PhotoComposer } from "@/components/entry-photos";
 import { MaintenanceLogSheet } from "@/components/ops/maintenance-log-sheet";
 import { HistorySheet } from "@/components/exports/history-sheet";
+import { EditRoomDefaultsSheet, EditRoomSheet } from "@/components/rooms/edit-room-sheets";
+import { MaintenanceDashboard } from "@/components/ops/maintenance-dashboard";
 import { StayoverPhotosSheet } from "@/components/stayover-photos-sheet";
 import { DndDoorPhoto } from "@/components/dnd-door-photo";
 import { RoomTypesSheet, RoomFeaturesSheet, ReceptionItemsSheet } from "@/components/rooms/config-sheets";
@@ -3843,47 +3845,13 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
   clearAllSnapshots={clearAllSnapshots}
 />
 
- <Sheet open={editDefaultsSheetRoom !== null} onOpenChange={(o) => { if (!o) setEditDefaultsSheetRoom(null); }}>
-   <SheetContent side="bottom" className="max-h-[85dvh] overflow-y-auto rounded-t-2xl p-4 sm:p-6">
-     {editDefaultsSheetRoom !== null && (() => {
-       const n = editDefaultsSheetRoom;
-       return (
-         <>
-           <SheetHeader className="text-left">
-             <SheetTitle className="flex items-center gap-2">
-               <Pencil className="h-4 w-4" />
-               Edit defaults — Room {n}
-             </SheetTitle>
-             <SheetDescription>Choose which linen items appear by default</SheetDescription>
-           </SheetHeader>
-           <div className="mt-4 space-y-1.5">
-             {template.length === 0 ? (
-               <p className="text-sm text-muted-foreground">No items yet.</p>
-             ) : (
-               template.map((t) => {
-                 const checked = isAssigned(t.id, n);
-                 return (
-                   <button
-                     key={t.id}
-                     type="button"
-                     onClick={() => toggleAssignment(t.id, n)}
-                     className={cn(
-                       "w-full flex items-center justify-between gap-3 rounded-full border bg-background px-4 min-h-12 text-sm font-medium transition-colors hover:bg-accent",
-                       checked && "border-primary bg-primary/10 text-primary",
-                     )}
-                   >
-                     <span className="text-left">{t.name}</span>
-                     {checked ? <Check className="h-5 w-5" /> : <span className="h-5 w-5" />}
-                   </button>
-                 );
-               })
-             )}
-           </div>
-         </>
-       );
-     })()}
-   </SheetContent>
- </Sheet>
+<EditRoomDefaultsSheet
+   editDefaultsSheetRoom={editDefaultsSheetRoom}
+   setEditDefaultsSheetRoom={setEditDefaultsSheetRoom}
+   template={template}
+   isAssigned={isAssigned}
+   toggleAssignment={toggleAssignment}
+ />
 
  {/* Room Types sheet (Admin) */}
   <RoomTypesSheet
@@ -3921,105 +3889,19 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
   />
 
   {/* Edit room sheet (Admin) */}
-  <Sheet open={editRoomSheetNumber !== null} onOpenChange={(o) => { if (!o) setEditRoomSheetNumber(null); }}>
-    <SheetContent side="bottom" className="max-h-[85dvh] overflow-y-auto p-4 sm:p-6">
-      {editRoomSheetNumber !== null && (() => {
-        const n = editRoomSheetNumber;
-        const r = rooms.find((x) => x.room_number === n);
-        if (!r) return null;
-        const cats = parseCats(r.category);
-        return (
-          <>
-            <SheetHeader className="text-left">
-              <SheetTitle className="flex items-center gap-2">
-                <Pencil className="h-4 w-4" />
-                Edit Room {n}
-              </SheetTitle>
-              <SheetDescription>Set room type, default status and features</SheetDescription>
-            </SheetHeader>
-            <div className="mt-4 space-y-5">
-              <div className="space-y-2">
-                <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">Room type</p>
-                <div className="space-y-1.5">
-                  {roomTypes.length === 0 && (
-                    <p className="text-sm text-muted-foreground">No room types yet.</p>
-                  )}
-                  {roomTypes.map((c) => {
-                    const selected = cats.includes(c.value);
-                    return (
-                      <button
-                        key={c.value}
-                        type="button"
-                        onClick={() => toggleRoomCategory(n, c.value)}
-                        className={cn(
-                          "w-full flex items-center justify-between gap-3 rounded-full border bg-background px-4 min-h-12 text-sm font-medium transition-colors hover:bg-accent",
-                          selected && "border-primary bg-primary/10 text-primary",
-                        )}
-                      >
-                        <span className="text-left">{c.label}</span>
-                        {selected ? <Check className="h-5 w-5" /> : <span className="h-5 w-5" />}
-                      </button>
-                    );
-                  })}
-                </div>
-              </div>
-              <div className="space-y-2">
-                <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">Default status</p>
-                <div className="space-y-1.5">
-                  {receptionStatuses.length === 0 && (
-                    <p className="text-sm text-muted-foreground">No statuses yet.</p>
-                  )}
-                  {receptionStatuses.map((s) => {
-                    const selected = r.default_status === s.id;
-                    return (
-                      <button
-                        key={s.id}
-                        type="button"
-                        onClick={() => setRoomDefaultStatus(n, selected ? null : s.id)}
-                        className={cn(
-                          "w-full flex items-center justify-between gap-3 rounded-full border bg-background px-4 min-h-12 text-sm font-medium transition-colors hover:bg-accent",
-                          selected && "border-primary bg-primary/10 text-primary",
-                        )}
-                      >
-                        <span className="text-left">{s.label}</span>
-                        {selected ? <Check className="h-5 w-5" /> : <span className="h-5 w-5" />}
-                      </button>
-                    );
-                  })}
-                </div>
-              </div>
-              {roomFeatures.length > 0 && (
-                <div className="space-y-2">
-                  <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">Room features</p>
-                  <div className="space-y-1.5">
-                    {roomFeatures.map((f) => {
-                      const selected = roomFeatureAssignments.some(
-                        (a) => a.feature_id === f.id && a.room_number === n,
-                      );
-                      return (
-                        <button
-                          key={f.id}
-                          type="button"
-                          onClick={() => toggleRoomFeature(n, f.id)}
-                          className={cn(
-                            "w-full flex items-center justify-between gap-3 rounded-full border bg-background px-4 min-h-12 text-sm font-medium transition-colors hover:bg-accent",
-                            selected && "border-primary bg-primary/10 text-primary",
-                          )}
-                        >
-                          <span className="text-left">{f.label}</span>
-                          {selected ? <Check className="h-5 w-5" /> : <span className="h-5 w-5" />}
-                        </button>
-                      );
-                    })}
-                  </div>
-                </div>
-              )}
-            </div>
-          </>
-        );
-      })()}
-    </SheetContent>
-  </Sheet>
+<EditRoomSheet
+    editRoomSheetNumber={editRoomSheetNumber}
+    setEditRoomSheetNumber={setEditRoomSheetNumber}
+    rooms={rooms}
+    roomTypes={roomTypes}
+    receptionStatuses={receptionStatuses}
+    roomFeatures={roomFeatures}
+    roomFeatureAssignments={roomFeatureAssignments}
+    parseCats={parseCats}
+    toggleRoomCategory={toggleRoomCategory}
+    setRoomDefaultStatus={setRoomDefaultStatus}
+    toggleRoomFeature={toggleRoomFeature}
+  />
 
   {/* Add / config dialogs (room types, features, reception items, icon guide) */}
   <AddConfigDialogs
@@ -4089,200 +3971,15 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
 
  {/* Rooms */}
  {isMaintenance ? (
-   <section className="space-y-4">
-     <div className="flex items-baseline justify-between">
-       <h2 className="text-sm font-medium text-muted-foreground uppercase tracking-wide">
-         Maintenance Requests
-       </h2>
-       <span className="text-xs text-muted-foreground">
-         {openMaintenanceCount} open
-       </span>
-     </div>
-     {(() => {
-       const openReqs = maintenanceRequests.filter((m) => !m.done);
-       const doneReqs = maintenanceRequests.filter((m) => m.done).slice(0, 30);
-       const openMsgs = roomMessages
-         .filter(
-           (m) =>
-             (m.thread === "hk_maintenance" || m.thread === "reception_maintenance") &&
-             !m.done_at &&
-             !m.deleted_at,
-         )
-         .slice(0, 100);
-       type Item = {
-         id: string;
-         source: "req" | "msg";
-         roomNumber: number | null;
-         message: string;
-         sender: string | null;
-         createdAt: string;
-         origin: "housekeeping" | "reception" | null;
-         done: boolean;
-       };
-       const items: Item[] = [
-         ...openReqs.map<Item>((m) => ({
-           id: `req-${m.id}`,
-           source: "req",
-           roomNumber: m.room_number,
-           message: m.message,
-           sender: m.created_by_username,
-           createdAt: m.created_at,
-           origin:
-             ((m as unknown as { origin_department?: string | null }).origin_department as
-               | "housekeeping"
-               | "reception"
-               | null) ?? null,
-           done: false,
-         })),
-         ...openMsgs.map<Item>((m) => ({
-           id: `msg-${m.id}`,
-           source: "msg",
-           roomNumber: m.room_number,
-           message: m.message,
-           sender: m.created_by_username,
-           createdAt: m.created_at,
-           origin: m.thread === "reception_maintenance" ? "reception" : "housekeeping",
-           done: false,
-         })),
-       ].sort((a, b) => (a.createdAt < b.createdAt ? 1 : -1));
-       const rawId = (id: string) => id.replace(/^req-|^msg-/, "");
-       const markDoneItem = async (it: Item) => {
-         if (it.source === "req") {
-           await markMaintenanceDone(rawId(it.id));
-         } else {
-           await supabase
-             .from("room_messages" as never)
-             .update({ done_at: new Date().toISOString(), updated_at: new Date().toISOString() } as never)
-             .eq("id", rawId(it.id));
-           qc.invalidateQueries({ queryKey: ["room_messages"] });
-         }
-       };
-       const deleteItem = async (it: Item) => {
-         if (it.source === "req") {
-           await supabase
-             .from("maintenance_requests" as never)
-             .update({ deleted_at: new Date().toISOString(), updated_at: new Date().toISOString(), done: true, done_at: new Date().toISOString() } as never)
-             .eq("id", rawId(it.id));
-           qc.invalidateQueries({ queryKey: ["maintenance_requests"] });
-         } else {
-           await supabase
-             .from("room_messages" as never)
-             .update({ deleted_at: new Date().toISOString(), updated_at: new Date().toISOString() } as never)
-             .eq("id", rawId(it.id));
-           qc.invalidateQueries({ queryKey: ["room_messages"] });
-         }
-       };
-       const replyToItem = (it: Item) => {
-         const thread: MessagesThread =
-           it.origin === "reception" ? "reception_maintenance" : "hk_maintenance";
-          setMessagesInitial({
-            thread,
-            room: it.roomNumber ?? null,
-            text: "",
-            replyTo: {
-              id: rawId(it.id),
-              sender: it.sender ?? (it.origin === "reception" ? "Reception" : "Housekeeping"),
-              snippet: it.message.slice(0, 280),
-            },
-          });
-         setMessagesSheetOpen(true);
-       };
-       return (
-         <>
-           {items.length === 0 ? (
-             <p className="text-sm text-muted-foreground py-8 text-center">
-               No open maintenance items.
-             </p>
-           ) : (
-             <ul className="space-y-2">
-               {items.map((it) => (
-                 <li key={it.id} className="rounded-lg border bg-background p-3">
-                   <div className="flex items-center gap-2 flex-wrap text-xs text-muted-foreground">
-                     {typeof it.roomNumber === "number" && (
-                       <span className="inline-flex h-6 items-center rounded-full bg-primary/10 text-primary px-2 font-semibold">
-                         Room {it.roomNumber}
-                       </span>
-                     )}
-                     {it.origin && (
-                       <span className="inline-flex h-5 items-center rounded-full bg-muted px-2 text-[10px] font-semibold uppercase">
-                         {it.origin === "reception" ? "Reception" : "Housekeeping"}
-                       </span>
-                     )}
-                     <span>
-                       {new Date(it.createdAt).toLocaleString(undefined, { month: "short", day: "numeric", hour: "numeric", minute: "2-digit" })}
-                       {it.sender ? ` · ${it.sender}` : ""}
-                     </span>
-                   </div>
-                   <p className="mt-2 text-sm whitespace-pre-wrap break-words">{it.message}</p>
-                    {it.source === "req" && (() => {
-                      const req = openReqs.find((r) => r.id === rawId(it.id));
-                      const paths = req && Array.isArray(req.photo_paths) ? req.photo_paths : [];
-                      if (paths.length === 0) return null;
-                      return (
-                        <div className="mt-2">
-                          <PhotoAttachments
-                            kind="maintenance"
-                            entryId={rawId(it.id)}
-                            paths={paths}
-                            canEdit={false}
-                            onChange={() => {}}
-                          />
-                        </div>
-                      );
-                    })()}
-                   <div className="mt-3 flex flex-wrap justify-end gap-2">
-                     <Button type="button" size="sm" variant="outline" className="h-8 text-xs" onClick={() => void replyToItem(it)}>
-                       <MessageSquare className="h-3.5 w-3.5 mr-1" /> Reply
-                     </Button>
-                     <Button type="button" size="sm" variant="default" className="h-8 text-xs" onClick={() => void markDoneItem(it)}>
-                       <Check className="h-3.5 w-3.5 mr-1" /> Done
-                     </Button>
-                     <Button type="button" size="sm" variant="ghost" className="h-8 text-xs text-destructive hover:text-destructive" onClick={() => void deleteItem(it)}>
-                       <Trash2 className="h-3.5 w-3.5 mr-1" /> Delete
-                     </Button>
-                   </div>
-                 </li>
-               ))}
-             </ul>
-           )}
-           {doneReqs.length > 0 && (
-             <div className="mt-6 space-y-2">
-               <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">Completed</p>
-               {doneReqs.map((m) => (
-                 <div key={m.id} className="rounded-lg border bg-muted/40 p-3">
-                   <div className="flex items-center gap-2 flex-wrap text-xs text-muted-foreground">
-                     <span className="inline-flex h-6 items-center rounded-full bg-muted px-2 font-semibold">Room {m.room_number}</span>
-                     <span>
-                       Done{m.done_by_username ? ` by ${m.done_by_username}` : ""}
-                       {m.done_at ? ` · ${new Date(m.done_at).toLocaleString(undefined, { month: "short", day: "numeric", hour: "numeric", minute: "2-digit" })}` : ""}
-                     </span>
-                   </div>
-                   <p className="mt-1 text-sm whitespace-pre-wrap break-words text-muted-foreground line-through">{m.message}</p>
-                   <div className="mt-2 flex justify-end">
-                     <Button
-                       type="button"
-                       size="sm"
-                       variant="ghost"
-                       className="h-7 text-xs"
-                       onClick={async () => {
-                         await supabase
-                           .from("maintenance_requests" as never)
-                           .update({ done: false, done_at: null, done_by_username: null, updated_at: new Date().toISOString() } as never)
-                           .eq("id", m.id);
-                         qc.invalidateQueries({ queryKey: ["maintenance_requests"] });
-                       }}
-                     >
-                       <RotateCcw className="h-3 w-3 mr-1" /> Reopen
-                     </Button>
-                   </div>
-                 </div>
-               ))}
-             </div>
-           )}
-         </>
-       );
-     })()}
-   </section>
+<MaintenanceDashboard
+     maintenanceRequests={maintenanceRequests}
+     roomMessages={roomMessages}
+     openMaintenanceCount={openMaintenanceCount}
+     markMaintenanceDone={markMaintenanceDone}
+     qc={qc}
+     setMessagesInitial={setMessagesInitial}
+     setMessagesSheetOpen={setMessagesSheetOpen}
+   />
  ) : isFnb ? (
    <section className="space-y-4">
      <div className="flex items-baseline justify-between">
