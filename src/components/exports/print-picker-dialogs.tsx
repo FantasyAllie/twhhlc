@@ -24,10 +24,12 @@ const DateField = ({
   value,
   onChange,
   disabledAfter,
+  availableDays,
 }: {
   value: Date | undefined;
   onChange: (d: Date | undefined) => void;
   disabledAfter?: Date;
+  availableDays?: Set<string>;
 }) => {
   const [open, setOpen] = useState(false);
   return (
@@ -49,7 +51,12 @@ const DateField = ({
             onChange(d ?? undefined);
             setOpen(false);
           }}
-          disabled={(d) => d > (disabledAfter ?? new Date())}
+          disabled={(d) => {
+            if (d > (disabledAfter ?? new Date())) return true;
+            if (!availableDays) return false;
+            if (Exp.isSameDay(d, new Date())) return false;
+            return !availableDays.has(d.toDateString());
+          }}
           initialFocus
           className="p-3 pointer-events-auto"
         />
@@ -57,6 +64,15 @@ const DateField = ({
     </Popover>
   );
 };
+
+// Calendar days that actually have a saved snapshot of a kind, so users can
+// only pick dates that will print something.
+const savedDays = (snapshots: ExportSnapshot[], kind: Exp.SnapshotKind) =>
+  new Set(
+    snapshots
+      .filter((s) => s.kind === kind)
+      .map((s) => new Date(s.created_at).toDateString()),
+  );
 
 export const RoomStatusPrintDialog = ({
   open,
@@ -72,6 +88,7 @@ export const RoomStatusPrintDialog = ({
   printRoomStatus: (rows: RoomStatusRow[], when: Date) => void;
 }) => {
   const [date, setDate] = useState<Date>(new Date());
+  const available = savedDays(snapshots, "room_status");
   const doPrint = () => {
     if (Exp.isSameDay(date, new Date())) {
       if (liveRows.length === 0) {
@@ -101,7 +118,10 @@ export const RoomStatusPrintDialog = ({
           </DialogDescription>
         </DialogHeader>
         <div className="mt-2 grid gap-3">
-          <DateField value={date} onChange={(d) => d && setDate(d)} />
+          <DateField value={date} onChange={(d) => d && setDate(d)} availableDays={available} />
+          <p className="text-xs text-muted-foreground">
+            Only dates with a saved sheet can be selected.
+          </p>
           <Button className="h-12" onClick={doPrint}>
             <Printer className="h-4 w-4 mr-2" />
             Print
@@ -118,11 +138,13 @@ export const LinenCountPrintDialog = ({
   snapshots,
   liveRows,
   printTotals,
+  linenDeliveryDays = [],
 }: {
   open: boolean;
   onOpenChange: (v: boolean) => void;
   snapshots: ExportSnapshot[];
   liveRows: SnapshotRow[];
+  linenDeliveryDays?: number[];
   printTotals: (
     rows: SnapshotRow[],
     grand: number,
@@ -131,10 +153,12 @@ export const LinenCountPrintDialog = ({
     footer?: string,
   ) => void;
 }) => {
-  const [mode, setMode] = useState<"single" | "range">("single");
+  const [mode, setMode] = useState<"single" | "range" | "delivery">("single");
   const [date, setDate] = useState<Date>(new Date());
   const [from, setFrom] = useState<Date | undefined>(undefined);
   const [to, setTo] = useState<Date | undefined>(undefined);
+  const available = savedDays(snapshots, "totals");
+  const window = Exp.deliveryWindow(new Date(), linenDeliveryDays);
 
   const footer = () => `Date Printed: ${Exp.formatLongDate(new Date(), true)}`;
 
@@ -175,6 +199,18 @@ export const LinenCountPrintDialog = ({
     onOpenChange(false);
   };
 
+  const printDelivery = () => {
+    const { start, end } = window;
+    const { rows, grand } = Exp.computeRangedLinenTotals(snapshots, start, end, liveRows);
+    if (rows.length === 0) {
+      toast.error("No linen counts recorded since the last delivery");
+      return;
+    }
+    const sub = `Printed Range: ${Exp.formatLongDate(start, false)} - ${Exp.formatLongDate(end, false)}`;
+    printTotals(rows, grand, end, sub, footer());
+    onOpenChange(false);
+  };
+
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="max-w-sm">
@@ -198,10 +234,40 @@ export const LinenCountPrintDialog = ({
             >
               Date range
             </Button>
+            <Button
+              variant={mode === "delivery" ? "default" : "outline"}
+              className="col-span-2"
+              onClick={() => setMode("delivery")}
+            >
+              Last Delivery Dates
+            </Button>
           </div>
-          {mode === "single" ? (
+          {mode === "delivery" ? (
             <>
-              <DateField value={date} onChange={(d) => d && setDate(d)} />
+              <div className="rounded-md border bg-muted/40 p-3 text-sm">
+                <div className="text-xs uppercase tracking-wide text-muted-foreground">
+                  Range
+                </div>
+                <div className="mt-1 font-medium">
+                  {Exp.formatLongDate(window.start, false)} - {Exp.formatLongDate(window.end, false)}
+                </div>
+                {linenDeliveryDays.length === 0 && (
+                  <p className="mt-2 text-xs text-muted-foreground">
+                    No delivery days set, so the last 7 days are used.
+                  </p>
+                )}
+              </div>
+              <Button className="h-12" onClick={printDelivery}>
+                <Printer className="h-4 w-4 mr-2" />
+                Print tally
+              </Button>
+            </>
+          ) : mode === "single" ? (
+            <>
+              <DateField value={date} onChange={(d) => d && setDate(d)} availableDays={available} />
+              <p className="text-xs text-muted-foreground">
+                Only dates with a saved count can be selected.
+              </p>
               <Button className="h-12" onClick={printSingle}>
                 <Printer className="h-4 w-4 mr-2" />
                 Print
