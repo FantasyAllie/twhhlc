@@ -48,6 +48,8 @@ import { UserApprovalDialog } from "@/components/user-approval-dialog";
 import { QuickReceptionSheet } from "@/components/quick-reception-sheet";
 import { LostPropertySheet } from "@/components/lost-property-sheet";
 import { PhotoAttachments, PhotoComposer } from "@/components/entry-photos";
+import { MaintenanceLogSheet } from "@/components/ops/maintenance-log-sheet";
+import { HistorySheet } from "@/components/exports/history-sheet";
 import { StayoverPhotosSheet } from "@/components/stayover-photos-sheet";
 import { DndDoorPhoto } from "@/components/dnd-door-photo";
 import { RoomTypesSheet, RoomFeaturesSheet, ReceptionItemsSheet } from "@/components/rooms/config-sheets";
@@ -3806,313 +3808,40 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
   </SheetContent>
 </Sheet>
 
-<Sheet open={maintenanceLogOpen} onOpenChange={setMaintenanceLogOpen}>
-  <SheetContent side="bottom" className="max-h-[90dvh] overflow-hidden rounded-t-2xl p-4 sm:p-6 flex flex-col">
-    <SheetHeader className="text-left">
-      <SheetTitle className="flex items-center gap-2">
-        <Wrench className="h-4 w-4" />
-        Maintenance Log
-        {hasOpenMaintenance && (
-          <span className="ml-1 inline-flex items-center gap-1 rounded-full bg-amber-500/15 text-amber-700 dark:text-amber-300 px-2 py-0.5 text-xs font-medium">
-            <span className="h-1.5 w-1.5 rounded-full bg-amber-500" aria-hidden />
-            {openMaintenanceCount} open
-          </span>
-        )}
-      </SheetTitle>
-      <SheetDescription>
-        {isReception || isMaintenance
-          ? "Reception and Maintenance can mark requests as complete."
-          : "Log a maintenance issue for Reception or Maintenance to action."}
-      </SheetDescription>
-    </SheetHeader>
-    <div className="mt-4 border-b pb-4">
-      {maintenanceComposerOpen ? (
-        <div className="flex flex-col gap-2 rounded-lg border bg-background p-3">
-          <div className="flex items-center justify-between">
-            <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
-              Log a new issue
-            </p>
-            <Button
-              type="button"
-              size="icon"
-              variant="ghost"
-              className="h-6 w-6"
-              onClick={() => {
-                setMaintenanceComposerOpen(false);
-                setNewMaintenanceRoom("");
-                setNewMaintenanceText("");
-                setNewMaintenancePhotos([]);
-              }}
-              aria-label="Close"
-            >
-              <X className="h-4 w-4" />
-            </Button>
-          </div>
-          <div className="flex flex-col sm:flex-row gap-2">
-            <select
-              value={newMaintenanceRoom}
-              onChange={(e) => setNewMaintenanceRoom(e.target.value)}
-              className="h-9 rounded-md border bg-background px-2 text-sm sm:w-32"
-            >
-              <option value="">Select a room</option>
-              {rooms
-                .map((r) => r.room_number)
-                .sort((a, b) => a - b)
-                .map((n) => (
-                  <option key={n} value={String(n)}>
-                    Room {n}
-                  </option>
-                ))}
-            </select>
-            <Input
-              placeholder="Describe the issue…"
-              value={newMaintenanceText}
-              onChange={(e) => setNewMaintenanceText(e.target.value)}
-              onKeyDown={(e) => {
-                if (e.key === "Enter") {
-                  e.preventDefault();
-                  void submitMaintenanceRequest();
-                }
-              }}
-              className="flex-1"
-            />
-            <Button
-              type="button"
-              onClick={async () => {
-                await submitMaintenanceRequest();
-                setMaintenanceComposerOpen(false);
-              }}
-            >
-              <Plus className="h-4 w-4 mr-1" /> Log
-            </Button>
-          </div>
-          <PhotoComposer value={newMaintenancePhotos} onChange={setNewMaintenancePhotos} />
-        </div>
-      ) : (
-        <Button
-          type="button"
-          variant="outline"
-          className="w-full justify-between"
-          onClick={() => setMaintenanceComposerOpen(true)}
-        >
-          <span className="flex items-center gap-2">
-            <Plus className="h-4 w-4" />
-            Log a new issue
-          </span>
-          <ChevronDown className="h-4 w-4 opacity-60" />
-        </Button>
-      )}
-    </div>
-    <div className="flex-1 min-h-0 overflow-y-auto mt-4 space-y-4">
-      <div className="space-y-2">
-        <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
-          Open ({openMaintenanceCount})
-        </p>
-        {openMaintenanceCount === 0 ? (
-          <p className="text-sm text-muted-foreground">No open maintenance requests.</p>
-        ) : (
-          maintenanceRequests
-            .filter((m) => !m.done)
-            .map((m) => (
-              <div key={m.id} className="flex items-start gap-2 rounded-lg border bg-background p-3">
-                <div className="flex-1 min-w-0">
-                  <div className="flex items-center gap-2 flex-wrap">
-                    <span className="inline-flex h-6 items-center rounded-full bg-primary/10 text-primary px-2 text-xs font-semibold">
-                      Room {m.room_number}
-                    </span>
-                    <span className="text-xs text-muted-foreground">
-                      {new Date(m.created_at).toLocaleString(undefined, { month: "short", day: "numeric", hour: "numeric", minute: "2-digit" })}
-                      {m.created_by_username ? ` · ${m.created_by_username}` : ""}
-                    </span>
-                  </div>
-                  <p className="mt-1 text-sm whitespace-pre-wrap break-words">{m.message}</p>
-                  <PhotoAttachments
-                    kind="maintenance"
-                    entryId={m.id}
-                    paths={m.photo_paths ?? []}
-                    canEdit={
-                      isAdmin ||
-                      (!!authUser?.username && m.created_by_username === authUser.username)
-                    }
-                    onChange={(next) => setMaintenancePhotoPaths(m.id, next)}
-                  />
-                </div>
-                {isReception || isMaintenance ? (
-                  <Button
-                    type="button"
-                    size="sm"
-                    variant="outline"
-                    onClick={() => void markMaintenanceDone(m.id)}
-                    aria-label="Mark as done"
-                  >
-                    <Check className="h-4 w-4 mr-1" /> Done
-                  </Button>
-                ) : (
-                  <span className="text-xs text-muted-foreground shrink-0 pt-1">Awaiting action</span>
-                )}
-                {isAdmin && (
-                  <Button
-                    type="button"
-                    size="icon"
-                    variant="ghost"
-                    className="h-8 w-8 text-muted-foreground hover:text-destructive"
-                    onClick={() => void deleteMaintenanceRequest(m.id)}
-                    aria-label="Delete request"
-                  >
-                    <Trash2 className="h-4 w-4" />
-                  </Button>
-                )}
-              </div>
-            ))
-        )}
-      </div>
-      {maintenanceRequests.some((m) => m.done) && (
-        <div className="space-y-2">
-          <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">Completed</p>
-          {maintenanceRequests
-            .filter((m) => m.done)
-            .slice(0, 25)
-            .map((m) => (
-              <div key={m.id} className="flex items-start gap-2 rounded-lg border bg-muted/40 p-3">
-                <div className="flex-1 min-w-0">
-                  <div className="flex items-center gap-2 flex-wrap">
-                    <span className="inline-flex h-6 items-center rounded-full bg-muted text-muted-foreground px-2 text-xs font-semibold">
-                      Room {m.room_number}
-                    </span>
-                    <span className="text-xs text-muted-foreground">
-                      Done{m.done_by_username ? ` by ${m.done_by_username}` : ""}
-                      {m.done_at ? ` · ${new Date(m.done_at).toLocaleString(undefined, { month: "short", day: "numeric", hour: "numeric", minute: "2-digit" })}` : ""}
-                    </span>
-                  </div>
-                  <p className="mt-1 text-sm whitespace-pre-wrap break-words text-muted-foreground line-through">{m.message}</p>
-                  <PhotoAttachments
-                    kind="maintenance"
-                    entryId={m.id}
-                    paths={m.photo_paths ?? []}
-                    canEdit={
-                      isAdmin ||
-                      (!!authUser?.username && m.created_by_username === authUser.username)
-                    }
-                    onChange={(next) => setMaintenancePhotoPaths(m.id, next)}
-                  />
-                </div>
-                {(isReception || isMaintenance || isAdmin) && (
-                  <Button
-                    type="button"
-                    size="icon"
-                    variant="ghost"
-                    className="h-8 w-8 text-muted-foreground hover:text-destructive"
-                    onClick={() => void deleteMaintenanceRequest(m.id)}
-                    aria-label="Delete request"
-                  >
-                    <Trash2 className="h-4 w-4" />
-                  </Button>
-                )}
-              </div>
-            ))}
-        </div>
-      )}
-    </div>
-  </SheetContent>
-</Sheet>
+<MaintenanceLogSheet
+  open={maintenanceLogOpen}
+  onOpenChange={setMaintenanceLogOpen}
+  rooms={rooms}
+  maintenanceRequests={maintenanceRequests}
+  hasOpenMaintenance={hasOpenMaintenance}
+  openMaintenanceCount={openMaintenanceCount}
+  isReception={isReception}
+  isMaintenance={isMaintenance}
+  isAdmin={isAdmin}
+  authUsername={authUser?.username}
+  maintenanceComposerOpen={maintenanceComposerOpen}
+  setMaintenanceComposerOpen={setMaintenanceComposerOpen}
+  newMaintenanceRoom={newMaintenanceRoom}
+  setNewMaintenanceRoom={setNewMaintenanceRoom}
+  newMaintenanceText={newMaintenanceText}
+  setNewMaintenanceText={setNewMaintenanceText}
+  newMaintenancePhotos={newMaintenancePhotos}
+  setNewMaintenancePhotos={setNewMaintenancePhotos}
+  submitMaintenanceRequest={submitMaintenanceRequest}
+  markMaintenanceDone={markMaintenanceDone}
+  deleteMaintenanceRequest={deleteMaintenanceRequest}
+  setMaintenancePhotoPaths={setMaintenancePhotoPaths}
+/>
 
-<Sheet open={historySheetOpen} onOpenChange={setHistorySheetOpen}>
-   <SheetContent side="bottom" className="max-h-[90dvh] overflow-hidden rounded-t-2xl p-4 sm:p-6">
-    <SheetHeader className="text-left">
-      <SheetTitle className="flex items-center gap-2">
-        <History className="h-4 w-4" />
-        History
-      </SheetTitle>
-      <SheetDescription>Recent exports</SheetDescription>
-    </SheetHeader>
-    <div className="flex-1 min-h-0 overflow-y-auto space-y-3">
-      {(isFnb ? snapshots.filter((s) => s.kind === "fnb_totals") : snapshots.filter((s) => s.kind !== "fnb_totals")).length === 0 ? (
-        <p className="text-sm text-muted-foreground">No exports yet.</p>
-      ) : (
-        (() => {
-          const visible = isFnb
-            ? snapshots.filter((s) => s.kind === "fnb_totals")
-            : snapshots.filter((s) => s.kind !== "fnb_totals");
-          const groups = new Map<string, typeof snapshots>();
-          for (const s of visible) {
-            const key = new Date(s.created_at).toDateString();
-            const list = groups.get(key) ?? [];
-            if (list.length < 6) list.push(s);
-            groups.set(key, list);
-          }
-          const days = Array.from(groups.entries()).slice(0, 6);
-          return days.map(([day, items]) => (
-            <div key={day} className="space-y-1.5">
-              <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
-                {new Date(items[0].created_at).toLocaleDateString(undefined, {
-                  weekday: "short",
-                  month: "short",
-                  day: "numeric",
-                })}
-              </p>
-              {items.map((s) => (
-                <div
-                  key={s.id}
-                  className="flex items-center gap-2 rounded-full border bg-background min-h-12 pl-4 pr-1.5"
-                >
-                  <button
-                    type="button"
-                    className="flex-1 flex items-center gap-2 text-left text-sm py-2"
-                    onClick={() => { setHistorySheetOpen(false); setViewingSnapshot(s); }}
-                  >
-                    <span>
-                      {new Date(s.created_at).toLocaleTimeString(undefined, { hour: "numeric", minute: "2-digit" })}
-                    </span>
-                    {s.kind === "rejects" && (
-                      <span className="text-xs uppercase tracking-wide text-muted-foreground">Rejects</span>
-                    )}
-                    {(s.kind === "totals" || !s.kind) && (
-                      <span className="text-xs uppercase tracking-wide text-muted-foreground">Daily linen</span>
-                    )}
-                    {s.kind === "totals_range" && (
-                      <span className="text-xs uppercase tracking-wide text-muted-foreground">Linen — ranged</span>
-                    )}
-                    {s.kind === "room_status" && (
-                      <span className="text-xs uppercase tracking-wide text-muted-foreground">Room status</span>
-                    )}
-                    {s.kind === "maintenance" && (
-                      <span className="text-xs uppercase tracking-wide text-muted-foreground">Maintenance</span>
-                    )}
-                    {s.kind === "fnb_totals" && (
-                      <span className="text-xs uppercase tracking-wide text-muted-foreground">F&amp;B Linen</span>
-                    )}
-                    <span className="text-xs text-muted-foreground">({s.grand_total})</span>
-                  </button>
-                  <Button
-                    type="button"
-                    variant="ghost"
-                    size="icon"
-                    className="h-9 w-9 text-muted-foreground hover:text-destructive"
-                    onClick={() => removeSnapshot(s.id)}
-                    aria-label="Delete history item"
-                  >
-                    <X className="h-4 w-4" />
-                  </Button>
-                </div>
-              ))}
-            </div>
-          ));
-        })()
-      )}
-      {(isFnb ? snapshots.filter((s) => s.kind === "fnb_totals") : snapshots.filter((s) => s.kind !== "fnb_totals")).length > 0 && (
-        <Button
-          type="button"
-          variant="outline"
-          className="w-full text-destructive hover:text-destructive"
-          onClick={() => clearAllSnapshots(isFnb ? "fnb_totals" : undefined)}
-        >
-          <Trash2 className="h-4 w-4 mr-2" />
-          Clear history
-        </Button>
-      )}
-    </div>
-  </SheetContent>
-</Sheet>
+<HistorySheet
+  open={historySheetOpen}
+  onOpenChange={setHistorySheetOpen}
+  snapshots={snapshots}
+  isFnb={isFnb}
+  setViewingSnapshot={setViewingSnapshot}
+  removeSnapshot={removeSnapshot}
+  clearAllSnapshots={clearAllSnapshots}
+/>
 
  <Sheet open={editDefaultsSheetRoom !== null} onOpenChange={(o) => { if (!o) setEditDefaultsSheetRoom(null); }}>
    <SheetContent side="bottom" className="max-h-[85dvh] overflow-y-auto rounded-t-2xl p-4 sm:p-6">
