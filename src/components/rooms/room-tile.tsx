@@ -66,6 +66,14 @@ export function ReceptionRoomTile({
     >
       {!isStaffRoom && (
         <>
+          {room?.done && (
+            <Check
+              aria-hidden="true"
+              strokeWidth={3}
+              className="pointer-events-none absolute inset-0 m-auto h-[80%] w-[80%] opacity-30"
+              style={{ color: meta.accent }}
+            />
+          )}
           <span className="text-sm sm:text-base font-bold leading-none inline-flex items-center gap-1">
             {n}
             {flags.isDnd && (
