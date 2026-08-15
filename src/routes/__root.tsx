@@ -131,6 +131,9 @@ function RootComponent() {
     bootstrapAuth();
   }, []);
 
+  // Material ripple feedback for every tappable control, app-wide.
+  useGlobalRipple();
+
   return (
     <QueryClientProvider client={queryClient}>
       <ThemeProvider>
