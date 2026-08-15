@@ -107,7 +107,7 @@ export function ReceptionStatusSheet({
             </SheetDescription>
            </SheetHeader>
               {!isReception && !!room?.guest_vacated && (
-                <div className="mt-3 flex flex-col items-center gap-2 rounded-md border bg-background p-3 text-center">
+                <div className="mt-3 flex flex-col items-center gap-2 rounded-xl border bg-background p-3 text-center">
                   <span className="flex items-center justify-center gap-2 text-sm font-medium">
                     <DoorOpen className="h-4 w-4 text-emerald-600 dark:text-emerald-400" />
                     Guest has checked out

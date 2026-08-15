@@ -92,14 +92,14 @@ export function RoomNotesSheet({
               )}
              {isReception ? (
                <>
-                  <div className="flex items-center justify-between gap-2 rounded-md border bg-background p-3">
+                  <div className="flex items-center justify-between gap-2 rounded-xl border bg-background p-3">
                     <span className="flex items-center gap-2 text-sm font-medium">
                       <DoorOpen className={cn("h-4 w-4", room?.early_check_in ? "text-amber-600 dark:text-amber-400" : "text-muted-foreground")} />
                       Early check-in
                     </span>
                     <Switch checked={!!room?.early_check_in} onCheckedChange={(v) => setRoomEarlyCheckIn(n, v)} />
                   </div>
-                 <div className="flex items-center justify-between gap-2 rounded-md border bg-background p-3">
+                 <div className="flex items-center justify-between gap-2 rounded-xl border bg-background p-3">
                    <span className="flex items-center gap-2 text-sm font-medium">
                      <DoorOpen className={cn("h-4 w-4", vacated ? "text-emerald-600 dark:text-emerald-400" : "text-muted-foreground")} />
                      Guest has checked out
@@ -107,14 +107,14 @@ export function RoomNotesSheet({
                    <Switch checked={vacated} onCheckedChange={(v) => setRoomGuestVacated(n, v)} />
                  </div>
                  {maintenance && (
-                   <div className="flex items-center gap-2 rounded-md border border-amber-500/60 bg-amber-50 dark:bg-amber-950/40 p-3 text-sm">
+                   <div className="flex items-center gap-2 rounded-xl border border-amber-500/60 bg-amber-50 dark:bg-amber-950/40 p-3 text-sm">
                      <Wrench className="h-4 w-4 text-amber-600 dark:text-amber-400 shrink-0" />
                      <span className="font-medium text-amber-800 dark:text-amber-200">
                        Maintenance requested by Housekeeping
                      </span>
                    </div>
                  )}
-                 <div className="rounded-md border bg-background p-3">
+                 <div className="rounded-xl border bg-background p-3">
                    <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground mb-1">
                      From Housekeeping
                    </p>
@@ -146,7 +146,7 @@ export function RoomNotesSheet({
                      <p className="text-sm text-muted-foreground">No notes from Housekeeping.</p>
                    )}
                  </div>
-                   <div className="space-y-2 rounded-md border border-emerald-400/60 bg-emerald-50 dark:bg-emerald-950/40 p-3">
+                   <div className="space-y-2 rounded-xl border border-emerald-400/60 bg-emerald-50 dark:bg-emerald-950/40 p-3">
                     <p className="text-xs font-semibold uppercase tracking-wide text-emerald-700 dark:text-emerald-300">
                       Leave a message for housekeeping
                     </p>
@@ -207,7 +207,7 @@ export function RoomNotesSheet({
              ) : (
                <>
                  {vacated && (
-                   <div className="flex items-center gap-2 rounded-md border border-emerald-500/60 bg-emerald-50 dark:bg-emerald-950/40 p-3 text-sm">
+                   <div className="flex items-center gap-2 rounded-xl border border-emerald-500/60 bg-emerald-50 dark:bg-emerald-950/40 p-3 text-sm">
                      <DoorOpen className="h-4 w-4 text-emerald-600 dark:text-emerald-400 shrink-0" />
                      <span className="font-medium text-emerald-800 dark:text-emerald-200">
                        Guest has vacated — marked by Reception
@@ -215,7 +215,7 @@ export function RoomNotesSheet({
                    </div>
                  )}
                  {msgs.length > 0 && (
-                   <div className="space-y-2 rounded-md border border-amber-400/60 bg-amber-50 dark:bg-amber-950/40 p-3">
+                   <div className="space-y-2 rounded-xl border border-amber-400/60 bg-amber-50 dark:bg-amber-950/40 p-3">
                      <p className="text-xs font-semibold uppercase tracking-wide text-amber-700 dark:text-amber-300">
                        Reception message{msgs.length > 1 ? "s" : ""}
                      </p>

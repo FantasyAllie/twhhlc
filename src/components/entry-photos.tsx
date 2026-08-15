@@ -88,7 +88,7 @@ export function PhotoComposer({
       />
       <div className="flex flex-wrap gap-2">
         {pending.map((p, idx) => (
-          <div key={p.id} className="relative h-16 w-16 overflow-hidden rounded-md border bg-muted">
+          <div key={p.id} className="relative h-16 w-16 overflow-hidden rounded-xl border bg-muted">
             <img src={p.previewUrl} alt="" className="h-full w-full object-cover" />
             <button
               type="button"
@@ -105,7 +105,7 @@ export function PhotoComposer({
             <button
               type="button"
               onClick={() => cameraInputRef.current?.click()}
-              className="flex h-16 w-16 flex-col items-center justify-center gap-0.5 rounded-md border border-dashed text-muted-foreground hover:bg-muted"
+              className="flex h-16 w-16 flex-col items-center justify-center gap-0.5 rounded-xl border border-dashed text-muted-foreground hover:bg-muted"
             >
               <Camera className="h-4 w-4" />
               <span className="text-[10px]">Camera</span>
@@ -113,7 +113,7 @@ export function PhotoComposer({
             <button
               type="button"
               onClick={() => inputRef.current?.click()}
-              className="flex h-16 w-16 flex-col items-center justify-center gap-0.5 rounded-md border border-dashed text-muted-foreground hover:bg-muted"
+              className="flex h-16 w-16 flex-col items-center justify-center gap-0.5 rounded-xl border border-dashed text-muted-foreground hover:bg-muted"
             >
               <ImagePlus className="h-4 w-4" />
               <span className="text-[10px]">Library</span>
@@ -217,7 +217,7 @@ export function PhotoAttachments({
         {paths.map((p) => {
           const url = urls[p];
           return (
-            <div key={p} className="relative h-14 w-14 overflow-hidden rounded-md border bg-muted">
+            <div key={p} className="relative h-14 w-14 overflow-hidden rounded-xl border bg-muted">
               {url ? (
                 <button
                   type="button"
@@ -253,7 +253,7 @@ export function PhotoAttachments({
               onClick={() => cameraInputRef.current?.click()}
               disabled={uploading}
               className={cn(
-                "flex h-14 w-14 flex-col items-center justify-center gap-0.5 rounded-md border border-dashed text-muted-foreground hover:bg-muted",
+                "flex h-14 w-14 flex-col items-center justify-center gap-0.5 rounded-xl border border-dashed text-muted-foreground hover:bg-muted",
                 uploading && "opacity-60",
               )}
               aria-label="Take photo"
@@ -272,7 +272,7 @@ export function PhotoAttachments({
               onClick={() => inputRef.current?.click()}
               disabled={uploading}
               className={cn(
-                "flex h-14 w-14 flex-col items-center justify-center gap-0.5 rounded-md border border-dashed text-muted-foreground hover:bg-muted",
+                "flex h-14 w-14 flex-col items-center justify-center gap-0.5 rounded-xl border border-dashed text-muted-foreground hover:bg-muted",
                 uploading && "opacity-60",
               )}
               aria-label="Add from library"

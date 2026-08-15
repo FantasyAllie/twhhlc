@@ -56,7 +56,7 @@ export function SnapshotViewerDialog({
           {viewingSnapshot.totals.length === 0 ? (
             <p className="text-sm text-muted-foreground py-4">No rooms in this snapshot.</p>
           ) : (
-            <div className="rounded-md border max-h-[60dvh] overflow-y-auto">
+            <div className="rounded-xl border max-h-[60dvh] overflow-y-auto">
               <table className="w-full text-sm">
                 <thead className="bg-muted/50 sticky top-0">
                   <tr>
@@ -114,7 +114,7 @@ export function SnapshotViewerDialog({
           {viewingSnapshot.totals.length === 0 ? (
             <p className="text-sm text-muted-foreground py-4">No rooms in this snapshot.</p>
           ) : (
-            <div className="rounded-md border max-h-[60dvh] overflow-y-auto">
+            <div className="rounded-xl border max-h-[60dvh] overflow-y-auto">
               <table className="w-full text-sm">
                 <thead className="bg-muted/50 sticky top-0">
                   <tr>
@@ -174,7 +174,7 @@ export function SnapshotViewerDialog({
          {viewingSnapshot.totals.length === 0 ? (
            <p className="text-sm text-muted-foreground py-4">No items in this snapshot.</p>
          ) : (
-           <ul className="divide-y rounded-md border max-h-[60dvh] overflow-y-auto">
+           <ul className="divide-y rounded-xl border max-h-[60dvh] overflow-y-auto">
               {(viewingSnapshot.totals as SnapshotRow[]).map((r) => (
                <li
                  key={r.name}

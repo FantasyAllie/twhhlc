@@ -128,7 +128,7 @@ export function ExportPreviewDialogs({
             }
             return (
               <div className="space-y-4">
-                <ul className="divide-y rounded-md border">
+                <ul className="divide-y rounded-xl border">
                   {rows.map(([name, count]) => (
                     <li key={name} className="flex items-center justify-between px-3 py-2 text-sm">
                       <span className="truncate pr-3">{name}</span>
@@ -237,7 +237,7 @@ export function ExportPreviewDialogs({
             }
             return (
               <div className="space-y-4">
-                <ul className="divide-y rounded-md border">
+                <ul className="divide-y rounded-xl border">
                   {rows.map((r) => (
                     <li
                       key={r.name}

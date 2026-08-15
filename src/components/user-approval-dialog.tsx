@@ -165,12 +165,12 @@ export function UserApprovalDialog({
                     </Button>
                   </div>
                   {selected?.id === u.id && (
-                    <div className="rounded-md border bg-background p-3 space-y-3">
+                    <div className="rounded-xl border bg-background p-3 space-y-3">
                       {assignablePositions.length > 1 && (
                         <div className="space-y-1">
                           <label className="text-xs font-medium">Position</label>
                           <select
-                            className="w-full h-9 rounded-md border bg-background px-3 text-sm"
+                            className="w-full h-9 rounded-xl border bg-background px-3 text-sm"
                             value={position}
                             onChange={(e) => setPosition(e.target.value as AssignablePosition)}
                           >
@@ -207,7 +207,7 @@ export function UserApprovalDialog({
                       <div className="space-y-1">
                         <label className="text-xs font-medium">Hotel workspace</label>
                         {canPickAnyHotel ? (
-                          <div className="flex flex-wrap gap-3 rounded-md border bg-background px-3 py-2">
+                          <div className="flex flex-wrap gap-3 rounded-xl border bg-background px-3 py-2">
                             {hotels.map((h) => (
                               <label key={h.id} className="flex items-center gap-2 text-sm">
                                 <input

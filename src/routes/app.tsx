@@ -2539,7 +2539,7 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
     return { backgroundColor: theme === "dark" ? c.darkBg : c.bg, borderLeft: `4px solid ${c.border}` };
   };
   return (
-  <div className="border rounded-md bg-muted/30 flex flex-col min-h-0 flex-1 overflow-hidden">
+  <div className="border rounded-xl bg-muted/30 flex flex-col min-h-0 flex-1 overflow-hidden">
     <div className={cn("p-4 space-y-4", isReception ? "flex-1 min-h-0 overflow-y-auto" : "shrink-0")}>
 
     {/* Reception messages */}
@@ -2571,7 +2571,7 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
                 : null;
               const hasAny = !!statusText || !!bedText;
               return (
-                <div className="rounded-md border bg-muted/40 p-3 space-y-2 text-sm">
+                <div className="rounded-xl border bg-muted/40 p-3 space-y-2 text-sm">
                   <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
                     Room status
                   </p>
@@ -2592,14 +2592,14 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
                 </div>
               );
             })()}
-            <div className="flex items-center justify-between gap-2 rounded-md border bg-background p-3">
+            <div className="flex items-center justify-between gap-2 rounded-xl border bg-background p-3">
               <span className="flex items-center gap-2 text-sm font-medium">
                 <DoorOpen className={cn("h-4 w-4", room?.early_check_in ? "text-amber-600 dark:text-amber-400" : "text-muted-foreground")} />
                 Early check-in
               </span>
               <Switch checked={!!room?.early_check_in} onCheckedChange={(v) => setRoomEarlyCheckIn(n, v)} />
             </div>
-            <div className="flex items-center justify-between gap-2 rounded-md border bg-background p-3">
+            <div className="flex items-center justify-between gap-2 rounded-xl border bg-background p-3">
               <span className="flex items-center gap-2 text-sm font-medium">
                 <DoorOpen className={cn("h-4 w-4", vacated ? "text-emerald-600 dark:text-emerald-400" : "text-muted-foreground")} />
                 Guest has checked out
@@ -2607,14 +2607,14 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
               <Switch checked={vacated} onCheckedChange={(v) => setRoomGuestVacated(n, v)} />
             </div>
             {maintenance && (
-              <div className="flex items-center gap-2 rounded-md border border-amber-500/60 bg-amber-50 dark:bg-amber-950/40 p-3 text-sm">
+              <div className="flex items-center gap-2 rounded-xl border border-amber-500/60 bg-amber-50 dark:bg-amber-950/40 p-3 text-sm">
                 <Wrench className="h-4 w-4 text-amber-600 dark:text-amber-400 shrink-0" />
                 <span className="font-medium text-amber-800 dark:text-amber-200">
                   Maintenance requested by Housekeeping
                 </span>
               </div>
             )}
-            <div className="rounded-md border bg-background p-3">
+            <div className="rounded-xl border bg-background p-3">
               <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground mb-1">
                 From Housekeeping
               </p>
@@ -2646,7 +2646,7 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
                 <p className="text-sm text-muted-foreground">No notes from Housekeeping.</p>
               )}
             </div>
-            <div className="space-y-2 rounded-md border border-emerald-400/60 bg-emerald-50 dark:bg-emerald-950/40 p-3">
+            <div className="space-y-2 rounded-xl border border-emerald-400/60 bg-emerald-50 dark:bg-emerald-950/40 p-3">
               <p className="text-xs font-semibold uppercase tracking-wide text-emerald-700 dark:text-emerald-300">
                 Leave a message for housekeeping
               </p>
@@ -2703,7 +2703,7 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
       );
       if (assigned.length === 0) return null;
       return (
-        <div className="space-y-2 rounded-md border bg-background p-3">
+        <div className="space-y-2 rounded-xl border bg-background p-3">
           <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
             Room features
           </p>
@@ -2711,7 +2711,7 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
             {assigned.map((f) => (
               <li
                 key={f.id}
-                className="inline-flex items-center rounded-md border bg-muted px-2 py-1 text-xs font-medium"
+                className="inline-flex items-center rounded-xl border bg-muted px-2 py-1 text-xs font-medium"
               >
                 {f.label}
               </li>
@@ -2745,7 +2745,7 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
       return (
         <div className="space-y-3">
           {openMaint.length > 0 && (
-            <div className="space-y-2 rounded-md border border-amber-400/60 bg-amber-50 dark:bg-amber-950/40 p-3">
+            <div className="space-y-2 rounded-xl border border-amber-400/60 bg-amber-50 dark:bg-amber-950/40 p-3">
               <p className="flex items-center gap-1.5 text-xs font-semibold uppercase tracking-wide text-amber-700 dark:text-amber-300">
                 <Wrench className="h-3.5 w-3.5" />
                 Open maintenance ({openMaint.length})
@@ -2774,7 +2774,7 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
             </div>
           )}
           {openLp.length > 0 && (
-            <div className="space-y-2 rounded-md border border-rose-400/60 bg-rose-50 dark:bg-rose-950/40 p-3">
+            <div className="space-y-2 rounded-xl border border-rose-400/60 bg-rose-50 dark:bg-rose-950/40 p-3">
               <p className="flex items-center gap-1.5 text-xs font-semibold uppercase tracking-wide text-rose-700 dark:text-rose-300">
                 <PackageSearch className="h-3.5 w-3.5" />
                 Lost property ({openLp.length})
@@ -2812,7 +2812,7 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
           type="button"
           onClick={() => setReceptionSheetRoom(n)}
             className={cn(
-              "flex items-center justify-center gap-1.5 rounded-full border bg-background px-3 sm:px-4 h-11 flex-1 text-sm font-medium cursor-pointer transition-colors hover:bg-accent",
+              "flex items-center justify-center gap-1.5 rounded-xl border bg-background px-3 sm:px-4 h-11 shadow-sm active:scale-[0.97] active:shadow-none flex-1 text-sm font-medium cursor-pointer transition-colors hover:bg-accent",
               receptionDoneSet.has(n)
                 ? "border-primary bg-primary/10 text-primary"
                 : ""
@@ -2826,7 +2826,7 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
             setShowAllLinen((prev) => ({ ...prev, [n]: !prev[n] }))
           }
           className={cn(
-            "flex items-center justify-center gap-1.5 rounded-full border bg-background px-3 sm:px-4 h-11 flex-1 text-sm font-medium cursor-pointer transition-colors hover:bg-accent",
+            "flex items-center justify-center gap-1.5 rounded-xl border bg-background px-3 sm:px-4 h-11 shadow-sm active:scale-[0.97] active:shadow-none flex-1 text-sm font-medium cursor-pointer transition-colors hover:bg-accent",
             showAll
               ? "border-primary bg-primary/10 text-primary"
               : ""
@@ -2838,7 +2838,7 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
           <button
             type="button"
             onClick={() => setEditDefaultsSheetRoom(n)}
-            className="inline-flex items-center justify-center h-11 w-11 shrink-0 rounded-full border bg-background text-sm font-medium cursor-pointer transition-colors hover:bg-accent disabled:opacity-50 disabled:cursor-not-allowed"
+            className="inline-flex items-center justify-center h-11 w-11 shrink-0 rounded-xl border bg-background shadow-sm active:scale-[0.97] active:shadow-none text-sm font-medium cursor-pointer transition-colors hover:bg-accent disabled:opacity-50 disabled:cursor-not-allowed"
             aria-label="Edit defaults"
           >
             <Pencil className="h-4 w-4" />
@@ -2863,7 +2863,7 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
             <button
               type="button"
               onClick={() => setNotesSheetRoom(n)}
-              className="relative inline-flex items-center justify-center h-11 w-11 shrink-0 rounded-full border bg-background text-sm font-medium cursor-pointer transition-colors hover:bg-accent"
+              className="relative inline-flex items-center justify-center h-11 w-11 shrink-0 rounded-xl border bg-background shadow-sm active:scale-[0.97] active:shadow-none text-sm font-medium cursor-pointer transition-colors hover:bg-accent"
               aria-label="Notifications"
             >
               <MessageSquare className="h-4 w-4" />
@@ -2906,7 +2906,7 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
         <button
           type="button"
           onClick={() => setNotesSheetRoom(n)}
-          className="mt-2 flex w-full items-center gap-2 rounded-md border border-amber-400/60 bg-amber-50 px-3 py-2 text-left text-xs hover:bg-amber-100 dark:bg-amber-950/40 dark:hover:bg-amber-950/60"
+          className="mt-2 flex w-full items-center gap-2 rounded-xl border border-amber-400/60 bg-amber-50 px-3 py-2 text-left text-xs hover:bg-amber-100 dark:bg-amber-950/40 dark:hover:bg-amber-950/60"
           aria-label="Open room message"
         >
           <MessageSquare className="h-3.5 w-3.5 shrink-0 text-amber-600 dark:text-amber-400" />
@@ -2934,7 +2934,7 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
     return (
      <li
        key={`t-${item.id}`}
-        className="flex items-center gap-3 py-2 px-2 rounded-md border"
+        className="flex items-center gap-3 py-2 px-2 rounded-xl border"
         style={colorStyle(item.color)}
      >
         <span
@@ -2984,7 +2984,7 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
    return (
     <li
       key={`e-${item.id}`}
-      className="flex items-center gap-3 py-2 px-2 rounded-md border"
+      className="flex items-center gap-3 py-2 px-2 rounded-xl border"
     >
      <span className="flex-1 min-w-0 break-words">
    {item.name}
@@ -3198,7 +3198,7 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
               </>
             )}
             {canViewAs && !isMobile && (
-              <div className="mt-3 inline-flex flex-wrap rounded-md border p-0.5 bg-background items-center">
+              <div className="mt-3 inline-flex flex-wrap rounded-xl border p-0.5 bg-background items-center">
                 {availableViews.map((r) => {
                   const active = (safeViewAs ?? defaultView) === r;
                   const label =
@@ -4100,7 +4100,7 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
           No F&amp;B linen items yet. Add some from the Linen List (F&amp;B tab).
        </p>
      ) : (
-       <ul className="divide-y border rounded-md bg-muted/30">
+       <ul className="divide-y border rounded-xl bg-muted/30">
           {templateFnbList.map((item) => {
            const value = fnbCountByItem.get(item.id) ?? 0;
            const swatch = item.color ? COLOR_SWATCHES[item.color] : null;

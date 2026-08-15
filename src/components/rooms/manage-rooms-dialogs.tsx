@@ -83,7 +83,7 @@ export function ManageRoomsDialogs({
         <div className="text-xs text-muted-foreground">
           {rooms.length} room{rooms.length === 1 ? "" : "s"} total
         </div>
-        <ul className="divide-y rounded-md border max-h-[50dvh] overflow-y-auto">
+        <ul className="divide-y rounded-xl border max-h-[50dvh] overflow-y-auto">
           {rooms
             .slice()
             .sort((a, b) => (a.sort_order ?? a.room_number) - (b.sort_order ?? b.room_number))

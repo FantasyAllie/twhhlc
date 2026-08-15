@@ -502,7 +502,7 @@ export function MessagesSheet({
                           )}
                         </div>
                         {m.reply_to_snippet && (
-                          <div className="mb-1.5 rounded-md border-l-4 border-primary bg-muted/60 px-2 py-1">
+                          <div className="mb-1.5 rounded-xl border-l-4 border-primary bg-muted/60 px-2 py-1">
                             <div className="text-[10px] font-semibold text-primary">
                               {m.reply_to_sender ?? "Original"}
                             </div>
@@ -559,7 +559,7 @@ export function MessagesSheet({
               <select
                 value={room === "" ? "" : String(room)}
                 onChange={(e) => setRoom(e.target.value === "" ? "" : Number(e.target.value))}
-                className="h-8 rounded-md border bg-background px-2 text-sm"
+                className="h-8 rounded-xl border bg-background px-2 text-sm"
               >
                 <option value="">— none —</option>
                 {roomNumbers.map((n) => (
@@ -603,7 +603,7 @@ export function MessagesSheet({
             </div>
           )}
           {replyTo && (
-            <div className="flex items-start gap-2 rounded-md border-l-4 border-primary bg-muted/60 px-2 py-1.5">
+            <div className="flex items-start gap-2 rounded-xl border-l-4 border-primary bg-muted/60 px-2 py-1.5">
               <div className="flex-1 min-w-0">
                 <div className="text-[10px] font-semibold text-primary">
                   Replying to {replyTo.sender}

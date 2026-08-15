@@ -252,7 +252,7 @@ export function AccountDialog({
               const linked = identities.find((i) => i.provider === provider);
               const label = provider === "google" ? "Google" : "Apple";
               return (
-                <div key={provider} className="flex items-center justify-between gap-2 rounded-md border p-2">
+                <div key={provider} className="flex items-center justify-between gap-2 rounded-xl border p-2">
                   <div className="text-sm">
                     <span className="font-medium">{label}</span>
                     <span className={`ml-2 text-xs ${linked ? "text-emerald-600 dark:text-emerald-400" : "text-muted-foreground"}`}>

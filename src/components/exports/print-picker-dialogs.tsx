@@ -388,7 +388,7 @@ export const LinenCountPrintDialog = ({
           </div>
           {mode === "delivery" ? (
             <>
-              <div className="rounded-md border bg-muted/40 p-3 text-sm">
+              <div className="rounded-xl border bg-muted/40 p-3 text-sm">
                 <div className="text-xs uppercase tracking-wide text-muted-foreground">
                   Range
                 </div>
@@ -435,7 +435,7 @@ export const LinenCountPrintDialog = ({
                 Print tally
               </Button>
               {gapWarning && (
-                <div className="rounded-md border border-amber-500/50 bg-amber-500/10 p-3 text-sm">
+                <div className="rounded-xl border border-amber-500/50 bg-amber-500/10 p-3 text-sm">
                   <p className="font-medium">
                     {gapWarning.days.length} day{gapWarning.days.length === 1 ? "" : "s"} in this
                     range have no saved export

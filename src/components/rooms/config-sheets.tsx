@@ -80,7 +80,7 @@ export function ManageEditableRow({
               setEditing(false);
             }
           }}
-          className="flex-1 min-w-0 bg-transparent text-sm font-medium outline-none px-2 py-1 rounded-md border border-input focus:ring-1 focus:ring-ring"
+          className="flex-1 min-w-0 bg-transparent text-sm font-medium outline-none px-2 py-1 rounded-xl border border-input focus:ring-1 focus:ring-ring"
         />
       ) : (
         <span className="flex-1 text-sm font-medium pl-2 truncate">{label}</span>
