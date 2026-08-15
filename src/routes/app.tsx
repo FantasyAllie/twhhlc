@@ -831,7 +831,7 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
       return;
     }
     qc.invalidateQueries({ queryKey: ["maintenance_requests"] });
-    if (target) await clearRoomFlagIfNoOpenRequests(target.room_number);
+    if (target?.room_number != null) await clearRoomFlagIfNoOpenRequests(target.room_number);
   };
 
   const deleteMaintenanceRequest = async (id: string) => {
@@ -846,7 +846,7 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
       .eq("id", id);
     if (error) toast.error(error.message);
     qc.invalidateQueries({ queryKey: ["maintenance_requests"] });
-    if (target) await clearRoomFlagIfNoOpenRequests(target.room_number);
+    if (target?.room_number != null) await clearRoomFlagIfNoOpenRequests(target.room_number);
   };
 
   const getRejectCount = (templateItemId: string) =>
