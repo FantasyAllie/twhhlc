@@ -3399,6 +3399,7 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
     onOpenChange={setLinenPrintOpen}
     snapshots={snapshots}
     liveRows={computeTotals().rows}
+    linenDeliveryDays={linenDeliveryDays}
     printTotals={(rows, grand, when, subheading, footer) =>
       printTotals(rows, grand, when, "totals", subheading, footer)
     }
