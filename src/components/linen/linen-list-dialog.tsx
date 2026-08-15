@@ -131,14 +131,13 @@ export function LinenListDialog({
           return (
             <li key={item.id} className="flex items-center gap-1.5 py-2">
               <span
-                className="h-3 w-3 rounded-full border-2 shrink-0"
+                className="h-3 w-3 rounded-full shrink-0"
                 style={{
                   backgroundColor: item.color
                     ? theme === "dark"
                       ? COLOR_SWATCHES[item.color].darkBg
                       : COLOR_SWATCHES[item.color].bg
                     : "transparent",
-                  borderColor: item.color ? COLOR_SWATCHES[item.color].border : "hsl(var(--border))",
                 }}
                 aria-hidden
               />
@@ -218,12 +217,11 @@ export function LinenListDialog({
                             aria-label={COLOR_SWATCHES[key].label}
                             title={COLOR_SWATCHES[key].label}
                             className={cn(
-                              "h-9 w-9 rounded-full border-2 transition",
+                              "h-9 w-9 rounded-full transition shadow-elevation-1",
                               item.color === key ? "ring-2 ring-offset-1 ring-foreground" : "",
                             )}
                             style={{
                               backgroundColor: theme === "dark" ? COLOR_SWATCHES[key].darkBg : COLOR_SWATCHES[key].bg,
-                              borderColor: COLOR_SWATCHES[key].border,
                             }}
                           />
                         ))}

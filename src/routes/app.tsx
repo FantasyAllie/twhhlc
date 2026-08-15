@@ -2536,7 +2536,7 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
   const colorStyle = (color: ItemColor | null | undefined): React.CSSProperties | undefined => {
     const c = color ? COLOR_SWATCHES[color] : null;
     if (!c) return undefined;
-    return { backgroundColor: theme === "dark" ? c.darkBg : c.bg, borderLeft: `4px solid ${c.border}` };
+    return { backgroundColor: theme === "dark" ? c.darkBg : c.bg };
   };
   return (
   <div className="border rounded-xl bg-muted/30 flex flex-col min-h-0 flex-1 overflow-hidden">
@@ -3786,7 +3786,7 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
           type="button"
           onClick={onClick}
           className={cn(
-            "w-full flex items-center gap-3 rounded-xl border bg-background px-4 min-h-12 text-sm font-medium shadow-sm transition-[transform,box-shadow,background-color] duration-150 hover:bg-accent active:scale-[0.985] active:shadow-none",
+            "w-full flex items-center gap-3 rounded-xl border bg-background px-4 min-h-12 text-sm font-medium shadow-elevation-1 transition-[transform,box-shadow,background-color] duration-150 hover:bg-accent active:scale-[0.985] active:shadow-none",
             destructive && "text-destructive hover:text-destructive",
           )}
         >

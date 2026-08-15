@@ -26,7 +26,7 @@ type BaseProps = {
 // Material "Surface Variant" tile: tonal filled container, hairline border,
 // soft elevation, and a press state layer instead of a heavy accent border.
 const TILE_CLASS =
-  "relative overflow-hidden rounded-xl border text-xs sm:text-sm md:text-base font-medium shadow-sm transition-[transform,box-shadow,background-color] duration-150 active:scale-[0.97] active:shadow-none tabular-nums flex flex-col justify-between aspect-[5/4] p-2 md:p-2.5 text-left";
+  "relative overflow-hidden rounded-xl border text-xs sm:text-sm md:text-base font-medium shadow-elevation-2 transition-[transform,box-shadow,background-color] duration-150 active:scale-[0.97] active:shadow-none tabular-nums flex flex-col justify-between aspect-[5/4] p-2 md:p-2.5 text-left";
 
 // Tiles re-render only when their own data changes. onClick is an inline
 // closure over the room number, so it's excluded from the comparison, and

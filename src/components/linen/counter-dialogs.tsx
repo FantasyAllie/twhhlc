@@ -19,9 +19,7 @@ const rowStyle = (
   theme: string | undefined,
 ): React.CSSProperties | undefined => {
   const c = item.color ? COLOR_SWATCHES[item.color] : null;
-  return c
-    ? { backgroundColor: theme === "dark" ? c.darkBg : c.bg, borderLeft: `4px solid ${c.border}` }
-    : undefined;
+  return c ? { backgroundColor: theme === "dark" ? c.darkBg : c.bg } : undefined;
 };
 
 const textStyle = (item: TemplateItem, theme: string | undefined) =>
