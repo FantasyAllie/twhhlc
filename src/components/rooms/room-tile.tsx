@@ -38,6 +38,10 @@ export function ReceptionRoomTile({
 }: BaseProps) {
   const flags = resolveRoomStatusFlags(room, statusIds);
   const isStaffRoom = flags.isStaff;
+  // Rooms that were never serviced (DND / Service Declined / Stayover / ROS)
+  // don't get a done marker — nobody entered them.
+  const showDoneMark =
+    !!room?.done && !isNR && !flags.isDnd && !flags.isStayover && !flags.isRos && !isStaffRoom;
   const meta = computeTileMeta({
     flags,
     state,
@@ -66,11 +70,11 @@ export function ReceptionRoomTile({
     >
       {!isStaffRoom && (
         <>
-          {room?.done && (
+          {showDoneMark && (
             <Check
               aria-hidden="true"
               strokeWidth={3}
-              className="pointer-events-none absolute inset-0 m-auto h-[80%] w-[80%] opacity-30"
+              className="pointer-events-none absolute inset-0 m-auto h-[80%] w-[80%] opacity-40"
               style={{ color: meta.accent }}
             />
           )}
