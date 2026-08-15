@@ -43,6 +43,103 @@ export const resetCutoff = (now: Date): Date => {
 export const dirtyStatusId = (receptionStatuses: ReceptionItem[]): string | null =>
   receptionStatuses.find((s) => s.label.toLowerCase() === "dirty")?.id ?? null;
 
+// --- Status id resolution + tile meta (shared by both role tile renderers) ---
+
+export type RoomStatusIds = {
+  dnd: string | null;
+  staff: string | null;
+  stay: string | null;
+  dirty: string | null;
+  clean: string | null;
+  arrival: string | null;
+  ros: string | null;
+};
+
+const byLabel = (items: ReceptionItem[], label: string) =>
+  items.find((s) => s.label.toLowerCase() === label)?.id ?? null;
+
+export const resolveRoomStatusIds = (receptionStatuses: ReceptionItem[]): RoomStatusIds => ({
+  dnd: receptionStatuses.find((s) => s.label === "DND")?.id ?? null,
+  staff: byLabel(receptionStatuses, "staff"),
+  stay: byLabel(receptionStatuses, "stayover"),
+  dirty: byLabel(receptionStatuses, "dirty"),
+  clean: byLabel(receptionStatuses, "clean"),
+  arrival: byLabel(receptionStatuses, "arrival"),
+  ros: byLabel(receptionStatuses, "ros"),
+});
+
+export type RoomStatusFlags = {
+  isStaff: boolean;
+  isDnd: boolean;
+  isStayover: boolean;
+  isDirty: boolean;
+  isClean: boolean;
+  isArrival: boolean;
+  isRos: boolean;
+  hasStatus: boolean;
+};
+
+export const resolveRoomStatusFlags = (
+  room: Room | undefined,
+  ids: RoomStatusIds,
+): RoomStatusFlags => {
+  const sid = room?.reception_status_id ?? room?.default_status ?? null;
+  return {
+    isStaff: !!ids.staff && sid === ids.staff,
+    isDnd: !!ids.dnd && sid === ids.dnd,
+    isStayover: !!ids.stay && sid === ids.stay,
+    isDirty: !!ids.dirty && sid === ids.dirty,
+    isClean: !!ids.clean && sid === ids.clean,
+    isArrival: !!ids.arrival && sid === ids.arrival,
+    isRos: !!ids.ros && sid === ids.ros,
+    hasStatus: !!sid,
+  };
+};
+
+export type TileMeta = { bg: string; fg: string; accent: string; label: string };
+
+// Verbatim tile colour/label rules from the route file, with the only
+// role difference (dirty label, progress condition) passed in.
+export const computeTileMeta = (args: {
+  flags: RoomStatusFlags;
+  state: RoomTileState;
+  isNR: boolean;
+  hasLinenCount: boolean;
+  earlyCheckIn: boolean;
+  role: "reception" | "housekeeping";
+}): TileMeta => {
+  const { flags, state, isNR, hasLinenCount, earlyCheckIn, role } = args;
+  const isDone = state === "done" || state === "complete";
+  if (flags.isStaff)
+    return { bg: "var(--room-staff)", fg: "var(--room-staff-fg)", accent: "var(--room-staff-accent)", label: "Staff" };
+  if (flags.isRos)
+    return { bg: "var(--room-staff)", fg: "var(--room-staff-fg)", accent: "var(--room-staff-accent)", label: "ROS" };
+  if (isNR)
+    return { bg: "var(--room-stayover)", fg: "var(--room-stayover-fg)", accent: "var(--room-stayover-accent)", label: "Stayover - Service Declined" };
+  if (flags.isStayover || flags.isDnd)
+    return { bg: "var(--room-stayover)", fg: "var(--room-stayover-fg)", accent: "var(--room-stayover-accent)", label: "Stayover" };
+  if (isDone)
+    return flags.isClean
+      ? { bg: "var(--room-cleandone)", fg: "var(--room-cleandone-fg)", accent: "var(--room-cleandone-accent)", label: "Clean" }
+      : { bg: "var(--room-complete)", fg: "var(--room-complete-fg)", accent: "var(--room-complete-accent)", label: "Arrival" };
+  if (flags.isDirty)
+    return {
+      bg: "var(--room-dirty)",
+      fg: "var(--room-dirty-fg)",
+      accent: "var(--room-dirty-accent)",
+      label: role === "reception" ? "ROS - Dirty" : "Dirty",
+    };
+  const inProgress =
+    flags.hasStatus || hasLinenCount || (role === "housekeeping" && state === "progress");
+  if (inProgress) return { ...roomStateMeta.progress, label: "Cleaning in Progress" };
+  if (earlyCheckIn)
+    return { bg: "var(--room-early)", fg: "var(--room-early-fg)", accent: "var(--room-early-accent)", label: "Early check-in" };
+  return {
+    ...roomStateMeta.todo,
+    label: flags.isArrival ? "Arrival" : flags.isDirty ? "Dirty" : flags.isClean ? "Clean" : "Not started",
+  };
+};
+
 // Rooms currently marked Dirty get reset like any other room, but the
 // "Guest has checked out" flag is switched on so housekeeping can spot rooms
 // needing cleaning first thing in the morning.

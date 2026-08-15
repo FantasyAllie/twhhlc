@@ -111,9 +111,11 @@ import type { SnapshotKind } from "@/lib/exports";
 import {
   computeResetPreserveMap,
   getRoomTileState as computeRoomTileState,
+  resolveRoomStatusIds,
   roomStateMeta,
 } from "@/lib/rooms";
 import type { RoomTileState } from "@/lib/rooms";
+import { HousekeepingRoomTile, ReceptionRoomTile } from "@/components/rooms/room-tile";
 
 export const Route = createFileRoute("/app")({
   ssr: false,
@@ -6248,268 +6250,47 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
       });
     }
   const nodes: React.ReactNode[] = [];
-   const dndStatusId = receptionStatuses.find((s) => s.label === "DND")?.id ?? null;
-    const staffStatusIdGlobal = receptionStatuses.find(
-      (s) => s.label.toLowerCase() === "staff",
-    )?.id ?? null;
-    const stayStatusIdGlobal = receptionStatuses.find(
-      (s) => s.label.toLowerCase() === "stayover",
-    )?.id ?? null;
-    const dirtyStatusIdGlobal = receptionStatuses.find(
-      (s) => s.label.toLowerCase() === "dirty",
-    )?.id ?? null;
-    const cleanStatusIdGlobal = receptionStatuses.find(
-      (s) => s.label.toLowerCase() === "clean",
-    )?.id ?? null;
-    const arrivalStatusIdGlobal = receptionStatuses.find(
-      (s) => s.label.toLowerCase() === "arrival",
-    )?.id ?? null;
-    const rosStatusIdGlobal = receptionStatuses.find(
-      (s) => s.label.toLowerCase() === "ros",
-    )?.id ?? null;
+    const statusIds = resolveRoomStatusIds(receptionStatuses);
    for (let i = 0; i < visibleRooms.length; i++) {
    const n = visibleRooms[i];
  const done = doneSet.has(n);
  const isOpen = openRoom === n;
-  if (isReception) {
-    const room = rooms.find((r) => r.room_number === n);
-    const staffStatusId = receptionStatuses.find(
-      (s) => s.label.toLowerCase() === "staff",
-    )?.id;
-    const isStaffRoom = (room?.reception_status_id ?? room?.default_status) === staffStatusId;
-    const isDnd = !!dndStatusId && (room?.reception_status_id ?? room?.default_status) === dndStatusId;
-     const isStayover = !!stayStatusIdGlobal && (room?.reception_status_id ?? room?.default_status) === stayStatusIdGlobal;
-     const isDirty = !!dirtyStatusIdGlobal && (room?.reception_status_id ?? room?.default_status) === dirtyStatusIdGlobal;
-     const isClean = !!cleanStatusIdGlobal && (room?.reception_status_id ?? room?.default_status) === cleanStatusIdGlobal;
-     const isArrival = !!arrivalStatusIdGlobal && (room?.reception_status_id ?? room?.default_status) === arrivalStatusIdGlobal;
-     const isRos = !!rosStatusIdGlobal && (room?.reception_status_id ?? room?.default_status) === rosStatusIdGlobal;
-     const state = getRoomTileState(n, done);
-     const baseMeta = roomStateMeta[state];
-     const hasStatus = !!(room?.reception_status_id ?? room?.default_status);
-      const hasLinenCount = counts.some((c) => c.room_number === n && (c.count ?? 0) > 0);
-       const isNR = nrOnRooms.has(n);
-      const meta = isStaffRoom
-        ? { bg: "var(--room-staff)", fg: "var(--room-staff-fg)", accent: "var(--room-staff-accent)", label: "Staff" }
-        : isRos
-          ? { bg: "var(--room-staff)", fg: "var(--room-staff-fg)", accent: "var(--room-staff-accent)", label: "ROS" }
-         : isNR
-           ? { bg: "var(--room-stayover)", fg: "var(--room-stayover-fg)", accent: "var(--room-stayover-accent)", label: "Stayover - Service Declined" }
-        : (isStayover || isDnd)
-          ? { bg: "var(--room-stayover)", fg: "var(--room-stayover-fg)", accent: "var(--room-stayover-accent)", label: "Stayover" }
-        : (state === "done" || state === "complete")
-          ? (isClean
-              ? { bg: "var(--room-cleandone)", fg: "var(--room-cleandone-fg)", accent: "var(--room-cleandone-accent)", label: "Clean" }
-              : { bg: "var(--room-complete)", fg: "var(--room-complete-fg)", accent: "var(--room-complete-accent)", label: "Arrival" })
-        : isDirty
-          ? { bg: "var(--room-dirty)", fg: "var(--room-dirty-fg)", accent: "var(--room-dirty-accent)", label: "ROS - Dirty" }
-          : (hasStatus || hasLinenCount)
-            ? { ...roomStateMeta.progress, label: "Cleaning in Progress" }
-            : room?.early_check_in
-              ? { bg: "var(--room-early)", fg: "var(--room-early-fg)", accent: "var(--room-early-accent)", label: "Early check-in" }
-              : { ...roomStateMeta.todo, label: isArrival ? "Arrival" : isDirty ? "Dirty" : isClean ? "Clean" : "Not started" };
-    nodes.push(
-        <button
-        key={`r-${n}`}
-          type="button"
-          disabled={isStaffRoom}
-          onClick={() => openOrToggle(n)}
-        className={cn(
-             "relative overflow-hidden rounded-lg border text-xs sm:text-sm md:text-base font-medium transition-colors tabular-nums flex flex-col justify-between aspect-[5/4] p-1.5 md:p-2.5 pt-2 md:pt-3 text-left",
-             openRoom === n && !isStaffRoom && "ring-2 ring-ring border-transparent bg-accent",
-             isStaffRoom && "opacity-90"
-        )}
-        style={
-            openRoom === n
-              ? undefined
-               : { backgroundColor: meta.bg, color: meta.fg, borderColor: meta.accent, borderTopWidth: 3 }
-        }
-         aria-label={`Room ${n} ${meta.label}${isStaffRoom ? " staff" : ""}`}
-      >
-         {!isStaffRoom && (
-           <>
-              <span className="text-sm sm:text-base font-bold leading-none inline-flex items-center gap-1">
-                {n}
-                {isDnd && (
-                   <>
-                     <span aria-hidden className="text-sm sm:text-base font-bold leading-none opacity-70">-</span>
-                     <span
-                       aria-label="DND"
-                       className="text-sm sm:text-base font-bold leading-none"
-                     >
-                       DND
-                     </span>
-                   </>
-                )}
-                  {isNR && (
-                     <>
-                       <span aria-hidden className="text-sm sm:text-base font-bold leading-none opacity-70">-</span>
-                       <span
-                         aria-label="Not Required"
-                         className="text-sm sm:text-base font-bold leading-none"
-                       >
-                         NR
-                       </span>
-                     </>
-                  )}
-              </span>
-              <span className="text-[9px] sm:text-[10px] md:text-xs font-medium leading-none opacity-90 whitespace-pre-line pr-4">
-                 {meta.label}
-               </span>
-           </>
-         )}
-         {isStaffRoom && (
-           <>
-             <span className="text-sm sm:text-base font-bold leading-none">{n}</span>
-             <span className="text-[9px] sm:text-[10px] md:text-xs font-medium leading-none opacity-90">
-               Staff
-             </span>
-           </>
-         )}
-          {(hasActiveMessage(n) || !!room?.housekeeping_note) && !isStaffRoom && (
-            <span
-              aria-label="Housekeeping note"
-                className={cn(
-                  "absolute right-1 h-2 w-2 rounded-full bg-amber-500 ring-2 ring-background",
-                  room?.guest_vacated ? "top-5" : "top-1",
-                )}
-            />
-          )}
-          {room?.needs_maintenance && !isStaffRoom && (
-            <Wrench
-              aria-label="Maintenance"
-              className="absolute bottom-0.5 right-0.5 h-3 w-3 text-amber-600 dark:text-amber-400"
-            />
-          )}
-          {room?.guest_vacated && !isStaffRoom && (
-            <DoorOpen
-              aria-label="Guest vacated"
-              className="absolute top-0.5 right-0.5 h-3.5 w-3.5 text-emerald-600 dark:text-emerald-400"
-            />
-          )}
-        </button>,
-    );
-  } else {
-    const room = rooms.find((r) => r.room_number === n);
-    const isDnd = !!dndStatusId && (room?.reception_status_id ?? room?.default_status) === dndStatusId;
-    const isStaff = !!staffStatusIdGlobal && (room?.reception_status_id ?? room?.default_status) === staffStatusIdGlobal;
-     const isStayover = !!stayStatusIdGlobal && (room?.reception_status_id ?? room?.default_status) === stayStatusIdGlobal;
-     const isDirty = !!dirtyStatusIdGlobal && (room?.reception_status_id ?? room?.default_status) === dirtyStatusIdGlobal;
-     const isClean = !!cleanStatusIdGlobal && (room?.reception_status_id ?? room?.default_status) === cleanStatusIdGlobal;
-    const isArrival = !!arrivalStatusIdGlobal && (room?.reception_status_id ?? room?.default_status) === arrivalStatusIdGlobal;
-     const isRos = !!rosStatusIdGlobal && (room?.reception_status_id ?? room?.default_status) === rosStatusIdGlobal;
-     const state = getRoomTileState(n, receptionDoneSet.has(n));
-      const baseMeta = state === "done"
-        ? { bg: "var(--room-done)", fg: "var(--room-done-fg)", accent: "var(--room-done-accent)", label: "Clean" }
-        : roomStateMeta[state];
-     const hasStatus = !!(room?.reception_status_id ?? room?.default_status);
-      const hasLinenCount = counts.some((c) => c.room_number === n && (c.count ?? 0) > 0);
-       const isNR = nrOnRooms.has(n);
-      const meta = isStaff
-        ? { bg: "var(--room-staff)", fg: "var(--room-staff-fg)", accent: "var(--room-staff-accent)", label: "Staff" }
-        : isRos
-          ? { bg: "var(--room-staff)", fg: "var(--room-staff-fg)", accent: "var(--room-staff-accent)", label: "ROS" }
-         : isNR
-           ? { bg: "var(--room-stayover)", fg: "var(--room-stayover-fg)", accent: "var(--room-stayover-accent)", label: "Stayover - Service Declined" }
-        : (isStayover || isDnd)
-          ? { bg: "var(--room-stayover)", fg: "var(--room-stayover-fg)", accent: "var(--room-stayover-accent)", label: "Stayover" }
-        : (state === "done" || state === "complete")
-          ? (isClean
-              ? { bg: "var(--room-cleandone)", fg: "var(--room-cleandone-fg)", accent: "var(--room-cleandone-accent)", label: "Clean" }
-              : { bg: "var(--room-complete)", fg: "var(--room-complete-fg)", accent: "var(--room-complete-accent)", label: "Arrival" })
-          : isDirty
-            ? { bg: "var(--room-dirty)", fg: "var(--room-dirty-fg)", accent: "var(--room-dirty-accent)", label: "Dirty" }
-          : (hasStatus || hasLinenCount || state === "progress")
-            ? { ...roomStateMeta.progress, label: "Cleaning in Progress" }
-             : room?.early_check_in
-               ? { bg: "var(--room-early)", fg: "var(--room-early-fg)", accent: "var(--room-early-accent)", label: "Early check-in" }
-               : { ...roomStateMeta.todo, label: isArrival ? "Arrival" : isDirty ? "Dirty" : isClean ? "Clean" : "Not started" };
-    nodes.push(
-      <button
-        key={`r-${n}`}
-        type="button"
-        onClick={() => openOrToggle(n)}
-        className={cn(
-             "relative overflow-hidden rounded-lg border text-xs sm:text-sm md:text-base font-medium transition-colors tabular-nums flex flex-col justify-between aspect-[5/4] p-1.5 md:p-2.5 pt-2 md:pt-3 text-left",
-          isOpen && "ring-2 ring-ring border-transparent bg-accent",
-        )}
-        style={
-          isOpen
-            ? undefined
-            : isStaff
-              ? { backgroundColor: "var(--room-staff)", color: "var(--room-staff-fg)", borderColor: "var(--room-staff-accent)", borderTopWidth: 3 }
-              : { backgroundColor: meta.bg, color: meta.fg, borderColor: meta.accent, borderTopWidth: 3 }
-        }
-        aria-pressed={done}
-        aria-expanded={isOpen}
-          aria-label={`Room ${n} ${isStaff ? "staff" : meta.label}`}
-      >
-          {isDirty && !isStaff && (
-            <span
-              aria-hidden="true"
-              className="pointer-events-none absolute inset-0 flex items-center justify-center text-6xl md:text-7xl opacity-15 leading-none"
-            >
-              💩
-            </span>
-          )}
-          {!isStaff && !isRos && !isStayover && !isDnd && (state === "done" || state === "complete") && (!room?.reception_bed_id || !hasStatus) && (
-            <AlertCircle
-              aria-hidden="true"
-              className="pointer-events-none absolute inset-0 m-auto h-[80%] w-[80%] opacity-30"
-              style={{ color: meta.accent }}
-            />
-          )}
-         <span className="text-sm sm:text-base font-bold leading-none inline-flex items-center gap-1">
-           {n}
-          {!isStaff && (state === "done" || state === "complete") && (
-            <Check aria-label="Done" className="h-3.5 w-3.5 opacity-80" />
-          )}
-           {isDnd && !isStaff && (
-             <span
-               aria-label="DND"
-                 className="text-sm sm:text-base font-bold leading-none"
-             >
-               DND
-             </span>
-           )}
-            {isNR && !isStaff && (
-              <span
-                aria-label="Not Required"
-                 className="text-sm sm:text-base font-bold leading-none"
-              >
-                NR
-              </span>
-            )}
-         </span>
-          <span className="text-[9px] sm:text-[10px] md:text-xs font-medium leading-none opacity-90 whitespace-pre-line pr-4">
-            {isStaff ? "Staff" : meta.label}
-          </span>
-          {hasActiveMessage(n) && (
-            <span
-              aria-label="Message"
-                className={cn(
-                  "absolute right-1 h-2 w-2 rounded-full bg-amber-500 ring-2 ring-background",
-                  room?.guest_vacated ? "top-5" : "top-1",
-                )}
-            />
-          )}
-          {room?.needs_maintenance && (
-            <Wrench
-              aria-label="Maintenance"
-              className="absolute bottom-0.5 right-0.5 h-3 w-3 text-amber-600 dark:text-amber-400"
-            />
-          )}
-          {room?.guest_vacated && (
-            <span
-              aria-label="Guest vacated"
-              className="absolute top-0.5 right-0.5 rounded-sm bg-emerald-600 px-1 py-px text-[8px] font-bold leading-none tracking-wide text-white shadow-sm dark:bg-emerald-500 dark:text-emerald-950"
-            >
-              Vacant
-            </span>
-          )}
-      </button>,
-    );
-  }
-  }
+   const room = rooms.find((r) => r.room_number === n);
+   const hasLinenCount = counts.some((c) => c.room_number === n && (c.count ?? 0) > 0);
+   const isNR = nrOnRooms.has(n);
+   if (isReception) {
+     nodes.push(
+       <ReceptionRoomTile
+         key={`r-${n}`}
+         n={n}
+         room={room}
+         statusIds={statusIds}
+         state={getRoomTileState(n, done)}
+         isNR={isNR}
+         hasLinenCount={hasLinenCount}
+         isOpen={isOpen}
+         hasMessage={hasActiveMessage(n)}
+         onClick={() => openOrToggle(n)}
+       />,
+     );
+   } else {
+     nodes.push(
+       <HousekeepingRoomTile
+         key={`r-${n}`}
+         n={n}
+         room={room}
+         statusIds={statusIds}
+         state={getRoomTileState(n, receptionDoneSet.has(n))}
+         isNR={isNR}
+         hasLinenCount={hasLinenCount}
+         isOpen={isOpen}
+         hasMessage={hasActiveMessage(n)}
+         onClick={() => openOrToggle(n)}
+         done={done}
+       />,
+     );
+   }
+   }
  return nodes;
  })()}
  </div>
