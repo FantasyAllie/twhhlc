@@ -5,6 +5,7 @@ import { supabase } from "@/integrations/supabase/client";
 import type {
   ExportSnapshot,
   LostPropertyLite,
+  MaintenanceArea,
   MaintenanceRequest,
   RoomMessage,
 } from "@/lib/app-types";
@@ -29,7 +30,7 @@ export const useMaintenanceRequestsQuery = () =>
     queryFn: async (): Promise<MaintenanceRequest[]> => {
       const { data, error } = await supabase
         .from("maintenance_requests" as never)
-        .select("id,room_number,message,created_by_username,done,done_by_username,done_at,created_at,photo_paths")
+        .select("id,room_number,area_label,message,created_by_username,done,done_by_username,done_at,created_at,photo_paths")
         .order("created_at", { ascending: false });
       if (error) throw error;
       return (data ?? []) as MaintenanceRequest[];
@@ -62,5 +63,19 @@ export const useExportSnapshotsQuery = () =>
         .limit(100);
       if (error) throw error;
       return (data ?? []) as ExportSnapshot[];
+    },
+  });
+
+export const useMaintenanceAreasQuery = () =>
+  useQuery({
+    queryKey: ["maintenance_areas"],
+    queryFn: async (): Promise<MaintenanceArea[]> => {
+      const { data, error } = await supabase
+        .from("maintenance_areas" as never)
+        .select("id,label,sort_order,created_at")
+        .order("sort_order", { ascending: true, nullsFirst: false })
+        .order("label", { ascending: true });
+      if (error) throw error;
+      return (data ?? []) as MaintenanceArea[];
     },
   });

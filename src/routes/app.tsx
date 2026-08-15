@@ -21,6 +21,7 @@ import {
   useExportSnapshotsQuery,
   useLostPropertyOpenQuery,
   useMaintenanceRequestsQuery,
+  useMaintenanceAreasQuery,
   useRoomMessagesQuery,
 } from "@/hooks/use-ops-log";
 import { supabase } from "@/integrations/supabase/client";
@@ -29,6 +30,7 @@ import { Input } from "@/components/ui/input";
 import { Minus, Plus, X, Menu, ArrowUp, ArrowDown, Pencil, Check, Trash2, Sun, Moon, List, Bed, Ban, History, Users, User, LogOut, Hash, ConciergeBell, ClipboardList, Printer, Filter, Wrench, DoorOpen, Bell, Eye, EyeOff, HelpCircle, AlertCircle, MessageSquare, PackageSearch, RotateCcw, ChevronDown, Camera, LayoutGrid, Truck } from "lucide-react";
 import {
   LinenCountPrintDialog,
+  MaintenancePrintDialog,
   RoomStatusPrintDialog,
   SnapshotPrintDialog,
 } from "@/components/exports/print-picker-dialogs";
@@ -53,6 +55,7 @@ import { QuickReceptionSheet } from "@/components/quick-reception-sheet";
 import { LostPropertySheet } from "@/components/lost-property-sheet";
 import { PhotoAttachments, PhotoComposer } from "@/components/entry-photos";
 import { MaintenanceLogSheet } from "@/components/ops/maintenance-log-sheet";
+import { MaintenanceAreasSheet } from "@/components/ops/maintenance-areas-sheet";
 import { HistorySheet } from "@/components/exports/history-sheet";
 import { EditRoomDefaultsSheet, EditRoomSheet } from "@/components/rooms/edit-room-sheets";
 import { MaintenanceDashboard } from "@/components/ops/maintenance-dashboard";
@@ -101,7 +104,7 @@ import {
 import { useTheme } from "@/components/theme-provider";
 import { useCurrentHotel, DEFAULT_HOTEL_NAME } from "@/lib/hotels";
 import { listHotels, setActiveHotel, createHotel, type HotelOption } from "@/lib/auth.functions";
-import { parseCats, categoryLabel, valueFromLabel, COLOR_SWATCHES } from "@/lib/app-format";
+import { parseCats, categoryLabel, valueFromLabel, maintenanceLocation, COLOR_SWATCHES } from "@/lib/app-format";
 import type {
   Category,
   ItemColor,
@@ -121,6 +124,7 @@ import type {
   RejectCount,
   DeliveryCount,
   RoomMessage,
+  MaintenanceArea,
   MaintenanceRequest,
   ViewRole,
   FnbCount,
@@ -344,7 +348,6 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
   const [editingItemName, setEditingItemName] = useState("");
   const [exportSheetOpen, setExportSheetOpen] = useState(false);
   const [endShiftPrintOpen, setEndShiftPrintOpen] = useState(false);
-  const [receptionPrintOpen, setReceptionPrintOpen] = useState(false);
   const [rolePickerSheetOpen, setRolePickerSheetOpen] = useState(false);
   const [editItemSheetId, setEditItemSheetId] = useState<string | null>(null);
   const [filtersSheetOpen, setFiltersSheetOpen] = useState(false);
@@ -489,6 +492,8 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
   const [rejectsPrintOpen, setRejectsPrintOpen] = useState(false);
   const [deliveryPrintOpen, setDeliveryPrintOpen] = useState(false);
   const [fnbPrintOpen, setFnbPrintOpen] = useState(false);
+  const [maintenancePrintOpen, setMaintenancePrintOpen] = useState(false);
+  const [maintenanceAreasOpen, setMaintenanceAreasOpen] = useState(false);
   const [rejectExportOpen, setRejectExportOpen] = useState(false);
   const [roomStatusExportOpen, setRoomStatusExportOpen] = useState(false);
   const [manageRoomsOpen, setManageRoomsOpen] = useState(false);
@@ -543,6 +548,7 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
   const deliveryQ = useDeliveryCountsQuery();
   const messagesQ = useRoomMessagesQuery();
   const maintenanceRequestsQ = useMaintenanceRequestsQuery();
+  const maintenanceAreasQ = useMaintenanceAreasQuery();
   const lostPropertyQ = useLostPropertyOpenQuery();
   const lostPropertyOpenItems = (lostPropertyQ.data ?? []) as LostPropertyLite[];
 
@@ -595,6 +601,26 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
     );
   const hasActiveMessage = (n: number) => activeMessagesByRoom(n).length > 0;
   const maintenanceRequests = (maintenanceRequestsQ.data ?? []) as MaintenanceRequest[];
+  const maintenanceAreas = (maintenanceAreasQ.data ?? []) as MaintenanceArea[];
+  const addMaintenanceArea = async (label: string) => {
+    const { error } = await supabase
+      .from("maintenance_areas" as never)
+      .insert({ label } as never);
+    if (error) {
+      toast.error(error.message);
+      return;
+    }
+    qc.invalidateQueries({ queryKey: ["maintenance_areas"] });
+    toast.success("Area added");
+  };
+  const deleteMaintenanceArea = async (id: string) => {
+    const { error } = await supabase.from("maintenance_areas" as never).delete().eq("id", id);
+    if (error) {
+      toast.error(error.message);
+      return;
+    }
+    qc.invalidateQueries({ queryKey: ["maintenance_areas"] });
+  };
   const openMaintenanceCount = maintenanceRequests.filter((m) => !m.done).length;
   const hasOpenMaintenance = openMaintenanceCount > 0;
 
@@ -719,10 +745,12 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
   };
 
   const submitMaintenanceRequest = async () => {
-    const roomNumber = Number(newMaintenanceRoom);
+    const isArea = newMaintenanceRoom.startsWith("area:");
+    const areaLabel = isArea ? newMaintenanceRoom.slice(5) : null;
+    const roomNumber = isArea ? null : Number(newMaintenanceRoom);
     const text = newMaintenanceText.trim();
-    if (!Number.isFinite(roomNumber) || roomNumber <= 0) {
-      toast.error("Pick a room");
+    if (!isArea && (!Number.isFinite(roomNumber as number) || (roomNumber as number) <= 0)) {
+      toast.error("Pick a location");
       return;
     }
     if (!text) {
@@ -733,6 +761,7 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
       .from("maintenance_requests" as never)
       .insert({
         room_number: roomNumber,
+        area_label: areaLabel,
         message: text,
         created_by_username: authUser?.username ?? null,
       } as never)
@@ -762,8 +791,8 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
     setNewMaintenanceText("");
     setNewMaintenancePhotos([]);
     qc.invalidateQueries({ queryKey: ["maintenance_requests"] });
-    await writeRoomMaintenanceFlag(roomNumber, true);
-    void notifyMaintenanceRequest({ data: { roomNumber, message: text } });
+    if (roomNumber != null) await writeRoomMaintenanceFlag(roomNumber, true);
+    void notifyMaintenanceRequest({ data: { roomNumber, areaLabel: areaLabel, message: text } });
     toast.success("Maintenance request logged");
   };
 
@@ -831,7 +860,7 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
       return;
     }
     qc.invalidateQueries({ queryKey: ["maintenance_requests"] });
-    if (target) await clearRoomFlagIfNoOpenRequests(target.room_number);
+    if (target?.room_number != null) await clearRoomFlagIfNoOpenRequests(target.room_number);
   };
 
   const deleteMaintenanceRequest = async (id: string) => {
@@ -846,7 +875,7 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
       .eq("id", id);
     if (error) toast.error(error.message);
     qc.invalidateQueries({ queryKey: ["maintenance_requests"] });
-    if (target) await clearRoomFlagIfNoOpenRequests(target.room_number);
+    if (target?.room_number != null) await clearRoomFlagIfNoOpenRequests(target.room_number);
   };
 
   const getRejectCount = (templateItemId: string) =>
@@ -1864,7 +1893,6 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
     }
     qc.invalidateQueries({ queryKey: ["export_snapshots"] });
     toast.success(`Backup saved (${jobs.length} ${jobs.length === 1 ? "item" : "items"})`);
-    setEndShiftPrintOpen(true);
   };
 
   const openMaintenanceExport = async () => {
@@ -3032,12 +3060,19 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
     const actions: MenuAction[] = [];
     // Settings menu content is uniform across screen sizes. Larger screens also
     // surface End of shift / Departments on the home header, but they stay here too.
-    if ((realIsAdmin || (realIsManager && hasHousekeeperRole)) && !isReception && !menuIsFnbOnly && !isMaintenance) {
+    if ((realIsAdmin || (realIsManager && hasHousekeeperRole)) && !isReception && !menuIsFnbOnly) {
       actions.push({
         key: "end-of-shift",
         icon: ClipboardList,
-        label: "End of shift",
-        onClick: () => void runEndOfShiftBackup(),
+        label: "Reports",
+        onClick: () => setEndShiftPrintOpen(true),
+      });
+    } else if (isMaintenance) {
+      actions.push({
+        key: "end-of-shift",
+        icon: ClipboardList,
+        label: "Reports",
+        onClick: () => setEndShiftPrintOpen(true),
       });
     }
     if (isAdmin && !isReception) {
@@ -3046,7 +3081,7 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
     if (isReception) {
       actions.push({
         key: "print", icon: Printer, label: "Print",
-        onClick: () => setReceptionPrintOpen(true),
+        onClick: () => printRoomStatus(computeRoomStatus().rows, new Date()),
       });
       actions.push({ key: "help", icon: HelpCircle, label: "Help", onClick: () => setReceptionHelpOpen(true) });
     }
@@ -3143,7 +3178,7 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
               <>
                 <h1 className="text-xl sm:text-2xl font-semibold tracking-tight">{hotelName}</h1>
                 <p className="text-xs text-muted-foreground mt-1 whitespace-pre-line">
-                  An auto-updating room tracker for Housekeeping. Use the help if you get stuck 
+                  An auto-updating room tracker for Housekeeping. Use the help button if you're stuck
                 </p>
               </>
             ) : isFnb ? (
@@ -3197,22 +3232,22 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
             )}
           </div>
  <div className="flex items-center gap-2">
-    {!isMobile && isAdmin && !isReception && (
+    {!isMobile && ((isAdmin && !isReception) || isMaintenance) && (
       <Button
         variant="outline"
         size="sm"
-        onClick={() => void runEndOfShiftBackup()}
-        title="Save today's totals, F&B, room status and maintenance snapshots"
+        onClick={() => setEndShiftPrintOpen(true)}
+        title="Back up today's data and print reports"
       >
         <ClipboardList className="h-4 w-4 mr-2" />
-        End of shift
+        Reports
       </Button>
     )}
     {!isMobile && isReception && (
       <Button
         variant="outline"
         size="sm"
-        onClick={() => setReceptionPrintOpen(true)}
+        onClick={() => printRoomStatus(computeRoomStatus().rows, new Date())}
       >
         <Printer className="h-4 w-4 mr-2" />
         Print
@@ -3317,52 +3352,28 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
  )}
  {/* Mobile export sheet (triggered from the burger menu). */}
   {/* End-of-shift: after backup, offer to print the room status sheet. */}
-  {isReception && (
-    <Dialog open={receptionPrintOpen} onOpenChange={setReceptionPrintOpen}>
-      <DialogContent className="max-w-sm">
-        <DialogHeader>
-          <DialogTitle>Print</DialogTitle>
-          <DialogDescription>Choose which report to print.</DialogDescription>
-        </DialogHeader>
-        <div className="mt-2 grid gap-2">
-          <Button
-            variant="outline"
-            className="justify-start h-12"
-            onClick={() => {
-              setReceptionPrintOpen(false);
-              setRoomStatusPrintOpen(true);
-            }}
-          >
-            <Printer className="h-4 w-4 mr-2" />
-            Room Status Sheet
-          </Button>
-          <Button
-            variant="outline"
-            className="justify-start h-12"
-            onClick={() => {
-              setReceptionPrintOpen(false);
-              setLinenPrintOpen(true);
-            }}
-          >
-            <Printer className="h-4 w-4 mr-2" />
-            Linen Count
-          </Button>
-        </div>
-        <div className="mt-4 flex justify-end">
-          <Button variant="ghost" onClick={() => setReceptionPrintOpen(false)}>Close</Button>
-        </div>
-      </DialogContent>
-    </Dialog>
-  )}
   <Dialog open={endShiftPrintOpen} onOpenChange={setEndShiftPrintOpen}>
     <DialogContent className="max-w-sm">
       <DialogHeader>
-        <DialogTitle>Print reports?</DialogTitle>
+        <DialogTitle>Reports</DialogTitle>
         <DialogDescription>
-          Backup saved. Choose a report, then pick the date to print.
+          {isMaintenance
+            ? "Print maintenance jobs for a day or date range."
+            : "Back up today's data, or choose a report and pick the date to print."}
         </DialogDescription>
       </DialogHeader>
       <div className="mt-2 grid gap-2">
+        {!isMaintenance && (
+          <Button
+            className="justify-start h-12"
+            onClick={() => void runEndOfShiftBackup()}
+          >
+            <ClipboardList className="h-4 w-4 mr-2" />
+            Back up data now
+          </Button>
+        )}
+        {!isMaintenance && (
+          <>
         <Button
           variant="outline"
           className="justify-start h-12"
@@ -3418,6 +3429,19 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
           <List className="h-4 w-4 mr-2" />
           F&amp;B Linen
         </Button>
+          </>
+        )}
+        <Button
+          variant="outline"
+          className="justify-start h-12"
+          onClick={() => {
+            setEndShiftPrintOpen(false);
+            setMaintenancePrintOpen(true);
+          }}
+        >
+          <Wrench className="h-4 w-4 mr-2" />
+          Maintenance
+        </Button>
       </div>
       <div className="mt-4 flex justify-end">
         <Button variant="ghost" onClick={() => setEndShiftPrintOpen(false)}>
@@ -3433,6 +3457,10 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
     snapshots={snapshots}
     liveRows={computeRoomStatus().rows}
     printRoomStatus={printRoomStatus}
+    onBack={() => {
+      setRoomStatusPrintOpen(false);
+      setEndShiftPrintOpen(true);
+    }}
   />
   <LinenCountPrintDialog
     open={linenPrintOpen}
@@ -3443,6 +3471,10 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
     printTotals={(rows, grand, when, subheading, footer) =>
       printTotals(rows, grand, when, "totals", subheading, footer)
     }
+    onBack={() => {
+      setLinenPrintOpen(false);
+      setEndShiftPrintOpen(true);
+    }}
   />
   <SnapshotPrintDialog
     open={rejectsPrintOpen}
@@ -3454,6 +3486,10 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
     printTotals={(rows, grand, when, footer) =>
       printTotals(rows, grand, when, "rejects", undefined, footer)
     }
+    onBack={() => {
+      setRejectsPrintOpen(false);
+      setEndShiftPrintOpen(true);
+    }}
   />
   <SnapshotPrintDialog
     open={deliveryPrintOpen}
@@ -3465,6 +3501,10 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
     printTotals={(rows, grand, when, footer) =>
       printTotals(rows, grand, when, "delivery", undefined, footer)
     }
+    onBack={() => {
+      setDeliveryPrintOpen(false);
+      setEndShiftPrintOpen(true);
+    }}
   />
   <SnapshotPrintDialog
     open={fnbPrintOpen}
@@ -3476,6 +3516,23 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
     printTotals={(rows, grand, when, footer) =>
       printTotals(rows, grand, when, "fnb_totals", undefined, footer)
     }
+    onBack={() => {
+      setFnbPrintOpen(false);
+      setEndShiftPrintOpen(true);
+    }}
+  />
+  <MaintenancePrintDialog
+    open={maintenancePrintOpen}
+    onOpenChange={setMaintenancePrintOpen}
+    requests={maintenanceRequests}
+    locationLabel={maintenanceLocation}
+    printJobs={(title, subheading, rows, showCompleted) =>
+      Exp.printMaintenanceJobs(hotelName, title, subheading, rows, showCompleted)
+    }
+    onBack={() => {
+      setMaintenancePrintOpen(false);
+      setEndShiftPrintOpen(true);
+    }}
   />
 
  {isAdmin && !isReception && (
@@ -3901,6 +3958,9 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
   onOpenChange={setMaintenanceLogOpen}
   rooms={rooms}
   maintenanceRequests={maintenanceRequests}
+  maintenanceAreas={maintenanceAreas}
+  canManageAreas={isAdmin}
+  onManageAreas={() => setMaintenanceAreasOpen(true)}
   hasOpenMaintenance={hasOpenMaintenance}
   openMaintenanceCount={openMaintenanceCount}
   isReception={isReception}
@@ -3919,6 +3979,14 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
   markMaintenanceDone={markMaintenanceDone}
   deleteMaintenanceRequest={deleteMaintenanceRequest}
   setMaintenancePhotoPaths={setMaintenancePhotoPaths}
+/>
+
+<MaintenanceAreasSheet
+  open={maintenanceAreasOpen}
+  onOpenChange={setMaintenanceAreasOpen}
+  areas={maintenanceAreas}
+  addArea={addMaintenanceArea}
+  deleteArea={deleteMaintenanceArea}
 />
 
 <HistorySheet

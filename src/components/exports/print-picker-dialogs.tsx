@@ -2,7 +2,7 @@
 // Past dates are served from the saved snapshot history (a rolling year);
 // today always prints the live figures.
 import { useState } from "react";
-import { CalendarIcon, Printer } from "lucide-react";
+import { ArrowLeft, CalendarIcon, Printer } from "lucide-react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Calendar } from "@/components/ui/calendar";
@@ -15,10 +15,27 @@ import {
 } from "@/components/ui/dialog";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { cn } from "@/lib/utils";
-import type { ExportSnapshot, RoomStatusRow, SnapshotRow } from "@/lib/app-types";
+import type {
+  ExportSnapshot,
+  MaintenanceRequest,
+  RoomStatusRow,
+  SnapshotRow,
+} from "@/lib/app-types";
 import * as Exp from "@/lib/exports";
 
 const label = (d: Date | undefined) => (d ? Exp.formatLongDate(d, true) : "Pick a date");
+
+// Shared "back to the report chooser" affordance so users don't have to close
+// a picker and re-open the Reports menu.
+const BackRow = ({ onBack }: { onBack?: () => void }) =>
+  onBack ? (
+    <div className="mt-1 flex justify-start">
+      <Button variant="ghost" size="sm" onClick={onBack}>
+        <ArrowLeft className="h-4 w-4 mr-2" />
+        Back
+      </Button>
+    </div>
+  ) : null;
 
 const DateField = ({
   value,
@@ -112,6 +129,7 @@ export const SnapshotPrintDialog = ({
   description,
   liveRows = [],
   printTotals,
+  onBack,
 }: {
   open: boolean;
   onOpenChange: (v: boolean) => void;
@@ -121,6 +139,7 @@ export const SnapshotPrintDialog = ({
   description?: string;
   liveRows?: SnapshotRow[];
   printTotals: (rows: SnapshotRow[], grand: number, when: Date, footer?: string) => void;
+  onBack?: () => void;
 }) => {
   const [date, setDate] = useState<Date>(new Date());
   const available = savedDays(snapshots, kind);
@@ -171,6 +190,7 @@ export const SnapshotPrintDialog = ({
             <Printer className="h-4 w-4 mr-2" />
             Print
           </Button>
+          <BackRow onBack={onBack} />
         </div>
       </DialogContent>
     </Dialog>
@@ -183,12 +203,14 @@ export const RoomStatusPrintDialog = ({
   snapshots,
   liveRows,
   printRoomStatus,
+  onBack,
 }: {
   open: boolean;
   onOpenChange: (v: boolean) => void;
   snapshots: ExportSnapshot[];
   liveRows: RoomStatusRow[];
   printRoomStatus: (rows: RoomStatusRow[], when: Date) => void;
+  onBack?: () => void;
 }) => {
   const [date, setDate] = useState<Date>(new Date());
   const available = savedDays(snapshots, "room_status");
@@ -235,6 +257,7 @@ export const RoomStatusPrintDialog = ({
             <Printer className="h-4 w-4 mr-2" />
             Print
           </Button>
+          <BackRow onBack={onBack} />
         </div>
       </DialogContent>
     </Dialog>
@@ -248,6 +271,7 @@ export const LinenCountPrintDialog = ({
   liveRows,
   printTotals,
   linenDeliveryDays = [],
+  onBack,
 }: {
   open: boolean;
   onOpenChange: (v: boolean) => void;
@@ -261,6 +285,7 @@ export const LinenCountPrintDialog = ({
     subheading?: string,
     footer?: string,
   ) => void;
+  onBack?: () => void;
 }) => {
   const [mode, setMode] = useState<"single" | "range" | "delivery">("single");
   const [date, setDate] = useState<Date>(new Date());
@@ -431,6 +456,160 @@ export const LinenCountPrintDialog = ({
             </>
           )}
         </div>
+        <BackRow onBack={onBack} />
+      </DialogContent>
+    </Dialog>
+  );
+};
+// Maintenance log reports: completed jobs for a day or range, plus the current
+// list of unresolved requests. Photos are deliberately omitted.
+export const MaintenancePrintDialog = ({
+  open,
+  onOpenChange,
+  requests,
+  locationLabel,
+  printJobs,
+  onBack,
+}: {
+  open: boolean;
+  onOpenChange: (v: boolean) => void;
+  requests: MaintenanceRequest[];
+  locationLabel: (m: MaintenanceRequest) => string;
+  printJobs: (
+    title: string,
+    subheading: string,
+    rows: Exp.MaintenanceJobRow[],
+    showCompleted: boolean,
+  ) => void;
+  onBack?: () => void;
+}) => {
+  const [mode, setMode] = useState<"single" | "range" | "open">("single");
+  const [date, setDate] = useState<Date>(new Date());
+  const [from, setFrom] = useState<Date | undefined>(undefined);
+  const [to, setTo] = useState<Date | undefined>(undefined);
+
+  const stamp = (iso: string | null | undefined) =>
+    iso ? Exp.formatLongDate(new Date(iso), false) : "—";
+
+  const toRow = (m: MaintenanceRequest): Exp.MaintenanceJobRow => ({
+    location: locationLabel(m),
+    message: m.message,
+    logged: stamp(m.created_at),
+    by: m.created_by_username ?? "—",
+    completed: stamp(m.done_at),
+    completedBy: m.done_by_username ?? "—",
+  });
+
+  const printCompletedSingle = () => {
+    const rows = requests
+      .filter((m) => m.done && m.done_at && Exp.isSameDay(new Date(m.done_at), date))
+      .map(toRow);
+    if (rows.length === 0) {
+      toast.error(`No jobs completed on ${Exp.formatLongDate(date, false)}`);
+      return;
+    }
+    printJobs("Completed Maintenance Jobs", Exp.formatLongDate(date, true), rows, true);
+    onOpenChange(false);
+  };
+
+  const printCompletedRange = () => {
+    if (!from || !to) {
+      toast.error("Pick both dates");
+      return;
+    }
+    const [start, end] = from.getTime() <= to.getTime() ? [from, to] : [to, from];
+    const s = Exp.startOfDay(start).getTime();
+    const e = Exp.endOfDay(end).getTime();
+    const rows = requests
+      .filter((m) => {
+        if (!m.done || !m.done_at) return false;
+        const t = new Date(m.done_at).getTime();
+        return t >= s && t <= e;
+      })
+      .map(toRow);
+    if (rows.length === 0) {
+      toast.error("No jobs completed in that range");
+      return;
+    }
+    const sub = `${Exp.formatLongDate(start, false)} - ${Exp.formatLongDate(end, true)}`;
+    printJobs("Completed Maintenance Jobs", sub, rows, true);
+    onOpenChange(false);
+  };
+
+  const printOpen = () => {
+    const rows = requests.filter((m) => !m.done).map(toRow);
+    if (rows.length === 0) {
+      toast.error("No unresolved maintenance requests");
+      return;
+    }
+    printJobs(
+      "Unresolved Maintenance Requests",
+      `As at ${Exp.formatLongDate(new Date(), true)}`,
+      rows,
+      false,
+    );
+    onOpenChange(false);
+  };
+
+  return (
+    <Dialog open={open} onOpenChange={onOpenChange}>
+      <DialogContent className="max-w-sm">
+        <DialogHeader>
+          <DialogTitle>Maintenance</DialogTitle>
+          <DialogDescription>
+            Print completed jobs for a day or date range, or the current unresolved list.
+          </DialogDescription>
+        </DialogHeader>
+        <div className="mt-2 grid gap-3">
+          <div className="grid grid-cols-2 gap-2">
+            <Button variant={mode === "single" ? "default" : "outline"} onClick={() => setMode("single")}>
+              Single date
+            </Button>
+            <Button variant={mode === "range" ? "default" : "outline"} onClick={() => setMode("range")}>
+              Date range
+            </Button>
+            <Button
+              variant={mode === "open" ? "default" : "outline"}
+              className="col-span-2"
+              onClick={() => setMode("open")}
+            >
+              Unresolved requests
+            </Button>
+          </div>
+          {mode === "single" ? (
+            <>
+              <DateField value={date} onChange={(d) => d && setDate(d)} />
+              <Button className="h-12" onClick={printCompletedSingle}>
+                <Printer className="h-4 w-4 mr-2" />
+                Print completed jobs
+              </Button>
+            </>
+          ) : mode === "range" ? (
+            <>
+              <div className="grid gap-2">
+                <span className="text-xs uppercase tracking-wide text-muted-foreground">From</span>
+                <DateField value={from} onChange={setFrom} />
+                <span className="text-xs uppercase tracking-wide text-muted-foreground">To</span>
+                <DateField value={to} onChange={setTo} />
+              </div>
+              <Button className="h-12" onClick={printCompletedRange}>
+                <Printer className="h-4 w-4 mr-2" />
+                Print completed jobs
+              </Button>
+            </>
+          ) : (
+            <>
+              <p className="text-sm text-muted-foreground">
+                Prints every request that hasn't been marked done yet.
+              </p>
+              <Button className="h-12" onClick={printOpen}>
+                <Printer className="h-4 w-4 mr-2" />
+                Print unresolved requests
+              </Button>
+            </>
+          )}
+        </div>
+        <BackRow onBack={onBack} />
       </DialogContent>
     </Dialog>
   );

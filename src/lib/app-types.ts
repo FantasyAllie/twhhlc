@@ -122,7 +122,8 @@ export type RoomMessage = {
 
 export type MaintenanceRequest = {
   id: string;
-  room_number: number;
+  room_number: number | null;
+  area_label?: string | null;
   message: string;
   created_by_username: string | null;
   done: boolean;
@@ -143,4 +144,13 @@ export type LostPropertyLite = {
   status: "open" | "collected" | "discarded";
   created_at: string;
   photo_paths?: string[] | null;
+};
+
+// Non-room parts of the hotel (lobby, kitchen, car park...) that maintenance
+// issues can be logged against. Configured by admins and managers.
+export type MaintenanceArea = {
+  id: string;
+  label: string;
+  sort_order: number | null;
+  created_at: string;
 };
