@@ -3385,6 +3385,39 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
           <Printer className="h-4 w-4 mr-2" />
           Linen Count
         </Button>
+        <Button
+          variant="outline"
+          className="justify-start h-12"
+          onClick={() => {
+            setEndShiftPrintOpen(false);
+            setRejectsPrintOpen(true);
+          }}
+        >
+          <Ban className="h-4 w-4 mr-2" />
+          Rejects
+        </Button>
+        <Button
+          variant="outline"
+          className="justify-start h-12"
+          onClick={() => {
+            setEndShiftPrintOpen(false);
+            setDeliveryPrintOpen(true);
+          }}
+        >
+          <Truck className="h-4 w-4 mr-2" />
+          Delivery
+        </Button>
+        <Button
+          variant="outline"
+          className="justify-start h-12"
+          onClick={() => {
+            setEndShiftPrintOpen(false);
+            setFnbPrintOpen(true);
+          }}
+        >
+          <List className="h-4 w-4 mr-2" />
+          F&amp;B Linen
+        </Button>
       </div>
       <div className="mt-4 flex justify-end">
         <Button variant="ghost" onClick={() => setEndShiftPrintOpen(false)}>
@@ -3409,6 +3442,39 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
     linenDeliveryDays={linenDeliveryDays}
     printTotals={(rows, grand, when, subheading, footer) =>
       printTotals(rows, grand, when, "totals", subheading, footer)
+    }
+  />
+  <SnapshotPrintDialog
+    open={rejectsPrintOpen}
+    onOpenChange={setRejectsPrintOpen}
+    snapshots={snapshots}
+    kind="rejects"
+    title="Rejects"
+    liveRows={computeRejectTotals().rows}
+    printTotals={(rows, grand, when, footer) =>
+      printTotals(rows, grand, when, "rejects", undefined, footer)
+    }
+  />
+  <SnapshotPrintDialog
+    open={deliveryPrintOpen}
+    onOpenChange={setDeliveryPrintOpen}
+    snapshots={snapshots}
+    kind="delivery"
+    title="Delivery"
+    liveRows={computeDeliveryTotals().rows}
+    printTotals={(rows, grand, when, footer) =>
+      printTotals(rows, grand, when, "delivery", undefined, footer)
+    }
+  />
+  <SnapshotPrintDialog
+    open={fnbPrintOpen}
+    onOpenChange={setFnbPrintOpen}
+    snapshots={snapshots}
+    kind="fnb_totals"
+    title="F&B Linen"
+    liveRows={computeFnbTotals().rows}
+    printTotals={(rows, grand, when, footer) =>
+      printTotals(rows, grand, when, "fnb_totals", undefined, footer)
     }
   />
 
