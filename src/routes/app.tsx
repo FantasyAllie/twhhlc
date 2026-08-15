@@ -30,6 +30,7 @@ import { Input } from "@/components/ui/input";
 import { Minus, Plus, X, Menu, ArrowUp, ArrowDown, Pencil, Check, Trash2, Sun, Moon, List, Bed, Ban, History, Users, User, LogOut, Hash, ConciergeBell, ClipboardList, Printer, Filter, Wrench, DoorOpen, Bell, Eye, EyeOff, HelpCircle, AlertCircle, MessageSquare, PackageSearch, RotateCcw, ChevronDown, Camera, LayoutGrid, Truck } from "lucide-react";
 import {
   LinenCountPrintDialog,
+  MaintenancePrintDialog,
   RoomStatusPrintDialog,
   SnapshotPrintDialog,
 } from "@/components/exports/print-picker-dialogs";
@@ -103,7 +104,7 @@ import {
 import { useTheme } from "@/components/theme-provider";
 import { useCurrentHotel, DEFAULT_HOTEL_NAME } from "@/lib/hotels";
 import { listHotels, setActiveHotel, createHotel, type HotelOption } from "@/lib/auth.functions";
-import { parseCats, categoryLabel, valueFromLabel, COLOR_SWATCHES } from "@/lib/app-format";
+import { parseCats, categoryLabel, valueFromLabel, maintenanceLocation, COLOR_SWATCHES } from "@/lib/app-format";
 import type {
   Category,
   ItemColor,
@@ -3520,7 +3521,7 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
     requests={maintenanceRequests}
     locationLabel={maintenanceLocation}
     printJobs={(title, subheading, rows, showCompleted) =>
-      printMaintenanceJobs(hotelName, title, subheading, rows, showCompleted)
+      Exp.printMaintenanceJobs(hotelName, title, subheading, rows, showCompleted)
     }
     onBack={() => {
       setMaintenancePrintOpen(false);
