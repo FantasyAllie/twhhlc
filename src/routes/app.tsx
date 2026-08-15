@@ -3345,52 +3345,28 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
  )}
  {/* Mobile export sheet (triggered from the burger menu). */}
   {/* End-of-shift: after backup, offer to print the room status sheet. */}
-  {isReception && (
-    <Dialog open={receptionPrintOpen} onOpenChange={setReceptionPrintOpen}>
-      <DialogContent className="max-w-sm">
-        <DialogHeader>
-          <DialogTitle>Print</DialogTitle>
-          <DialogDescription>Choose which report to print.</DialogDescription>
-        </DialogHeader>
-        <div className="mt-2 grid gap-2">
-          <Button
-            variant="outline"
-            className="justify-start h-12"
-            onClick={() => {
-              setReceptionPrintOpen(false);
-              setRoomStatusPrintOpen(true);
-            }}
-          >
-            <Printer className="h-4 w-4 mr-2" />
-            Room Status Sheet
-          </Button>
-          <Button
-            variant="outline"
-            className="justify-start h-12"
-            onClick={() => {
-              setReceptionPrintOpen(false);
-              setLinenPrintOpen(true);
-            }}
-          >
-            <Printer className="h-4 w-4 mr-2" />
-            Linen Count
-          </Button>
-        </div>
-        <div className="mt-4 flex justify-end">
-          <Button variant="ghost" onClick={() => setReceptionPrintOpen(false)}>Close</Button>
-        </div>
-      </DialogContent>
-    </Dialog>
-  )}
   <Dialog open={endShiftPrintOpen} onOpenChange={setEndShiftPrintOpen}>
     <DialogContent className="max-w-sm">
       <DialogHeader>
-        <DialogTitle>Print reports?</DialogTitle>
+        <DialogTitle>Reports</DialogTitle>
         <DialogDescription>
-          Backup saved. Choose a report, then pick the date to print.
+          {isMaintenance
+            ? "Print maintenance jobs for a day or date range."
+            : "Back up today's data, or choose a report and pick the date to print."}
         </DialogDescription>
       </DialogHeader>
       <div className="mt-2 grid gap-2">
+        {!isMaintenance && (
+          <Button
+            className="justify-start h-12"
+            onClick={() => void runEndOfShiftBackup()}
+          >
+            <ClipboardList className="h-4 w-4 mr-2" />
+            Back up data now
+          </Button>
+        )}
+        {!isMaintenance && (
+          <>
         <Button
           variant="outline"
           className="justify-start h-12"
@@ -3446,6 +3422,19 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
           <List className="h-4 w-4 mr-2" />
           F&amp;B Linen
         </Button>
+          </>
+        )}
+        <Button
+          variant="outline"
+          className="justify-start h-12"
+          onClick={() => {
+            setEndShiftPrintOpen(false);
+            setMaintenancePrintOpen(true);
+          }}
+        >
+          <Wrench className="h-4 w-4 mr-2" />
+          Maintenance
+        </Button>
       </div>
       <div className="mt-4 flex justify-end">
         <Button variant="ghost" onClick={() => setEndShiftPrintOpen(false)}>
@@ -3461,6 +3450,10 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
     snapshots={snapshots}
     liveRows={computeRoomStatus().rows}
     printRoomStatus={printRoomStatus}
+    onBack={() => {
+      setRoomStatusPrintOpen(false);
+      setEndShiftPrintOpen(true);
+    }}
   />
   <LinenCountPrintDialog
     open={linenPrintOpen}
@@ -3471,6 +3464,10 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
     printTotals={(rows, grand, when, subheading, footer) =>
       printTotals(rows, grand, when, "totals", subheading, footer)
     }
+    onBack={() => {
+      setLinenPrintOpen(false);
+      setEndShiftPrintOpen(true);
+    }}
   />
   <SnapshotPrintDialog
     open={rejectsPrintOpen}
@@ -3482,6 +3479,10 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
     printTotals={(rows, grand, when, footer) =>
       printTotals(rows, grand, when, "rejects", undefined, footer)
     }
+    onBack={() => {
+      setRejectsPrintOpen(false);
+      setEndShiftPrintOpen(true);
+    }}
   />
   <SnapshotPrintDialog
     open={deliveryPrintOpen}
@@ -3493,6 +3494,10 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
     printTotals={(rows, grand, when, footer) =>
       printTotals(rows, grand, when, "delivery", undefined, footer)
     }
+    onBack={() => {
+      setDeliveryPrintOpen(false);
+      setEndShiftPrintOpen(true);
+    }}
   />
   <SnapshotPrintDialog
     open={fnbPrintOpen}
@@ -3504,6 +3509,23 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
     printTotals={(rows, grand, when, footer) =>
       printTotals(rows, grand, when, "fnb_totals", undefined, footer)
     }
+    onBack={() => {
+      setFnbPrintOpen(false);
+      setEndShiftPrintOpen(true);
+    }}
+  />
+  <MaintenancePrintDialog
+    open={maintenancePrintOpen}
+    onOpenChange={setMaintenancePrintOpen}
+    requests={maintenanceRequests}
+    locationLabel={maintenanceLocation}
+    printJobs={(title, subheading, rows, showCompleted) =>
+      printMaintenanceJobs(hotelName, title, subheading, rows, showCompleted)
+    }
+    onBack={() => {
+      setMaintenancePrintOpen(false);
+      setEndShiftPrintOpen(true);
+    }}
   />
 
  {isAdmin && !isReception && (
