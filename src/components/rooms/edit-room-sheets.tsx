@@ -57,7 +57,7 @@ export function EditRoomDefaultsSheet({
                      type="button"
                      onClick={() => toggleAssignment(t.id, n)}
                      className={cn(
-                       "w-full flex items-center justify-between gap-3 rounded-full border bg-background px-4 min-h-12 text-sm font-medium transition-colors hover:bg-accent",
+                       "w-full flex items-center justify-between gap-3 rounded-xl border bg-background shadow-sm px-4 min-h-12 text-sm font-medium transition-colors hover:bg-accent",
                        checked && "border-primary bg-primary/10 text-primary",
                      )}
                    >
@@ -133,7 +133,7 @@ export function EditRoomSheet({
                         type="button"
                         onClick={() => toggleRoomCategory(n, c.value)}
                         className={cn(
-                          "w-full flex items-center justify-between gap-3 rounded-full border bg-background px-4 min-h-12 text-sm font-medium transition-colors hover:bg-accent",
+                          "w-full flex items-center justify-between gap-3 rounded-xl border bg-background shadow-sm px-4 min-h-12 text-sm font-medium transition-colors hover:bg-accent",
                           selected && "border-primary bg-primary/10 text-primary",
                         )}
                       >
@@ -158,7 +158,7 @@ export function EditRoomSheet({
                         type="button"
                         onClick={() => setRoomDefaultStatus(n, selected ? null : s.id)}
                         className={cn(
-                          "w-full flex items-center justify-between gap-3 rounded-full border bg-background px-4 min-h-12 text-sm font-medium transition-colors hover:bg-accent",
+                          "w-full flex items-center justify-between gap-3 rounded-xl border bg-background shadow-sm px-4 min-h-12 text-sm font-medium transition-colors hover:bg-accent",
                           selected && "border-primary bg-primary/10 text-primary",
                         )}
                       >
@@ -183,7 +183,7 @@ export function EditRoomSheet({
                           type="button"
                           onClick={() => toggleRoomFeature(n, f.id)}
                           className={cn(
-                            "w-full flex items-center justify-between gap-3 rounded-full border bg-background px-4 min-h-12 text-sm font-medium transition-colors hover:bg-accent",
+                            "w-full flex items-center justify-between gap-3 rounded-xl border bg-background shadow-sm px-4 min-h-12 text-sm font-medium transition-colors hover:bg-accent",
                             selected && "border-primary bg-primary/10 text-primary",
                           )}
                         >

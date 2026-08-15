@@ -39,7 +39,7 @@ export function ManageEditableRow({
     setEditing(false);
   };
   return (
-    <div className="flex items-center gap-1 rounded-full border bg-background min-h-12 pl-2 pr-1.5">
+    <div className="flex items-center gap-1 rounded-xl border bg-background shadow-sm min-h-12 pl-2 pr-1.5">
       <div className="flex flex-col">
         <Button
           type="button"
