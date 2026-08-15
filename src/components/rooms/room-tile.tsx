@@ -47,6 +47,9 @@ function tilePropsEqual<T extends BaseProps>(prev: T, next: T) {
   });
 }
 
+export const ReceptionRoomTile = memo(ReceptionRoomTileBase, tilePropsEqual);
+export const HousekeepingRoomTile = memo(HousekeepingRoomTileBase, tilePropsEqual);
+
 function ReceptionRoomTileBase({
   n,
   room,
