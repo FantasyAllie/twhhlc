@@ -7,8 +7,9 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
+export type OverwriteKind = "totals" | "rejects" | "room_status" | "maintenance" | "fnb_totals";
+
 import type {
-  ExportSnapshotKind,
   RoomCount,
   RoomExtra,
   RoomStatusRow,
@@ -36,15 +37,17 @@ type Props = {
   computeRejectTotals: () => { rows: SnapshotRow[]; grand: number };
 
   // Overwrite confirmation
-  confirmOverwrite: { kind: ExportSnapshotKind } | null;
-  setConfirmOverwrite: (v: { kind: ExportSnapshotKind } | null) => void;
-  proceedExport: (kind: ExportSnapshotKind) => Promise<void> | void;
+  confirmOverwrite: { kind: OverwriteKind } | null;
+  setConfirmOverwrite: (v: { kind: OverwriteKind } | null) => void;
+  proceedExport: (kind: OverwriteKind) => Promise<void> | void;
 
   printTotals: (
     rows: SnapshotRow[],
     grand: number,
     date: Date,
-    kind?: ExportSnapshotKind,
+    kind?: "totals" | "rejects" | "fnb_totals" | "delivery",
+    subheading?: string,
+    footer?: string,
   ) => void;
 };
 
@@ -57,7 +60,7 @@ async function copy(text: string) {
   }
 }
 
-function overwriteCopy(kind: ExportSnapshotKind | undefined) {
+function overwriteCopy(kind: OverwriteKind | undefined) {
   const label =
     kind === "rejects"
       ? "A rejects export"
