@@ -24,10 +24,12 @@ const DateField = ({
   value,
   onChange,
   disabledAfter,
+  availableDays,
 }: {
   value: Date | undefined;
   onChange: (d: Date | undefined) => void;
   disabledAfter?: Date;
+  availableDays?: Set<string>;
 }) => {
   const [open, setOpen] = useState(false);
   return (
@@ -49,7 +51,12 @@ const DateField = ({
             onChange(d ?? undefined);
             setOpen(false);
           }}
-          disabled={(d) => d > (disabledAfter ?? new Date())}
+          disabled={(d) => {
+            if (d > (disabledAfter ?? new Date())) return true;
+            if (!availableDays) return false;
+            if (Exp.isSameDay(d, new Date())) return false;
+            return !availableDays.has(d.toDateString());
+          }}
           initialFocus
           className="p-3 pointer-events-auto"
         />
@@ -57,6 +64,15 @@ const DateField = ({
     </Popover>
   );
 };
+
+// Calendar days that actually have a saved snapshot of a kind, so users can
+// only pick dates that will print something.
+const savedDays = (snapshots: ExportSnapshot[], kind: Exp.SnapshotKind) =>
+  new Set(
+    snapshots
+      .filter((s) => s.kind === kind)
+      .map((s) => new Date(s.created_at).toDateString()),
+  );
 
 export const RoomStatusPrintDialog = ({
   open,
