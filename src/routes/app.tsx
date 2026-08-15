@@ -719,10 +719,12 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
   };
 
   const submitMaintenanceRequest = async () => {
-    const roomNumber = Number(newMaintenanceRoom);
+    const isArea = newMaintenanceRoom.startsWith("area:");
+    const areaLabel = isArea ? newMaintenanceRoom.slice(5) : null;
+    const roomNumber = isArea ? null : Number(newMaintenanceRoom);
     const text = newMaintenanceText.trim();
-    if (!Number.isFinite(roomNumber) || roomNumber <= 0) {
-      toast.error("Pick a room");
+    if (!isArea && (!Number.isFinite(roomNumber as number) || (roomNumber as number) <= 0)) {
+      toast.error("Pick a location");
       return;
     }
     if (!text) {
@@ -733,6 +735,7 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
       .from("maintenance_requests" as never)
       .insert({
         room_number: roomNumber,
+        area_label: areaLabel,
         message: text,
         created_by_username: authUser?.username ?? null,
       } as never)
