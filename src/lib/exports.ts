@@ -516,3 +516,60 @@ export const printMaintenance = (when: Date, list: MaintenanceRow[]) => {
     </body></html>`);
   win.document.close();
 };
+
+// --- Maintenance job reports (from the maintenance log, not room flags) -----
+
+export type MaintenanceJobRow = {
+  location: string;
+  message: string;
+  logged: string;
+  by: string;
+  completed?: string;
+  completedBy?: string;
+};
+
+export const printMaintenanceJobs = (
+  hotelName: string,
+  title: string,
+  subheading: string,
+  rows: MaintenanceJobRow[],
+  showCompleted: boolean,
+) => {
+  if (rows.length === 0) {
+    toast.error("Nothing to print");
+    return;
+  }
+  const win = window.open("", "_blank");
+  if (!win) {
+    toast.error("Pop-up blocked");
+    return;
+  }
+  const head = showCompleted
+    ? "<th>Location</th><th>Issue</th><th>Logged</th><th>Logged by</th><th>Completed</th><th>Completed by</th>"
+    : "<th>Location</th><th>Issue</th><th>Logged</th><th>Logged by</th>";
+  const trs = rows
+    .map((r) => {
+      const base = `<td>${esc(r.location)}</td><td>${esc(r.message)}</td><td>${esc(r.logged)}</td><td>${esc(r.by)}</td>`;
+      return showCompleted
+        ? `<tr>${base}<td>${esc(r.completed ?? "—")}</td><td>${esc(r.completedBy ?? "—")}</td></tr>`
+        : `<tr>${base}</tr>`;
+    })
+    .join("");
+  win.document.write(`<!doctype html><html><head><title>${esc(title)}</title><style>
+      body{font-family:system-ui,-apple-system,sans-serif;color:#000;background:#fff;padding:1.5rem;max-width:1000px;margin:0 auto;}
+      h1{font-size:1.5rem;margin:0 0 .25rem;text-align:center;text-decoration:underline;}
+      .date{margin:0 0 1.25rem;font-size:.95rem;text-align:center;}
+      table{width:100%;border-collapse:collapse;font-size:.9rem;}
+      th,td{text-align:left;padding:.4rem .55rem;border:1px solid #444;vertical-align:top;}
+      th{background:#eee;}
+      .foot{margin-top:1rem;font-size:.8rem;text-align:right;color:#333;}
+      @media print{body{padding:0;}}
+    </style></head><body>
+      <h1>${esc(title)}</h1>
+      <p class="date">${esc(hotelName)}${subheading ? ` — ${esc(subheading)}` : ""}</p>
+      <table><thead><tr>${head}</tr></thead><tbody>${trs}</tbody></table>
+      <p class="foot">Date Printed: ${longDate(new Date())}</p>
+      <script>window.onload=()=>{window.print();}</script>
+    </body></html>`);
+  win.document.close();
+};
