@@ -1,5 +1,6 @@
 // Room tiles for the home grid. JSX moved verbatim from src/routes/app.tsx
 // (stage 5 of the staged refactor); colour/label rules live in @/lib/rooms.
+import { memo } from "react";
 import { AlertCircle, Check, DoorOpen, Wrench } from "lucide-react";
 import { cn } from "@/lib/utils";
 import type { Room } from "@/lib/app-types";
@@ -25,7 +26,31 @@ type BaseProps = {
 const TILE_CLASS =
   "relative overflow-hidden rounded-lg border text-xs sm:text-sm md:text-base font-medium transition-colors tabular-nums flex flex-col justify-between aspect-[5/4] p-1.5 md:p-2.5 pt-2 md:pt-3 text-left";
 
-export function ReceptionRoomTile({
+// Tiles re-render only when their own data changes. onClick is an inline
+// closure over the room number, so it's excluded from the comparison, and
+// statusIds is compared by value rather than identity.
+function sameStatusIds(a: RoomStatusIds, b: RoomStatusIds) {
+  const ka = Object.keys(a) as (keyof RoomStatusIds)[];
+  const kb = Object.keys(b) as (keyof RoomStatusIds)[];
+  if (ka.length !== kb.length) return false;
+  return ka.every((k) => a[k] === b[k]);
+}
+
+function tilePropsEqual<T extends BaseProps>(prev: T, next: T) {
+  const keys = Object.keys(next) as (keyof T)[];
+  return keys.every((k) => {
+    if (k === "onClick") return true;
+    if (k === "statusIds") {
+      return sameStatusIds(prev.statusIds, next.statusIds);
+    }
+    return prev[k] === next[k];
+  });
+}
+
+export const ReceptionRoomTile = memo(ReceptionRoomTileBase, tilePropsEqual);
+export const HousekeepingRoomTile = memo(HousekeepingRoomTileBase, tilePropsEqual);
+
+function ReceptionRoomTileBase({
   n,
   room,
   statusIds,
@@ -132,7 +157,7 @@ export function ReceptionRoomTile({
   );
 }
 
-export function HousekeepingRoomTile({
+function HousekeepingRoomTileBase({
   n,
   room,
   statusIds,
