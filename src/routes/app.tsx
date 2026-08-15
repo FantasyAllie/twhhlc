@@ -545,6 +545,7 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
   const deliveryQ = useDeliveryCountsQuery();
   const messagesQ = useRoomMessagesQuery();
   const maintenanceRequestsQ = useMaintenanceRequestsQuery();
+  const maintenanceAreasQ = useMaintenanceAreasQuery();
   const lostPropertyQ = useLostPropertyOpenQuery();
   const lostPropertyOpenItems = (lostPropertyQ.data ?? []) as LostPropertyLite[];
 
@@ -597,6 +598,26 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
     );
   const hasActiveMessage = (n: number) => activeMessagesByRoom(n).length > 0;
   const maintenanceRequests = (maintenanceRequestsQ.data ?? []) as MaintenanceRequest[];
+  const maintenanceAreas = (maintenanceAreasQ.data ?? []) as MaintenanceArea[];
+  const addMaintenanceArea = async (label: string) => {
+    const { error } = await supabase
+      .from("maintenance_areas" as never)
+      .insert({ label } as never);
+    if (error) {
+      toast.error(error.message);
+      return;
+    }
+    qc.invalidateQueries({ queryKey: ["maintenance_areas"] });
+    toast.success("Area added");
+  };
+  const deleteMaintenanceArea = async (id: string) => {
+    const { error } = await supabase.from("maintenance_areas" as never).delete().eq("id", id);
+    if (error) {
+      toast.error(error.message);
+      return;
+    }
+    qc.invalidateQueries({ queryKey: ["maintenance_areas"] });
+  };
   const openMaintenanceCount = maintenanceRequests.filter((m) => !m.done).length;
   const hasOpenMaintenance = openMaintenanceCount > 0;
 
