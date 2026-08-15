@@ -163,7 +163,7 @@ export const deliveryWindow = (
   return { start, end };
 };
 
-const sumSnapshotsInRange = (
+export const sumSnapshotsInRange = (
   snapshots: ExportSnapshot[],
   kind: SnapshotKind,
   start: Date,
@@ -181,6 +181,65 @@ const sumSnapshotsInRange = (
       map.set(key, (map.get(key) ?? 0) + (r.count ?? 0));
     }
   }
+  return rowsFromMap(map);
+};
+
+// Most recent snapshot of a kind saved on a given calendar day, if any.
+export const snapshotForDay = (
+  snapshots: ExportSnapshot[],
+  kind: SnapshotKind,
+  day: Date,
+): ExportSnapshot | null => {
+  const target = day.toDateString();
+  const matches = snapshots
+    .filter((s) => s.kind === kind && new Date(s.created_at).toDateString() === target)
+    .sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime());
+  return matches[0] ?? null;
+};
+
+export const isSameDay = (a: Date, b: Date) => a.toDateString() === b.toDateString();
+
+export const startOfDay = (d: Date) => {
+  const x = new Date(d);
+  x.setHours(0, 0, 0, 0);
+  return x;
+};
+
+export const endOfDay = (d: Date) => {
+  const x = new Date(d);
+  x.setHours(23, 59, 59, 999);
+  return x;
+};
+
+// Sum daily linen snapshots across an inclusive date range, optionally folding
+// in today's live counts when today falls inside the range and no snapshot for
+// today has been saved yet.
+export const computeRangedLinenTotals = (
+  snapshots: ExportSnapshot[],
+  from: Date,
+  to: Date,
+  liveToday?: SnapshotRow[],
+): { rows: SnapshotRow[]; grand: number } => {
+  const start = startOfDay(from);
+  const end = endOfDay(to);
+  const map = new Map<string, number>();
+  const add = (list: SnapshotRow[]) => {
+    for (const r of list) {
+      const key = (r.name ?? "").trim();
+      if (!key) continue;
+      map.set(key, (map.get(key) ?? 0) + (r.count ?? 0));
+    }
+  };
+  const today = new Date();
+  const todayInRange = today.getTime() >= start.getTime() && today.getTime() <= end.getTime();
+  const todaySaved = snapshotForDay(snapshots, "totals", today);
+  for (const s of snapshots) {
+    if (s.kind !== "totals") continue;
+    const created = new Date(s.created_at);
+    if (created.getTime() < start.getTime() || created.getTime() > end.getTime()) continue;
+    add((s.totals as SnapshotRow[] | null) ?? []);
+  }
+  if (todayInRange && !todaySaved && liveToday?.length) add(liveToday);
   return rowsFromMap(map);
 };
 
