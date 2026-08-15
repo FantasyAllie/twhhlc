@@ -115,7 +115,7 @@ export const computeTileMeta = (args: {
   if (flags.isRos)
     return { bg: "var(--room-staff)", fg: "var(--room-staff-fg)", accent: "var(--room-staff-accent)", label: "ROS" };
   if (isNR)
-    return { bg: "var(--room-stayover)", fg: "var(--room-stayover-fg)", accent: "var(--room-stayover-accent)", label: "Stayover - No Service" };
+    return { bg: "var(--room-stayover)", fg: "var(--room-stayover-fg)", accent: "var(--room-stayover-accent)", label: "No Service" };
   if (flags.isStayover || flags.isDnd)
     return { bg: "var(--room-stayover)", fg: "var(--room-stayover-fg)", accent: "var(--room-stayover-accent)", label: "Stayover" };
   if (isDone)
