@@ -5,9 +5,10 @@ import { Input } from "@/components/ui/input";
 import { Switch } from "@/components/ui/switch";
 import { cn } from "@/lib/utils";
 import type { Room, RoomMessage } from "@/lib/app-types";
+import type { MessagesThread } from "@/components/messages-sheet";
 
 type MessagesInitial = {
-  thread?: string;
+  thread?: MessagesThread;
   room?: number | null;
   text?: string;
   replyTo?: { id: string; sender: string; snippet: string };
