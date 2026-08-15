@@ -27,7 +27,7 @@ import {
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Minus, Plus, X, Menu, ArrowUp, ArrowDown, Pencil, Check, Trash2, Sun, Moon, List, Bed, Ban, History, Users, User, LogOut, Hash, ConciergeBell, ClipboardList, Printer, Filter, Wrench, DoorOpen, Bell, Eye, EyeOff, HelpCircle, AlertCircle, MessageSquare, PackageSearch, RotateCcw, ChevronDown, Camera, LayoutGrid, Truck } from "lucide-react";
+import { Minus, Plus, X, Menu, ArrowUp, ArrowDown, Pencil, Check, Trash2, Sun, Moon, List, Bed, House, Ban, History, Users, User, LogOut, Hash, ConciergeBell, ClipboardList, Printer, Filter, Wrench, DoorOpen, Bell, Eye, EyeOff, HelpCircle, AlertCircle, MessageSquare, PackageSearch, RotateCcw, ChevronDown, Camera, LayoutGrid, Truck } from "lucide-react";
 import {
   AccountDialog,
   AddConfigDialogs,
@@ -3383,8 +3383,8 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
             setRoomStatusPrintOpen(true);
           }}
         >
-          <Printer className="h-4 w-4 mr-2" />
-          Room Status Sheet
+          <House className="h-4 w-4 mr-2" />
+          Room Status
         </Button>
         <Button
           variant="outline"
@@ -3394,7 +3394,7 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
             setLinenPrintOpen(true);
           }}
         >
-          <Printer className="h-4 w-4 mr-2" />
+          <Bed className="h-4 w-4 mr-2" />
           Linen Count
         </Button>
         <Button
