@@ -29,39 +29,44 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Minus, Plus, X, Menu, ArrowUp, ArrowDown, Pencil, Check, Trash2, Sun, Moon, List, Bed, Ban, History, Users, User, LogOut, Hash, ConciergeBell, ClipboardList, Printer, Filter, Wrench, DoorOpen, Bell, Eye, EyeOff, HelpCircle, AlertCircle, MessageSquare, PackageSearch, RotateCcw, ChevronDown, Camera, LayoutGrid, Truck } from "lucide-react";
 import {
+  AccountDialog,
+  AddConfigDialogs,
+  DeliveryDialog,
+  EditRoomDefaultsSheet,
+  EditRoomSheet,
+  ExportPreviewDialogs,
+  HistorySheet,
   LinenCountPrintDialog,
+  LinenListDialog,
+  LostPropertySheet,
+  MaintenanceAreasSheet,
+  MaintenanceDashboard,
+  MaintenanceLogSheet,
   MaintenancePrintDialog,
+  ManageRoomsDialogs,
+  MessagesSheet,
+  NotificationsSheet,
+  QuickReceptionSheet,
+  ReceptionItemsSheet,
+  ReceptionStatusSheet,
+  RejectsDialog,
+  RoomFeaturesSheet,
+  RoomNotesSheet,
   RoomStatusPrintDialog,
+  RoomTypesSheet,
   SnapshotPrintDialog,
-} from "@/components/exports/print-picker-dialogs";
-import { ExportPreviewDialogs } from "@/components/exports/export-preview-dialogs";
-import { SnapshotViewerDialog } from "@/components/exports/snapshot-viewer-dialog";
-import { RejectsDialog, DeliveryDialog } from "@/components/linen/counter-dialogs";
-import { AccountDialog } from "@/components/account-dialog";
-import { RoomNotesSheet } from "@/components/rooms/notes-sheet";
-import { ReceptionStatusSheet } from "@/components/rooms/reception-status-sheet";
-import { AddConfigDialogs } from "@/components/rooms/add-config-dialogs";
-import { ManageRoomsDialogs } from "@/components/rooms/manage-rooms-dialogs";
-import { LinenListDialog } from "@/components/linen/linen-list-dialog";
+  SnapshotViewerDialog,
+  StayoverPhotosSheet,
+  UserApprovalDialog,
+  UsersDialog,
+} from "@/components/lazy-panels";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
 import { getToken, getStoredUser, clearSession } from "@/lib/auth-client";
 import { notifyRoomEvent, notifyMaintenanceRequest } from "@/lib/push.functions";
-import { NotificationsSheet } from "@/components/notifications-sheet";
-import { MessagesSheet, type MessagesThread, type Department as MessagesDepartment } from "@/components/messages-sheet";
-import { UsersDialog } from "@/components/users-dialog";
-import { UserApprovalDialog } from "@/components/user-approval-dialog";
-import { QuickReceptionSheet } from "@/components/quick-reception-sheet";
-import { LostPropertySheet } from "@/components/lost-property-sheet";
+import type { MessagesThread, Department as MessagesDepartment } from "@/components/messages-sheet";
 import { PhotoAttachments, PhotoComposer } from "@/components/entry-photos";
-import { MaintenanceLogSheet } from "@/components/ops/maintenance-log-sheet";
-import { MaintenanceAreasSheet } from "@/components/ops/maintenance-areas-sheet";
-import { HistorySheet } from "@/components/exports/history-sheet";
-import { EditRoomDefaultsSheet, EditRoomSheet } from "@/components/rooms/edit-room-sheets";
-import { MaintenanceDashboard } from "@/components/ops/maintenance-dashboard";
-import { StayoverPhotosSheet } from "@/components/stayover-photos-sheet";
 import { DndDoorPhoto } from "@/components/dnd-door-photo";
-import { RoomTypesSheet, RoomFeaturesSheet, ReceptionItemsSheet } from "@/components/rooms/config-sheets";
 import { BroomBurst } from "@/components/broom-burst";
 import {
   deleteTodayStayoverPhotosForRoom,
