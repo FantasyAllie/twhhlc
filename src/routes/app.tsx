@@ -3075,9 +3075,6 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
         onClick: () => setEndShiftPrintOpen(true),
       });
     }
-    if (isAdmin && !isReception) {
-      actions.push({ key: "export", icon: ClipboardList, label: "Export", onClick: () => setExportSheetOpen(true) });
-    }
     if (isReception) {
       actions.push({
         key: "print", icon: Printer, label: "Print",
