@@ -2,6 +2,7 @@
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import type {
+  DeliveryCount,
   FnbCount,
   RejectCount,
   RoomCount,
@@ -82,5 +83,17 @@ export const useRejectCountsQuery = () =>
         .select("id,template_item_id,count");
       if (error) throw error;
       return (data ?? []) as RejectCount[];
+    },
+  });
+
+export const useDeliveryCountsQuery = () =>
+  useQuery({
+    queryKey: ["delivery_counts"],
+    queryFn: async (): Promise<DeliveryCount[]> => {
+      const { data, error } = await supabase
+        .from("delivery_counts" as never)
+        .select("id,template_item_id,count");
+      if (error) throw error;
+      return (data ?? []) as DeliveryCount[];
     },
   });

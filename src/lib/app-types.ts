@@ -88,6 +88,7 @@ export type MaintenanceRow = { room: number; note: string };
 export type ExportSnapshotKind =
   | "totals"
   | "rejects"
+  | "delivery"
   | "room_status"
   | "maintenance"
   | "fnb_totals"
@@ -102,6 +103,8 @@ export type ExportSnapshot = {
 };
 
 export type RejectCount = { id: string; template_item_id: string; count: number };
+
+export type DeliveryCount = { id: string; template_item_id: string; count: number };
 
 export type RoomMessage = {
   id: string;

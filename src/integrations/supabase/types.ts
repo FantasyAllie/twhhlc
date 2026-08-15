@@ -14,6 +14,48 @@ export type Database = {
   }
   public: {
     Tables: {
+      delivery_counts: {
+        Row: {
+          count: number
+          hotel_id: string
+          id: string
+          template_item_id: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          count?: number
+          hotel_id?: string
+          id?: string
+          template_item_id: string
+          updated_at?: string
+          user_id?: string
+        }
+        Update: {
+          count?: number
+          hotel_id?: string
+          id?: string
+          template_item_id?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "delivery_counts_hotel_id_fkey"
+            columns: ["hotel_id"]
+            isOneToOne: false
+            referencedRelation: "hotels"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "delivery_counts_template_item_id_fkey"
+            columns: ["template_item_id"]
+            isOneToOne: false
+            referencedRelation: "template_items"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       export_snapshots: {
         Row: {
           created_at: string
