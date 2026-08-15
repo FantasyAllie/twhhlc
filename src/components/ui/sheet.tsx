@@ -43,16 +43,16 @@ const SheetOverlay = React.forwardRef<
 SheetOverlay.displayName = SheetPrimitive.Overlay.displayName;
 
 const sheetVariants = cva(
-  "fixed z-50 flex flex-col gap-0 bg-background p-6 shadow-lg transition ease-in-out data-[state=closed]:duration-300 data-[state=open]:duration-500 max-lg:data-[state=open]:animate-in max-lg:data-[state=closed]:animate-out lg:data-[state=open]:animate-[sheet-pop-in_250ms_ease-out] lg:data-[state=closed]:animate-[sheet-pop-out_180ms_ease-in]",
+  "fixed z-50 flex flex-col gap-0 bg-background p-6 shadow-2xl transition ease-in-out data-[state=closed]:duration-300 data-[state=open]:duration-500 max-lg:data-[state=open]:animate-in max-lg:data-[state=closed]:animate-out lg:data-[state=open]:animate-[sheet-pop-in_250ms_ease-out] lg:data-[state=closed]:animate-[sheet-pop-out_180ms_ease-in]",
   {
     variants: {
       side: {
-        top: "inset-x-0 top-0 border-b rounded-b-2xl max-lg:data-[state=closed]:slide-out-to-top max-lg:data-[state=open]:slide-in-from-top lg:inset-x-auto lg:top-1/2 lg:left-1/2 lg:w-[calc(100vw-2rem)] lg:max-w-2xl lg:-translate-x-1/2 lg:-translate-y-1/2 lg:rounded-2xl lg:border lg:border-b lg:max-h-[85vh]",
+        top: "inset-x-0 top-0 border-b rounded-b-3xl max-lg:data-[state=closed]:slide-out-to-top max-lg:data-[state=open]:slide-in-from-top lg:inset-x-auto lg:top-1/2 lg:left-1/2 lg:w-[calc(100vw-2rem)] lg:max-w-2xl lg:-translate-x-1/2 lg:-translate-y-1/2 lg:rounded-3xl lg:border lg:border-b lg:max-h-[85vh]",
         bottom:
-          "inset-x-0 left-0 right-0 bottom-0 w-full max-w-none border-t rounded-t-2xl max-lg:data-[state=closed]:slide-out-to-bottom max-lg:data-[state=open]:slide-in-from-bottom lg:inset-x-auto lg:bottom-auto lg:top-1/2 lg:left-1/2 lg:w-[calc(100vw-2rem)] lg:max-w-2xl lg:-translate-x-1/2 lg:-translate-y-1/2 lg:rounded-2xl lg:border lg:max-h-[85vh]",
-        left: "inset-y-0 left-0 h-full w-3/4 border-r rounded-r-2xl data-[state=closed]:slide-out-to-left data-[state=open]:slide-in-from-left sm:max-w-sm lg:inset-auto lg:top-1/2 lg:left-1/2 lg:h-auto lg:max-h-[85vh] lg:w-[calc(100vw-2rem)] lg:max-w-2xl lg:-translate-x-1/2 lg:-translate-y-1/2 lg:rounded-2xl lg:border",
+          "inset-x-0 left-0 right-0 bottom-0 w-full max-w-none border-t rounded-t-3xl max-lg:data-[state=closed]:slide-out-to-bottom max-lg:data-[state=open]:slide-in-from-bottom lg:inset-x-auto lg:bottom-auto lg:top-1/2 lg:left-1/2 lg:w-[calc(100vw-2rem)] lg:max-w-2xl lg:-translate-x-1/2 lg:-translate-y-1/2 lg:rounded-3xl lg:border lg:max-h-[85vh]",
+        left: "inset-y-0 left-0 h-full w-3/4 border-r rounded-r-3xl data-[state=closed]:slide-out-to-left data-[state=open]:slide-in-from-left sm:max-w-sm lg:inset-auto lg:top-1/2 lg:left-1/2 lg:h-auto lg:max-h-[85vh] lg:w-[calc(100vw-2rem)] lg:max-w-2xl lg:-translate-x-1/2 lg:-translate-y-1/2 lg:rounded-3xl lg:border",
         right:
-          "inset-y-0 right-0 h-full w-3/4 border-l rounded-l-2xl max-lg:data-[state=closed]:slide-out-to-right max-lg:data-[state=open]:slide-in-from-right sm:max-w-sm lg:inset-auto lg:top-1/2 lg:left-1/2 lg:h-auto lg:max-h-[85vh] lg:w-[calc(100vw-2rem)] lg:max-w-2xl lg:-translate-x-1/2 lg:-translate-y-1/2 lg:rounded-2xl lg:border",
+          "inset-y-0 right-0 h-full w-3/4 border-l rounded-l-3xl max-lg:data-[state=closed]:slide-out-to-right max-lg:data-[state=open]:slide-in-from-right sm:max-w-sm lg:inset-auto lg:top-1/2 lg:left-1/2 lg:h-auto lg:max-h-[85vh] lg:w-[calc(100vw-2rem)] lg:max-w-2xl lg:-translate-x-1/2 lg:-translate-y-1/2 lg:rounded-3xl lg:border",
       },
     },
     defaultVariants: {
