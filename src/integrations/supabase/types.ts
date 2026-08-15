@@ -248,8 +248,44 @@ export type Database = {
           },
         ]
       }
+      maintenance_areas: {
+        Row: {
+          created_at: string
+          hotel_id: string
+          id: string
+          label: string
+          sort_order: number | null
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          hotel_id?: string
+          id?: string
+          label: string
+          sort_order?: number | null
+          user_id?: string
+        }
+        Update: {
+          created_at?: string
+          hotel_id?: string
+          id?: string
+          label?: string
+          sort_order?: number | null
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "maintenance_areas_hotel_id_fkey"
+            columns: ["hotel_id"]
+            isOneToOne: false
+            referencedRelation: "hotels"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       maintenance_requests: {
         Row: {
+          area_label: string | null
           created_at: string
           created_by_username: string | null
           deleted_at: string | null
@@ -261,11 +297,12 @@ export type Database = {
           message: string
           origin_department: string | null
           photo_paths: string[]
-          room_number: number
+          room_number: number | null
           updated_at: string
           user_id: string
         }
         Insert: {
+          area_label?: string | null
           created_at?: string
           created_by_username?: string | null
           deleted_at?: string | null
@@ -277,11 +314,12 @@ export type Database = {
           message: string
           origin_department?: string | null
           photo_paths?: string[]
-          room_number: number
+          room_number?: number | null
           updated_at?: string
           user_id?: string
         }
         Update: {
+          area_label?: string | null
           created_at?: string
           created_by_username?: string | null
           deleted_at?: string | null
@@ -293,7 +331,7 @@ export type Database = {
           message?: string
           origin_department?: string | null
           photo_paths?: string[]
-          room_number?: number
+          room_number?: number | null
           updated_at?: string
           user_id?: string
         }
