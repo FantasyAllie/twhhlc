@@ -3930,6 +3930,9 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
   onOpenChange={setMaintenanceLogOpen}
   rooms={rooms}
   maintenanceRequests={maintenanceRequests}
+  maintenanceAreas={maintenanceAreas}
+  canManageAreas={isAdmin}
+  onManageAreas={() => setMaintenanceAreasOpen(true)}
   hasOpenMaintenance={hasOpenMaintenance}
   openMaintenanceCount={openMaintenanceCount}
   isReception={isReception}
@@ -3948,6 +3951,14 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
   markMaintenanceDone={markMaintenanceDone}
   deleteMaintenanceRequest={deleteMaintenanceRequest}
   setMaintenancePhotoPaths={setMaintenancePhotoPaths}
+/>
+
+<MaintenanceAreasSheet
+  open={maintenanceAreasOpen}
+  onOpenChange={setMaintenanceAreasOpen}
+  areas={maintenanceAreas}
+  addArea={addMaintenanceArea}
+  deleteArea={deleteMaintenanceArea}
 />
 
 <HistorySheet
