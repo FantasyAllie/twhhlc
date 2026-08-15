@@ -866,6 +866,44 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
     if (error) toast.error(error.message);
     qc.invalidateQueries({ queryKey: ["reject_counts"] });
   };
+
+  // --- Delivery counter -----------------------------------------------------
+  // Same shape as rejects, but counts arrive in large batches so the panel uses
+  // direct number entry instead of +/- steppers.
+  const getDeliveryCount = (templateItemId: string) =>
+    deliveryCounts.find((r) => r.template_item_id === templateItemId)?.count ?? 0;
+
+  const setDeliveryCount = async (templateItemId: string, value: number) => {
+    const next = Math.max(0, Math.floor(Number.isFinite(value) ? value : 0));
+    qc.setQueryData<DeliveryCount[]>(["delivery_counts"], (old) => {
+      const list = old ? [...old] : [];
+      const idx = list.findIndex((r) => r.template_item_id === templateItemId);
+      if (idx >= 0) list[idx] = { ...list[idx], count: next };
+      else list.push({ id: `temp-${templateItemId}`, template_item_id: templateItemId, count: next });
+      return list;
+    });
+    const { error } = await supabase
+      .from("delivery_counts" as never)
+      .upsert(
+        { template_item_id: templateItemId, count: next, updated_at: new Date().toISOString() } as never,
+        { onConflict: "user_id,hotel_id,template_item_id" },
+      );
+    if (error) {
+      toast.error(error.message);
+      qc.invalidateQueries({ queryKey: ["delivery_counts"] });
+    }
+  };
+
+  const resetDeliveryCounts = async () => {
+    if (!confirm("Reset all delivery counts?")) return;
+    qc.setQueryData<DeliveryCount[]>(["delivery_counts"], []);
+    const { error } = await supabase
+      .from("delivery_counts" as never)
+      .delete()
+      .neq("id", "00000000-0000-0000-0000-000000000000");
+    if (error) toast.error(error.message);
+    qc.invalidateQueries({ queryKey: ["delivery_counts"] });
+  };
    const position = authUser?.position;
    const subRoles = authUser?.subRoles ?? [];
    const realIsRegionalAdmin = position === "regional_admin";
