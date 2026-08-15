@@ -3061,12 +3061,12 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
     const actions: MenuAction[] = [];
     // Settings menu content is uniform across screen sizes. Larger screens also
     // surface End of shift / Departments on the home header, but they stay here too.
-    if ((realIsAdmin || (realIsManager && hasHousekeeperRole)) && !isReception && !menuIsFnbOnly && !isMaintenance) {
+    if ((realIsAdmin || (realIsManager && hasHousekeeperRole)) && !isReception && !menuIsFnbOnly) {
       actions.push({
         key: "end-of-shift",
         icon: ClipboardList,
-        label: "End of shift",
-        onClick: () => void runEndOfShiftBackup(),
+        label: "Reports",
+        onClick: () => setEndShiftPrintOpen(true),
       });
     }
     if (isAdmin && !isReception) {
@@ -3172,7 +3172,7 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
               <>
                 <h1 className="text-xl sm:text-2xl font-semibold tracking-tight">{hotelName}</h1>
                 <p className="text-xs text-muted-foreground mt-1 whitespace-pre-line">
-                  An auto-updating room tracker for Housekeeping. Use the help if you get stuck 
+                  An auto-updating room tracker for Housekeeping. Use the help button if you're stuck
                 </p>
               </>
             ) : isFnb ? (
@@ -3230,11 +3230,11 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
       <Button
         variant="outline"
         size="sm"
-        onClick={() => void runEndOfShiftBackup()}
-        title="Save today's totals, F&B, room status and maintenance snapshots"
+        onClick={() => setEndShiftPrintOpen(true)}
+        title="Back up today's data and print reports"
       >
         <ClipboardList className="h-4 w-4 mr-2" />
-        End of shift
+        Reports
       </Button>
     )}
     {!isMobile && isReception && (
