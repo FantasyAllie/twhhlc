@@ -4216,7 +4216,7 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
             <div className="space-y-4">
               <div className="space-y-2">
                 <p className="text-xs font-medium text-muted-foreground uppercase tracking-wide">Housekeeping</p>
-                <label className="flex items-center gap-2 py-1.5 px-2 rounded-md hover:bg-muted cursor-pointer">
+                <label className="flex items-center gap-2 py-1.5 px-2 rounded-lg hover:bg-muted cursor-pointer">
                   <Checkbox
                     checked={receptionDoneOnlyFilter}
                     onCheckedChange={(c) => setReceptionDoneOnlyFilter(!!c)}
@@ -4235,7 +4235,7 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
                       return (
                         <label
                           key={s.id}
-                          className="flex items-center gap-2 py-1.5 px-2 rounded-md hover:bg-muted cursor-pointer"
+                          className="flex items-center gap-2 py-1.5 px-2 rounded-lg hover:bg-muted cursor-pointer"
                         >
                           <Checkbox
                             checked={checked}
@@ -4263,7 +4263,7 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
                         return (
                           <label
                             key={rt.id}
-                            className="flex items-center gap-2 py-1.5 px-2 rounded-md hover:bg-muted cursor-pointer"
+                            className="flex items-center gap-2 py-1.5 px-2 rounded-lg hover:bg-muted cursor-pointer"
                           >
                             <Checkbox
                               checked={checked}
@@ -4293,7 +4293,7 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
                         return (
                           <label
                             key={f.id}
-                            className="flex items-center gap-2 py-1.5 px-2 rounded-md hover:bg-muted cursor-pointer"
+                            className="flex items-center gap-2 py-1.5 px-2 rounded-lg hover:bg-muted cursor-pointer"
                           >
                             <Checkbox
                               checked={checked}
@@ -4398,7 +4398,7 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
                 <div className="space-y-4">
                   <div className="space-y-2">
                     <p className="text-xs font-medium text-muted-foreground uppercase tracking-wide">Visibility</p>
-                    <label className="flex items-center gap-2 py-1.5 px-2 rounded-md hover:bg-muted cursor-pointer">
+                    <label className="flex items-center gap-2 py-1.5 px-2 rounded-lg hover:bg-muted cursor-pointer">
                       <Checkbox
                         checked={hideCompletedRooms}
                         onCheckedChange={(c) => setHideCompletedRooms(!!c)}
@@ -4415,7 +4415,7 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
                         return (
                           <label
                             key={s.key}
-                            className="flex items-center gap-2 py-1.5 px-2 rounded-md hover:bg-muted cursor-pointer"
+                            className="flex items-center gap-2 py-1.5 px-2 rounded-lg hover:bg-muted cursor-pointer"
                           >
                             <Checkbox
                               checked={checked}
