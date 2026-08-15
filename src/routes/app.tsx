@@ -3315,10 +3315,8 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
             variant="outline"
             className="justify-start h-12"
             onClick={() => {
-              const { rows } = computeRoomStatus();
-              if (rows.length === 0) { toast.error("No rooms to print"); return; }
               setReceptionPrintOpen(false);
-              printRoomStatus(rows, new Date());
+              setRoomStatusPrintOpen(true);
             }}
           >
             <Printer className="h-4 w-4 mr-2" />
@@ -3329,11 +3327,11 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
             className="justify-start h-12"
             onClick={() => {
               setReceptionPrintOpen(false);
-              void openDeliveryLinenTotals();
+              setLinenPrintOpen(true);
             }}
           >
             <Printer className="h-4 w-4 mr-2" />
-            Ranged Linen Totals
+            Linen Count
           </Button>
         </div>
         <div className="mt-4 flex justify-end">
@@ -3347,84 +3345,32 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
       <DialogHeader>
         <DialogTitle>Print reports?</DialogTitle>
         <DialogDescription>
-          Backup saved. Print any of the reports that were just captured.
+          Backup saved. Choose a report, then pick the date to print.
         </DialogDescription>
       </DialogHeader>
       <div className="mt-2 grid gap-2">
-        {endShiftPrintKinds.includes("room_status") && (
-          <Button
-            variant="outline"
-            className="justify-start h-12"
-            onClick={() => {
-              const { rows } = computeRoomStatus();
-              if (rows.length === 0) { toast.error("No rooms to print"); return; }
-              printRoomStatus(rows, new Date());
-            }}
-          >
-            <Printer className="h-4 w-4 mr-2" />
-            Room Status Sheet
-          </Button>
-        )}
         <Button
           variant="outline"
           className="justify-start h-12"
-          onClick={() => openDeliveryLinenTotals()}
+          onClick={() => {
+            setEndShiftPrintOpen(false);
+            setRoomStatusPrintOpen(true);
+          }}
         >
           <Printer className="h-4 w-4 mr-2" />
-          Ranged Linen Totals
+          Room Status Sheet
         </Button>
-        {endShiftPrintKinds.includes("totals") && (
-          <Button
-            variant="outline"
-            className="justify-start h-12"
-            onClick={() => {
-              const { rows, grand } = computeTotals();
-              if (rows.length === 0) { toast.error("No linen counted"); return; }
-              printTotals(rows, grand, new Date(), "totals");
-            }}
-          >
-            <Printer className="h-4 w-4 mr-2" />
-            Daily Linen Totals
-          </Button>
-        )}
-        {endShiftPrintKinds.includes("fnb_totals") && (
-          <Button
-            variant="outline"
-            className="justify-start h-12"
-            onClick={() => {
-              const { rows, grand } = computeFnbTotals();
-              if (rows.length === 0) { toast.error("No F&B linen counted"); return; }
-              printTotals(rows, grand, new Date(), "fnb_totals");
-            }}
-          >
-            <Printer className="h-4 w-4 mr-2" />
-            F&amp;B Linen Totals (today)
-          </Button>
-        )}
-        {todayIsMonday && (
-          <Button
-            variant="outline"
-            className="justify-start h-12"
-            onClick={() => openWeeklyFnbTotals()}
-          >
-            <Printer className="h-4 w-4 mr-2" />
-            F&amp;B Linen Totals (previous week)
-          </Button>
-        )}
-        {endShiftPrintKinds.includes("maintenance") && (
-          <Button
-            variant="outline"
-            className="justify-start h-12"
-            onClick={() => {
-              const { rows } = computeMaintenance();
-              if (rows.length === 0) { toast.error("No maintenance items"); return; }
-              printMaintenance(new Date(), rows);
-            }}
-          >
-            <Printer className="h-4 w-4 mr-2" />
-            Maintenance Log
-          </Button>
-        )}
+        <Button
+          variant="outline"
+          className="justify-start h-12"
+          onClick={() => {
+            setEndShiftPrintOpen(false);
+            setLinenPrintOpen(true);
+          }}
+        >
+          <Printer className="h-4 w-4 mr-2" />
+          Linen Count
+        </Button>
       </div>
       <div className="mt-4 flex justify-end">
         <Button variant="ghost" onClick={() => setEndShiftPrintOpen(false)}>
@@ -3433,6 +3379,23 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
       </div>
     </DialogContent>
   </Dialog>
+
+  <RoomStatusPrintDialog
+    open={roomStatusPrintOpen}
+    onOpenChange={setRoomStatusPrintOpen}
+    snapshots={snapshots}
+    liveRows={computeRoomStatus().rows}
+    printRoomStatus={printRoomStatus}
+  />
+  <LinenCountPrintDialog
+    open={linenPrintOpen}
+    onOpenChange={setLinenPrintOpen}
+    snapshots={snapshots}
+    liveRows={computeTotals().rows}
+    printTotals={(rows, grand, when, subheading, footer) =>
+      printTotals(rows, grand, when, "totals", subheading, footer)
+    }
+  />
 
  {isAdmin && !isReception && (
    <Sheet open={exportSheetOpen} onOpenChange={setExportSheetOpen}>
