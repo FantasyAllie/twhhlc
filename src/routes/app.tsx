@@ -1893,7 +1893,6 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
     }
     qc.invalidateQueries({ queryKey: ["export_snapshots"] });
     toast.success(`Backup saved (${jobs.length} ${jobs.length === 1 ? "item" : "items"})`);
-    setEndShiftPrintOpen(true);
   };
 
   const openMaintenanceExport = async () => {
