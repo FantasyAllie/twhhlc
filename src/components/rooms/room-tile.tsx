@@ -23,8 +23,10 @@ type BaseProps = {
   onClick: () => void;
 };
 
+// Material "Surface Variant" tile: tonal filled container, hairline border,
+// soft elevation, and a press state layer instead of a heavy accent border.
 const TILE_CLASS =
-  "relative overflow-hidden rounded-lg border text-xs sm:text-sm md:text-base font-medium transition-colors tabular-nums flex flex-col justify-between aspect-[5/4] p-1.5 md:p-2.5 pt-2 md:pt-3 text-left";
+  "relative overflow-hidden rounded-xl border text-xs sm:text-sm md:text-base font-medium shadow-sm transition-[transform,box-shadow,background-color] duration-150 active:scale-[0.97] active:shadow-none tabular-nums flex flex-col justify-between aspect-[5/4] p-2 md:p-2.5 text-left";
 
 // Tiles re-render only when their own data changes. onClick is an inline
 // closure over the room number, so it's excluded from the comparison, and
@@ -92,7 +94,7 @@ function ReceptionRoomTileBase({
       style={
         isOpen
           ? undefined
-          : { backgroundColor: meta.bg, color: meta.fg, borderColor: meta.accent, borderTopWidth: 3 }
+          : { backgroundColor: meta.bg, color: meta.fg, borderColor: meta.accent }
       }
       aria-label={`Room ${n} ${meta.label}${isStaffRoom ? " staff" : ""}`}
     >
@@ -121,7 +123,7 @@ function ReceptionRoomTileBase({
               </>
             )}
           </span>
-          <span className="text-[9px] sm:text-[10px] md:text-xs font-medium leading-none opacity-90 whitespace-pre-line pr-4">
+          <span className="text-[9px] sm:text-[10px] md:text-xs font-bold uppercase tracking-tight leading-tight opacity-80 whitespace-pre-line pr-4">
             {meta.label}
           </span>
         </>
@@ -190,8 +192,8 @@ function HousekeepingRoomTileBase({
         isOpen
           ? undefined
           : isStaff
-            ? { backgroundColor: "var(--room-staff)", color: "var(--room-staff-fg)", borderColor: "var(--room-staff-accent)", borderTopWidth: 3 }
-            : { backgroundColor: meta.bg, color: meta.fg, borderColor: meta.accent, borderTopWidth: 3 }
+            ? { backgroundColor: "var(--room-staff)", color: "var(--room-staff-fg)", borderColor: "var(--room-staff-accent)" }
+            : { backgroundColor: meta.bg, color: meta.fg, borderColor: meta.accent }
       }
       aria-pressed={done}
       aria-expanded={isOpen}
@@ -222,7 +224,7 @@ function HousekeepingRoomTileBase({
           <span aria-label="Not Required" className="text-sm sm:text-base font-bold leading-none">NR</span>
         )}
       </span>
-      <span className="text-[9px] sm:text-[10px] md:text-xs font-medium leading-none opacity-90 whitespace-pre-line pr-4">
+      <span className="text-[9px] sm:text-[10px] md:text-xs font-bold uppercase tracking-tight leading-tight opacity-80 whitespace-pre-line pr-4">
         {isStaff ? "Staff" : meta.label}
       </span>
       {hasMessage && (
