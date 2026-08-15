@@ -400,7 +400,7 @@ export function UsersDialog({
                   <div className="space-y-1">
                     <label className="text-xs font-medium">Position</label>
                     <select
-                      className="w-full h-9 rounded-md border bg-background px-3 text-sm"
+                      className="w-full h-9 rounded-xl border bg-background px-3 text-sm"
                       value={newPosition}
                       onChange={(e) => setNewPosition(e.target.value as AssignablePosition)}
                     >
@@ -413,7 +413,7 @@ export function UsersDialog({
                 <div className="space-y-1 sm:col-span-2">
                   <label className="text-xs font-medium">Hotel workspaces</label>
                   {isRegionalAdmin ? (
-                    <div className="flex flex-wrap gap-3 rounded-md border bg-background px-3 py-2">
+                    <div className="flex flex-wrap gap-3 rounded-xl border bg-background px-3 py-2">
                       {hotels.map((h) => (
                         <label key={h.id} className="flex items-center gap-2 text-sm">
                           <input
@@ -515,7 +515,7 @@ export function UsersDialog({
                 <div className="flex items-center gap-2">
                   <select
                     aria-label="Sort accounts"
-                    className="h-8 rounded-md border bg-background px-2 text-xs"
+                    className="h-8 rounded-xl border bg-background px-2 text-xs"
                     value={accountsSort}
                     onChange={(e) => setAccountsSort(e.target.value as AccountsSort)}
                   >
@@ -645,7 +645,7 @@ export function UsersDialog({
               <div className="space-y-1">
                 <label className="text-xs font-medium">Position</label>
                 <select
-                  className="w-full h-9 rounded-md border bg-background px-3 text-sm"
+                  className="w-full h-9 rounded-xl border bg-background px-3 text-sm"
                   value={editPosition}
                   onChange={(e) => setEditPosition(e.target.value as AssignablePosition)}
                 >
@@ -662,7 +662,7 @@ export function UsersDialog({
               <div className="space-y-1">
                 <label className="text-xs font-medium">Hotel workspaces</label>
                 {isRegionalAdmin ? (
-                  <div className="flex flex-wrap gap-3 rounded-md border bg-background px-3 py-2">
+                  <div className="flex flex-wrap gap-3 rounded-xl border bg-background px-3 py-2">
                     {hotels.map((h) => (
                       <label key={h.id} className="flex items-center gap-2 text-sm">
                         <input
@@ -708,7 +708,7 @@ export function UsersDialog({
                   </p>
                 )}
               </div>
-              <div className="rounded-md border p-3 space-y-2">
+              <div className="rounded-xl border p-3 space-y-2">
                 <div>
                   <div className="text-sm font-medium">Reset password</div>
                   <div className="text-xs text-muted-foreground">
@@ -724,7 +724,7 @@ export function UsersDialog({
                   autoComplete="new-password"
                 />
               </div>
-              <div className="rounded-md border p-3 flex items-center justify-between gap-3">
+              <div className="rounded-xl border p-3 flex items-center justify-between gap-3">
                 <div className="min-w-0">
                   <div className="text-sm font-medium">
                     {editUser.disabled ? "Account disabled" : "Account active"}

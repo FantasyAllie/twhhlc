@@ -88,7 +88,7 @@ export function ReceptionStatusSheet({
            disabled={disabled}
            onClick={onClick}
            className={cn(
-            "w-full flex items-center justify-center text-center gap-3 rounded-full border bg-background px-4 min-h-12 text-sm font-medium transition-colors hover:bg-accent disabled:opacity-60 disabled:cursor-not-allowed",
+            "w-full flex items-center justify-center text-center gap-3 rounded-xl border bg-background shadow-sm px-4 min-h-12 text-sm font-medium transition-colors hover:bg-accent disabled:opacity-60 disabled:cursor-not-allowed",
              selected && "border-primary bg-primary/10 text-primary",
            )}
          >
@@ -107,7 +107,7 @@ export function ReceptionStatusSheet({
             </SheetDescription>
            </SheetHeader>
               {!isReception && !!room?.guest_vacated && (
-                <div className="mt-3 flex flex-col items-center gap-2 rounded-md border bg-background p-3 text-center">
+                <div className="mt-3 flex flex-col items-center gap-2 rounded-xl border bg-background p-3 text-center">
                   <span className="flex items-center justify-center gap-2 text-sm font-medium">
                     <DoorOpen className="h-4 w-4 text-emerald-600 dark:text-emerald-400" />
                     Guest has checked out

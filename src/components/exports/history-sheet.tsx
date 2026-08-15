@@ -66,7 +66,7 @@ export function HistorySheet({
               {items.map((s) => (
                 <div
                   key={s.id}
-                  className="flex items-center gap-2 rounded-full border bg-background min-h-12 pl-4 pr-1.5"
+                  className="flex items-center gap-2 rounded-xl border bg-background shadow-sm min-h-12 pl-4 pr-1.5"
                 >
                   <button
                     type="button"

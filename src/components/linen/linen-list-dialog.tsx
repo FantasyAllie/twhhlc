@@ -83,7 +83,7 @@ export function LinenListDialog({
  </DialogHeader>
    <div className="space-y-3">
       {(realIsAdmin || realIsManager || (hasHousekeeperRole && hasFnbRole)) && (
-      <div className="inline-flex rounded-md border p-0.5 bg-muted/40 self-start">
+      <div className="inline-flex rounded-xl border p-0.5 bg-muted/40 self-start">
        <button
          type="button"
          onClick={() => setLinenListType("housekeeping")}

@@ -39,7 +39,7 @@ export function ManageEditableRow({
     setEditing(false);
   };
   return (
-    <div className="flex items-center gap-1 rounded-full border bg-background min-h-12 pl-2 pr-1.5">
+    <div className="flex items-center gap-1 rounded-xl border bg-background shadow-sm min-h-12 pl-2 pr-1.5">
       <div className="flex flex-col">
         <Button
           type="button"
@@ -80,7 +80,7 @@ export function ManageEditableRow({
               setEditing(false);
             }
           }}
-          className="flex-1 min-w-0 bg-transparent text-sm font-medium outline-none px-2 py-1 rounded-md border border-input focus:ring-1 focus:ring-ring"
+          className="flex-1 min-w-0 bg-transparent text-sm font-medium outline-none px-2 py-1 rounded-xl border border-input focus:ring-1 focus:ring-ring"
         />
       ) : (
         <span className="flex-1 text-sm font-medium pl-2 truncate">{label}</span>

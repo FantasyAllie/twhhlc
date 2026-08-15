@@ -146,14 +146,14 @@ export function NotificationsSheet({
 
         <div className="mt-4 space-y-4">
           {!supported && (
-            <div className="rounded-md border bg-muted/40 p-3 text-sm">
+            <div className="rounded-xl border bg-muted/40 p-3 text-sm">
               Push notifications are not supported by this browser. Try Chrome/Edge on desktop or
               Android, or install this app to your Home Screen on iOS 16.4+.
             </div>
           )}
 
           {supported && iosNeedsInstall && (
-            <div className="flex items-start gap-2 rounded-md border border-amber-500/60 bg-amber-50 dark:bg-amber-950/40 p-3 text-sm">
+            <div className="flex items-start gap-2 rounded-xl border border-amber-500/60 bg-amber-50 dark:bg-amber-950/40 p-3 text-sm">
               <Smartphone className="h-4 w-4 shrink-0 mt-0.5 text-amber-600 dark:text-amber-400" />
               <div>
                 <p className="font-medium text-amber-800 dark:text-amber-200">Install required on iPhone/iPad</p>
@@ -166,7 +166,7 @@ export function NotificationsSheet({
           )}
 
           {supported && !iosNeedsInstall && (
-            <div className="rounded-md border bg-background p-3">
+            <div className="rounded-xl border bg-background p-3">
               <div className="flex items-center justify-between gap-3">
                 <div>
                   <p className="text-sm font-medium">This device</p>
@@ -199,7 +199,7 @@ export function NotificationsSheet({
             </div>
           )}
 
-          <div className="space-y-2 rounded-md border bg-background p-3">
+          <div className="space-y-2 rounded-xl border bg-background p-3">
             <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
               Notify me about
             </p>
@@ -224,7 +224,7 @@ export function NotificationsSheet({
             </p>
           </div>
 
-          <div className="space-y-2 rounded-md border bg-background p-3">
+          <div className="space-y-2 rounded-xl border bg-background p-3">
             <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
               Notify me about new messages from
             </p>
@@ -272,7 +272,7 @@ export function NotificationsSheet({
           </div>
 
           {(userRole === "admin" || userRole === "maintenance" || (myDepartments ?? []).includes("maintenance")) && (
-            <div className="space-y-2 rounded-md border bg-background p-3">
+            <div className="space-y-2 rounded-xl border bg-background p-3">
               <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
                 Maintenance requests
               </p>
@@ -302,7 +302,7 @@ function PrefRow({
   onChange: (v: boolean) => void;
 }) {
   return (
-    <label className="flex items-center justify-between gap-3 rounded-md border bg-muted/30 px-3 py-2 text-sm">
+    <label className="flex items-center justify-between gap-3 rounded-xl border bg-muted/30 px-3 py-2 text-sm">
       <span>{label}</span>
       <Switch checked={checked} onCheckedChange={onChange} />
     </label>

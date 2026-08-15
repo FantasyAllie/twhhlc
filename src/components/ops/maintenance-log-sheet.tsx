@@ -116,7 +116,7 @@ export function MaintenanceLogSheet({
             <select
               value={newMaintenanceRoom}
               onChange={(e) => setNewMaintenanceRoom(e.target.value)}
-              className="h-9 rounded-md border bg-background px-2 text-sm sm:w-44"
+              className="h-9 rounded-xl border bg-background px-2 text-sm sm:w-44"
             >
               <option value="">Select a location</option>
               <optgroup label="Rooms">

@@ -140,12 +140,12 @@ export function ReceptionIconGuide() {
         <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground mb-1.5">
           Tile colours
         </p>
-        <ul className="divide-y rounded-md border bg-card">
+        <ul className="divide-y rounded-xl border bg-card">
           {TILE_COLOURS.map((c) => (
             <li key={c.key} className="px-3 py-2.5">
               <div className="flex items-center gap-3">
                 <span
-                  className={`inline-flex h-6 w-10 items-center justify-center shrink-0 rounded-md border ${c.swatch}`}
+                  className={`inline-flex h-6 w-10 items-center justify-center shrink-0 rounded-xl border ${c.swatch}`}
                 />
                 <span className="text-sm font-medium flex-1">{c.label}</span>
               </div>
@@ -160,7 +160,7 @@ export function ReceptionIconGuide() {
         <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground mb-1.5">
           Icons &amp; symbols
         </p>
-        <ul className="divide-y rounded-md border bg-card">
+        <ul className="divide-y rounded-xl border bg-card">
           {ENTRIES.map((e) => (
             <li key={e.key} className="px-3 py-2.5">
               <div className="flex items-center gap-3">

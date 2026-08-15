@@ -301,7 +301,7 @@ export function LostPropertySheet({
                     onChange={(e) =>
                       setAddRoom(e.target.value === "" ? "" : Number(e.target.value))
                     }
-                    className="h-8 rounded-md border bg-background px-2 text-sm"
+                    className="h-8 rounded-xl border bg-background px-2 text-sm"
                   >
                     <option value="">{requireRoom ? "Select a room" : "— none —"}</option>
                     {(roomNumbers ?? []).map((n) => (

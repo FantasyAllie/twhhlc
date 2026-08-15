@@ -65,7 +65,7 @@ export function RejectsDialog({
             No linen items yet. Add some from the Linen List.
           </p>
         ) : (
-          <div className="border rounded-md bg-muted/30 flex flex-col min-h-0 flex-1 overflow-hidden">
+          <div className="border rounded-xl bg-muted/30 flex flex-col min-h-0 flex-1 overflow-hidden">
             <div className="flex-1 min-h-0 overflow-y-auto p-4">
               <ul className="space-y-1">
                 {template.map((item) => {
@@ -73,7 +73,7 @@ export function RejectsDialog({
                   return (
                     <li
                       key={item.id}
-                      className="flex items-center gap-3 py-2 px-2 rounded-md border"
+                      className="flex items-center gap-3 py-2 px-2 rounded-xl border"
                       style={rowStyle(item, theme)}
                     >
                       <span className="flex-1 min-w-0 break-words" style={textStyle(item, theme)}>
@@ -169,7 +169,7 @@ export function DeliveryDialog({
             No linen items yet. Add some from the Linen List.
           </p>
         ) : (
-          <div className="border rounded-md bg-muted/30 flex flex-col min-h-0 flex-1 overflow-hidden">
+          <div className="border rounded-xl bg-muted/30 flex flex-col min-h-0 flex-1 overflow-hidden">
             <div className="flex-1 min-h-0 overflow-y-auto p-4">
               <ul className="space-y-1">
                 {template.map((item) => {
@@ -177,7 +177,7 @@ export function DeliveryDialog({
                   return (
                     <li
                       key={item.id}
-                      className="flex items-center gap-3 py-2 px-2 rounded-md border"
+                      className="flex items-center gap-3 py-2 px-2 rounded-xl border"
                       style={rowStyle(item, theme)}
                     >
                       <span className="flex-1 min-w-0 break-words" style={textStyle(item, theme)}>
