@@ -329,9 +329,6 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
   const [exportSheetOpen, setExportSheetOpen] = useState(false);
   const [endShiftPrintOpen, setEndShiftPrintOpen] = useState(false);
   const [receptionPrintOpen, setReceptionPrintOpen] = useState(false);
-  const [endShiftPrintKinds, setEndShiftPrintKinds] = useState<
-    Array<"totals" | "fnb_totals" | "room_status" | "maintenance">
-  >([]);
   const [rolePickerSheetOpen, setRolePickerSheetOpen] = useState(false);
   const [editItemSheetId, setEditItemSheetId] = useState<string | null>(null);
   const [filtersSheetOpen, setFiltersSheetOpen] = useState(false);
