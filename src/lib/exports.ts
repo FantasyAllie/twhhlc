@@ -378,7 +378,7 @@ export const printTotals = (
   rows: SnapshotRow[],
   grand: number,
   when: Date,
-  kind: "totals" | "rejects" | "fnb_totals" = "totals",
+  kind: "totals" | "rejects" | "fnb_totals" | "delivery" = "totals",
   subheading?: string,
   footer?: string,
 ) => {
@@ -386,9 +386,11 @@ export const printTotals = (
   const heading =
     kind === "rejects"
       ? `${hotelName} Linen Rejects`
-      : kind === "fnb_totals"
-        ? `${hotelName} F&B Linen`
-        : `${hotelName} Linen`;
+      : kind === "delivery"
+        ? `${hotelName} Linen Delivery`
+        : kind === "fnb_totals"
+          ? `${hotelName} F&B Linen`
+          : `${hotelName} Linen`;
   const win = window.open("", "_blank");
   if (!win) {
     toast.error("Pop-up blocked");
