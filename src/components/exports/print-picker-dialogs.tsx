@@ -294,12 +294,19 @@ export const LinenCountPrintDialog = ({
     onOpenChange(false);
   };
 
-  const printRange = () => {
+  const printRange = (force = false) => {
     if (!from || !to) {
       toast.error("Pick both dates");
       return;
     }
     const [start, end] = from.getTime() <= to.getTime() ? [from, to] : [to, from];
+    if (!force) {
+      const missing = missingDaysInRange(snapshots, "totals", start, end, liveRows.length > 0);
+      if (missing.length > 0) {
+        setGapWarning({ days: missing, start, end });
+        return;
+      }
+    }
     const { rows, grand } = Exp.computeRangedLinenTotals(snapshots, start, end, liveRows);
     if (rows.length === 0) {
       toast.error("No linen counts recorded in that range");
@@ -307,6 +314,7 @@ export const LinenCountPrintDialog = ({
     }
     const sub = `Printed Range: ${Exp.formatLongDate(start, false)} - ${Exp.formatLongDate(end, false)}`;
     printTotals(rows, grand, end, sub, footer());
+    setGapWarning(null);
     onOpenChange(false);
   };
 
@@ -397,10 +405,29 @@ export const LinenCountPrintDialog = ({
                 <span className="text-xs uppercase tracking-wide text-muted-foreground">To</span>
                 <DateField value={to} onChange={setTo} />
               </div>
-              <Button className="h-12" onClick={printRange}>
+              <Button className="h-12" onClick={() => printRange()}>
                 <Printer className="h-4 w-4 mr-2" />
                 Print tally
               </Button>
+              {gapWarning && (
+                <div className="rounded-md border border-amber-500/50 bg-amber-500/10 p-3 text-sm">
+                  <p className="font-medium">
+                    {gapWarning.days.length} day{gapWarning.days.length === 1 ? "" : "s"} in this
+                    range have no saved export
+                  </p>
+                  <p className="mt-1 max-h-24 overflow-y-auto text-xs text-muted-foreground">
+                    {gapWarning.days.map((d) => Exp.formatLongDate(d, false)).join(", ")}
+                  </p>
+                  <div className="mt-3 flex justify-end gap-2">
+                    <Button variant="ghost" size="sm" onClick={() => setGapWarning(null)}>
+                      Cancel
+                    </Button>
+                    <Button size="sm" onClick={() => printRange(true)}>
+                      Print anyway
+                    </Button>
+                  </div>
+                </div>
+              )}
             </>
           )}
         </div>
