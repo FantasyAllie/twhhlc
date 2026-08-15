@@ -12,7 +12,7 @@ type Props = {
   rooms: Room[];
   receptionStatuses: ReceptionItem[];
   receptionBeds: ReceptionItem[];
-  parseCats: (v: unknown) => string[];
+  parseCats: (c: string | null | undefined) => string[];
   isReception: boolean;
   isAdmin: boolean;
   receptionDoneSet: Set<number>;
@@ -21,7 +21,7 @@ type Props = {
   dndFileInputRef: React.RefObject<HTMLInputElement | null>;
   setRoomGuestVacated: (n: number, v: boolean) => void;
   setQuickReceptionOpen: (v: boolean) => void;
-  setStayoverPhotosRoomFilter: (n: number | null) => void;
+  setStayoverPhotosRoomFilter: (n: number | undefined) => void;
   setStayoverPhotosOpen: (v: boolean) => void;
   toggleReceptionDone: (n: number) => void | Promise<void>;
   setRoomReceptionStatus: (n: number, id: string | null) => void;
