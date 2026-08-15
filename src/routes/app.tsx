@@ -521,6 +521,7 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
   const assignmentsQ = useTemplateItemRoomsQuery();
   const snapshotsQ = useExportSnapshotsQuery();
   const rejectsQ = useRejectCountsQuery();
+  const deliveryQ = useDeliveryCountsQuery();
   const messagesQ = useRoomMessagesQuery();
   const maintenanceRequestsQ = useMaintenanceRequestsQuery();
   const lostPropertyQ = useLostPropertyOpenQuery();
@@ -562,6 +563,7 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
   const assignments = assignmentsQ.data ?? [];
   const snapshots = snapshotsQ.data ?? [];
   const rejects = (rejectsQ.data ?? []) as RejectCount[];
+  const deliveryCounts = (deliveryQ.data ?? []) as DeliveryCount[];
   const roomMessages = (messagesQ.data ?? []) as RoomMessage[];
   const activeMessagesByRoom = (n: number) =>
     roomMessages.filter(
