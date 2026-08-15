@@ -4655,28 +4655,44 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
                 const pct = total > 0 ? Math.min(100, (progress / total) * 100) : 0;
                 const isComplete = total > 0 && progress >= total;
                  return (
-                     <div className="mt-3 space-y-1 max-lg:fixed max-lg:inset-x-0 max-lg:bottom-0 max-lg:z-40 max-lg:mt-0 max-lg:border-t max-lg:border-border max-lg:bg-background/95 max-lg:backdrop-blur max-lg:pl-[calc(env(safe-area-inset-left,0px)+1.5rem)] max-lg:pr-[calc(env(safe-area-inset-right,0px)+1.5rem)] max-lg:pt-2 max-lg:pb-[calc(env(safe-area-inset-bottom,0px)+0.75rem)] max-lg:shadow-[0_-2px_8px_rgba(0,0,0,0.06)]">
-                    <div className="flex items-center justify-between text-xs text-muted-foreground">
-                      <span>Rooms progress</span>
+                      <div className="mt-3 space-y-2 max-lg:fixed max-lg:inset-x-0 max-lg:bottom-0 max-lg:z-40 max-lg:mt-0 max-lg:border-t max-lg:border-border max-lg:bg-background/95 max-lg:backdrop-blur max-lg:pl-[calc(env(safe-area-inset-left,0px)+1.5rem)] max-lg:pr-[calc(env(safe-area-inset-right,0px)+1.5rem)] max-lg:pt-3 max-lg:pb-[calc(env(safe-area-inset-bottom,0px)+1rem)]">
+                    <div className="flex items-center justify-between text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+                      <span className="flex items-center gap-1.5">
+                        {isComplete ? (
+                          <Check className="h-3.5 w-3.5 text-room-complete-accent" />
+                        ) : (
+                          <House className="h-3.5 w-3.5" />
+                        )}
+                        Rooms progress
+                      </span>
                       <span className="tabular-nums">{progress} of {total}</span>
                     </div>
                     <div
                       role="button"
                       tabIndex={-1}
                       onClick={handleProgressTap}
-                      className="relative h-4 w-full overflow-hidden rounded-full bg-secondary shadow-inner cursor-pointer select-none"
+                      className="relative h-5 w-full overflow-hidden rounded-full bg-muted shadow-elevation-1 cursor-pointer select-none active:scale-[0.99] transition-transform"
                     >
                       <div
                         className={cn(
-                          "h-full rounded-full transition-[width,background-color] duration-300",
+                          "h-full rounded-full transition-[width,background-color] duration-300 shadow-elevation-1",
+                          isComplete && "bg-room-complete",
                         )}
                         style={{
                           width: `${pct}%`,
-                          backgroundColor: `hsl(${(pct / 100) * 120}, 85%, 45%)`,
+                          backgroundColor: isComplete
+                            ? undefined
+                            : pct < 30
+                              ? "var(--color-room-todo)"
+                              : pct < 70
+                                ? "var(--color-room-progress)"
+                                : pct < 100
+                                  ? "var(--color-room-done)"
+                                  : "var(--color-room-complete)",
                         }}
                       />
                       {isComplete && (
-                        <div className="pointer-events-none absolute inset-0 flex items-center justify-center text-[10px] font-bold uppercase tracking-widest text-white">
+                        <div className="pointer-events-none absolute inset-0 flex items-center justify-center text-[10px] font-bold uppercase tracking-widest text-room-complete-fg">
                           Complete
                         </div>
                       )}
