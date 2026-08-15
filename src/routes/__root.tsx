@@ -12,6 +12,7 @@ import appCss from "../styles.css?url";
 import { Toaster } from "sonner";
 import { ThemeProvider } from "@/components/theme-provider";
 import { useEffect } from "react";
+import { useGlobalRipple } from "@/lib/ripple";
 import { bootstrapAuth } from "@/lib/auth-client";
 
 function NotFoundComponent() {
