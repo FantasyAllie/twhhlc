@@ -3532,53 +3532,6 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
     }}
   />
 
- {isAdmin && !isReception && (
-   <Sheet open={exportSheetOpen} onOpenChange={setExportSheetOpen}>
-     <SheetContent side="bottom" className="max-h-[85dvh] overflow-y-auto rounded-t-2xl p-4 sm:p-6">
-       <SheetHeader className="text-left">
-         <SheetTitle>Export</SheetTitle>
-         <SheetDescription>Choose what to export.</SheetDescription>
-       </SheetHeader>
-       <div className="mt-4 grid gap-2">
-         <Button variant="outline" size="lg" className="justify-start h-12" onClick={() => { setExportSheetOpen(false); openExport(); }}>
-           <List className="h-5 w-5 mr-2" />
-          Daily Linen Totals
-         </Button>
-         <Button variant="outline" size="lg" className="justify-start h-12" onClick={() => { setExportSheetOpen(false); setLinenPrintOpen(true); }}>
-           <Printer className="h-5 w-5 mr-2" />
-           Linen Count (by date)
-         </Button>
-         <Button variant="outline" size="lg" className="justify-start h-12" onClick={() => { setExportSheetOpen(false); setRoomStatusPrintOpen(true); }}>
-           <Printer className="h-5 w-5 mr-2" />
-           Room Status Sheet (by date)
-         </Button>
-        <Button variant="outline" size="lg" className="justify-start h-12" onClick={() => { setExportSheetOpen(false); setRejectsPrintOpen(true); }}>
-          <Ban className="h-5 w-5 mr-2" />
-          Rejects (by date)
-        </Button>
-        <Button variant="outline" size="lg" className="justify-start h-12" onClick={() => { setExportSheetOpen(false); setDeliveryPrintOpen(true); }}>
-          <Truck className="h-5 w-5 mr-2" />
-          Delivery (by date)
-        </Button>
-        <Button variant="outline" size="lg" className="justify-start h-12" onClick={() => { setExportSheetOpen(false); setFnbPrintOpen(true); }}>
-          <List className="h-5 w-5 mr-2" />
-          F&amp;B Linen (by date)
-        </Button>
-         <Button variant="outline" size="lg" className="justify-start h-12" onClick={() => { setExportSheetOpen(false); openRoomStatusExport(); }}>
-           <ClipboardList className="h-5 w-5 mr-2" />
-           Room status
-         </Button>
-          {todayIsMonday && (
-            <Button variant="outline" size="lg" className="justify-start h-12" onClick={() => { setExportSheetOpen(false); openWeeklyFnbTotals(); }}>
-              <List className="h-5 w-5 mr-2" />
-              Weekly F&amp;B linen totals
-            </Button>
-          )}
-       </div>
-     </SheetContent>
-   </Sheet>
- )}
-
   {/* Linen list dialog */}
   <LinenListDialog
     templateOpen={templateOpen}
