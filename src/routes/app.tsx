@@ -3498,6 +3498,18 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
            <Printer className="h-5 w-5 mr-2" />
            Room Status Sheet (by date)
          </Button>
+        <Button variant="outline" size="lg" className="justify-start h-12" onClick={() => { setExportSheetOpen(false); setRejectsPrintOpen(true); }}>
+          <Ban className="h-5 w-5 mr-2" />
+          Rejects (by date)
+        </Button>
+        <Button variant="outline" size="lg" className="justify-start h-12" onClick={() => { setExportSheetOpen(false); setDeliveryPrintOpen(true); }}>
+          <Truck className="h-5 w-5 mr-2" />
+          Delivery (by date)
+        </Button>
+        <Button variant="outline" size="lg" className="justify-start h-12" onClick={() => { setExportSheetOpen(false); setFnbPrintOpen(true); }}>
+          <List className="h-5 w-5 mr-2" />
+          F&amp;B Linen (by date)
+        </Button>
          <Button variant="outline" size="lg" className="justify-start h-12" onClick={() => { setExportSheetOpen(false); openRoomStatusExport(); }}>
            <ClipboardList className="h-5 w-5 mr-2" />
            Room status
