@@ -266,8 +266,10 @@ export const LinenCountPrintDialog = ({
   const [date, setDate] = useState<Date>(new Date());
   const [from, setFrom] = useState<Date | undefined>(undefined);
   const [to, setTo] = useState<Date | undefined>(undefined);
+  const [gapWarning, setGapWarning] = useState<{ days: Date[]; start: Date; end: Date } | null>(null);
   const available = savedDays(snapshots, "totals");
   const window = Exp.deliveryWindow(new Date(), linenDeliveryDays);
+  const todaySelectable = liveRows.length > 0 || available.has(new Date().toDateString());
 
   const footer = () => `Date Printed: ${Exp.formatLongDate(new Date(), true)}`;
 
@@ -373,9 +375,14 @@ export const LinenCountPrintDialog = ({
             </>
           ) : mode === "single" ? (
             <>
-              <DateField value={date} onChange={(d) => d && setDate(d)} availableDays={available} />
+          <DateField
+            value={date}
+            onChange={(d) => d && setDate(d)}
+            availableDays={available}
+            allowToday={todaySelectable}
+          />
               <p className="text-xs text-muted-foreground">
-                Only dates with a saved count can be selected.
+                Days without a saved count are greyed out.
               </p>
               <Button className="h-12" onClick={printSingle}>
                 <Printer className="h-4 w-4 mr-2" />
