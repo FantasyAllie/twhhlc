@@ -111,9 +111,11 @@ import type { SnapshotKind } from "@/lib/exports";
 import {
   computeResetPreserveMap,
   getRoomTileState as computeRoomTileState,
+  resolveRoomStatusIds,
   roomStateMeta,
 } from "@/lib/rooms";
 import type { RoomTileState } from "@/lib/rooms";
+import { HousekeepingRoomTile, ReceptionRoomTile } from "@/components/rooms/room-tile";
 
 export const Route = createFileRoute("/app")({
   ssr: false,
