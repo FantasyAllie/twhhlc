@@ -122,6 +122,10 @@
   --sidebar-accent-foreground: oklch(0.208 0.042 265.755);
   --sidebar-border: oklch(0.929 0.013 255.508);
   --sidebar-ring: oklch(0.704 0.04 256.788);
+  /* Material elevation tiers: ambient + key light for tactile depth. */
+  --shadow-1: 0 1px 2px 0 rgb(0 0 0 / 0.08), 0 1px 1px -1px rgb(0 0 0 / 0.06);
+  --shadow-2: 0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.08);
+  --shadow-3: 0 20px 25px -5px rgb(0 0 0 / 0.14), 0 8px 10px -6px rgb(0 0 0 / 0.1);
   --room-todo: oklch(0.955 0.025 25);
   --room-todo-fg: oklch(0.45 0.18 27);
   --room-todo-accent: oklch(0.62 0.22 27);
