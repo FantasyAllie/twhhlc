@@ -145,3 +145,12 @@ export type LostPropertyLite = {
   created_at: string;
   photo_paths?: string[] | null;
 };
+
+// Non-room parts of the hotel (lobby, kitchen, car park...) that maintenance
+// issues can be logged against. Configured by admins and managers.
+export type MaintenanceArea = {
+  id: string;
+  label: string;
+  sort_order: number | null;
+  created_at: string;
+};
