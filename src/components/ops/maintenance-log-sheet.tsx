@@ -1,6 +1,6 @@
 // Maintenance Log sheet (composer + open/completed lists).
 // Extracted verbatim from src/routes/app.tsx.
-import { Check, ChevronDown, Plus, Trash2, Wrench, X } from "lucide-react";
+import { Check, ChevronDown, Plus, Settings, Trash2, Wrench, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import {
@@ -11,13 +11,17 @@ import {
   SheetTitle,
 } from "@/components/ui/sheet";
 import { PhotoAttachments, PhotoComposer } from "@/components/entry-photos";
-import type { MaintenanceRequest, Room } from "@/lib/app-types";
+import type { MaintenanceArea, MaintenanceRequest, Room } from "@/lib/app-types";
+import { maintenanceLocation } from "@/lib/app-format";
 
 export function MaintenanceLogSheet({
   open,
   onOpenChange,
   rooms,
   maintenanceRequests,
+  maintenanceAreas = [],
+  canManageAreas = false,
+  onManageAreas,
   hasOpenMaintenance,
   openMaintenanceCount,
   isReception,
@@ -41,6 +45,9 @@ export function MaintenanceLogSheet({
   onOpenChange: (o: boolean) => void;
   rooms: Room[];
   maintenanceRequests: MaintenanceRequest[];
+  maintenanceAreas?: MaintenanceArea[];
+  canManageAreas?: boolean;
+  onManageAreas?: () => void;
   hasOpenMaintenance: boolean;
   openMaintenanceCount: number;
   isReception: boolean;
@@ -109,17 +116,28 @@ export function MaintenanceLogSheet({
             <select
               value={newMaintenanceRoom}
               onChange={(e) => setNewMaintenanceRoom(e.target.value)}
-              className="h-9 rounded-md border bg-background px-2 text-sm sm:w-32"
+              className="h-9 rounded-md border bg-background px-2 text-sm sm:w-44"
             >
-              <option value="">Select a room</option>
-              {rooms
-                .map((r) => r.room_number)
-                .sort((a, b) => a - b)
-                .map((n) => (
-                  <option key={n} value={String(n)}>
-                    Room {n}
-                  </option>
-                ))}
+              <option value="">Select a location</option>
+              <optgroup label="Rooms">
+                {rooms
+                  .map((r) => r.room_number)
+                  .sort((a, b) => a - b)
+                  .map((n) => (
+                    <option key={n} value={String(n)}>
+                      Room {n}
+                    </option>
+                  ))}
+              </optgroup>
+              {maintenanceAreas.length > 0 && (
+                <optgroup label="Other areas">
+                  {maintenanceAreas.map((a) => (
+                    <option key={a.id} value={`area:${a.label}`}>
+                      {a.label}
+                    </option>
+                  ))}
+                </optgroup>
+              )}
             </select>
             <Input
               placeholder="Describe the issue…"
@@ -144,6 +162,18 @@ export function MaintenanceLogSheet({
             </Button>
           </div>
           <PhotoComposer value={newMaintenancePhotos} onChange={setNewMaintenancePhotos} />
+          {canManageAreas && onManageAreas && (
+            <Button
+              type="button"
+              variant="ghost"
+              size="sm"
+              className="self-start text-xs"
+              onClick={onManageAreas}
+            >
+              <Settings className="h-3.5 w-3.5 mr-1" />
+              Manage areas
+            </Button>
+          )}
         </div>
       ) : (
         <Button
@@ -175,7 +205,7 @@ export function MaintenanceLogSheet({
                 <div className="flex-1 min-w-0">
                   <div className="flex items-center gap-2 flex-wrap">
                     <span className="inline-flex h-6 items-center rounded-full bg-primary/10 text-primary px-2 text-xs font-semibold">
-                      Room {m.room_number}
+                      {maintenanceLocation(m)}
                     </span>
                     <span className="text-xs text-muted-foreground">
                       {new Date(m.created_at).toLocaleString(undefined, { month: "short", day: "numeric", hour: "numeric", minute: "2-digit" })}
@@ -231,7 +261,7 @@ export function MaintenanceLogSheet({
                 <div className="flex-1 min-w-0">
                   <div className="flex items-center gap-2 flex-wrap">
                     <span className="inline-flex h-6 items-center rounded-full bg-muted text-muted-foreground px-2 text-xs font-semibold">
-                      Room {m.room_number}
+                      {maintenanceLocation(m)}
                     </span>
                     <span className="text-xs text-muted-foreground">
                       Done{m.done_by_username ? ` by ${m.done_by_username}` : ""}
