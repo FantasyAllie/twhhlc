@@ -5244,6 +5244,7 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
   {/* Manage Rooms dialog */}
   <Dialog open={manageRoomsOpen} onOpenChange={setManageRoomsOpen}>
     <DialogContent className="max-w-md w-[calc(100vw-1.5rem)] sm:w-full p-4 sm:p-6">
+    <DialogContent className="max-w-md w-[calc(100vw-1.5rem)] sm:w-full p-4 sm:p-6">
       <DialogHeader>
         <DialogTitle>Manage Rooms</DialogTitle>
         <DialogDescription>
