@@ -293,14 +293,9 @@ export const formatShortDate = (d: Date) =>
 
 // --- Snapshot persistence --------------------------------------------------
 
-// Retention: one snapshot per day, per kind. Room status sheets and daily linen
-// totals keep a rolling year so any past date can be re-printed; F&B linen
-// keeps a couple of weeks for the Monday roll-up; everything else keeps a week.
-export const retentionDaysFor = (kind: SnapshotKind) => {
-  if (kind === "totals" || kind === "room_status" || kind === "totals_range") return 366;
-  if (kind === "fnb_totals") return 16;
-  return 7;
-};
+// Retention: one snapshot per day, per kind. Every kind now keeps a rolling
+// year so any past date can be re-printed.
+export const retentionDaysFor = (_kind: SnapshotKind) => 366;
 
 export const pruneSnapshots = async (kind: SnapshotKind) => {
   const { data } = await supabase
