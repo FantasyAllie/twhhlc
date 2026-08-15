@@ -88,6 +88,7 @@ export const RoomStatusPrintDialog = ({
   printRoomStatus: (rows: RoomStatusRow[], when: Date) => void;
 }) => {
   const [date, setDate] = useState<Date>(new Date());
+  const available = savedDays(snapshots, "room_status");
   const doPrint = () => {
     if (Exp.isSameDay(date, new Date())) {
       if (liveRows.length === 0) {
@@ -117,7 +118,10 @@ export const RoomStatusPrintDialog = ({
           </DialogDescription>
         </DialogHeader>
         <div className="mt-2 grid gap-3">
-          <DateField value={date} onChange={(d) => d && setDate(d)} />
+          <DateField value={date} onChange={(d) => d && setDate(d)} availableDays={available} />
+          <p className="text-xs text-muted-foreground">
+            Only dates with a saved sheet can be selected.
+          </p>
           <Button className="h-12" onClick={doPrint}>
             <Printer className="h-4 w-4 mr-2" />
             Print
