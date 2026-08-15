@@ -293,9 +293,14 @@ export const formatShortDate = (d: Date) =>
 
 // --- Snapshot persistence --------------------------------------------------
 
-// Retention: one snapshot per day, per kind. History keeps 7 days; F&B linen
-// keeps longer because the Monday roll-up sums the whole previous week.
-export const retentionDaysFor = (kind: SnapshotKind) => (kind === "fnb_totals" ? 16 : 7);
+// Retention: one snapshot per day, per kind. Room status sheets and daily linen
+// totals keep a rolling year so any past date can be re-printed; F&B linen
+// keeps a couple of weeks for the Monday roll-up; everything else keeps a week.
+export const retentionDaysFor = (kind: SnapshotKind) => {
+  if (kind === "totals" || kind === "room_status" || kind === "totals_range") return 366;
+  if (kind === "fnb_totals") return 16;
+  return 7;
+};
 
 export const pruneSnapshots = async (kind: SnapshotKind) => {
   const { data } = await supabase
@@ -303,7 +308,7 @@ export const pruneSnapshots = async (kind: SnapshotKind) => {
     .select("id,created_at")
     .eq("kind", kind)
     .order("created_at", { ascending: false })
-    .limit(500);
+    .limit(2000);
   if (!data) return;
   const maxDays = retentionDaysFor(kind);
   const days = new Set<string>();
