@@ -4580,12 +4580,17 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
     }
   const nodes: React.ReactNode[] = [];
     const statusIds = resolveRoomStatusIds(receptionStatuses);
+    // Index rooms/counts once instead of scanning the arrays per tile.
+    const roomByNumber = new Map<number, Room>();
+    for (const r of rooms) roomByNumber.set(r.room_number, r);
+    const countedRooms = new Set<number>();
+    for (const c of counts) if ((c.count ?? 0) > 0) countedRooms.add(c.room_number);
    for (let i = 0; i < visibleRooms.length; i++) {
    const n = visibleRooms[i];
  const done = doneSet.has(n);
  const isOpen = openRoom === n;
-   const room = rooms.find((r) => r.room_number === n);
-   const hasLinenCount = counts.some((c) => c.room_number === n && (c.count ?? 0) > 0);
+   const room = roomByNumber.get(n);
+   const hasLinenCount = countedRooms.has(n);
    const isNR = nrOnRooms.has(n);
    if (isReception) {
      nodes.push(
