@@ -27,7 +27,11 @@ import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Minus, Plus, X, Menu, ArrowUp, ArrowDown, Pencil, Check, Trash2, Sun, Moon, List, Bed, Ban, History, Users, User, LogOut, Hash, ConciergeBell, ClipboardList, Printer, Filter, Wrench, DoorOpen, Bell, Eye, EyeOff, HelpCircle, AlertCircle, MessageSquare, PackageSearch, RotateCcw, ChevronDown, Camera, LayoutGrid, Truck } from "lucide-react";
-import { LinenCountPrintDialog, RoomStatusPrintDialog } from "@/components/exports/print-picker-dialogs";
+import {
+  LinenCountPrintDialog,
+  RoomStatusPrintDialog,
+  SnapshotPrintDialog,
+} from "@/components/exports/print-picker-dialogs";
 import { ExportPreviewDialogs } from "@/components/exports/export-preview-dialogs";
 import { SnapshotViewerDialog } from "@/components/exports/snapshot-viewer-dialog";
 import { RejectsDialog, DeliveryDialog } from "@/components/linen/counter-dialogs";
@@ -482,6 +486,9 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
   const [deliveryOpen, setDeliveryOpen] = useState(false);
   const [roomStatusPrintOpen, setRoomStatusPrintOpen] = useState(false);
   const [linenPrintOpen, setLinenPrintOpen] = useState(false);
+  const [rejectsPrintOpen, setRejectsPrintOpen] = useState(false);
+  const [deliveryPrintOpen, setDeliveryPrintOpen] = useState(false);
+  const [fnbPrintOpen, setFnbPrintOpen] = useState(false);
   const [rejectExportOpen, setRejectExportOpen] = useState(false);
   const [roomStatusExportOpen, setRoomStatusExportOpen] = useState(false);
   const [manageRoomsOpen, setManageRoomsOpen] = useState(false);
@@ -3378,6 +3385,39 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
           <Printer className="h-4 w-4 mr-2" />
           Linen Count
         </Button>
+        <Button
+          variant="outline"
+          className="justify-start h-12"
+          onClick={() => {
+            setEndShiftPrintOpen(false);
+            setRejectsPrintOpen(true);
+          }}
+        >
+          <Ban className="h-4 w-4 mr-2" />
+          Rejects
+        </Button>
+        <Button
+          variant="outline"
+          className="justify-start h-12"
+          onClick={() => {
+            setEndShiftPrintOpen(false);
+            setDeliveryPrintOpen(true);
+          }}
+        >
+          <Truck className="h-4 w-4 mr-2" />
+          Delivery
+        </Button>
+        <Button
+          variant="outline"
+          className="justify-start h-12"
+          onClick={() => {
+            setEndShiftPrintOpen(false);
+            setFnbPrintOpen(true);
+          }}
+        >
+          <List className="h-4 w-4 mr-2" />
+          F&amp;B Linen
+        </Button>
       </div>
       <div className="mt-4 flex justify-end">
         <Button variant="ghost" onClick={() => setEndShiftPrintOpen(false)}>
@@ -3404,6 +3444,39 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
       printTotals(rows, grand, when, "totals", subheading, footer)
     }
   />
+  <SnapshotPrintDialog
+    open={rejectsPrintOpen}
+    onOpenChange={setRejectsPrintOpen}
+    snapshots={snapshots}
+    kind="rejects"
+    title="Rejects"
+    liveRows={computeRejectTotals().rows}
+    printTotals={(rows, grand, when, footer) =>
+      printTotals(rows, grand, when, "rejects", undefined, footer)
+    }
+  />
+  <SnapshotPrintDialog
+    open={deliveryPrintOpen}
+    onOpenChange={setDeliveryPrintOpen}
+    snapshots={snapshots}
+    kind="delivery"
+    title="Delivery"
+    liveRows={computeDeliveryTotals().rows}
+    printTotals={(rows, grand, when, footer) =>
+      printTotals(rows, grand, when, "delivery", undefined, footer)
+    }
+  />
+  <SnapshotPrintDialog
+    open={fnbPrintOpen}
+    onOpenChange={setFnbPrintOpen}
+    snapshots={snapshots}
+    kind="fnb_totals"
+    title="F&B Linen"
+    liveRows={computeFnbTotals().rows}
+    printTotals={(rows, grand, when, footer) =>
+      printTotals(rows, grand, when, "fnb_totals", undefined, footer)
+    }
+  />
 
  {isAdmin && !isReception && (
    <Sheet open={exportSheetOpen} onOpenChange={setExportSheetOpen}>
@@ -3425,6 +3498,18 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
            <Printer className="h-5 w-5 mr-2" />
            Room Status Sheet (by date)
          </Button>
+        <Button variant="outline" size="lg" className="justify-start h-12" onClick={() => { setExportSheetOpen(false); setRejectsPrintOpen(true); }}>
+          <Ban className="h-5 w-5 mr-2" />
+          Rejects (by date)
+        </Button>
+        <Button variant="outline" size="lg" className="justify-start h-12" onClick={() => { setExportSheetOpen(false); setDeliveryPrintOpen(true); }}>
+          <Truck className="h-5 w-5 mr-2" />
+          Delivery (by date)
+        </Button>
+        <Button variant="outline" size="lg" className="justify-start h-12" onClick={() => { setExportSheetOpen(false); setFnbPrintOpen(true); }}>
+          <List className="h-5 w-5 mr-2" />
+          F&amp;B Linen (by date)
+        </Button>
          <Button variant="outline" size="lg" className="justify-start h-12" onClick={() => { setExportSheetOpen(false); openRoomStatusExport(); }}>
            <ClipboardList className="h-5 w-5 mr-2" />
            Room status

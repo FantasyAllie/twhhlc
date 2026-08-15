@@ -25,11 +25,13 @@ const DateField = ({
   onChange,
   disabledAfter,
   availableDays,
+  allowToday = true,
 }: {
   value: Date | undefined;
   onChange: (d: Date | undefined) => void;
   disabledAfter?: Date;
   availableDays?: Set<string>;
+  allowToday?: boolean;
 }) => {
   const [open, setOpen] = useState(false);
   return (
@@ -54,7 +56,7 @@ const DateField = ({
           disabled={(d) => {
             if (d > (disabledAfter ?? new Date())) return true;
             if (!availableDays) return false;
-            if (Exp.isSameDay(d, new Date())) return false;
+            if (Exp.isSameDay(d, new Date())) return !allowToday;
             return !availableDays.has(d.toDateString());
           }}
           initialFocus
@@ -74,6 +76,107 @@ const savedDays = (snapshots: ExportSnapshot[], kind: Exp.SnapshotKind) =>
       .map((s) => new Date(s.created_at).toDateString()),
   );
 
+// Every calendar day in an inclusive range that has no saved snapshot of a
+// kind, so users can be warned before printing an incomplete tally.
+const missingDaysInRange = (
+  snapshots: ExportSnapshot[],
+  kind: Exp.SnapshotKind,
+  start: Date,
+  end: Date,
+  countTodayLive: boolean,
+) => {
+  const saved = savedDays(snapshots, kind);
+  const out: Date[] = [];
+  const cursor = Exp.startOfDay(start);
+  const last = Exp.startOfDay(end);
+  const today = new Date();
+  while (cursor.getTime() <= last.getTime()) {
+    const day = new Date(cursor);
+    const isToday = Exp.isSameDay(day, today);
+    if (!saved.has(day.toDateString()) && !(isToday && countTodayLive) && day <= today) {
+      out.push(day);
+    }
+    cursor.setDate(cursor.getDate() + 1);
+  }
+  return out;
+};
+
+// Generic single-date print picker for snapshot kinds that only ever print one
+// day at a time (rejects, delivery, F&B linen).
+export const SnapshotPrintDialog = ({
+  open,
+  onOpenChange,
+  snapshots,
+  kind,
+  title,
+  description,
+  liveRows = [],
+  printTotals,
+}: {
+  open: boolean;
+  onOpenChange: (v: boolean) => void;
+  snapshots: ExportSnapshot[];
+  kind: Exp.SnapshotKind;
+  title: string;
+  description?: string;
+  liveRows?: SnapshotRow[];
+  printTotals: (rows: SnapshotRow[], grand: number, when: Date, footer?: string) => void;
+}) => {
+  const [date, setDate] = useState<Date>(new Date());
+  const available = savedDays(snapshots, kind);
+  const hasLiveToday = liveRows.length > 0;
+  const footer = () => `Date Printed: ${Exp.formatLongDate(new Date(), true)}`;
+
+  const doPrint = () => {
+    if (Exp.isSameDay(date, new Date()) && !available.has(date.toDateString())) {
+      if (!hasLiveToday) {
+        toast.error(`Nothing counted today for ${title.toLowerCase()}`);
+        return;
+      }
+      const grand = liveRows.reduce((s, r) => s + r.count, 0);
+      printTotals(liveRows, grand, new Date(), footer());
+      onOpenChange(false);
+      return;
+    }
+    const snap = Exp.snapshotForDay(snapshots, kind, date);
+    const rows = (snap?.totals as SnapshotRow[] | undefined) ?? [];
+    if (!snap || rows.length === 0) {
+      toast.error(`No ${title.toLowerCase()} export saved for ${Exp.formatLongDate(date, false)}`);
+      return;
+    }
+    printTotals(rows, snap.grand_total, date, footer());
+    onOpenChange(false);
+  };
+
+  return (
+    <Dialog open={open} onOpenChange={onOpenChange}>
+      <DialogContent className="max-w-sm">
+        <DialogHeader>
+          <DialogTitle>{title}</DialogTitle>
+          <DialogDescription>
+            {description ?? "Pick a date. Only days with a saved export can be selected."}
+          </DialogDescription>
+        </DialogHeader>
+        <div className="mt-2 grid gap-3">
+          <DateField
+            value={date}
+            onChange={(d) => d && setDate(d)}
+            availableDays={available}
+            allowToday={hasLiveToday || available.has(new Date().toDateString())}
+          />
+          <p className="text-xs text-muted-foreground">
+            Days without an export are greyed out.
+          </p>
+          <Button className="h-12" onClick={doPrint}>
+            <Printer className="h-4 w-4 mr-2" />
+            Print
+          </Button>
+        </div>
+      </DialogContent>
+    </Dialog>
+  );
+};
+
 export const RoomStatusPrintDialog = ({
   open,
   onOpenChange,
@@ -89,6 +192,7 @@ export const RoomStatusPrintDialog = ({
 }) => {
   const [date, setDate] = useState<Date>(new Date());
   const available = savedDays(snapshots, "room_status");
+  const todaySelectable = liveRows.length > 0 || available.has(new Date().toDateString());
   const doPrint = () => {
     if (Exp.isSameDay(date, new Date())) {
       if (liveRows.length === 0) {
@@ -118,9 +222,14 @@ export const RoomStatusPrintDialog = ({
           </DialogDescription>
         </DialogHeader>
         <div className="mt-2 grid gap-3">
-          <DateField value={date} onChange={(d) => d && setDate(d)} availableDays={available} />
+          <DateField
+            value={date}
+            onChange={(d) => d && setDate(d)}
+            availableDays={available}
+            allowToday={todaySelectable}
+          />
           <p className="text-xs text-muted-foreground">
-            Only dates with a saved sheet can be selected.
+            Days without a saved sheet are greyed out.
           </p>
           <Button className="h-12" onClick={doPrint}>
             <Printer className="h-4 w-4 mr-2" />
@@ -157,8 +266,10 @@ export const LinenCountPrintDialog = ({
   const [date, setDate] = useState<Date>(new Date());
   const [from, setFrom] = useState<Date | undefined>(undefined);
   const [to, setTo] = useState<Date | undefined>(undefined);
+  const [gapWarning, setGapWarning] = useState<{ days: Date[]; start: Date; end: Date } | null>(null);
   const available = savedDays(snapshots, "totals");
   const window = Exp.deliveryWindow(new Date(), linenDeliveryDays);
+  const todaySelectable = liveRows.length > 0 || available.has(new Date().toDateString());
 
   const footer = () => `Date Printed: ${Exp.formatLongDate(new Date(), true)}`;
 
@@ -183,12 +294,19 @@ export const LinenCountPrintDialog = ({
     onOpenChange(false);
   };
 
-  const printRange = () => {
+  const printRange = (force = false) => {
     if (!from || !to) {
       toast.error("Pick both dates");
       return;
     }
     const [start, end] = from.getTime() <= to.getTime() ? [from, to] : [to, from];
+    if (!force) {
+      const missing = missingDaysInRange(snapshots, "totals", start, end, liveRows.length > 0);
+      if (missing.length > 0) {
+        setGapWarning({ days: missing, start, end });
+        return;
+      }
+    }
     const { rows, grand } = Exp.computeRangedLinenTotals(snapshots, start, end, liveRows);
     if (rows.length === 0) {
       toast.error("No linen counts recorded in that range");
@@ -196,6 +314,7 @@ export const LinenCountPrintDialog = ({
     }
     const sub = `Printed Range: ${Exp.formatLongDate(start, false)} - ${Exp.formatLongDate(end, false)}`;
     printTotals(rows, grand, end, sub, footer());
+    setGapWarning(null);
     onOpenChange(false);
   };
 
@@ -264,9 +383,14 @@ export const LinenCountPrintDialog = ({
             </>
           ) : mode === "single" ? (
             <>
-              <DateField value={date} onChange={(d) => d && setDate(d)} availableDays={available} />
+          <DateField
+            value={date}
+            onChange={(d) => d && setDate(d)}
+            availableDays={available}
+            allowToday={todaySelectable}
+          />
               <p className="text-xs text-muted-foreground">
-                Only dates with a saved count can be selected.
+                Days without a saved count are greyed out.
               </p>
               <Button className="h-12" onClick={printSingle}>
                 <Printer className="h-4 w-4 mr-2" />
@@ -281,10 +405,29 @@ export const LinenCountPrintDialog = ({
                 <span className="text-xs uppercase tracking-wide text-muted-foreground">To</span>
                 <DateField value={to} onChange={setTo} />
               </div>
-              <Button className="h-12" onClick={printRange}>
+              <Button className="h-12" onClick={() => printRange()}>
                 <Printer className="h-4 w-4 mr-2" />
                 Print tally
               </Button>
+              {gapWarning && (
+                <div className="rounded-md border border-amber-500/50 bg-amber-500/10 p-3 text-sm">
+                  <p className="font-medium">
+                    {gapWarning.days.length} day{gapWarning.days.length === 1 ? "" : "s"} in this
+                    range have no saved export
+                  </p>
+                  <p className="mt-1 max-h-24 overflow-y-auto text-xs text-muted-foreground">
+                    {gapWarning.days.map((d) => Exp.formatLongDate(d, false)).join(", ")}
+                  </p>
+                  <div className="mt-3 flex justify-end gap-2">
+                    <Button variant="ghost" size="sm" onClick={() => setGapWarning(null)}>
+                      Cancel
+                    </Button>
+                    <Button size="sm" onClick={() => printRange(true)}>
+                      Print anyway
+                    </Button>
+                  </div>
+                </div>
+              )}
             </>
           )}
         </div>
