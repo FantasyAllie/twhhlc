@@ -346,7 +346,6 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
   const [newTemplateName, setNewTemplateName] = useState("");
   const [editingItemId, setEditingItemId] = useState<string | null>(null);
   const [editingItemName, setEditingItemName] = useState("");
-  const [exportSheetOpen, setExportSheetOpen] = useState(false);
   const [endShiftPrintOpen, setEndShiftPrintOpen] = useState(false);
   const [rolePickerSheetOpen, setRolePickerSheetOpen] = useState(false);
   const [editItemSheetId, setEditItemSheetId] = useState<string | null>(null);
