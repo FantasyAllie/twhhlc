@@ -1671,10 +1671,21 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
     rows: SnapshotRow[],
     grand: number,
     when: Date,
-    kind: "totals" | "rejects" | "fnb_totals" = "totals",
+    kind: "totals" | "rejects" | "fnb_totals" | "delivery" = "totals",
     subheading?: string,
     footer?: string,
   ) => Exp.printTotals(hotelName, rows, grand, when, kind, subheading, footer);
+
+  const openDeliveryExport = async () => {
+    const { rows, grand } = computeDeliveryTotals();
+    if (rows.length === 0) {
+      toast.error("No delivery counted yet");
+      return;
+    }
+    printTotals(rows, grand, new Date(), "delivery");
+    const ok = await Exp.saveSnapshot(qc, "delivery", rows, grand);
+    if (ok) qc.invalidateQueries({ queryKey: ["export_snapshots"] });
+  };
   const printRoomStatus = Exp.printRoomStatus;
   const printMaintenance = (when: Date, presetList?: MaintenanceRow[]) =>
     Exp.printMaintenance(when, presetList ?? computeMaintenance().rows);
