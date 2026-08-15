@@ -122,7 +122,8 @@ export type RoomMessage = {
 
 export type MaintenanceRequest = {
   id: string;
-  room_number: number;
+  room_number: number | null;
+  area_label?: string | null;
   message: string;
   created_by_username: string | null;
   done: boolean;
