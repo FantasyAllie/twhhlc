@@ -31,6 +31,7 @@ import { LinenCountPrintDialog, RoomStatusPrintDialog } from "@/components/expor
 import { SnapshotViewerDialog } from "@/components/exports/snapshot-viewer-dialog";
 import { RejectsDialog, DeliveryDialog } from "@/components/linen/counter-dialogs";
 import { AccountDialog } from "@/components/account-dialog";
+import { RoomNotesSheet } from "@/components/rooms/notes-sheet";
 import { ReceptionIconGuide } from "@/components/reception-icon-guide";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
