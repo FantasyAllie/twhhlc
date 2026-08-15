@@ -94,7 +94,7 @@ function ReceptionRoomTileBase({
       style={
         isOpen
           ? undefined
-          : { backgroundColor: meta.bg, color: meta.fg, borderColor: meta.accent, borderTopWidth: 3 }
+          : { backgroundColor: meta.bg, color: meta.fg, borderColor: meta.accent }
       }
       aria-label={`Room ${n} ${meta.label}${isStaffRoom ? " staff" : ""}`}
     >
@@ -123,7 +123,7 @@ function ReceptionRoomTileBase({
               </>
             )}
           </span>
-          <span className="text-[9px] sm:text-[10px] md:text-xs font-medium leading-none opacity-90 whitespace-pre-line pr-4">
+          <span className="text-[9px] sm:text-[10px] md:text-xs font-bold uppercase tracking-tight leading-tight opacity-80 whitespace-pre-line pr-4">
             {meta.label}
           </span>
         </>
@@ -192,8 +192,8 @@ function HousekeepingRoomTileBase({
         isOpen
           ? undefined
           : isStaff
-            ? { backgroundColor: "var(--room-staff)", color: "var(--room-staff-fg)", borderColor: "var(--room-staff-accent)", borderTopWidth: 3 }
-            : { backgroundColor: meta.bg, color: meta.fg, borderColor: meta.accent, borderTopWidth: 3 }
+            ? { backgroundColor: "var(--room-staff)", color: "var(--room-staff-fg)", borderColor: "var(--room-staff-accent)" }
+            : { backgroundColor: meta.bg, color: meta.fg, borderColor: meta.accent }
       }
       aria-pressed={done}
       aria-expanded={isOpen}
@@ -224,7 +224,7 @@ function HousekeepingRoomTileBase({
           <span aria-label="Not Required" className="text-sm sm:text-base font-bold leading-none">NR</span>
         )}
       </span>
-      <span className="text-[9px] sm:text-[10px] md:text-xs font-medium leading-none opacity-90 whitespace-pre-line pr-4">
+      <span className="text-[9px] sm:text-[10px] md:text-xs font-bold uppercase tracking-tight leading-tight opacity-80 whitespace-pre-line pr-4">
         {isStaff ? "Staff" : meta.label}
       </span>
       {hasMessage && (
