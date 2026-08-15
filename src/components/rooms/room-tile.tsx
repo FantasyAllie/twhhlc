@@ -26,6 +26,27 @@ type BaseProps = {
 const TILE_CLASS =
   "relative overflow-hidden rounded-lg border text-xs sm:text-sm md:text-base font-medium transition-colors tabular-nums flex flex-col justify-between aspect-[5/4] p-1.5 md:p-2.5 pt-2 md:pt-3 text-left";
 
+// Tiles re-render only when their own data changes. onClick is an inline
+// closure over the room number, so it's excluded from the comparison, and
+// statusIds is compared by value rather than identity.
+function sameStatusIds(a: RoomStatusIds, b: RoomStatusIds) {
+  const ka = Object.keys(a) as (keyof RoomStatusIds)[];
+  const kb = Object.keys(b) as (keyof RoomStatusIds)[];
+  if (ka.length !== kb.length) return false;
+  return ka.every((k) => a[k] === b[k]);
+}
+
+function tilePropsEqual<T extends BaseProps>(prev: T, next: T) {
+  const keys = Object.keys(next) as (keyof T)[];
+  return keys.every((k) => {
+    if (k === "onClick") return true;
+    if (k === "statusIds") {
+      return sameStatusIds(prev.statusIds, next.statusIds);
+    }
+    return prev[k] === next[k];
+  });
+}
+
 function ReceptionRoomTileBase({
   n,
   room,
