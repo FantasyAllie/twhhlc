@@ -1655,6 +1655,8 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
 
   const computeTotals = () => Exp.computeTotals(counts, template, extras);
   const computeRejectTotals = () => Exp.computeRejectTotals(rejects, template);
+  const computeDeliveryTotals = () =>
+    Exp.computeRejectTotals(deliveryCounts as unknown as RejectCount[], template);
   const computeRoomStatus = () => Exp.computeRoomStatus(rooms, receptionStatuses, receptionBeds);
   const computeMaintenance = () => Exp.computeMaintenance(rooms);
   const computeFnbTotals = () => Exp.computeFnbTotals(templateFnbList, fnbCountByItem);
