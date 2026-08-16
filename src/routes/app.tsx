@@ -1161,6 +1161,35 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
     if (next) fireRoomNotification("done", roomNumber);
   };
 
+  const toggleHousekeepingDone = async (roomNumber: number) => {
+    const room = rooms.find((r) => r.room_number === roomNumber);
+    const next = !room?.done;
+    qc.setQueryData<Room[]>(["rooms"], (old) =>
+      (old ?? []).map((r) =>
+        r.room_number === roomNumber
+          ? {
+              ...r,
+              done: next,
+              guest_vacated: next ? false : r.guest_vacated,
+              guest_vacated_at: next ? null : r.guest_vacated_at,
+            }
+          : r,
+      ),
+    );
+    const { error } = await supabase.from("rooms").upsert(
+      {
+        room_number: roomNumber,
+        done: next,
+        ...(next ? { guest_vacated: false, guest_vacated_at: null } : {}),
+        updated_at: new Date().toISOString(),
+      },
+      { onConflict: "user_id,hotel_id,room_number" },
+    );
+    if (error) toast.error(error.message);
+    qc.invalidateQueries({ queryKey: ["rooms"] });
+    if (next) fireRoomNotification("done", roomNumber);
+  };
+
   const isAssigned = (templateItemId: string, roomNumber: number) =>
     assignments.some(
       (a) => a.template_item_id === templateItemId && a.room_number === roomNumber,
@@ -3540,6 +3569,7 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
     parseCats={parseCats}
     isReception={isReception}
     isAdmin={isAdmin}
+    housekeepingDoneSet={new Set(rooms.filter((r) => r.done).map((r) => r.room_number))}
     receptionDoneSet={receptionDoneSet}
     nrOnRooms={nrOnRooms}
     qc={qc}
@@ -3549,6 +3579,7 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
     setStayoverPhotosRoomFilter={setStayoverPhotosRoomFilter}
     setStayoverPhotosOpen={setStayoverPhotosOpen}
     toggleReceptionDone={toggleReceptionDone}
+    toggleHousekeepingDone={toggleHousekeepingDone}
     setRoomReceptionStatus={setRoomReceptionStatus}
     setRoomReceptionBed={setRoomReceptionBed}
     setRoomNotRequired={setRoomNotRequired}
@@ -3685,22 +3716,6 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
       return;
     }
     setRoomReceptionStatus(room, dndId);
-    // Mark room as done (housekeeping + reception) alongside DND.
-    qc.setQueryData<Room[]>(["rooms"], (old) => {
-      const list = old ? [...old] : [];
-      const idx = list.findIndex((r) => r.room_number === room);
-      if (idx >= 0) list[idx] = { ...list[idx], done: true, done_reception: true };
-      return list;
-    });
-    await supabase.from("rooms").upsert(
-      {
-        room_number: room,
-        done: true,
-        done_reception: true,
-        updated_at: new Date().toISOString(),
-      } as never,
-      { onConflict: "user_id,hotel_id,room_number" },
-    );
     qc.invalidateQueries({ queryKey: ["rooms"] });
     qc.invalidateQueries({ queryKey: ["stayover_photos"] });
     toast.success("DND set and photo saved");
