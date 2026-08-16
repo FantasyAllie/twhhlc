@@ -1126,6 +1126,9 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
   const receptionDoneSet = new Set(
     rooms.filter((r) => r.done_reception).map((r) => r.room_number),
   );
+  // Housekeeping's own completion flag, used so reception tiles reflect
+  // Clean / Arrival exactly as housekeeping left them.
+  const hkDoneSet = new Set(rooms.filter((r) => r.done).map((r) => r.room_number));
   const roomsWithCounts = new Set<number>(
     counts.filter((c) => (c.count ?? 0) > 0).map((c) => c.room_number),
   );
@@ -4562,7 +4565,7 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
          n={n}
          room={room}
          statusIds={statusIds}
-         state={getRoomTileState(n, done)}
+         state={getRoomTileState(n, hkDoneSet.has(n))}
          isNR={isNR}
          hasLinenCount={hasLinenCount}
          isOpen={isOpen}
