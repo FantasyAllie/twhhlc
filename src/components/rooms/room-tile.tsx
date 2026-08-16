@@ -65,13 +65,12 @@ function ReceptionRoomTileBase({
 }: BaseProps) {
   const flags = resolveRoomStatusFlags(room, statusIds);
   const isStaffRoom = flags.isStaff;
-  // Done marker reflects housekeeping completion. Hide it only for rooms
-  // that were never entered: DND, Service Declined (NR), ROS, or Staff.
-  // Regular stayovers are still serviced, so they keep the marker.
-  const isDoneState = state === "done" || state === "complete";
+  // Done marker reflects HOUSEKEEPING completion only (room.done) — reception's
+  // own done flag must not light it up. Hidden for rooms that are never
+  // serviced: DND, Service Declined (NR), ROS, Staff, or Dirty.
   const showDoneMark =
-    (isDoneState || !!room?.done) &&
-    !isNR && !flags.isDnd && !flags.isRos && !isStaffRoom;
+    !!room?.done &&
+    !isNR && !flags.isDnd && !flags.isRos && !isStaffRoom && !flags.isDirty;
   const meta = computeTileMeta({
     flags,
     state,
