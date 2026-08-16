@@ -15,6 +15,7 @@ type Props = {
   parseCats: (c: string | null | undefined) => string[];
   isReception: boolean;
   isAdmin: boolean;
+  housekeepingDoneSet: Set<number>;
   receptionDoneSet: Set<number>;
   nrOnRooms: Set<number>;
   qc: QueryClient;
@@ -24,6 +25,7 @@ type Props = {
   setStayoverPhotosRoomFilter: (n: number | undefined) => void;
   setStayoverPhotosOpen: (v: boolean) => void;
   toggleReceptionDone: (n: number) => void | Promise<void>;
+  toggleHousekeepingDone: (n: number) => void | Promise<void>;
   setRoomReceptionStatus: (n: number, id: string | null) => void;
   setRoomReceptionBed: (n: number, id: string | null) => void;
   setRoomNotRequired: (n: number, v: boolean) => void | Promise<void>;
@@ -40,6 +42,7 @@ export function ReceptionStatusSheet({
   parseCats,
   isReception,
   isAdmin,
+  housekeepingDoneSet,
   receptionDoneSet,
   nrOnRooms,
   qc,
@@ -49,6 +52,7 @@ export function ReceptionStatusSheet({
   setStayoverPhotosRoomFilter,
   setStayoverPhotosOpen,
   toggleReceptionDone,
+  toggleHousekeepingDone,
   setRoomReceptionStatus,
   setRoomReceptionBed,
   setRoomNotRequired,
@@ -159,7 +163,9 @@ export function ReceptionStatusSheet({
              <div className="space-y-2">
                 {(() => {
                   const stayIdLocal = receptionStatuses.find((x) => x.label === "Stayover")?.id ?? null;
-                  const isDoneLocal = receptionDoneSet.has(n);
+                  const isDoneLocal = isReception
+                    ? receptionDoneSet.has(n)
+                    : housekeepingDoneSet.has(n);
                   const isStayoverLocal = !!stayIdLocal && occ === stayIdLocal;
                    void stayIdLocal; void isStayoverLocal;
                    return (
@@ -167,7 +173,9 @@ export function ReceptionStatusSheet({
                        label="Mark as Done"
                        selected={isDoneLocal}
                        onClick={() => {
-                         void toggleReceptionDone(n);
+                          void (isReception
+                            ? toggleReceptionDone(n)
+                            : toggleHousekeepingDone(n));
                        }}
                      />
                    );

@@ -59,7 +59,7 @@ const byLabel = (items: ReceptionItem[], label: string) =>
   items.find((s) => s.label.toLowerCase() === label)?.id ?? null;
 
 export const resolveRoomStatusIds = (receptionStatuses: ReceptionItem[]): RoomStatusIds => ({
-  dnd: receptionStatuses.find((s) => s.label === "DND")?.id ?? null,
+  dnd: byLabel(receptionStatuses, "dnd"),
   staff: byLabel(receptionStatuses, "staff"),
   stay: byLabel(receptionStatuses, "stayover"),
   dirty: byLabel(receptionStatuses, "dirty"),
