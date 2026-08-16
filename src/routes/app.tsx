@@ -1405,47 +1405,6 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
  qc.invalidateQueries({ queryKey: ["room_counts"] });
  }
 
-  // Auto-mark room as done when any item becomes positive.
-  if (next > 0) {
-  const room = rooms.find((r) => r.room_number === roomNumber);
-  if (!room?.done) {
-  qc.setQueryData<Room[]>(["rooms"], (old) => {
-  const list = old ? [...old] : [];
-  const idx = list.findIndex((r) => r.room_number === roomNumber);
-  if (idx >= 0) list[idx] = { ...list[idx], done: true, guest_vacated: false, guest_vacated_at: null };
-  else list.push({ id: `temp-${roomNumber}`, room_number: roomNumber, done: true, done_reception: false, category: null, default_status: null, reception_status_id: null, reception_bed_id: null, housekeeping_note: null, needs_maintenance: false, guest_vacated: false, early_check_in: false });
-  return list;
-  });
-  const { error: roomErr } = await supabase.from("rooms").upsert(
-  { room_number: roomNumber, done: true, guest_vacated: false, guest_vacated_at: null, updated_at: new Date().toISOString() },
-  { onConflict: "user_id,hotel_id,room_number" },
-  );
-  if (roomErr) toast.error(roomErr.message);
-  qc.invalidateQueries({ queryKey: ["rooms"] });
-  }
-  }
-
-  // Auto-mark room as not done when no items have counts above default.
-  const roomCountsAfter = (qc.getQueryData<RoomCount[]>(["room_counts"]) ?? [])
-  .filter((c) => c.room_number === roomNumber);
-  const anyMarked = roomCountsAfter.some((c) => c.count > 0);
-  if (!anyMarked) {
-  const room = rooms.find((r) => r.room_number === roomNumber);
-  if (room?.done) {
-  qc.setQueryData<Room[]>(["rooms"], (old) => {
-  const list = old ? [...old] : [];
-  const idx = list.findIndex((r) => r.room_number === roomNumber);
-  if (idx >= 0) list[idx] = { ...list[idx], done: false };
-  return list;
-  });
-  const { error: roomErr } = await supabase.from("rooms").upsert(
-  { room_number: roomNumber, done: false, updated_at: new Date().toISOString() },
-  { onConflict: "user_id,hotel_id,room_number" },
-  );
-  if (roomErr) toast.error(roomErr.message);
-  qc.invalidateQueries({ queryKey: ["rooms"] });
-  }
-  }
   };
 
 
@@ -1468,22 +1427,6 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
     if (error) toast.error(error.message);
     qc.invalidateQueries({ queryKey: ["room_counts"] });
 
-    // Mark room as not done since all counts are reset.
-    const room = rooms.find((r) => r.room_number === roomNumber);
-    if (room?.done) {
-      qc.setQueryData<Room[]>(["rooms"], (old) => {
-        const list = old ? [...old] : [];
-        const idx = list.findIndex((r) => r.room_number === roomNumber);
-        if (idx >= 0) list[idx] = { ...list[idx], done: false };
-        return list;
-      });
-      const { error: roomErr } = await supabase.from("rooms").upsert(
-        { room_number: roomNumber, done: false, updated_at: new Date().toISOString() },
-        { onConflict: "user_id,hotel_id,room_number" },
-      );
-      if (roomErr) toast.error(roomErr.message);
-      qc.invalidateQueries({ queryKey: ["rooms"] });
-    }
   };
 
   const resetAll = async () => {
