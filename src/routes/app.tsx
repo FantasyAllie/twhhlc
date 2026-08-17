@@ -1875,6 +1875,16 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
     toast.success(`Backup saved (${jobs.length} ${jobs.length === 1 ? "item" : "items"})`);
   };
 
+  // Reports entry point: ask whether to record today's data first. Maintenance
+  // accounts have no data to back up, so they go straight to the reports list.
+  const openReports = () => {
+    if (isMaintenance) {
+      setEndShiftPrintOpen(true);
+      return;
+    }
+    setRecordPromptOpen(true);
+  };
+
   const openMaintenanceExport = async () => {
     const { rows } = computeMaintenance();
     if (rows.length === 0) {
