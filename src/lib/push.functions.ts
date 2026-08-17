@@ -1,27 +1,150 @@
 import { createServerFn } from "@tanstack/react-start";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 
-type Role = "admin" | "user" | "reception" | "maintenance";
-type AppRole = Role | "pending";
-
 async function getDb() {
   const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
   return supabaseAdmin;
 }
 
+// Departments are what notifications actually target. In user_roles a
+// department membership is a sub-role (housekeeper / reception / fnb /
+// maintenance); admin / manager / developer / regional_admin are positions and
+// say nothing about which department alerts someone should receive.
+type Dept = "housekeeping" | "reception" | "fnb" | "maintenance";
+
+const DEPT_SUBROLE: Record<Dept, string> = {
+  housekeeping: "housekeeper",
+  reception: "reception",
+  fnb: "fnb",
+  maintenance: "maintenance",
+};
+const SUBROLE_DEPT: Record<string, Dept> = {
+  housekeeper: "housekeeping",
+  // Legacy rows used "user" as the housekeeping role name.
+  user: "housekeeping",
+  reception: "reception",
+  fnb: "fnb",
+  maintenance: "maintenance",
+};
+const ELEVATED = new Set(["developer", "regional_admin", "admin", "manager"]);
+
+function deptsFromRoles(roles: string[]): { depts: Dept[]; elevated: boolean } {
+  const depts: Dept[] = [];
+  let elevated = false;
+  for (const r of roles) {
+    if (ELEVATED.has(r)) elevated = true;
+    const d = SUBROLE_DEPT[r];
+    if (d && !depts.includes(d)) depts.push(d);
+  }
+  return { depts, elevated };
+}
+
 async function getActor(ctx: { supabase: import("@supabase/supabase-js").SupabaseClient; userId: string }) {
   const db = await getDb();
-  const [{ data: profile }, { data: roleRows }] = await Promise.all([
+  const [{ data: profile }, { data: roleRows }, { data: activeHotel }] = await Promise.all([
     db.from("profiles").select("display_name, email").eq("id", ctx.userId).maybeSingle(),
     db.from("user_roles").select("role").eq("user_id", ctx.userId),
+    db.from("user_active_hotel").select("hotel_id").eq("user_id", ctx.userId).maybeSingle(),
   ]);
-  const roles = ((roleRows ?? []) as { role: AppRole }[]).map((r) => r.role);
-  const order: AppRole[] = ["admin", "reception", "user", "pending"];
-  let role: AppRole = "pending";
-  for (const r of order) if (roles.includes(r)) { role = r; break; }
+  const roles = ((roleRows ?? []) as { role: string }[]).map((r) => r.role);
+  const { depts, elevated } = deptsFromRoles(roles);
+  let hotelId = (activeHotel as { hotel_id: string } | null)?.hotel_id ?? null;
+  if (!hotelId) {
+    const { data: member } = await db
+      .from("hotel_members")
+      .select("hotel_id")
+      .eq("user_id", ctx.userId)
+      .limit(1)
+      .maybeSingle();
+    hotelId = (member as { hotel_id: string } | null)?.hotel_id ?? null;
+  }
   const p = profile as { display_name: string | null; email: string | null } | null;
   const username = p?.display_name || (p?.email ?? "").split("@")[0] || "user";
-  return { id: ctx.userId, username, role };
+  const active = roles.some((r) => r !== "pending");
+  return { id: ctx.userId, username, roles, depts, elevated, hotelId, active };
+}
+
+/**
+ * Everyone in `depts` who shares the sender's hotel, minus the sender.
+ * Elevated accounts with no department assigned at all still get alerts so an
+ * admin/developer account is never silently cut out.
+ */
+async function recipientIdsForDepts(
+  depts: Dept[],
+  hotelId: string | null,
+  excludeUserId: string,
+): Promise<string[]> {
+  const db = await getDb();
+  let scopedIds: string[] | null = null;
+  if (hotelId) {
+    const { data: members } = await db
+      .from("hotel_members")
+      .select("user_id")
+      .eq("hotel_id", hotelId);
+    scopedIds = ((members ?? []) as { user_id: string }[]).map((m) => m.user_id);
+    if (scopedIds.length === 0) return [];
+  }
+
+  let q = db.from("user_roles").select("user_id,role");
+  if (scopedIds) q = q.in("user_id", scopedIds);
+  const { data: roleRows } = await q;
+  const byUser = new Map<string, string[]>();
+  for (const r of (roleRows ?? []) as { user_id: string; role: string }[]) {
+    const list = byUser.get(r.user_id) ?? [];
+    list.push(r.role);
+    byUser.set(r.user_id, list);
+  }
+
+  const wanted = new Set(depts);
+  const out: string[] = [];
+  for (const [userId, roles] of byUser) {
+    if (userId === excludeUserId) continue;
+    const { depts: userDepts, elevated } = deptsFromRoles(roles);
+    const inDept = userDepts.some((d) => wanted.has(d));
+    if (inDept || (elevated && userDepts.length === 0)) out.push(userId);
+  }
+  return out;
+}
+
+async function filterByPref(
+  userIds: string[],
+  prefColumn: keyof NotificationPrefs,
+): Promise<string[]> {
+  if (userIds.length === 0) return [];
+  const db = await getDb();
+  const { data: prefsRows } = await db
+    .from("notification_preferences" as never)
+    .select(`user_id,${prefColumn}`)
+    .in("user_id", userIds);
+  const disabled = new Set<string>();
+  for (const p of (prefsRows ?? []) as Array<Record<string, unknown>>) {
+    if (p[prefColumn] === false) disabled.add(p.user_id as string);
+  }
+  return userIds.filter((id) => !disabled.has(id));
+}
+
+async function subsForUsers(userIds: string[]): Promise<SubRow[]> {
+  if (userIds.length === 0) return [];
+  const db = await getDb();
+  const { data: subRows } = await db
+    .from("push_subscriptions" as never)
+    .select("id,user_id,endpoint,p256dh,auth")
+    .in("user_id", userIds);
+  return (subRows ?? []) as SubRow[];
+}
+
+// Voids the whole "who gets this" pipeline into one call.
+async function fanOut(
+  depts: Dept[],
+  prefColumn: keyof NotificationPrefs,
+  sender: { id: string; hotelId: string | null },
+  body: { title: string; body: string; url?: string; tag?: string },
+): Promise<number> {
+  const ids = await recipientIdsForDepts(depts, sender.hotelId, sender.id);
+  const optedIn = await filterByPref(ids, prefColumn);
+  const subs = await subsForUsers(optedIn);
+  await sendToSubs(subs, body);
+  return subs.length;
 }
 
 export const getVapidPublicKey = createServerFn({ method: "GET" }).handler(async () => {
