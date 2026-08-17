@@ -332,6 +332,34 @@ function AppPage() {
           qc.invalidateQueries({ queryKey: ["lost_property_lite"] });
         },
       )
+      .on(
+        "postgres_changes",
+        { event: "*", schema: "public", table: "reject_counts" },
+        () => {
+          qc.invalidateQueries({ queryKey: ["reject_counts"] });
+        },
+      )
+      .on(
+        "postgres_changes",
+        { event: "*", schema: "public", table: "delivery_counts" },
+        () => {
+          qc.invalidateQueries({ queryKey: ["delivery_counts"] });
+        },
+      )
+      .on(
+        "postgres_changes",
+        { event: "*", schema: "public", table: "room_item_counts" },
+        () => {
+          qc.invalidateQueries({ queryKey: ["room_counts"] });
+        },
+      )
+      .on(
+        "postgres_changes",
+        { event: "*", schema: "public", table: "fnb_linen_counts" },
+        () => {
+          qc.invalidateQueries({ queryKey: ["fnb_linen_counts"] });
+        },
+      )
       .subscribe();
     return () => {
       supabase.removeChannel(channel);
@@ -3106,8 +3134,24 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
     }
     if (menuIsAdmin && !isMaintenance) {
       manage.push({ key: "manage-rooms", icon: Hash, label: "Manage Rooms", onClick: () => setManageRoomsOpen(true) });
-      manage.push({ key: "rejects", icon: Ban, label: "Rejects", onClick: () => setRejectsOpen(true) });
-      manage.push({ key: "delivery", icon: Truck, label: "Delivery", onClick: () => setDeliveryOpen(true) });
+      manage.push({
+        key: "rejects",
+        icon: Ban,
+        label: "Rejects",
+        onClick: () => {
+          qc.invalidateQueries({ queryKey: ["reject_counts"] });
+          setRejectsOpen(true);
+        },
+      });
+      manage.push({
+        key: "delivery",
+        icon: Truck,
+        label: "Delivery",
+        onClick: () => {
+          qc.invalidateQueries({ queryKey: ["delivery_counts"] });
+          setDeliveryOpen(true);
+        },
+      });
       if (!isReception) {
         manage.push({ key: "history", icon: History, label: "History", onClick: () => setHistorySheetOpen(true) });
       }
@@ -4040,7 +4084,10 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
  {/* Rejects dialog */}
   <RejectsDialog
     open={rejectsOpen}
-    onOpenChange={setRejectsOpen}
+    onOpenChange={(o) => {
+      setRejectsOpen(o);
+      if (o) qc.invalidateQueries({ queryKey: ["reject_counts"] });
+    }}
     template={template}
     theme={theme}
     total={rejects.reduce((s, r) => s + r.count, 0)}
@@ -4053,7 +4100,10 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
   {/* Delivery counter dialog — number entry for large delivery batches. */}
   <DeliveryDialog
     open={deliveryOpen}
-    onOpenChange={setDeliveryOpen}
+    onOpenChange={(o) => {
+      setDeliveryOpen(o);
+      if (o) qc.invalidateQueries({ queryKey: ["delivery_counts"] });
+    }}
     template={template}
     theme={theme}
     total={deliveryCounts.reduce((s, r) => s + r.count, 0)}
