@@ -332,6 +332,34 @@ function AppPage() {
           qc.invalidateQueries({ queryKey: ["lost_property_lite"] });
         },
       )
+      .on(
+        "postgres_changes",
+        { event: "*", schema: "public", table: "reject_counts" },
+        () => {
+          qc.invalidateQueries({ queryKey: ["reject_counts"] });
+        },
+      )
+      .on(
+        "postgres_changes",
+        { event: "*", schema: "public", table: "delivery_counts" },
+        () => {
+          qc.invalidateQueries({ queryKey: ["delivery_counts"] });
+        },
+      )
+      .on(
+        "postgres_changes",
+        { event: "*", schema: "public", table: "room_item_counts" },
+        () => {
+          qc.invalidateQueries({ queryKey: ["room_counts"] });
+        },
+      )
+      .on(
+        "postgres_changes",
+        { event: "*", schema: "public", table: "fnb_linen_counts" },
+        () => {
+          qc.invalidateQueries({ queryKey: ["fnb_linen_counts"] });
+        },
+      )
       .subscribe();
     return () => {
       supabase.removeChannel(channel);
