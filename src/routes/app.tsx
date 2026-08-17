@@ -3339,6 +3339,38 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
  )}
  {/* Mobile export sheet (triggered from the burger menu). */}
   {/* End-of-shift: after backup, offer to print the room status sheet. */}
+  <Dialog open={recordPromptOpen} onOpenChange={setRecordPromptOpen}>
+    <DialogContent className="max-w-sm">
+      <DialogHeader>
+        <DialogTitle>Would you like to record today's data?</DialogTitle>
+        <DialogDescription>
+          Recording saves a backup of today's counts and room statuses before you open the reports.
+        </DialogDescription>
+      </DialogHeader>
+      <div className="mt-2 grid grid-cols-2 gap-2">
+        <Button
+          variant="outline"
+          className="h-12"
+          onClick={() => {
+            setRecordPromptOpen(false);
+            setEndShiftPrintOpen(true);
+          }}
+        >
+          No
+        </Button>
+        <Button
+          className="h-12"
+          onClick={async () => {
+            setRecordPromptOpen(false);
+            await runEndOfShiftBackup();
+            setEndShiftPrintOpen(true);
+          }}
+        >
+          Yes
+        </Button>
+      </div>
+    </DialogContent>
+  </Dialog>
   <Dialog open={endShiftPrintOpen} onOpenChange={setEndShiftPrintOpen}>
     <DialogContent className="max-w-sm">
       <DialogHeader>
