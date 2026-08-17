@@ -3055,14 +3055,14 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
         key: "end-of-shift",
         icon: ClipboardList,
         label: "Reports",
-        onClick: () => setEndShiftPrintOpen(true),
+        onClick: () => openReports(),
       });
     } else if (isMaintenance) {
       actions.push({
         key: "end-of-shift",
         icon: ClipboardList,
         label: "Reports",
-        onClick: () => setEndShiftPrintOpen(true),
+        onClick: () => openReports(),
       });
     }
     if (isReception) {
@@ -3223,7 +3223,7 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
       <Button
         variant="outline"
         size="sm"
-        onClick={() => setEndShiftPrintOpen(true)}
+        onClick={openReports}
         title="Back up today's data and print reports"
       >
         <ClipboardList className="h-4 w-4 mr-2" />
