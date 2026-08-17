@@ -4068,7 +4068,10 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
  {/* Rejects dialog */}
   <RejectsDialog
     open={rejectsOpen}
-    onOpenChange={setRejectsOpen}
+    onOpenChange={(o) => {
+      setRejectsOpen(o);
+      if (o) qc.invalidateQueries({ queryKey: ["reject_counts"] });
+    }}
     template={template}
     theme={theme}
     total={rejects.reduce((s, r) => s + r.count, 0)}
@@ -4081,7 +4084,10 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
   {/* Delivery counter dialog — number entry for large delivery batches. */}
   <DeliveryDialog
     open={deliveryOpen}
-    onOpenChange={setDeliveryOpen}
+    onOpenChange={(o) => {
+      setDeliveryOpen(o);
+      if (o) qc.invalidateQueries({ queryKey: ["delivery_counts"] });
+    }}
     template={template}
     theme={theme}
     total={deliveryCounts.reduce((s, r) => s + r.count, 0)}
