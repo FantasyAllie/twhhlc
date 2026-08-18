@@ -400,14 +400,6 @@ const THREAD_PAIR: Record<MessagesThread, [MessagesDepartment, MessagesDepartmen
   fnb_maintenance: ["fnb", "maintenance"],
 };
 
-const DEPT_TO_ROLES: Record<MessagesDepartment, Role[]> = {
-  housekeeping: ["user", "admin"],
-  reception: ["reception", "admin"],
-  // "fnb" is stored in user_roles as a separate role name.
-  fnb: ["fnb" as Role, "admin"],
-  maintenance: ["maintenance", "admin"],
-};
-
 const PREF_COL_FROM: Record<MessagesDepartment, keyof NotificationPrefs> = {
   reception: "notify_from_reception",
   housekeeping: "notify_from_housekeeping",
@@ -434,8 +426,7 @@ export const notifyDepartmentMessage = createServerFn({ method: "POST" })
   )
   .handler(async ({ data, context }) => {
     const sender = await getActor(context);
-    if (sender.role === "pending") return { ok: true, recipients: 0 };
-    const db = await getDb();
+    if (!sender.active) return { ok: true, recipients: 0 };
     const pair = THREAD_PAIR[data.thread];
     if (!pair) throw new Error("Unknown thread");
 
@@ -443,9 +434,14 @@ export const notifyDepartmentMessage = createServerFn({ method: "POST" })
     // If the client couldn't say (admin/manager on both sides), notify both
     // halves and filter each by whether they opted in to the opposite half.
     const pairs: Array<{ from: MessagesDepartment; to: MessagesDepartment }> = [];
-    if (data.senderDepartment && pair.includes(data.senderDepartment)) {
-      const to = pair[0] === data.senderDepartment ? pair[1] : pair[0];
-      pairs.push({ from: data.senderDepartment, to });
+    const claimed = data.senderDepartment && pair.includes(data.senderDepartment)
+      ? data.senderDepartment
+      : // Fall back to the sender's own department memberships when the client
+        // couldn't decide which half of the thread they sent from.
+        pair.find((d) => sender.depts.includes(d as Dept)) ?? null;
+    if (claimed) {
+      const to = pair[0] === claimed ? pair[1] : pair[0];
+      pairs.push({ from: claimed, to });
     } else {
       pairs.push({ from: pair[0], to: pair[1] });
       pairs.push({ from: pair[1], to: pair[0] });
@@ -456,36 +452,7 @@ export const notifyDepartmentMessage = createServerFn({ method: "POST" })
 
     let totalSubs = 0;
     for (const { from, to } of pairs) {
-      const roles = DEPT_TO_ROLES[to];
-      const { data: usersRows } = await db
-        .from("user_roles")
-        .select("user_id")
-        .in("role", roles)
-        .neq("user_id", sender.id);
-      const userIds = Array.from(
-        new Set(((usersRows ?? []) as { user_id: string }[]).map((r) => r.user_id)),
-      );
-      if (userIds.length === 0) continue;
-
-      const prefCol = PREF_COL_FROM[from];
-      const { data: prefsRows } = await db
-        .from("notification_preferences" as never)
-        .select(`user_id,${prefCol}`)
-        .in("user_id", userIds);
-      const disabled = new Set<string>();
-      for (const p of (prefsRows ?? []) as Array<Record<string, unknown>>) {
-        if (p[prefCol] === false) disabled.add(p.user_id as string);
-      }
-      const optedIn = userIds.filter((id) => !disabled.has(id));
-      if (optedIn.length === 0) continue;
-
-      const { data: subRows } = await db
-        .from("push_subscriptions" as never)
-        .select("id,user_id,endpoint,p256dh,auth")
-        .in("user_id", optedIn);
-      const subs = (subRows ?? []) as SubRow[];
-      totalSubs += subs.length;
-      await sendToSubs(subs, {
+      totalSubs += await fanOut([to as Dept], PREF_COL_FROM[from], sender, {
         title: `${DEPT_LABEL[from]} — ${sender.username}${roomTag}`,
         body,
         url: `/app`,
