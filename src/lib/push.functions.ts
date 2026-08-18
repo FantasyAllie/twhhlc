@@ -475,49 +475,23 @@ export const notifyMaintenanceRequest = createServerFn({ method: "POST" })
   )
   .handler(async ({ data, context }) => {
     const sender = await getActor(context);
-    if (sender.role === "pending") return { ok: true, recipients: 0 };
-    const db = await getDb();
-
-    // Target: maintenance role users (+ admins), excluding the sender.
-    const { data: usersRows } = await db
-      .from("user_roles")
-      .select("user_id")
-      .in("role", ["maintenance", "admin"])
-      .neq("user_id", sender.id);
-    const userIds = Array.from(
-      new Set(((usersRows ?? []) as { user_id: string }[]).map((r) => r.user_id)),
-    );
-    if (userIds.length === 0) return { ok: true, recipients: 0 };
-
-    // Filter by notify_maintenance_requests preference (default true).
-    const { data: prefsRows } = await db
-      .from("notification_preferences" as never)
-      .select("user_id,notify_maintenance_requests")
-      .in("user_id", userIds);
-    const disabled = new Set<string>();
-    for (const p of (prefsRows ?? []) as Array<Record<string, unknown>>) {
-      if (p.notify_maintenance_requests === false) disabled.add(p.user_id as string);
-    }
-    const optedIn = userIds.filter((id) => !disabled.has(id));
-    if (optedIn.length === 0) return { ok: true, recipients: 0 };
-
-    const { data: subRows } = await db
-      .from("push_subscriptions" as never)
-      .select("id,user_id,endpoint,p256dh,auth")
-      .in("user_id", optedIn);
-    const subs = (subRows ?? []) as SubRow[];
-
+    if (!sender.active) return { ok: true, recipients: 0 };
     const fromLabel = data.originDepartment
       ? DEPT_LABEL[data.originDepartment]
       : sender.username;
     const body = (data.message?.slice(0, 240) || "New maintenance request");
     const place =
       data.roomNumber != null ? `Room ${data.roomNumber}` : (data.areaLabel || "Hotel");
-    await sendToSubs(subs, {
-      title: `Maintenance — ${place} (${fromLabel})`,
-      body,
-      url: `/app`,
-      tag: `maintenance-${data.roomNumber ?? data.areaLabel ?? "hotel"}`,
-    });
-    return { ok: true, recipients: subs.length };
+    const recipients = await fanOut(
+      ["maintenance"],
+      "notify_maintenance_requests",
+      sender,
+      {
+        title: `Maintenance — ${place} (${fromLabel})`,
+        body,
+        url: `/app`,
+        tag: `maintenance-${data.roomNumber ?? data.areaLabel ?? "hotel"}`,
+      },
+    );
+    return { ok: true, recipients };
   });
