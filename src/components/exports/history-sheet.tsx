@@ -94,6 +94,9 @@ export function HistorySheet({
                     {s.kind === "fnb_totals" && (
                       <span className="text-xs uppercase tracking-wide text-muted-foreground">F&amp;B Linen</span>
                     )}
+                    {s.kind === "delivery" && (
+                      <span className="text-xs uppercase tracking-wide text-muted-foreground">Delivery</span>
+                    )}
                     <span className="text-xs text-muted-foreground">({s.grand_total})</span>
                   </button>
                   <Button
