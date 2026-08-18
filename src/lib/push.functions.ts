@@ -20,8 +20,6 @@ const DEPT_SUBROLE: Record<Dept, string> = {
 };
 const SUBROLE_DEPT: Record<string, Dept> = {
   housekeeper: "housekeeping",
-  // Legacy rows used "user" as the housekeeping role name.
-  user: "housekeeping",
   reception: "reception",
   fnb: "fnb",
   maintenance: "maintenance",
