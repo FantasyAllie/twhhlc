@@ -336,31 +336,35 @@ export const notifyRoomEvent = createServerFn({ method: "POST" })
   )
   .handler(async ({ data, context }) => {
     const sender = await getActor(context);
-    if (sender.role === "pending") return { ok: true, recipients: 0 };
-    const db = await getDb();
+    if (!sender.active) return { ok: true, recipients: 0 };
 
-    // Pick target roles + which preference column to require.
-    let targetRoles: Role[];
+    // Pick target departments + which preference column to require.
+    let targetDepts: Dept[];
     let prefColumn: keyof NotificationPrefs;
     let title: string;
     let body: string;
     switch (data.kind) {
       case "message":
-        // Reception sends -> housekeeping receives; housekeeping sends -> reception receives.
-        targetRoles =
-          sender.role === "reception" ? ["user", "admin"] : ["reception"];
+        // Reception sends -> housekeeping receives, and vice versa. When the
+        // sender sits in both departments, notify both halves.
+        targetDepts =
+          sender.depts.includes("reception") && !sender.depts.includes("housekeeping")
+            ? ["housekeeping"]
+            : sender.depts.includes("housekeeping") && !sender.depts.includes("reception")
+            ? ["reception"]
+            : ["housekeeping", "reception"];
         prefColumn = "messages_enabled";
         title = `Room ${data.roomNumber} — Message from ${sender.username}`;
         body = data.messageText?.slice(0, 240) ?? "New message";
         break;
       case "checkout":
-        targetRoles = ["user", "admin"];
+        targetDepts = ["housekeeping"];
         prefColumn = "checkout_enabled";
         title = `Room ${data.roomNumber} — Guest checked out`;
         body = `Reception (${sender.username}) marked room ${data.roomNumber} as checked out.`;
         break;
       case "done":
-        targetRoles = ["reception", "admin"];
+        targetDepts = ["reception"];
         prefColumn = "done_enabled";
         title = `Room ${data.roomNumber} — Marked done`;
         body = `Housekeeping (${sender.username}) marked room ${data.roomNumber} as done.`;
@@ -369,45 +373,13 @@ export const notifyRoomEvent = createServerFn({ method: "POST" })
         throw new Error("Unknown event kind");
     }
 
-    // 1) Find users in target roles, excluding the sender, from user_roles.
-    const { data: usersRows, error: usersErr } = await db
-      .from("user_roles")
-      .select("user_id")
-      .in("role", targetRoles)
-      .neq("user_id", sender.id);
-    if (usersErr) throw new Error(usersErr.message);
-    const userIds = Array.from(
-      new Set(((usersRows ?? []) as { user_id: string }[]).map((r) => r.user_id)),
-    );
-    if (userIds.length === 0) return { ok: true, recipients: 0 };
-
-    // 2) Filter to users whose preference is enabled (or who have no row → default true).
-    const { data: prefsRows } = await db
-      .from("notification_preferences" as never)
-      .select(`user_id,${prefColumn}`)
-      .in("user_id", userIds);
-    const prefsMap = new Map<string, boolean>();
-    for (const p of (prefsRows ?? []) as Array<Record<string, unknown>>) {
-      prefsMap.set(p.user_id as string, p[prefColumn] !== false);
-    }
-    const optedIn = userIds.filter((id) => prefsMap.get(id) !== false);
-    if (optedIn.length === 0) return { ok: true, recipients: 0 };
-
-    // 3) Load subscriptions for those users.
-    const { data: subRows } = await db
-      .from("push_subscriptions" as never)
-      .select("id,user_id,endpoint,p256dh,auth")
-      .in("user_id", optedIn);
-    const subs = (subRows ?? []) as SubRow[];
-
-    await sendToSubs(subs, {
+    const recipients = await fanOut(targetDepts, prefColumn, sender, {
       title,
       body,
       url: `/app`,
       tag: `room-${data.roomNumber}-${data.kind}`,
     });
-
-    return { ok: true, recipients: subs.length };
+    return { ok: true, recipients };
   });
 
 export type MessagesDepartment = "housekeeping" | "reception" | "fnb" | "maintenance";
