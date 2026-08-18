@@ -12,12 +12,6 @@ async function getDb() {
 // say nothing about which department alerts someone should receive.
 type Dept = "housekeeping" | "reception" | "fnb" | "maintenance";
 
-const DEPT_SUBROLE: Record<Dept, string> = {
-  housekeeping: "housekeeper",
-  reception: "reception",
-  fnb: "fnb",
-  maintenance: "maintenance",
-};
 const SUBROLE_DEPT: Record<string, Dept> = {
   housekeeper: "housekeeping",
   reception: "reception",
