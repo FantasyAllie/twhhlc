@@ -1570,12 +1570,15 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
     // Clear every linen count source so the reset zeroes rooms for all
     // departments (reception's reset runs the same path as housekeeping's).
     qc.setQueryData(["reject_counts"], () => []);
-    const [r2, rRej] = await Promise.all([
+    qc.setQueryData(["delivery_counts"], () => []);
+    const [r2, rRej, rDel] = await Promise.all([
       supabase.from("room_item_counts").delete().neq("room_number", -1),
       supabase.from("reject_counts").delete().neq("count", -1),
+      supabase.from("delivery_counts").delete().neq("count", -1),
     ]);
     if (r2.error) toast.error(r2.error.message);
     if (rRej.error) toast.error(rRej.error.message);
+    if (rDel.error) toast.error(rDel.error.message);
     // Verify the linen counts actually cleared (RLS or a partial failure would
     // otherwise leave stale counts showing after the cache refetches).
     const { data: leftover } = await supabase
@@ -1611,6 +1614,7 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
     qc.invalidateQueries({ queryKey: ["rooms"] });
     await qc.refetchQueries({ queryKey: ["room_counts"] });
     qc.invalidateQueries({ queryKey: ["reject_counts"] });
+    qc.invalidateQueries({ queryKey: ["delivery_counts"] });
     qc.invalidateQueries({ queryKey: ["room_messages"] });
   };
 
@@ -1881,12 +1885,14 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
   // sheet. Replaces the multi-item Export dropdown on the home screen; the
   // per-kind manual exports remain available in Settings → Actions → Export.
   const runEndOfShiftBackup = async () => {
-    type Kind = "totals" | "fnb_totals" | "room_status" | "maintenance";
+    type Kind = "totals" | "fnb_totals" | "room_status" | "maintenance" | "delivery";
     const jobs: Array<{ kind: Kind; rows: unknown[]; grand: number }> = [];
     const t = computeTotals();
     if (t.rows.length) jobs.push({ kind: "totals", rows: t.rows, grand: t.grand });
     const f = computeFnbTotals();
     if (f.rows.length) jobs.push({ kind: "fnb_totals", rows: f.rows, grand: f.grand });
+    const d = computeDeliveryTotals();
+    if (d.rows.length) jobs.push({ kind: "delivery", rows: d.rows, grand: d.grand });
     const rs = computeRoomStatus();
     if (rs.rows.length) jobs.push({ kind: "room_status", rows: rs.rows, grand: rs.grand });
     const m = computeMaintenance();
