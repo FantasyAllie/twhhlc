@@ -170,31 +170,15 @@ export function DeliveryDialog({
           <div className="border rounded-xl bg-muted/30 flex flex-col min-h-0 flex-1 overflow-hidden">
             <div className="flex-1 min-h-0 overflow-y-auto p-4">
               <ul className="space-y-1">
-                {template.map((item) => {
-                  const count = getDeliveryCount(item.id);
-                  return (
-                    <li
-                      key={item.id}
-                      className="flex items-center gap-3 py-2 px-2 rounded-xl border"
-                      style={rowStyle(item, theme)}
-                    >
-                      <span className="flex-1 min-w-0 break-words" style={textStyle(item, theme)}>
-                        {item.name}
-                      </span>
-                      <Input
-                        type="number"
-                        inputMode="numeric"
-                        min={0}
-                        value={count === 0 ? "" : String(count)}
-                        placeholder="0"
-                        onChange={(e) => void setDeliveryCount(item.id, Number(e.target.value))}
-                        onFocus={(e) => e.currentTarget.select()}
-                        className="h-10 sm:h-9 w-20 shrink-0 text-center tabular-nums bg-background"
-                        aria-label={`Delivered ${item.name}`}
-                      />
-                    </li>
-                  );
-                })}
+                {template.map((item) => (
+                  <DeliveryRow
+                    key={item.id}
+                    item={item}
+                    theme={theme}
+                    count={getDeliveryCount(item.id)}
+                    setDeliveryCount={setDeliveryCount}
+                  />
+                ))}
               </ul>
             </div>
             <div className="flex items-center justify-between gap-2 border-t bg-background/60 px-3 py-2 text-sm">
