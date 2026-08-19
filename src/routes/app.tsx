@@ -1881,12 +1881,14 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
   // sheet. Replaces the multi-item Export dropdown on the home screen; the
   // per-kind manual exports remain available in Settings → Actions → Export.
   const runEndOfShiftBackup = async () => {
-    type Kind = "totals" | "fnb_totals" | "room_status" | "maintenance";
+    type Kind = "totals" | "fnb_totals" | "room_status" | "maintenance" | "delivery";
     const jobs: Array<{ kind: Kind; rows: unknown[]; grand: number }> = [];
     const t = computeTotals();
     if (t.rows.length) jobs.push({ kind: "totals", rows: t.rows, grand: t.grand });
     const f = computeFnbTotals();
     if (f.rows.length) jobs.push({ kind: "fnb_totals", rows: f.rows, grand: f.grand });
+    const d = computeDeliveryTotals();
+    if (d.rows.length) jobs.push({ kind: "delivery", rows: d.rows, grand: d.grand });
     const rs = computeRoomStatus();
     if (rs.rows.length) jobs.push({ kind: "room_status", rows: rs.rows, grand: rs.grand });
     const m = computeMaintenance();
