@@ -28,6 +28,73 @@ const textStyle = (item: TemplateItem, theme: string | undefined) =>
 const shellClass =
   "max-w-md w-[calc(100vw-1.5rem)] sm:w-full p-4 sm:p-6 h-[90dvh] sm:h-auto sm:max-h-[85dvh] flex flex-col gap-3";
 
+function DeliveryRow({
+  item,
+  theme,
+  count,
+  setDeliveryCount,
+}: {
+  item: TemplateItem;
+  theme: string | undefined;
+  count: number;
+  setDeliveryCount: (itemId: string, value: number) => void | Promise<void>;
+}) {
+  const [add, setAdd] = React.useState("");
+  const applyAdd = () => {
+    const n = Number(add);
+    if (!Number.isFinite(n) || n === 0) return;
+    void setDeliveryCount(item.id, Math.max(0, count + Math.floor(n)));
+    setAdd("");
+  };
+  return (
+    <li
+      className="flex items-center gap-2 py-2 px-2 rounded-xl border"
+      style={rowStyle(item, theme)}
+    >
+      <span className="flex-1 min-w-0 break-words" style={textStyle(item, theme)}>
+        {item.name}
+      </span>
+      <Input
+        type="number"
+        inputMode="numeric"
+        value={add}
+        placeholder="+"
+        onChange={(e) => setAdd(e.target.value)}
+        onKeyDown={(e) => {
+          if (e.key === "Enter") {
+            e.preventDefault();
+            applyAdd();
+          }
+        }}
+        onFocus={(e) => e.currentTarget.select()}
+        className="h-10 sm:h-9 w-16 shrink-0 text-center tabular-nums bg-background"
+        aria-label={`Add to ${item.name}`}
+      />
+      <Button
+        variant="outline"
+        size="icon"
+        className="h-10 w-10 sm:h-9 sm:w-9 shrink-0"
+        onClick={applyAdd}
+        disabled={!add.trim() || Number(add) === 0}
+        aria-label={`Add amount to ${item.name}`}
+      >
+        <Plus className="h-4 w-4" />
+      </Button>
+      <Input
+        type="number"
+        inputMode="numeric"
+        min={0}
+        value={count === 0 ? "" : String(count)}
+        placeholder="0"
+        onChange={(e) => void setDeliveryCount(item.id, Number(e.target.value))}
+        onFocus={(e) => e.currentTarget.select()}
+        className="h-10 sm:h-9 w-20 shrink-0 text-center tabular-nums font-medium bg-background"
+        aria-label={`Delivered total ${item.name}`}
+      />
+    </li>
+  );
+}
+
 export function RejectsDialog({
   open,
   onOpenChange,
