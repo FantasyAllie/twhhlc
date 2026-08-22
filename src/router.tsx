@@ -8,10 +8,13 @@ export const getRouter = () => {
   const queryClient = new QueryClient({
     defaultOptions: {
       queries: {
-        staleTime: 60_000,
+      // Short stale window: mobile browsers freeze websockets in the
+        // background, so focus/reconnect refetches are the safety net.
+        staleTime: 10_000,
         gcTime: 10 * 60_000,
-        refetchOnWindowFocus: false,
-        refetchOnMount: false,
+        refetchOnWindowFocus: "always",
+        refetchOnReconnect: "always",
+        refetchOnMount: true,
         retry: 1,
       },
     },

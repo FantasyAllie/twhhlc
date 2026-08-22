@@ -261,6 +261,7 @@ function AppPage() {
     };
   }, []);
   // Realtime: push room status changes to all signed-in clients (esp. reception)
+  const [realtimeEpoch, setRealtimeEpoch] = useState(0);
   useEffect(() => {
     if (!authUser) return;
     const notifyEnabled = (viewAsRole ?? authUser.role) !== "reception";
@@ -360,11 +361,46 @@ function AppPage() {
           qc.invalidateQueries({ queryKey: ["fnb_linen_counts"] });
         },
       )
-      .subscribe();
+      .subscribe((status) => {
+        // iOS/Android suspend sockets in the background; when the socket dies
+        // we rebuild the channel instead of silently going stale.
+        if (status === "CHANNEL_ERROR" || status === "TIMED_OUT" || status === "CLOSED") {
+          window.setTimeout(() => setRealtimeEpoch((n) => n + 1), 2000);
+        }
+        if (status === "SUBSCRIBED") {
+          qc.invalidateQueries({ type: "active" });
+        }
+      });
     return () => {
       supabase.removeChannel(channel);
     };
-  }, [authUser, qc, viewAsRole]);
+  }, [authUser, qc, viewAsRole, realtimeEpoch]);
+  // Resume + polling safety net: refetch whatever is on screen when the app
+  // comes back to the foreground, regains network, or every 20s while visible.
+  useEffect(() => {
+    if (!authUser) return;
+    const resync = () => {
+      if (typeof document !== "undefined" && document.visibilityState !== "visible") return;
+      qc.invalidateQueries({ type: "active" });
+    };
+    const onVisible = () => {
+      if (document.visibilityState !== "visible") return;
+      setRealtimeEpoch((n) => n + 1);
+      resync();
+    };
+    document.addEventListener("visibilitychange", onVisible);
+    window.addEventListener("focus", resync);
+    window.addEventListener("online", onVisible);
+    window.addEventListener("pageshow", onVisible);
+    const poll = window.setInterval(resync, 20_000);
+    return () => {
+      document.removeEventListener("visibilitychange", onVisible);
+      window.removeEventListener("focus", resync);
+      window.removeEventListener("online", onVisible);
+      window.removeEventListener("pageshow", onVisible);
+      window.clearInterval(poll);
+    };
+  }, [authUser, qc]);
   const signOut = () => {
     clearSession();
     navigate({ to: "/login", replace: true });
