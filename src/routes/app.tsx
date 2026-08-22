@@ -261,6 +261,7 @@ function AppPage() {
     };
   }, []);
   // Realtime: push room status changes to all signed-in clients (esp. reception)
+  const [realtimeEpoch, setRealtimeEpoch] = useState(0);
   useEffect(() => {
     if (!authUser) return;
     const notifyEnabled = (viewAsRole ?? authUser.role) !== "reception";
