@@ -1651,6 +1651,7 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
     qc.invalidateQueries({ queryKey: ["rooms"] });
     await qc.refetchQueries({ queryKey: ["room_counts"] });
     qc.invalidateQueries({ queryKey: ["reject_counts"] });
+    qc.invalidateQueries({ queryKey: ["delivery_counts"] });
     qc.invalidateQueries({ queryKey: ["room_messages"] });
   };
 
