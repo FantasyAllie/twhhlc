@@ -1603,16 +1603,19 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
       if (r.error) toast.error(r.error.message);
     }
 
-    // Clear room linen counts and rejects so the reset zeroes rooms for all
-    // departments (reception's reset runs the same path as housekeeping's).
-    // Delivery counts are intentionally preserved across resets.
+    // Clear room linen counts, rejects, and delivery counts so the reset
+    // zeroes rooms for all departments (reception's reset runs the same path
+    // as housekeeping's).
     qc.setQueryData(["reject_counts"], () => []);
-    const [r2, rRej] = await Promise.all([
+    qc.setQueryData(["delivery_counts"], () => []);
+    const [r2, rRej, rDel] = await Promise.all([
       supabase.from("room_item_counts").delete().neq("room_number", -1),
       supabase.from("reject_counts").delete().neq("count", -1),
+      supabase.from("delivery_counts" as never).delete().neq("count", -1),
     ]);
     if (r2.error) toast.error(r2.error.message);
     if (rRej.error) toast.error(rRej.error.message);
+    if (rDel.error) toast.error(rDel.error.message);
     // Verify the linen counts actually cleared (RLS or a partial failure would
     // otherwise leave stale counts showing after the cache refetches).
     const { data: leftover } = await supabase
@@ -1648,6 +1651,7 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
     qc.invalidateQueries({ queryKey: ["rooms"] });
     await qc.refetchQueries({ queryKey: ["room_counts"] });
     qc.invalidateQueries({ queryKey: ["reject_counts"] });
+    qc.invalidateQueries({ queryKey: ["delivery_counts"] });
     qc.invalidateQueries({ queryKey: ["room_messages"] });
   };
 
