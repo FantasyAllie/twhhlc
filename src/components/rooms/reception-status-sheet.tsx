@@ -1,5 +1,5 @@
 import React from "react";
-import { ConciergeBell, DoorOpen, Camera } from "lucide-react";
+import { ConciergeBell, DoorOpen, Footprints, Camera } from "lucide-react";
 import type { QueryClient } from "@tanstack/react-query";
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetDescription } from "@/components/ui/sheet";
 import { Button } from "@/components/ui/button";
@@ -21,6 +21,7 @@ type Props = {
   qc: QueryClient;
   dndFileInputRef: React.RefObject<HTMLInputElement | null>;
   setRoomGuestVacated: (n: number, v: boolean) => void;
+  setRoomStayoverOut: (n: number, v: boolean) => void;
   setQuickReceptionOpen: (v: boolean) => void;
   setStayoverPhotosRoomFilter: (n: number | undefined) => void;
   setStayoverPhotosOpen: (v: boolean) => void;
@@ -48,6 +49,7 @@ export function ReceptionStatusSheet({
   qc,
   dndFileInputRef,
   setRoomGuestVacated,
+  setRoomStayoverOut,
   setQuickReceptionOpen,
   setStayoverPhotosRoomFilter,
   setStayoverPhotosOpen,
@@ -126,7 +128,18 @@ export function ReceptionStatusSheet({
                   </Button>
                 </div>
               )}
-             {(isAdmin || isCurrentDnd) && (
+             {!isReception && !!room?.stayover_out && (
+                <div className="mt-3 flex flex-col items-center gap-2 rounded-xl border border-sky-500/60 bg-sky-50 p-3 text-center dark:bg-sky-950/40">
+                  <span className="flex items-center justify-center gap-2 text-sm font-medium">
+                    <Footprints className="h-4 w-4 text-sky-600 dark:text-sky-400" />
+                    Stayover — guest out, room can be serviced
+                  </span>
+                  <Button type="button" size="sm" variant="outline" onClick={() => setRoomStayoverOut(n, false)}>
+                    Dismiss
+                  </Button>
+                </div>
+              )}
+              {(isAdmin || isCurrentDnd) && (
                <div className="mt-2 flex gap-2">
                  {isAdmin && (
                    <Button
