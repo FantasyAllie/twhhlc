@@ -1526,7 +1526,9 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
   };
 
   const resetRoomCounts = async (roomNumber: number) => {
+    pendingCounts.clearAll();
     qc.setQueryData<RoomCount[]>(["room_counts"], (old) =>
+
       old?.filter((c) => c.room_number !== roomNumber) ?? [],
     );
     const { error } = await supabase
