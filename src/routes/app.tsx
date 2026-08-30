@@ -1546,6 +1546,7 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
   };
 
   const performResetAll = async () => {
+    pendingCounts.clearAll();
     const now = new Date();
     const currentRooms = qc.getQueryData<Room[]>(["rooms"]) ?? [];
     // Preserve reception flags (guest_vacated / early_check_in / needs_maintenance)
