@@ -71,6 +71,10 @@ export type Room = {
   housekeeping_note: string | null;
   needs_maintenance: boolean;
   guest_vacated: boolean;
+  // Stayover room whose guest has gone out for the day: room is empty and can
+  // be serviced now (distinct from guest_vacated = checked out for good).
+  stayover_out?: boolean;
+  stayover_out_at?: string | null;
   early_check_in?: boolean;
   not_required?: boolean;
   guest_vacated_at?: string | null;
