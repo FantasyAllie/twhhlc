@@ -4789,23 +4789,24 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
  </div>
 
 
-            {!isReception && (
-              (() => {
-                 const staffId = receptionStatuses.find((s) => s.label.toLowerCase() === "staff")?.id ?? null;
-                 const rosId = receptionStatuses.find((s) => s.label.toLowerCase() === "ros")?.id ?? null;
-                 const statusLabelById = new Map(
-                   receptionStatuses.map((s) => [s.id, s.label.toLowerCase()]),
-                 );
-                 const excludedProgressStatuses = new Set(["staff", "ros", "staff/ros", "ros - staff"]);
-                 const eligible = rooms.filter((r) => {
-                   const sid = r.reception_status_id ?? r.default_status;
-                   const statusLabel = sid ? (statusLabelById.get(sid) ?? sid).toLowerCase() : "";
-                    if (excludedProgressStatuses.has(statusLabel)) return false;
-                    if (statusLabel === "dnd") return false;
-                    return true;
-                 });
-                const total = eligible.length;
-                const progress = eligible.filter((r) => r.done || r.done_reception).length;
+             {!isReception && (
+               (() => {
+                  const staffId = receptionStatuses.find((s) => s.label.toLowerCase() === "staff")?.id ?? null;
+                  const rosId = receptionStatuses.find((s) => s.label.toLowerCase() === "ros")?.id ?? null;
+                  const dndId = receptionStatuses.find((s) => s.label.toLowerCase() === "dnd")?.id ?? null;
+                  const statusLabelById = new Map(
+                    receptionStatuses.map((s) => [s.id, s.label.toLowerCase()]),
+                  );
+                  const excludedProgressStatuses = new Set(["staff", "ros", "staff/ros", "ros - staff"]);
+                  const eligible = rooms.filter((r) => {
+                    const sid = r.reception_status_id ?? r.default_status;
+                    const statusLabel = sid ? (statusLabelById.get(sid) ?? sid).toLowerCase() : "";
+                     if (excludedProgressStatuses.has(statusLabel)) return false;
+                     if (dndId && sid === dndId) return false;
+                     return true;
+                  });
+                 const total = eligible.length;
+                 const progress = eligible.filter((r) => r.done || r.done_reception).length;
                 const pct = total > 0 ? Math.min(100, (progress / total) * 100) : 0;
                 const isComplete = total > 0 && progress >= total;
                  return (
