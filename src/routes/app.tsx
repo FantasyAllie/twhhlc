@@ -144,6 +144,7 @@ import {
   roomStateMeta,
 } from "@/lib/rooms";
 import type { RoomTileState } from "@/lib/rooms";
+import { usePendingCounts } from "@/lib/pending-counts";
 import { HousekeepingRoomTile, ReceptionRoomTile } from "@/components/rooms/room-tile";
 
 export const Route = createFileRoute("/app")({
@@ -646,7 +647,51 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
     qc.invalidateQueries({ queryKey: ["fnb_linen_counts"] });
   };
   const extras = extrasQ.data ?? [];
-  const counts = countsQ.data ?? [];
+  const serverCounts = countsQ.data ?? [];
+  // Locally intended linen values win over server data until the server has
+  // confirmed them (see usePendingCounts) so taps never flash a stale number.
+  const pendingCounts = usePendingCounts({
+    write: async (room, kind, itemId, value) => {
+      const { error } = await supabase.from("room_item_counts").upsert(
+        {
+          room_number: room,
+          item_kind: kind,
+          item_id: itemId,
+          count: value,
+          updated_at: new Date().toISOString(),
+        },
+        { onConflict: "user_id,hotel_id,room_number,item_kind,item_id" },
+      );
+      if (error) throw new Error(error.message);
+    },
+    onError: (message) => {
+      toast.error(message);
+      qc.invalidateQueries({ queryKey: ["room_counts"] });
+    },
+  });
+  const counts = useMemo(() => {
+    const entries = Object.values(pendingCounts.pending);
+    if (entries.length === 0) return serverCounts;
+    const list = [...serverCounts];
+    for (const entry of entries) {
+      const idx = list.findIndex(
+        (c) =>
+          c.room_number === entry.room &&
+          c.item_kind === entry.kind &&
+          c.item_id === entry.itemId,
+      );
+      if (idx >= 0) list[idx] = { ...list[idx], count: entry.value };
+      else
+        list.push({
+          id: `pending-${entry.room}-${entry.kind}-${entry.itemId}`,
+          room_number: entry.room,
+          item_kind: entry.kind,
+          item_id: entry.itemId,
+          count: entry.value,
+        });
+    }
+    return list;
+  }, [serverCounts, pendingCounts.pending]);
   const rooms = roomsQ.data ?? [];
   const roomTypes = roomTypesQ.data ?? [];
   const roomFeatures = roomFeaturesQ.data ?? [];
@@ -1457,51 +1502,19 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
  }
  };
 
- // --- Count updates ---
- const updateCount = async (
- roomNumber: number,
- kind: "template" | "extra",
- itemId: string,
- delta: number,
- ) => {
- const current = getCount(roomNumber, kind, itemId);
- const next = Math.max(0, current + delta);
- if (next === current) return;
-
- qc.setQueryData<RoomCount[]>(["room_counts"], (old) => {
- const list = old ? [...old] : [];
- const idx = list.findIndex(
- (c) => c.room_number === roomNumber && c.item_kind === kind && c.item_id === itemId,
- );
- if (idx >= 0) list[idx] = { ...list[idx], count: next };
- else
- list.push({
- id: `temp-${roomNumber}-${kind}-${itemId}`,
- room_number: roomNumber,
- item_kind: kind,
- item_id: itemId,
- count: next,
- });
- return list;
- });
-
- const { error } = await supabase
- .from("room_item_counts")
- .upsert(
- {
- room_number: roomNumber,
- item_kind: kind,
- item_id: itemId,
- count: next,
- updated_at: new Date().toISOString(),
- },
- { onConflict: "user_id,hotel_id,room_number,item_kind,item_id" },
- );
- if (error) {
- toast.error(error.message);
- qc.invalidateQueries({ queryKey: ["room_counts"] });
- }
-
+  // --- Count updates ---
+  // Synchronous: the intended value lands in the pending overlay immediately
+  // and the network write is queued/coalesced per item.
+  const updateCount = (
+    roomNumber: number,
+    kind: "template" | "extra",
+    itemId: string,
+    delta: number,
+  ) => {
+    const current = getCount(roomNumber, kind, itemId);
+    const next = Math.max(0, current + delta);
+    if (next === current) return;
+    pendingCounts.setTarget(roomNumber, kind, itemId, next);
   };
 
 
@@ -1514,7 +1527,9 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
   };
 
   const resetRoomCounts = async (roomNumber: number) => {
+    pendingCounts.clearAll();
     qc.setQueryData<RoomCount[]>(["room_counts"], (old) =>
+
       old?.filter((c) => c.room_number !== roomNumber) ?? [],
     );
     const { error } = await supabase
@@ -1532,6 +1547,7 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
   };
 
   const performResetAll = async () => {
+    pendingCounts.clearAll();
     const now = new Date();
     const currentRooms = qc.getQueryData<Room[]>(["rooms"]) ?? [];
     // Preserve reception flags (guest_vacated / early_check_in / needs_maintenance)
