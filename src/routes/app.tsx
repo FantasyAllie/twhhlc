@@ -1501,51 +1501,19 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
  }
  };
 
- // --- Count updates ---
- const updateCount = async (
- roomNumber: number,
- kind: "template" | "extra",
- itemId: string,
- delta: number,
- ) => {
- const current = getCount(roomNumber, kind, itemId);
- const next = Math.max(0, current + delta);
- if (next === current) return;
-
- qc.setQueryData<RoomCount[]>(["room_counts"], (old) => {
- const list = old ? [...old] : [];
- const idx = list.findIndex(
- (c) => c.room_number === roomNumber && c.item_kind === kind && c.item_id === itemId,
- );
- if (idx >= 0) list[idx] = { ...list[idx], count: next };
- else
- list.push({
- id: `temp-${roomNumber}-${kind}-${itemId}`,
- room_number: roomNumber,
- item_kind: kind,
- item_id: itemId,
- count: next,
- });
- return list;
- });
-
- const { error } = await supabase
- .from("room_item_counts")
- .upsert(
- {
- room_number: roomNumber,
- item_kind: kind,
- item_id: itemId,
- count: next,
- updated_at: new Date().toISOString(),
- },
- { onConflict: "user_id,hotel_id,room_number,item_kind,item_id" },
- );
- if (error) {
- toast.error(error.message);
- qc.invalidateQueries({ queryKey: ["room_counts"] });
- }
-
+  // --- Count updates ---
+  // Synchronous: the intended value lands in the pending overlay immediately
+  // and the network write is queued/coalesced per item.
+  const updateCount = (
+    roomNumber: number,
+    kind: "template" | "extra",
+    itemId: string,
+    delta: number,
+  ) => {
+    const current = getCount(roomNumber, kind, itemId);
+    const next = Math.max(0, current + delta);
+    if (next === current) return;
+    pendingCounts.setTarget(roomNumber, kind, itemId, next);
   };
 
 
