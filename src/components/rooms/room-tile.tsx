@@ -154,12 +154,13 @@ function ReceptionRoomTileBase({
           className="absolute top-0.5 right-0.5 h-3.5 w-3.5 text-emerald-600 dark:text-emerald-400"
         />
       )}
-      {room?.stayover_out && !isStaffRoom && (
+      {room?.stayover_out && !isStaffRoom && !room?.done && (
         <Footprints
           aria-label="Stayover guest out - room empty"
-          className="absolute top-0.5 left-0.5 h-3.5 w-3.5 text-sky-600 dark:text-sky-400"
+          className="absolute top-0.5 right-0.5 h-3.5 w-3.5 text-sky-600 dark:text-sky-400"
         />
       )}
+
     </button>
   );
 }
@@ -255,15 +256,16 @@ function HousekeepingRoomTileBase({
           Vacant
         </span>
       )}
-      {room?.stayover_out && (
+      {room?.stayover_out && !room?.done && !isDone && (
         <span
           aria-label="Stayover guest out - room empty"
-          className="absolute top-0.5 left-0.5 inline-flex items-center gap-0.5 rounded-sm bg-sky-500 px-1 py-px text-[8px] font-bold leading-none tracking-wide text-white shadow-sm dark:bg-sky-400 dark:text-sky-950"
+          className="absolute top-0.5 right-0.5 inline-flex items-center gap-0.5 rounded-sm bg-sky-500 px-1 py-px text-[8px] font-bold leading-none tracking-wide text-white shadow-sm dark:bg-sky-400 dark:text-sky-950"
         >
           <Footprints aria-hidden className="h-2 w-2" />
           Out
         </span>
       )}
+
     </button>
   );
 }
