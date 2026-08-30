@@ -79,7 +79,7 @@ export function usePendingCounts(options: {
         for (;;) {
           const entry = pendingRef.current[key];
           if (!entry || entry.value === lastSent) break;
-          const value = entry.value;
+          const value: number = entry.value;
           try {
             await writeRef.current(entry.room, entry.kind, entry.itemId, value);
             lastSent = value;
