@@ -646,7 +646,51 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
     qc.invalidateQueries({ queryKey: ["fnb_linen_counts"] });
   };
   const extras = extrasQ.data ?? [];
-  const counts = countsQ.data ?? [];
+  const serverCounts = countsQ.data ?? [];
+  // Locally intended linen values win over server data until the server has
+  // confirmed them (see usePendingCounts) so taps never flash a stale number.
+  const pendingCounts = usePendingCounts({
+    write: async (room, kind, itemId, value) => {
+      const { error } = await supabase.from("room_item_counts").upsert(
+        {
+          room_number: room,
+          item_kind: kind,
+          item_id: itemId,
+          count: value,
+          updated_at: new Date().toISOString(),
+        },
+        { onConflict: "user_id,hotel_id,room_number,item_kind,item_id" },
+      );
+      if (error) throw new Error(error.message);
+    },
+    onError: (message) => {
+      toast.error(message);
+      qc.invalidateQueries({ queryKey: ["room_counts"] });
+    },
+  });
+  const counts = useMemo(() => {
+    const entries = Object.values(pendingCounts.pending);
+    if (entries.length === 0) return serverCounts;
+    const list = [...serverCounts];
+    for (const entry of entries) {
+      const idx = list.findIndex(
+        (c) =>
+          c.room_number === entry.room &&
+          c.item_kind === entry.kind &&
+          c.item_id === entry.itemId,
+      );
+      if (idx >= 0) list[idx] = { ...list[idx], count: entry.value };
+      else
+        list.push({
+          id: `pending-${entry.room}-${entry.kind}-${entry.itemId}`,
+          room_number: entry.room,
+          item_kind: entry.kind,
+          item_id: entry.itemId,
+          count: entry.value,
+        });
+    }
+    return list;
+  }, [serverCounts, pendingCounts.pending]);
   const rooms = roomsQ.data ?? [];
   const roomTypes = roomTypesQ.data ?? [];
   const roomFeatures = roomFeaturesQ.data ?? [];
