@@ -154,12 +154,13 @@ function ReceptionRoomTileBase({
           className="absolute top-0.5 right-0.5 h-3.5 w-3.5 text-emerald-600 dark:text-emerald-400"
         />
       )}
-      {room?.stayover_out && !isStaffRoom && (
+      {room?.stayover_out && !isStaffRoom && !room?.done && (
         <Footprints
           aria-label="Stayover guest out - room empty"
-          className="absolute top-0.5 left-0.5 h-3.5 w-3.5 text-sky-600 dark:text-sky-400"
+          className="absolute top-0.5 right-0.5 h-3.5 w-3.5 text-sky-600 dark:text-sky-400"
         />
       )}
+
     </button>
   );
 }
