@@ -144,6 +144,7 @@ import {
   roomStateMeta,
 } from "@/lib/rooms";
 import type { RoomTileState } from "@/lib/rooms";
+import { usePendingCounts } from "@/lib/pending-counts";
 import { HousekeepingRoomTile, ReceptionRoomTile } from "@/components/rooms/room-tile";
 
 export const Route = createFileRoute("/app")({
