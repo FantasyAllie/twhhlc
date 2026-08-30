@@ -814,6 +814,8 @@ export type Database = {
           reception_status_secondary_id: string | null
           room_number: number
           sort_order: number
+          stayover_out: boolean
+          stayover_out_at: string | null
           updated_at: string
           user_id: string
         }
@@ -838,6 +840,8 @@ export type Database = {
           reception_status_secondary_id?: string | null
           room_number: number
           sort_order?: number
+          stayover_out?: boolean
+          stayover_out_at?: string | null
           updated_at?: string
           user_id?: string
         }
@@ -862,6 +866,8 @@ export type Database = {
           reception_status_secondary_id?: string | null
           room_number?: number
           sort_order?: number
+          stayover_out?: boolean
+          stayover_out_at?: string | null
           updated_at?: string
           user_id?: string
         }

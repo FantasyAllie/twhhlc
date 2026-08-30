@@ -1,4 +1,4 @@
-import { MessageSquare, DoorOpen, Wrench, X } from "lucide-react";
+import { MessageSquare, DoorOpen, Footprints, Wrench, X } from "lucide-react";
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetDescription } from "@/components/ui/sheet";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -25,6 +25,7 @@ type Props = {
   setMessagesSheetOpen: (v: boolean) => void;
   setRoomEarlyCheckIn: (n: number, v: boolean) => void;
   setRoomGuestVacated: (n: number, v: boolean) => void;
+  setRoomStayoverOut: (n: number, v: boolean) => void;
   confirmHousekeepingNote: (n: number, note: string) => void;
   setRoomHousekeepingNote: (n: number, note: string) => void;
   deleteRoomMessage: (id: string) => void;
@@ -46,6 +47,7 @@ export function RoomNotesSheet({
   setMessagesSheetOpen,
   setRoomEarlyCheckIn,
   setRoomGuestVacated,
+  setRoomStayoverOut,
   confirmHousekeepingNote,
   setRoomHousekeepingNote,
   deleteRoomMessage,
@@ -105,6 +107,13 @@ export function RoomNotesSheet({
                      Guest has checked out
                    </span>
                    <Switch checked={vacated} onCheckedChange={(v) => setRoomGuestVacated(n, v)} />
+                 </div>
+                 <div className="flex items-center justify-between gap-2 rounded-xl border bg-background p-3">
+                   <span className="flex items-center gap-2 text-sm font-medium">
+                     <Footprints className={cn("h-4 w-4", room?.stayover_out ? "text-sky-600 dark:text-sky-400" : "text-muted-foreground")} />
+                     Stayover — guest out for the day
+                   </span>
+                   <Switch checked={!!room?.stayover_out} onCheckedChange={(v) => setRoomStayoverOut(n, v)} />
                  </div>
                  {maintenance && (
                    <div className="flex items-center gap-2 rounded-xl border border-amber-500/60 bg-amber-50 dark:bg-amber-950/40 p-3 text-sm">

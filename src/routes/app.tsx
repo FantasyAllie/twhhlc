@@ -27,7 +27,7 @@ import {
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Minus, Plus, X, Menu, ArrowUp, ArrowDown, Pencil, Check, Trash2, Sun, Moon, List, Bed, House, Ban, History, Users, User, LogOut, Hash, ConciergeBell, ClipboardList, Printer, Filter, Wrench, DoorOpen, Bell, Eye, EyeOff, HelpCircle, AlertCircle, MessageSquare, PackageSearch, RotateCcw, ChevronDown, Camera, LayoutGrid, Truck } from "lucide-react";
+import { Minus, Plus, X, Menu, ArrowUp, ArrowDown, Pencil, Check, Trash2, Sun, Moon, List, Bed, House, Ban, History, Users, User, LogOut, Hash, ConciergeBell, ClipboardList, Printer, Filter, Wrench, DoorOpen, Footprints, Bell, Eye, EyeOff, HelpCircle, AlertCircle, MessageSquare, PackageSearch, RotateCcw, ChevronDown, Camera, LayoutGrid, Truck } from "lucide-react";
 import {
   AccountDialog,
   AddConfigDialogs,
@@ -1565,6 +1565,8 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
           reception_status_id: null,
           reception_bed_id: null,
           guest_vacated: keep?.guest_vacated ?? false,
+          stayover_out: false,
+          stayover_out_at: null,
           early_check_in: keep?.early_check_in ?? false,
           needs_maintenance: keep?.needs_maintenance ?? false,
           guest_vacated_at: keep?.guest_vacated_at ?? null,
@@ -1587,6 +1589,8 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
       needs_maintenance_at: null,
       guest_vacated: false,
       guest_vacated_at: null,
+      stayover_out: false,
+      stayover_out_at: null,
       early_check_in: false,
       early_check_in_at: null,
       reception_status_id: null,
@@ -1609,6 +1613,8 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
         reception_bed_id: null,
         guest_vacated: keep.guest_vacated,
         guest_vacated_at: keep.guest_vacated_at,
+        stayover_out: false,
+        stayover_out_at: null,
         early_check_in: keep.early_check_in,
         early_check_in_at: keep.early_check_in_at,
         needs_maintenance: keep.needs_maintenance,
@@ -2275,6 +2281,30 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
     if (value) fireRoomNotification("checkout", roomNumber);
   };
 
+  // Stayover guest has gone out for the day: room is empty and can be
+  // serviced now. Separate from guest_vacated (checked out for good).
+  const setRoomStayoverOut = async (roomNumber: number, value: boolean) => {
+    const nowIso = new Date().toISOString();
+    qc.setQueryData<Room[]>(["rooms"], (old) => {
+      const list = old ? [...old] : [];
+      const idx = list.findIndex((r) => r.room_number === roomNumber);
+      if (idx >= 0)
+        list[idx] = { ...list[idx], stayover_out: value, stayover_out_at: value ? nowIso : null };
+      return list;
+    });
+    const { error } = await supabase.from("rooms").upsert(
+      {
+        room_number: roomNumber,
+        stayover_out: value,
+        stayover_out_at: value ? nowIso : null,
+        updated_at: nowIso,
+      } as never,
+      { onConflict: "user_id,hotel_id,room_number" },
+    );
+    if (error) toast.error(error.message);
+    qc.invalidateQueries({ queryKey: ["rooms"] });
+  };
+
   const setRoomNotRequired = async (roomNumber: number, value: boolean) => {
     const nowIso = new Date().toISOString();
     qc.setQueryData<Room[]>(["rooms"], (old) => {
@@ -2678,6 +2708,13 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
                 Guest has checked out
               </span>
               <Switch checked={vacated} onCheckedChange={(v) => setRoomGuestVacated(n, v)} />
+            </div>
+            <div className="flex items-center justify-between gap-2 rounded-xl border bg-background p-3">
+              <span className="flex items-center gap-2 text-sm font-medium">
+                <Footprints className={cn("h-4 w-4", room?.stayover_out ? "text-sky-600 dark:text-sky-400" : "text-muted-foreground")} />
+                Stayover — guest out for the day
+              </span>
+              <Switch checked={!!room?.stayover_out} onCheckedChange={(v) => setRoomStayoverOut(n, v)} />
             </div>
             {maintenance && (
               <div className="flex items-center gap-2 rounded-xl border border-amber-500/60 bg-amber-50 dark:bg-amber-950/40 p-3 text-sm">
@@ -3698,6 +3735,7 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
     setMessagesSheetOpen={setMessagesSheetOpen}
     setRoomEarlyCheckIn={setRoomEarlyCheckIn}
     setRoomGuestVacated={setRoomGuestVacated}
+    setRoomStayoverOut={setRoomStayoverOut}
     confirmHousekeepingNote={confirmHousekeepingNote}
     setRoomHousekeepingNote={setRoomHousekeepingNote}
     deleteRoomMessage={deleteRoomMessage}
@@ -3724,6 +3762,7 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
     qc={qc}
     dndFileInputRef={dndFileInputRef}
     setRoomGuestVacated={setRoomGuestVacated}
+    setRoomStayoverOut={setRoomStayoverOut}
     setQuickReceptionOpen={setQuickReceptionOpen}
     setStayoverPhotosRoomFilter={setStayoverPhotosRoomFilter}
     setStayoverPhotosOpen={setStayoverPhotosOpen}
