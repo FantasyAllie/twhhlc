@@ -741,16 +741,18 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
   // Whether the housekeeping shift is complete — all eligible rooms are done.
   // Used to reveal the "Mark shift as finished" shortcut and to hide the now
   // redundant Linen totals / Room status items from the Export menu.
+  // DND rooms are never serviceable, so they are excluded from the total.
   const isShiftComplete = (() => {
     const statusLabelById = new Map(
       receptionStatuses.map((s) => [s.id, s.label.toLowerCase()]),
     );
     const excluded = new Set(["staff", "ros", "staff/ros", "ros - staff"]);
+    const dndId = receptionStatuses.find((s) => s.label.toLowerCase() === "dnd")?.id ?? null;
     const eligible = rooms.filter((r) => {
       const sid = r.reception_status_id ?? r.default_status;
       const lbl = sid ? (statusLabelById.get(sid) ?? sid).toLowerCase() : "";
       if (excluded.has(lbl)) return false;
-      if (lbl === "dnd") return false;
+      if (dndId && sid === dndId) return false;
       return true;
     });
     const total = eligible.length;
