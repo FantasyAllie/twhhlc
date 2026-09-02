@@ -1,4 +1,4 @@
-import { MessageSquare, DoorOpen, Footprints, Wrench, X } from "lucide-react";
+import { Clock, MessageSquare, DoorOpen, Footprints, Wrench, X } from "lucide-react";
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetDescription } from "@/components/ui/sheet";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -24,6 +24,7 @@ type Props = {
   setMessagesInitial: (v: MessagesInitial) => void;
   setMessagesSheetOpen: (v: boolean) => void;
   setRoomEarlyCheckIn: (n: number, v: boolean) => void;
+  setRoomLateCheckout: (n: number, v: boolean) => void;
   setRoomGuestVacated: (n: number, v: boolean) => void;
   setRoomStayoverOut: (n: number, v: boolean) => void;
   confirmHousekeepingNote: (n: number, note: string) => void;
@@ -46,6 +47,7 @@ export function RoomNotesSheet({
   setMessagesInitial,
   setMessagesSheetOpen,
   setRoomEarlyCheckIn,
+  setRoomLateCheckout,
   setRoomGuestVacated,
   setRoomStayoverOut,
   confirmHousekeepingNote,
@@ -100,6 +102,13 @@ export function RoomNotesSheet({
                       Early check-in
                     </span>
                     <Switch checked={!!room?.early_check_in} onCheckedChange={(v) => setRoomEarlyCheckIn(n, v)} />
+                  </div>
+                  <div className="flex items-center justify-between gap-2 rounded-xl border bg-background p-3">
+                    <span className="flex items-center gap-2 text-sm font-medium">
+                      <Clock className={cn("h-4 w-4", room?.late_checkout ? "text-red-700 dark:text-red-400" : "text-muted-foreground")} />
+                      Late checkout
+                    </span>
+                    <Switch checked={!!room?.late_checkout} onCheckedChange={(v) => setRoomLateCheckout(n, v)} />
                   </div>
                  <div className="flex items-center justify-between gap-2 rounded-xl border bg-background p-3">
                    <span className="flex items-center gap-2 text-sm font-medium">

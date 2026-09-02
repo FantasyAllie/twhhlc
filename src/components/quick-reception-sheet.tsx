@@ -16,6 +16,7 @@ export type QuickReceptionRoom = {
   default_status: string | null;
   guest_vacated?: boolean;
   early_check_in?: boolean;
+  late_checkout?: boolean;
   stayover_out?: boolean;
 };
 
@@ -84,6 +85,7 @@ export function QuickReceptionSheet({
   onResetAll,
   onChangeVacant,
   onChangeEarlyCheckIn,
+  onChangeLateCheckout,
   onChangeStayoverOut,
   flagsOnly = false,
 }: {
@@ -97,6 +99,7 @@ export function QuickReceptionSheet({
   onResetAll?: () => void | Promise<void>;
   onChangeVacant?: (roomNumber: number, value: boolean) => void;
   onChangeEarlyCheckIn?: (roomNumber: number, value: boolean) => void;
+  onChangeLateCheckout?: (roomNumber: number, value: boolean) => void;
   onChangeStayoverOut?: (roomNumber: number, value: boolean) => void;
   /** Reception accounts: only the room flags are editable, not status or bed. */
   flagsOnly?: boolean;
@@ -217,7 +220,7 @@ export function QuickReceptionSheet({
                   </div>
                 )}
 
-                {(onChangeVacant || onChangeEarlyCheckIn || onChangeStayoverOut) && (
+                {(onChangeVacant || onChangeEarlyCheckIn || onChangeLateCheckout || onChangeStayoverOut) && (
                   <div className="grid grid-cols-1 gap-1.5">
 
                       {onChangeVacant && (
@@ -244,6 +247,21 @@ export function QuickReceptionSheet({
                           selected={!!room.early_check_in}
                           onClick={() =>
                             onChangeEarlyCheckIn(n, !room.early_check_in)
+                          }
+                          truncate={false}
+                        />
+                      )}
+                      {onChangeLateCheckout && (
+                        <Chip
+                          label={
+                            <span className="inline-flex items-center gap-1.5">
+                              <Clock className="h-3.5 w-3.5 shrink-0" />
+                              Late checkout
+                            </span>
+                          }
+                          selected={!!room.late_checkout}
+                          onClick={() =>
+                            onChangeLateCheckout(n, !room.late_checkout)
                           }
                           truncate={false}
                         />
