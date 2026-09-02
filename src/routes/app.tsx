@@ -5011,7 +5011,8 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
     beds={receptionBeds.map((b) => ({ id: b.id, label: b.label }))}
     onChangeStatus={setRoomReceptionStatus}
     onChangeBed={setRoomReceptionBed}
-    onResetAll={resetReceptionAll}
+    onResetAll={isReception ? undefined : resetReceptionAll}
+    flagsOnly={isReception}
     onChangeVacant={(n, v) => void setRoomGuestVacated(n, v)}
     onChangeEarlyCheckIn={(n, v) => void setRoomEarlyCheckIn(n, v)}
     onChangeStayoverOut={(n, v) => void setRoomStayoverOut(n, v)}

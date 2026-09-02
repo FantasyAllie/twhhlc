@@ -83,6 +83,7 @@ export function QuickReceptionSheet({
   onChangeVacant,
   onChangeEarlyCheckIn,
   onChangeStayoverOut,
+  flagsOnly = false,
 }: {
   open: boolean;
   onOpenChange: (o: boolean) => void;
@@ -95,6 +96,8 @@ export function QuickReceptionSheet({
   onChangeVacant?: (roomNumber: number, value: boolean) => void;
   onChangeEarlyCheckIn?: (roomNumber: number, value: boolean) => void;
   onChangeStayoverOut?: (roomNumber: number, value: boolean) => void;
+  /** Reception accounts: only the room flags are editable, not status or bed. */
+  flagsOnly?: boolean;
 }) {
   const sorted = [...rooms].sort((a, b) => a.room_number - b.room_number);
 
@@ -110,9 +113,9 @@ export function QuickReceptionSheet({
             Quick Room Setup
           </SheetTitle>
           <SheetDescription>
-            Set the status, bed and flags (Vacant, Early check-in, Stayover out)
-            for every room in one place. Tap the selected chip to clear it.
-            Changes save instantly.
+            {flagsOnly
+              ? "Set Vacant, Early check-in and Stayover out for every room in one place. Tap a chip to toggle it. Changes save instantly."
+              : "Set the status, bed and flags for every room in one place. Tap the selected chip to clear it. Changes save instantly."}
           </SheetDescription>
         </SheetHeader>
 
@@ -147,7 +150,7 @@ export function QuickReceptionSheet({
                   <div className="text-sm font-semibold">Room {n}</div>
                 </div>
 
-                {statuses.length > 0 && (
+                {!flagsOnly && statuses.length > 0 && (
                   <div className="flex items-start gap-2">
                     <div className="w-14 shrink-0 text-[10px] font-semibold uppercase tracking-wide text-muted-foreground pt-1.5">
                       Status
@@ -180,7 +183,7 @@ export function QuickReceptionSheet({
                   </div>
                 )}
 
-                {filtered.length > 0 && (
+                {!flagsOnly && filtered.length > 0 && (
                   <div className="flex items-start gap-2">
                     <div className="w-14 shrink-0 text-[10px] font-semibold uppercase tracking-wide text-muted-foreground pt-1.5">
                       Bed
