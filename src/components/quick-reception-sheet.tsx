@@ -225,7 +225,7 @@ export function QuickReceptionSheet({
                         <Chip
                           label={
                             <span className="inline-flex items-center gap-1">
-                              <LogOut className="h-3.5 w-3.5" />
+                              <DoorOpen className="h-3.5 w-3.5" />
                               Vacant
                             </span>
                           }
@@ -237,7 +237,7 @@ export function QuickReceptionSheet({
                         <Chip
                           label={
                             <span className="inline-flex items-center gap-1">
-                              <DoorOpen className="h-3.5 w-3.5" />
+                              <Clock className="h-3.5 w-3.5" />
                               Early
                             </span>
                           }
