@@ -80,6 +80,9 @@ export function QuickReceptionSheet({
   onChangeStatus,
   onChangeBed,
   onResetAll,
+  onChangeVacant,
+  onChangeEarlyCheckIn,
+  onChangeStayoverOut,
 }: {
   open: boolean;
   onOpenChange: (o: boolean) => void;
@@ -89,6 +92,9 @@ export function QuickReceptionSheet({
   onChangeStatus: (roomNumber: number, statusId: string | null) => void;
   onChangeBed: (roomNumber: number, bedId: string | null) => void;
   onResetAll?: () => void | Promise<void>;
+  onChangeVacant?: (roomNumber: number, value: boolean) => void;
+  onChangeEarlyCheckIn?: (roomNumber: number, value: boolean) => void;
+  onChangeStayoverOut?: (roomNumber: number, value: boolean) => void;
 }) {
   const sorted = [...rooms].sort((a, b) => a.room_number - b.room_number);
 
