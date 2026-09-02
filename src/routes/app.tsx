@@ -2699,7 +2699,7 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
             })()}
             <div className="flex items-center justify-between gap-2 rounded-xl border bg-background p-3">
               <span className="flex items-center gap-2 text-sm font-medium">
-                <DoorOpen className={cn("h-4 w-4", room?.early_check_in ? "text-amber-600 dark:text-amber-400" : "text-muted-foreground")} />
+                <Clock className={cn("h-4 w-4", room?.early_check_in ? "text-amber-600 dark:text-amber-400" : "text-muted-foreground")} />
                 Early check-in
               </span>
               <Switch checked={!!room?.early_check_in} onCheckedChange={(v) => setRoomEarlyCheckIn(n, v)} />
