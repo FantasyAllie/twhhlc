@@ -49,11 +49,13 @@ function Chip({
   selected,
   disabled,
   onClick,
+  truncate = true,
 }: {
   label: React.ReactNode;
   selected: boolean;
   disabled?: boolean;
   onClick: () => void;
+  truncate?: boolean;
 }) {
   return (
     <button
@@ -65,8 +67,8 @@ function Chip({
         selected && "border-primary bg-primary/10 text-primary",
       )}
     >
-      {selected && <Check className="h-3.5 w-3.5" />}
-      <span className="truncate">{label}</span>
+      {selected && <Check className="h-3.5 w-3.5 shrink-0" />}
+      <span className={cn(truncate ? "truncate" : "whitespace-normal leading-tight")}>{label}</span>
     </button>
   );
 }
