@@ -26,9 +26,11 @@ export const roomStateMeta: Record<
 export type PreservedFlags = {
   guest_vacated: boolean;
   early_check_in: boolean;
+  late_checkout: boolean;
   needs_maintenance: boolean;
   guest_vacated_at: string | null;
   early_check_in_at: string | null;
+  late_checkout_at: string | null;
   needs_maintenance_at: string | null;
 };
 
@@ -106,9 +108,10 @@ export const computeTileMeta = (args: {
   isNR: boolean;
   hasLinenCount: boolean;
   earlyCheckIn: boolean;
+  lateCheckout?: boolean;
   role: "reception" | "housekeeping";
 }): TileMeta => {
-  const { flags, state, isNR, hasLinenCount, earlyCheckIn, role } = args;
+  const { flags, state, isNR, hasLinenCount, earlyCheckIn, lateCheckout, role } = args;
   const isDone = state === "done" || state === "complete";
   if (flags.isStaff)
     return { bg: "var(--room-staff)", fg: "var(--room-staff-fg)", accent: "var(--room-staff-accent)", label: "Staff" };
@@ -132,6 +135,8 @@ export const computeTileMeta = (args: {
   const inProgress =
     flags.hasStatus || hasLinenCount || (role === "housekeeping" && state === "progress");
   if (inProgress) return { ...roomStateMeta.progress, label: "Cleaning in Progress" };
+  if (lateCheckout)
+    return { bg: "var(--room-late)", fg: "var(--room-late-fg)", accent: "var(--room-late-accent)", label: "Late Checkout" };
   if (earlyCheckIn)
     return { bg: "var(--room-early)", fg: "var(--room-early-fg)", accent: "var(--room-early-accent)", label: "Early check-in" };
   return {
@@ -160,14 +165,17 @@ export const computeResetPreserveMap = (
     const dirty = isDirtyRoom(r);
     const gv = dirty || (r.guest_vacated && isFresh(r.guest_vacated_at));
     const ec = isFresh(r.early_check_in_at) && !!r.early_check_in;
+    const lc = isFresh(r.late_checkout_at) && !!r.late_checkout;
     const nm = isFresh(r.needs_maintenance_at) && r.needs_maintenance;
-    if (gv || ec || nm) {
+    if (gv || ec || lc || nm) {
       preserveMap.set(r.room_number, {
         guest_vacated: gv,
         early_check_in: ec,
+        late_checkout: lc,
         needs_maintenance: nm,
         guest_vacated_at: gv ? (dirty ? now.toISOString() : r.guest_vacated_at ?? null) : null,
         early_check_in_at: ec ? r.early_check_in_at ?? null : null,
+        late_checkout_at: lc ? r.late_checkout_at ?? null : null,
         needs_maintenance_at: nm ? r.needs_maintenance_at ?? null : null,
       });
     }

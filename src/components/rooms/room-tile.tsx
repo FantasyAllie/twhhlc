@@ -77,6 +77,7 @@ function ReceptionRoomTileBase({
     isNR,
     hasLinenCount,
     earlyCheckIn: !!room?.early_check_in,
+    lateCheckout: !!room?.late_checkout,
     role: "reception",
   });
 
@@ -185,6 +186,7 @@ function HousekeepingRoomTileBase({
     isNR,
     hasLinenCount,
     earlyCheckIn: !!room?.early_check_in,
+    lateCheckout: !!room?.late_checkout,
     role: "housekeeping",
   });
   const isDone = state === "done" || state === "complete";
