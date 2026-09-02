@@ -1951,7 +1951,8 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
   // any same-day snapshot of that kind), then offer to print the room status
   // sheet. Replaces the multi-item Export dropdown on the home screen; the
   // per-kind manual exports remain available in Settings → Actions → Export.
-  const runEndOfShiftBackup = async () => {
+  const runEndOfShiftBackup = async (opts?: { silent?: boolean }) => {
+    const silent = opts?.silent === true;
     type Kind = "totals" | "fnb_totals" | "room_status" | "maintenance" | "delivery";
     const jobs: Array<{ kind: Kind; rows: unknown[]; grand: number }> = [];
     const t = computeTotals();
@@ -1965,7 +1966,7 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
     const m = computeMaintenance();
     if (m.rows.length) jobs.push({ kind: "maintenance", rows: m.rows, grand: m.grand });
     if (jobs.length === 0) {
-      toast.error("Nothing to back up yet");
+      if (!silent) toast.error("Nothing to back up yet");
       return;
     }
     for (const job of jobs) {
@@ -1976,15 +1977,24 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
     toast.success(`Backup saved (${jobs.length} ${jobs.length === 1 ? "item" : "items"})`);
   };
 
-  // Reports entry point: ask whether to record today's data first. Maintenance
-  // accounts have no data to back up, so they go straight to the reports list.
-  const openReports = () => {
-    if (isMaintenance) {
-      setEndShiftPrintOpen(true);
-      return;
-    }
-    setRecordPromptOpen(true);
+  // Records today's data automatically the first time it's needed each day.
+  // If a snapshot already exists for today, this is a no-op.
+  const ensureTodaysBackup = async () => {
+    if (isMaintenance) return;
+    const today = new Date().toDateString();
+    const hasToday = snapshots.some(
+      (s) => new Date(s.created_at).toDateString() === today,
+    );
+    if (hasToday) return;
+    await runEndOfShiftBackup({ silent: true });
   };
+
+  // Reports entry point: record today's data automatically on first open.
+  const openReports = async () => {
+    await ensureTodaysBackup();
+    setEndShiftPrintOpen(true);
+  };
+
 
   const openMaintenanceExport = async () => {
     const { rows } = computeMaintenance();
