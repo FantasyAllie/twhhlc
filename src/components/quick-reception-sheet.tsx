@@ -221,7 +221,10 @@ export function QuickReceptionSheet({
                 )}
 
                 {(onChangeVacant || onChangeEarlyCheckIn || onChangeLateCheckout || onChangeStayoverOut) && (
-                  <div className="grid grid-cols-1 gap-1.5">
+                  <div className="flex items-start gap-2">
+                    {!flagsOnly && <div className="w-14 shrink-0" aria-hidden />}
+                    <div className="grid grid-cols-1 gap-1.5 flex-1 min-w-0">
+
 
                       {onChangeVacant && (
                         <Chip
@@ -282,8 +285,9 @@ export function QuickReceptionSheet({
                         />
                       )}
                     </div>
-
+                  </div>
                 )}
+
               </div>
             );
           })}
