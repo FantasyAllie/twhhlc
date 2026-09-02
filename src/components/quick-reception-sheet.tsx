@@ -107,11 +107,12 @@ export function QuickReceptionSheet({
         <SheetHeader className="text-left">
           <SheetTitle className="flex items-center gap-2">
             <ConciergeBell className="h-4 w-4" />
-            Bulk Room Status Setup
+            Quick Room Setup
           </SheetTitle>
           <SheetDescription>
-            Tap a chip to set the status or bed for any room. Tap the selected
-            chip to clear it. Changes save instantly.
+            Set the status, bed and flags (Vacant, Early check-in, Stayover out)
+            for every room in one place. Tap the selected chip to clear it.
+            Changes save instantly.
           </SheetDescription>
         </SheetHeader>
 
