@@ -21,6 +21,7 @@ type BaseProps = {
   isOpen: boolean;
   hasMessage: boolean;
   onClick: () => void;
+  bedLabel?: string | null;
 };
 
 // Material "Surface Variant" tile: tonal filled container, hairline border,
@@ -62,6 +63,7 @@ function ReceptionRoomTileBase({
   isOpen,
   hasMessage,
   onClick,
+  bedLabel,
 }: BaseProps) {
   const flags = resolveRoomStatusFlags(room, statusIds);
   const isStaffRoom = flags.isStaff;
@@ -126,6 +128,14 @@ function ReceptionRoomTileBase({
           <span className="text-[9px] sm:text-[10px] md:text-xs font-bold uppercase tracking-tight leading-tight opacity-80 whitespace-pre-line pr-4">
             {meta.label}
           </span>
+          {bedLabel && (
+            <span
+              className="text-[8px] sm:text-[9px] md:text-[10px] font-bold uppercase tracking-tight leading-tight pr-4"
+              style={{ color: meta.accent }}
+            >
+              {bedLabel}
+            </span>
+          )}
         </>
       )}
       {isStaffRoom && (
