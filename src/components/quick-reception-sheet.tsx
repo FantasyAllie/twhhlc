@@ -1,4 +1,4 @@
-import { ConciergeBell, Check, RotateCcw } from "lucide-react";
+import { ConciergeBell, Check, RotateCcw, LogOut, DoorOpen, Footprints } from "lucide-react";
 import { cn } from "@/lib/utils";
 import {
   Sheet,
