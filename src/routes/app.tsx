@@ -1570,9 +1570,11 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
           stayover_out: false,
           stayover_out_at: null,
           early_check_in: keep?.early_check_in ?? false,
+          late_checkout: keep?.late_checkout ?? false,
           needs_maintenance: keep?.needs_maintenance ?? false,
           guest_vacated_at: keep?.guest_vacated_at ?? null,
           early_check_in_at: keep?.early_check_in_at ?? null,
+          late_checkout_at: keep?.late_checkout_at ?? null,
           needs_maintenance_at: keep?.needs_maintenance_at ?? null,
           not_required: false,
           not_required_at: null,
@@ -1595,6 +1597,8 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
       stayover_out_at: null,
       early_check_in: false,
       early_check_in_at: null,
+      late_checkout: false,
+      late_checkout_at: null,
       reception_status_id: null,
       reception_bed_id: null,
       not_required: false,
@@ -1619,6 +1623,8 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
         stayover_out_at: null,
         early_check_in: keep.early_check_in,
         early_check_in_at: keep.early_check_in_at,
+        late_checkout: keep.late_checkout,
+        late_checkout_at: keep.late_checkout_at,
         needs_maintenance: keep.needs_maintenance,
         needs_maintenance_at: keep.needs_maintenance_at,
         not_required: false,
@@ -2366,6 +2372,43 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
     qc.invalidateQueries({ queryKey: ["rooms"] });
   };
 
+  const setRoomLateCheckout = async (roomNumber: number, value: boolean) => {
+    const nowIso = new Date().toISOString();
+    qc.setQueryData<Room[]>(["rooms"], (old) => {
+      const list = old ? [...old] : [];
+      const idx = list.findIndex((r) => r.room_number === roomNumber);
+      if (idx >= 0) list[idx] = { ...list[idx], late_checkout: value, late_checkout_at: value ? nowIso : null };
+      else
+        list.push({
+          id: `temp-${roomNumber}`,
+          room_number: roomNumber,
+          done: false,
+          done_reception: false,
+          category: null,
+          default_status: null,
+          reception_status_id: null,
+          reception_bed_id: null,
+          housekeeping_note: null,
+          needs_maintenance: false,
+          guest_vacated: false,
+          late_checkout: value,
+          late_checkout_at: value ? nowIso : null,
+        });
+      return list;
+    });
+    const { error } = await supabase.from("rooms").upsert(
+      {
+        room_number: roomNumber,
+        late_checkout: value,
+        late_checkout_at: value ? nowIso : null,
+        updated_at: nowIso,
+      } as never,
+      { onConflict: "user_id,hotel_id,room_number" },
+    );
+    if (error) toast.error(error.message);
+    qc.invalidateQueries({ queryKey: ["rooms"] });
+  };
+
   // --- Room type management ---
   const addRoomType = async (label: string) => {
     const clean = label.trim();
@@ -2703,6 +2746,13 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
                 Early check-in
               </span>
               <Switch checked={!!room?.early_check_in} onCheckedChange={(v) => setRoomEarlyCheckIn(n, v)} />
+            </div>
+            <div className="flex items-center justify-between gap-2 rounded-xl border bg-background p-3">
+              <span className="flex items-center gap-2 text-sm font-medium">
+                <Clock className={cn("h-4 w-4", room?.late_checkout ? "text-red-700 dark:text-red-400" : "text-muted-foreground")} />
+                Late checkout
+              </span>
+              <Switch checked={!!room?.late_checkout} onCheckedChange={(v) => setRoomLateCheckout(n, v)} />
             </div>
             <div className="flex items-center justify-between gap-2 rounded-xl border bg-background p-3">
               <span className="flex items-center gap-2 text-sm font-medium">
@@ -3747,6 +3797,7 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
     setMessagesInitial={setMessagesInitial}
     setMessagesSheetOpen={setMessagesSheetOpen}
     setRoomEarlyCheckIn={setRoomEarlyCheckIn}
+    setRoomLateCheckout={setRoomLateCheckout}
     setRoomGuestVacated={setRoomGuestVacated}
     setRoomStayoverOut={setRoomStayoverOut}
     confirmHousekeepingNote={confirmHousekeepingNote}
@@ -5003,6 +5054,7 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
       default_status: r.default_status,
       guest_vacated: r.guest_vacated,
       early_check_in: r.early_check_in,
+      late_checkout: r.late_checkout,
       stayover_out: r.stayover_out,
     }))}
     statuses={receptionStatuses
@@ -5015,6 +5067,7 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
     flagsOnly={isReception}
     onChangeVacant={(n, v) => void setRoomGuestVacated(n, v)}
     onChangeEarlyCheckIn={(n, v) => void setRoomEarlyCheckIn(n, v)}
+    onChangeLateCheckout={(n, v) => void setRoomLateCheckout(n, v)}
     onChangeStayoverOut={(n, v) => void setRoomStayoverOut(n, v)}
   />
  </main>

@@ -83,6 +83,9 @@
   --color-room-early: var(--room-early);
   --color-room-early-fg: var(--room-early-fg);
   --color-room-early-accent: var(--room-early-accent);
+  --color-room-late: var(--room-late);
+  --color-room-late-fg: var(--room-late-fg);
+  --color-room-late-accent: var(--room-late-accent);
   --color-room-cleandone: var(--room-cleandone);
   --color-room-cleandone-fg: var(--room-cleandone-fg);
   --color-room-cleandone-accent: var(--room-cleandone-accent);
@@ -150,6 +153,9 @@
   --room-early: oklch(0.9 0.14 90);
   --room-early-fg: oklch(0.38 0.12 70);
   --room-early-accent: oklch(0.72 0.17 80);
+  --room-late: oklch(0.47 0.17 25);
+  --room-late-fg: oklch(0.97 0.03 25);
+  --room-late-accent: oklch(0.37 0.15 25);
   --room-cleandone: oklch(0.93 0.08 300);
   --room-cleandone-fg: oklch(0.4 0.18 300);
   --room-cleandone-accent: oklch(0.6 0.22 300);
@@ -216,6 +222,9 @@
   --room-early: oklch(0.4 0.14 85);
   --room-early-fg: oklch(0.92 0.16 90);
   --room-early-accent: oklch(0.75 0.18 85);
+  --room-late: oklch(0.36 0.15 25);
+  --room-late-fg: oklch(0.95 0.05 25);
+  --room-late-accent: oklch(0.6 0.2 25);
   --room-cleandone: oklch(0.32 0.1 300);
   --room-cleandone-fg: oklch(0.88 0.14 300);
   --room-cleandone-accent: oklch(0.65 0.22 300);

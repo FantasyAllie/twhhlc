@@ -76,9 +76,12 @@ export type Room = {
   stayover_out?: boolean;
   stayover_out_at?: string | null;
   early_check_in?: boolean;
+  // Reception flag: guest is staying past normal checkout time.
+  late_checkout?: boolean;
   not_required?: boolean;
   guest_vacated_at?: string | null;
   early_check_in_at?: string | null;
+  late_checkout_at?: string | null;
   needs_maintenance_at?: string | null;
   not_required_at?: string | null;
 };
