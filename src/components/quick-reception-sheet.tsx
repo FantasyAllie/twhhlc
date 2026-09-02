@@ -14,6 +14,9 @@ export type QuickReceptionRoom = {
   reception_status_id: string | null;
   reception_bed_id: string | null;
   default_status: string | null;
+  guest_vacated?: boolean;
+  early_check_in?: boolean;
+  stayover_out?: boolean;
 };
 
 export type QuickReceptionItem = { id: string; label: string };
