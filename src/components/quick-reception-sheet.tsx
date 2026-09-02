@@ -264,7 +264,7 @@ export function QuickReceptionSheet({
                         />
                       )}
                     </div>
-                  </div>
+
                 )}
               </div>
             );
