@@ -417,7 +417,6 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
   const [editingItemId, setEditingItemId] = useState<string | null>(null);
   const [editingItemName, setEditingItemName] = useState("");
   const [endShiftPrintOpen, setEndShiftPrintOpen] = useState(false);
-  const [recordPromptOpen, setRecordPromptOpen] = useState(false);
   const [rolePickerSheetOpen, setRolePickerSheetOpen] = useState(false);
   const [editItemSheetId, setEditItemSheetId] = useState<string | null>(null);
   const [filtersSheetOpen, setFiltersSheetOpen] = useState(false);
@@ -3241,20 +3240,23 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
         key: "end-of-shift",
         icon: ClipboardList,
         label: "Reports",
-        onClick: () => openReports(),
+        onClick: () => void openReports(),
       });
     } else if (isMaintenance) {
       actions.push({
         key: "end-of-shift",
         icon: ClipboardList,
         label: "Reports",
-        onClick: () => openReports(),
+        onClick: () => void openReports(),
       });
     }
     if (isReception) {
       actions.push({
         key: "print", icon: Printer, label: "Print",
-        onClick: () => printRoomStatus(computeRoomStatus().rows, new Date()),
+        onClick: async () => {
+          await ensureTodaysBackup();
+          printRoomStatus(computeRoomStatus().rows, new Date());
+        },
       });
       actions.push({ key: "help", icon: HelpCircle, label: "Help", onClick: () => setReceptionHelpOpen(true) });
     }
@@ -3425,7 +3427,7 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
       <Button
         variant="outline"
         size="sm"
-        onClick={openReports}
+        onClick={() => void openReports()}
         title="Back up today's data and print reports"
       >
         <ClipboardList className="h-4 w-4 mr-2" />
@@ -3447,7 +3449,10 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
       <Button
         variant="outline"
         size="sm"
-        onClick={() => printRoomStatus(computeRoomStatus().rows, new Date())}
+        onClick={async () => {
+          await ensureTodaysBackup();
+          printRoomStatus(computeRoomStatus().rows, new Date());
+        }}
       >
         <Printer className="h-4 w-4 mr-2" />
         Print
@@ -3551,39 +3556,6 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
    </Sheet>
  )}
  {/* Mobile export sheet (triggered from the burger menu). */}
-  {/* End-of-shift: after backup, offer to print the room status sheet. */}
-  <Dialog open={recordPromptOpen} onOpenChange={setRecordPromptOpen}>
-    <DialogContent className="max-w-sm">
-      <DialogHeader>
-        <DialogTitle>Would you like to record today's data?</DialogTitle>
-        <DialogDescription>
-          Recording saves a backup of today's counts and room statuses before you open the reports.
-        </DialogDescription>
-      </DialogHeader>
-      <div className="mt-2 grid grid-cols-2 gap-2">
-        <Button
-          variant="outline"
-          className="h-12"
-          onClick={() => {
-            setRecordPromptOpen(false);
-            setEndShiftPrintOpen(true);
-          }}
-        >
-          No
-        </Button>
-        <Button
-          className="h-12"
-          onClick={async () => {
-            setRecordPromptOpen(false);
-            await runEndOfShiftBackup();
-            setEndShiftPrintOpen(true);
-          }}
-        >
-          Yes
-        </Button>
-      </div>
-    </DialogContent>
-  </Dialog>
   <Dialog open={endShiftPrintOpen} onOpenChange={setEndShiftPrintOpen}>
     <DialogContent className="max-w-sm">
       <DialogHeader>
