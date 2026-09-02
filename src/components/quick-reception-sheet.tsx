@@ -211,6 +211,56 @@ export function QuickReceptionSheet({
                     </div>
                   </div>
                 )}
+
+                {(onChangeVacant || onChangeEarlyCheckIn || onChangeStayoverOut) && (
+                  <div className="flex items-start gap-2">
+                    <div className="w-14 shrink-0 text-[10px] font-semibold uppercase tracking-wide text-muted-foreground pt-1.5">
+                      Flags
+                    </div>
+                    <div className="grid grid-cols-3 gap-1.5 flex-1 min-w-0">
+                      {onChangeVacant && (
+                        <Chip
+                          label={
+                            <span className="inline-flex items-center gap-1">
+                              <LogOut className="h-3.5 w-3.5" />
+                              Vacant
+                            </span>
+                          }
+                          selected={!!room.guest_vacated}
+                          onClick={() => onChangeVacant(n, !room.guest_vacated)}
+                        />
+                      )}
+                      {onChangeEarlyCheckIn && (
+                        <Chip
+                          label={
+                            <span className="inline-flex items-center gap-1">
+                              <DoorOpen className="h-3.5 w-3.5" />
+                              Early
+                            </span>
+                          }
+                          selected={!!room.early_check_in}
+                          onClick={() =>
+                            onChangeEarlyCheckIn(n, !room.early_check_in)
+                          }
+                        />
+                      )}
+                      {onChangeStayoverOut && (
+                        <Chip
+                          label={
+                            <span className="inline-flex items-center gap-1">
+                              <Footprints className="h-3.5 w-3.5" />
+                              Out
+                            </span>
+                          }
+                          selected={!!room.stayover_out}
+                          onClick={() =>
+                            onChangeStayoverOut(n, !room.stayover_out)
+                          }
+                        />
+                      )}
+                    </div>
+                  </div>
+                )}
               </div>
             );
           })}
