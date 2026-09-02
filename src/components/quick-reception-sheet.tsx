@@ -218,11 +218,8 @@ export function QuickReceptionSheet({
                 )}
 
                 {(onChangeVacant || onChangeEarlyCheckIn || onChangeStayoverOut) && (
-                  <div className="flex items-start gap-2">
-                    <div className="w-14 shrink-0 text-[10px] font-semibold uppercase tracking-wide text-muted-foreground pt-1.5">
-                      Flags
-                    </div>
-                    <div className="grid grid-cols-1 gap-1.5 flex-1 min-w-0">
+                  <div className="grid grid-cols-1 gap-1.5">
+
                       {onChangeVacant && (
                         <Chip
                           label={
