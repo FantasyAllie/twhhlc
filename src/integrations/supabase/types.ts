@@ -805,6 +805,8 @@ export type Database = {
           hotel_id: string
           housekeeping_note: string | null
           id: string
+          late_checkout: boolean
+          late_checkout_at: string | null
           needs_maintenance: boolean
           needs_maintenance_at: string | null
           not_required: boolean
@@ -831,6 +833,8 @@ export type Database = {
           hotel_id?: string
           housekeeping_note?: string | null
           id?: string
+          late_checkout?: boolean
+          late_checkout_at?: string | null
           needs_maintenance?: boolean
           needs_maintenance_at?: string | null
           not_required?: boolean
@@ -857,6 +861,8 @@ export type Database = {
           hotel_id?: string
           housekeeping_note?: string | null
           id?: string
+          late_checkout?: boolean
+          late_checkout_at?: string | null
           needs_maintenance?: boolean
           needs_maintenance_at?: string | null
           not_required?: boolean
