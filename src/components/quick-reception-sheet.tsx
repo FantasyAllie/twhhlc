@@ -1,4 +1,4 @@
-import { ConciergeBell, Check, RotateCcw } from "lucide-react";
+import { ConciergeBell, Check, RotateCcw, LogOut, DoorOpen, Footprints } from "lucide-react";
 import { cn } from "@/lib/utils";
 import {
   Sheet,
@@ -14,6 +14,9 @@ export type QuickReceptionRoom = {
   reception_status_id: string | null;
   reception_bed_id: string | null;
   default_status: string | null;
+  guest_vacated?: boolean;
+  early_check_in?: boolean;
+  stayover_out?: boolean;
 };
 
 export type QuickReceptionItem = { id: string; label: string };
@@ -77,6 +80,9 @@ export function QuickReceptionSheet({
   onChangeStatus,
   onChangeBed,
   onResetAll,
+  onChangeVacant,
+  onChangeEarlyCheckIn,
+  onChangeStayoverOut,
 }: {
   open: boolean;
   onOpenChange: (o: boolean) => void;
@@ -86,6 +92,9 @@ export function QuickReceptionSheet({
   onChangeStatus: (roomNumber: number, statusId: string | null) => void;
   onChangeBed: (roomNumber: number, bedId: string | null) => void;
   onResetAll?: () => void | Promise<void>;
+  onChangeVacant?: (roomNumber: number, value: boolean) => void;
+  onChangeEarlyCheckIn?: (roomNumber: number, value: boolean) => void;
+  onChangeStayoverOut?: (roomNumber: number, value: boolean) => void;
 }) {
   const sorted = [...rooms].sort((a, b) => a.room_number - b.room_number);
 
@@ -98,11 +107,12 @@ export function QuickReceptionSheet({
         <SheetHeader className="text-left">
           <SheetTitle className="flex items-center gap-2">
             <ConciergeBell className="h-4 w-4" />
-            Bulk Room Status Setup
+            Quick Room Setup
           </SheetTitle>
           <SheetDescription>
-            Tap a chip to set the status or bed for any room. Tap the selected
-            chip to clear it. Changes save instantly.
+            Set the status, bed and flags (Vacant, Early check-in, Stayover out)
+            for every room in one place. Tap the selected chip to clear it.
+            Changes save instantly.
           </SheetDescription>
         </SheetHeader>
 
@@ -198,6 +208,56 @@ export function QuickReceptionSheet({
                           />
                         );
                       })}
+                    </div>
+                  </div>
+                )}
+
+                {(onChangeVacant || onChangeEarlyCheckIn || onChangeStayoverOut) && (
+                  <div className="flex items-start gap-2">
+                    <div className="w-14 shrink-0 text-[10px] font-semibold uppercase tracking-wide text-muted-foreground pt-1.5">
+                      Flags
+                    </div>
+                    <div className="grid grid-cols-3 gap-1.5 flex-1 min-w-0">
+                      {onChangeVacant && (
+                        <Chip
+                          label={
+                            <span className="inline-flex items-center gap-1">
+                              <LogOut className="h-3.5 w-3.5" />
+                              Vacant
+                            </span>
+                          }
+                          selected={!!room.guest_vacated}
+                          onClick={() => onChangeVacant(n, !room.guest_vacated)}
+                        />
+                      )}
+                      {onChangeEarlyCheckIn && (
+                        <Chip
+                          label={
+                            <span className="inline-flex items-center gap-1">
+                              <DoorOpen className="h-3.5 w-3.5" />
+                              Early
+                            </span>
+                          }
+                          selected={!!room.early_check_in}
+                          onClick={() =>
+                            onChangeEarlyCheckIn(n, !room.early_check_in)
+                          }
+                        />
+                      )}
+                      {onChangeStayoverOut && (
+                        <Chip
+                          label={
+                            <span className="inline-flex items-center gap-1">
+                              <Footprints className="h-3.5 w-3.5" />
+                              Out
+                            </span>
+                          }
+                          selected={!!room.stayover_out}
+                          onClick={() =>
+                            onChangeStayoverOut(n, !room.stayover_out)
+                          }
+                        />
+                      )}
                     </div>
                   </div>
                 )}

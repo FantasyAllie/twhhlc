@@ -3253,7 +3253,7 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
       if (!isReception) {
         manage.push({ key: "history", icon: History, label: "History", onClick: () => setHistorySheetOpen(true) });
       }
-      manage.push({ key: "bulk", icon: ConciergeBell, label: "Bulk Room Status Setup", onClick: () => setQuickReceptionOpen(true) });
+      manage.push({ key: "bulk", icon: ConciergeBell, label: "Quick Room Setup", onClick: () => setQuickReceptionOpen(true) });
     }
     if ((realIsAdmin || (realIsManager && hasHousekeeperRole)) && !isMaintenance) {
       manage.push({ key: "linen-days", icon: List, label: "Linen delivery days", onClick: () => setLinenDeliveryOpen(true) });
@@ -3370,6 +3370,17 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
       >
         <ClipboardList className="h-4 w-4 mr-2" />
         Reports
+      </Button>
+    )}
+    {isReception && (
+      <Button
+        variant="outline"
+        size="sm"
+        onClick={() => setQuickReceptionOpen(true)}
+        title="Set status, bed and flags for every room in one place"
+      >
+        <ConciergeBell className="h-4 w-4 sm:mr-2" />
+        <span className="hidden sm:inline">Quick Setup</span>
       </Button>
     )}
     {!isMobile && isReception && (
@@ -4990,6 +5001,9 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
       reception_status_id: r.reception_status_id,
       reception_bed_id: r.reception_bed_id,
       default_status: r.default_status,
+      guest_vacated: r.guest_vacated,
+      early_check_in: r.early_check_in,
+      stayover_out: r.stayover_out,
     }))}
     statuses={receptionStatuses
       .filter((s) => s.label !== "Staff" && s.label !== "DND")
@@ -4998,6 +5012,9 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
     onChangeStatus={setRoomReceptionStatus}
     onChangeBed={setRoomReceptionBed}
     onResetAll={resetReceptionAll}
+    onChangeVacant={(n, v) => void setRoomGuestVacated(n, v)}
+    onChangeEarlyCheckIn={(n, v) => void setRoomEarlyCheckIn(n, v)}
+    onChangeStayoverOut={(n, v) => void setRoomStayoverOut(n, v)}
   />
  </main>
  );
