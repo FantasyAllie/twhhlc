@@ -3372,6 +3372,17 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
         Reports
       </Button>
     )}
+    {isReception && (
+      <Button
+        variant="outline"
+        size="sm"
+        onClick={() => setQuickReceptionOpen(true)}
+        title="Set status, bed and flags for every room in one place"
+      >
+        <ConciergeBell className="h-4 w-4 sm:mr-2" />
+        <span className="hidden sm:inline">Quick Setup</span>
+      </Button>
+    )}
     {!isMobile && isReception && (
       <Button
         variant="outline"
