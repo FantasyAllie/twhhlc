@@ -27,7 +27,7 @@ import {
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Minus, Plus, X, Menu, ArrowUp, ArrowDown, Pencil, Check, Trash2, Sun, Moon, List, Bed, House, Ban, History, Users, User, LogOut, Hash, ConciergeBell, ClipboardList, Printer, Filter, Wrench, DoorOpen, Footprints, Bell, Eye, EyeOff, HelpCircle, AlertCircle, MessageSquare, PackageSearch, RotateCcw, ChevronDown, Camera, LayoutGrid, Truck } from "lucide-react";
+import { Minus, Plus, X, Menu, ArrowUp, ArrowDown, Pencil, Check, Trash2, Sun, Moon, List, Bed, House, Ban, History, Users, User, LogOut, Hash, ConciergeBell, ClipboardList, Printer, Filter, Wrench, DoorOpen, Footprints, Bell, Eye, EyeOff, HelpCircle, AlertCircle, MessageSquare, PackageSearch, RotateCcw, ChevronDown, Camera, LayoutGrid, Truck, Clock } from "lucide-react";
 import {
   AccountDialog,
   AddConfigDialogs,
@@ -2699,7 +2699,7 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
             })()}
             <div className="flex items-center justify-between gap-2 rounded-xl border bg-background p-3">
               <span className="flex items-center gap-2 text-sm font-medium">
-                <DoorOpen className={cn("h-4 w-4", room?.early_check_in ? "text-amber-600 dark:text-amber-400" : "text-muted-foreground")} />
+                <Clock className={cn("h-4 w-4", room?.early_check_in ? "text-amber-600 dark:text-amber-400" : "text-muted-foreground")} />
                 Early check-in
               </span>
               <Switch checked={!!room?.early_check_in} onCheckedChange={(v) => setRoomEarlyCheckIn(n, v)} />
