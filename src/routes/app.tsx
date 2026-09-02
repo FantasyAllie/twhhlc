@@ -5001,6 +5001,9 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
     onChangeStatus={setRoomReceptionStatus}
     onChangeBed={setRoomReceptionBed}
     onResetAll={resetReceptionAll}
+    onChangeVacant={(n, v) => void setRoomGuestVacated(n, v)}
+    onChangeEarlyCheckIn={(n, v) => void setRoomEarlyCheckIn(n, v)}
+    onChangeStayoverOut={(n, v) => void setRoomStayoverOut(n, v)}
   />
  </main>
  );
