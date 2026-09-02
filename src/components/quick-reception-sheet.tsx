@@ -49,11 +49,13 @@ function Chip({
   selected,
   disabled,
   onClick,
+  truncate = true,
 }: {
   label: React.ReactNode;
   selected: boolean;
   disabled?: boolean;
   onClick: () => void;
+  truncate?: boolean;
 }) {
   return (
     <button
@@ -65,8 +67,8 @@ function Chip({
         selected && "border-primary bg-primary/10 text-primary",
       )}
     >
-      {selected && <Check className="h-3.5 w-3.5" />}
-      <span className="truncate">{label}</span>
+      {selected && <Check className="h-3.5 w-3.5 shrink-0" />}
+      <span className={cn(truncate ? "truncate" : "whitespace-normal leading-tight")}>{label}</span>
     </button>
   );
 }
@@ -114,7 +116,7 @@ export function QuickReceptionSheet({
           </SheetTitle>
           <SheetDescription>
             {flagsOnly
-              ? "Set Vacant, Early check-in and Stayover out for every room in one place. Tap a chip to toggle it. Changes save instantly."
+              ? "Set Guest has checked out, Early check-in and Stayover — guest out for the day for every room in one place. Tap a chip to toggle it. Changes save instantly."
               : "Set the status, bed and flags for every room in one place. Tap the selected chip to clear it. Changes save instantly."}
           </SheetDescription>
         </SheetHeader>
@@ -220,45 +222,48 @@ export function QuickReceptionSheet({
                     <div className="w-14 shrink-0 text-[10px] font-semibold uppercase tracking-wide text-muted-foreground pt-1.5">
                       Flags
                     </div>
-                    <div className="grid grid-cols-3 gap-1.5 flex-1 min-w-0">
+                    <div className="grid grid-cols-1 gap-1.5 flex-1 min-w-0">
                       {onChangeVacant && (
                         <Chip
                           label={
-                            <span className="inline-flex items-center gap-1">
-                              <DoorOpen className="h-3.5 w-3.5" />
-                              Vacant
+                            <span className="inline-flex items-center gap-1.5">
+                              <DoorOpen className="h-3.5 w-3.5 shrink-0" />
+                              Guest has checked out
                             </span>
                           }
                           selected={!!room.guest_vacated}
                           onClick={() => onChangeVacant(n, !room.guest_vacated)}
+                          truncate={false}
                         />
                       )}
                       {onChangeEarlyCheckIn && (
                         <Chip
                           label={
-                            <span className="inline-flex items-center gap-1">
-                              <Clock className="h-3.5 w-3.5" />
-                              Early
+                            <span className="inline-flex items-center gap-1.5">
+                              <Clock className="h-3.5 w-3.5 shrink-0" />
+                              Early check-in
                             </span>
                           }
                           selected={!!room.early_check_in}
                           onClick={() =>
                             onChangeEarlyCheckIn(n, !room.early_check_in)
                           }
+                          truncate={false}
                         />
                       )}
                       {onChangeStayoverOut && (
                         <Chip
                           label={
-                            <span className="inline-flex items-center gap-1">
-                              <Footprints className="h-3.5 w-3.5" />
-                              Out
+                            <span className="inline-flex items-center gap-1.5">
+                              <Footprints className="h-3.5 w-3.5 shrink-0" />
+                              Stayover — guest out for the day
                             </span>
                           }
                           selected={!!room.stayover_out}
                           onClick={() =>
                             onChangeStayoverOut(n, !room.stayover_out)
                           }
+                          truncate={false}
                         />
                       )}
                     </div>
