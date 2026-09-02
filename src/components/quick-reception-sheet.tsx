@@ -116,7 +116,7 @@ export function QuickReceptionSheet({
           </SheetTitle>
           <SheetDescription>
             {flagsOnly
-              ? "Set Vacant, Early check-in and Stayover out for every room in one place. Tap a chip to toggle it. Changes save instantly."
+              ? "Set Guest has checked out, Early check-in and Stayover — guest out for the day for every room in one place. Tap a chip to toggle it. Changes save instantly."
               : "Set the status, bed and flags for every room in one place. Tap the selected chip to clear it. Changes save instantly."}
           </SheetDescription>
         </SheetHeader>
