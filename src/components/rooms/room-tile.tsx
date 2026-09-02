@@ -63,6 +63,7 @@ function ReceptionRoomTileBase({
   isOpen,
   hasMessage,
   onClick,
+  bedLabel,
 }: BaseProps) {
   const flags = resolveRoomStatusFlags(room, statusIds);
   const isStaffRoom = flags.isStaff;
