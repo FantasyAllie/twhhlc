@@ -3253,7 +3253,7 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
       if (!isReception) {
         manage.push({ key: "history", icon: History, label: "History", onClick: () => setHistorySheetOpen(true) });
       }
-      manage.push({ key: "bulk", icon: ConciergeBell, label: "Bulk Room Status Setup", onClick: () => setQuickReceptionOpen(true) });
+      manage.push({ key: "bulk", icon: ConciergeBell, label: "Quick Room Setup", onClick: () => setQuickReceptionOpen(true) });
     }
     if ((realIsAdmin || (realIsManager && hasHousekeeperRole)) && !isMaintenance) {
       manage.push({ key: "linen-days", icon: List, label: "Linen delivery days", onClick: () => setLinenDeliveryOpen(true) });
