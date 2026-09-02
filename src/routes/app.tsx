@@ -4827,6 +4827,7 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
          hasLinenCount={hasLinenCount}
          isOpen={isOpen}
          hasMessage={hasActiveMessage(n)}
+         bedLabel={room?.reception_bed_id ? bedLabelById.get(room.reception_bed_id) ?? null : null}
          onClick={() => openOrToggle(n)}
        />,
      );
