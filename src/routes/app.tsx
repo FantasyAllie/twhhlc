@@ -4990,6 +4990,9 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
       reception_status_id: r.reception_status_id,
       reception_bed_id: r.reception_bed_id,
       default_status: r.default_status,
+      guest_vacated: r.guest_vacated,
+      early_check_in: r.early_check_in,
+      stayover_out: r.stayover_out,
     }))}
     statuses={receptionStatuses
       .filter((s) => s.label !== "Staff" && s.label !== "DND")
