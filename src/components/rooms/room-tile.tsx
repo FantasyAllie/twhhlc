@@ -21,6 +21,7 @@ type BaseProps = {
   isOpen: boolean;
   hasMessage: boolean;
   onClick: () => void;
+  bedLabel?: string | null;
 };
 
 // Material "Surface Variant" tile: tonal filled container, hairline border,
