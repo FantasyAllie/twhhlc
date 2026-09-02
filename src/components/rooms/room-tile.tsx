@@ -125,9 +125,6 @@ function ReceptionRoomTileBase({
               </>
             )}
           </span>
-          <span className="text-[9px] sm:text-[10px] md:text-xs font-bold uppercase tracking-tight leading-tight opacity-80 whitespace-pre-line pr-4">
-            {meta.label}
-          </span>
           {bedLabel && (
             <span
               className="text-[8px] sm:text-[9px] md:text-[10px] font-bold uppercase tracking-tight leading-tight pr-4"
@@ -136,6 +133,9 @@ function ReceptionRoomTileBase({
               {bedLabel}
             </span>
           )}
+          <span className="text-[9px] sm:text-[10px] md:text-xs font-bold uppercase tracking-tight leading-tight opacity-80 whitespace-pre-line pr-4">
+            {meta.label}
+          </span>
         </>
       )}
       {isStaffRoom && (
