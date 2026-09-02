@@ -417,7 +417,6 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
   const [editingItemId, setEditingItemId] = useState<string | null>(null);
   const [editingItemName, setEditingItemName] = useState("");
   const [endShiftPrintOpen, setEndShiftPrintOpen] = useState(false);
-  const [recordPromptOpen, setRecordPromptOpen] = useState(false);
   const [rolePickerSheetOpen, setRolePickerSheetOpen] = useState(false);
   const [editItemSheetId, setEditItemSheetId] = useState<string | null>(null);
   const [filtersSheetOpen, setFiltersSheetOpen] = useState(false);
@@ -1951,7 +1950,8 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
   // any same-day snapshot of that kind), then offer to print the room status
   // sheet. Replaces the multi-item Export dropdown on the home screen; the
   // per-kind manual exports remain available in Settings → Actions → Export.
-  const runEndOfShiftBackup = async () => {
+  const runEndOfShiftBackup = async (opts?: { silent?: boolean }) => {
+    const silent = opts?.silent === true;
     type Kind = "totals" | "fnb_totals" | "room_status" | "maintenance" | "delivery";
     const jobs: Array<{ kind: Kind; rows: unknown[]; grand: number }> = [];
     const t = computeTotals();
@@ -1965,7 +1965,7 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
     const m = computeMaintenance();
     if (m.rows.length) jobs.push({ kind: "maintenance", rows: m.rows, grand: m.grand });
     if (jobs.length === 0) {
-      toast.error("Nothing to back up yet");
+      if (!silent) toast.error("Nothing to back up yet");
       return;
     }
     for (const job of jobs) {
@@ -1976,15 +1976,24 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
     toast.success(`Backup saved (${jobs.length} ${jobs.length === 1 ? "item" : "items"})`);
   };
 
-  // Reports entry point: ask whether to record today's data first. Maintenance
-  // accounts have no data to back up, so they go straight to the reports list.
-  const openReports = () => {
-    if (isMaintenance) {
-      setEndShiftPrintOpen(true);
-      return;
-    }
-    setRecordPromptOpen(true);
+  // Records today's data automatically the first time it's needed each day.
+  // If a snapshot already exists for today, this is a no-op.
+  const ensureTodaysBackup = async () => {
+    if (isMaintenance) return;
+    const today = new Date().toDateString();
+    const hasToday = snapshots.some(
+      (s) => new Date(s.created_at).toDateString() === today,
+    );
+    if (hasToday) return;
+    await runEndOfShiftBackup({ silent: true });
   };
+
+  // Reports entry point: record today's data automatically on first open.
+  const openReports = async () => {
+    await ensureTodaysBackup();
+    setEndShiftPrintOpen(true);
+  };
+
 
   const openMaintenanceExport = async () => {
     const { rows } = computeMaintenance();
@@ -3231,20 +3240,23 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
         key: "end-of-shift",
         icon: ClipboardList,
         label: "Reports",
-        onClick: () => openReports(),
+        onClick: () => void openReports(),
       });
     } else if (isMaintenance) {
       actions.push({
         key: "end-of-shift",
         icon: ClipboardList,
         label: "Reports",
-        onClick: () => openReports(),
+        onClick: () => void openReports(),
       });
     }
     if (isReception) {
       actions.push({
         key: "print", icon: Printer, label: "Print",
-        onClick: () => printRoomStatus(computeRoomStatus().rows, new Date()),
+        onClick: async () => {
+          await ensureTodaysBackup();
+          printRoomStatus(computeRoomStatus().rows, new Date());
+        },
       });
       actions.push({ key: "help", icon: HelpCircle, label: "Help", onClick: () => setReceptionHelpOpen(true) });
     }
@@ -3415,7 +3427,7 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
       <Button
         variant="outline"
         size="sm"
-        onClick={openReports}
+        onClick={() => void openReports()}
         title="Back up today's data and print reports"
       >
         <ClipboardList className="h-4 w-4 mr-2" />
@@ -3437,7 +3449,10 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
       <Button
         variant="outline"
         size="sm"
-        onClick={() => printRoomStatus(computeRoomStatus().rows, new Date())}
+        onClick={async () => {
+          await ensureTodaysBackup();
+          printRoomStatus(computeRoomStatus().rows, new Date());
+        }}
       >
         <Printer className="h-4 w-4 mr-2" />
         Print
@@ -3541,39 +3556,6 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
    </Sheet>
  )}
  {/* Mobile export sheet (triggered from the burger menu). */}
-  {/* End-of-shift: after backup, offer to print the room status sheet. */}
-  <Dialog open={recordPromptOpen} onOpenChange={setRecordPromptOpen}>
-    <DialogContent className="max-w-sm">
-      <DialogHeader>
-        <DialogTitle>Would you like to record today's data?</DialogTitle>
-        <DialogDescription>
-          Recording saves a backup of today's counts and room statuses before you open the reports.
-        </DialogDescription>
-      </DialogHeader>
-      <div className="mt-2 grid grid-cols-2 gap-2">
-        <Button
-          variant="outline"
-          className="h-12"
-          onClick={() => {
-            setRecordPromptOpen(false);
-            setEndShiftPrintOpen(true);
-          }}
-        >
-          No
-        </Button>
-        <Button
-          className="h-12"
-          onClick={async () => {
-            setRecordPromptOpen(false);
-            await runEndOfShiftBackup();
-            setEndShiftPrintOpen(true);
-          }}
-        >
-          Yes
-        </Button>
-      </div>
-    </DialogContent>
-  </Dialog>
   <Dialog open={endShiftPrintOpen} onOpenChange={setEndShiftPrintOpen}>
     <DialogContent className="max-w-sm">
       <DialogHeader>
