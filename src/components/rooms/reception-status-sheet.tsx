@@ -248,6 +248,11 @@ export function ReceptionStatusSheet({
                             dndFileInputRef.current?.click();
                           } else {
                             setRoomReceptionStatus(n, s.id);
+                            // Housekeeping marking a room as Stayover also marks
+                            // it as done — there's nothing further to service.
+                            if (!isReception && stayId && s.id === stayId && !housekeepingDoneSet.has(n)) {
+                              void toggleHousekeepingDone(n);
+                            }
                             if (occ === dndId) {
                               void deleteTodayStayoverPhotosForRoom(n).then(() => {
                                 qc.invalidateQueries({ queryKey: ["stayover_photos"] });
@@ -255,6 +260,7 @@ export function ReceptionStatusSheet({
                             }
                           }
                        }
+
                      };
                      const renderRow = (s: { id: string; label: string }) => {
                         const selected =
