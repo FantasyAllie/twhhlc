@@ -256,47 +256,44 @@ function HousekeepingRoomTileBase({
       <span className="text-[9px] sm:text-[10px] md:text-xs font-bold uppercase tracking-tight leading-tight opacity-80 whitespace-pre-line pr-4">
         {isStaff ? "Staff" : meta.label}
       </span>
-      {hasMessage && (
-        <span
-          aria-label="Message"
-          className={cn(
-            "absolute right-1 h-2 w-2 rounded-full bg-amber-500 ring-2 ring-background",
-            room?.guest_vacated ? "top-5" : "top-1",
-          )}
-        />
-      )}
-      {room?.dog_box && (
-        <span
-          aria-label="Dog box needed"
-          className="absolute bottom-0.5 left-0.5 inline-flex items-center gap-0.5 rounded-sm bg-violet-600 px-1 py-px text-[8px] font-bold leading-none tracking-wide text-white shadow-sm dark:bg-violet-500 dark:text-violet-950"
-        >
-          <Dog aria-hidden className="h-2.5 w-2.5" />
-          Dog
-        </span>
-      )}
+      <span className="absolute top-0.5 right-0.5 flex flex-col items-end gap-0.5">
+        {hasMessage && (
+          <span aria-label="Message" className="h-2 w-2 rounded-full bg-amber-500 ring-2 ring-background" />
+        )}
+        {room?.guest_vacated && (
+          <span
+            aria-label="Guest vacated"
+            className="rounded-sm bg-emerald-600 px-1 py-px text-[8px] font-bold leading-none tracking-wide text-white shadow-sm dark:bg-emerald-500 dark:text-emerald-950"
+          >
+            Vacant
+          </span>
+        )}
+        {room?.stayover_out && !room?.done && !isDone && (
+          <span
+            aria-label="Stayover guest out - room empty"
+            className="inline-flex items-center gap-0.5 rounded-sm bg-sky-500 px-1 py-px text-[8px] font-bold leading-none tracking-wide text-white shadow-sm dark:bg-sky-400 dark:text-sky-950"
+          >
+            <Footprints aria-hidden className="h-2 w-2" />
+            Out
+          </span>
+        )}
+        {room?.dog_box && (
+          <span
+            aria-label="Dog box needed"
+            className="inline-flex items-center gap-0.5 rounded-sm bg-violet-600 px-1 py-px text-[8px] font-bold leading-none tracking-wide text-white shadow-sm dark:bg-violet-500 dark:text-violet-950"
+          >
+            <Dog aria-hidden className="h-2.5 w-2.5" />
+            Dog
+          </span>
+        )}
+      </span>
       {room?.needs_maintenance && (
         <Wrench
           aria-label="Maintenance"
           className="absolute bottom-0.5 right-0.5 h-3 w-3 text-amber-600 dark:text-amber-400"
         />
       )}
-      {room?.guest_vacated && (
-        <span
-          aria-label="Guest vacated"
-          className="absolute top-0.5 right-0.5 rounded-sm bg-emerald-600 px-1 py-px text-[8px] font-bold leading-none tracking-wide text-white shadow-sm dark:bg-emerald-500 dark:text-emerald-950"
-        >
-          Vacant
-        </span>
-      )}
-      {room?.stayover_out && !room?.done && !isDone && (
-        <span
-          aria-label="Stayover guest out - room empty"
-          className="absolute top-0.5 right-0.5 inline-flex items-center gap-0.5 rounded-sm bg-sky-500 px-1 py-px text-[8px] font-bold leading-none tracking-wide text-white shadow-sm dark:bg-sky-400 dark:text-sky-950"
-        >
-          <Footprints aria-hidden className="h-2 w-2" />
-          Out
-        </span>
-      )}
+
 
     </button>
   );
