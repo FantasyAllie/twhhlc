@@ -19,6 +19,13 @@
  */
 
 @theme inline {
+  /* Ink & Brass typography: Space Grotesk display, DM Sans UI body. */
+  --font-sans: "DM Sans", ui-sans-serif, system-ui, sans-serif;
+  --font-display: "Space Grotesk", "DM Sans", ui-sans-serif, sans-serif;
+  --color-brass: var(--brass);
+  --color-brass-foreground: var(--brass-foreground);
+  --color-ink: var(--ink);
+  --color-ink-foreground: var(--ink-foreground);
   --radius-sm: calc(var(--radius) - 4px);
   --radius-md: calc(var(--radius) - 2px);
   --radius-lg: var(--radius);
