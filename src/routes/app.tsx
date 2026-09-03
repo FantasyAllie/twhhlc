@@ -3409,26 +3409,29 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
     paddingRight: "max(1rem, env(safe-area-inset-right))",
   }}
 >
- <header className="flex items-start sm:items-center justify-between gap-3 flex-wrap">
+ <header className="flex items-start sm:items-center justify-between gap-3 flex-wrap rounded-2xl border border-primary/20 bg-sidebar px-4 py-3 sm:px-5 sm:py-4 shadow-elevation-2">
           <div className="min-w-0 flex-1">
+            <p className="text-[10px] font-bold uppercase tracking-[0.22em] text-sidebar-primary">
+              The Hotel <span className="text-sidebar-foreground">Hub</span>
+            </p>
             {isReception ? (
               <>
-                <h1 className="text-xl sm:text-2xl font-semibold tracking-tight">{hotelName}</h1>
-                <p className="text-xs text-muted-foreground mt-1 whitespace-pre-line">
+                <h1 className="mt-1 text-xl sm:text-2xl font-semibold tracking-tight text-sidebar-foreground">{hotelName}</h1>
+                <p className="text-xs text-sidebar-foreground/60 mt-1 whitespace-pre-line">
                   An auto-updating room tracker for Housekeeping. Use the help button if you're stuck
                 </p>
               </>
             ) : isFnb ? (
               <>
-                <h1 className="text-xl sm:text-2xl font-semibold tracking-tight">{hotelName}</h1>
-                <p className="text-xs text-muted-foreground mt-1">
+                <h1 className="mt-1 text-xl sm:text-2xl font-semibold tracking-tight text-sidebar-foreground">{hotelName}</h1>
+                <p className="text-xs text-sidebar-foreground/60 mt-1">
                   Shared workspace for F&B staff
                 </p>
               </>
             ) : (
               <>
-                <h1 className="text-xl sm:text-2xl font-semibold tracking-tight">{hotelName}</h1>
-                <p className="text-xs text-muted-foreground mt-1">
+                <h1 className="mt-1 text-xl sm:text-2xl font-semibold tracking-tight text-sidebar-foreground">{hotelName}</h1>
+                <p className="text-xs text-sidebar-foreground/60 mt-1">
                   Shared workspace for Housekeeping staff
                 </p>
               </>
