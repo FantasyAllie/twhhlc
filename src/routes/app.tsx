@@ -4021,12 +4021,12 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
         <span className="flex-1">Settings</span>
         <button
           type="button"
-          onClick={() => toggleTheme()}
-          aria-label={theme === "dark" ? "Switch to light mode" : "Switch to dark mode"}
-          title={theme === "dark" ? "Light mode" : "Dark mode"}
-          className="relative -my-1 mr-6 grid h-8 w-8 place-items-center overflow-hidden rounded-full text-muted-foreground transition-colors hover:bg-accent hover:text-foreground"
+          onClick={() => cycleTheme()}
+          aria-label={`Theme: ${levelLabel}. Switch to next theme`}
+          title={`Theme: ${levelLabel}`}
+          className="relative -my-1 -mr-1 lg:mr-6 grid h-8 w-8 place-items-center overflow-hidden rounded-full text-muted-foreground transition-colors hover:bg-accent hover:text-foreground"
         >
-          {theme === "dark" ? <Sun className="h-4 w-4" /> : <Moon className="h-4 w-4" />}
+          <ThemeGlyph className="h-4 w-4" />
         </button>
       </SheetTitle>
       {authUser && (
