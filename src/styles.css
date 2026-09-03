@@ -264,7 +264,33 @@
   body {
     background-color: var(--color-background);
     color: var(--color-foreground);
+    font-family: var(--font-sans);
   }
+
+  /* Display face carries headings and numeric room plates. */
+  h1,
+  h2,
+  h3,
+  h4 {
+    font-family: var(--font-display);
+    letter-spacing: -0.015em;
+  }
+
+  /* Numbers stay column-aligned while they tick over. */
+  .tabular-nums,
+  [class*="tabular-nums"] {
+    font-variant-numeric: tabular-nums;
+  }
+}
+
+/* Brass-edged chrome surface used by the app bar and sticky footer. */
+@utility chrome-ink {
+  background-color: var(--ink);
+  color: var(--ink-foreground);
+  border-color: color-mix(in oklab, var(--brass) 22%, transparent);
+}
+
+@layer base {
 
   /*
    * Prevent iOS Safari from zooming the page when a form control is focused.
