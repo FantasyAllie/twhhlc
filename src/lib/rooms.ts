@@ -109,9 +109,10 @@ export const computeTileMeta = (args: {
   hasLinenCount: boolean;
   earlyCheckIn: boolean;
   lateCheckout?: boolean;
+  stayoverOut?: boolean;
   role: "reception" | "housekeeping";
 }): TileMeta => {
-  const { flags, state, isNR, hasLinenCount, earlyCheckIn, lateCheckout, role } = args;
+  const { flags, state, isNR, hasLinenCount, earlyCheckIn, lateCheckout, stayoverOut, role } = args;
   const isDone = state === "done" || state === "complete";
   if (flags.isStaff)
     return { bg: "var(--room-staff)", fg: "var(--room-staff-fg)", accent: "var(--room-staff-accent)", label: "Staff" };
@@ -119,6 +120,8 @@ export const computeTileMeta = (args: {
     return { bg: "var(--room-staff)", fg: "var(--room-staff-fg)", accent: "var(--room-staff-accent)", label: "ROS" };
   if (isNR)
     return { bg: "var(--room-stayover)", fg: "var(--room-stayover-fg)", accent: "var(--room-stayover-accent)", label: "STAYOVER" };
+  if (stayoverOut && !isDone)
+    return { bg: "var(--room-stayover-out)", fg: "var(--room-stayover-out-fg)", accent: "var(--room-stayover-out-accent)", label: "Not started" };
   if (flags.isStayover || flags.isDnd)
     return { bg: "var(--room-stayover)", fg: "var(--room-stayover-fg)", accent: "var(--room-stayover-accent)", label: "Stayover" };
   if (isDone)

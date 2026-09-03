@@ -80,6 +80,7 @@ function ReceptionRoomTileBase({
     hasLinenCount,
     earlyCheckIn: !!room?.early_check_in,
     lateCheckout: !!room?.late_checkout,
+    stayoverOut: !!room?.stayover_out,
     role: "reception",
   });
 
@@ -208,6 +209,7 @@ function HousekeepingRoomTileBase({
     hasLinenCount,
     earlyCheckIn: !!room?.early_check_in,
     lateCheckout: !!room?.late_checkout,
+    stayoverOut: !!room?.stayover_out,
     role: "housekeeping",
   });
   const isDone = state === "done" || state === "complete";
