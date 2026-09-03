@@ -796,6 +796,8 @@ export type Database = {
         Row: {
           category: string | null
           default_status: string | null
+          dog_box: boolean
+          dog_box_at: string | null
           done: boolean
           done_reception: boolean
           early_check_in: boolean
@@ -824,6 +826,8 @@ export type Database = {
         Insert: {
           category?: string | null
           default_status?: string | null
+          dog_box?: boolean
+          dog_box_at?: string | null
           done?: boolean
           done_reception?: boolean
           early_check_in?: boolean
@@ -852,6 +856,8 @@ export type Database = {
         Update: {
           category?: string | null
           default_status?: string | null
+          dog_box?: boolean
+          dog_box_at?: string | null
           done?: boolean
           done_reception?: boolean
           early_check_in?: boolean
