@@ -4426,7 +4426,8 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
   <section className="space-y-4">
 
  {/* Bento live cards: tap a card to open its panel. */}
- {(() => {
+ {!isReception && (() => {
+
    const activeMessageCount = roomMessages.filter(
      (m) => m.thread === "hk_reception" && !m.done_at && !m.deleted_at && !m.dismissed,
    ).length;
