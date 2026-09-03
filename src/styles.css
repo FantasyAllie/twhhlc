@@ -257,6 +257,54 @@
   --room-cleandone-accent: oklch(0.65 0.22 300);
 }
 
+/* Theme level 1 — crisp white: neutral canvas, ink text, brass accent kept. */
+.theme-white {
+  --background: oklch(1 0 0);
+  --foreground: oklch(0.19 0.03 264);
+  --card: oklch(1 0 0);
+  --card-foreground: oklch(0.19 0.03 264);
+  --popover: oklch(1 0 0);
+  --popover-foreground: oklch(0.19 0.03 264);
+  --secondary: oklch(0.968 0.002 264);
+  --muted: oklch(0.968 0.002 264);
+  --muted-foreground: oklch(0.5 0.015 264);
+  --accent: oklch(0.955 0.02 88);
+  --accent-foreground: oklch(0.28 0.05 80);
+  --border: oklch(0.912 0.003 264);
+  --input: oklch(0.912 0.003 264);
+  --sidebar: oklch(1 0 0);
+  --sidebar-foreground: oklch(0.19 0.03 264);
+  --sidebar-accent: oklch(0.962 0.002 264);
+  --sidebar-accent-foreground: oklch(0.19 0.03 264);
+  --sidebar-border: oklch(0.6 0.115 82 / 24%);
+}
+
+/* Theme level 4 — OLED black: true black surfaces, minimal ambient glow. */
+.theme-oled {
+  --background: oklch(0 0 0);
+  --foreground: oklch(0.95 0.004 85);
+  --card: oklch(0.16 0.008 264);
+  --card-foreground: oklch(0.95 0.004 85);
+  --popover: oklch(0.16 0.008 264);
+  --popover-foreground: oklch(0.95 0.004 85);
+  --secondary: oklch(0.18 0.008 264);
+  --muted: oklch(0.18 0.008 264);
+  --muted-foreground: oklch(0.7 0.012 262);
+  --accent: oklch(0.22 0.012 264);
+  --accent-foreground: oklch(0.88 0.09 88);
+  --border: oklch(0.762 0.135 88 / 16%);
+  --input: oklch(1 0 0 / 12%);
+  --sidebar: oklch(0.06 0.004 264);
+  --sidebar-foreground: oklch(0.95 0.004 85);
+  --sidebar-accent: oklch(0.2 0.01 264);
+  --sidebar-accent-foreground: oklch(0.95 0.004 85);
+  --sidebar-border: oklch(0.762 0.135 88 / 18%);
+  --shadow-1: 0 1px 2px 0 rgb(0 0 0 / 0.6), 0 1px 1px -1px rgb(0 0 0 / 0.5);
+  --shadow-2: 0 4px 6px -1px rgb(0 0 0 / 0.65), 0 2px 4px -2px rgb(0 0 0 / 0.5);
+  --shadow-3: 0 20px 25px -5px rgb(0 0 0 / 0.75), 0 8px 10px -6px rgb(0 0 0 / 0.6);
+}
+
+
 @layer base {
   * {
     border-color: var(--color-border);
