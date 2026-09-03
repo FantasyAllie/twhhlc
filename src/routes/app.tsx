@@ -70,6 +70,7 @@ import { DndDoorPhoto } from "@/components/dnd-door-photo";
 import { BroomBurst } from "@/components/broom-burst";
 import {
   deleteTodayStayoverPhotosForRoom,
+  listStayoverPhotos,
   purgeExpiredStayoverPhotos,
   uploadStayoverPhoto,
 } from "@/lib/stayover-photos";
