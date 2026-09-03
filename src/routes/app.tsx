@@ -4909,44 +4909,42 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
                 const pct = total > 0 ? Math.min(100, (progress / total) * 100) : 0;
                 const isComplete = total > 0 && progress >= total;
                  return (
-                      <div className="mt-3 space-y-2 max-lg:fixed max-lg:inset-x-0 max-lg:bottom-0 max-lg:z-40 max-lg:mt-0 max-lg:border-t max-lg:border-border max-lg:bg-background/95 max-lg:backdrop-blur max-lg:pl-[calc(env(safe-area-inset-left,0px)+1.5rem)] max-lg:pr-[calc(env(safe-area-inset-right,0px)+1.5rem)] max-lg:pt-3 max-lg:pb-[calc(env(safe-area-inset-bottom,0px)+1rem)]">
-                    <div className="flex items-center justify-between text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+                      <div className="mt-3 space-y-2 rounded-2xl border border-sidebar-border bg-sidebar px-4 py-3 shadow-elevation-2 lg:px-5 max-lg:fixed max-lg:inset-x-0 max-lg:bottom-0 max-lg:z-40 max-lg:mt-0 max-lg:rounded-none max-lg:border-x-0 max-lg:border-b-0 max-lg:border-t max-lg:pl-[calc(env(safe-area-inset-left,0px)+1.5rem)] max-lg:pr-[calc(env(safe-area-inset-right,0px)+1.5rem)] max-lg:pt-3 max-lg:pb-[calc(env(safe-area-inset-bottom,0px)+1rem)]">
+                    <div className="flex items-center justify-between text-[10px] font-bold uppercase tracking-[0.18em] text-sidebar-foreground/60">
                       <span className="flex items-center gap-1.5">
                         {isComplete ? (
                           <Check className="h-3.5 w-3.5 text-room-complete-accent" />
                         ) : (
-                          <House className="h-3.5 w-3.5" />
+                          <House className="h-3.5 w-3.5 text-sidebar-primary" />
                         )}
                         Rooms progress
                       </span>
-                      <span className="tabular-nums">{progress} of {total}</span>
+                      <span className="tabular-nums text-sidebar-primary">{progress} of {total}</span>
                     </div>
                     <div
                       role="button"
                       tabIndex={-1}
                       onClick={handleProgressTap}
-                      className="relative h-5 w-full overflow-hidden rounded-full bg-muted shadow-elevation-1 cursor-pointer select-none active:scale-[0.99] transition-transform"
+                      className="relative h-4 w-full overflow-hidden rounded-full bg-sidebar-accent shadow-elevation-1 cursor-pointer select-none active:scale-[0.99] transition-transform"
                     >
                       <div
                         className={cn(
-                          "h-full rounded-full transition-[width,background-color] duration-300 shadow-elevation-1",
-                          isComplete && "bg-room-complete",
+                          "h-full rounded-full transition-[width,background-color] duration-500 ease-out",
+                          isComplete && "bg-room-complete-accent",
                         )}
                         style={{
                           width: `${pct}%`,
                           backgroundColor: isComplete
                             ? undefined
                             : pct < 30
-                              ? "var(--color-room-todo)"
+                              ? "var(--color-room-todo-accent)"
                               : pct < 70
-                                ? "var(--color-room-progress)"
-                                : pct < 100
-                                  ? "var(--color-room-done)"
-                                  : "var(--color-room-complete)",
+                                ? "var(--color-room-progress-accent)"
+                                : "var(--brass)",
                         }}
                       />
                       {isComplete && (
-                        <div className="pointer-events-none absolute inset-0 flex items-center justify-center text-[10px] font-bold uppercase tracking-widest text-room-complete-fg">
+                        <div className="pointer-events-none absolute inset-0 flex items-center justify-center text-[10px] font-bold uppercase tracking-[0.25em] text-ink">
                           Complete
                         </div>
                       )}
