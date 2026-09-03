@@ -82,7 +82,7 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
       { name: "author", content: "Lovable" },
       { name: "apple-mobile-web-app-capable", content: "yes" },
       { name: "apple-mobile-web-app-title", content: "The Hotel Hub" },
-      { name: "theme-color", content: "#3b82f6" },
+      { name: "theme-color", content: "#101827" },
       { property: "og:title", content: "The Hotel Hub" },
       { property: "og:description", content: "Live room statuses, housekeeping linen counts, F&B tracking, and maintenance alerts in one easy app" },
       { property: "og:type", content: "website" },
