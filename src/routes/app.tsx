@@ -3859,7 +3859,6 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
     dndFileInputRef={dndFileInputRef}
     setRoomGuestVacated={setRoomGuestVacated}
     setRoomStayoverOut={setRoomStayoverOut}
-    setRoomDogBox={setRoomDogBox}
     setQuickReceptionOpen={setQuickReceptionOpen}
     setStayoverPhotosRoomFilter={setStayoverPhotosRoomFilter}
     setStayoverPhotosOpen={setStayoverPhotosOpen}
