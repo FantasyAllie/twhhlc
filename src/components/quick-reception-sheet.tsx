@@ -277,7 +277,7 @@ export function QuickReceptionSheet({
                           label={
                             <span className="inline-flex items-center gap-1.5">
                               <Footprints className="h-3.5 w-3.5 shrink-0" />
-                              Stayover — guest out for the day
+                              Stayover — guest out
                             </span>
                           }
                           selected={!!room.stayover_out}
