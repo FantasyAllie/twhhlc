@@ -100,6 +100,21 @@ export const resolveRoomStatusFlags = (
 
 export type TileMeta = { bg: string; fg: string; accent: string; label: string };
 
+// Bed short code used on room tiles (e.g. "ARRIVAL - D"), not the full label.
+export const bedCode = (label: string | null | undefined): string | null => {
+  if (!label) return null;
+  const normalized = label.trim();
+  const explicit: Record<string, string> = {
+    Double: "D",
+    King: "K",
+    Twin: "T",
+    Single: "S",
+    Sofa: "SF",
+    Cot: "C",
+  };
+  return explicit[normalized] ?? normalized[0]?.toUpperCase() ?? null;
+};
+
 // Verbatim tile colour/label rules from the route file, with the only
 // role difference (dirty label, progress condition) passed in.
 export const computeTileMeta = (args: {
