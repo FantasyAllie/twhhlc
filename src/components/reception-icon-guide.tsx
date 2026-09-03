@@ -165,7 +165,7 @@ const ENTRIES: Entry[] = [
   {
     key: "dog",
     label: "Dog badge",
-    description: "Reception has flagged that this room needs a dog box.",
+    description: "Indicates a dog will be staying in the room and a dog box is needed",
     render: () => (
       <span className="inline-flex items-center gap-0.5 rounded-full bg-violet-600 px-1.5 py-0.5 text-[8px] font-bold leading-none tracking-wide text-white dark:bg-violet-500 dark:text-violet-950">
         <Dog aria-hidden className="h-2.5 w-2.5" />
