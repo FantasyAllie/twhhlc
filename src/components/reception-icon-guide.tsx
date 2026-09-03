@@ -113,7 +113,7 @@ const ENTRIES: Entry[] = [
     key: "status-bed",
     label: "STATUS - LETTER",
     description:
-      "The caption on each tile shows the room status followed by the bed short code: D double, K king, T twin, S single, SF sofa, C cot.",
+      "The caption on each tile shows the room status followed by the bed short code: D double, K king, T twin.",
     render: () => (
       <span className="text-[10px] font-bold leading-none tracking-tight">A - K</span>
     ),
