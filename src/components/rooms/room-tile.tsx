@@ -128,7 +128,7 @@ function ReceptionRoomTileBase({
             )}
           </span>
           <span className="text-[9px] sm:text-[10px] md:text-xs font-bold uppercase tracking-tight leading-tight opacity-80 whitespace-pre-line pr-4">
-            {bedLabel ? `${meta.label} - ${bedLabel}` : meta.label}
+            {bedLabel ? `${meta.label} - ${bedCode(bedLabel)}` : meta.label}
           </span>
         </>
       )}
