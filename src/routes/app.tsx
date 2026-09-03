@@ -3447,7 +3447,7 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
               </>
             )}
             {canViewAs && !isMobile && (
-              <div className="mt-3 inline-flex flex-wrap rounded-xl border p-0.5 bg-background items-center">
+              <div className="mt-3 inline-flex flex-wrap rounded-full border p-1 bg-background items-center">
                 {availableViews.map((r) => {
                   const active = (safeViewAs ?? defaultView) === r;
                   const label =
@@ -3468,7 +3468,7 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
                       type="button"
                       onClick={() => setViewAsRole(active ? null : r)}
                       className={cn(
-                        "px-3 h-8 text-xs sm:text-sm rounded-[0.3rem] transition-colors whitespace-nowrap",
+                        "px-4 h-8 text-xs sm:text-sm rounded-full transition-colors whitespace-nowrap",
                         active
                           ? "bg-primary text-primary-foreground shadow-sm font-medium"
                           : "text-muted-foreground hover:text-foreground",
@@ -4017,20 +4017,21 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
 />
 <Sheet open={menuSheetOpen} onOpenChange={setMenuSheetOpen}>
   <SheetContent side="right" disableDragDismiss className="w-auto max-w-[90vw] min-w-[18rem] sm:max-w-md p-0 flex flex-col overflow-hidden [&_[data-sheet-close]]:max-lg:hidden">
-    <SheetHeader className="text-left shrink-0 px-4 sm:px-6 pt-4 sm:pt-6 pb-3 bg-background border-b">
-      <SheetTitle className="flex items-center gap-2">
+    <SheetHeader className="relative text-left shrink-0 px-4 sm:px-6 pt-4 sm:pt-6 pb-3 bg-background border-b">
+      <button
+        type="button"
+        onClick={() => cycleTheme()}
+        aria-label={`Theme: ${levelLabel}. Switch to next theme`}
+        title={`Theme: ${levelLabel}`}
+        className="absolute right-4 top-4 sm:right-6 sm:top-6 lg:right-14 z-10 grid h-12 w-12 place-items-center overflow-hidden rounded-full text-muted-foreground transition-colors hover:bg-accent hover:text-foreground"
+      >
+        <ThemeGlyph className="h-6 w-6" />
+      </button>
+      <SheetTitle className="flex items-center gap-2 pr-14">
         <Menu className="h-4 w-4" />
         <span className="flex-1">Settings</span>
-        <button
-          type="button"
-          onClick={() => cycleTheme()}
-          aria-label={`Theme: ${levelLabel}. Switch to next theme`}
-          title={`Theme: ${levelLabel}`}
-          className="relative -my-1 -mr-1 lg:mr-6 grid h-8 w-8 place-items-center overflow-hidden rounded-full text-muted-foreground transition-colors hover:bg-accent hover:text-foreground"
-        >
-          <ThemeGlyph className="h-4 w-4" />
-        </button>
       </SheetTitle>
+
       {authUser && (
         <SheetDescription>Signed in as {authUser.username}</SheetDescription>
       )}
@@ -4426,7 +4427,8 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
   <section className="space-y-4">
 
  {/* Bento live cards: tap a card to open its panel. */}
- {(() => {
+ {!isReception && (() => {
+
    const activeMessageCount = roomMessages.filter(
      (m) => m.thread === "hk_reception" && !m.done_at && !m.deleted_at && !m.dismissed,
    ).length;
