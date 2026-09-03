@@ -4010,7 +4010,16 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
     <SheetHeader className="text-left shrink-0 px-4 sm:px-6 pt-4 sm:pt-6 pb-3 bg-background border-b">
       <SheetTitle className="flex items-center gap-2">
         <Menu className="h-4 w-4" />
-        Settings
+        <span className="flex-1">Settings</span>
+        <button
+          type="button"
+          onClick={() => toggleTheme()}
+          aria-label={theme === "dark" ? "Switch to light mode" : "Switch to dark mode"}
+          title={theme === "dark" ? "Light mode" : "Dark mode"}
+          className="relative -my-1 mr-6 grid h-8 w-8 place-items-center overflow-hidden rounded-full text-muted-foreground transition-colors hover:bg-accent hover:text-foreground"
+        >
+          {theme === "dark" ? <Sun className="h-4 w-4" /> : <Moon className="h-4 w-4" />}
+        </button>
       </SheetTitle>
       {authUser && (
         <SheetDescription>Signed in as {authUser.username}</SheetDescription>
@@ -4063,7 +4072,7 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
       };
       return (
         <div className="space-y-4">
-          {menuGroups.map((group) => (
+          {menuGroups.filter((g) => g.id !== "appearance").map((group) => (
             <Section key={group.id} id={group.id} title={group.title}>
               {group.items.map((item) => (
                 <Row
