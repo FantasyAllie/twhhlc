@@ -162,7 +162,9 @@ export const Route = createFileRoute("/app")({
 function AppPage() {
  const qc = useQueryClient();
   const navigate = useNavigate();
-  const { theme, toggleTheme } = useTheme();
+  const { theme, level, levelLabel, cycleTheme } = useTheme();
+  const ThemeGlyph =
+    level === "white" ? Sun : level === "cream" ? SunDim : level === "navy" ? Moon : MoonStar;
   const isMobile = useIsMobile();
   const [authUser, setAuthUser] = useState(() => getStoredUser());
   const currentHotelQ = useCurrentHotel();
