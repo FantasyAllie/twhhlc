@@ -1249,10 +1249,20 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
   const toggleReceptionDone = async (roomNumber: number) => {
     const current = receptionDoneSet.has(roomNumber);
     const next = !current;
+    const clearedReceptionFlags = {
+      guest_vacated: false,
+      guest_vacated_at: null,
+      early_check_in: false,
+      early_check_in_at: null,
+      late_checkout: false,
+      late_checkout_at: null,
+      stayover_out: false,
+      stayover_out_at: null,
+    } as const;
     qc.setQueryData<Room[]>(["rooms"], (old) => {
       const list = old ? [...old] : [];
       const idx = list.findIndex((r) => r.room_number === roomNumber);
-      if (idx >= 0) list[idx] = { ...list[idx], done_reception: next, guest_vacated: next ? false : list[idx].guest_vacated, guest_vacated_at: next ? null : list[idx].guest_vacated_at };
+      if (idx >= 0) list[idx] = { ...list[idx], done_reception: next, ...(next ? clearedReceptionFlags : {}) };
       else
         list.push({
           id: `temp-${roomNumber}`,
@@ -1267,9 +1277,10 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
       return list;
     });
     const { error } = await supabase.from("rooms").upsert(
-      { room_number: roomNumber, done_reception: next, ...(next ? { guest_vacated: false, guest_vacated_at: null } : {}), updated_at: new Date().toISOString() },
+      { room_number: roomNumber, done_reception: next, ...(next ? clearedReceptionFlags : {}), updated_at: new Date().toISOString() },
       { onConflict: "user_id,hotel_id,room_number" },
     );
+
     if (error) toast.error(error.message);
     qc.invalidateQueries({ queryKey: ["rooms"] });
     if (next) fireRoomNotification("done", roomNumber);
@@ -1278,15 +1289,22 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
   const toggleHousekeepingDone = async (roomNumber: number) => {
     const room = rooms.find((r) => r.room_number === roomNumber);
     const next = !room?.done;
+    // Marking done clears reception's guest flags: the room is serviced, so
+    // early check-in / late checkout / vacated / stayover-out no longer apply.
+    const clearedFlags = {
+      guest_vacated: false,
+      guest_vacated_at: null,
+      early_check_in: false,
+      early_check_in_at: null,
+      late_checkout: false,
+      late_checkout_at: null,
+      stayover_out: false,
+      stayover_out_at: null,
+    } as const;
     qc.setQueryData<Room[]>(["rooms"], (old) =>
       (old ?? []).map((r) =>
         r.room_number === roomNumber
-          ? {
-              ...r,
-              done: next,
-              guest_vacated: next ? false : r.guest_vacated,
-              guest_vacated_at: next ? null : r.guest_vacated_at,
-            }
+          ? { ...r, done: next, ...(next ? clearedFlags : {}) }
           : r,
       ),
     );
@@ -1294,12 +1312,13 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
       {
         room_number: roomNumber,
         done: next,
-        ...(next ? { guest_vacated: false, guest_vacated_at: null } : {}),
+        ...(next ? clearedFlags : {}),
         updated_at: new Date().toISOString(),
       },
       { onConflict: "user_id,hotel_id,room_number" },
     );
     if (error) toast.error(error.message);
+
     qc.invalidateQueries({ queryKey: ["rooms"] });
     if (next) fireRoomNotification("done", roomNumber);
   };
