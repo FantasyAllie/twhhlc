@@ -27,7 +27,7 @@ import {
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Minus, Plus, X, Menu, ArrowUp, ArrowDown, Pencil, Check, Trash2, Sun, Moon, List, Bed, House, Ban, History, Users, User, LogOut, Hash, ConciergeBell, ClipboardList, Printer, Filter, Wrench, DoorOpen, Footprints, Bell, Eye, EyeOff, HelpCircle, AlertCircle, MessageSquare, PackageSearch, RotateCcw, ChevronDown, Camera, LayoutGrid, Truck, Clock, Dog } from "lucide-react";
+import { Minus, Plus, X, Menu, ArrowUp, ArrowDown, Pencil, Check, Trash2, Sun, SunDim, Moon, MoonStar, List, Bed, House, Ban, History, Users, User, LogOut, Hash, ConciergeBell, ClipboardList, Printer, Filter, Wrench, DoorOpen, Footprints, Bell, Eye, EyeOff, HelpCircle, AlertCircle, MessageSquare, PackageSearch, RotateCcw, ChevronDown, Camera, LayoutGrid, Truck, Clock, Dog } from "lucide-react";
 import {
   AccountDialog,
   AddConfigDialogs,
@@ -70,6 +70,7 @@ import { DndDoorPhoto } from "@/components/dnd-door-photo";
 import { BroomBurst } from "@/components/broom-burst";
 import {
   deleteTodayStayoverPhotosForRoom,
+  listStayoverPhotos,
   purgeExpiredStayoverPhotos,
   uploadStayoverPhoto,
 } from "@/lib/stayover-photos";
@@ -161,7 +162,9 @@ export const Route = createFileRoute("/app")({
 function AppPage() {
  const qc = useQueryClient();
   const navigate = useNavigate();
-  const { theme, toggleTheme } = useTheme();
+  const { theme, level, levelLabel, cycleTheme } = useTheme();
+  const ThemeGlyph =
+    level === "white" ? Sun : level === "cream" ? SunDim : level === "navy" ? Moon : MoonStar;
   const isMobile = useIsMobile();
   const [authUser, setAuthUser] = useState(() => getStoredUser());
   const currentHotelQ = useCurrentHotel();
@@ -485,6 +488,13 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
   const [stayoverPhotosRoomFilter, setStayoverPhotosRoomFilter] = useState<number | undefined>(undefined);
   const [pendingDndRoom, setPendingDndRoom] = useState<number | null>(null);
   const dndFileInputRef = useRef<HTMLInputElement | null>(null);
+  // Count for the stayover photos bento card.
+  const stayoverPhotoCountQ = useQuery({
+    queryKey: ["stayover_photos", "all"],
+    staleTime: 60_000,
+    queryFn: () => listStayoverPhotos(),
+  });
+  const stayoverPhotoCount = stayoverPhotoCountQ.data?.length ?? 0;
   // Menu section collapse state, synced to profiles.preferences.menu_collapsed
   const menuPrefsQ = useQuery({
     queryKey: ["profile_preferences", authUser?.id],
@@ -3384,9 +3394,9 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
     account.push({ key: "signout", icon: LogOut, label: "Sign out", destructive: true, onClick: () => void signOut() });
     const appearance: MenuAction[] = [{
       key: "theme",
-      icon: theme === "dark" ? Sun : Moon,
-      label: theme === "dark" ? "Light mode" : "Dark mode",
-      onClick: () => toggleTheme(),
+      icon: ThemeGlyph,
+      label: `Theme: ${levelLabel}`,
+      onClick: () => cycleTheme(),
     }];
     return [
       { id: "actions", title: "Actions", items: actions },
@@ -4013,12 +4023,12 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
         <span className="flex-1">Settings</span>
         <button
           type="button"
-          onClick={() => toggleTheme()}
-          aria-label={theme === "dark" ? "Switch to light mode" : "Switch to dark mode"}
-          title={theme === "dark" ? "Light mode" : "Dark mode"}
-          className="relative -my-1 mr-6 grid h-8 w-8 place-items-center overflow-hidden rounded-full text-muted-foreground transition-colors hover:bg-accent hover:text-foreground"
+          onClick={() => cycleTheme()}
+          aria-label={`Theme: ${levelLabel}. Switch to next theme`}
+          title={`Theme: ${levelLabel}`}
+          className="relative -my-1 -mr-1 lg:mr-6 grid h-8 w-8 place-items-center overflow-hidden rounded-full text-muted-foreground transition-colors hover:bg-accent hover:text-foreground"
         >
-          {theme === "dark" ? <Sun className="h-4 w-4" /> : <Moon className="h-4 w-4" />}
+          <ThemeGlyph className="h-4 w-4" />
         </button>
       </SheetTitle>
       {authUser && (
@@ -4413,7 +4423,91 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
      )}
    </section>
  ) : (
- <section className="space-y-4">
+  <section className="space-y-4">
+
+ {/* Bento live cards: tap a card to open its panel. */}
+ {(() => {
+   const activeMessageCount = roomMessages.filter(
+     (m) => m.thread === "hk_reception" && !m.done_at && !m.deleted_at && !m.dismissed,
+   ).length;
+   const cards = [
+     {
+       key: "stayover-photos",
+       icon: Camera,
+       label: "Stayover photos",
+       value: `${stayoverPhotoCount} saved`,
+       tone: stayoverPhotoCount > 0 ? ("brass" as const) : ("calm" as const),
+       onClick: () => {
+         setStayoverPhotosRoomFilter(undefined);
+         setStayoverPhotosOpen(true);
+       },
+     },
+     {
+       key: "maintenance",
+       icon: Wrench,
+       label: "Maintenance",
+       value: `${openMaintenanceCount} open`,
+       tone: openMaintenanceCount > 0 ? ("alert" as const) : ("calm" as const),
+       onClick: () => setMaintenanceLogOpen(true),
+     },
+     {
+       key: "messages",
+       icon: MessageSquare,
+       label: "Messages",
+       value: `${activeMessageCount} active`,
+       tone: activeMessageCount > 0 ? ("brass" as const) : ("calm" as const),
+       onClick: () => {
+         setMessagesInitial({});
+         setMessagesSheetOpen(true);
+       },
+     },
+     {
+       key: "lost",
+       icon: PackageSearch,
+       label: "Lost property",
+       value: `${lostPropertyOpenItems.length} open`,
+       tone: lostPropertyOpenItems.length > 0 ? ("brass" as const) : ("calm" as const),
+       onClick: () => setLostPropertyOpen(true),
+     },
+   ];
+   return (
+     <div className="grid grid-cols-2 lg:grid-cols-4 gap-2 md:gap-3">
+       {cards.map((c) => {
+         const Icon = c.icon;
+         return (
+           <button
+             key={c.key}
+             type="button"
+             onClick={c.onClick}
+             className="relative flex items-center gap-3 overflow-hidden rounded-2xl border border-sidebar-border bg-sidebar px-3 py-2.5 text-left shadow-elevation-1 transition-[transform,box-shadow,background-color] duration-150 hover:bg-sidebar-accent active:scale-[0.985] active:shadow-none"
+           >
+             <span
+               className={cn(
+                 "flex h-9 w-9 shrink-0 items-center justify-center rounded-xl",
+                 c.tone === "alert"
+                   ? "bg-amber-500/15 text-amber-400"
+                   : c.tone === "brass"
+                     ? "bg-sidebar-primary/15 text-sidebar-primary"
+                     : "bg-sidebar-accent text-sidebar-foreground/70",
+               )}
+             >
+               <Icon className="h-4 w-4" />
+             </span>
+             <div className="min-w-0">
+               <p className="text-[10px] font-bold uppercase tracking-[0.18em] text-sidebar-foreground/60">
+                 {c.label}
+               </p>
+               <p className="truncate text-sm font-semibold tabular-nums text-sidebar-foreground">
+                 {c.value}
+               </p>
+             </div>
+           </button>
+         );
+       })}
+     </div>
+   );
+ })()}
+
  <div className="relative flex items-center justify-between">
  <h2 className="text-sm font-medium text-muted-foreground uppercase tracking-wide">
  Rooms
@@ -4773,71 +4867,6 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
       );
     })()}
  </div>
-
- {/* Bento live cards: at-a-glance ops counts above the room grid. */}
- {(() => {
-   const activeMessageCount = roomMessages.filter(
-     (m) => m.thread === "hk_reception" && !m.done_at && !m.deleted_at && !m.dismissed,
-   ).length;
-   const cards = [
-     { key: "rooms", icon: House, label: "Rooms", value: `${rooms.length}`, tone: "brass" as const },
-     {
-       key: "maintenance",
-       icon: Wrench,
-       label: "Maintenance",
-       value: `${openMaintenanceCount} open`,
-       tone: openMaintenanceCount > 0 ? ("alert" as const) : ("calm" as const),
-     },
-     {
-       key: "messages",
-       icon: MessageSquare,
-       label: "Messages",
-       value: `${activeMessageCount} active`,
-       tone: activeMessageCount > 0 ? ("brass" as const) : ("calm" as const),
-     },
-     {
-       key: "lost",
-       icon: PackageSearch,
-       label: "Lost property",
-       value: `${lostPropertyOpenItems.length} open`,
-       tone: "calm" as const,
-     },
-   ];
-   return (
-     <div className="grid grid-cols-2 lg:grid-cols-4 gap-2 md:gap-3">
-       {cards.map((c) => {
-         const Icon = c.icon;
-         return (
-           <div
-             key={c.key}
-             className="flex items-center gap-3 rounded-2xl border border-sidebar-border bg-sidebar px-3 py-2.5 shadow-elevation-1"
-           >
-             <span
-               className={cn(
-                 "flex h-9 w-9 shrink-0 items-center justify-center rounded-xl",
-                 c.tone === "alert"
-                   ? "bg-amber-500/15 text-amber-400"
-                   : c.tone === "brass"
-                     ? "bg-sidebar-primary/15 text-sidebar-primary"
-                     : "bg-sidebar-accent text-sidebar-foreground/70",
-               )}
-             >
-               <Icon className="h-4 w-4" />
-             </span>
-             <div className="min-w-0">
-               <p className="text-[10px] font-bold uppercase tracking-[0.18em] text-sidebar-foreground/60">
-                 {c.label}
-               </p>
-               <p className="truncate text-sm font-semibold tabular-nums text-sidebar-foreground">
-                 {c.value}
-               </p>
-             </div>
-           </div>
-         );
-       })}
-     </div>
-   );
- })()}
 
  {/* On-screen interactive accordion */}
  <div className="grid grid-cols-4 sm:grid-cols-6 md:grid-cols-7 lg:grid-cols-8 xl:grid-cols-10 gap-2 md:gap-3">
