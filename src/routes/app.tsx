@@ -3524,7 +3524,7 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
       {hasOpenMaintenance && (
         <span
           aria-label={`${openMaintenanceCount} open maintenance request${openMaintenanceCount === 1 ? "" : "s"}`}
-          className="absolute -top-0.5 -right-0.5 h-2.5 w-2.5 rounded-full bg-amber-500 ring-2 ring-background"
+          className="absolute top-1 right-1 h-2 w-2 rounded-full bg-amber-500 ring-2 ring-background"
         />
       )}
     </Button>
@@ -3536,7 +3536,7 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
           {hasOpenMaintenance && (
             <span
               aria-label={`${openMaintenanceCount} open maintenance request${openMaintenanceCount === 1 ? "" : "s"}`}
-              className="absolute -top-0.5 -right-0.5 h-2.5 w-2.5 rounded-full bg-amber-500 ring-2 ring-background"
+              className="absolute top-1 right-1 h-2 w-2 rounded-full bg-amber-500 ring-2 ring-background"
             />
           )}
         </Button>
