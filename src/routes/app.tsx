@@ -486,6 +486,13 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
   const [stayoverPhotosRoomFilter, setStayoverPhotosRoomFilter] = useState<number | undefined>(undefined);
   const [pendingDndRoom, setPendingDndRoom] = useState<number | null>(null);
   const dndFileInputRef = useRef<HTMLInputElement | null>(null);
+  // Count for the stayover photos bento card.
+  const stayoverPhotoCountQ = useQuery({
+    queryKey: ["stayover_photos", "all"],
+    staleTime: 60_000,
+    queryFn: () => listStayoverPhotos(),
+  });
+  const stayoverPhotoCount = stayoverPhotoCountQ.data?.length ?? 0;
   // Menu section collapse state, synced to profiles.preferences.menu_collapsed
   const menuPrefsQ = useQuery({
     queryKey: ["profile_preferences", authUser?.id],
