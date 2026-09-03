@@ -4020,7 +4020,8 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
         label,
         onClick,
         destructive,
-      }: { icon: React.ComponentType<{ className?: string }>; label: React.ReactNode; onClick: () => void; destructive?: boolean }) => (
+        notify,
+      }: { icon: React.ComponentType<{ className?: string }>; label: React.ReactNode; onClick: () => void; destructive?: boolean; notify?: boolean }) => (
         <button
           type="button"
           onClick={onClick}
@@ -4029,7 +4030,7 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
             destructive && "text-destructive hover:text-destructive",
           )}
         >
-          <Icon className="h-4 w-4 shrink-0" />
+          <Icon className={cn("h-4 w-4 shrink-0", notify && "text-amber-500")} />
           <span className="text-left flex-1">{label}</span>
         </button>
       );
