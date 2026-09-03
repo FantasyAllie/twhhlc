@@ -3552,7 +3552,10 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
         </Button>
       </DropdownMenuTrigger>
       <DropdownMenuContent align="end" className="w-64">
-        {menuGroups.map((group, gi) => (
+        {[
+          ...menuGroups.filter((g) => g.id === "appearance"),
+          ...menuGroups.filter((g) => g.id !== "appearance"),
+        ].map((group, gi) => (
           <React.Fragment key={group.id}>
             {gi > 0 && <DropdownMenuSeparator />}
             <DropdownMenuLabel className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
@@ -3560,10 +3563,14 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
             </DropdownMenuLabel>
             {group.items.map((item) => {
               const Icon = item.icon;
+              const keepOpen = item.key === "theme";
               return (
                 <DropdownMenuItem
                   key={item.key}
-                  onClick={item.onClick}
+                  onSelect={(e) => {
+                    if (keepOpen) e.preventDefault();
+                    item.onClick();
+                  }}
                   className={item.destructive ? "text-destructive focus:text-destructive" : undefined}
                 >
                   <Icon className={cn("h-4 w-4 mr-2", item.notify && "text-amber-500")} />
