@@ -3314,12 +3314,8 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
     if (!menuIsFnbOnly && !isMaintenance) {
       utilities.push({
         key: "maintenance-log", icon: Wrench,
-        label: (
-          <span className="flex items-center gap-2">
-            Maintenance Log
-            {hasOpenMaintenance && (<span className="h-2 w-2 rounded-full bg-amber-500" aria-hidden />)}
-          </span>
-        ),
+        label: "Maintenance Log",
+        notify: hasOpenMaintenance,
         onClick: () => setMaintenanceLogOpen(true),
       });
     }
