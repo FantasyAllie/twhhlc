@@ -1,4 +1,4 @@
-import { Clock, MessageSquare, DoorOpen, Footprints, Wrench, X } from "lucide-react";
+import { Clock, MessageSquare, DoorOpen, Footprints, Wrench, X, Dog } from "lucide-react";
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetDescription } from "@/components/ui/sheet";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
