@@ -132,14 +132,15 @@
   --chart-3: oklch(0.398 0.07 227.392);
   --chart-4: oklch(0.828 0.189 84.429);
   --chart-5: oklch(0.769 0.188 70.08);
-  --sidebar: oklch(0.203 0.033 264);
-  --sidebar-foreground: oklch(0.962 0.006 85);
-  --sidebar-primary: oklch(0.719 0.129 88);
-  --sidebar-primary-foreground: oklch(0.203 0.033 264);
-  --sidebar-accent: oklch(0.27 0.033 264);
-  --sidebar-accent-foreground: oklch(0.962 0.006 85);
-  --sidebar-border: oklch(0.719 0.129 88 / 22%);
-  --sidebar-ring: oklch(0.719 0.129 88);
+  /* Light mode keeps the chrome on the cream canvas; dark mode goes ink. */
+  --sidebar: oklch(0.99 0.004 85);
+  --sidebar-foreground: oklch(0.203 0.033 264);
+  --sidebar-primary: oklch(0.6 0.115 82);
+  --sidebar-primary-foreground: oklch(0.99 0.004 85);
+  --sidebar-accent: oklch(0.925 0.009 85);
+  --sidebar-accent-foreground: oklch(0.203 0.033 264);
+  --sidebar-border: oklch(0.6 0.115 82 / 28%);
+  --sidebar-ring: oklch(0.6 0.115 82);
   /* Material elevation tiers: ambient + key light for tactile depth. */
   --shadow-1: 0 1px 2px 0 rgb(0 0 0 / 0.08), 0 1px 1px -1px rgb(0 0 0 / 0.06);
   --shadow-2: 0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.08);
