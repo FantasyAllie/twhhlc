@@ -4072,7 +4072,7 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
       };
       return (
         <div className="space-y-4">
-          {menuGroups.map((group) => (
+          {menuGroups.filter((g) => g.id !== "appearance").map((group) => (
             <Section key={group.id} id={group.id} title={group.title}>
               {group.items.map((item) => (
                 <Row
