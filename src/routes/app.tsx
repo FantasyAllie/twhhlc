@@ -3553,7 +3553,7 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
                   onClick={item.onClick}
                   className={item.destructive ? "text-destructive focus:text-destructive" : undefined}
                 >
-                  <Icon className="h-4 w-4 mr-2" />
+                  <Icon className={cn("h-4 w-4 mr-2", item.notify && "text-amber-500")} />
                   <span className="flex-1">{item.label}</span>
                 </DropdownMenuItem>
               );
