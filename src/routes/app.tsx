@@ -2341,6 +2341,29 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
     qc.invalidateQueries({ queryKey: ["rooms"] });
   };
 
+  // Reception flag: this room's guest has a dog and needs a dog box put in.
+  const setRoomDogBox = async (roomNumber: number, value: boolean) => {
+    const nowIso = new Date().toISOString();
+    qc.setQueryData<Room[]>(["rooms"], (old) => {
+      const list = old ? [...old] : [];
+      const idx = list.findIndex((r) => r.room_number === roomNumber);
+      if (idx >= 0)
+        list[idx] = { ...list[idx], dog_box: value, dog_box_at: value ? nowIso : null };
+      return list;
+    });
+    const { error } = await supabase.from("rooms").upsert(
+      {
+        room_number: roomNumber,
+        dog_box: value,
+        dog_box_at: value ? nowIso : null,
+        updated_at: nowIso,
+      } as never,
+      { onConflict: "user_id,hotel_id,room_number" },
+    );
+    if (error) toast.error(error.message);
+    qc.invalidateQueries({ queryKey: ["rooms"] });
+  };
+
   const setRoomNotRequired = async (roomNumber: number, value: boolean) => {
     const nowIso = new Date().toISOString();
     qc.setQueryData<Room[]>(["rooms"], (old) => {
@@ -2795,6 +2818,13 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
                 Stayover — guest out for the day
               </span>
               <Switch checked={!!room?.stayover_out} onCheckedChange={(v) => setRoomStayoverOut(n, v)} />
+            </div>
+            <div className="flex items-center justify-between gap-2 rounded-xl border bg-background p-3">
+              <span className="flex items-center gap-2 text-sm font-medium">
+                <Dog className={cn("h-4 w-4", room?.dog_box ? "text-violet-600 dark:text-violet-400" : "text-muted-foreground")} />
+                Dog
+              </span>
+              <Switch checked={!!room?.dog_box} onCheckedChange={(v) => setRoomDogBox(n, v)} />
             </div>
             {maintenance && (
               <div className="flex items-center gap-2 rounded-xl border border-amber-500/60 bg-amber-50 dark:bg-amber-950/40 p-3 text-sm">
@@ -3801,6 +3831,7 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
     setRoomLateCheckout={setRoomLateCheckout}
     setRoomGuestVacated={setRoomGuestVacated}
     setRoomStayoverOut={setRoomStayoverOut}
+    setRoomDogBox={setRoomDogBox}
     confirmHousekeepingNote={confirmHousekeepingNote}
     setRoomHousekeepingNote={setRoomHousekeepingNote}
     deleteRoomMessage={deleteRoomMessage}
@@ -3828,6 +3859,7 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
     dndFileInputRef={dndFileInputRef}
     setRoomGuestVacated={setRoomGuestVacated}
     setRoomStayoverOut={setRoomStayoverOut}
+    setRoomDogBox={setRoomDogBox}
     setQuickReceptionOpen={setQuickReceptionOpen}
     setStayoverPhotosRoomFilter={setStayoverPhotosRoomFilter}
     setStayoverPhotosOpen={setStayoverPhotosOpen}
@@ -5060,6 +5092,7 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
       early_check_in: r.early_check_in,
       late_checkout: r.late_checkout,
       stayover_out: r.stayover_out,
+      dog_box: r.dog_box,
     }))}
     statuses={receptionStatuses
       .filter((s) => s.label !== "Staff" && s.label !== "DND")
@@ -5073,6 +5106,7 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
     onChangeEarlyCheckIn={(n, v) => void setRoomEarlyCheckIn(n, v)}
     onChangeLateCheckout={(n, v) => void setRoomLateCheckout(n, v)}
     onChangeStayoverOut={(n, v) => void setRoomStayoverOut(n, v)}
+    onChangeDogBox={(n, v) => void setRoomDogBox(n, v)}
   />
  </main>
  );
