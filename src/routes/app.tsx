@@ -3447,7 +3447,7 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
               </>
             )}
             {canViewAs && !isMobile && (
-              <div className="mt-3 inline-flex flex-wrap rounded-xl border p-0.5 bg-background items-center">
+              <div className="mt-3 inline-flex flex-wrap rounded-full border p-1 bg-background items-center">
                 {availableViews.map((r) => {
                   const active = (safeViewAs ?? defaultView) === r;
                   const label =
