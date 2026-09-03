@@ -144,22 +144,35 @@ function ReceptionRoomTileBase({
           <span className="text-[9px] sm:text-[10px] md:text-xs font-medium leading-none opacity-90">Staff</span>
         </>
       )}
-      {(hasMessage || !!room?.housekeeping_note) && !isStaffRoom && (
-        <span
-          aria-label="Housekeeping note"
-          className={cn(
-            "absolute right-1 h-2 w-2 rounded-full bg-amber-500 ring-2 ring-background",
-            room?.guest_vacated ? "top-5" : "top-1",
+      {!isStaffRoom && (
+        <span className="absolute top-0.5 right-0.5 flex flex-col items-end gap-0.5">
+          {(hasMessage || !!room?.housekeeping_note) && (
+            <span
+              aria-label="Housekeeping note"
+              className="h-2 w-2 rounded-full bg-amber-500 ring-2 ring-background"
+            />
           )}
-        />
-      )}
-      {room?.dog_box && !isStaffRoom && (
-        <span
-          aria-label="Dog box needed"
-          className="absolute bottom-0.5 left-0.5 inline-flex items-center gap-0.5 rounded-sm bg-violet-600 px-1 py-px text-[8px] font-bold leading-none tracking-wide text-white shadow-sm dark:bg-violet-500 dark:text-violet-950"
-        >
-          <Dog aria-hidden className="h-2.5 w-2.5" />
-          Dog
+          {room?.guest_vacated && (
+            <DoorOpen
+              aria-label="Guest vacated"
+              className="h-3.5 w-3.5 text-emerald-600 dark:text-emerald-400"
+            />
+          )}
+          {room?.stayover_out && !room?.done && (
+            <Footprints
+              aria-label="Stayover guest out - room empty"
+              className="h-3.5 w-3.5 text-sky-600 dark:text-sky-400"
+            />
+          )}
+          {room?.dog_box && (
+            <span
+              aria-label="Dog box needed"
+              className="inline-flex items-center gap-0.5 rounded-sm bg-violet-600 px-1 py-px text-[8px] font-bold leading-none tracking-wide text-white shadow-sm dark:bg-violet-500 dark:text-violet-950"
+            >
+              <Dog aria-hidden className="h-2.5 w-2.5" />
+              Dog
+            </span>
+          )}
         </span>
       )}
       {room?.needs_maintenance && !isStaffRoom && (
@@ -168,18 +181,7 @@ function ReceptionRoomTileBase({
           className="absolute bottom-0.5 right-0.5 h-3 w-3 text-amber-600 dark:text-amber-400"
         />
       )}
-      {room?.guest_vacated && !isStaffRoom && (
-        <DoorOpen
-          aria-label="Guest vacated"
-          className="absolute top-0.5 right-0.5 h-3.5 w-3.5 text-emerald-600 dark:text-emerald-400"
-        />
-      )}
-      {room?.stayover_out && !isStaffRoom && !room?.done && (
-        <Footprints
-          aria-label="Stayover guest out - room empty"
-          className="absolute top-0.5 right-0.5 h-3.5 w-3.5 text-sky-600 dark:text-sky-400"
-        />
-      )}
+
 
     </button>
   );
