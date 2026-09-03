@@ -126,19 +126,8 @@ function ReceptionRoomTileBase({
               </>
             )}
           </span>
-          {bedLabel && (
-            <span
-              className="self-start inline-flex items-center rounded-full px-1.5 py-0.5 text-[9px] sm:text-[10px] md:text-[11px] font-bold uppercase tracking-wide leading-none"
-              style={{
-                backgroundColor: `color-mix(in oklab, ${meta.accent} 20%, transparent)`,
-                color: meta.accent,
-              }}
-            >
-              {bedLabel}
-            </span>
-          )}
           <span className="text-[9px] sm:text-[10px] md:text-xs font-bold uppercase tracking-tight leading-tight opacity-80 whitespace-pre-line pr-4">
-            {meta.label}
+            {bedLabel ? `${meta.label} - ${bedLabel}` : meta.label}
           </span>
         </>
       )}
