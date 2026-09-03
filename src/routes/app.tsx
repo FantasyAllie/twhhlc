@@ -3471,7 +3471,7 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
               </div>
             )}
           </div>
- <div className="flex items-center gap-2">
+ <div className="flex items-center gap-2 [&_button]:border-sidebar-border [&_button]:bg-transparent [&_button]:text-sidebar-foreground [&_button:hover]:bg-sidebar-accent [&_button:hover]:text-sidebar-foreground">
     {!isMobile && ((isAdmin && !isReception) || isMaintenance) && (
       <Button
         variant="outline"
