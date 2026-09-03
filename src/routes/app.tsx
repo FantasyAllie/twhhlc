@@ -4017,20 +4017,21 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
 />
 <Sheet open={menuSheetOpen} onOpenChange={setMenuSheetOpen}>
   <SheetContent side="right" disableDragDismiss className="w-auto max-w-[90vw] min-w-[18rem] sm:max-w-md p-0 flex flex-col overflow-hidden [&_[data-sheet-close]]:max-lg:hidden">
-    <SheetHeader className="text-left shrink-0 px-4 sm:px-6 pt-4 sm:pt-6 pb-3 bg-background border-b">
-      <SheetTitle className="flex items-center gap-2">
+    <SheetHeader className="relative text-left shrink-0 px-4 sm:px-6 pt-4 sm:pt-6 pb-3 bg-background border-b">
+      <button
+        type="button"
+        onClick={() => cycleTheme()}
+        aria-label={`Theme: ${levelLabel}. Switch to next theme`}
+        title={`Theme: ${levelLabel}`}
+        className="absolute right-4 top-4 sm:right-6 sm:top-6 lg:right-14 z-10 grid h-12 w-12 place-items-center overflow-hidden rounded-full text-muted-foreground transition-colors hover:bg-accent hover:text-foreground"
+      >
+        <ThemeGlyph className="h-6 w-6" />
+      </button>
+      <SheetTitle className="flex items-center gap-2 pr-14">
         <Menu className="h-4 w-4" />
         <span className="flex-1">Settings</span>
-        <button
-          type="button"
-          onClick={() => cycleTheme()}
-          aria-label={`Theme: ${levelLabel}. Switch to next theme`}
-          title={`Theme: ${levelLabel}`}
-          className="relative -my-1 -mr-1 lg:mr-6 grid h-8 w-8 place-items-center overflow-hidden rounded-full text-muted-foreground transition-colors hover:bg-accent hover:text-foreground"
-        >
-          <ThemeGlyph className="h-4 w-4" />
-        </button>
       </SheetTitle>
+
       {authUser && (
         <SheetDescription>Signed in as {authUser.username}</SheetDescription>
       )}
