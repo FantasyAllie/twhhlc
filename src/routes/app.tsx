@@ -3468,7 +3468,7 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
                       type="button"
                       onClick={() => setViewAsRole(active ? null : r)}
                       className={cn(
-                        "px-3 h-8 text-xs sm:text-sm rounded-[0.3rem] transition-colors whitespace-nowrap",
+                        "px-4 h-8 text-xs sm:text-sm rounded-full transition-colors whitespace-nowrap",
                         active
                           ? "bg-primary text-primary-foreground shadow-sm font-medium"
                           : "text-muted-foreground hover:text-foreground",
