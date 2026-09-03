@@ -92,7 +92,7 @@ export function PhotoComposer({
             <img src={p.previewUrl} alt="" className="h-full w-full object-cover" />
             <button
               type="button"
-              className="absolute -right-1 -top-1 rounded-full bg-background/90 shadow border p-0.5 text-muted-foreground hover:text-destructive"
+              className="absolute right-0.5 top-0.5 rounded-full bg-background/90 shadow border p-0.5 text-muted-foreground hover:text-destructive"
               onClick={() => removeAt(idx)}
               aria-label="Remove photo"
             >
@@ -236,7 +236,7 @@ export function PhotoAttachments({
               {canEdit && (
                 <button
                   type="button"
-                  className="absolute -right-1 -top-1 rounded-full bg-background/90 shadow border p-0.5 text-muted-foreground hover:text-destructive"
+                  className="absolute right-0.5 top-0.5 rounded-full bg-background/90 shadow border p-0.5 text-muted-foreground hover:text-destructive"
                   onClick={() => void removePath(p)}
                   aria-label="Delete photo"
                 >
