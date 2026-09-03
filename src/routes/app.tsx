@@ -4765,6 +4765,71 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
     })()}
  </div>
 
+ {/* Bento live cards: at-a-glance ops counts above the room grid. */}
+ {(() => {
+   const activeMessageCount = roomMessages.filter(
+     (m) => m.thread === "hk_reception" && !m.done_at && !m.deleted_at && !m.dismissed,
+   ).length;
+   const cards = [
+     { key: "rooms", icon: House, label: "Rooms", value: `${rooms.length}`, tone: "brass" as const },
+     {
+       key: "maintenance",
+       icon: Wrench,
+       label: "Maintenance",
+       value: `${openMaintenanceCount} open`,
+       tone: openMaintenanceCount > 0 ? ("alert" as const) : ("calm" as const),
+     },
+     {
+       key: "messages",
+       icon: MessageSquare,
+       label: "Messages",
+       value: `${activeMessageCount} active`,
+       tone: activeMessageCount > 0 ? ("brass" as const) : ("calm" as const),
+     },
+     {
+       key: "lost",
+       icon: PackageSearch,
+       label: "Lost property",
+       value: `${lostPropertyOpenItems.length} open`,
+       tone: "calm" as const,
+     },
+   ];
+   return (
+     <div className="grid grid-cols-2 lg:grid-cols-4 gap-2 md:gap-3">
+       {cards.map((c) => {
+         const Icon = c.icon;
+         return (
+           <div
+             key={c.key}
+             className="flex items-center gap-3 rounded-2xl border border-sidebar-border bg-sidebar px-3 py-2.5 shadow-elevation-1"
+           >
+             <span
+               className={cn(
+                 "flex h-9 w-9 shrink-0 items-center justify-center rounded-xl",
+                 c.tone === "alert"
+                   ? "bg-amber-500/15 text-amber-400"
+                   : c.tone === "brass"
+                     ? "bg-sidebar-primary/15 text-sidebar-primary"
+                     : "bg-sidebar-accent text-sidebar-foreground/70",
+               )}
+             >
+               <Icon className="h-4 w-4" />
+             </span>
+             <div className="min-w-0">
+               <p className="text-[10px] font-bold uppercase tracking-[0.18em] text-sidebar-foreground/60">
+                 {c.label}
+               </p>
+               <p className="truncate text-sm font-semibold tabular-nums text-sidebar-foreground">
+                 {c.value}
+               </p>
+             </div>
+           </div>
+         );
+       })}
+     </div>
+   );
+ })()}
+
  {/* On-screen interactive accordion */}
  <div className="grid grid-cols-4 sm:grid-cols-6 md:grid-cols-7 lg:grid-cols-8 xl:grid-cols-10 gap-2 md:gap-3">
  {(() => {
