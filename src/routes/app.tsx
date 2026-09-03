@@ -3392,9 +3392,9 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
     account.push({ key: "signout", icon: LogOut, label: "Sign out", destructive: true, onClick: () => void signOut() });
     const appearance: MenuAction[] = [{
       key: "theme",
-      icon: theme === "dark" ? Sun : Moon,
-      label: theme === "dark" ? "Light mode" : "Dark mode",
-      onClick: () => toggleTheme(),
+      icon: ThemeGlyph,
+      label: `Theme: ${levelLabel}`,
+      onClick: () => cycleTheme(),
     }];
     return [
       { id: "actions", title: "Actions", items: actions },
