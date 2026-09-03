@@ -241,12 +241,13 @@ export function ReceptionStatusSheet({
                               qc.invalidateQueries({ queryKey: ["stayover_photos"] });
                             });
                           }
-                       } else {
-                          if (s.id === dndId) {
-                            // Require a photo of the DND door before applying.
-                            setPendingDndRoom(n);
-                            dndFileInputRef.current?.click();
-                          } else {
+                        } else {
+                           if (s.id === dndId) {
+                             // Require a photo of the DND door before applying.
+                             void setRoomStayoverOut(n, false);
+                             setPendingDndRoom(n);
+                             dndFileInputRef.current?.click();
+                           } else {
                             setRoomReceptionStatus(n, s.id);
                             // Housekeeping marking a room as Stayover also marks
                             // it as done — there's nothing further to service.
