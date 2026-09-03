@@ -5,6 +5,7 @@ import { AlertCircle, Check, Dog, DoorOpen, Footprints, Wrench } from "lucide-re
 import { cn } from "@/lib/utils";
 import type { Room } from "@/lib/app-types";
 import {
+  bedCode,
   computeTileMeta,
   resolveRoomStatusFlags,
   type RoomStatusIds,
