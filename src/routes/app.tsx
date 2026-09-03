@@ -3279,6 +3279,7 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
     label: React.ReactNode;
     onClick: () => void;
     destructive?: boolean;
+    notify?: boolean;
   };
   const menuGroups: { id: string; title: string; items: MenuAction[] }[] = (() => {
     const actions: MenuAction[] = [];
