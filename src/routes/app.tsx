@@ -4068,6 +4068,7 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
                   icon={item.icon}
                   label={item.label}
                   destructive={item.destructive}
+                  notify={item.notify}
                   onClick={() => { close(); item.onClick(); }}
                 />
               ))}
