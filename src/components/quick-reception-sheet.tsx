@@ -1,4 +1,4 @@
-import { ConciergeBell, Check, RotateCcw, Clock, DoorOpen, Footprints } from "lucide-react";
+import { ConciergeBell, Check, RotateCcw, Clock, DoorOpen, Footprints, Dog } from "lucide-react";
 import { cn } from "@/lib/utils";
 import {
   Sheet,
@@ -18,6 +18,7 @@ export type QuickReceptionRoom = {
   early_check_in?: boolean;
   late_checkout?: boolean;
   stayover_out?: boolean;
+  dog_box?: boolean;
 };
 
 export type QuickReceptionItem = { id: string; label: string };
@@ -87,6 +88,7 @@ export function QuickReceptionSheet({
   onChangeEarlyCheckIn,
   onChangeLateCheckout,
   onChangeStayoverOut,
+  onChangeDogBox,
   flagsOnly = false,
 }: {
   open: boolean;
@@ -101,6 +103,7 @@ export function QuickReceptionSheet({
   onChangeEarlyCheckIn?: (roomNumber: number, value: boolean) => void;
   onChangeLateCheckout?: (roomNumber: number, value: boolean) => void;
   onChangeStayoverOut?: (roomNumber: number, value: boolean) => void;
+  onChangeDogBox?: (roomNumber: number, value: boolean) => void;
   /** Reception accounts: only the room flags are editable, not status or bed. */
   flagsOnly?: boolean;
 }) {
@@ -220,7 +223,7 @@ export function QuickReceptionSheet({
                   </div>
                 )}
 
-                {(onChangeVacant || onChangeEarlyCheckIn || onChangeLateCheckout || onChangeStayoverOut) && (
+                {(onChangeVacant || onChangeEarlyCheckIn || onChangeLateCheckout || onChangeStayoverOut || onChangeDogBox) && (
                   <div className="flex items-start gap-2">
                     <div className="w-14 shrink-0 text-[10px] font-semibold uppercase tracking-wide text-muted-foreground pt-1.5">
                       Guest
@@ -281,6 +284,19 @@ export function QuickReceptionSheet({
                           onClick={() =>
                             onChangeStayoverOut(n, !room.stayover_out)
                           }
+                          truncate={false}
+                        />
+                      )}
+                      {onChangeDogBox && (
+                        <Chip
+                          label={
+                            <span className="inline-flex items-center gap-1.5">
+                              <Dog className="h-3.5 w-3.5 shrink-0" />
+                              Dog
+                            </span>
+                          }
+                          selected={!!room.dog_box}
+                          onClick={() => onChangeDogBox(n, !room.dog_box)}
                           truncate={false}
                         />
                       )}

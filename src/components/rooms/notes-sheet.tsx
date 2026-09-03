@@ -1,4 +1,4 @@
-import { Clock, MessageSquare, DoorOpen, Footprints, Wrench, X } from "lucide-react";
+import { Clock, MessageSquare, DoorOpen, Footprints, Wrench, X, Dog } from "lucide-react";
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetDescription } from "@/components/ui/sheet";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -27,6 +27,7 @@ type Props = {
   setRoomLateCheckout: (n: number, v: boolean) => void;
   setRoomGuestVacated: (n: number, v: boolean) => void;
   setRoomStayoverOut: (n: number, v: boolean) => void;
+  setRoomDogBox: (n: number, v: boolean) => void;
   confirmHousekeepingNote: (n: number, note: string) => void;
   setRoomHousekeepingNote: (n: number, note: string) => void;
   deleteRoomMessage: (id: string) => void;
@@ -50,6 +51,7 @@ export function RoomNotesSheet({
   setRoomLateCheckout,
   setRoomGuestVacated,
   setRoomStayoverOut,
+  setRoomDogBox,
   confirmHousekeepingNote,
   setRoomHousekeepingNote,
   deleteRoomMessage,
@@ -123,6 +125,13 @@ export function RoomNotesSheet({
                      Stayover — guest out for the day
                    </span>
                    <Switch checked={!!room?.stayover_out} onCheckedChange={(v) => setRoomStayoverOut(n, v)} />
+                 </div>
+                 <div className="flex items-center justify-between gap-2 rounded-xl border bg-background p-3">
+                   <span className="flex items-center gap-2 text-sm font-medium">
+                     <Dog className={cn("h-4 w-4", room?.dog_box ? "text-violet-600 dark:text-violet-400" : "text-muted-foreground")} />
+                     Dog
+                   </span>
+                   <Switch checked={!!room?.dog_box} onCheckedChange={(v) => setRoomDogBox(n, v)} />
                  </div>
                  {maintenance && (
                    <div className="flex items-center gap-2 rounded-xl border border-amber-500/60 bg-amber-50 dark:bg-amber-950/40 p-3 text-sm">

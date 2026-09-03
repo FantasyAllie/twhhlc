@@ -74,6 +74,9 @@ export type Room = {
   // Stayover room whose guest has gone out for the day: room is empty and can
   // be serviced now (distinct from guest_vacated = checked out for good).
   stayover_out?: boolean;
+  // Reception flag: room needs a dog box for a guest's dog.
+  dog_box?: boolean;
+  dog_box_at?: string | null;
   stayover_out_at?: string | null;
   early_check_in?: boolean;
   // Reception flag: guest is staying past normal checkout time.

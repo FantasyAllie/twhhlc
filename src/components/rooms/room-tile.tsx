@@ -1,7 +1,7 @@
 // Room tiles for the home grid. JSX moved verbatim from src/routes/app.tsx
 // (stage 5 of the staged refactor); colour/label rules live in @/lib/rooms.
 import { memo } from "react";
-import { AlertCircle, Check, DoorOpen, Footprints, Wrench } from "lucide-react";
+import { AlertCircle, Check, Dog, DoorOpen, Footprints, Wrench } from "lucide-react";
 import { cn } from "@/lib/utils";
 import type { Room } from "@/lib/app-types";
 import {
@@ -153,6 +153,15 @@ function ReceptionRoomTileBase({
           )}
         />
       )}
+      {room?.dog_box && !isStaffRoom && (
+        <span
+          aria-label="Dog box needed"
+          className="absolute bottom-0.5 left-0.5 inline-flex items-center gap-0.5 rounded-sm bg-violet-600 px-1 py-px text-[8px] font-bold leading-none tracking-wide text-white shadow-sm dark:bg-violet-500 dark:text-violet-950"
+        >
+          <Dog aria-hidden className="h-2.5 w-2.5" />
+          Dog
+        </span>
+      )}
       {room?.needs_maintenance && !isStaffRoom && (
         <Wrench
           aria-label="Maintenance"
@@ -253,6 +262,15 @@ function HousekeepingRoomTileBase({
             room?.guest_vacated ? "top-5" : "top-1",
           )}
         />
+      )}
+      {room?.dog_box && (
+        <span
+          aria-label="Dog box needed"
+          className="absolute bottom-0.5 left-0.5 inline-flex items-center gap-0.5 rounded-sm bg-violet-600 px-1 py-px text-[8px] font-bold leading-none tracking-wide text-white shadow-sm dark:bg-violet-500 dark:text-violet-950"
+        >
+          <Dog aria-hidden className="h-2.5 w-2.5" />
+          Dog
+        </span>
       )}
       {room?.needs_maintenance && (
         <Wrench
