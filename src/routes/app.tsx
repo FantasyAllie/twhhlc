@@ -3279,6 +3279,7 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
     label: React.ReactNode;
     onClick: () => void;
     destructive?: boolean;
+    notify?: boolean;
   };
   const menuGroups: { id: string; title: string; items: MenuAction[] }[] = (() => {
     const actions: MenuAction[] = [];
@@ -3313,12 +3314,8 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
     if (!menuIsFnbOnly && !isMaintenance) {
       utilities.push({
         key: "maintenance-log", icon: Wrench,
-        label: (
-          <span className="flex items-center gap-2">
-            Maintenance Log
-            {hasOpenMaintenance && (<span className="h-2 w-2 rounded-full bg-amber-500" aria-hidden />)}
-          </span>
-        ),
+        label: "Maintenance Log",
+        notify: hasOpenMaintenance,
         onClick: () => setMaintenanceLogOpen(true),
       });
     }
@@ -3556,7 +3553,7 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
                   onClick={item.onClick}
                   className={item.destructive ? "text-destructive focus:text-destructive" : undefined}
                 >
-                  <Icon className="h-4 w-4 mr-2" />
+                  <Icon className={cn("h-4 w-4 mr-2", item.notify && "text-amber-500")} />
                   <span className="flex-1">{item.label}</span>
                 </DropdownMenuItem>
               );
@@ -4023,7 +4020,8 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
         label,
         onClick,
         destructive,
-      }: { icon: React.ComponentType<{ className?: string }>; label: React.ReactNode; onClick: () => void; destructive?: boolean }) => (
+        notify,
+      }: { icon: React.ComponentType<{ className?: string }>; label: React.ReactNode; onClick: () => void; destructive?: boolean; notify?: boolean }) => (
         <button
           type="button"
           onClick={onClick}
@@ -4032,7 +4030,7 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
             destructive && "text-destructive hover:text-destructive",
           )}
         >
-          <Icon className="h-4 w-4 shrink-0" />
+          <Icon className={cn("h-4 w-4 shrink-0", notify && "text-amber-500")} />
           <span className="text-left flex-1">{label}</span>
         </button>
       );
@@ -4070,6 +4068,7 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
                   icon={item.icon}
                   label={item.label}
                   destructive={item.destructive}
+                  notify={item.notify}
                   onClick={() => { close(); item.onClick(); }}
                 />
               ))}
