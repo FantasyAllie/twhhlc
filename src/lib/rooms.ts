@@ -28,10 +28,14 @@ export type PreservedFlags = {
   early_check_in: boolean;
   late_checkout: boolean;
   needs_maintenance: boolean;
+  stayover_out: boolean;
+  dog_box: boolean;
   guest_vacated_at: string | null;
   early_check_in_at: string | null;
   late_checkout_at: string | null;
   needs_maintenance_at: string | null;
+  stayover_out_at: string | null;
+  dog_box_at: string | null;
 };
 
 // Reception flags set after the most recent 4pm cutoff survive a morning reset.
@@ -185,16 +189,22 @@ export const computeResetPreserveMap = (
     const ec = isFresh(r.early_check_in_at) && !!r.early_check_in;
     const lc = isFresh(r.late_checkout_at) && !!r.late_checkout;
     const nm = isFresh(r.needs_maintenance_at) && r.needs_maintenance;
-    if (gv || ec || lc || nm) {
+    const so = isFresh(r.stayover_out_at) && !!r.stayover_out;
+    const dg = isFresh(r.dog_box_at) && !!r.dog_box;
+    if (gv || ec || lc || nm || so || dg) {
       preserveMap.set(r.room_number, {
         guest_vacated: gv,
         early_check_in: ec,
         late_checkout: lc,
         needs_maintenance: nm,
+        stayover_out: so,
+        dog_box: dg,
         guest_vacated_at: gv ? (dirty ? now.toISOString() : r.guest_vacated_at ?? null) : null,
         early_check_in_at: ec ? r.early_check_in_at ?? null : null,
         late_checkout_at: lc ? r.late_checkout_at ?? null : null,
         needs_maintenance_at: nm ? r.needs_maintenance_at ?? null : null,
+        stayover_out_at: so ? r.stayover_out_at ?? null : null,
+        dog_box_at: dg ? r.dog_box_at ?? null : null,
       });
     }
   }
