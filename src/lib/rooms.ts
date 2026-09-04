@@ -28,10 +28,14 @@ export type PreservedFlags = {
   early_check_in: boolean;
   late_checkout: boolean;
   needs_maintenance: boolean;
+  stayover_out: boolean;
+  dog_box: boolean;
   guest_vacated_at: string | null;
   early_check_in_at: string | null;
   late_checkout_at: string | null;
   needs_maintenance_at: string | null;
+  stayover_out_at: string | null;
+  dog_box_at: string | null;
 };
 
 // Reception flags set after the most recent 4pm cutoff survive a morning reset.
