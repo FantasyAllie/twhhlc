@@ -1597,6 +1597,8 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
           guest_vacated: keep?.guest_vacated ?? false,
           stayover_out: false,
           stayover_out_at: null,
+          dog_box: false,
+          dog_box_at: null,
           early_check_in: keep?.early_check_in ?? false,
           late_checkout: keep?.late_checkout ?? false,
           needs_maintenance: keep?.needs_maintenance ?? false,
