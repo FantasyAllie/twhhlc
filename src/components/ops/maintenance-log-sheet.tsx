@@ -100,8 +100,8 @@ export function MaintenanceLogSheet({
     [maintenanceRequests],
   );
   const completedItems = useMemo(
-    () => maintenanceRequests.filter((m) => m.done),
-    [maintenanceRequests],
+    () => maintenanceRequests.filter((m) => m.done && isWithinRetention(m.done_at)),
+    [maintenanceRequests, retentionMonths],
   );
 
   const activeItems = activeTab === "open" ? openItems : completedItems;
