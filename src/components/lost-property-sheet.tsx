@@ -410,7 +410,7 @@ export function LostPropertySheet({
             </div>
           )}
           {/* Section pills */}
-          <div className="mt-4 inline-flex w-full justify-center rounded-full border p-1 bg-background items-center">
+          <div className="inline-flex w-full justify-center rounded-full border p-1 bg-background items-center">
             {([
               { key: "open", label: `Open (${openRows.length})` },
               { key: "expired", label: `Expired (${expiredRows.length})` },
