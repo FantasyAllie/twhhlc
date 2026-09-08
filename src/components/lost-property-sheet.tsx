@@ -147,6 +147,11 @@ export function LostPropertySheet({
   };
   // Re-render every minute so countdowns tick.
   const [, setTick] = useState(0);
+  const [expiredExpanded, setExpiredExpanded] = useState(false);
+  const [resolvedExpanded, setResolvedExpanded] = useState(false);
+  const [openPage, setOpenPage] = useState(0);
+  const PAGE_SIZE = 15;
+
   useEffect(() => {
     if (!open) return;
     const t = window.setInterval(() => setTick((n) => n + 1), 60_000);
@@ -348,27 +353,82 @@ export function LostPropertySheet({
               </Button>
             )
           )}
-          {[
+          {(() => {
+            const pageCount = Math.max(1, Math.ceil(openRows.length / PAGE_SIZE));
+            const page = Math.min(openPage, pageCount - 1);
+            const pagedOpen = openRows.slice(page * PAGE_SIZE, page * PAGE_SIZE + PAGE_SIZE);
+            return [
             {
               key: "open",
               label: `Open (${openRows.length})`,
-              list: openRows,
+              list: pagedOpen,
               empty: "No open lost property.",
+              collapsible: false,
+              expanded: true,
+              toggle: () => {},
+              pager:
+                pageCount > 1 ? (
+                  <div className="flex items-center justify-between gap-2 pt-1">
+                    <Button
+                      type="button"
+                      size="sm"
+                      variant="outline"
+                      className="h-8 text-xs"
+                      disabled={page === 0}
+                      onClick={() => setOpenPage(page - 1)}
+                    >
+                      Previous
+                    </Button>
+                    <span className="text-xs text-muted-foreground">
+                      Page {page + 1} of {pageCount}
+                    </span>
+                    <Button
+                      type="button"
+                      size="sm"
+                      variant="outline"
+                      className="h-8 text-xs"
+                      disabled={page >= pageCount - 1}
+                      onClick={() => setOpenPage(page + 1)}
+                    >
+                      Next
+                    </Button>
+                  </div>
+                ) : null,
             },
             {
               key: "expired",
               label: `Expired (${expiredRows.length})`,
               list: expiredRows,
               empty: "Nothing has passed the keep-for period yet.",
+              collapsible: true,
+              expanded: expiredExpanded,
+              toggle: () => setExpiredExpanded((v) => !v),
+              pager: null,
             },
           ].map((group) => (
             <div key={group.key} className="space-y-2">
-            <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
-              {group.label}
-            </p>
-            {group.list.length === 0 ? (
+            {group.collapsible ? (
+              <button
+                type="button"
+                onClick={group.toggle}
+                className="flex w-full items-center justify-between rounded-lg border bg-muted/30 px-3 py-2 text-xs font-semibold uppercase tracking-wide text-muted-foreground"
+              >
+                <span>{group.label}</span>
+                <ChevronDown
+                  className={
+                    "h-4 w-4 transition-transform " + (group.expanded ? "rotate-180" : "")
+                  }
+                />
+              </button>
+            ) : (
+              <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+                {group.label}
+              </p>
+            )}
+            {!group.expanded ? null : group.list.length === 0 ? (
               <p className="text-sm text-muted-foreground">{group.empty}</p>
             ) : (
+
               group.list.map((r) => (
                 <div key={r.id} className="flex items-start gap-2 rounded-lg border bg-background p-3">
                   <div className="flex-1 min-w-0">
@@ -483,14 +543,26 @@ export function LostPropertySheet({
                 </div>
               ))
             )}
+            {group.pager}
               </div>
-            ))}
+            ));
+          })()}
           {resolvedRows.length > 0 && (
             <div className="space-y-2">
-              <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
-                Resolved ({resolvedRows.length})
-              </p>
-              {resolvedRows.map((r) => (
+              <button
+                type="button"
+                onClick={() => setResolvedExpanded((v) => !v)}
+                className="flex w-full items-center justify-between rounded-lg border bg-muted/30 px-3 py-2 text-xs font-semibold uppercase tracking-wide text-muted-foreground"
+              >
+                <span>Resolved ({resolvedRows.length})</span>
+                <ChevronDown
+                  className={
+                    "h-4 w-4 transition-transform " + (resolvedExpanded ? "rotate-180" : "")
+                  }
+                />
+              </button>
+              {resolvedExpanded && resolvedRows.map((r) => (
+
                 <div key={r.id} className="flex items-start gap-2 rounded-lg border bg-muted/40 p-3">
                   <div className="flex-1 min-w-0">
                     <div className="flex items-center gap-2 flex-wrap">
