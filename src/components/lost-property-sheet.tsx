@@ -488,7 +488,7 @@ export function LostPropertySheet({
           {resolvedRows.length > 0 && (
             <div className="space-y-2">
               <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
-                Resolved
+                Resolved ({resolvedRows.length})
               </p>
               {resolvedRows.map((r) => (
                 <div key={r.id} className="flex items-start gap-2 rounded-lg border bg-muted/40 p-3">
