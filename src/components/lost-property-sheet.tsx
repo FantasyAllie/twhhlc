@@ -293,25 +293,18 @@ export function LostPropertySheet({
                   <ChevronDown className="h-4 w-4 opacity-60" />
                 </Button>
                 {isAdmin && (
-                  <div className="flex items-center justify-center gap-2 rounded-lg border bg-muted/40 px-2">
-                    <label htmlFor="lp-retention" className="text-sm">
-                      Keep items for
-                    </label>
-                    <Input
-                      id="lp-retention"
-                      type="number"
-                      inputMode="numeric"
-                      min={0}
-                      max={120}
-                      value={retentionMonths}
-                      onChange={(e) => {
-                        const n = Number(e.target.value);
-                        if (Number.isFinite(n) && n >= 0) setRetentionMonths(Math.floor(n));
-                      }}
-                      className="h-8 w-16 text-center"
-                    />
-                    <span className="text-sm">months</span>
-                  </div>
+                  <Button
+                    type="button"
+                    variant="outline"
+                    className="w-full justify-between"
+                    onClick={() => setSettingsOpen(true)}
+                  >
+                    <span className="flex items-center gap-2">
+                      <Settings className="h-4 w-4" />
+                      Settings
+                    </span>
+                    <ChevronDown className="h-4 w-4 opacity-60" />
+                  </Button>
                 )}
               </div>
               {addOpen && (
