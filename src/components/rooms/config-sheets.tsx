@@ -175,7 +175,7 @@ export function RoomTypesSheet({
 }) {
   return (
     <Sheet open={open} onOpenChange={onOpenChange}>
-      <SheetContent side="bottom" className="max-h-[85dvh] overflow-y-auto p-4 sm:p-6">
+      <SheetContent side="bottom" className="overflow-y-auto p-4 sm:p-6">
         <SheetHeader className="text-left">
           <SheetTitle className="flex items-center gap-2">
             <Bed className="h-4 w-4" />
@@ -220,7 +220,7 @@ export function RoomFeaturesSheet({
 }) {
   return (
     <Sheet open={open} onOpenChange={onOpenChange}>
-      <SheetContent side="bottom" className="max-h-[85dvh] overflow-y-auto p-4 sm:p-6">
+      <SheetContent side="bottom" className="overflow-y-auto p-4 sm:p-6">
         <SheetHeader className="text-left">
           <SheetTitle className="flex items-center gap-2">
             <List className="h-4 w-4" />
@@ -269,7 +269,7 @@ export function ReceptionItemsSheet({
 }) {
   return (
     <Sheet open={open} onOpenChange={onOpenChange}>
-      <SheetContent side="bottom" className="max-h-[85dvh] overflow-y-auto p-4 sm:p-6">
+      <SheetContent side="bottom" className="overflow-y-auto p-4 sm:p-6">
         <SheetHeader className="text-left">
           <SheetTitle className="flex items-center gap-2">
             <ConciergeBell className="h-4 w-4" />

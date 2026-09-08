@@ -71,7 +71,7 @@ export function MaintenanceLogSheet({
     isAdmin || (!!authUsername && m.created_by_username === authUsername);
   return (
 <Sheet open={open} onOpenChange={onOpenChange}>
-  <SheetContent side="bottom" className="max-h-[90dvh] overflow-hidden rounded-t-2xl p-4 sm:p-6 flex flex-col">
+  <SheetContent side="bottom" className="overflow-hidden rounded-t-2xl p-4 sm:p-6 flex flex-col">
     <SheetHeader className="text-left">
       <SheetTitle className="flex items-center gap-2">
         <Wrench className="h-4 w-4" />

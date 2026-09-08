@@ -157,7 +157,7 @@ export function LinenListDialog({
                       <Pencil className="h-4 w-4" />
                     </Button>
                   </SheetTrigger>
-                  <SheetContent side="bottom" className="max-h-[85dvh] overflow-y-auto rounded-t-2xl p-4 sm:p-6">
+                  <SheetContent side="bottom" className="overflow-y-auto rounded-t-2xl p-4 sm:p-6">
                     <SheetHeader className="text-left">
                       <SheetTitle>Edit item</SheetTitle>
                       <SheetDescription>{item.name}</SheetDescription>
