@@ -543,14 +543,26 @@ export function LostPropertySheet({
                 </div>
               ))
             )}
+            {group.pager}
               </div>
-            ))}
+            ));
+          })()}
           {resolvedRows.length > 0 && (
             <div className="space-y-2">
-              <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
-                Resolved ({resolvedRows.length})
-              </p>
-              {resolvedRows.map((r) => (
+              <button
+                type="button"
+                onClick={() => setResolvedExpanded((v) => !v)}
+                className="flex w-full items-center justify-between rounded-lg border bg-muted/30 px-3 py-2 text-xs font-semibold uppercase tracking-wide text-muted-foreground"
+              >
+                <span>Resolved ({resolvedRows.length})</span>
+                <ChevronDown
+                  className={
+                    "h-4 w-4 transition-transform " + (resolvedExpanded ? "rotate-180" : "")
+                  }
+                />
+              </button>
+              {resolvedExpanded && resolvedRows.map((r) => (
+
                 <div key={r.id} className="flex items-start gap-2 rounded-lg border bg-muted/40 p-3">
                   <div className="flex-1 min-w-0">
                     <div className="flex items-center gap-2 flex-wrap">
