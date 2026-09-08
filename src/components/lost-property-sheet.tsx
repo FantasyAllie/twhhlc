@@ -566,7 +566,7 @@ export function LostPropertySheet({
               })();
 
               return (
-                <div className="mt-4 space-y-3">
+                <div className="mt-2 space-y-3">
                   {openRows.length === 0 ? (
                     <p className="text-sm text-muted-foreground">No open lost property.</p>
                   ) : (
@@ -622,7 +622,7 @@ export function LostPropertySheet({
 
             if (activeTab === "expired") {
               return (
-                <div className="mt-4 space-y-3">
+                <div className="mt-2 space-y-3">
                   {expiredRows.length === 0 ? (
                     <p className="text-sm text-muted-foreground">Nothing has passed the keep-for period yet.</p>
                   ) : (
@@ -633,7 +633,7 @@ export function LostPropertySheet({
             }
 
             return (
-              <div className="mt-4 space-y-3">
+              <div className="mt-2 space-y-3">
                 {resolvedRows.length === 0 ? (
                   <p className="text-sm text-muted-foreground">No resolved items yet.</p>
                 ) : (
