@@ -254,7 +254,7 @@ export function LostPropertySheet({
         </SheetHeader>
 
         <div className="flex-1 min-h-0 overflow-y-auto mt-4 space-y-4">
-          {isAdmin && !(canAdd && onAdd && !addOpen) && (
+          {isAdmin && !(canAdd && onAdd) && (
             <div className="flex items-center gap-2 rounded-lg border bg-muted/40 px-3 py-2">
               <label htmlFor="lp-retention" className="text-sm">
                 Keep items for
@@ -277,67 +277,7 @@ export function LostPropertySheet({
           )}
 
           {canAdd && onAdd && (
-            addOpen ? (
-              <div className="space-y-2 rounded-lg border bg-background p-3">
-                <div className="flex items-center justify-between">
-                  <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
-                    Log a new item
-                  </p>
-                  <Button
-                    type="button"
-                    size="icon"
-                    variant="ghost"
-                    className="h-6 w-6"
-                    onClick={() => {
-                      setAddOpen(false);
-                      resetAddForm();
-                    }}
-                    aria-label="Close"
-                  >
-                    <X className="h-4 w-4" />
-                  </Button>
-                </div>
-                <div className="flex items-center gap-2">
-                  <label htmlFor="lp-add-room" className="text-sm shrink-0">
-                    Room
-                  </label>
-                  <select
-                    id="lp-add-room"
-                    value={addRoom === "" ? "" : String(addRoom)}
-                    onChange={(e) =>
-                      setAddRoom(e.target.value === "" ? "" : Number(e.target.value))
-                    }
-                    className="h-8 rounded-xl border bg-background px-2 text-sm"
-                  >
-                    <option value="">{requireRoom ? "Select a room" : "— none —"}</option>
-                    {(roomNumbers ?? []).map((n) => (
-                      <option key={n} value={n}>
-                        Room {n}
-                      </option>
-                    ))}
-                  </select>
-                </div>
-                <Textarea
-                  placeholder="Describe the item (e.g. black wallet on nightstand)"
-                  value={addMessage}
-                  onChange={(e) => setAddMessage(e.target.value.slice(0, 500))}
-                  rows={2}
-                  className="resize-none"
-                />
-                <PhotoComposer value={addPhotos} onChange={setAddPhotos} />
-                <div className="flex justify-end">
-                  <Button
-                    type="button"
-                    size="sm"
-                    onClick={() => void submitAdd()}
-                    disabled={submitting || !addMessage.trim()}
-                  >
-                    <Plus className="h-3.5 w-3.5 mr-1" />
-                    {submitting ? "Logging…" : "Log item"}
-                  </Button>
-                </div>
-              </div>
-            ) : (
+            <div className="space-y-2">
               <div className={isAdmin ? "grid grid-cols-2 gap-2" : undefined}>
                 <Button
                   type="button"
@@ -373,7 +313,68 @@ export function LostPropertySheet({
                   </div>
                 )}
               </div>
-            )
+              {addOpen && (
+                <div className="space-y-2 rounded-lg border bg-background p-3">
+                  <div className="flex items-center justify-between">
+                    <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+                      Log a new item
+                    </p>
+                    <Button
+                      type="button"
+                      size="icon"
+                      variant="ghost"
+                      className="h-6 w-6"
+                      onClick={() => {
+                        setAddOpen(false);
+                        resetAddForm();
+                      }}
+                      aria-label="Close"
+                    >
+                      <X className="h-4 w-4" />
+                    </Button>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <label htmlFor="lp-add-room" className="text-sm shrink-0">
+                      Room
+                    </label>
+                    <select
+                      id="lp-add-room"
+                      value={addRoom === "" ? "" : String(addRoom)}
+                      onChange={(e) =>
+                        setAddRoom(e.target.value === "" ? "" : Number(e.target.value))
+                      }
+                      className="h-8 rounded-xl border bg-background px-2 text-sm"
+                    >
+                      <option value="">{requireRoom ? "Select a room" : "— none —"}</option>
+                      {(roomNumbers ?? []).map((n) => (
+                        <option key={n} value={n}>
+                          Room {n}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+                  <Textarea
+                    placeholder="Describe the item (e.g. black wallet on nightstand)"
+                    value={addMessage}
+                    onChange={(e) => setAddMessage(e.target.value.slice(0, 500))}
+                    rows={2}
+                    className="resize-none"
+                  />
+                  <PhotoComposer value={addPhotos} onChange={setAddPhotos} />
+                  <div className="flex justify-end">
+                    <Button
+                      type="button"
+                      size="sm"
+                      onClick={() => void submitAdd()}
+                      disabled={submitting || !addMessage.trim()}
+                    >
+                      <Plus className="h-3.5 w-3.5 mr-1" />
+                      {submitting ? "Logging…" : "Log item"}
+                    </Button>
+                  </div>
+                </div>
+              )}
+            </div>
           )}
           {/* Section pills */}
           <div className="mt-4 inline-flex w-full justify-center rounded-full border p-1 bg-background items-center">
