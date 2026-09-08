@@ -147,8 +147,7 @@ export function LostPropertySheet({
   };
   // Re-render every minute so countdowns tick.
   const [, setTick] = useState(0);
-  const [expiredExpanded, setExpiredExpanded] = useState(false);
-  const [resolvedExpanded, setResolvedExpanded] = useState(false);
+  const [activeTab, setActiveTab] = useState<"open" | "expired" | "resolved">("open");
   const [openPage, setOpenPage] = useState(0);
   const PAGE_SIZE = 15;
 
