@@ -1,6 +1,6 @@
 // Maintenance Log sheet (composer + open/completed lists).
 // Extracted verbatim from src/routes/app.tsx.
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { Check, ChevronDown, Plus, Settings, Trash2, Wrench, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
