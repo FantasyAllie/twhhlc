@@ -1,6 +1,6 @@
 // Maintenance Log sheet (composer + open/completed lists).
 // Extracted verbatim from src/routes/app.tsx.
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { Check, ChevronDown, Plus, Settings, Trash2, Wrench, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -71,6 +71,26 @@ export function MaintenanceLogSheet({
   const canEditPhotos = (m: MaintenanceRequest) =>
     isAdmin || (!!authUsername && m.created_by_username === authUsername);
 
+  const RETENTION_KEY = "maintenance_retention_months";
+  const [retentionMonths, setRetentionMonths] = useState<number>(() => {
+    if (typeof window === "undefined") return 3;
+    const raw = window.localStorage.getItem(RETENTION_KEY);
+    const n = raw === null ? NaN : Number(raw);
+    return Number.isFinite(n) && n >= 0 ? n : 3;
+  });
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    window.localStorage.setItem(RETENTION_KEY, String(retentionMonths));
+  }, [retentionMonths]);
+  const isWithinRetention = (iso: string | null) => {
+    if (retentionMonths <= 0) return false;
+    if (!iso) return true;
+    const done = new Date(iso).getTime();
+    const monthsElapsed = (Date.now() - done) / (1000 * 60 * 60 * 24 * 30.44);
+    return monthsElapsed < retentionMonths;
+  };
+  const [settingsOpen, setSettingsOpen] = useState(false);
+
   const [activeTab, setActiveTab] = useState<"open" | "completed">("open");
   const [page, setPage] = useState(0);
   const PAGE_SIZE = 15;
@@ -80,8 +100,8 @@ export function MaintenanceLogSheet({
     [maintenanceRequests],
   );
   const completedItems = useMemo(
-    () => maintenanceRequests.filter((m) => m.done),
-    [maintenanceRequests],
+    () => maintenanceRequests.filter((m) => m.done && isWithinRetention(m.done_at)),
+    [maintenanceRequests, retentionMonths],
   );
 
   const activeItems = activeTab === "open" ? openItems : completedItems;
@@ -216,8 +236,56 @@ export function MaintenanceLogSheet({
               : "Log a maintenance issue for Reception or Maintenance to action."}
           </SheetDescription>
         </SheetHeader>
-        <div className="mt-4 border-b pb-4">
-          {maintenanceComposerOpen ? (
+        <div className="mt-4 border-b pb-4 space-y-2">
+          <div className={isAdmin ? "grid grid-cols-2 gap-2" : undefined}>
+            <Button
+              type="button"
+              variant="outline"
+              className="w-full justify-between"
+              onClick={() => {
+                setMaintenanceComposerOpen(!maintenanceComposerOpen);
+                if (maintenanceComposerOpen) {
+                  setNewMaintenanceRoom("");
+                  setNewMaintenanceText("");
+                  setNewMaintenancePhotos([]);
+                }
+              }}
+              aria-expanded={maintenanceComposerOpen}
+            >
+              <span className="flex items-center gap-2">
+                <Plus className="h-4 w-4" />
+                Log a new issue
+              </span>
+              <ChevronDown
+                className={
+                  "h-4 w-4 opacity-60 transition-transform " +
+                  (maintenanceComposerOpen ? "rotate-180" : "")
+                }
+              />
+            </Button>
+            {isAdmin && (
+              <Button
+                type="button"
+                variant="outline"
+                className="w-full justify-between"
+                onClick={() => setSettingsOpen((open) => !open)}
+                aria-expanded={settingsOpen}
+              >
+                <span className="flex items-center gap-2">
+                  <Settings className="h-4 w-4" />
+                  Settings
+                </span>
+                <ChevronDown
+                  className={
+                    "h-4 w-4 opacity-60 transition-transform " +
+                    (settingsOpen ? "rotate-180" : "")
+                  }
+                />
+              </Button>
+            )}
+          </div>
+
+          {maintenanceComposerOpen && (
             <div className="flex flex-col gap-2 rounded-lg border bg-background p-3">
               <div className="flex items-center justify-between">
                 <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
@@ -302,19 +370,45 @@ export function MaintenanceLogSheet({
                 </Button>
               )}
             </div>
-          ) : (
-            <Button
-              type="button"
-              variant="outline"
-              className="w-full justify-between"
-              onClick={() => setMaintenanceComposerOpen(true)}
-            >
-              <span className="flex items-center gap-2">
-                <Plus className="h-4 w-4" />
-                Log a new issue
-              </span>
-              <ChevronDown className="h-4 w-4 opacity-60" />
-            </Button>
+          )}
+
+          {settingsOpen && (
+            <div className="flex flex-col gap-2 rounded-lg border bg-background p-3">
+              <div className="flex items-center justify-between">
+                <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+                  Settings
+                </p>
+                <Button
+                  type="button"
+                  size="icon"
+                  variant="ghost"
+                  className="h-6 w-6"
+                  onClick={() => setSettingsOpen(false)}
+                  aria-label="Close"
+                >
+                  <X className="h-4 w-4" />
+                </Button>
+              </div>
+              <div className="flex items-center gap-2 rounded-lg border bg-muted/40 px-3 py-2">
+                <label htmlFor="maint-retention" className="text-sm">
+                  Keep completed tasks for
+                </label>
+                <Input
+                  id="maint-retention"
+                  type="number"
+                  inputMode="numeric"
+                  min={0}
+                  max={120}
+                  value={retentionMonths}
+                  onChange={(e) => {
+                    const n = Number(e.target.value);
+                    if (Number.isFinite(n) && n >= 0) setRetentionMonths(Math.floor(n));
+                  }}
+                  className="h-8 w-16 text-center"
+                />
+                <span className="text-sm">months</span>
+              </div>
+            </div>
           )}
         </div>
 
