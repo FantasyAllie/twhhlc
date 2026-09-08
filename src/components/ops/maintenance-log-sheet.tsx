@@ -71,6 +71,26 @@ export function MaintenanceLogSheet({
   const canEditPhotos = (m: MaintenanceRequest) =>
     isAdmin || (!!authUsername && m.created_by_username === authUsername);
 
+  const RETENTION_KEY = "maintenance_retention_months";
+  const [retentionMonths, setRetentionMonths] = useState<number>(() => {
+    if (typeof window === "undefined") return 3;
+    const raw = window.localStorage.getItem(RETENTION_KEY);
+    const n = raw === null ? NaN : Number(raw);
+    return Number.isFinite(n) && n >= 0 ? n : 3;
+  });
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    window.localStorage.setItem(RETENTION_KEY, String(retentionMonths));
+  }, [retentionMonths]);
+  const isWithinRetention = (iso: string | null) => {
+    if (retentionMonths <= 0) return false;
+    if (!iso) return true;
+    const done = new Date(iso).getTime();
+    const monthsElapsed = (Date.now() - done) / (1000 * 60 * 60 * 24 * 30.44);
+    return monthsElapsed < retentionMonths;
+  };
+  const [settingsOpen, setSettingsOpen] = useState(false);
+
   const [activeTab, setActiveTab] = useState<"open" | "completed">("open");
   const [page, setPage] = useState(0);
   const PAGE_SIZE = 15;
