@@ -352,268 +352,263 @@ export function LostPropertySheet({
               </Button>
             )
           )}
-          {(() => {
-            const pageCount = Math.max(1, Math.ceil(openRows.length / PAGE_SIZE));
-            const page = Math.min(openPage, pageCount - 1);
-            const pagedOpen = openRows.slice(page * PAGE_SIZE, page * PAGE_SIZE + PAGE_SIZE);
-            return [
-            {
-              key: "open",
-              label: `Open (${openRows.length})`,
-              list: pagedOpen,
-              empty: "No open lost property.",
-              collapsible: false,
-              expanded: true,
-              toggle: () => {},
-              pager:
-                pageCount > 1 ? (
-                  <div className="flex items-center justify-between gap-2 pt-1">
-                    <Button
-                      type="button"
-                      size="sm"
-                      variant="outline"
-                      className="h-8 text-xs"
-                      disabled={page === 0}
-                      onClick={() => setOpenPage(page - 1)}
-                    >
-                      Previous
-                    </Button>
-                    <span className="text-xs text-muted-foreground">
-                      Page {page + 1} of {pageCount}
-                    </span>
-                    <Button
-                      type="button"
-                      size="sm"
-                      variant="outline"
-                      className="h-8 text-xs"
-                      disabled={page >= pageCount - 1}
-                      onClick={() => setOpenPage(page + 1)}
-                    >
-                      Next
-                    </Button>
-                  </div>
-                ) : null,
-            },
-            {
-              key: "expired",
-              label: `Expired (${expiredRows.length})`,
-              list: expiredRows,
-              empty: "Nothing has passed the keep-for period yet.",
-              collapsible: true,
-              expanded: expiredExpanded,
-              toggle: () => setExpiredExpanded((v) => !v),
-              pager: null,
-            },
-          ].map((group) => (
-            <div key={group.key} className="space-y-2">
-            {group.collapsible ? (
-              <button
-                type="button"
-                onClick={group.toggle}
-                className="flex w-full items-center justify-between rounded-lg border bg-muted/30 px-3 py-2 text-xs font-semibold uppercase tracking-wide text-muted-foreground"
-              >
-                <span>{group.label}</span>
-                <ChevronDown
+          {/* Section pills */}
+          <div className="mt-4 inline-flex w-full justify-center rounded-full border p-1 bg-background items-center">
+            {([
+              { key: "open", label: `Open (${openRows.length})` },
+              { key: "expired", label: `Expired (${expiredRows.length})` },
+              { key: "resolved", label: `Resolved (${resolvedRows.length})` },
+            ] as { key: "open" | "expired" | "resolved"; label: string }[]).map((tab) => {
+              const active = activeTab === tab.key;
+              return (
+                <button
+                  key={tab.key}
+                  type="button"
+                  onClick={() => setActiveTab(tab.key)}
                   className={
-                    "h-4 w-4 transition-transform " + (group.expanded ? "rotate-180" : "")
+                    "flex-1 px-2 sm:px-4 h-8 text-xs sm:text-sm rounded-full transition-colors whitespace-nowrap " +
+                    (active
+                      ? "bg-primary text-primary-foreground shadow-sm font-medium"
+                      : "text-muted-foreground hover:text-foreground")
                   }
-                />
-              </button>
-            ) : (
-              <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
-                {group.label}
-              </p>
-            )}
-            {!group.expanded ? null : group.list.length === 0 ? (
-              <p className="text-sm text-muted-foreground">{group.empty}</p>
-            ) : (
+                >
+                  {tab.label}
+                </button>
+              );
+            })}
+          </div>
 
-              group.list.map((r) => (
-                <div key={r.id} className="flex items-start gap-2 rounded-lg border bg-background p-3">
-                  <div className="flex-1 min-w-0">
-                    <div className="flex items-center gap-2 flex-wrap">
-                      {typeof r.room_number === "number" && (
-                        <span className="inline-flex h-6 items-center rounded-full bg-primary/10 text-primary px-2 text-xs font-semibold">
-                          Room {r.room_number}
-                        </span>
-                      )}
-                      <span className="text-xs text-muted-foreground">
-                        {fmt(r.created_at)}
-                        {r.created_by_username ? ` · ${r.created_by_username}` : ""}
-                      </span>
-                    </div>
-                    <p className="mt-1 text-sm whitespace-pre-wrap break-words">{r.message}</p>
-                    {r.found_by_department && (
-                      <span className="mt-1 inline-flex h-5 items-center rounded-full bg-muted text-muted-foreground px-2 text-[10px] font-semibold uppercase tracking-wide">
-                        Found by {r.found_by_department}
+          {(() => {
+            const renderOpenItem = (r: LostPropertyRow) => (
+              <div key={r.id} className="flex items-start gap-2 rounded-lg border bg-background p-3">
+                <div className="flex-1 min-w-0">
+                  <div className="flex items-center gap-2 flex-wrap">
+                    {typeof r.room_number === "number" && (
+                      <span className="inline-flex h-6 items-center rounded-full bg-primary/10 text-primary px-2 text-xs font-semibold">
+                        Room {r.room_number}
                       </span>
                     )}
-                    <PhotoAttachments
-                      kind="lost_property"
-                      entryId={r.id}
-                      paths={r.photo_paths ?? []}
-                      canEdit={
-                        !!isAdmin ||
-                        (!!currentUsername && r.created_by_username === currentUsername)
-                      }
-                      onChange={(next) => setRowPhotoPaths(r.id, next)}
-                    />
+                    <span className="text-xs text-muted-foreground">
+                      {fmt(r.created_at)}
+                      {r.created_by_username ? ` · ${r.created_by_username}` : ""}
+                    </span>
                   </div>
-                  {canResolve ? (
-                    <div className="flex flex-col gap-1 shrink-0">
+                  <p className="mt-1 text-sm whitespace-pre-wrap break-words">{r.message}</p>
+                  {r.found_by_department && (
+                    <span className="mt-1 inline-flex h-5 items-center rounded-full bg-muted text-muted-foreground px-2 text-[10px] font-semibold uppercase tracking-wide">
+                      Found by {r.found_by_department}
+                    </span>
+                  )}
+                  <PhotoAttachments
+                    kind="lost_property"
+                    entryId={r.id}
+                    paths={r.photo_paths ?? []}
+                    canEdit={
+                      !!isAdmin ||
+                      (!!currentUsername && r.created_by_username === currentUsername)
+                    }
+                    onChange={(next) => setRowPhotoPaths(r.id, next)}
+                  />
+                </div>
+                {canResolve ? (
+                  <div className="flex flex-col gap-1 shrink-0">
+                    <Button
+                      type="button"
+                      size="sm"
+                      variant="default"
+                      className="h-8 text-xs"
+                      onClick={() => void setStatus(r.id, "collected")}
+                    >
+                      <Check className="h-3.5 w-3.5 mr-1" />
+                      Collected
+                    </Button>
+                    {onReply && (
                       <Button
                         type="button"
                         size="sm"
-                        variant="default"
+                        variant="outline"
                         className="h-8 text-xs"
-                        onClick={() => void setStatus(r.id, "collected")}
-                      >
-                        <Check className="h-3.5 w-3.5 mr-1" />
-                        Collected
-                      </Button>
-                      {onReply && (
-                        <Button
-                          type="button"
-                          size="sm"
-                          variant="outline"
-                          className="h-8 text-xs"
-                          onClick={() =>
-                            onReply({
-                              id: r.id,
-                              roomNumber: r.room_number,
-                              message: r.message,
-                              sender: r.created_by_username,
-                            })
-                          }
-                        >
-                          <MessageSquare className="h-3.5 w-3.5 mr-1" />
-                          Reply
-                        </Button>
-                      )}
-                      {canDiscard(r.created_at) ? (
-                        <Button
-                          type="button"
-                          size="sm"
-                          variant="outline"
-                          className="h-8 text-xs"
-                          onClick={() => void setStatus(r.id, "discarded")}
-                        >
-                          <Trash2 className="h-3.5 w-3.5 mr-1" />
-                          Throw away
-                        </Button>
-                      ) : (
-                        (() => {
-                          const ms = msUntilDiscardable(r.created_at);
-                          const urgent = ms > 0 && ms <= 24 * 60 * 60 * 1000;
-                          return (
-                            <span
-                              title={`Disposable ${new Date(
-                                new Date(r.created_at).getTime() +
-                                  retentionMonths * 30.44 * 24 * 60 * 60 * 1000,
-                              ).toLocaleString()}`}
-                              className={
-                                "text-[10px] text-center leading-tight " +
-                                (urgent
-                                  ? "text-destructive font-semibold"
-                                  : "text-muted-foreground")
-                              }
-                            >
-                              {formatCountdown(ms)}
-                            </span>
-                          );
-                        })()
-                      )}
-                    </div>
-                  ) : (
-                    <span className="text-xs text-muted-foreground shrink-0 pt-1">Awaiting reception</span>
-                  )}
-                  {isAdmin && (
-                    <Button
-                      type="button"
-                      size="icon"
-                      variant="ghost"
-                      className="h-8 w-8 shrink-0 text-muted-foreground hover:text-destructive"
-                      onClick={() => void softDelete(r.id)}
-                      aria-label="Delete entry"
-                    >
-                      <Trash2 className="h-4 w-4" />
-                    </Button>
-                  )}
-                </div>
-              ))
-            )}
-            {group.pager}
-              </div>
-            ));
-          })()}
-          {resolvedRows.length > 0 && (
-            <div className="space-y-2">
-              <button
-                type="button"
-                onClick={() => setResolvedExpanded((v) => !v)}
-                className="flex w-full items-center justify-between rounded-lg border bg-muted/30 px-3 py-2 text-xs font-semibold uppercase tracking-wide text-muted-foreground"
-              >
-                <span>Resolved ({resolvedRows.length})</span>
-                <ChevronDown
-                  className={
-                    "h-4 w-4 transition-transform " + (resolvedExpanded ? "rotate-180" : "")
-                  }
-                />
-              </button>
-              {resolvedExpanded && resolvedRows.map((r) => (
-
-                <div key={r.id} className="flex items-start gap-2 rounded-lg border bg-muted/40 p-3">
-                  <div className="flex-1 min-w-0">
-                    <div className="flex items-center gap-2 flex-wrap">
-                      {typeof r.room_number === "number" && (
-                        <span className="inline-flex h-6 items-center rounded-full bg-muted text-muted-foreground px-2 text-xs font-semibold">
-                          Room {r.room_number}
-                        </span>
-                      )}
-                      <span
-                        className={
-                          r.status === "collected"
-                            ? "inline-flex h-5 items-center rounded-full bg-emerald-500/15 text-emerald-700 dark:text-emerald-300 px-2 text-[10px] font-semibold uppercase"
-                            : "inline-flex h-5 items-center rounded-full bg-destructive/15 text-destructive px-2 text-[10px] font-semibold uppercase"
+                        onClick={() =>
+                          onReply({
+                            id: r.id,
+                            roomNumber: r.room_number,
+                            message: r.message,
+                            sender: r.created_by_username,
+                          })
                         }
                       >
-                        {r.status === "collected" ? "Collected" : "Thrown away"}
-                      </span>
-                      <span className="text-xs text-muted-foreground">
-                        {r.resolved_at ? fmt(r.resolved_at) : ""}
-                        {r.resolved_by_username ? ` · ${r.resolved_by_username}` : ""}
-                      </span>
-                    </div>
-                    <p className="mt-1 text-sm whitespace-pre-wrap break-words text-muted-foreground line-through">
-                      {r.message}
-                    </p>
-                    <PhotoAttachments
-                      kind="lost_property"
-                      entryId={r.id}
-                      paths={r.photo_paths ?? []}
-                      canEdit={
-                        !!isAdmin ||
-                        (!!currentUsername && r.created_by_username === currentUsername)
-                      }
-                      onChange={(next) => setRowPhotoPaths(r.id, next)}
-                    />
+                        <MessageSquare className="h-3.5 w-3.5 mr-1" />
+                        Reply
+                      </Button>
+                    )}
+                    {canDiscard(r.created_at) ? (
+                      <Button
+                        type="button"
+                        size="sm"
+                        variant="outline"
+                        className="h-8 text-xs"
+                        onClick={() => void setStatus(r.id, "discarded")}
+                      >
+                        <Trash2 className="h-3.5 w-3.5 mr-1" />
+                        Throw away
+                      </Button>
+                    ) : (
+                      (() => {
+                        const ms = msUntilDiscardable(r.created_at);
+                        const urgent = ms > 0 && ms <= 24 * 60 * 60 * 1000;
+                        return (
+                          <span
+                            title={`Disposable ${new Date(
+                              new Date(r.created_at).getTime() +
+                                retentionMonths * 30.44 * 24 * 60 * 60 * 1000,
+                            ).toLocaleString()}`}
+                            className={
+                              "text-[10px] text-center leading-tight " +
+                              (urgent
+                                ? "text-destructive font-semibold"
+                                : "text-muted-foreground")
+                            }
+                          >
+                            {formatCountdown(ms)}
+                          </span>
+                        );
+                      })()
+                    )}
                   </div>
-                  {canResolve && (
-                    <Button
-                      type="button"
-                      size="icon"
-                      variant="ghost"
-                      className="h-8 w-8 text-muted-foreground hover:text-destructive"
-                      onClick={() => void softDelete(r.id)}
-                      aria-label="Delete entry"
-                    >
-                      <Trash2 className="h-4 w-4" />
-                    </Button>
+                ) : (
+                  <span className="text-xs text-muted-foreground shrink-0 pt-1">Awaiting reception</span>
+                )}
+                {isAdmin && (
+                  <Button
+                    type="button"
+                    size="icon"
+                    variant="ghost"
+                    className="h-8 w-8 shrink-0 text-muted-foreground hover:text-destructive"
+                    onClick={() => void softDelete(r.id)}
+                    aria-label="Delete entry"
+                  >
+                    <Trash2 className="h-4 w-4" />
+                  </Button>
+                )}
+              </div>
+            );
+
+            if (activeTab === "open") {
+              const pageCount = Math.max(1, Math.ceil(openRows.length / PAGE_SIZE));
+              const page = Math.min(openPage, pageCount - 1);
+              const pagedOpen = openRows.slice(page * PAGE_SIZE, page * PAGE_SIZE + PAGE_SIZE);
+              return (
+                <div className="mt-4 space-y-3">
+                  {openRows.length === 0 ? (
+                    <p className="text-sm text-muted-foreground">No open lost property.</p>
+                  ) : (
+                    <>
+                      {pagedOpen.map((r) => renderOpenItem(r))}
+                      {pageCount > 1 && (
+                        <div className="flex items-center justify-between gap-2 pt-1">
+                          <Button
+                            type="button"
+                            size="sm"
+                            variant="outline"
+                            className="h-8 text-xs"
+                            disabled={page === 0}
+                            onClick={() => setOpenPage(page - 1)}
+                          >
+                            Previous
+                          </Button>
+                          <span className="text-xs text-muted-foreground">
+                            Page {page + 1} of {pageCount}
+                          </span>
+                          <Button
+                            type="button"
+                            size="sm"
+                            variant="outline"
+                            className="h-8 text-xs"
+                            disabled={page >= pageCount - 1}
+                            onClick={() => setOpenPage(page + 1)}
+                          >
+                            Next
+                          </Button>
+                        </div>
+                      )}
+                    </>
                   )}
                 </div>
-              ))}
-            </div>
-          )}
+              );
+            }
+
+            if (activeTab === "expired") {
+              return (
+                <div className="mt-4 space-y-3">
+                  {expiredRows.length === 0 ? (
+                    <p className="text-sm text-muted-foreground">Nothing has passed the keep-for period yet.</p>
+                  ) : (
+                    expiredRows.map((r) => renderOpenItem(r))
+                  )}
+                </div>
+              );
+            }
+
+            return (
+              <div className="mt-4 space-y-3">
+                {resolvedRows.length === 0 ? (
+                  <p className="text-sm text-muted-foreground">No resolved items yet.</p>
+                ) : (
+                  resolvedRows.map((r) => (
+                    <div key={r.id} className="flex items-start gap-2 rounded-lg border bg-muted/40 p-3">
+                      <div className="flex-1 min-w-0">
+                        <div className="flex items-center gap-2 flex-wrap">
+                          {typeof r.room_number === "number" && (
+                            <span className="inline-flex h-6 items-center rounded-full bg-muted text-muted-foreground px-2 text-xs font-semibold">
+                              Room {r.room_number}
+                            </span>
+                          )}
+                          <span
+                            className={
+                              r.status === "collected"
+                                ? "inline-flex h-5 items-center rounded-full bg-emerald-500/15 text-emerald-700 dark:text-emerald-300 px-2 text-[10px] font-semibold uppercase"
+                                : "inline-flex h-5 items-center rounded-full bg-destructive/15 text-destructive px-2 text-[10px] font-semibold uppercase"
+                            }
+                          >
+                            {r.status === "collected" ? "Collected" : "Thrown away"}
+                          </span>
+                          <span className="text-xs text-muted-foreground">
+                            {r.resolved_at ? fmt(r.resolved_at) : ""}
+                            {r.resolved_by_username ? ` · ${r.resolved_by_username}` : ""}
+                          </span>
+                        </div>
+                        <p className="mt-1 text-sm whitespace-pre-wrap break-words text-muted-foreground line-through">
+                          {r.message}
+                        </p>
+                        <PhotoAttachments
+                          kind="lost_property"
+                          entryId={r.id}
+                          paths={r.photo_paths ?? []}
+                          canEdit={
+                            !!isAdmin ||
+                            (!!currentUsername && r.created_by_username === currentUsername)
+                          }
+                          onChange={(next) => setRowPhotoPaths(r.id, next)}
+                        />
+                      </div>
+                      {canResolve && (
+                        <Button
+                          type="button"
+                          size="icon"
+                          variant="ghost"
+                          className="h-8 w-8 text-muted-foreground hover:text-destructive"
+                          onClick={() => void softDelete(r.id)}
+                          aria-label="Delete entry"
+                        >
+                          <Trash2 className="h-4 w-4" />
+                        </Button>
+                      )}
+                    </div>
+                  ))
+                )}
+              </div>
+            );
+          })()}
         </div>
       </SheetContent>
     </Sheet>
