@@ -452,11 +452,6 @@ export function LostPropertySheet({
                     </span>
                   </div>
                   <p className="mt-1 text-sm whitespace-pre-wrap break-words">{r.message}</p>
-                  {r.found_by_department && (
-                    <span className="mt-1 inline-flex h-5 items-center rounded-full bg-muted text-muted-foreground px-2 text-[10px] font-semibold uppercase tracking-wide">
-                      Found by {r.found_by_department}
-                    </span>
-                  )}
                   <PhotoAttachments
                     kind="lost_property"
                     entryId={r.id}
