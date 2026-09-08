@@ -236,8 +236,56 @@ export function MaintenanceLogSheet({
               : "Log a maintenance issue for Reception or Maintenance to action."}
           </SheetDescription>
         </SheetHeader>
-        <div className="mt-4 border-b pb-4">
-          {maintenanceComposerOpen ? (
+        <div className="mt-4 border-b pb-4 space-y-2">
+          <div className={isAdmin ? "grid grid-cols-2 gap-2" : undefined}>
+            <Button
+              type="button"
+              variant="outline"
+              className="w-full justify-between"
+              onClick={() => {
+                setMaintenanceComposerOpen(!maintenanceComposerOpen);
+                if (maintenanceComposerOpen) {
+                  setNewMaintenanceRoom("");
+                  setNewMaintenanceText("");
+                  setNewMaintenancePhotos([]);
+                }
+              }}
+              aria-expanded={maintenanceComposerOpen}
+            >
+              <span className="flex items-center gap-2">
+                <Plus className="h-4 w-4" />
+                Log a new issue
+              </span>
+              <ChevronDown
+                className={
+                  "h-4 w-4 opacity-60 transition-transform " +
+                  (maintenanceComposerOpen ? "rotate-180" : "")
+                }
+              />
+            </Button>
+            {isAdmin && (
+              <Button
+                type="button"
+                variant="outline"
+                className="w-full justify-between"
+                onClick={() => setSettingsOpen((open) => !open)}
+                aria-expanded={settingsOpen}
+              >
+                <span className="flex items-center gap-2">
+                  <Settings className="h-4 w-4" />
+                  Settings
+                </span>
+                <ChevronDown
+                  className={
+                    "h-4 w-4 opacity-60 transition-transform " +
+                    (settingsOpen ? "rotate-180" : "")
+                  }
+                />
+              </Button>
+            )}
+          </div>
+
+          {maintenanceComposerOpen && (
             <div className="flex flex-col gap-2 rounded-lg border bg-background p-3">
               <div className="flex items-center justify-between">
                 <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
@@ -322,19 +370,45 @@ export function MaintenanceLogSheet({
                 </Button>
               )}
             </div>
-          ) : (
-            <Button
-              type="button"
-              variant="outline"
-              className="w-full justify-between"
-              onClick={() => setMaintenanceComposerOpen(true)}
-            >
-              <span className="flex items-center gap-2">
-                <Plus className="h-4 w-4" />
-                Log a new issue
-              </span>
-              <ChevronDown className="h-4 w-4 opacity-60" />
-            </Button>
+          )}
+
+          {settingsOpen && (
+            <div className="flex flex-col gap-2 rounded-lg border bg-background p-3">
+              <div className="flex items-center justify-between">
+                <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+                  Settings
+                </p>
+                <Button
+                  type="button"
+                  size="icon"
+                  variant="ghost"
+                  className="h-6 w-6"
+                  onClick={() => setSettingsOpen(false)}
+                  aria-label="Close"
+                >
+                  <X className="h-4 w-4" />
+                </Button>
+              </div>
+              <div className="flex items-center gap-2 rounded-lg border bg-muted/40 px-3 py-2">
+                <label htmlFor="maint-retention" className="text-sm">
+                  Keep completed tasks for
+                </label>
+                <Input
+                  id="maint-retention"
+                  type="number"
+                  inputMode="numeric"
+                  min={0}
+                  max={120}
+                  value={retentionMonths}
+                  onChange={(e) => {
+                    const n = Number(e.target.value);
+                    if (Number.isFinite(n) && n >= 0) setRetentionMonths(Math.floor(n));
+                  }}
+                  className="h-8 w-16 text-center"
+                />
+                <span className="text-sm">months</span>
+              </div>
+            </div>
           )}
         </div>
 
