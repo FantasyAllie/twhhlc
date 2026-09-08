@@ -368,6 +368,44 @@ export function LostPropertySheet({
                   </div>
                 </div>
               )}
+              {settingsOpen && (
+                <div className="space-y-2 rounded-lg border bg-background p-3">
+                  <div className="flex items-center justify-between">
+                    <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+                      Settings
+                    </p>
+                    <Button
+                      type="button"
+                      size="icon"
+                      variant="ghost"
+                      className="h-6 w-6"
+                      onClick={() => setSettingsOpen(false)}
+                      aria-label="Close"
+                    >
+                      <X className="h-4 w-4" />
+                    </Button>
+                  </div>
+                  <div className="flex items-center gap-2 rounded-lg border bg-muted/40 px-3 py-2">
+                    <label htmlFor="lp-retention" className="text-sm">
+                      Keep items for
+                    </label>
+                    <Input
+                      id="lp-retention"
+                      type="number"
+                      inputMode="numeric"
+                      min={0}
+                      max={120}
+                      value={retentionMonths}
+                      onChange={(e) => {
+                        const n = Number(e.target.value);
+                        if (Number.isFinite(n) && n >= 0) setRetentionMonths(Math.floor(n));
+                      }}
+                      className="h-8 w-16 text-center"
+                    />
+                    <span className="text-sm">months</span>
+                  </div>
+                </div>
+              )}
             </div>
           )}
           {/* Section pills */}
