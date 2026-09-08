@@ -184,7 +184,9 @@ export function LostPropertySheet({
   }, [open, qc]);
 
   const rows = useMemo(() => q.data ?? [], [q.data]);
-  const openRows = rows.filter((r) => r.status === "open");
+  const allOpen = rows.filter((r) => r.status === "open");
+  const openRows = allOpen.filter((r) => !canDiscard(r.created_at));
+  const expiredRows = allOpen.filter((r) => canDiscard(r.created_at));
   const resolvedRows = rows.filter((r) => r.status !== "open").slice(0, 50);
 
   const setStatus = async (id: string, status: "collected" | "discarded") => {
