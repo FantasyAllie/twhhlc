@@ -277,7 +277,7 @@ export function LostPropertySheet({
           )}
 
           {canAdd && onAdd && (
-            <div className="space-y-2">
+            <div className="border-b pb-4 space-y-2">
               <div className={isAdmin ? "grid grid-cols-2 gap-2" : undefined}>
                 <Button
                   type="button"
