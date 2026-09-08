@@ -469,7 +469,8 @@ export function LostPropertySheet({
                 </div>
               ))
             )}
-          </div>
+              </div>
+            ))}
           {resolvedRows.length > 0 && (
             <div className="space-y-2">
               <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
