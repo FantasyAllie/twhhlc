@@ -184,7 +184,9 @@ export function LostPropertySheet({
   }, [open, qc]);
 
   const rows = useMemo(() => q.data ?? [], [q.data]);
-  const openRows = rows.filter((r) => r.status === "open");
+  const allOpen = rows.filter((r) => r.status === "open");
+  const openRows = allOpen.filter((r) => !canDiscard(r.created_at));
+  const expiredRows = allOpen.filter((r) => canDiscard(r.created_at));
   const resolvedRows = rows.filter((r) => r.status !== "open").slice(0, 50);
 
   const setStatus = async (id: string, status: "collected" | "discarded") => {
@@ -346,14 +348,28 @@ export function LostPropertySheet({
               </Button>
             )
           )}
-          <div className="space-y-2">
+          {[
+            {
+              key: "open",
+              label: `Open (${openRows.length})`,
+              list: openRows,
+              empty: "No open lost property.",
+            },
+            {
+              key: "expired",
+              label: `Expired (${expiredRows.length})`,
+              list: expiredRows,
+              empty: "Nothing has passed the keep-for period yet.",
+            },
+          ].map((group) => (
+            <div key={group.key} className="space-y-2">
             <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
-              Open ({openRows.length})
+              {group.label}
             </p>
-            {openRows.length === 0 ? (
-              <p className="text-sm text-muted-foreground">No open lost property.</p>
+            {group.list.length === 0 ? (
+              <p className="text-sm text-muted-foreground">{group.empty}</p>
             ) : (
-              openRows.map((r) => (
+              group.list.map((r) => (
                 <div key={r.id} className="flex items-start gap-2 rounded-lg border bg-background p-3">
                   <div className="flex-1 min-w-0">
                     <div className="flex items-center gap-2 flex-wrap">
@@ -467,7 +483,8 @@ export function LostPropertySheet({
                 </div>
               ))
             )}
-          </div>
+              </div>
+            ))}
           {resolvedRows.length > 0 && (
             <div className="space-y-2">
               <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
