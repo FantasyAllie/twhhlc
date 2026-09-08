@@ -11,7 +11,7 @@ import {
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
-import { PackageSearch, Check, Trash2, Plus, ChevronDown, X, MessageSquare } from "lucide-react";
+import { PackageSearch, Check, Trash2, Plus, ChevronDown, X, MessageSquare, Settings } from "lucide-react";
 import { toast } from "sonner";
 import { PhotoAttachments, PhotoComposer } from "@/components/entry-photos";
 import { supabase as sb } from "@/integrations/supabase/client";
@@ -66,6 +66,7 @@ export function LostPropertySheet({
   const qc = useQueryClient();
 
   const [addOpen, setAddOpen] = useState(false);
+  const [settingsOpen, setSettingsOpen] = useState(false);
   const [addRoom, setAddRoom] = useState<number | "">("");
   const [addMessage, setAddMessage] = useState("");
   const [addPhotos, setAddPhotos] = useState<File[]>([]);
@@ -292,25 +293,18 @@ export function LostPropertySheet({
                   <ChevronDown className="h-4 w-4 opacity-60" />
                 </Button>
                 {isAdmin && (
-                  <div className="flex items-center justify-center gap-2 rounded-lg border bg-muted/40 px-2">
-                    <label htmlFor="lp-retention" className="text-sm">
-                      Keep items for
-                    </label>
-                    <Input
-                      id="lp-retention"
-                      type="number"
-                      inputMode="numeric"
-                      min={0}
-                      max={120}
-                      value={retentionMonths}
-                      onChange={(e) => {
-                        const n = Number(e.target.value);
-                        if (Number.isFinite(n) && n >= 0) setRetentionMonths(Math.floor(n));
-                      }}
-                      className="h-8 w-16 text-center"
-                    />
-                    <span className="text-sm">months</span>
-                  </div>
+                  <Button
+                    type="button"
+                    variant="outline"
+                    className="w-full justify-between"
+                    onClick={() => setSettingsOpen(true)}
+                  >
+                    <span className="flex items-center gap-2">
+                      <Settings className="h-4 w-4" />
+                      Settings
+                    </span>
+                    <ChevronDown className="h-4 w-4 opacity-60" />
+                  </Button>
                 )}
               </div>
               {addOpen && (
@@ -371,6 +365,44 @@ export function LostPropertySheet({
                       <Plus className="h-3.5 w-3.5 mr-1" />
                       {submitting ? "Logging…" : "Log item"}
                     </Button>
+                  </div>
+                </div>
+              )}
+              {settingsOpen && (
+                <div className="space-y-2 rounded-lg border bg-background p-3">
+                  <div className="flex items-center justify-between">
+                    <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+                      Settings
+                    </p>
+                    <Button
+                      type="button"
+                      size="icon"
+                      variant="ghost"
+                      className="h-6 w-6"
+                      onClick={() => setSettingsOpen(false)}
+                      aria-label="Close"
+                    >
+                      <X className="h-4 w-4" />
+                    </Button>
+                  </div>
+                  <div className="flex items-center gap-2 rounded-lg border bg-muted/40 px-3 py-2">
+                    <label htmlFor="lp-retention" className="text-sm">
+                      Keep items for
+                    </label>
+                    <Input
+                      id="lp-retention"
+                      type="number"
+                      inputMode="numeric"
+                      min={0}
+                      max={120}
+                      value={retentionMonths}
+                      onChange={(e) => {
+                        const n = Number(e.target.value);
+                        if (Number.isFinite(n) && n >= 0) setRetentionMonths(Math.floor(n));
+                      }}
+                      className="h-8 w-16 text-center"
+                    />
+                    <span className="text-sm">months</span>
                   </div>
                 </div>
               )}
