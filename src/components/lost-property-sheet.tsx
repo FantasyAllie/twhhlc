@@ -253,29 +253,29 @@ export function LostPropertySheet({
           </SheetDescription>
         </SheetHeader>
 
-        {isAdmin && (
-          <div className="mt-3 flex items-center gap-2 rounded-lg border bg-muted/40 px-3 py-2">
-            <label htmlFor="lp-retention" className="text-sm">
-              Keep items for
-            </label>
-            <Input
-              id="lp-retention"
-              type="number"
-              inputMode="numeric"
-              min={0}
-              max={120}
-              value={retentionMonths}
-              onChange={(e) => {
-                const n = Number(e.target.value);
-                if (Number.isFinite(n) && n >= 0) setRetentionMonths(Math.floor(n));
-              }}
-              className="h-8 w-16 text-center"
-            />
-            <span className="text-sm">months</span>
-          </div>
-        )}
-
         <div className="flex-1 min-h-0 overflow-y-auto mt-4 space-y-4">
+          {isAdmin && !(canAdd && onAdd && !addOpen) && (
+            <div className="flex items-center gap-2 rounded-lg border bg-muted/40 px-3 py-2">
+              <label htmlFor="lp-retention" className="text-sm">
+                Keep items for
+              </label>
+              <Input
+                id="lp-retention"
+                type="number"
+                inputMode="numeric"
+                min={0}
+                max={120}
+                value={retentionMonths}
+                onChange={(e) => {
+                  const n = Number(e.target.value);
+                  if (Number.isFinite(n) && n >= 0) setRetentionMonths(Math.floor(n));
+                }}
+                className="h-8 w-16 text-center"
+              />
+              <span className="text-sm">months</span>
+            </div>
+          )}
+
           {canAdd && onAdd && (
             addOpen ? (
               <div className="space-y-2 rounded-lg border bg-background p-3">
@@ -338,18 +338,41 @@ export function LostPropertySheet({
                 </div>
               </div>
             ) : (
-              <Button
-                type="button"
-                variant="outline"
-                className="w-full justify-between"
-                onClick={() => setAddOpen(true)}
-              >
-                <span className="flex items-center gap-2">
-                  <Plus className="h-4 w-4" />
-                  Log a new item
-                </span>
-                <ChevronDown className="h-4 w-4 opacity-60" />
-              </Button>
+              <div className={isAdmin ? "grid grid-cols-2 gap-2" : undefined}>
+                <Button
+                  type="button"
+                  variant="outline"
+                  className="w-full justify-between"
+                  onClick={() => setAddOpen(true)}
+                >
+                  <span className="flex items-center gap-2">
+                    <Plus className="h-4 w-4" />
+                    Log a new item
+                  </span>
+                  <ChevronDown className="h-4 w-4 opacity-60" />
+                </Button>
+                {isAdmin && (
+                  <div className="flex items-center justify-center gap-2 rounded-lg border bg-muted/40 px-2">
+                    <label htmlFor="lp-retention" className="text-sm">
+                      Keep items for
+                    </label>
+                    <Input
+                      id="lp-retention"
+                      type="number"
+                      inputMode="numeric"
+                      min={0}
+                      max={120}
+                      value={retentionMonths}
+                      onChange={(e) => {
+                        const n = Number(e.target.value);
+                        if (Number.isFinite(n) && n >= 0) setRetentionMonths(Math.floor(n));
+                      }}
+                      className="h-8 w-16 text-center"
+                    />
+                    <span className="text-sm">months</span>
+                  </div>
+                )}
+              </div>
             )
           )}
           {/* Section pills */}
