@@ -33,7 +33,7 @@ export function EditRoomDefaultsSheet({
 }) {
   return (
  <Sheet open={editDefaultsSheetRoom !== null} onOpenChange={(o) => { if (!o) setEditDefaultsSheetRoom(null); }}>
-   <SheetContent side="bottom" className="max-h-[85dvh] overflow-y-auto rounded-t-2xl p-4 sm:p-6">
+   <SheetContent side="bottom" className="overflow-y-auto rounded-t-2xl p-4 sm:p-6">
      {editDefaultsSheetRoom !== null && (() => {
        const n = editDefaultsSheetRoom;
        return (
@@ -103,7 +103,7 @@ export function EditRoomSheet({
 }) {
   return (
   <Sheet open={editRoomSheetNumber !== null} onOpenChange={(o) => { if (!o) setEditRoomSheetNumber(null); }}>
-    <SheetContent side="bottom" className="max-h-[85dvh] overflow-y-auto p-4 sm:p-6">
+    <SheetContent side="bottom" className="overflow-y-auto p-4 sm:p-6">
       {editRoomSheetNumber !== null && (() => {
         const n = editRoomSheetNumber;
         const r = rooms.find((x) => x.room_number === n);

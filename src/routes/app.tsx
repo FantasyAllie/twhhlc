@@ -3595,7 +3595,7 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
  {/* Mobile role-picker sheet (triggered from the burger menu). */}
  {isMobile && canViewAs && (
    <Sheet open={rolePickerSheetOpen} onOpenChange={setRolePickerSheetOpen}>
-     <SheetContent side="bottom" className="max-h-[85dvh] overflow-y-auto rounded-t-2xl p-4 sm:p-6">
+     <SheetContent side="bottom" className="overflow-y-auto rounded-t-2xl p-4 sm:p-6">
        <SheetHeader className="text-left">
          <SheetTitle>Department</SheetTitle>
          <SheetDescription>Switch between your assigned departments.</SheetDescription>
@@ -4120,7 +4120,7 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
 {/* History sheet (Admin) */}
 {/* Hotel switcher sheet */}
 <Sheet open={hotelSwitcherOpen} onOpenChange={setHotelSwitcherOpen}>
-  <SheetContent side="bottom" className="max-h-[85dvh] overflow-y-auto rounded-t-2xl p-4 sm:p-6">
+  <SheetContent side="bottom" className="overflow-y-auto rounded-t-2xl p-4 sm:p-6">
     <SheetHeader className="text-left">
       <SheetTitle>Switch hotel</SheetTitle>
       <SheetDescription>Choose which hotel workspace to work in.</SheetDescription>
@@ -4805,7 +4805,7 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
               return isMobile ? (
                 <Sheet open={hkFiltersOpen} onOpenChange={setHkFiltersOpen}>
                   <SheetTrigger asChild>{triggerBtn}</SheetTrigger>
-                  <SheetContent side="bottom" className="max-h-[85dvh] overflow-y-auto rounded-t-2xl p-4 sm:p-6">
+                  <SheetContent side="bottom" className="overflow-y-auto rounded-t-2xl p-4 sm:p-6">
                     <SheetHeader className="text-left px-0">
                       <SheetTitle>Filter rooms</SheetTitle>
                       <SheetDescription>
@@ -5079,7 +5079,7 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
  </div>
 
  <Sheet open={openRoom !== null} onOpenChange={(o) => { if (!o) { if (openRoom !== null) setShowAllLinen(prev => ({ ...prev, [openRoom]: false })); setOpenRoom(null); setNewMessageText(""); } }}>
-   <SheetContent side="bottom" className="h-[90dvh] max-h-[90dvh] flex flex-col overflow-hidden rounded-t-2xl p-4 sm:p-6">
+   <SheetContent side="bottom" className="max-h-[90dvh] flex flex-col overflow-hidden rounded-t-2xl p-4 sm:p-6">
      <SheetHeader className="text-left space-y-0">
        <SheetTitle>Room {openRoom} — {categoryLabel(roomCategory(openRoom ?? 0), roomTypes)}</SheetTitle>
       {(() => {
@@ -5136,7 +5136,7 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
   />
   <UsersDialog open={usersOpen} onOpenChange={setUsersOpen} />
   <Sheet open={linenDeliveryOpen} onOpenChange={setLinenDeliveryOpen}>
-    <SheetContent side="bottom" className="max-h-[85dvh] overflow-y-auto rounded-t-2xl p-4 sm:p-6">
+    <SheetContent side="bottom" className="overflow-y-auto rounded-t-2xl p-4 sm:p-6">
       <SheetHeader className="text-left">
         <SheetTitle>Linen delivery days</SheetTitle>
         <SheetDescription>

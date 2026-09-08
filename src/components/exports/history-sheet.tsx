@@ -33,7 +33,7 @@ export function HistorySheet({
     : snapshots.filter((s) => s.kind !== "fnb_totals");
   return (
 <Sheet open={open} onOpenChange={onOpenChange}>
-   <SheetContent side="bottom" className="max-h-[90dvh] overflow-hidden rounded-t-2xl p-4 sm:p-6">
+   <SheetContent side="bottom" className="overflow-hidden rounded-t-2xl p-4 sm:p-6">
     <SheetHeader className="text-left">
       <SheetTitle className="flex items-center gap-2">
         <History className="h-4 w-4" />

@@ -34,7 +34,7 @@ export function MaintenanceAreasSheet({
   };
   return (
     <Sheet open={open} onOpenChange={onOpenChange}>
-      <SheetContent side="bottom" className="max-h-[85dvh] overflow-y-auto rounded-t-2xl p-4 sm:p-6">
+      <SheetContent side="bottom" className="overflow-y-auto rounded-t-2xl p-4 sm:p-6">
         <SheetHeader className="text-left">
           <SheetTitle>Maintenance areas</SheetTitle>
           <SheetDescription>
