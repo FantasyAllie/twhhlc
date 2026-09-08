@@ -11,7 +11,7 @@ import {
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
-import { PackageSearch, Check, Trash2, Plus, ChevronDown, X, MessageSquare } from "lucide-react";
+import { PackageSearch, Check, Trash2, Plus, ChevronDown, X, MessageSquare, Settings } from "lucide-react";
 import { toast } from "sonner";
 import { PhotoAttachments, PhotoComposer } from "@/components/entry-photos";
 import { supabase as sb } from "@/integrations/supabase/client";
@@ -66,6 +66,7 @@ export function LostPropertySheet({
   const qc = useQueryClient();
 
   const [addOpen, setAddOpen] = useState(false);
+  const [settingsOpen, setSettingsOpen] = useState(false);
   const [addRoom, setAddRoom] = useState<number | "">("");
   const [addMessage, setAddMessage] = useState("");
   const [addPhotos, setAddPhotos] = useState<File[]>([]);
