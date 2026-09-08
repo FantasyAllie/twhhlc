@@ -284,26 +284,28 @@ export function LostPropertySheet({
                   type="button"
                   variant="outline"
                   className="w-full justify-between"
-                  onClick={() => setAddOpen(true)}
+                  onClick={() => setAddOpen((open) => !open)}
+                  aria-expanded={addOpen}
                 >
                   <span className="flex items-center gap-2">
                     <Plus className="h-4 w-4" />
                     Log a new item
                   </span>
-                  <ChevronDown className="h-4 w-4 opacity-60" />
+                  <ChevronDown className={"h-4 w-4 opacity-60 transition-transform " + (addOpen ? "rotate-180" : "")} />
                 </Button>
                 {isAdmin && (
                   <Button
                     type="button"
                     variant="outline"
                     className="w-full justify-between"
-                    onClick={() => setSettingsOpen(true)}
+                    onClick={() => setSettingsOpen((open) => !open)}
+                    aria-expanded={settingsOpen}
                   >
                     <span className="flex items-center gap-2">
                       <Settings className="h-4 w-4" />
                       Settings
                     </span>
-                    <ChevronDown className="h-4 w-4 opacity-60" />
+                    <ChevronDown className={"h-4 w-4 opacity-60 transition-transform " + (settingsOpen ? "rotate-180" : "")} />
                   </Button>
                 )}
               </div>
