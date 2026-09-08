@@ -147,6 +147,11 @@ export function LostPropertySheet({
   };
   // Re-render every minute so countdowns tick.
   const [, setTick] = useState(0);
+  const [expiredExpanded, setExpiredExpanded] = useState(false);
+  const [resolvedExpanded, setResolvedExpanded] = useState(false);
+  const [openPage, setOpenPage] = useState(0);
+  const PAGE_SIZE = 15;
+
   useEffect(() => {
     if (!open) return;
     const t = window.setInterval(() => setTick((n) => n + 1), 60_000);
