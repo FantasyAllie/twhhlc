@@ -497,15 +497,30 @@ export function LostPropertySheet({
               const pageCount = Math.max(1, Math.ceil(openRows.length / PAGE_SIZE));
               const page = Math.min(openPage, pageCount - 1);
               const pagedOpen = openRows.slice(page * PAGE_SIZE, page * PAGE_SIZE + PAGE_SIZE);
+
+              const pageItems: (number | "ellipsis")[] = (() => {
+                if (pageCount <= 5) {
+                  return Array.from({ length: pageCount }, (_, i) => i + 1);
+                }
+                const current = page + 1;
+                const items: (number | "ellipsis")[] = [1];
+                const start = Math.max(2, current - 2);
+                const end = Math.min(pageCount - 1, current + 2);
+                if (start > 2) items.push("ellipsis");
+                for (let i = start; i <= end; i++) items.push(i);
+                if (end < pageCount - 1) items.push("ellipsis");
+                items.push(pageCount);
+                return items;
+              })();
+
               return (
                 <div className="mt-4 space-y-3">
                   {openRows.length === 0 ? (
                     <p className="text-sm text-muted-foreground">No open lost property.</p>
                   ) : (
                     <>
-                      {pagedOpen.map((r) => renderOpenItem(r))}
                       {pageCount > 1 && (
-                        <div className="flex items-center justify-between gap-2 pt-1">
+                        <div className="flex items-center justify-center gap-1 sm:gap-2 flex-wrap">
                           <Button
                             type="button"
                             size="sm"
@@ -516,9 +531,24 @@ export function LostPropertySheet({
                           >
                             Previous
                           </Button>
-                          <span className="text-xs text-muted-foreground">
-                            Page {page + 1} of {pageCount}
-                          </span>
+                          {pageItems.map((item, idx) =>
+                            item === "ellipsis" ? (
+                              <span key={`ellipsis-${idx}`} className="text-xs text-muted-foreground px-1">
+                                …
+                              </span>
+                            ) : (
+                              <Button
+                                key={item}
+                                type="button"
+                                size="sm"
+                                variant={page + 1 === item ? "default" : "outline"}
+                                className="h-8 w-8 p-0 text-xs"
+                                onClick={() => setOpenPage(item - 1)}
+                              >
+                                {item}
+                              </Button>
+                            )
+                          )}
                           <Button
                             type="button"
                             size="sm"
@@ -531,6 +561,7 @@ export function LostPropertySheet({
                           </Button>
                         </div>
                       )}
+                      {pagedOpen.map((r) => renderOpenItem(r))}
                     </>
                   )}
                 </div>
