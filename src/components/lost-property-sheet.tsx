@@ -653,12 +653,13 @@ export function LostPropertySheet({
                                 : "inline-flex h-5 items-center rounded-full bg-destructive/15 text-destructive px-2 text-[10px] font-semibold uppercase"
                             }
                           >
-                            {r.status === "collected" ? "Collected" : "Thrown away"}
+                            {r.status === "collected"
+                              ? `Collected${r.resolved_by_username ? ` by ${r.resolved_by_username}` : ""}`
+                              : `Thrown away${r.resolved_by_username ? ` by ${r.resolved_by_username}` : ""}`}
                           </span>
-                          <span className="text-xs text-muted-foreground">
-                            {r.resolved_at ? fmt(r.resolved_at) : ""}
-                            {r.resolved_by_username ? ` · ${r.resolved_by_username}` : ""}
-                          </span>
+                          {r.resolved_at && (
+                            <span className="text-xs text-muted-foreground">{fmt(r.resolved_at)}</span>
+                          )}
                         </div>
                         <p className="mt-1 text-sm whitespace-pre-wrap break-words text-muted-foreground line-through">
                           {r.message}
