@@ -28,7 +28,6 @@ type LostPropertyRow = {
   deleted_at: string | null;
   created_at: string;
   photo_paths: string[];
-  found_by_department: string | null;
 };
 
 export function LostPropertySheet({
@@ -164,7 +163,7 @@ export function LostPropertySheet({
     queryFn: async (): Promise<LostPropertyRow[]> => {
       const { data, error } = await supabase
         .from("lost_property" as never)
-          .select("id,room_number,message,created_by_username,created_by_role,status,resolved_by_username,resolved_at,deleted_at,created_at,photo_paths,found_by_department")
+          .select("id,room_number,message,created_by_username,created_by_role,status,resolved_by_username,resolved_at,deleted_at,created_at,photo_paths")
         .is("deleted_at", null)
         .order("created_at", { ascending: false })
         .limit(500);
@@ -452,11 +451,6 @@ export function LostPropertySheet({
                     </span>
                   </div>
                   <p className="mt-1 text-sm whitespace-pre-wrap break-words">{r.message}</p>
-                  {r.found_by_department && (
-                    <span className="mt-1 inline-flex h-5 items-center rounded-full bg-muted text-muted-foreground px-2 text-[10px] font-semibold uppercase tracking-wide">
-                      Found by {r.found_by_department}
-                    </span>
-                  )}
                   <PhotoAttachments
                     kind="lost_property"
                     entryId={r.id}

@@ -1201,16 +1201,6 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
           : myMessageDepartments.includes("reception")
           ? "reception"
           : myMessageDepartments[0] ?? null;
-    const foundByDepartment =
-      senderRole === "housekeeping"
-        ? "HK"
-        : senderRole === "fnb"
-        ? "F&B"
-        : senderRole === "maintenance"
-        ? "MNT"
-        : senderRole === "reception"
-        ? "Reception"
-        : null;
       const { data, error } = await supabase
         .from("lost_property" as never)
         .insert({
@@ -1218,7 +1208,6 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
           message,
           created_by_username: authUser?.username ?? null,
           created_by_role: senderRole,
-        found_by_department: foundByDepartment,
         } as never)
         .select("id")
         .single();
