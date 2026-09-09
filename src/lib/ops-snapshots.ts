@@ -62,7 +62,10 @@ type Delta = {
 const roomSnap = (r: Room): RoomSnap => ({
   done: !!r.done,
   done_reception: !!r.done_reception,
+  category: r.category ?? null,
+  default_status: r.default_status ?? null,
   reception_status_id: r.reception_status_id ?? null,
+  reception_status_secondary_id: r.reception_status_secondary_id ?? null,
   reception_bed_id: r.reception_bed_id ?? null,
   housekeeping_note: r.housekeeping_note ?? null,
   needs_maintenance: !!r.needs_maintenance,
