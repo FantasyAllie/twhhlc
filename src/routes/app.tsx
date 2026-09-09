@@ -3987,6 +3987,10 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
   active={broomBurstActive}
   onDone={() => setBroomBurstActive(false)}
 />
+<CelebrationBurst
+  active={celebrationActive}
+  onDone={() => setCelebrationActive(false)}
+/>
 <StayoverPhotosSheet
   open={stayoverPhotosOpen}
   onOpenChange={(o) => {
