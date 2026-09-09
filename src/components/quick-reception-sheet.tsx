@@ -19,6 +19,7 @@ export type QuickReceptionRoom = {
   late_checkout?: boolean;
   stayover_out?: boolean;
   dog_box?: boolean;
+  done?: boolean;
 };
 
 export type QuickReceptionItem = { id: string; label: string };
@@ -89,6 +90,7 @@ export function QuickReceptionSheet({
   onChangeLateCheckout,
   onChangeStayoverOut,
   onChangeDogBox,
+  onToggleDone,
   flagsOnly = false,
 }: {
   open: boolean;
@@ -104,6 +106,8 @@ export function QuickReceptionSheet({
   onChangeLateCheckout?: (roomNumber: number, value: boolean) => void;
   onChangeStayoverOut?: (roomNumber: number, value: boolean) => void;
   onChangeDogBox?: (roomNumber: number, value: boolean) => void;
+  /** Housekeeping: mark the whole room done straight from this list. */
+  onToggleDone?: (roomNumber: number) => void;
   /** Reception accounts: only the room flags are editable, not status or bed. */
   flagsOnly?: boolean;
 }) {
@@ -154,9 +158,24 @@ export function QuickReceptionSheet({
             const { filtered, onlyDouble } = filterBedsForRoom(room, beds);
             return (
               <div key={n} className="p-3 space-y-2">
-                <div className="flex items-baseline gap-2">
+                <div className="flex items-center justify-between gap-2">
                   <div className="text-sm font-semibold">Room {n}</div>
+                  {onToggleDone && (
+                    <button
+                      type="button"
+                      onClick={() => onToggleDone(n)}
+                      aria-pressed={!!room.done}
+                      className={cn(
+                        "inline-flex items-center gap-1.5 rounded-full border bg-background px-3 min-h-9 text-xs font-medium transition-colors hover:bg-accent shrink-0",
+                        room.done && "border-primary bg-primary/10 text-primary",
+                      )}
+                    >
+                      <Check className="h-3.5 w-3.5 shrink-0" />
+                      <span>{room.done ? "Done" : "Mark as done"}</span>
+                    </button>
+                  )}
                 </div>
+
 
                 {!flagsOnly && statuses.length > 0 && (
                   <div className="flex items-start gap-2">

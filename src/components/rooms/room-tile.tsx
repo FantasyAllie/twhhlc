@@ -1,6 +1,6 @@
 // Room tiles for the home grid. JSX moved verbatim from src/routes/app.tsx
 // (stage 5 of the staged refactor); colour/label rules live in @/lib/rooms.
-import { memo } from "react";
+import { memo, useRef } from "react";
 import { AlertCircle, Check, Dog, DoorOpen, Footprints, Wrench } from "lucide-react";
 import { cn } from "@/lib/utils";
 import type { Room } from "@/lib/app-types";
@@ -22,8 +22,50 @@ type BaseProps = {
   isOpen: boolean;
   hasMessage: boolean;
   onClick: () => void;
+  /** Hold the tile for two seconds to jump straight to the status panel. */
+  onLongPress?: () => void;
   bedLabel?: string | null;
 };
+
+const LONG_PRESS_MS = 2000;
+
+/** Press-and-hold handlers that suppress the click that would follow. */
+function useLongPress(onLongPress?: () => void) {
+  const timer = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const fired = useRef(false);
+
+  const clear = () => {
+    if (timer.current) clearTimeout(timer.current);
+    timer.current = null;
+  };
+
+  if (!onLongPress) {
+    return { handlers: {}, consumeClick: () => false };
+  }
+
+  return {
+    handlers: {
+      onPointerDown: () => {
+        fired.current = false;
+        clear();
+        timer.current = setTimeout(() => {
+          fired.current = true;
+          onLongPress();
+        }, LONG_PRESS_MS);
+      },
+      onPointerUp: clear,
+      onPointerLeave: clear,
+      onPointerCancel: clear,
+      onContextMenu: (e: React.MouseEvent) => e.preventDefault(),
+    },
+    consumeClick: () => {
+      if (!fired.current) return false;
+      fired.current = false;
+      return true;
+    },
+  };
+}
+
 
 // Material "Surface Variant" tile: tonal filled container, hairline border,
 // soft elevation, and a press state layer instead of a heavy accent border.
@@ -43,7 +85,7 @@ function sameStatusIds(a: RoomStatusIds, b: RoomStatusIds) {
 function tilePropsEqual<T extends BaseProps>(prev: T, next: T) {
   const keys = Object.keys(next) as (keyof T)[];
   return keys.every((k) => {
-    if (k === "onClick") return true;
+    if (k === "onClick" || k === "onLongPress") return true;
     if (k === "statusIds") {
       return sameStatusIds(prev.statusIds, next.statusIds);
     }
@@ -64,8 +106,10 @@ function ReceptionRoomTileBase({
   isOpen,
   hasMessage,
   onClick,
+  onLongPress,
   bedLabel,
 }: BaseProps) {
+  const longPress = useLongPress(onLongPress);
   const flags = resolveRoomStatusFlags(room, statusIds);
   const isStaffRoom = flags.isStaff;
   // Done marker reflects HOUSEKEEPING completion only (room.done) — reception's
@@ -89,7 +133,12 @@ function ReceptionRoomTileBase({
     <button
       type="button"
       disabled={isStaffRoom}
-      onClick={onClick}
+      {...longPress.handlers}
+      onClick={() => {
+        if (longPress.consumeClick()) return;
+        onClick();
+      }}
+
       className={cn(
         TILE_CLASS,
         isOpen && !isStaffRoom && "ring-2 ring-ring border-transparent bg-accent",
@@ -191,8 +240,10 @@ function HousekeepingRoomTileBase({
   isOpen,
   hasMessage,
   onClick,
+  onLongPress,
   done,
 }: BaseProps & { done: boolean }) {
+  const longPress = useLongPress(onLongPress);
   const flags = resolveRoomStatusFlags(room, statusIds);
   const isStaff = flags.isStaff;
   const meta = computeTileMeta({
@@ -210,7 +261,11 @@ function HousekeepingRoomTileBase({
   return (
     <button
       type="button"
-      onClick={onClick}
+      {...longPress.handlers}
+      onClick={() => {
+        if (longPress.consumeClick()) return;
+        onClick();
+      }}
       className={cn(TILE_CLASS, isOpen && "ring-2 ring-ring border-transparent bg-accent")}
       style={
         isOpen
