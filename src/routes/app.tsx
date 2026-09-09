@@ -1361,6 +1361,7 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
 
     qc.invalidateQueries({ queryKey: ["rooms"] });
     if (next) {
+      markedDoneHereRef.current = true;
       fireRoomNotification("done", roomNumber);
       captureEmergencySnapshot(`Room ${roomNumber} marked done`);
     }
