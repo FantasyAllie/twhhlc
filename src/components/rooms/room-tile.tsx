@@ -22,12 +22,12 @@ type BaseProps = {
   isOpen: boolean;
   hasMessage: boolean;
   onClick: () => void;
-  /** Hold the tile for two seconds to jump straight to the status panel. */
+  /** Hold the tile for one second to jump straight to the status panel. */
   onLongPress?: () => void;
   bedLabel?: string | null;
 };
 
-const LONG_PRESS_MS = 2000;
+const LONG_PRESS_MS = 1000;
 
 /** Press-and-hold handlers that suppress the click that would follow. */
 function useLongPress(onLongPress?: () => void) {
