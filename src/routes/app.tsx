@@ -1611,6 +1611,8 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
   };
 
   const performResetAll = async () => {
+    // Record the state before wiping it so Undo can bring it all back.
+    captureEmergencySnapshot("Reset all");
     pendingCounts.clearAll();
     const now = new Date();
     const currentRooms = qc.getQueryData<Room[]>(["rooms"]) ?? [];
