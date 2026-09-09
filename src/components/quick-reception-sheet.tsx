@@ -158,9 +158,24 @@ export function QuickReceptionSheet({
             const { filtered, onlyDouble } = filterBedsForRoom(room, beds);
             return (
               <div key={n} className="p-3 space-y-2">
-                <div className="flex items-baseline gap-2">
+                <div className="flex items-center justify-between gap-2">
                   <div className="text-sm font-semibold">Room {n}</div>
+                  {onToggleDone && (
+                    <button
+                      type="button"
+                      onClick={() => onToggleDone(n)}
+                      aria-pressed={!!room.done}
+                      className={cn(
+                        "inline-flex items-center gap-1.5 rounded-full border bg-background px-3 min-h-9 text-xs font-medium transition-colors hover:bg-accent shrink-0",
+                        room.done && "border-primary bg-primary/10 text-primary",
+                      )}
+                    >
+                      <Check className="h-3.5 w-3.5 shrink-0" />
+                      <span>{room.done ? "Done" : "Mark as done"}</span>
+                    </button>
+                  )}
                 </div>
+
 
                 {!flagsOnly && statuses.length > 0 && (
                   <div className="flex items-start gap-2">
