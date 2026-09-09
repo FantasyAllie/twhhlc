@@ -769,6 +769,16 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
     return total > 0 && done >= total;
   })();
 
+  // Celebration when the room progress reaches 100% (fires on the transition).
+  const [celebrationActive, setCelebrationActive] = useState(false);
+  const wasShiftCompleteRef = useRef(false);
+  useEffect(() => {
+    if (isShiftComplete && !wasShiftCompleteRef.current) {
+      setCelebrationActive(true);
+    }
+    wasShiftCompleteRef.current = isShiftComplete;
+  }, [isShiftComplete]);
+
   const [newMessageText, setNewMessageText] = useState("");
 
   // Auto-assign the Double bed type to Double rooms so exports/status reflect the
