@@ -384,6 +384,41 @@ export type Database = {
         }
         Relationships: []
       }
+      ops_snapshots: {
+        Row: {
+          created_at: string
+          hotel_id: string
+          id: string
+          kind: string
+          label: string | null
+          payload: Json
+        }
+        Insert: {
+          created_at?: string
+          hotel_id?: string
+          id?: string
+          kind: string
+          label?: string | null
+          payload: Json
+        }
+        Update: {
+          created_at?: string
+          hotel_id?: string
+          id?: string
+          kind?: string
+          label?: string | null
+          payload?: Json
+        }
+        Relationships: [
+          {
+            foreignKeyName: "ops_snapshots_hotel_id_fkey"
+            columns: ["hotel_id"]
+            isOneToOne: false
+            referencedRelation: "hotels"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       profiles: {
         Row: {
           created_at: string

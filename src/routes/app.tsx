@@ -27,7 +27,7 @@ import {
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Minus, Plus, X, Menu, ArrowUp, ArrowDown, Pencil, Check, Trash2, Sun, SunDim, Moon, MoonStar, List, Bed, House, Ban, History, Users, User, LogOut, Hash, ConciergeBell, ClipboardList, Printer, Filter, Wrench, DoorOpen, Footprints, Bell, Eye, EyeOff, HelpCircle, AlertCircle, MessageSquare, PackageSearch, RotateCcw, ChevronDown, Camera, LayoutGrid, Truck, Clock, Dog } from "lucide-react";
+import { Minus, Plus, X, Menu, ArrowUp, ArrowDown, Pencil, Check, Trash2, Sun, SunDim, Moon, MoonStar, List, Bed, House, Ban, History, Users, User, LogOut, Hash, ConciergeBell, ClipboardList, Printer, Filter, Wrench, DoorOpen, Footprints, Bell, Eye, EyeOff, HelpCircle, AlertCircle, MessageSquare, PackageSearch, RotateCcw, ChevronDown, Camera, LayoutGrid, Truck, Clock, Dog, Undo2 } from "lucide-react";
 import {
   AccountDialog,
   AddConfigDialogs,
@@ -147,6 +147,7 @@ import {
 } from "@/lib/rooms";
 import type { RoomTileState } from "@/lib/rooms";
 import { usePendingCounts } from "@/lib/pending-counts";
+import { buildOpsState, captureOpsSnapshot, undoLastOpsSnapshot } from "@/lib/ops-snapshots";
 import { HousekeepingRoomTile, ReceptionRoomTile } from "@/components/rooms/room-tile";
 
 export const Route = createFileRoute("/app")({
@@ -713,6 +714,22 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
   const snapshots = snapshotsQ.data ?? [];
   const rejects = (rejectsQ.data ?? []) as RejectCount[];
   const deliveryCounts = (deliveryQ.data ?? []) as DeliveryCount[];
+  // Emergency snapshot: silently record the shared state after a room is
+  // marked done, so Settings → Actions → Undo can roll it back. Values are read
+  // from the live cache so the newest change is always included.
+  const captureEmergencySnapshot = (label: string) => {
+    captureOpsSnapshot(
+      currentHotelQ.data?.id,
+      buildOpsState({
+        rooms: qc.getQueryData<Room[]>(["rooms"]) ?? [],
+        counts: qc.getQueryData<RoomCount[]>(["room_counts"]) ?? [],
+        reject: qc.getQueryData<RejectCount[]>(["reject_counts"]) ?? [],
+        delivery: qc.getQueryData<DeliveryCount[]>(["delivery_counts"]) ?? [],
+        fnb: qc.getQueryData<FnbCount[]>(["fnb_linen_counts"]) ?? [],
+      }),
+      label,
+    );
+  };
   const roomMessages = (messagesQ.data ?? []) as RoomMessage[];
   const activeMessagesByRoom = (n: number) =>
     roomMessages.filter(
@@ -1293,7 +1310,10 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
 
     if (error) toast.error(error.message);
     qc.invalidateQueries({ queryKey: ["rooms"] });
-    if (next) fireRoomNotification("done", roomNumber);
+    if (next) {
+      fireRoomNotification("done", roomNumber);
+      captureEmergencySnapshot(`Room ${roomNumber} marked done`);
+    }
   };
 
   const toggleHousekeepingDone = async (roomNumber: number) => {
@@ -1330,7 +1350,10 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
     if (error) toast.error(error.message);
 
     qc.invalidateQueries({ queryKey: ["rooms"] });
-    if (next) fireRoomNotification("done", roomNumber);
+    if (next) {
+      fireRoomNotification("done", roomNumber);
+      captureEmergencySnapshot(`Room ${roomNumber} marked done`);
+    }
   };
 
   const isAssigned = (templateItemId: string, roomNumber: number) =>
@@ -2024,6 +2047,32 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
   };
 
   // Reports entry point: record today's data automatically on first open.
+  // Emergency undo: rolls the shared state back to the most recent hidden
+  // snapshot (taken whenever a room was marked done).
+  const [undoing, setUndoing] = useState(false);
+  const runEmergencyUndo = async () => {
+    if (undoing) return;
+    if (!confirm("Undo the last recorded change? Rooms and linen counts will go back to the previous snapshot.")) return;
+    setUndoing(true);
+    const result = await undoLastOpsSnapshot();
+    setUndoing(false);
+    if (!result.ok) {
+      toast.error(result.message);
+      return;
+    }
+    pendingCounts.clearAll();
+    for (const key of [
+      "rooms",
+      "room_counts",
+      "reject_counts",
+      "delivery_counts",
+      "fnb_linen_counts",
+    ]) {
+      qc.invalidateQueries({ queryKey: [key] });
+    }
+    toast.success(result.message);
+  };
+
   const openReports = async () => {
     await ensureTodaysBackup();
     setEndShiftPrintOpen(true);
@@ -3299,6 +3348,14 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
   };
   const menuGroups: { id: string; title: string; items: MenuAction[] }[] = (() => {
     const actions: MenuAction[] = [];
+    if (!menuIsFnbOnly && !isMaintenance) {
+      actions.push({
+        key: "undo",
+        icon: Undo2,
+        label: undoing ? "Undoing…" : "Undo last change",
+        onClick: () => void runEmergencyUndo(),
+      });
+    }
     // Settings menu content is uniform across screen sizes. Larger screens also
     // surface End of shift / Departments on the home header, but they stay here too.
     if ((realIsAdmin || (realIsManager && hasHousekeeperRole)) && !isReception && !menuIsFnbOnly) {
