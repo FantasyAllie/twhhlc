@@ -3348,6 +3348,14 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
   };
   const menuGroups: { id: string; title: string; items: MenuAction[] }[] = (() => {
     const actions: MenuAction[] = [];
+    if (!menuIsFnbOnly && !isMaintenance) {
+      actions.push({
+        key: "undo",
+        icon: Undo2,
+        label: undoing ? "Undoing…" : "Undo last change",
+        onClick: () => void runEmergencyUndo(),
+      });
+    }
     // Settings menu content is uniform across screen sizes. Larger screens also
     // surface End of shift / Departments on the home header, but they stay here too.
     if ((realIsAdmin || (realIsManager && hasHousekeeperRole)) && !isReception && !menuIsFnbOnly) {
