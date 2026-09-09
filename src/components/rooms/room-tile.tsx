@@ -1,6 +1,6 @@
 // Room tiles for the home grid. JSX moved verbatim from src/routes/app.tsx
 // (stage 5 of the staged refactor); colour/label rules live in @/lib/rooms.
-import { memo } from "react";
+import { memo, useRef } from "react";
 import { AlertCircle, Check, Dog, DoorOpen, Footprints, Wrench } from "lucide-react";
 import { cn } from "@/lib/utils";
 import type { Room } from "@/lib/app-types";
