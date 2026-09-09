@@ -1331,6 +1331,9 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
   const toggleHousekeepingDone = async (roomNumber: number) => {
     const room = rooms.find((r) => r.room_number === roomNumber);
     const next = !room?.done;
+    // Flag before the optimistic cache update so the celebration effect,
+    // which runs on the resulting re-render, sees that this user did it.
+    if (next) markedDoneHereRef.current = true;
     // Marking done clears reception's guest flags: the room is serviced, so
     // early check-in / late checkout / vacated / stayover-out no longer apply.
     const clearedFlags = {
