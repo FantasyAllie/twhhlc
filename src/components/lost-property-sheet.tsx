@@ -633,7 +633,7 @@ export function LostPropertySheet({
             }
 
             return (
-              <div className="mt-2 space-y-3">
+              <div className="space-y-3">
                 {resolvedRows.length === 0 ? (
                   <p className="text-sm text-muted-foreground">No resolved items yet.</p>
                 ) : (
