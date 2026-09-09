@@ -2047,6 +2047,32 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
   };
 
   // Reports entry point: record today's data automatically on first open.
+  // Emergency undo: rolls the shared state back to the most recent hidden
+  // snapshot (taken whenever a room was marked done).
+  const [undoing, setUndoing] = useState(false);
+  const runEmergencyUndo = async () => {
+    if (undoing) return;
+    if (!confirm("Undo the last recorded change? Rooms and linen counts will go back to the previous snapshot.")) return;
+    setUndoing(true);
+    const result = await undoLastOpsSnapshot();
+    setUndoing(false);
+    if (!result.ok) {
+      toast.error(result.message);
+      return;
+    }
+    pendingCounts.clear();
+    for (const key of [
+      "rooms",
+      "room_counts",
+      "reject_counts",
+      "delivery_counts",
+      "fnb_linen_counts",
+    ]) {
+      qc.invalidateQueries({ queryKey: [key] });
+    }
+    toast.success(result.message);
+  };
+
   const openReports = async () => {
     await ensureTodaysBackup();
     setEndShiftPrintOpen(true);
