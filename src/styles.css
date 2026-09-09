@@ -389,6 +389,11 @@
   box-shadow: var(--shadow-3);
 }
 
+@utility touch-callout-none {
+  -webkit-touch-callout: none;
+  touch-callout: none;
+}
+
 /* Material ripple: a splash layer drawn inside the pressed element only.
    The host clips it (overflow-hidden), so it never spills onto neighbours. */
 @keyframes ripple-expand {
