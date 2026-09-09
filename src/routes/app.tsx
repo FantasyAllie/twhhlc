@@ -5055,6 +5055,7 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
          hasMessage={hasActiveMessage(n)}
          bedLabel={room?.reception_bed_id ? bedLabelById.get(room.reception_bed_id) ?? null : null}
          onClick={() => openOrToggle(n)}
+         onLongPress={() => setReceptionSheetRoom(n)}
        />,
      );
    } else {
@@ -5070,6 +5071,7 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
          isOpen={isOpen}
          hasMessage={hasActiveMessage(n)}
          onClick={() => openOrToggle(n)}
+         onLongPress={() => setReceptionSheetRoom(n)}
          done={done}
        />,
      );
@@ -5284,6 +5286,7 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
       late_checkout: r.late_checkout,
       stayover_out: r.stayover_out,
       dog_box: r.dog_box,
+      done: r.done,
     }))}
     statuses={receptionStatuses
       .filter((s) => s.label !== "Staff" && s.label !== "DND")
@@ -5298,6 +5301,7 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
     onChangeLateCheckout={(n, v) => void setRoomLateCheckout(n, v)}
     onChangeStayoverOut={(n, v) => void setRoomStayoverOut(n, v)}
     onChangeDogBox={(n, v) => void setRoomDogBox(n, v)}
+    onToggleDone={isReception ? undefined : (n) => void toggleHousekeepingDone(n)}
   />
  </main>
  );
