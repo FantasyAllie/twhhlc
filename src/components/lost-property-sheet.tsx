@@ -622,7 +622,7 @@ export function LostPropertySheet({
 
             if (activeTab === "expired") {
               return (
-                <div className="mt-2 space-y-3">
+                <div className="space-y-3">
                   {expiredRows.length === 0 ? (
                     <p className="text-sm text-muted-foreground">Nothing has passed the keep-for period yet.</p>
                   ) : (
