@@ -19,6 +19,8 @@ import type {
 type RoomSnap = {
   done: boolean;
   done_reception: boolean;
+  category: string | null;
+  default_status: string | null;
   reception_status_id: string | null;
   reception_bed_id: string | null;
   housekeeping_note: string | null;
@@ -59,6 +61,8 @@ type Delta = {
 const roomSnap = (r: Room): RoomSnap => ({
   done: !!r.done,
   done_reception: !!r.done_reception,
+  category: r.category ?? null,
+  default_status: r.default_status ?? null,
   reception_status_id: r.reception_status_id ?? null,
   reception_bed_id: r.reception_bed_id ?? null,
   housekeeping_note: r.housekeeping_note ?? null,
