@@ -261,7 +261,11 @@ function HousekeepingRoomTileBase({
   return (
     <button
       type="button"
-      onClick={onClick}
+      {...longPress.handlers}
+      onClick={() => {
+        if (longPress.consumeClick()) return;
+        onClick();
+      }}
       className={cn(TILE_CLASS, isOpen && "ring-2 ring-ring border-transparent bg-accent")}
       style={
         isOpen
