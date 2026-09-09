@@ -133,7 +133,12 @@ function ReceptionRoomTileBase({
     <button
       type="button"
       disabled={isStaffRoom}
-      onClick={onClick}
+      {...longPress.handlers}
+      onClick={() => {
+        if (longPress.consumeClick()) return;
+        onClick();
+      }}
+
       className={cn(
         TILE_CLASS,
         isOpen && !isStaffRoom && "ring-2 ring-ring border-transparent bg-accent",
