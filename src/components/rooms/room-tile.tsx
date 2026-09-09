@@ -85,7 +85,7 @@ function sameStatusIds(a: RoomStatusIds, b: RoomStatusIds) {
 function tilePropsEqual<T extends BaseProps>(prev: T, next: T) {
   const keys = Object.keys(next) as (keyof T)[];
   return keys.every((k) => {
-    if (k === "onClick") return true;
+    if (k === "onClick" || k === "onLongPress") return true;
     if (k === "statusIds") {
       return sameStatusIds(prev.statusIds, next.statusIds);
     }
