@@ -566,7 +566,7 @@ export function LostPropertySheet({
               })();
 
               return (
-                <div className="mt-2 space-y-3">
+                <div className="space-y-3">
                   {openRows.length === 0 ? (
                     <p className="text-sm text-muted-foreground">No open lost property.</p>
                   ) : (
