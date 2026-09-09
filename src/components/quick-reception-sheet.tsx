@@ -19,6 +19,7 @@ export type QuickReceptionRoom = {
   late_checkout?: boolean;
   stayover_out?: boolean;
   dog_box?: boolean;
+  done?: boolean;
 };
 
 export type QuickReceptionItem = { id: string; label: string };
