@@ -1285,6 +1285,9 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
   const toggleReceptionDone = async (roomNumber: number) => {
     const current = receptionDoneSet.has(roomNumber);
     const next = !current;
+    // Flag before the optimistic cache update so the celebration effect,
+    // which runs on the resulting re-render, sees that this user did it.
+    if (next) markedDoneHereRef.current = true;
     const clearedReceptionFlags = {
       guest_vacated: false,
       guest_vacated_at: null,
