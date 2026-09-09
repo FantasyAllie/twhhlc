@@ -1285,6 +1285,9 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
   const toggleReceptionDone = async (roomNumber: number) => {
     const current = receptionDoneSet.has(roomNumber);
     const next = !current;
+    // Flag before the optimistic cache update so the celebration effect,
+    // which runs on the resulting re-render, sees that this user did it.
+    if (next) markedDoneHereRef.current = true;
     const clearedReceptionFlags = {
       guest_vacated: false,
       guest_vacated_at: null,
@@ -1320,7 +1323,6 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
     if (error) toast.error(error.message);
     qc.invalidateQueries({ queryKey: ["rooms"] });
     if (next) {
-      markedDoneHereRef.current = true;
       fireRoomNotification("done", roomNumber);
       captureEmergencySnapshot(`Room ${roomNumber} marked done`);
     }
@@ -1329,6 +1331,9 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
   const toggleHousekeepingDone = async (roomNumber: number) => {
     const room = rooms.find((r) => r.room_number === roomNumber);
     const next = !room?.done;
+    // Flag before the optimistic cache update so the celebration effect,
+    // which runs on the resulting re-render, sees that this user did it.
+    if (next) markedDoneHereRef.current = true;
     // Marking done clears reception's guest flags: the room is serviced, so
     // early check-in / late checkout / vacated / stayover-out no longer apply.
     const clearedFlags = {
@@ -1361,7 +1366,6 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
 
     qc.invalidateQueries({ queryKey: ["rooms"] });
     if (next) {
-      markedDoneHereRef.current = true;
       fireRoomNotification("done", roomNumber);
       captureEmergencySnapshot(`Room ${roomNumber} marked done`);
     }
