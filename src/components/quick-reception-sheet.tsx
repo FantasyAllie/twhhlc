@@ -90,6 +90,7 @@ export function QuickReceptionSheet({
   onChangeLateCheckout,
   onChangeStayoverOut,
   onChangeDogBox,
+  onToggleDone,
   flagsOnly = false,
 }: {
   open: boolean;
@@ -105,6 +106,8 @@ export function QuickReceptionSheet({
   onChangeLateCheckout?: (roomNumber: number, value: boolean) => void;
   onChangeStayoverOut?: (roomNumber: number, value: boolean) => void;
   onChangeDogBox?: (roomNumber: number, value: boolean) => void;
+  /** Housekeeping: mark the whole room done straight from this list. */
+  onToggleDone?: (roomNumber: number) => void;
   /** Reception accounts: only the room flags are editable, not status or bed. */
   flagsOnly?: boolean;
 }) {
