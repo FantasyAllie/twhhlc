@@ -1310,7 +1310,10 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
 
     if (error) toast.error(error.message);
     qc.invalidateQueries({ queryKey: ["rooms"] });
-    if (next) fireRoomNotification("done", roomNumber);
+    if (next) {
+      fireRoomNotification("done", roomNumber);
+      captureEmergencySnapshot(`Room ${roomNumber} marked done`);
+    }
   };
 
   const toggleHousekeepingDone = async (roomNumber: number) => {
@@ -1347,7 +1350,10 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
     if (error) toast.error(error.message);
 
     qc.invalidateQueries({ queryKey: ["rooms"] });
-    if (next) fireRoomNotification("done", roomNumber);
+    if (next) {
+      fireRoomNotification("done", roomNumber);
+      captureEmergencySnapshot(`Room ${roomNumber} marked done`);
+    }
   };
 
   const isAssigned = (templateItemId: string, roomNumber: number) =>
