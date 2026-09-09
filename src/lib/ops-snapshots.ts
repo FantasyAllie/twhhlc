@@ -19,7 +19,10 @@ import type {
 type RoomSnap = {
   done: boolean;
   done_reception: boolean;
+  category: string | null;
+  default_status: string | null;
   reception_status_id: string | null;
+  reception_status_secondary_id: string | null;
   reception_bed_id: string | null;
   housekeeping_note: string | null;
   needs_maintenance: boolean;
