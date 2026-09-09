@@ -787,13 +787,22 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
     return total > 0 && done >= total;
   })();
 
-  // Celebration when the room progress reaches 100% (fires on the transition).
+  // Celebration when the room progress reaches 100%. It only plays on the
+  // device that marked the final room as done, once per time the bar fills.
   const [celebrationActive, setCelebrationActive] = useState(false);
   const wasShiftCompleteRef = useRef(false);
+  const markedDoneHereRef = useRef(false);
+  const celebratedRef = useRef(false);
   useEffect(() => {
-    if (isShiftComplete && !wasShiftCompleteRef.current) {
-      setCelebrationActive(true);
+    if (isShiftComplete) {
+      if (!wasShiftCompleteRef.current && markedDoneHereRef.current && !celebratedRef.current) {
+        celebratedRef.current = true;
+        setCelebrationActive(true);
+      }
+    } else {
+      celebratedRef.current = false;
     }
+    markedDoneHereRef.current = false;
     wasShiftCompleteRef.current = isShiftComplete;
   }, [isShiftComplete]);
 
@@ -1311,6 +1320,7 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
     if (error) toast.error(error.message);
     qc.invalidateQueries({ queryKey: ["rooms"] });
     if (next) {
+      markedDoneHereRef.current = true;
       fireRoomNotification("done", roomNumber);
       captureEmergencySnapshot(`Room ${roomNumber} marked done`);
     }
@@ -1351,6 +1361,7 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
 
     qc.invalidateQueries({ queryKey: ["rooms"] });
     if (next) {
+      markedDoneHereRef.current = true;
       fireRoomNotification("done", roomNumber);
       captureEmergencySnapshot(`Room ${roomNumber} marked done`);
     }
