@@ -714,16 +714,17 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
   const rejects = (rejectsQ.data ?? []) as RejectCount[];
   const deliveryCounts = (deliveryQ.data ?? []) as DeliveryCount[];
   // Emergency snapshot: silently record the shared state after a room is
-  // marked done, so Settings → Actions → Undo can roll it back.
+  // marked done, so Settings → Actions → Undo can roll it back. Values are read
+  // from the live cache so the newest change is always included.
   const captureEmergencySnapshot = (label: string) => {
     captureOpsSnapshot(
       currentHotelQ.data?.id,
       buildOpsState({
-        rooms: roomsQ.data ?? [],
-        counts: countsQ.data ?? [],
-        reject: (rejectsQ.data ?? []) as RejectCount[],
-        delivery: (deliveryQ.data ?? []) as DeliveryCount[],
-        fnb: fnbCountsQ.data ?? [],
+        rooms: qc.getQueryData<Room[]>(["rooms"]) ?? [],
+        counts: qc.getQueryData<RoomCount[]>(["room_counts"]) ?? [],
+        reject: qc.getQueryData<RejectCount[]>(["reject_counts"]) ?? [],
+        delivery: qc.getQueryData<DeliveryCount[]>(["delivery_counts"]) ?? [],
+        fnb: qc.getQueryData<FnbCount[]>(["fnb_linen_counts"]) ?? [],
       }),
       label,
     );
