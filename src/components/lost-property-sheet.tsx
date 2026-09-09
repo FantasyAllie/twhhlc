@@ -253,7 +253,7 @@ export function LostPropertySheet({
           </SheetDescription>
         </SheetHeader>
 
-        <div className="flex-1 min-h-0 overflow-y-auto mt-4 space-y-4">
+        <div className="flex-1 min-h-0 overflow-y-auto mt-4 space-y-3">
           {isAdmin && !(canAdd && onAdd) && (
             <div className="flex items-center gap-2 rounded-lg border bg-muted/40 px-3 py-2">
               <label htmlFor="lp-retention" className="text-sm">
