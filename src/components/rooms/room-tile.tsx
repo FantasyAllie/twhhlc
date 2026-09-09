@@ -106,8 +106,10 @@ function ReceptionRoomTileBase({
   isOpen,
   hasMessage,
   onClick,
+  onLongPress,
   bedLabel,
 }: BaseProps) {
+  const longPress = useLongPress(onLongPress);
   const flags = resolveRoomStatusFlags(room, statusIds);
   const isStaffRoom = flags.isStaff;
   // Done marker reflects HOUSEKEEPING completion only (room.done) — reception's
