@@ -22,8 +22,50 @@ type BaseProps = {
   isOpen: boolean;
   hasMessage: boolean;
   onClick: () => void;
+  /** Hold the tile for two seconds to jump straight to the status panel. */
+  onLongPress?: () => void;
   bedLabel?: string | null;
 };
+
+const LONG_PRESS_MS = 2000;
+
+/** Press-and-hold handlers that suppress the click that would follow. */
+function useLongPress(onLongPress?: () => void) {
+  const timer = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const fired = useRef(false);
+
+  const clear = () => {
+    if (timer.current) clearTimeout(timer.current);
+    timer.current = null;
+  };
+
+  if (!onLongPress) {
+    return { handlers: {}, consumeClick: () => false };
+  }
+
+  return {
+    handlers: {
+      onPointerDown: () => {
+        fired.current = false;
+        clear();
+        timer.current = setTimeout(() => {
+          fired.current = true;
+          onLongPress();
+        }, LONG_PRESS_MS);
+      },
+      onPointerUp: clear,
+      onPointerLeave: clear,
+      onPointerCancel: clear,
+      onContextMenu: (e: React.MouseEvent) => e.preventDefault(),
+    },
+    consumeClick: () => {
+      if (!fired.current) return false;
+      fired.current = false;
+      return true;
+    },
+  };
+}
+
 
 // Material "Surface Variant" tile: tonal filled container, hairline border,
 // soft elevation, and a press state layer instead of a heavy accent border.
