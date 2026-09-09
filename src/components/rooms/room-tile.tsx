@@ -240,8 +240,10 @@ function HousekeepingRoomTileBase({
   isOpen,
   hasMessage,
   onClick,
+  onLongPress,
   done,
 }: BaseProps & { done: boolean }) {
+  const longPress = useLongPress(onLongPress);
   const flags = resolveRoomStatusFlags(room, statusIds);
   const isStaff = flags.isStaff;
   const meta = computeTileMeta({
