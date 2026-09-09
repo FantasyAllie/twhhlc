@@ -22,7 +22,6 @@ type RoomSnap = {
   category: string | null;
   default_status: string | null;
   reception_status_id: string | null;
-  reception_status_secondary_id: string | null;
   reception_bed_id: string | null;
   housekeeping_note: string | null;
   needs_maintenance: boolean;
@@ -65,7 +64,6 @@ const roomSnap = (r: Room): RoomSnap => ({
   category: r.category ?? null,
   default_status: r.default_status ?? null,
   reception_status_id: r.reception_status_id ?? null,
-  reception_status_secondary_id: r.reception_status_secondary_id ?? null,
   reception_bed_id: r.reception_bed_id ?? null,
   housekeeping_note: r.housekeeping_note ?? null,
   needs_maintenance: !!r.needs_maintenance,
