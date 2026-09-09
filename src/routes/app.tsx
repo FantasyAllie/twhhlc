@@ -2060,7 +2060,7 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
       toast.error(result.message);
       return;
     }
-    pendingCounts.clear();
+    pendingCounts.clearAll();
     for (const key of [
       "rooms",
       "room_counts",
