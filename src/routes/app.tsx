@@ -68,6 +68,7 @@ import type { MessagesThread, Department as MessagesDepartment } from "@/compone
 import { PhotoAttachments, PhotoComposer } from "@/components/entry-photos";
 import { DndDoorPhoto } from "@/components/dnd-door-photo";
 import { BroomBurst } from "@/components/broom-burst";
+import { CelebrationBurst } from "@/components/celebration-burst";
 import {
   deleteTodayStayoverPhotosForRoom,
   listStayoverPhotos,
@@ -768,6 +769,16 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
     const done = eligible.filter((r) => r.done || r.done_reception).length;
     return total > 0 && done >= total;
   })();
+
+  // Celebration when the room progress reaches 100% (fires on the transition).
+  const [celebrationActive, setCelebrationActive] = useState(false);
+  const wasShiftCompleteRef = useRef(false);
+  useEffect(() => {
+    if (isShiftComplete && !wasShiftCompleteRef.current) {
+      setCelebrationActive(true);
+    }
+    wasShiftCompleteRef.current = isShiftComplete;
+  }, [isShiftComplete]);
 
   const [newMessageText, setNewMessageText] = useState("");
 
@@ -3975,6 +3986,10 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
 <BroomBurst
   active={broomBurstActive}
   onDone={() => setBroomBurstActive(false)}
+/>
+<CelebrationBurst
+  active={celebrationActive}
+  onDone={() => setCelebrationActive(false)}
 />
 <StayoverPhotosSheet
   open={stayoverPhotosOpen}
