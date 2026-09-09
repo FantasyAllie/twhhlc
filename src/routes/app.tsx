@@ -68,6 +68,7 @@ import type { MessagesThread, Department as MessagesDepartment } from "@/compone
 import { PhotoAttachments, PhotoComposer } from "@/components/entry-photos";
 import { DndDoorPhoto } from "@/components/dnd-door-photo";
 import { BroomBurst } from "@/components/broom-burst";
+import { CelebrationBurst } from "@/components/celebration-burst";
 import {
   deleteTodayStayoverPhotosForRoom,
   listStayoverPhotos,
