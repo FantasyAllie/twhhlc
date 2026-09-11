@@ -22,6 +22,9 @@ type Props = {
   dndFileInputRef: React.RefObject<HTMLInputElement | null>;
   setRoomGuestVacated: (n: number, v: boolean) => void;
   setRoomStayoverOut: (n: number, v: boolean) => void;
+  setRoomEarlyCheckIn: (n: number, v: boolean) => void | Promise<void>;
+  setRoomLateCheckout: (n: number, v: boolean) => void | Promise<void>;
+  setRoomDogBox: (n: number, v: boolean) => void | Promise<void>;
   setQuickReceptionOpen: (v: boolean) => void;
   setStayoverPhotosRoomFilter: (n: number | undefined) => void;
   setStayoverPhotosOpen: (v: boolean) => void;
