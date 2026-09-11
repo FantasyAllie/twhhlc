@@ -27,7 +27,7 @@ type BaseProps = {
   bedLabel?: string | null;
 };
 
-const LONG_PRESS_MS = 1000;
+const LONG_PRESS_MS = 500;
 
 /** Press-and-hold handlers that suppress the click that would follow. */
 function useLongPress(onLongPress?: () => void) {
