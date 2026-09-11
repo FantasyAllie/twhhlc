@@ -1,7 +1,8 @@
 // Full-screen celebration shown when the room progress bar reaches 100%:
 // animated fireworks behind a "Congratulations" banner. Purely decorative —
 // no pointer events, and nothing is left on screen once it finishes.
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
+import yippieAsset from "@/assets/yippie.mp3.asset.json";
 
 type Firework = {
   id: number;
@@ -35,6 +36,28 @@ export function CelebrationBurst({
     }, durationMs);
     return () => window.clearTimeout(t);
   }, [active, durationMs, onDone]);
+
+  const audioRef = useRef<HTMLAudioElement | null>(null);
+
+  useEffect(() => {
+    if (!running) {
+      audioRef.current?.pause();
+      return;
+    }
+    const audio = new Audio(yippieAsset.url);
+    audio.volume = 0.85;
+    audioRef.current = audio;
+    const play = audio.play();
+    if (play !== undefined) {
+      play.catch(() => {
+        // Autoplay policy or other playback failure — ignore silently.
+      });
+    }
+    return () => {
+      audio.pause();
+      audio.currentTime = 0;
+    };
+  }, [running]);
 
   const fireworks = useMemo<Firework[]>(() => {
     if (!running) return [];
