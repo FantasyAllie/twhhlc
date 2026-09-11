@@ -1,5 +1,5 @@
 import React from "react";
-import { ConciergeBell, DoorOpen, Footprints, Camera } from "lucide-react";
+import { ConciergeBell, DoorOpen, Footprints, Camera, Clock, Dog } from "lucide-react";
 import type { QueryClient } from "@tanstack/react-query";
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetDescription } from "@/components/ui/sheet";
 import { Button } from "@/components/ui/button";
@@ -22,6 +22,9 @@ type Props = {
   dndFileInputRef: React.RefObject<HTMLInputElement | null>;
   setRoomGuestVacated: (n: number, v: boolean) => void;
   setRoomStayoverOut: (n: number, v: boolean) => void;
+  setRoomEarlyCheckIn: (n: number, v: boolean) => void | Promise<void>;
+  setRoomLateCheckout: (n: number, v: boolean) => void | Promise<void>;
+  setRoomDogBox: (n: number, v: boolean) => void | Promise<void>;
   setQuickReceptionOpen: (v: boolean) => void;
   setStayoverPhotosRoomFilter: (n: number | undefined) => void;
   setStayoverPhotosOpen: (v: boolean) => void;
@@ -50,6 +53,9 @@ export function ReceptionStatusSheet({
   dndFileInputRef,
   setRoomGuestVacated,
   setRoomStayoverOut,
+  setRoomEarlyCheckIn,
+  setRoomLateCheckout,
+  setRoomDogBox,
   setQuickReceptionOpen,
   setStayoverPhotosRoomFilter,
   setStayoverPhotosOpen,
@@ -112,31 +118,61 @@ export function ReceptionStatusSheet({
               Mark status and bed configuration
             </SheetDescription>
            </SheetHeader>
-              {!isReception && !!room?.guest_vacated && (
-                <div className="mt-3 flex flex-col items-center gap-2 rounded-xl border bg-background p-3 text-center">
-                  <span className="flex items-center justify-center gap-2 text-sm font-medium">
-                    <DoorOpen className="h-4 w-4 text-emerald-600 dark:text-emerald-400" />
-                    Guest has checked out
-                  </span>
-                  <Button
-                    type="button"
-                    size="sm"
-                    variant="outline"
-                    onClick={() => setRoomGuestVacated(n, false)}
-                  >
-                    Dismiss
-                  </Button>
-                </div>
-              )}
-             {!isReception && !!room?.stayover_out && (
-                <div className="mt-3 flex flex-col items-center gap-2 rounded-xl border border-sky-500/60 bg-sky-50 p-3 text-center dark:bg-sky-950/40">
-                  <span className="flex items-center justify-center gap-2 text-sm font-medium">
-                    <Footprints className="h-4 w-4 text-sky-600 dark:text-sky-400" />
-                    Stayover — guest out, room can be serviced
-                  </span>
-                  <Button type="button" size="sm" variant="outline" onClick={() => setRoomStayoverOut(n, false)}>
-                    Dismiss
-                  </Button>
+              {!isReception && (
+                <div className="mt-3 space-y-2">
+                  <p className="text-center text-xs font-semibold uppercase tracking-wide text-muted-foreground">Guest</p>
+                  <div className="grid grid-cols-2 gap-1.5">
+                    <Row
+                      label={
+                        <span className="inline-flex items-center gap-2">
+                          <DoorOpen className="h-4 w-4 shrink-0" />
+                          Guest has checked out
+                        </span>
+                      }
+                      selected={!!room?.guest_vacated}
+                      onClick={() => setRoomGuestVacated(n, !room?.guest_vacated)}
+                    />
+                    <Row
+                      label={
+                        <span className="inline-flex items-center gap-2">
+                          <Clock className="h-4 w-4 shrink-0" />
+                          Early check-in
+                        </span>
+                      }
+                      selected={!!room?.early_check_in}
+                      onClick={() => void setRoomEarlyCheckIn(n, !room?.early_check_in)}
+                    />
+                    <Row
+                      label={
+                        <span className="inline-flex items-center gap-2">
+                          <Clock className="h-4 w-4 shrink-0" />
+                          Late checkout
+                        </span>
+                      }
+                      selected={!!room?.late_checkout}
+                      onClick={() => void setRoomLateCheckout(n, !room?.late_checkout)}
+                    />
+                    <Row
+                      label={
+                        <span className="inline-flex items-center gap-2">
+                          <Footprints className="h-4 w-4 shrink-0" />
+                          Stayover — guest out
+                        </span>
+                      }
+                      selected={!!room?.stayover_out}
+                      onClick={() => setRoomStayoverOut(n, !room?.stayover_out)}
+                    />
+                    <Row
+                      label={
+                        <span className="inline-flex items-center gap-2">
+                          <Dog className="h-4 w-4 shrink-0" />
+                          Dog
+                        </span>
+                      }
+                      selected={!!room?.dog_box}
+                      onClick={() => void setRoomDogBox(n, !room?.dog_box)}
+                    />
+                  </div>
                 </div>
               )}
               {(isAdmin || isCurrentDnd) && (
