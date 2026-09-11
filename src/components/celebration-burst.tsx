@@ -1,7 +1,8 @@
 // Full-screen celebration shown when the room progress bar reaches 100%:
 // animated fireworks behind a "Congratulations" banner. Purely decorative —
 // no pointer events, and nothing is left on screen once it finishes.
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
+import yippieAsset from "@/assets/yippie.mp3.asset.json";
 
 type Firework = {
   id: number;
