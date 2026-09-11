@@ -37,6 +37,28 @@ export function CelebrationBurst({
     return () => window.clearTimeout(t);
   }, [active, durationMs, onDone]);
 
+  const audioRef = useRef<HTMLAudioElement | null>(null);
+
+  useEffect(() => {
+    if (!running) {
+      audioRef.current?.pause();
+      return;
+    }
+    const audio = new Audio(yippieAsset.url);
+    audio.volume = 0.85;
+    audioRef.current = audio;
+    const play = audio.play();
+    if (play !== undefined) {
+      play.catch(() => {
+        // Autoplay policy or other playback failure — ignore silently.
+      });
+    }
+    return () => {
+      audio.pause();
+      audio.currentTime = 0;
+    };
+  }, [running]);
+
   const fireworks = useMemo<Firework[]>(() => {
     if (!running) return [];
     return Array.from({ length: 26 }).map((_, i) => ({
