@@ -50,6 +50,7 @@ export function useRipple<T extends HTMLElement>(
       onPointerDown?.(event);
       const host = event.currentTarget as unknown as HTMLElement;
       if (!host || host.hasAttribute("disabled")) return;
+      playClick();
       spawnInk(host, event.clientX, event.clientY);
     },
     [onPointerDown],
