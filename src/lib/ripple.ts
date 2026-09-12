@@ -2,6 +2,7 @@
 // element. The host clips the ink, so it is always contained to that element
 // and never bleeds onto neighbouring controls.
 import * as React from "react";
+import { playClick } from "./click-sound";
 
 const RIPPLE_SELECTOR = [
   "button",
@@ -66,6 +67,7 @@ export function installGlobalRipple() {
     if (!host) return;
     if (host.hasAttribute("disabled") || host.getAttribute("aria-disabled") === "true") return;
     if (host.closest("[data-no-ripple]")) return;
+    playClick();
     spawnInk(host, event.clientX, event.clientY);
   };
   document.addEventListener("pointerdown", onPointerDown, true);
