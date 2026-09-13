@@ -2241,6 +2241,13 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
     field: "reception_status_id" | "reception_bed_id",
     value: string | null,
   ) => {
+    // Marking a room Dirty can be the action that fills the progress bar, so it
+    // counts as "the outcome happened on this device" just like Mark as done.
+    if (field === "reception_status_id" && value) {
+      const dirtyId =
+        receptionStatuses.find((s) => s.label.toLowerCase() === "dirty")?.id ?? null;
+      if (dirtyId && value === dirtyId) markedDoneHereRef.current = true;
+    }
     qc.setQueryData<Room[]>(["rooms"], (old) => {
       const list = old ? [...old] : [];
       const idx = list.findIndex((r) => r.room_number === roomNumber);
