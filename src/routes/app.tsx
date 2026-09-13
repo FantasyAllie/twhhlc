@@ -5118,11 +5118,18 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
                     receptionStatuses.map((s) => [s.id, s.label.toLowerCase()]),
                   );
                   const excludedProgressStatuses = new Set(["staff", "ros", "staff/ros", "ros - staff"]);
+                  // Dirty rooms are hidden from the visible count, and they don't
+                  // hold the bar back either — the bar fills once everything else
+                  // is done (leftover Dirty rooms change the outcome animation).
+                  const dirtyProgressId =
+                    receptionStatuses.find((s) => s.label.toLowerCase() === "dirty")?.id ?? null;
                   const eligible = rooms.filter((r) => {
                     const sid = r.reception_status_id ?? r.default_status;
                     const statusLabel = sid ? (statusLabelById.get(sid) ?? sid).toLowerCase() : "";
                      if (excludedProgressStatuses.has(statusLabel)) return false;
                      if (dndId && sid === dndId) return false;
+                     if (dirtyProgressId && sid === dirtyProgressId && !(r.done || r.done_reception))
+                       return false;
                      return true;
                   });
                  const total = eligible.length;
