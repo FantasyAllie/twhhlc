@@ -69,6 +69,7 @@ import { PhotoAttachments, PhotoComposer } from "@/components/entry-photos";
 import { DndDoorPhoto } from "@/components/dnd-door-photo";
 import { BroomBurst } from "@/components/broom-burst";
 import { CelebrationBurst } from "@/components/celebration-burst";
+import { GloomBurst } from "@/components/gloom-burst";
 import {
   deleteTodayStayoverPhotosForRoom,
   listStayoverPhotos,
@@ -765,31 +766,45 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
   const openMaintenanceCount = maintenanceRequests.filter((m) => !m.done).length;
   const hasOpenMaintenance = openMaintenanceCount > 0;
 
-  // Whether the housekeeping shift is complete — all eligible rooms are done.
+  // Whether the housekeeping shift is complete — all serviceable rooms are done.
   // Used to reveal the "Mark shift as finished" shortcut and to hide the now
   // redundant Linen totals / Room status items from the Export menu.
   // DND rooms are never serviceable, so they are excluded from the total.
-  const isShiftComplete = (() => {
+  // Dirty rooms are also left out of the visible count, but they don't hold the
+  // shift open: once every other room is done the shift reads as complete and
+  // any leftover Dirty rooms switch the outcome to the "not finished" one.
+  const { isShiftComplete, hasLeftoverDirtyRooms } = (() => {
     const statusLabelById = new Map(
       receptionStatuses.map((s) => [s.id, s.label.toLowerCase()]),
     );
     const excluded = new Set(["staff", "ros", "staff/ros", "ros - staff"]);
     const dndId = receptionStatuses.find((s) => s.label.toLowerCase() === "dnd")?.id ?? null;
-    const eligible = rooms.filter((r) => {
+    const dirtyId = receptionStatuses.find((s) => s.label.toLowerCase() === "dirty")?.id ?? null;
+    let counted = 0;
+    let done = 0;
+    let dirtyLeft = 0;
+    for (const r of rooms) {
       const sid = r.reception_status_id ?? r.default_status;
       const lbl = sid ? (statusLabelById.get(sid) ?? sid).toLowerCase() : "";
-      if (excluded.has(lbl)) return false;
-      if (dndId && sid === dndId) return false;
-      return true;
-    });
-    const total = eligible.length;
-    const done = eligible.filter((r) => r.done || r.done_reception).length;
-    return total > 0 && done >= total;
+      if (excluded.has(lbl)) continue;
+      if (dndId && sid === dndId) continue;
+      const isDone = r.done || r.done_reception;
+      if (dirtyId && sid === dirtyId) {
+        if (!isDone) dirtyLeft += 1;
+        continue;
+      }
+      counted += 1;
+      if (isDone) done += 1;
+    }
+    const complete = counted + dirtyLeft > 0 && done >= counted;
+    return { isShiftComplete: complete, hasLeftoverDirtyRooms: dirtyLeft > 0 };
   })();
 
-  // Celebration when the room progress reaches 100%. It only plays on the
-  // device that marked the final room as done, once per time the bar fills.
+  // Outcome animation when the room progress reaches 100%. It only plays on the
+  // device that marked the final room as done, once per time the bar fills:
+  // fireworks when everything was serviced, sad trombone when Dirty rooms remain.
   const [celebrationActive, setCelebrationActive] = useState(false);
+  const [gloomActive, setGloomActive] = useState(false);
   const wasShiftCompleteRef = useRef(false);
   const markedDoneHereRef = useRef(false);
   const celebratedRef = useRef(false);
@@ -797,14 +812,15 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
     if (isShiftComplete) {
       if (!wasShiftCompleteRef.current && markedDoneHereRef.current && !celebratedRef.current) {
         celebratedRef.current = true;
-        setCelebrationActive(true);
+        if (hasLeftoverDirtyRooms) setGloomActive(true);
+        else setCelebrationActive(true);
       }
     } else {
       celebratedRef.current = false;
     }
     markedDoneHereRef.current = false;
     wasShiftCompleteRef.current = isShiftComplete;
-  }, [isShiftComplete]);
+  }, [isShiftComplete, hasLeftoverDirtyRooms]);
 
   const [newMessageText, setNewMessageText] = useState("");
 
@@ -4068,6 +4084,10 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
   active={celebrationActive}
   onDone={() => setCelebrationActive(false)}
 />
+<GloomBurst
+  active={gloomActive}
+  onDone={() => setGloomActive(false)}
+/>
 <StayoverPhotosSheet
   open={stayoverPhotosOpen}
   onOpenChange={(o) => {
@@ -5098,11 +5118,18 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
                     receptionStatuses.map((s) => [s.id, s.label.toLowerCase()]),
                   );
                   const excludedProgressStatuses = new Set(["staff", "ros", "staff/ros", "ros - staff"]);
+                  // Dirty rooms are hidden from the visible count, and they don't
+                  // hold the bar back either — the bar fills once everything else
+                  // is done (leftover Dirty rooms change the outcome animation).
+                  const dirtyProgressId =
+                    receptionStatuses.find((s) => s.label.toLowerCase() === "dirty")?.id ?? null;
                   const eligible = rooms.filter((r) => {
                     const sid = r.reception_status_id ?? r.default_status;
                     const statusLabel = sid ? (statusLabelById.get(sid) ?? sid).toLowerCase() : "";
                      if (excludedProgressStatuses.has(statusLabel)) return false;
                      if (dndId && sid === dndId) return false;
+                     if (dirtyProgressId && sid === dirtyProgressId && !(r.done || r.done_reception))
+                       return false;
                      return true;
                   });
                  const total = eligible.length;
