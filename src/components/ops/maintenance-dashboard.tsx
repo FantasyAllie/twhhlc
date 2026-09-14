@@ -266,7 +266,7 @@ export function MaintenanceDashboard({
                  </li>
                ))}
              </ul>
-           )}
+            )
       ) : doneReqs.length === 0 ? (
         <p className="py-8 text-center text-sm text-muted-foreground">No completed maintenance requests.</p>
       ) : (
