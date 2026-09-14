@@ -1,14 +1,14 @@
-# Dirty-room completion outcome
+# Match the maintenance workspace to the Maintenance Log
 
 ## What will change
-- Detect when the active housekeeping workload reaches its completed state while one or more rooms remain marked Dirty.
-- Show a one-time sad full-screen effect only to the person whose action reached that state.
-- Display: “You haven't finished all the rooms. Better luck next time”.
-- Play a short sad-trombone sound during the effect.
-- Keep the existing fireworks and “Congratulations” outcome for a genuinely complete shift with no Dirty rooms.
+- Rework the maintenance-only home view to use the same Open and Completed pill navigation as the Maintenance Log.
+- Show the matching item count in each pill and render only the selected list.
+- Limit both lists to 15 items per page.
+- Add the same direct page-number navigation, ellipses, Previous, and Next controls beneath the pills.
+- Keep maintenance-specific actions intact, including completing, reopening, replying to, deleting, and viewing photos.
 
 ## Technical details
-- Reuse the existing per-device, per-completion-cycle trigger pattern so neither outcome repeats until progress drops below completion and reaches it again.
-- Add a separate lightweight visual component and CDN-hosted audio asset.
-- Preserve the existing progress calculation, room rules, and all other completion behavior.
-- Verify compilation and both trigger branches in the running preview.
+- Update the existing maintenance dashboard rather than opening a second bottom panel.
+- Preserve the combined open feed of maintenance requests and maintenance messages.
+- Reset to the first page when switching between Open and Completed, and safely clamp the current page when list sizes change.
+- Verify the maintenance role view at desktop and mobile widths and confirm the app builds cleanly.
