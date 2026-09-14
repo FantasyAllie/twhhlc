@@ -211,7 +211,7 @@ export function MaintenanceDashboard({
       )}
 
       {activeTab === "open" ? (
-            {openItems.length === 0 ? (
+        openItems.length === 0 ? (
              <p className="text-sm text-muted-foreground py-8 text-center">
                No open maintenance items.
              </p>
