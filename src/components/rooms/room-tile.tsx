@@ -3,6 +3,7 @@
 import { memo, useRef } from "react";
 import { AlertCircle, Check, Dog, DoorOpen, Footprints, Wrench } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { playClick } from "@/lib/click-sound";
 import type { Room } from "@/lib/app-types";
 import {
   bedCode,
@@ -50,6 +51,7 @@ function useLongPress(onLongPress?: () => void) {
         clear();
         timer.current = setTimeout(() => {
           fired.current = true;
+          playClick();
           onLongPress();
         }, LONG_PRESS_MS);
       },
