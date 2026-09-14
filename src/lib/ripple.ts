@@ -50,7 +50,6 @@ export function useRipple<T extends HTMLElement>(
       onPointerDown?.(event);
       const host = event.currentTarget as unknown as HTMLElement;
       if (!host || host.hasAttribute("disabled")) return;
-      playClick();
       spawnInk(host, event.clientX, event.clientY);
     },
     [onPointerDown],
@@ -68,11 +67,24 @@ export function installGlobalRipple() {
     if (!host) return;
     if (host.hasAttribute("disabled") || host.getAttribute("aria-disabled") === "true") return;
     if (host.closest("[data-no-ripple]")) return;
-    playClick();
     spawnInk(host, event.clientX, event.clientY);
   };
+  // Sound plays only when the press actually activates the control (click),
+  // so scrolling or a cancelled touch stays silent.
+  const onClick = (event: MouseEvent) => {
+    const target = event.target as HTMLElement | null;
+    const host = target?.closest?.(RIPPLE_SELECTOR) as HTMLElement | null;
+    if (!host) return;
+    if (host.hasAttribute("disabled") || host.getAttribute("aria-disabled") === "true") return;
+    if (host.closest("[data-no-ripple]")) return;
+    playClick();
+  };
   document.addEventListener("pointerdown", onPointerDown, true);
-  return () => document.removeEventListener("pointerdown", onPointerDown, true);
+  document.addEventListener("click", onClick, true);
+  return () => {
+    document.removeEventListener("pointerdown", onPointerDown, true);
+    document.removeEventListener("click", onClick, true);
+  };
 }
 
 export function useGlobalRipple() {
