@@ -151,6 +151,25 @@ export function LostPropertySheet({
   const [openPage, setOpenPage] = useState(0);
   const PAGE_SIZE = 15;
 
+  // Swipe across the pills to move between sections, swipe the open list to
+  // page through it, and pull the panel down to refresh.
+  const TABS = ["open", "expired", "resolved"] as const;
+  const stepTab = (delta: number) => {
+    const i = TABS.indexOf(activeTab);
+    const next = TABS[Math.min(TABS.length - 1, Math.max(0, i + delta))];
+    if (next && next !== activeTab) {
+      setActiveTab(next);
+      setOpenPage(0);
+    }
+  };
+  const tabSwipe = useSwipeNav({ onNext: () => stepTab(1), onPrev: () => stepTab(-1) });
+  const pageSwipe = (page: number, pageCount: number) =>
+    useSwipeNav({
+      onNext: () => setOpenPage(Math.min(pageCount - 1, page + 1)),
+      onPrev: () => setOpenPage(Math.max(0, page - 1)),
+    });
+  const refresh = usePullToRefresh(() => qc.invalidateQueries({ queryKey: ["lost_property"] }));
+
   useEffect(() => {
     if (!open) return;
     const t = window.setInterval(() => setTick((n) => n + 1), 60_000);
