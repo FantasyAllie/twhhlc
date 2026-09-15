@@ -121,6 +121,19 @@ export function MaintenanceLogSheet({
   const [activeTab, setActiveTab] = useState<"open" | "completed">("open");
   const [page, setPage] = useState(0);
   const PAGE_SIZE = 15;
+  const qc = useQueryClient();
+
+  // Swipe across the pills to change section.
+  const tabSwipe = useSwipeNav({
+    onNext: () => {
+      setActiveTab("completed");
+      setPage(0);
+    },
+    onPrev: () => {
+      setActiveTab("open");
+      setPage(0);
+    },
+  });
 
   // Maintenance-thread messages are maintenance work too: show them in the
   // same log so Housekeeping and Reception see everything Maintenance sees.
