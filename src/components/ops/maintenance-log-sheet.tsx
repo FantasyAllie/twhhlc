@@ -575,7 +575,22 @@ export function MaintenanceLogSheet({
           </div>
         )}
 
-        <div className="flex-1 min-h-0 overflow-y-auto mt-4 space-y-4">
+        <div
+          className="flex-1 min-h-0 overflow-y-auto mt-4 space-y-4 overscroll-contain"
+          {...refresh.handlers}
+          {...listSwipe}
+        >
+          {(refresh.pull > 0 || refresh.refreshing) && (
+            <div
+              className="flex items-center justify-center text-muted-foreground"
+              style={{ height: refresh.refreshing ? 28 : refresh.pull }}
+            >
+              <Loader2
+                className={"h-4 w-4 " + (refresh.refreshing ? "animate-spin" : "")}
+                aria-hidden
+              />
+            </div>
+          )}
           {activeItems.length === 0 ? (
             <p className="text-sm text-muted-foreground">
               {activeTab === "open" ? "No open maintenance requests." : "No completed maintenance requests."}
