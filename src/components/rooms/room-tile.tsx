@@ -46,14 +46,23 @@ function useLongPress(onLongPress?: () => void) {
 
   return {
     handlers: {
-      onPointerDown: () => {
+      onPointerDown: (e: React.PointerEvent) => {
         fired.current = false;
+        origin.current = { x: e.clientX, y: e.clientY };
         clear();
         timer.current = setTimeout(() => {
           fired.current = true;
           playClick();
           onLongPress();
         }, LONG_PRESS_MS);
+      },
+      // Scrolling or swiping across the grid must not count as a hold.
+      onPointerMove: (e: React.PointerEvent) => {
+        const from = origin.current;
+        if (!from || !timer.current) return;
+        if (Math.abs(e.clientX - from.x) > MOVE_TOLERANCE || Math.abs(e.clientY - from.y) > MOVE_TOLERANCE) {
+          clear();
+        }
       },
       onPointerUp: clear,
       onPointerLeave: clear,
