@@ -65,7 +65,11 @@ export function swipeNavProps(
  * Pull down at the top of a scroll container to refresh. Returns props for the
  * scroll container plus the current pull distance so a spinner can be shown.
  */
-export function usePullToRefresh(onRefresh: () => void | Promise<unknown>, enabled = true) {
+export function usePullToRefresh(
+  onRefresh: () => void | Promise<unknown>,
+  options: { enabled?: boolean; atTop?: () => boolean } = {},
+) {
+  const { enabled = true, atTop } = options;
   const [pull, setPull] = React.useState(0);
   const [refreshing, setRefreshing] = React.useState(false);
   const drag = React.useRef<{ y: number; id: number; active: boolean } | null>(null);
