@@ -182,15 +182,18 @@ export function MessagesSheet({
     queryKey: ["messages_feed", thread],
     enabled: open,
     queryFn: async (): Promise<Msg[]> => {
-      const cutoff = new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString();
+      // Messages stay in the feed for 3 months regardless of being marked done
+      // or cleared by a reset; only manual deletion removes them sooner.
+      const cutoff = new Date(Date.now() - 90 * 24 * 60 * 60 * 1000).toISOString();
       const { data, error } = await supabase
         .from("room_messages" as never)
           .select("id,thread,room_number,message,created_by_username,done_at,deleted_at,created_at,reply_to_id,reply_to_sender,reply_to_snippet")
         .eq("thread", thread)
         .is("deleted_at", null)
-        .or(`done_at.is.null,done_at.gte.${cutoff}`)
+        .gte("created_at", cutoff)
         .order("created_at", { ascending: true })
-        .limit(500);
+        .limit(2000);
+
       if (error) throw error;
       return (data ?? []) as Msg[];
     },
