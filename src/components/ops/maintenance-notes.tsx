@@ -15,11 +15,16 @@ export function MaintenanceNotes({
   requestId,
   notes,
   canEdit = true,
+  source = "request",
 }: {
   requestId: string;
   notes?: string | null;
   canEdit?: boolean;
+  /** Where the item lives: a maintenance request or a maintenance message. */
+  source?: "request" | "message";
 }) {
+  const table = source === "message" ? "room_messages" : "maintenance_requests";
+  const queryKey = source === "message" ? "room_messages" : "maintenance_requests";
   const qc = useQueryClient();
   const [open, setOpen] = useState(false);
   const [draft, setDraft] = useState(notes ?? "");
