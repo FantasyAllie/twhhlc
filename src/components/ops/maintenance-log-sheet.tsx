@@ -285,40 +285,27 @@ export function MaintenanceLogSheet({
             notes={e.notes}
           />
         </div>
-        {!isCompleted && canDone ? (
-          <Button
-            type="button"
-            size="sm"
-            variant="outline"
-            onClick={() =>
-              void (e.source === "req"
-                ? markMaintenanceDone(e.rawId)
-                : markMessageDone?.(e.rawId))
-            }
-            aria-label="Mark as done"
-          >
+        {primary ? (
+          <Button type="button" size="sm" variant="outline" onClick={primary} aria-label="Mark as done">
             <Check className="h-4 w-4 mr-1" /> Done
           </Button>
         ) : !isCompleted ? (
           <span className="text-xs text-muted-foreground shrink-0 pt-1">Awaiting action</span>
         ) : null}
-        {(isReception || isMaintenance || isAdmin) && (
+        {remove && (
           <Button
             type="button"
             size="icon"
             variant="ghost"
-            className="h-8 w-8 text-muted-foreground hover:text-destructive"
-            onClick={() =>
-              void (e.source === "req"
-                ? deleteMaintenanceRequest(e.rawId)
-                : deleteMessage?.(e.rawId))
-            }
+            className="touch-danger text-muted-foreground hover:text-destructive"
+            onClick={remove}
             aria-label="Delete request"
           >
             <Trash2 className="h-4 w-4" />
           </Button>
         )}
       </div>
+      </SwipeRow>
     );
   };
 
