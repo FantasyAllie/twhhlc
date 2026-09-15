@@ -5,6 +5,7 @@ import { Check, MessageSquare, RotateCcw, Trash2 } from "lucide-react";
 import type { QueryClient } from "@tanstack/react-query";
 import { Button } from "@/components/ui/button";
 import { PhotoAttachments } from "@/components/entry-photos";
+import { MaintenanceNotes } from "@/components/ops/maintenance-notes";
 import { supabase } from "@/integrations/supabase/client";
 import type { MaintenanceRequest, RoomMessage } from "@/lib/app-types";
 import { maintenanceLocation } from "@/lib/app-format";
@@ -252,6 +253,12 @@ export function MaintenanceDashboard({
                         </div>
                       );
                     })()}
+                   {it.source === "req" && (
+                     <MaintenanceNotes
+                       requestId={rawId(it.id)}
+                       notes={openReqs.find((r) => r.id === rawId(it.id))?.notes}
+                     />
+                   )}
                    <div className="mt-3 flex flex-wrap justify-end gap-2">
                      <Button type="button" size="sm" variant="outline" className="h-8 text-xs" onClick={() => void replyToItem(it)}>
                        <MessageSquare className="h-3.5 w-3.5 mr-1" /> Reply
@@ -281,6 +288,7 @@ export function MaintenanceDashboard({
                      </span>
                    </div>
                    <p className="mt-1 text-sm whitespace-pre-wrap break-words text-muted-foreground line-through">{m.message}</p>
+                   <MaintenanceNotes requestId={m.id} notes={m.notes} />
                    <div className="mt-2 flex justify-end">
                      <Button
                        type="button"
