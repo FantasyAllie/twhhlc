@@ -186,6 +186,7 @@ export function MaintenanceLogSheet({
             canEdit={canEditPhotos(m)}
             onChange={(next) => setMaintenancePhotoPaths(m.id, next)}
           />
+          <MaintenanceNotes requestId={m.id} notes={m.notes} />
         </div>
         {!isCompleted && (isReception || isMaintenance) ? (
           <Button
