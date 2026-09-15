@@ -681,7 +681,7 @@ export function LostPropertySheet({
                           type="button"
                           size="icon"
                           variant="ghost"
-                          className="h-8 w-8 text-muted-foreground hover:text-destructive"
+                          className="touch-danger text-muted-foreground hover:text-destructive"
                           onClick={() => void softDelete(r.id)}
                           aria-label="Delete entry"
                         >
@@ -689,6 +689,7 @@ export function LostPropertySheet({
                         </Button>
                       )}
                     </div>
+                    </SwipeRow>
                   ))
                 )}
               </div>
