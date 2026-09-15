@@ -273,7 +273,7 @@ export function ReceptionItemsSheet({
         <SheetHeader className="text-left">
           <SheetTitle className="flex items-center gap-2">
             <ConciergeBell className="h-4 w-4" />
-            Reception
+            Status &amp; bed
           </SheetTitle>
           <SheetDescription>Manage room statuses and bed types</SheetDescription>
         </SheetHeader>
