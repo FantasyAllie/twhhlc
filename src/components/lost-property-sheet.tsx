@@ -356,14 +356,15 @@ export function LostPropertySheet({
                     className="resize-none"
                   />
                   <PhotoComposer value={addPhotos} onChange={setAddPhotos} />
-                  <div className="flex justify-end">
+                  {/* Stays in reach at the bottom of the form, above the keyboard. */}
+                  <div className="touch-action-bar flex justify-end">
                     <Button
                       type="button"
-                      size="sm"
+                      className="w-full sm:w-auto"
                       onClick={() => void submitAdd()}
                       disabled={submitting || !addMessage.trim()}
                     >
-                      <Plus className="h-3.5 w-3.5 mr-1" />
+                      <Plus className="h-4 w-4 mr-1" />
                       {submitting ? "Logging…" : "Log item"}
                     </Button>
                   </div>
