@@ -394,6 +394,77 @@
   touch-callout: none;
 }
 
+/* Explicit opt-in for a comfortable finger-sized control. */
+@utility touch-target {
+  min-height: 44px;
+  min-width: 44px;
+}
+
+/*
+ * Touch ergonomics: on phones/tablets with a coarse pointer every tappable
+ * control is at least 44px in both directions, so small pills, page numbers
+ * and icon buttons can be hit reliably. Desktop keeps the compact design
+ * sizes. Opt out on a control with data-touch-exempt (e.g. tiny overlay
+ * buttons on photo thumbnails).
+ */
+@media (pointer: coarse) and (max-width: 1023px) {
+  button:not([data-touch-exempt]),
+  summary:not([data-touch-exempt]),
+  [role="button"]:not([data-touch-exempt]),
+  [role="tab"]:not([data-touch-exempt]),
+  [role="switch"]:not([data-touch-exempt]),
+  [role="menuitem"]:not([data-touch-exempt]),
+  [role="menuitemcheckbox"]:not([data-touch-exempt]),
+  [role="menuitemradio"]:not([data-touch-exempt]),
+  [role="option"]:not([data-touch-exempt]) {
+    min-height: 44px;
+    min-width: 44px;
+  }
+
+  /* Full-width controls must not be forced wider than their container. */
+  button.w-full,
+  [role="button"].w-full {
+    min-width: 0;
+  }
+
+  /* Controls inside toasts, photo overlays and the drag handle keep their
+     own compact sizing. */
+  [data-sonner-toast] button,
+  [data-touch-exempt] button,
+  [data-no-touch-size] button,
+  [data-no-touch-size] [role="button"] {
+    min-height: 0;
+    min-width: 0;
+  }
+
+  /* Breathing room between neighbouring actions in tight rows. */
+  [data-touch-row] {
+    gap: 0.625rem;
+  }
+}
+
+/* A destructive action gets separated from the safe actions beside it. */
+@utility touch-danger {
+  margin-left: 0.5rem;
+}
+
+/* Sticky primary action bar pinned to the bottom of a scrolling panel. */
+@utility touch-action-bar {
+  position: sticky;
+  bottom: 0;
+  z-index: 20;
+  background-color: var(--background);
+  border-top: 1px solid var(--border);
+  padding-top: 0.75rem;
+  padding-bottom: max(0.5rem, env(safe-area-inset-bottom));
+  margin-top: 0.5rem;
+}
+
+/* Rows that can be swiped horizontally still scroll vertically. */
+@utility swipe-row {
+  touch-action: pan-y;
+}
+
 /* Material ripple: a splash layer drawn inside the pressed element only.
    The host clips it (overflow-hidden), so it never spills onto neighbours. */
 @keyframes ripple-expand {
