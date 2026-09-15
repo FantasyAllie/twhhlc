@@ -1,9 +1,12 @@
 // Maintenance Log sheet (composer + open/completed lists).
 // Extracted verbatim from src/routes/app.tsx.
 import { useEffect, useMemo, useState } from "react";
-import { Check, ChevronDown, Plus, Settings, Trash2, Wrench, X } from "lucide-react";
+import { Check, ChevronDown, Loader2, Plus, Settings, Trash2, Wrench, X } from "lucide-react";
+import { useQueryClient } from "@tanstack/react-query";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { SwipeRow } from "@/components/ui/swipe-row";
+import { usePullToRefresh, useSwipeNav } from "@/hooks/use-touch-gestures";
 import {
   Sheet,
   SheetContent,
