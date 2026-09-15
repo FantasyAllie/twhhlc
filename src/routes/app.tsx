@@ -892,6 +892,17 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
     toast.success("Confirmation sent to reception");
   };
 
+  // Maintenance-thread messages shown in the Maintenance Log can be completed
+  // from there as well, so all departments see the same state.
+  const markMaintenanceMessageDone = async (id: string) => {
+    const { error } = await supabase
+      .from("room_messages" as never)
+      .update({ done_at: new Date().toISOString(), updated_at: new Date().toISOString() } as never)
+      .eq("id", id);
+    if (error) toast.error(error.message);
+    qc.invalidateQueries({ queryKey: ["room_messages"] });
+  };
+
   const deleteRoomMessage = async (id: string) => {
     qc.setQueryData<RoomMessage[]>(["room_messages"], (old) =>
       old?.filter((m) => m.id !== id) ?? [],
