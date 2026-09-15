@@ -141,6 +141,8 @@ export type MaintenanceRequest = {
   done_at: string | null;
   created_at: string;
   photo_paths: string[];
+  // Free-text repair notes: what needs doing, parts needed, what's outstanding.
+  notes?: string | null;
 };
 
 export type ViewRole = "admin" | "manager" | "user" | "reception" | "fnb" | "maintenance";
