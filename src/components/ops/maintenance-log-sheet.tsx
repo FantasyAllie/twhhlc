@@ -228,18 +228,18 @@ export function MaintenanceLogSheet({
                   : "bg-primary/10 text-primary")
               }
             >
-              {maintenanceLocation(m)}
+              {e.location}
             </span>
             <span className="text-xs text-muted-foreground">
               {isCompleted ? (
                 <>
-                  Done{m.done_by_username ? ` by ${m.done_by_username}` : ""}
-                  {m.done_at ? ` · ${fmt(m.done_at)}` : ""}
+                  Done{e.doneBy ? ` by ${e.doneBy}` : ""}
+                  {e.doneAt ? ` · ${fmt(e.doneAt)}` : ""}
                 </>
               ) : (
                 <>
-                  {fmt(m.created_at)}
-                  {m.created_by_username ? ` · ${m.created_by_username}` : ""}
+                  {fmt(e.createdAt)}
+                  {e.createdBy ? ` · ${e.createdBy}` : ""}
                 </>
               )}
             </span>
@@ -250,23 +250,33 @@ export function MaintenanceLogSheet({
               (isCompleted ? "text-muted-foreground line-through" : "")
             }
           >
-            {m.message}
+            {e.message}
           </p>
-          <PhotoAttachments
-            kind="maintenance"
-            entryId={m.id}
-            paths={m.photo_paths ?? []}
-            canEdit={canEditPhotos(m)}
-            onChange={(next) => setMaintenancePhotoPaths(m.id, next)}
+          {e.source === "req" && (
+            <PhotoAttachments
+              kind="maintenance"
+              entryId={e.rawId}
+              paths={e.photoPaths}
+              canEdit={e.canEditPhotos}
+              onChange={(next) => setMaintenancePhotoPaths(e.rawId, next)}
+            />
+          )}
+          <MaintenanceNotes
+            requestId={e.rawId}
+            source={e.source === "req" ? "request" : "message"}
+            notes={e.notes}
           />
-          <MaintenanceNotes requestId={m.id} notes={m.notes} />
         </div>
-        {!isCompleted && (isReception || isMaintenance) ? (
+        {!isCompleted && canDone ? (
           <Button
             type="button"
             size="sm"
             variant="outline"
-            onClick={() => void markMaintenanceDone(m.id)}
+            onClick={() =>
+              void (e.source === "req"
+                ? markMaintenanceDone(e.rawId)
+                : markMessageDone?.(e.rawId))
+            }
             aria-label="Mark as done"
           >
             <Check className="h-4 w-4 mr-1" /> Done
@@ -280,7 +290,11 @@ export function MaintenanceLogSheet({
             size="icon"
             variant="ghost"
             className="h-8 w-8 text-muted-foreground hover:text-destructive"
-            onClick={() => void deleteMaintenanceRequest(m.id)}
+            onClick={() =>
+              void (e.source === "req"
+                ? deleteMaintenanceRequest(e.rawId)
+                : deleteMessage?.(e.rawId))
+            }
             aria-label="Delete request"
           >
             <Trash2 className="h-4 w-4" />
