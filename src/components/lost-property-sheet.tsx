@@ -11,7 +11,9 @@ import {
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
-import { PackageSearch, Check, Trash2, Plus, ChevronDown, X, MessageSquare, Settings } from "lucide-react";
+import { PackageSearch, Check, Trash2, Plus, ChevronDown, Loader2, X, MessageSquare, Settings } from "lucide-react";
+import { SwipeRow } from "@/components/ui/swipe-row";
+import { swipeNavProps, usePullToRefresh, useSwipeNav, useSwipeState } from "@/hooks/use-touch-gestures";
 import { toast } from "sonner";
 import { PhotoAttachments, PhotoComposer } from "@/components/entry-photos";
 import { supabase as sb } from "@/integrations/supabase/client";
@@ -163,8 +165,9 @@ export function LostPropertySheet({
     }
   };
   const tabSwipe = useSwipeNav({ onNext: () => stepTab(1), onPrev: () => stepTab(-1) });
+  const pageSwipeState = useSwipeState();
   const pageSwipe = (page: number, pageCount: number) =>
-    useSwipeNav({
+    swipeNavProps(pageSwipeState, {
       onNext: () => setOpenPage(Math.min(pageCount - 1, page + 1)),
       onPrev: () => setOpenPage(Math.max(0, page - 1)),
     });
