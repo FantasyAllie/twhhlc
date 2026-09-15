@@ -342,7 +342,7 @@ export function ReceptionStatusSheet({
               </div>
               {!isReception && (
                 <div className="space-y-2">
-                  <p className="text-center text-xs font-semibold uppercase tracking-wide text-muted-foreground">Guest</p>
+                  <p className="text-center text-xs font-semibold uppercase tracking-wide text-muted-foreground">Guest &amp; room info</p>
                   <div className="grid grid-cols-2 gap-1.5">
                     <Row
                       label={
