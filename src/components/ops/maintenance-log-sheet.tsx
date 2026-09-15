@@ -214,6 +214,19 @@ export function MaintenanceLogSheet({
     return items;
   }, [pageCount, safePage]);
 
+  // Swipe the list sideways to page through it; pull down to refresh.
+  const listSwipe = useSwipeNav({
+    onNext: () => setPage(Math.min(pageCount - 1, safePage + 1)),
+    onPrev: () => setPage(Math.max(0, safePage - 1)),
+  });
+  const refresh = usePullToRefresh(async () => {
+    await Promise.all([
+      qc.invalidateQueries({ queryKey: ["maintenance_requests"] }),
+      qc.invalidateQueries({ queryKey: ["room_messages"] }),
+    ]);
+  });
+
+
   const fmt = (iso: string) =>
     new Date(iso).toLocaleString(undefined, {
       month: "short",
