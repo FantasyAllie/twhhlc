@@ -2887,6 +2887,11 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
                 ? receptionBeds.find((b) => b.id === room.reception_bed_id)?.label ?? null
                 : null;
               const hasAny = !!statusText || !!bedText;
+              const assigned = roomFeatures.filter((f) =>
+                roomFeatureAssignments.some(
+                  (a) => a.feature_id === f.id && a.room_number === n,
+                ),
+              );
               return (
                 <div className="rounded-xl border bg-muted/40 p-3 space-y-2 text-sm">
                   <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
@@ -2905,6 +2910,26 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
                     </div>
                   ) : (
                     <p className="text-muted-foreground">Status not currently set</p>
+                  )}
+                  {assigned.length > 0 && (
+                    <>
+                      <div className="border-t border-border/60" />
+                      <div className="space-y-1.5">
+                        <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+                          Features
+                        </p>
+                        <ul className="flex flex-wrap gap-1.5">
+                          {assigned.map((f) => (
+                            <li
+                              key={f.id}
+                              className="inline-flex items-center rounded-xl border bg-muted px-2 py-1 text-xs font-medium"
+                            >
+                              {f.label}
+                            </li>
+                          ))}
+                        </ul>
+                      </div>
+                    </>
                   )}
                 </div>
               );
@@ -3033,31 +3058,6 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
       return null;
     })()}
 
-    {isReception && (() => {
-      const assigned = roomFeatures.filter((f) =>
-        roomFeatureAssignments.some(
-          (a) => a.feature_id === f.id && a.room_number === n,
-        ),
-      );
-      if (assigned.length === 0) return null;
-      return (
-        <div className="space-y-2 rounded-xl border bg-background p-3">
-          <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
-            Room features
-          </p>
-          <ul className="flex flex-wrap gap-1.5">
-            {assigned.map((f) => (
-              <li
-                key={f.id}
-                className="inline-flex items-center rounded-xl border bg-muted px-2 py-1 text-xs font-medium"
-              >
-                {f.label}
-              </li>
-            ))}
-          </ul>
-        </div>
-      );
-    })()}
 
     {isReception && (() => {
       const room = rooms.find((r) => r.room_number === n);
