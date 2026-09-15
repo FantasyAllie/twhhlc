@@ -29,11 +29,13 @@ type BaseProps = {
 };
 
 const LONG_PRESS_MS = 500;
+const MOVE_TOLERANCE = 10;
 
 /** Press-and-hold handlers that suppress the click that would follow. */
 function useLongPress(onLongPress?: () => void) {
   const timer = useRef<ReturnType<typeof setTimeout> | null>(null);
   const fired = useRef(false);
+  const origin = useRef<{ x: number; y: number } | null>(null);
 
   const clear = () => {
     if (timer.current) clearTimeout(timer.current);
