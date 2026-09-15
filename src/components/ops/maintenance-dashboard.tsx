@@ -97,6 +97,21 @@ export function MaintenanceDashboard({
   const activeItems = activeTab === "open" ? openItems : doneReqs;
   const pageCount = Math.max(1, Math.ceil(activeItems.length / PAGE_SIZE));
   const safePage = Math.min(page, pageCount - 1);
+  // Swipe the pills to switch section, swipe the list to page through it.
+  const tabSwipe = useSwipeNav({
+    onNext: () => {
+      setActiveTab("completed");
+      setPage(0);
+    },
+    onPrev: () => {
+      setActiveTab("open");
+      setPage(0);
+    },
+  });
+  const pageSwipe = useSwipeNav({
+    onNext: () => setPage(Math.min(pageCount - 1, safePage + 1)),
+    onPrev: () => setPage(Math.max(0, safePage - 1)),
+  });
   const pagedItems = activeItems.slice(
     safePage * PAGE_SIZE,
     safePage * PAGE_SIZE + PAGE_SIZE,
