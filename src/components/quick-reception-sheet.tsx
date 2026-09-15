@@ -244,8 +244,8 @@ export function QuickReceptionSheet({
 
                 {(onChangeVacant || onChangeEarlyCheckIn || onChangeLateCheckout || onChangeStayoverOut || onChangeDogBox) && (
                   <div className="flex items-start gap-2">
-                    <div className="w-14 shrink-0 text-[10px] font-semibold uppercase tracking-wide text-muted-foreground pt-1.5">
-                      Guest
+                    <div className="w-14 shrink-0 text-[10px] font-semibold uppercase tracking-wide text-muted-foreground pt-1.5 leading-tight">
+                      Guest &amp; room info
                     </div>
                     <div className="grid grid-cols-2 gap-1.5 flex-1 min-w-0">
                       {onChangeVacant && (
