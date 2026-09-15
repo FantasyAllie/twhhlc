@@ -1,7 +1,7 @@
 // Maintenance department dashboard (open requests + messages, completed list).
 // Extracted verbatim from src/routes/app.tsx.
 import { useMemo, useState } from "react";
-import { Check, MessageSquare, RotateCcw, Trash2 } from "lucide-react";
+import { Check, MessageSquare, Plus, RotateCcw, Trash2 } from "lucide-react";
 import type { QueryClient } from "@tanstack/react-query";
 import { Button } from "@/components/ui/button";
 import { PhotoAttachments } from "@/components/entry-photos";
@@ -26,6 +26,7 @@ export function MaintenanceDashboard({
   qc,
   setMessagesInitial,
   setMessagesSheetOpen,
+  onLogNewIssue,
 }: {
   maintenanceRequests: MaintenanceRequest[];
   roomMessages: RoomMessage[];
@@ -34,6 +35,7 @@ export function MaintenanceDashboard({
   qc: QueryClient;
   setMessagesInitial: (v: MessagesInitial) => void;
   setMessagesSheetOpen: (o: boolean) => void;
+  onLogNewIssue?: () => void;
 }) {
   const [activeTab, setActiveTab] = useState<"open" | "completed">("open");
   const [page, setPage] = useState(0);
@@ -159,10 +161,20 @@ export function MaintenanceDashboard({
        <h2 className="text-sm font-medium text-muted-foreground uppercase tracking-wide">
          Maintenance Requests
        </h2>
-       <span className="text-xs text-muted-foreground">
+        <span className="text-xs text-muted-foreground">
          {openMaintenanceCount} open
        </span>
      </div>
+     {onLogNewIssue && (
+       <Button
+         type="button"
+         variant="outline"
+         className="w-full justify-center"
+         onClick={onLogNewIssue}
+       >
+         <Plus className="mr-1 h-4 w-4" /> Log a new issue
+       </Button>
+     )}
       <div className="inline-flex w-full items-center justify-center rounded-full border bg-background p-1">
         {([
           { key: "open", label: `Open (${openItems.length})` },

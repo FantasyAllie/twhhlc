@@ -13,14 +13,34 @@ import {
 } from "@/components/ui/sheet";
 import { PhotoAttachments, PhotoComposer } from "@/components/entry-photos";
 import { MaintenanceNotes } from "@/components/ops/maintenance-notes";
-import type { MaintenanceArea, MaintenanceRequest, Room } from "@/lib/app-types";
+import type { MaintenanceArea, MaintenanceRequest, Room, RoomMessage } from "@/lib/app-types";
 import { maintenanceLocation } from "@/lib/app-format";
+
+// One row in the log: either a maintenance request or a maintenance message.
+type Entry = {
+  id: string;
+  rawId: string;
+  source: "req" | "msg";
+  location: string;
+  message: string;
+  createdAt: string;
+  createdBy: string | null;
+  done: boolean;
+  doneAt: string | null;
+  doneBy: string | null;
+  photoPaths: string[];
+  notes: string | null;
+  canEditPhotos: boolean;
+};
 
 export function MaintenanceLogSheet({
   open,
   onOpenChange,
   rooms,
   maintenanceRequests,
+  maintenanceMessages = [],
+  markMessageDone,
+  deleteMessage,
   maintenanceAreas = [],
   canManageAreas = false,
   onManageAreas,
@@ -47,6 +67,9 @@ export function MaintenanceLogSheet({
   onOpenChange: (o: boolean) => void;
   rooms: Room[];
   maintenanceRequests: MaintenanceRequest[];
+  maintenanceMessages?: RoomMessage[];
+  markMessageDone?: (id: string) => Promise<void> | void;
+  deleteMessage?: (id: string) => Promise<void> | void;
   maintenanceAreas?: MaintenanceArea[];
   canManageAreas?: boolean;
   onManageAreas?: () => void;
@@ -96,13 +119,60 @@ export function MaintenanceLogSheet({
   const [page, setPage] = useState(0);
   const PAGE_SIZE = 15;
 
-  const openItems = useMemo(
-    () => maintenanceRequests.filter((m) => !m.done),
-    [maintenanceRequests],
+  // Maintenance-thread messages are maintenance work too: show them in the
+  // same log so Housekeeping and Reception see everything Maintenance sees.
+  const msgEntries = useMemo<Entry[]>(
+    () =>
+      maintenanceMessages
+        .filter(
+          (m) =>
+            (m.thread === "hk_maintenance" || m.thread === "reception_maintenance") &&
+            !m.deleted_at,
+        )
+        .map((m) => ({
+          id: `msg-${m.id}`,
+          rawId: m.id,
+          source: "msg" as const,
+          location: m.room_number != null ? `Room ${m.room_number}` : "General",
+          message: m.message,
+          createdAt: m.created_at,
+          createdBy: m.created_by_username,
+          done: !!m.done_at,
+          doneAt: m.done_at,
+          doneBy: null,
+          photoPaths: [],
+          notes: m.notes ?? null,
+          canEditPhotos: false,
+        })),
+    [maintenanceMessages],
   );
+  const reqEntries = useMemo<Entry[]>(
+    () =>
+      maintenanceRequests.map((m) => ({
+        id: `req-${m.id}`,
+        rawId: m.id,
+        source: "req" as const,
+        location: maintenanceLocation(m),
+        message: m.message,
+        createdAt: m.created_at,
+        createdBy: m.created_by_username,
+        done: m.done,
+        doneAt: m.done_at,
+        doneBy: m.done_by_username,
+        photoPaths: m.photo_paths ?? [],
+        notes: m.notes ?? null,
+        canEditPhotos: canEditPhotos(m),
+      })),
+    [maintenanceRequests, isAdmin, authUsername],
+  );
+  const allEntries = useMemo(
+    () => [...reqEntries, ...msgEntries].sort((a, b) => (a.createdAt < b.createdAt ? 1 : -1)),
+    [reqEntries, msgEntries],
+  );
+  const openItems = useMemo(() => allEntries.filter((e) => !e.done), [allEntries]);
   const completedItems = useMemo(
-    () => maintenanceRequests.filter((m) => m.done && isWithinRetention(m.done_at)),
-    [maintenanceRequests, retentionMonths],
+    () => allEntries.filter((e) => e.done && isWithinRetention(e.doneAt)),
+    [allEntries, retentionMonths],
   );
 
   const activeItems = activeTab === "open" ? openItems : completedItems;
@@ -136,11 +206,13 @@ export function MaintenanceLogSheet({
       minute: "2-digit",
     });
 
-  const renderItem = (m: MaintenanceRequest) => {
-    const isCompleted = m.done;
+  const renderItem = (e: Entry) => {
+    const isCompleted = e.done;
+    const canDone =
+      e.source === "req" ? isReception || isMaintenance : !!markMessageDone;
     return (
       <div
-        key={m.id}
+        key={e.id}
         className={
           "flex items-start gap-2 rounded-lg border p-3 " +
           (isCompleted ? "bg-muted/40" : "bg-background")
@@ -156,18 +228,18 @@ export function MaintenanceLogSheet({
                   : "bg-primary/10 text-primary")
               }
             >
-              {maintenanceLocation(m)}
+              {e.location}
             </span>
             <span className="text-xs text-muted-foreground">
               {isCompleted ? (
                 <>
-                  Done{m.done_by_username ? ` by ${m.done_by_username}` : ""}
-                  {m.done_at ? ` · ${fmt(m.done_at)}` : ""}
+                  Done{e.doneBy ? ` by ${e.doneBy}` : ""}
+                  {e.doneAt ? ` · ${fmt(e.doneAt)}` : ""}
                 </>
               ) : (
                 <>
-                  {fmt(m.created_at)}
-                  {m.created_by_username ? ` · ${m.created_by_username}` : ""}
+                  {fmt(e.createdAt)}
+                  {e.createdBy ? ` · ${e.createdBy}` : ""}
                 </>
               )}
             </span>
@@ -178,23 +250,33 @@ export function MaintenanceLogSheet({
               (isCompleted ? "text-muted-foreground line-through" : "")
             }
           >
-            {m.message}
+            {e.message}
           </p>
-          <PhotoAttachments
-            kind="maintenance"
-            entryId={m.id}
-            paths={m.photo_paths ?? []}
-            canEdit={canEditPhotos(m)}
-            onChange={(next) => setMaintenancePhotoPaths(m.id, next)}
+          {e.source === "req" && (
+            <PhotoAttachments
+              kind="maintenance"
+              entryId={e.rawId}
+              paths={e.photoPaths}
+              canEdit={e.canEditPhotos}
+              onChange={(next) => setMaintenancePhotoPaths(e.rawId, next)}
+            />
+          )}
+          <MaintenanceNotes
+            requestId={e.rawId}
+            source={e.source === "req" ? "request" : "message"}
+            notes={e.notes}
           />
-          <MaintenanceNotes requestId={m.id} notes={m.notes} />
         </div>
-        {!isCompleted && (isReception || isMaintenance) ? (
+        {!isCompleted && canDone ? (
           <Button
             type="button"
             size="sm"
             variant="outline"
-            onClick={() => void markMaintenanceDone(m.id)}
+            onClick={() =>
+              void (e.source === "req"
+                ? markMaintenanceDone(e.rawId)
+                : markMessageDone?.(e.rawId))
+            }
             aria-label="Mark as done"
           >
             <Check className="h-4 w-4 mr-1" /> Done
@@ -208,7 +290,11 @@ export function MaintenanceLogSheet({
             size="icon"
             variant="ghost"
             className="h-8 w-8 text-muted-foreground hover:text-destructive"
-            onClick={() => void deleteMaintenanceRequest(m.id)}
+            onClick={() =>
+              void (e.source === "req"
+                ? deleteMaintenanceRequest(e.rawId)
+                : deleteMessage?.(e.rawId))
+            }
             aria-label="Delete request"
           >
             <Trash2 className="h-4 w-4" />
