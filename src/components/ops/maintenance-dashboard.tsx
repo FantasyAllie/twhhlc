@@ -279,17 +279,19 @@ export function MaintenanceDashboard({
                          : openMsgs.find((m) => m.id === rawId(it.id))?.notes
                      }
                    />
-                   <div className="mt-3 flex flex-wrap justify-end gap-2">
-                     <Button type="button" size="sm" variant="outline" className="h-8 text-xs" onClick={() => void replyToItem(it)}>
-                       <MessageSquare className="h-3.5 w-3.5 mr-1" /> Reply
+                   <div data-touch-row className="mt-3 flex flex-wrap items-center justify-end gap-2.5">
+                     <Button type="button" size="sm" variant="outline" className="text-xs" onClick={() => void replyToItem(it)}>
+                       <MessageSquare className="h-4 w-4 mr-1" /> Reply
                      </Button>
-                     <Button type="button" size="sm" variant="default" className="h-8 text-xs" onClick={() => void markDoneItem(it)}>
-                       <Check className="h-3.5 w-3.5 mr-1" /> Done
+                     <Button type="button" size="sm" variant="default" className="text-xs" onClick={() => void markDoneItem(it)}>
+                       <Check className="h-4 w-4 mr-1" /> Done
                      </Button>
-                     <Button type="button" size="sm" variant="ghost" className="h-8 text-xs text-destructive hover:text-destructive" onClick={() => void deleteItem(it)}>
-                       <Trash2 className="h-3.5 w-3.5 mr-1" /> Delete
+                     <Button type="button" size="sm" variant="ghost" className="touch-danger text-xs text-destructive hover:text-destructive" onClick={() => void deleteItem(it)}>
+                       <Trash2 className="h-4 w-4 mr-1" /> Delete
                      </Button>
                    </div>
+                 </div>
+                 </SwipeRow>
                  </li>
                ))}
              </ul>
