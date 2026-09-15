@@ -4,6 +4,8 @@ import { useMemo, useState } from "react";
 import { Check, MessageSquare, Plus, RotateCcw, Trash2 } from "lucide-react";
 import type { QueryClient } from "@tanstack/react-query";
 import { Button } from "@/components/ui/button";
+import { SwipeRow } from "@/components/ui/swipe-row";
+import { useSwipeNav } from "@/hooks/use-touch-gestures";
 import { PhotoAttachments } from "@/components/entry-photos";
 import { MaintenanceNotes } from "@/components/ops/maintenance-notes";
 import { supabase } from "@/integrations/supabase/client";
@@ -175,7 +177,10 @@ export function MaintenanceDashboard({
          <Plus className="mr-1 h-4 w-4" /> Log a new issue
        </Button>
      )}
-      <div className="inline-flex w-full items-center justify-center rounded-full border bg-background p-1">
+      <div
+        className="inline-flex w-full items-center justify-center rounded-full border bg-background p-1"
+        {...tabSwipe}
+      >
         {([
           { key: "open", label: `Open (${openItems.length})` },
           { key: "completed", label: `Completed (${doneReqs.length})` },
