@@ -253,12 +253,15 @@ export function MaintenanceDashboard({
                         </div>
                       );
                     })()}
-                   {it.source === "req" && (
-                     <MaintenanceNotes
-                       requestId={rawId(it.id)}
-                       notes={openReqs.find((r) => r.id === rawId(it.id))?.notes}
-                     />
-                   )}
+                   <MaintenanceNotes
+                     requestId={rawId(it.id)}
+                     source={it.source === "req" ? "request" : "message"}
+                     notes={
+                       it.source === "req"
+                         ? openReqs.find((r) => r.id === rawId(it.id))?.notes
+                         : openMsgs.find((m) => m.id === rawId(it.id))?.notes
+                     }
+                   />)
                    <div className="mt-3 flex flex-wrap justify-end gap-2">
                      <Button type="button" size="sm" variant="outline" className="h-8 text-xs" onClick={() => void replyToItem(it)}>
                        <MessageSquare className="h-3.5 w-3.5 mr-1" /> Reply
