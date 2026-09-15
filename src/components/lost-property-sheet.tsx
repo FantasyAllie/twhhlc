@@ -411,7 +411,10 @@ export function LostPropertySheet({
             </div>
           )}
           {/* Section pills */}
-          <div className="inline-flex w-full justify-center rounded-full border p-1 bg-background items-center">
+          <div
+            className="inline-flex w-full justify-center rounded-full border p-1 bg-background items-center"
+            {...tabSwipe}
+          >
             {([
               { key: "open", label: `Open (${openRows.length})` },
               { key: "expired", label: `Expired (${expiredRows.length})` },
