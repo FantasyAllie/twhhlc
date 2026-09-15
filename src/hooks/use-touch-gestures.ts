@@ -88,7 +88,7 @@ export function usePullToRefresh(
     onPointerDown: (e: React.PointerEvent<HTMLElement>) => {
       if (e.pointerType === "mouse" || refreshing) return;
       const el = e.currentTarget;
-      if (el.scrollTop > 0) return;
+      if (atTop ? !atTop() : el.scrollTop > 0) return;
       drag.current = { y: e.clientY, id: e.pointerId, active: false };
     },
     onPointerMove: (e: React.PointerEvent<HTMLElement>) => {
