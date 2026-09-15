@@ -13,14 +13,34 @@ import {
 } from "@/components/ui/sheet";
 import { PhotoAttachments, PhotoComposer } from "@/components/entry-photos";
 import { MaintenanceNotes } from "@/components/ops/maintenance-notes";
-import type { MaintenanceArea, MaintenanceRequest, Room } from "@/lib/app-types";
+import type { MaintenanceArea, MaintenanceRequest, Room, RoomMessage } from "@/lib/app-types";
 import { maintenanceLocation } from "@/lib/app-format";
+
+// One row in the log: either a maintenance request or a maintenance message.
+type Entry = {
+  id: string;
+  rawId: string;
+  source: "req" | "msg";
+  location: string;
+  message: string;
+  createdAt: string;
+  createdBy: string | null;
+  done: boolean;
+  doneAt: string | null;
+  doneBy: string | null;
+  photoPaths: string[];
+  notes: string | null;
+  canEditPhotos: boolean;
+};
 
 export function MaintenanceLogSheet({
   open,
   onOpenChange,
   rooms,
   maintenanceRequests,
+  maintenanceMessages = [],
+  markMessageDone,
+  deleteMessage,
   maintenanceAreas = [],
   canManageAreas = false,
   onManageAreas,
