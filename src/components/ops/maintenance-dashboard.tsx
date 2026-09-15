@@ -229,9 +229,14 @@ export function MaintenanceDashboard({
                No open maintenance items.
              </p>
            ) : (
-             <ul className="space-y-2">
+             <ul className="space-y-2" {...pageSwipe}>
                 {(pagedItems as Item[]).map((it) => (
-                 <li key={it.id} className="rounded-lg border bg-background p-3">
+                 <li key={it.id}>
+                 <SwipeRow
+                   onPrimary={() => void markDoneItem(it)}
+                   onDelete={() => void deleteItem(it)}
+                 >
+                 <div className="rounded-lg border bg-background p-3">
                    <div className="flex items-center gap-2 flex-wrap text-xs text-muted-foreground">
                      {it.location && (
                        <span className="inline-flex h-6 items-center rounded-full bg-primary/10 text-primary px-2 font-semibold">
