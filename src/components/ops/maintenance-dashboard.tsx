@@ -35,6 +35,7 @@ export function MaintenanceDashboard({
   qc: QueryClient;
   setMessagesInitial: (v: MessagesInitial) => void;
   setMessagesSheetOpen: (o: boolean) => void;
+  onLogNewIssue?: () => void;
 }) {
   const [activeTab, setActiveTab] = useState<"open" | "completed">("open");
   const [page, setPage] = useState(0);
