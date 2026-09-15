@@ -443,6 +443,9 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
   const [receptionRoomTypeFilter, setReceptionRoomTypeFilter] = useState<string[]>([]);
   const [noteDraft, setNoteDraft] = useState<Record<number, string>>({});
   const [notesSheetRoom, setNotesSheetRoom] = useState<number | null>(null);
+  const [roomInfoTab, setRoomInfoTab] = useState<
+    { room: number; tab: "dnd" | "lp" | "maint" } | null
+  >(null);
   const [receptionSheetRoom, setReceptionSheetRoom] = useState<number | null>(null);
   const [quickReceptionOpen, setQuickReceptionOpen] = useState(false);
   const [editDefaultsSheetRoom, setEditDefaultsSheetRoom] = useState<number | null>(null);
