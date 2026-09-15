@@ -437,7 +437,13 @@ export function LostPropertySheet({
 
           {(() => {
             const renderOpenItem = (r: LostPropertyRow) => (
-              <div key={r.id} className="flex items-start gap-2 rounded-lg border bg-background p-3">
+              <SwipeRow
+                key={r.id}
+                primaryLabel="Collected"
+                onPrimary={canResolve ? () => void setStatus(r.id, "collected") : undefined}
+                onDelete={isAdmin ? () => void softDelete(r.id) : undefined}
+              >
+              <div data-touch-row className="flex items-start gap-2.5 rounded-lg border bg-background p-3">
                 <div className="flex-1 min-w-0">
                   <div className="flex items-center gap-2 flex-wrap">
                     {typeof r.room_number === "number" && (
