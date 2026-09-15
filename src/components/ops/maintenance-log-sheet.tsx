@@ -504,7 +504,10 @@ export function MaintenanceLogSheet({
         </div>
 
         {/* Section pills */}
-        <div className="mt-4 inline-flex w-full justify-center rounded-full border p-1 bg-background items-center">
+        <div
+          className="mt-4 inline-flex w-full justify-center rounded-full border p-1 bg-background items-center"
+          {...tabSwipe}
+        >
           {([
             { key: "open", label: `Open (${openItems.length})` },
             { key: "completed", label: `Completed (${completedItems.length})` },
