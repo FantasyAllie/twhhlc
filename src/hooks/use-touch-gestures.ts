@@ -19,9 +19,23 @@ type SwipeNavOptions = {
  * forward or back. Gestures that begin inside a [data-swipe-row] are ignored so
  * per-row swipe actions keep working.
  */
-export function useSwipeNav({ onNext, onPrev, threshold = 60, enabled = true }: SwipeNavOptions) {
-  const start = React.useRef<{ x: number; y: number; id: number } | null>(null);
+export function useSwipeNav(options: SwipeNavOptions) {
+  const start = React.useRef<SwipeStart>(null);
+  return swipeNavProps(start, options);
+}
 
+type SwipeStart = { x: number; y: number; id: number } | null;
+
+/** Hold the gesture state yourself when handlers are built conditionally. */
+export function useSwipeState() {
+  return React.useRef<SwipeStart>(null);
+}
+
+/** Handler props for a swipe region, given externally held gesture state. */
+export function swipeNavProps(
+  start: React.MutableRefObject<SwipeStart>,
+  { onNext, onPrev, threshold = 60, enabled = true }: SwipeNavOptions,
+) {
   if (!enabled) return {};
 
   return {
