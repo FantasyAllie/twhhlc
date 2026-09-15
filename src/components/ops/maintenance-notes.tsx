@@ -40,7 +40,7 @@ export function MaintenanceNotes({
     const value = draft.trim().slice(0, MAX_NOTES);
     setSaving(true);
     const { error } = await supabase
-      .from("maintenance_requests" as never)
+      .from(table as never)
       .update({ notes: value === "" ? null : value, updated_at: new Date().toISOString() } as never)
       .eq("id", requestId);
     setSaving(false);
@@ -48,7 +48,7 @@ export function MaintenanceNotes({
       toast.error(error.message);
       return;
     }
-    qc.invalidateQueries({ queryKey: ["maintenance_requests"] });
+    qc.invalidateQueries({ queryKey: [queryKey] });
     toast.success("Notes saved.");
     setOpen(false);
   };
