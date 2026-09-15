@@ -67,6 +67,9 @@ export function MaintenanceLogSheet({
   onOpenChange: (o: boolean) => void;
   rooms: Room[];
   maintenanceRequests: MaintenanceRequest[];
+  maintenanceMessages?: RoomMessage[];
+  markMessageDone?: (id: string) => Promise<void> | void;
+  deleteMessage?: (id: string) => Promise<void> | void;
   maintenanceAreas?: MaintenanceArea[];
   canManageAreas?: boolean;
   onManageAreas?: () => void;
