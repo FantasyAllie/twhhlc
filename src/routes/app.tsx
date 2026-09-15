@@ -443,6 +443,9 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
   const [receptionRoomTypeFilter, setReceptionRoomTypeFilter] = useState<string[]>([]);
   const [noteDraft, setNoteDraft] = useState<Record<number, string>>({});
   const [notesSheetRoom, setNotesSheetRoom] = useState<number | null>(null);
+  const [roomInfoTab, setRoomInfoTab] = useState<
+    { room: number; tab: "dnd" | "lp" | "maint" } | null
+  >(null);
   const [receptionSheetRoom, setReceptionSheetRoom] = useState<number | null>(null);
   const [quickReceptionOpen, setQuickReceptionOpen] = useState(false);
   const [editDefaultsSheetRoom, setEditDefaultsSheetRoom] = useState<number | null>(null);
@@ -3063,16 +3066,12 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
       const room = rooms.find((r) => r.room_number === n);
       const occ = room?.reception_status_id ?? room?.default_status ?? null;
       const dndId = receptionStatuses.find((x) => x.label === "DND")?.id ?? null;
-      if (!dndId || occ !== dndId) return null;
-      return <DndDoorPhoto roomNumber={n} />;
-    })()}
-
-    {isReception && (() => {
+      const hasDnd = !!dndId && occ === dndId;
       const openMaint = (maintenanceRequestsQ.data ?? []).filter(
         (m) => m.room_number === n && !m.done,
       );
       const openLp = lostPropertyOpenItems.filter((lp) => lp.room_number === n);
-      if (openMaint.length === 0 && openLp.length === 0) return null;
+      if (!hasDnd && openMaint.length === 0 && openLp.length === 0) return null;
       const fmt = (iso: string) =>
         new Date(iso).toLocaleString(undefined, {
           month: "short",
@@ -3080,9 +3079,65 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
           hour: "numeric",
           minute: "2-digit",
         });
+      const active = roomInfoTab?.room === n ? roomInfoTab.tab : null;
+      const toggle = (tab: "dnd" | "lp" | "maint") =>
+        setRoomInfoTab(active === tab ? null : { room: n, tab });
+      const tile = (
+        tab: "dnd" | "lp" | "maint",
+        label: string,
+        count: number | null,
+        Icon: typeof Wrench,
+        base: string,
+        on: string,
+      ) => (
+        <button
+          type="button"
+          onClick={() => toggle(tab)}
+          aria-pressed={active === tab}
+          className={cn(
+            "flex flex-1 min-w-0 flex-col items-center justify-center gap-1 rounded-xl border p-2 text-center text-[11px] font-semibold uppercase tracking-wide shadow-sm transition-colors active:scale-[0.97]",
+            base,
+            active === tab ? on : "",
+          )}
+        >
+          <Icon className="h-4 w-4" />
+          <span className="leading-tight break-words">{label}</span>
+          {count !== null && <span className="text-sm tabular-nums">{count}</span>}
+        </button>
+      );
       return (
         <div className="space-y-3">
-          {openMaint.length > 0 && (
+          <div className="flex flex-row gap-2">
+            {hasDnd &&
+              tile(
+                "dnd",
+                "DND photos",
+                null,
+                Camera,
+                "border-sky-400/60 bg-sky-50 text-sky-700 dark:bg-sky-950/40 dark:text-sky-300",
+                "ring-2 ring-sky-500/60",
+              )}
+            {openLp.length > 0 &&
+              tile(
+                "lp",
+                "Lost property",
+                openLp.length,
+                PackageSearch,
+                "border-rose-400/60 bg-rose-50 text-rose-700 dark:bg-rose-950/40 dark:text-rose-300",
+                "ring-2 ring-rose-500/60",
+              )}
+            {openMaint.length > 0 &&
+              tile(
+                "maint",
+                "Maintenance",
+                openMaint.length,
+                Wrench,
+                "border-orange-400/60 bg-orange-50 text-orange-700 dark:bg-orange-950/40 dark:text-orange-300",
+                "ring-2 ring-orange-500/60",
+              )}
+          </div>
+          {active === "dnd" && hasDnd && <DndDoorPhoto roomNumber={n} />}
+          {active === "maint" && openMaint.length > 0 && (
             <div className="space-y-2 rounded-xl border border-amber-400/60 bg-amber-50 dark:bg-amber-950/40 p-3">
               <p className="flex items-center gap-1.5 text-xs font-semibold uppercase tracking-wide text-amber-700 dark:text-amber-300">
                 <Wrench className="h-3.5 w-3.5" />
