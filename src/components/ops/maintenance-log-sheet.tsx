@@ -96,13 +96,60 @@ export function MaintenanceLogSheet({
   const [page, setPage] = useState(0);
   const PAGE_SIZE = 15;
 
-  const openItems = useMemo(
-    () => maintenanceRequests.filter((m) => !m.done),
-    [maintenanceRequests],
+  // Maintenance-thread messages are maintenance work too: show them in the
+  // same log so Housekeeping and Reception see everything Maintenance sees.
+  const msgEntries = useMemo<Entry[]>(
+    () =>
+      maintenanceMessages
+        .filter(
+          (m) =>
+            (m.thread === "hk_maintenance" || m.thread === "reception_maintenance") &&
+            !m.deleted_at,
+        )
+        .map((m) => ({
+          id: `msg-${m.id}`,
+          rawId: m.id,
+          source: "msg" as const,
+          location: m.room_number != null ? `Room ${m.room_number}` : "General",
+          message: m.message,
+          createdAt: m.created_at,
+          createdBy: m.created_by_username,
+          done: !!m.done_at,
+          doneAt: m.done_at,
+          doneBy: null,
+          photoPaths: [],
+          notes: m.notes ?? null,
+          canEditPhotos: false,
+        })),
+    [maintenanceMessages],
   );
+  const reqEntries = useMemo<Entry[]>(
+    () =>
+      maintenanceRequests.map((m) => ({
+        id: `req-${m.id}`,
+        rawId: m.id,
+        source: "req" as const,
+        location: maintenanceLocation(m),
+        message: m.message,
+        createdAt: m.created_at,
+        createdBy: m.created_by_username,
+        done: m.done,
+        doneAt: m.done_at,
+        doneBy: m.done_by_username,
+        photoPaths: m.photo_paths ?? [],
+        notes: m.notes ?? null,
+        canEditPhotos: canEditPhotos(m),
+      })),
+    [maintenanceRequests, isAdmin, authUsername],
+  );
+  const allEntries = useMemo(
+    () => [...reqEntries, ...msgEntries].sort((a, b) => (a.createdAt < b.createdAt ? 1 : -1)),
+    [reqEntries, msgEntries],
+  );
+  const openItems = useMemo(() => allEntries.filter((e) => !e.done), [allEntries]);
   const completedItems = useMemo(
-    () => maintenanceRequests.filter((m) => m.done && isWithinRetention(m.done_at)),
-    [maintenanceRequests, retentionMonths],
+    () => allEntries.filter((e) => e.done && isWithinRetention(e.doneAt)),
+    [allEntries, retentionMonths],
   );
 
   const activeItems = activeTab === "open" ? openItems : completedItems;
