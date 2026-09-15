@@ -11,7 +11,9 @@ import {
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
-import { PackageSearch, Check, Trash2, Plus, ChevronDown, X, MessageSquare, Settings } from "lucide-react";
+import { PackageSearch, Check, Trash2, Plus, ChevronDown, Loader2, X, MessageSquare, Settings } from "lucide-react";
+import { SwipeRow } from "@/components/ui/swipe-row";
+import { swipeNavProps, usePullToRefresh, useSwipeNav, useSwipeState } from "@/hooks/use-touch-gestures";
 import { toast } from "sonner";
 import { PhotoAttachments, PhotoComposer } from "@/components/entry-photos";
 import { supabase as sb } from "@/integrations/supabase/client";
@@ -151,6 +153,26 @@ export function LostPropertySheet({
   const [openPage, setOpenPage] = useState(0);
   const PAGE_SIZE = 15;
 
+  // Swipe across the pills to move between sections, swipe the open list to
+  // page through it, and pull the panel down to refresh.
+  const TABS = ["open", "expired", "resolved"] as const;
+  const stepTab = (delta: number) => {
+    const i = TABS.indexOf(activeTab);
+    const next = TABS[Math.min(TABS.length - 1, Math.max(0, i + delta))];
+    if (next && next !== activeTab) {
+      setActiveTab(next);
+      setOpenPage(0);
+    }
+  };
+  const tabSwipe = useSwipeNav({ onNext: () => stepTab(1), onPrev: () => stepTab(-1) });
+  const pageSwipeState = useSwipeState();
+  const pageSwipe = (page: number, pageCount: number) =>
+    swipeNavProps(pageSwipeState, {
+      onNext: () => setOpenPage(Math.min(pageCount - 1, page + 1)),
+      onPrev: () => setOpenPage(Math.max(0, page - 1)),
+    });
+  const refresh = usePullToRefresh(() => qc.invalidateQueries({ queryKey: ["lost_property"] }));
+
   useEffect(() => {
     if (!open) return;
     const t = window.setInterval(() => setTick((n) => n + 1), 60_000);
@@ -253,7 +275,21 @@ export function LostPropertySheet({
           </SheetDescription>
         </SheetHeader>
 
-        <div className="flex-1 min-h-0 overflow-y-auto mt-4 space-y-3">
+        <div
+          className="flex-1 min-h-0 overflow-y-auto mt-4 space-y-3 overscroll-contain"
+          {...refresh.handlers}
+        >
+          {(refresh.pull > 0 || refresh.refreshing) && (
+            <div
+              className="flex items-center justify-center text-muted-foreground"
+              style={{ height: refresh.refreshing ? 28 : refresh.pull }}
+            >
+              <Loader2
+                className={"h-4 w-4 " + (refresh.refreshing ? "animate-spin" : "")}
+                aria-hidden
+              />
+            </div>
+          )}
           {isAdmin && !(canAdd && onAdd) && (
             <div className="flex items-center gap-2 rounded-lg border bg-muted/40 px-3 py-2">
               <label htmlFor="lp-retention" className="text-sm">
@@ -356,14 +392,15 @@ export function LostPropertySheet({
                     className="resize-none"
                   />
                   <PhotoComposer value={addPhotos} onChange={setAddPhotos} />
-                  <div className="flex justify-end">
+                  {/* Stays in reach at the bottom of the form, above the keyboard. */}
+                  <div className="touch-action-bar flex justify-end">
                     <Button
                       type="button"
-                      size="sm"
+                      className="w-full sm:w-auto"
                       onClick={() => void submitAdd()}
                       disabled={submitting || !addMessage.trim()}
                     >
-                      <Plus className="h-3.5 w-3.5 mr-1" />
+                      <Plus className="h-4 w-4 mr-1" />
                       {submitting ? "Logging…" : "Log item"}
                     </Button>
                   </div>
@@ -410,7 +447,10 @@ export function LostPropertySheet({
             </div>
           )}
           {/* Section pills */}
-          <div className="inline-flex w-full justify-center rounded-full border p-1 bg-background items-center">
+          <div
+            className="inline-flex w-full justify-center rounded-full border p-1 bg-background items-center"
+            {...tabSwipe}
+          >
             {([
               { key: "open", label: `Open (${openRows.length})` },
               { key: "expired", label: `Expired (${expiredRows.length})` },
@@ -437,7 +477,13 @@ export function LostPropertySheet({
 
           {(() => {
             const renderOpenItem = (r: LostPropertyRow) => (
-              <div key={r.id} className="flex items-start gap-2 rounded-lg border bg-background p-3">
+              <SwipeRow
+                key={r.id}
+                primaryLabel="Collected"
+                onPrimary={canResolve ? () => void setStatus(r.id, "collected") : undefined}
+                onDelete={isAdmin ? () => void softDelete(r.id) : undefined}
+              >
+              <div data-touch-row className="flex items-start gap-2.5 rounded-lg border bg-background p-3">
                 <div className="flex-1 min-w-0">
                   <div className="flex items-center gap-2 flex-wrap">
                     {typeof r.room_number === "number" && (
@@ -535,7 +581,7 @@ export function LostPropertySheet({
                     type="button"
                     size="icon"
                     variant="ghost"
-                    className="h-8 w-8 shrink-0 text-muted-foreground hover:text-destructive"
+                    className="touch-danger shrink-0 text-muted-foreground hover:text-destructive"
                     onClick={() => void softDelete(r.id)}
                     aria-label="Delete entry"
                   >
@@ -543,6 +589,7 @@ export function LostPropertySheet({
                   </Button>
                 )}
               </div>
+              </SwipeRow>
             );
 
             if (activeTab === "open") {
@@ -566,7 +613,7 @@ export function LostPropertySheet({
               })();
 
               return (
-                <div className="space-y-3">
+                <div className="space-y-3" {...pageSwipe(page, pageCount)}>
                   {openRows.length === 0 ? (
                     <p className="text-sm text-muted-foreground">No open lost property.</p>
                   ) : (
@@ -638,7 +685,8 @@ export function LostPropertySheet({
                   <p className="text-sm text-muted-foreground">No resolved items yet.</p>
                 ) : (
                   resolvedRows.map((r) => (
-                    <div key={r.id} className="flex items-start gap-2 rounded-lg border bg-muted/40 p-3">
+                    <SwipeRow key={r.id} onDelete={canResolve ? () => void softDelete(r.id) : undefined}>
+                    <div data-touch-row className="flex items-start gap-2.5 rounded-lg border bg-muted/40 p-3">
                       <div className="flex-1 min-w-0">
                         <div className="flex items-center gap-2 flex-wrap">
                           {typeof r.room_number === "number" && (
@@ -680,7 +728,7 @@ export function LostPropertySheet({
                           type="button"
                           size="icon"
                           variant="ghost"
-                          className="h-8 w-8 text-muted-foreground hover:text-destructive"
+                          className="touch-danger text-muted-foreground hover:text-destructive"
                           onClick={() => void softDelete(r.id)}
                           aria-label="Delete entry"
                         >
@@ -688,6 +736,7 @@ export function LostPropertySheet({
                         </Button>
                       )}
                     </div>
+                    </SwipeRow>
                   ))
                 )}
               </div>

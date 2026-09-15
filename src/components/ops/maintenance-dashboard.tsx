@@ -4,6 +4,8 @@ import { useMemo, useState } from "react";
 import { Check, MessageSquare, Plus, RotateCcw, Trash2 } from "lucide-react";
 import type { QueryClient } from "@tanstack/react-query";
 import { Button } from "@/components/ui/button";
+import { SwipeRow } from "@/components/ui/swipe-row";
+import { useSwipeNav } from "@/hooks/use-touch-gestures";
 import { PhotoAttachments } from "@/components/entry-photos";
 import { MaintenanceNotes } from "@/components/ops/maintenance-notes";
 import { supabase } from "@/integrations/supabase/client";
@@ -95,6 +97,21 @@ export function MaintenanceDashboard({
   const activeItems = activeTab === "open" ? openItems : doneReqs;
   const pageCount = Math.max(1, Math.ceil(activeItems.length / PAGE_SIZE));
   const safePage = Math.min(page, pageCount - 1);
+  // Swipe the pills to switch section, swipe the list to page through it.
+  const tabSwipe = useSwipeNav({
+    onNext: () => {
+      setActiveTab("completed");
+      setPage(0);
+    },
+    onPrev: () => {
+      setActiveTab("open");
+      setPage(0);
+    },
+  });
+  const pageSwipe = useSwipeNav({
+    onNext: () => setPage(Math.min(pageCount - 1, safePage + 1)),
+    onPrev: () => setPage(Math.max(0, safePage - 1)),
+  });
   const pagedItems = activeItems.slice(
     safePage * PAGE_SIZE,
     safePage * PAGE_SIZE + PAGE_SIZE,
@@ -175,7 +192,10 @@ export function MaintenanceDashboard({
          <Plus className="mr-1 h-4 w-4" /> Log a new issue
        </Button>
      )}
-      <div className="inline-flex w-full items-center justify-center rounded-full border bg-background p-1">
+      <div
+        className="inline-flex w-full items-center justify-center rounded-full border bg-background p-1"
+        {...tabSwipe}
+      >
         {([
           { key: "open", label: `Open (${openItems.length})` },
           { key: "completed", label: `Completed (${doneReqs.length})` },
@@ -229,9 +249,14 @@ export function MaintenanceDashboard({
                No open maintenance items.
              </p>
            ) : (
-             <ul className="space-y-2">
+             <ul className="space-y-2" {...pageSwipe}>
                 {(pagedItems as Item[]).map((it) => (
-                 <li key={it.id} className="rounded-lg border bg-background p-3">
+                 <li key={it.id}>
+                 <SwipeRow
+                   onPrimary={() => void markDoneItem(it)}
+                   onDelete={() => void deleteItem(it)}
+                 >
+                 <div className="rounded-lg border bg-background p-3">
                    <div className="flex items-center gap-2 flex-wrap text-xs text-muted-foreground">
                      {it.location && (
                        <span className="inline-flex h-6 items-center rounded-full bg-primary/10 text-primary px-2 font-semibold">
@@ -274,17 +299,19 @@ export function MaintenanceDashboard({
                          : openMsgs.find((m) => m.id === rawId(it.id))?.notes
                      }
                    />
-                   <div className="mt-3 flex flex-wrap justify-end gap-2">
-                     <Button type="button" size="sm" variant="outline" className="h-8 text-xs" onClick={() => void replyToItem(it)}>
-                       <MessageSquare className="h-3.5 w-3.5 mr-1" /> Reply
+                   <div data-touch-row className="mt-3 flex flex-wrap items-center justify-end gap-2.5">
+                     <Button type="button" size="sm" variant="outline" className="text-xs" onClick={() => void replyToItem(it)}>
+                       <MessageSquare className="h-4 w-4 mr-1" /> Reply
                      </Button>
-                     <Button type="button" size="sm" variant="default" className="h-8 text-xs" onClick={() => void markDoneItem(it)}>
-                       <Check className="h-3.5 w-3.5 mr-1" /> Done
+                     <Button type="button" size="sm" variant="default" className="text-xs" onClick={() => void markDoneItem(it)}>
+                       <Check className="h-4 w-4 mr-1" /> Done
                      </Button>
-                     <Button type="button" size="sm" variant="ghost" className="h-8 text-xs text-destructive hover:text-destructive" onClick={() => void deleteItem(it)}>
-                       <Trash2 className="h-3.5 w-3.5 mr-1" /> Delete
+                     <Button type="button" size="sm" variant="ghost" className="touch-danger text-xs text-destructive hover:text-destructive" onClick={() => void deleteItem(it)}>
+                       <Trash2 className="h-4 w-4 mr-1" /> Delete
                      </Button>
                    </div>
+                 </div>
+                 </SwipeRow>
                  </li>
                ))}
              </ul>

@@ -1,9 +1,12 @@
 // Maintenance Log sheet (composer + open/completed lists).
 // Extracted verbatim from src/routes/app.tsx.
 import { useEffect, useMemo, useState } from "react";
-import { Check, ChevronDown, Plus, Settings, Trash2, Wrench, X } from "lucide-react";
+import { Check, ChevronDown, Loader2, Plus, Settings, Trash2, Wrench, X } from "lucide-react";
+import { useQueryClient } from "@tanstack/react-query";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { SwipeRow } from "@/components/ui/swipe-row";
+import { usePullToRefresh, useSwipeNav } from "@/hooks/use-touch-gestures";
 import {
   Sheet,
   SheetContent,
@@ -118,6 +121,19 @@ export function MaintenanceLogSheet({
   const [activeTab, setActiveTab] = useState<"open" | "completed">("open");
   const [page, setPage] = useState(0);
   const PAGE_SIZE = 15;
+  const qc = useQueryClient();
+
+  // Swipe across the pills to change section.
+  const tabSwipe = useSwipeNav({
+    onNext: () => {
+      setActiveTab("completed");
+      setPage(0);
+    },
+    onPrev: () => {
+      setActiveTab("open");
+      setPage(0);
+    },
+  });
 
   // Maintenance-thread messages are maintenance work too: show them in the
   // same log so Housekeeping and Reception see everything Maintenance sees.
@@ -198,6 +214,19 @@ export function MaintenanceLogSheet({
     return items;
   }, [pageCount, safePage]);
 
+  // Swipe the list sideways to page through it; pull down to refresh.
+  const listSwipe = useSwipeNav({
+    onNext: () => setPage(Math.min(pageCount - 1, safePage + 1)),
+    onPrev: () => setPage(Math.max(0, safePage - 1)),
+  });
+  const refresh = usePullToRefresh(async () => {
+    await Promise.all([
+      qc.invalidateQueries({ queryKey: ["maintenance_requests"] }),
+      qc.invalidateQueries({ queryKey: ["room_messages"] }),
+    ]);
+  });
+
+
   const fmt = (iso: string) =>
     new Date(iso).toLocaleString(undefined, {
       month: "short",
@@ -210,11 +239,26 @@ export function MaintenanceLogSheet({
     const isCompleted = e.done;
     const canDone =
       e.source === "req" ? isReception || isMaintenance : !!markMessageDone;
+    const canDelete = isReception || isMaintenance || isAdmin;
+    const primary =
+      !isCompleted && canDone
+        ? () =>
+            void (e.source === "req"
+              ? markMaintenanceDone(e.rawId)
+              : markMessageDone?.(e.rawId))
+        : undefined;
+    const remove = canDelete
+      ? () =>
+          void (e.source === "req"
+            ? deleteMaintenanceRequest(e.rawId)
+            : deleteMessage?.(e.rawId))
+      : undefined;
     return (
+      <SwipeRow key={e.id} onPrimary={primary} onDelete={remove}>
       <div
-        key={e.id}
+        data-touch-row
         className={
-          "flex items-start gap-2 rounded-lg border p-3 " +
+          "flex items-start gap-2.5 rounded-lg border p-3 " +
           (isCompleted ? "bg-muted/40" : "bg-background")
         }
       >
@@ -267,40 +311,27 @@ export function MaintenanceLogSheet({
             notes={e.notes}
           />
         </div>
-        {!isCompleted && canDone ? (
-          <Button
-            type="button"
-            size="sm"
-            variant="outline"
-            onClick={() =>
-              void (e.source === "req"
-                ? markMaintenanceDone(e.rawId)
-                : markMessageDone?.(e.rawId))
-            }
-            aria-label="Mark as done"
-          >
+        {primary ? (
+          <Button type="button" size="sm" variant="outline" onClick={primary} aria-label="Mark as done">
             <Check className="h-4 w-4 mr-1" /> Done
           </Button>
         ) : !isCompleted ? (
           <span className="text-xs text-muted-foreground shrink-0 pt-1">Awaiting action</span>
         ) : null}
-        {(isReception || isMaintenance || isAdmin) && (
+        {remove && (
           <Button
             type="button"
             size="icon"
             variant="ghost"
-            className="h-8 w-8 text-muted-foreground hover:text-destructive"
-            onClick={() =>
-              void (e.source === "req"
-                ? deleteMaintenanceRequest(e.rawId)
-                : deleteMessage?.(e.rawId))
-            }
+            className="touch-danger text-muted-foreground hover:text-destructive"
+            onClick={remove}
             aria-label="Delete request"
           >
             <Trash2 className="h-4 w-4" />
           </Button>
         )}
       </div>
+      </SwipeRow>
     );
   };
 
@@ -501,7 +532,10 @@ export function MaintenanceLogSheet({
         </div>
 
         {/* Section pills */}
-        <div className="mt-4 inline-flex w-full justify-center rounded-full border p-1 bg-background items-center">
+        <div
+          className="mt-4 inline-flex w-full justify-center rounded-full border p-1 bg-background items-center"
+          {...tabSwipe}
+        >
           {([
             { key: "open", label: `Open (${openItems.length})` },
             { key: "completed", label: `Completed (${completedItems.length})` },
@@ -572,7 +606,22 @@ export function MaintenanceLogSheet({
           </div>
         )}
 
-        <div className="flex-1 min-h-0 overflow-y-auto mt-4 space-y-4">
+        <div
+          className="flex-1 min-h-0 overflow-y-auto mt-4 space-y-4 overscroll-contain"
+          {...refresh.handlers}
+          {...listSwipe}
+        >
+          {(refresh.pull > 0 || refresh.refreshing) && (
+            <div
+              className="flex items-center justify-center text-muted-foreground"
+              style={{ height: refresh.refreshing ? 28 : refresh.pull }}
+            >
+              <Loader2
+                className={"h-4 w-4 " + (refresh.refreshing ? "animate-spin" : "")}
+                aria-hidden
+              />
+            </div>
+          )}
           {activeItems.length === 0 ? (
             <p className="text-sm text-muted-foreground">
               {activeTab === "open" ? "No open maintenance requests." : "No completed maintenance requests."}

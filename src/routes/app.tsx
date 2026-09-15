@@ -1,4 +1,6 @@
 import React, { useEffect, useMemo, useRef, useState } from "react";
+import { Loader2 } from "lucide-react";
+import { usePullToRefresh } from "@/hooks/use-touch-gestures";
 import { createFileRoute, useNavigate, Link } from "@tanstack/react-router";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import {
@@ -3521,11 +3523,31 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
     ].filter((g) => g.items.length > 0);
   })();
 
+  // Pull the home screen down from the top to refetch everything on screen.
+  const homeRefresh = usePullToRefresh(
+    async () => {
+      await qc.invalidateQueries();
+    },
+    { atTop: () => (typeof window === "undefined" ? false : window.scrollY <= 0) },
+  );
+
   return (
 <main
   className="min-h-[100dvh] bg-background"
   style={{ paddingBottom: "max(1.5rem, env(safe-area-inset-bottom))" }}
+  {...homeRefresh.handlers}
 >
+{(homeRefresh.pull > 0 || homeRefresh.refreshing) && (
+  <div
+    className="flex items-center justify-center text-muted-foreground"
+    style={{ height: homeRefresh.refreshing ? 28 : homeRefresh.pull }}
+  >
+    <Loader2
+      className={"h-4 w-4 " + (homeRefresh.refreshing ? "animate-spin" : "")}
+      aria-hidden
+    />
+  </div>
+)}
 <div
   className="max-w-2xl md:max-w-5xl lg:max-w-6xl xl:max-w-7xl mx-auto py-6 sm:py-10 space-y-8 sm:space-y-10"
   style={{
