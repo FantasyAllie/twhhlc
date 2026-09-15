@@ -213,11 +213,26 @@ export function MaintenanceLogSheet({
     const isCompleted = e.done;
     const canDone =
       e.source === "req" ? isReception || isMaintenance : !!markMessageDone;
+    const canDelete = isReception || isMaintenance || isAdmin;
+    const primary =
+      !isCompleted && canDone
+        ? () =>
+            void (e.source === "req"
+              ? markMaintenanceDone(e.rawId)
+              : markMessageDone?.(e.rawId))
+        : undefined;
+    const remove = canDelete
+      ? () =>
+          void (e.source === "req"
+            ? deleteMaintenanceRequest(e.rawId)
+            : deleteMessage?.(e.rawId))
+      : undefined;
     return (
+      <SwipeRow key={e.id} onPrimary={primary} onDelete={remove}>
       <div
-        key={e.id}
+        data-touch-row
         className={
-          "flex items-start gap-2 rounded-lg border p-3 " +
+          "flex items-start gap-2.5 rounded-lg border p-3 " +
           (isCompleted ? "bg-muted/40" : "bg-background")
         }
       >
