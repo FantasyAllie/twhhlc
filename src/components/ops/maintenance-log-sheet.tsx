@@ -206,11 +206,13 @@ export function MaintenanceLogSheet({
       minute: "2-digit",
     });
 
-  const renderItem = (m: MaintenanceRequest) => {
-    const isCompleted = m.done;
+  const renderItem = (e: Entry) => {
+    const isCompleted = e.done;
+    const canDone =
+      e.source === "req" ? isReception || isMaintenance : !!markMessageDone;
     return (
       <div
-        key={m.id}
+        key={e.id}
         className={
           "flex items-start gap-2 rounded-lg border p-3 " +
           (isCompleted ? "bg-muted/40" : "bg-background")
