@@ -638,7 +638,8 @@ export function LostPropertySheet({
                   <p className="text-sm text-muted-foreground">No resolved items yet.</p>
                 ) : (
                   resolvedRows.map((r) => (
-                    <div key={r.id} className="flex items-start gap-2 rounded-lg border bg-muted/40 p-3">
+                    <SwipeRow key={r.id} onDelete={canResolve ? () => void softDelete(r.id) : undefined}>
+                    <div data-touch-row className="flex items-start gap-2.5 rounded-lg border bg-muted/40 p-3">
                       <div className="flex-1 min-w-0">
                         <div className="flex items-center gap-2 flex-wrap">
                           {typeof r.room_number === "number" && (
