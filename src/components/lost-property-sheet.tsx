@@ -541,7 +541,7 @@ export function LostPropertySheet({
                     type="button"
                     size="icon"
                     variant="ghost"
-                    className="h-8 w-8 shrink-0 text-muted-foreground hover:text-destructive"
+                    className="touch-danger shrink-0 text-muted-foreground hover:text-destructive"
                     onClick={() => void softDelete(r.id)}
                     aria-label="Delete entry"
                   >
@@ -549,6 +549,7 @@ export function LostPropertySheet({
                   </Button>
                 )}
               </div>
+              </SwipeRow>
             );
 
             if (activeTab === "open") {
