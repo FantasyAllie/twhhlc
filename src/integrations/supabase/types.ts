@@ -295,6 +295,7 @@ export type Database = {
           hotel_id: string
           id: string
           message: string
+          notes: string | null
           origin_department: string | null
           photo_paths: string[]
           room_number: number | null
@@ -312,6 +313,7 @@ export type Database = {
           hotel_id?: string
           id?: string
           message: string
+          notes?: string | null
           origin_department?: string | null
           photo_paths?: string[]
           room_number?: number | null
@@ -329,6 +331,7 @@ export type Database = {
           hotel_id?: string
           id?: string
           message?: string
+          notes?: string | null
           origin_department?: string | null
           photo_paths?: string[]
           room_number?: number | null
