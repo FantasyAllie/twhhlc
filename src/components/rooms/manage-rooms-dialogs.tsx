@@ -60,7 +60,7 @@ export function ManageRoomsDialogs({
           </Button>
           <Button variant="outline" size="sm" className="min-w-0 justify-center gap-1.5 px-3 rounded-full" onClick={() => setReceptionItemsSheetOpen(true)}>
             <ConciergeBell className="h-4 w-4 shrink-0" />
-            <span className="truncate">Reception</span>
+            <span className="truncate">Status &amp; bed</span>
           </Button>
           <Button
             variant="outline"
