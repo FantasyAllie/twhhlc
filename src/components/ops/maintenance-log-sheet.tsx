@@ -12,6 +12,7 @@ import {
   SheetTitle,
 } from "@/components/ui/sheet";
 import { PhotoAttachments, PhotoComposer } from "@/components/entry-photos";
+import { MaintenanceNotes } from "@/components/ops/maintenance-notes";
 import type { MaintenanceArea, MaintenanceRequest, Room } from "@/lib/app-types";
 import { maintenanceLocation } from "@/lib/app-format";
 
