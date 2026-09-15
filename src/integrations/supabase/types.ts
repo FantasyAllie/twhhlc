@@ -728,6 +728,7 @@ export type Database = {
           hotel_id: string
           id: string
           message: string
+          notes: string | null
           reply_to_id: string | null
           reply_to_sender: string | null
           reply_to_snippet: string | null
@@ -746,6 +747,7 @@ export type Database = {
           hotel_id?: string
           id?: string
           message: string
+          notes?: string | null
           reply_to_id?: string | null
           reply_to_sender?: string | null
           reply_to_snippet?: string | null
@@ -764,6 +766,7 @@ export type Database = {
           hotel_id?: string
           id?: string
           message?: string
+          notes?: string | null
           reply_to_id?: string | null
           reply_to_sender?: string | null
           reply_to_snippet?: string | null
