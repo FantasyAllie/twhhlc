@@ -128,6 +128,8 @@ export type RoomMessage = {
   done_at: string | null;
   deleted_at: string | null;
   created_at: string;
+  // Free-text repair notes on maintenance-thread messages.
+  notes?: string | null;
 };
 
 export type MaintenanceRequest = {

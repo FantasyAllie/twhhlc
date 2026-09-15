@@ -15,11 +15,16 @@ export function MaintenanceNotes({
   requestId,
   notes,
   canEdit = true,
+  source = "request",
 }: {
   requestId: string;
   notes?: string | null;
   canEdit?: boolean;
+  /** Where the item lives: a maintenance request or a maintenance message. */
+  source?: "request" | "message";
 }) {
+  const table = source === "message" ? "room_messages" : "maintenance_requests";
+  const queryKey = source === "message" ? "room_messages" : "maintenance_requests";
   const qc = useQueryClient();
   const [open, setOpen] = useState(false);
   const [draft, setDraft] = useState(notes ?? "");
@@ -35,7 +40,7 @@ export function MaintenanceNotes({
     const value = draft.trim().slice(0, MAX_NOTES);
     setSaving(true);
     const { error } = await supabase
-      .from("maintenance_requests" as never)
+      .from(table as never)
       .update({ notes: value === "" ? null : value, updated_at: new Date().toISOString() } as never)
       .eq("id", requestId);
     setSaving(false);
@@ -43,7 +48,7 @@ export function MaintenanceNotes({
       toast.error(error.message);
       return;
     }
-    qc.invalidateQueries({ queryKey: ["maintenance_requests"] });
+    qc.invalidateQueries({ queryKey: [queryKey] });
     toast.success("Notes saved.");
     setOpen(false);
   };
