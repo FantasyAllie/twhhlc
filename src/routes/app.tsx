@@ -4297,6 +4297,9 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
   onOpenChange={setMaintenanceLogOpen}
   rooms={rooms}
   maintenanceRequests={maintenanceRequests}
+  maintenanceMessages={roomMessages}
+  markMessageDone={markMaintenanceMessageDone}
+  deleteMessage={deleteRoomMessage}
   maintenanceAreas={maintenanceAreas}
   canManageAreas={isAdmin}
   onManageAreas={() => setMaintenanceAreasOpen(true)}
@@ -4478,6 +4481,10 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
      qc={qc}
      setMessagesInitial={setMessagesInitial}
      setMessagesSheetOpen={setMessagesSheetOpen}
+     onLogNewIssue={() => {
+       setMaintenanceComposerOpen(true);
+       setMaintenanceLogOpen(true);
+     }}
    />
  ) : isFnb ? (
    <section className="space-y-4">
