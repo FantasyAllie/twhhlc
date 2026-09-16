@@ -1,5 +1,7 @@
 // Short synthesised tap sound (Web Audio) used as press feedback, similar to
 // the keypress click on mobile operating systems. No audio asset needed.
+import { areButtonSoundsEnabled } from "./feedback-prefs";
+
 let ctx: AudioContext | null = null;
 let lastAt = 0;
 
