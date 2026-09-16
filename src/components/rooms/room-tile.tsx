@@ -174,7 +174,7 @@ function ReceptionRoomTileBase({
               style={{ color: meta.accent }}
             />
           )}
-          <span className="text-sm sm:text-base font-bold leading-none inline-flex items-center gap-1">
+          <span className="text-sm sm:text-base font-bold leading-none inline-flex min-w-0 items-center gap-1 pr-7 @[120px]:pr-12">
             {n}
             {flags.isDnd && (
               <>
@@ -189,7 +189,7 @@ function ReceptionRoomTileBase({
               </>
             )}
           </span>
-          <span className="text-[9px] sm:text-[10px] md:text-xs font-bold uppercase tracking-tight leading-tight opacity-80 whitespace-pre-line pr-4">
+          <span className="text-[9px] sm:text-[10px] md:text-xs font-bold uppercase tracking-tight leading-tight opacity-80 whitespace-pre-line pr-5">
             {bedLabel ? `${meta.label} - ${bedCode(bedLabel)}` : meta.label}
           </span>
         </>
@@ -201,7 +201,7 @@ function ReceptionRoomTileBase({
         </>
       )}
       {!isStaffRoom && (
-        <span className="absolute top-1.5 right-1.5 flex flex-col items-end gap-1">
+        <span className="absolute top-1.5 right-1.5 flex max-w-[42%] flex-col items-end gap-1">
           {(hasMessage || !!room?.housekeeping_note) && (
             <span
               aria-label="Housekeeping note"
@@ -211,22 +211,22 @@ function ReceptionRoomTileBase({
           {room?.guest_vacated && (
             <DoorOpen
               aria-label="Guest vacated"
-              className="h-3.5 w-3.5 text-emerald-600 dark:text-emerald-400"
+              className="h-3.5 w-3.5 shrink-0 text-emerald-600 dark:text-emerald-400"
             />
           )}
           {room?.stayover_out && !room?.done && (
             <Footprints
               aria-label="Stayover guest out - room empty"
-              className="h-3.5 w-3.5 text-sky-600 dark:text-sky-400"
+              className="h-3.5 w-3.5 shrink-0 text-sky-600 dark:text-sky-400"
             />
           )}
           {room?.dog_box && (
             <span
               aria-label="Dog box needed"
-              className="inline-flex items-center gap-0.5 rounded-full bg-violet-600 px-1.5 py-0.5 text-[8px] font-bold leading-none tracking-wide text-white shadow-sm dark:bg-violet-500 dark:text-violet-950"
+              className={BADGE_CLASS + " bg-violet-600 text-white dark:bg-violet-500 dark:text-violet-950"}
             >
-              <Dog aria-hidden className="h-2.5 w-2.5" />
-              Dog
+              <Dog aria-hidden className="h-2.5 w-2.5 shrink-0" />
+              <span className="hidden @[120px]:inline">Dog</span>
             </span>
           )}
         </span>
