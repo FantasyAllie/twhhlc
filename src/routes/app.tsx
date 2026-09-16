@@ -3276,7 +3276,12 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
         <span
           className="flex-1 min-w-0 break-words"
           style={item.color ? { color: theme === "dark" ? "#f8fafc" : "#0f172a" } : undefined}
-        >{item.name}</span>
+        >
+          {item.name}
+          {isPreferred(item.id, n) && (
+            <span className="ml-2 text-xs font-semibold opacity-70">(Preferred)</span>
+          )}
+        </span>
      <div className="flex items-center gap-1 shrink-0">
     {item.default_count > 0 && (
     <Button
