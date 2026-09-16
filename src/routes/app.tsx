@@ -73,6 +73,7 @@ import { DndDoorPhoto } from "@/components/dnd-door-photo";
 import { RoomInfoTiles } from "@/components/rooms/room-info-tiles";
 import { BroomBurst } from "@/components/broom-burst";
 import { CelebrationBurst } from "@/components/celebration-burst";
+import { areOutcomeAnimationsEnabled } from "@/lib/feedback-prefs";
 import { GloomBurst } from "@/components/gloom-burst";
 import {
   deleteTodayStayoverPhotosForRoom,

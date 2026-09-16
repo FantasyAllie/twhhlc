@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { Bell, Smartphone } from "lucide-react";
+import { Bell, Smartphone, Volume2 } from "lucide-react";
 import { toast } from "sonner";
 import {
   Sheet,
@@ -26,6 +26,12 @@ import {
   type MessagesDepartment,
 } from "@/lib/push.functions";
 import { getToken } from "@/lib/auth-client";
+import {
+  areButtonSoundsEnabled,
+  setButtonSoundsEnabled,
+  areOutcomeAnimationsEnabled,
+  setOutcomeAnimationsEnabled,
+} from "@/lib/feedback-prefs";
 
 const DEFAULT_PREFS: NotificationPrefs = {
   messages_enabled: true,
@@ -57,12 +63,16 @@ export function NotificationsSheet({
   const [subscribed, setSubscribed] = useState(false);
   const [busy, setBusy] = useState(false);
   const [prefs, setPrefs] = useState<NotificationPrefs>(DEFAULT_PREFS);
+  const [buttonSounds, setButtonSounds] = useState(true);
+  const [outcomeAnimations, setOutcomeAnimations] = useState(true);
   const [permission, setPermission] = useState<NotificationPermission>(
     typeof Notification !== "undefined" ? Notification.permission : "default",
   );
 
   useEffect(() => {
     if (!open) return;
+    setButtonSounds(areButtonSoundsEnabled());
+    setOutcomeAnimations(areOutcomeAnimationsEnabled());
     let cancelled = false;
     (async () => {
       try {
@@ -268,6 +278,34 @@ export function NotificationsSheet({
             </div>
             <p className="text-[11px] text-muted-foreground pt-1">
               Applies to the Messages window between departments.
+            </p>
+          </div>
+
+          <div className="space-y-2 rounded-xl border bg-background p-3">
+            <p className="flex items-center gap-2 text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+              <Volume2 className="h-3.5 w-3.5" />
+              Sounds &amp; effects on this device
+            </p>
+            <div className="space-y-2">
+              <PrefRow
+                label="Tap sound when pressing buttons and tiles"
+                checked={buttonSounds}
+                onChange={(v) => {
+                  setButtonSounds(v);
+                  setButtonSoundsEnabled(v);
+                }}
+              />
+              <PrefRow
+                label="End-of-shift celebration and better-luck screens"
+                checked={outcomeAnimations}
+                onChange={(v) => {
+                  setOutcomeAnimations(v);
+                  setOutcomeAnimationsEnabled(v);
+                }}
+              />
+            </div>
+            <p className="text-[11px] text-muted-foreground pt-1">
+              These only affect this phone or computer, not your other devices.
             </p>
           </div>
 
