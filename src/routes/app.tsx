@@ -3157,9 +3157,10 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
               type="button"
               onClick={() => setNotesSheetRoom(n)}
               className="relative inline-flex items-center justify-center h-11 w-11 shrink-0 rounded-xl border bg-background shadow-sm active:scale-[0.97] active:shadow-none text-sm font-medium cursor-pointer transition-colors hover:bg-accent"
-              aria-label="Notifications"
+              aria-label="Room hub"
             >
-              <MessageSquare className="h-4 w-4" />
+              <Inbox className="h-4 w-4" />
+
               {hasIndicator && (
                 <span className="absolute -top-0.5 -right-0.5 flex items-center gap-0.5">
                   {hasMsg && (
