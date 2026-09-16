@@ -6,7 +6,6 @@ import { cn } from "@/lib/utils";
 import { playClick } from "@/lib/click-sound";
 import type { Room } from "@/lib/app-types";
 import {
-  bedCode,
   computeTileMeta,
   resolveRoomStatusFlags,
   type RoomStatusIds,
