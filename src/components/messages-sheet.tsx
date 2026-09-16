@@ -467,10 +467,27 @@ export function MessagesSheet({
           </div>
         )}
 
+        {doneCount > 0 && (
+          <div className="mt-3 flex justify-end">
+            <Button
+              type="button"
+              size="sm"
+              variant={showDone ? "default" : "outline"}
+              className="rounded-full"
+              onClick={() => setShowDone((v) => !v)}
+            >
+              <Check className="h-3.5 w-3.5 mr-1" />
+              {showDone ? "Hide done" : `Show done (${doneCount})`}
+            </Button>
+          </div>
+        )}
+
         <div ref={feedRef} className="flex-1 min-h-0 overflow-y-auto mt-4 space-y-4 pr-1">
           {groups.length === 0 ? (
             <p className="text-sm text-muted-foreground text-center py-8">
-              No messages yet. Say hi.
+              {doneCount > 0 && !showDone
+                ? "No open messages — everything here is marked done."
+                : "No messages yet. Say hi."}
             </p>
           ) : (
             groups.map((g) => (
