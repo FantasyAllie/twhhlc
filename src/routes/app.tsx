@@ -224,18 +224,6 @@ function AppPage() {
   useEffect(() => {
     void purgeExpiredStayoverPhotos();
   }, []);
-  // When reception expands a bottom tile (DND, maintenance, lost property), scroll
-  // the panel content into view only if it falls below the fold.
-  useEffect(() => {
-    if (!roomInfoTab || !roomInfoExpandedRef.current) return;
-    const el = roomInfoExpandedRef.current;
-    const rect = el.getBoundingClientRect();
-    const margin = 16;
-    if (rect.bottom > window.innerHeight - margin) {
-      const top = window.scrollY + rect.top - margin;
-      window.scrollTo({ top, behavior: "smooth" });
-    }
-  }, [roomInfoTab]);
   // Mobile keyboard: keep the focused input visible above the on-screen keyboard.
   // We listen to focus on form controls and use visualViewport to detect when the
   // keyboard reduces the visible area, then scroll the field into view.
