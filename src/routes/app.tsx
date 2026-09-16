@@ -838,8 +838,10 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
     if (isShiftComplete) {
       if (!wasShiftCompleteRef.current && markedDoneHereRef.current && !celebratedRef.current) {
         celebratedRef.current = true;
-        if (hasLeftoverDirtyRooms) setGloomActive(true);
-        else setCelebrationActive(true);
+        if (areOutcomeAnimationsEnabled()) {
+          if (hasLeftoverDirtyRooms) setGloomActive(true);
+          else setCelebrationActive(true);
+        }
       }
     } else {
       celebratedRef.current = false;
