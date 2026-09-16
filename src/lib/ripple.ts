@@ -27,7 +27,16 @@ const spawnInk = (host: HTMLElement, clientX: number, clientY: number) => {
 
   const style = window.getComputedStyle(host);
   if (style.position === "static") host.style.position = "relative";
-  if (style.overflow === "visible") host.style.overflow = "hidden";
+
+  // The ink lives in its own clip layer instead of clipping the host itself,
+  // so badges/indicators positioned outside the host stay fully visible.
+  let clip = host.querySelector<HTMLElement>(":scope > .ripple-clip");
+  if (!clip) {
+    clip = document.createElement("span");
+    clip.className = "ripple-clip";
+    clip.setAttribute("aria-hidden", "true");
+    host.appendChild(clip);
+  }
 
   const size = Math.max(rect.width, rect.height) * 2;
   const ink = document.createElement("span");
@@ -37,8 +46,9 @@ const spawnInk = (host: HTMLElement, clientX: number, clientY: number) => {
   ink.style.left = `${clientX - rect.left - size / 2}px`;
   ink.style.top = `${clientY - rect.top - size / 2}px`;
   ink.addEventListener("animationend", () => ink.remove());
-  host.appendChild(ink);
+  clip.appendChild(ink);
   window.setTimeout(() => ink.remove(), 900);
+
 };
 
 // Opt-in hook for custom elements that are not caught by the global listener.
