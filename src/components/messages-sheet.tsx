@@ -109,6 +109,7 @@ export function MessagesSheet({
   const [replyTo, setReplyTo] = useState<{ id: string; sender: string; snippet: string } | null>(initialReplyTo ?? null);
   const [alsoMaintenance, setAlsoMaintenance] = useState(false);
   const [alsoLostProperty, setAlsoLostProperty] = useState(false);
+  const [showDone, setShowDone] = useState(false);
   const feedRef = useRef<HTMLDivElement | null>(null);
 
   // "Send to" picker options for non-admin users with a single department.
@@ -199,25 +200,27 @@ export function MessagesSheet({
     },
   });
 
-  const items = useMemo(() => q.data ?? [], [q.data]);
+  const allItems = useMemo(() => q.data ?? [], [q.data]);
+  const doneCount = useMemo(() => allItems.filter((m) => !!m.done_at).length, [allItems]);
+  // Done messages are hidden by default; they stay available behind the toggle.
+  const items = useMemo(
+    () => (showDone ? allItems : allItems.filter((m) => !m.done_at)),
+    [allItems, showDone],
+  );
 
-  const prevLenRef = useRef(0);
+  // Always land on the most recent message: on open, on thread change, and
+  // whenever the visible feed changes.
   useEffect(() => {
     if (!open) return;
     const el = feedRef.current;
-    // Only auto-scroll to bottom on open, or when new messages arrive.
-    // Skip when the list shrinks (e.g. after deleting a message) so the
-    // user's scroll position isn't yanked to the bottom.
-    if (el && items.length > prevLenRef.current) {
+    if (!el) return;
+    const scroll = () => {
       el.scrollTop = el.scrollHeight;
-    }
-    prevLenRef.current = items.length;
-  }, [open, items.length]);
-  useEffect(() => {
-    if (open) {
-      prevLenRef.current = 0;
-    }
-  }, [open]);
+    };
+    scroll();
+    const raf = requestAnimationFrame(scroll);
+    return () => cancelAnimationFrame(raf);
+  }, [open, thread, showDone, items.length]);
 
   // Realtime: refetch on any change to this thread.
   useEffect(() => {
@@ -464,10 +467,27 @@ export function MessagesSheet({
           </div>
         )}
 
+        {doneCount > 0 && (
+          <div className="mt-3 flex justify-end">
+            <Button
+              type="button"
+              size="sm"
+              variant={showDone ? "default" : "outline"}
+              className="rounded-full"
+              onClick={() => setShowDone((v) => !v)}
+            >
+              <Check className="h-3.5 w-3.5 mr-1" />
+              {showDone ? "Hide done" : `Show done (${doneCount})`}
+            </Button>
+          </div>
+        )}
+
         <div ref={feedRef} className="flex-1 min-h-0 overflow-y-auto mt-4 space-y-4 pr-1">
           {groups.length === 0 ? (
             <p className="text-sm text-muted-foreground text-center py-8">
-              No messages yet. Say hi.
+              {doneCount > 0 && !showDone
+                ? "No open messages — everything here is marked done."
+                : "No messages yet. Say hi."}
             </p>
           ) : (
             groups.map((g) => (
