@@ -129,6 +129,7 @@ import type {
   RoomCount,
   Room,
   TemplateItemRoom,
+  RoomPreferredItem,
   SnapshotRow,
   RoomStatusRow,
   MaintenanceRow,

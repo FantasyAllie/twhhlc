@@ -1,6 +1,6 @@
 // Admin per-room configuration sheets: linen defaults and room settings.
 // Extracted verbatim from src/routes/app.tsx.
-import { Check, Pencil } from "lucide-react";
+import { Check, Pencil, Star } from "lucide-react";
 import { cn } from "@/lib/utils";
 import {
   Sheet,
@@ -24,12 +24,16 @@ export function EditRoomDefaultsSheet({
   template,
   isAssigned,
   toggleAssignment,
+  isPreferred,
+  togglePreferred,
 }: {
   editDefaultsSheetRoom: number | null;
   setEditDefaultsSheetRoom: (n: number | null) => void;
   template: TemplateItem[];
   isAssigned: (itemId: string, room: number) => boolean;
   toggleAssignment: (itemId: string, room: number) => void;
+  isPreferred: (itemId: string, room: number) => boolean;
+  togglePreferred: (itemId: string, room: number) => void;
 }) {
   return (
  <Sheet open={editDefaultsSheetRoom !== null} onOpenChange={(o) => { if (!o) setEditDefaultsSheetRoom(null); }}>
@@ -43,7 +47,9 @@ export function EditRoomDefaultsSheet({
                <Pencil className="h-4 w-4" />
                Edit defaults — Room {n}
              </SheetTitle>
-             <SheetDescription>Choose which linen items appear by default</SheetDescription>
+             <SheetDescription>
+               Choose which linen items appear by default, and star the room's preferred items
+             </SheetDescription>
            </SheetHeader>
            <div className="mt-4 space-y-1.5">
              {template.length === 0 ? (
@@ -51,19 +57,39 @@ export function EditRoomDefaultsSheet({
              ) : (
                template.map((t) => {
                  const checked = isAssigned(t.id, n);
+                 const preferred = isPreferred(t.id, n);
                  return (
-                   <button
-                     key={t.id}
-                     type="button"
-                     onClick={() => toggleAssignment(t.id, n)}
-                     className={cn(
-                       "w-full flex items-center justify-between gap-3 rounded-xl border bg-background shadow-sm px-4 min-h-12 text-sm font-medium transition-colors hover:bg-accent",
-                       checked && "border-primary bg-primary/10 text-primary",
-                     )}
-                   >
-                     <span className="text-left">{t.name}</span>
-                     {checked ? <Check className="h-5 w-5" /> : <span className="h-5 w-5" />}
-                   </button>
+                   <div key={t.id} className="flex items-stretch gap-2">
+                     <button
+                       type="button"
+                       onClick={() => toggleAssignment(t.id, n)}
+                       className={cn(
+                         "flex-1 min-w-0 flex items-center justify-between gap-3 rounded-xl border bg-background shadow-sm px-4 min-h-12 text-sm font-medium transition-colors hover:bg-accent",
+                         checked && "border-primary bg-primary/10 text-primary",
+                       )}
+                     >
+                       <span className="text-left break-words">
+                         {t.name}
+                         {preferred && (
+                           <span className="ml-2 text-xs font-semibold opacity-70">(Preferred)</span>
+                         )}
+                       </span>
+                       {checked ? <Check className="h-5 w-5 shrink-0" /> : <span className="h-5 w-5 shrink-0" />}
+                     </button>
+                     <button
+                       type="button"
+                       onClick={() => togglePreferred(t.id, n)}
+                       aria-pressed={preferred}
+                       aria-label={preferred ? `Unmark ${t.name} as preferred` : `Mark ${t.name} as preferred`}
+                       title="Preferred for this room"
+                       className={cn(
+                         "inline-flex w-12 shrink-0 items-center justify-center rounded-xl border bg-background shadow-sm transition-colors hover:bg-accent",
+                         preferred && "border-amber-400/70 bg-amber-50 text-amber-600 dark:bg-amber-950/40 dark:text-amber-300",
+                       )}
+                     >
+                       <Star className={cn("h-5 w-5", preferred && "fill-current")} />
+                     </button>
+                   </div>
                  );
                })
              )}
