@@ -473,6 +473,10 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
   const [newMaintenanceText, setNewMaintenanceText] = useState<string>("");
   const [maintenanceComposerOpen, setMaintenanceComposerOpen] = useState(false);
   const [lostPropertyOpen, setLostPropertyOpen] = useState(false);
+  // Room number pre-selected in the lost property composer when it's opened
+  // from a room hub, so the user doesn't have to pick the room again.
+  const [lostPropertyInitialRoom, setLostPropertyInitialRoom] = useState<number | null>(null);
+
    // Progress-bar easter egg: 7 taps within a 2-second rolling window →
    // immediate full reset + fancy broom-burst animation. If more than 2 seconds
    // elapses between taps, the counter resets and the user starts again.
