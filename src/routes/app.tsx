@@ -3149,7 +3149,7 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
                 "ring-2 ring-orange-500/60",
               )}
           </div>
-          <div ref={expandedRef}>
+          <div ref={roomInfoExpandedRef}>
             {active === "dnd" && hasDnd && <DndDoorPhoto roomNumber={n} />}
             {active === "maint" && openMaint.length > 0 && (
               <div className="space-y-2 rounded-xl border border-orange-400/60 bg-orange-50 dark:bg-orange-950/40 p-3">
