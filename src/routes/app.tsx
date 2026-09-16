@@ -5300,7 +5300,7 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
  </section>
  )}
   {!isReception && (
-    <div className="lg:hidden h-[calc(env(safe-area-inset-bottom,0px)+3.25rem)]" aria-hidden />
+    <div className="lg:hidden h-[calc(env(safe-area-inset-bottom,0px)+2.75rem)]" aria-hidden />
   )}
  </div>
 
