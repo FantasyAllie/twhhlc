@@ -2902,11 +2902,12 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
  const renderRoomPanel = (n: number) => {
  const roomExtras = extras.filter((e) => e.room_number === n);
    const showAll = !!showAllLinen[n];
-   const visibleTemplate = template.filter((t) => {
-     if (isAssigned(t.id, n)) return true;
-     if (showAll) return true;
-     return getCount(n, "template", t.id) > 0;
-   });
+    const visibleTemplate = template.filter((t) => {
+      if (isPreferred(t.id, n)) return true;
+      if (isAssigned(t.id, n)) return true;
+      if (showAll) return true;
+      return getCount(n, "template", t.id) > 0;
+    });
   const cat = roomCategory(n);
   const colorStyle = (color: ItemColor | null | undefined): React.CSSProperties | undefined => {
     const c = color ? COLOR_SWATCHES[color] : null;
