@@ -1078,6 +1078,14 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
       return;
     }
     qc.invalidateQueries({ queryKey: ["maintenance_requests"] });
+    if (getToken())
+      void notifyMaintenanceCompleted({
+        data: {
+          roomNumber: target?.room_number ?? null,
+          areaLabel: target?.area_label ?? null,
+          message: target?.message ?? "",
+        },
+      }).catch(() => {});
     if (target?.room_number != null) await clearRoomFlagIfNoOpenRequests(target.room_number);
   };
 
