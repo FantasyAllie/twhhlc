@@ -505,3 +505,49 @@ export const notifyMaintenanceRequest = createServerFn({ method: "POST" })
     );
     return { ok: true, recipients };
   });
+export const notifyLostProperty = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((d: { kind: "logged" | "collected"; roomNumber: number | null; description: string }) => d)
+  .handler(async ({ data, context }) => {
+    const sender = await getActor(context);
+    if (!sender.active) return { ok: true, recipients: 0 };
+    const place = data.roomNumber != null ? `Room ${data.roomNumber}` : "Hotel";
+    const logged = data.kind === "logged";
+    const recipients = await fanOut(
+      ["housekeeping", "reception"],
+      logged ? "notify_lost_property_logged" : "notify_lost_property_collected",
+      sender,
+      {
+        title: logged
+          ? `Lost property logged — ${place}`
+          : `Lost property collected — ${place}`,
+        body:
+          (data.description?.slice(0, 240) || "Lost property item") +
+          ` (${logged ? "logged" : "collected"} by ${sender.username})`,
+        url: `/app`,
+        tag: `lost-property-${data.kind}-${data.roomNumber ?? "hotel"}`,
+      },
+    );
+    return { ok: true, recipients };
+  });
+
+export const notifyMaintenanceCompleted = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((d: { roomNumber: number | null; areaLabel?: string | null; message: string }) => d)
+  .handler(async ({ data, context }) => {
+    const sender = await getActor(context);
+    if (!sender.active) return { ok: true, recipients: 0 };
+    const place = data.roomNumber != null ? `Room ${data.roomNumber}` : (data.areaLabel || "Hotel");
+    const recipients = await fanOut(
+      ["housekeeping", "reception", "fnb"],
+      "notify_maintenance_completed",
+      sender,
+      {
+        title: `Maintenance completed — ${place}`,
+        body: (data.message?.slice(0, 240) || "Job completed") + ` (${sender.username})`,
+        url: `/app`,
+        tag: `maintenance-done-${data.roomNumber ?? data.areaLabel ?? "hotel"}`,
+      },
+    );
+    return { ok: true, recipients };
+  });
