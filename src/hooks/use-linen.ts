@@ -74,6 +74,18 @@ export const useTemplateItemRoomsQuery = () =>
     },
   });
 
+export const useRoomPreferredItemsQuery = () =>
+  useQuery({
+    queryKey: ["room_preferred_items"],
+    queryFn: async (): Promise<RoomPreferredItem[]> => {
+      const { data, error } = await supabase
+        .from("room_preferred_items" as never)
+        .select("id,template_item_id,room_number");
+      if (error) throw error;
+      return (data ?? []) as RoomPreferredItem[];
+    },
+  });
+
 export const useRejectCountsQuery = () =>
   useQuery({
     queryKey: ["reject_counts"],
