@@ -179,12 +179,12 @@ function ReceptionRoomTileBase({
             />
           )}
           <div className="flex flex-col items-start gap-0.5 pr-7 @[120px]:pr-12">
-            <span className="text-sm sm:text-base font-bold leading-none inline-flex min-w-0 items-center gap-1">
+            <span className="text-sm sm:text-base font-bold leading-none inline-flex min-w-0 items-baseline gap-1">
               {n}
               {bedLabel && (
                 <>
-                  <span aria-hidden className="opacity-60">-</span>
-                  <span className="truncate">{bedLabel}</span>
+                  <span aria-hidden className="text-[9px] sm:text-[10px] md:text-xs font-bold uppercase tracking-tight opacity-60">-</span>
+                  <span className="text-[9px] sm:text-[10px] md:text-xs font-bold uppercase tracking-tight leading-tight opacity-80 truncate">{bedLabel}</span>
                 </>
               )}
             </span>
