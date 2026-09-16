@@ -446,6 +446,7 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
   const [roomInfoTab, setRoomInfoTab] = useState<
     { room: number; tab: "dnd" | "lp" | "maint" } | null
   >(null);
+  const roomInfoExpandedRef = useRef<HTMLDivElement>(null);
   const [receptionSheetRoom, setReceptionSheetRoom] = useState<number | null>(null);
   const [quickReceptionOpen, setQuickReceptionOpen] = useState(false);
   const [editDefaultsSheetRoom, setEditDefaultsSheetRoom] = useState<number | null>(null);
