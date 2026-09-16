@@ -3147,65 +3147,67 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
                 "ring-2 ring-orange-500/60",
               )}
           </div>
-          {active === "dnd" && hasDnd && <DndDoorPhoto roomNumber={n} />}
-          {active === "maint" && openMaint.length > 0 && (
-            <div className="space-y-2 rounded-xl border border-orange-400/60 bg-orange-50 dark:bg-orange-950/40 p-3">
-              <p className="flex items-center gap-1.5 text-xs font-semibold uppercase tracking-wide text-orange-700 dark:text-orange-300">
-                <Wrench className="h-3.5 w-3.5" />
-                Open maintenance ({openMaint.length})
-              </p>
-              <ul className="space-y-1.5">
-                {openMaint.map((m) => (
-                  <li key={m.id} className="rounded bg-background/70 p-2 text-sm">
-                    <div className="whitespace-pre-wrap break-words">{m.message}</div>
-                    <div className="mt-1 text-[11px] text-muted-foreground">
-                      {m.created_by_username ?? "Unknown"} · {fmt(m.created_at)}
-                    </div>
-                    {Array.isArray(m.photo_paths) && m.photo_paths.length > 0 && (
-                      <div className="mt-2">
-                        <PhotoAttachments
-                          kind="maintenance"
-                          entryId={m.id}
-                          paths={m.photo_paths}
-                          canEdit={false}
-                          onChange={() => {}}
-                        />
+          <div ref={expandedRef}>
+            {active === "dnd" && hasDnd && <DndDoorPhoto roomNumber={n} />}
+            {active === "maint" && openMaint.length > 0 && (
+              <div className="space-y-2 rounded-xl border border-orange-400/60 bg-orange-50 dark:bg-orange-950/40 p-3">
+                <p className="flex items-center gap-1.5 text-xs font-semibold uppercase tracking-wide text-orange-700 dark:text-orange-300">
+                  <Wrench className="h-3.5 w-3.5" />
+                  Open maintenance ({openMaint.length})
+                </p>
+                <ul className="space-y-1.5">
+                  {openMaint.map((m) => (
+                    <li key={m.id} className="rounded bg-background/70 p-2 text-sm">
+                      <div className="whitespace-pre-wrap break-words">{m.message}</div>
+                      <div className="mt-1 text-[11px] text-muted-foreground">
+                        {m.created_by_username ?? "Unknown"} · {fmt(m.created_at)}
                       </div>
-                    )}
-                  </li>
-                ))}
-              </ul>
-            </div>
-          )}
-          {active === "lp" && openLp.length > 0 && (
-            <div className="space-y-2 rounded-xl border border-rose-400/60 bg-rose-50 dark:bg-rose-950/40 p-3">
-              <p className="flex items-center gap-1.5 text-xs font-semibold uppercase tracking-wide text-rose-700 dark:text-rose-300">
-                <PackageSearch className="h-3.5 w-3.5" />
-                Lost property ({openLp.length})
-              </p>
-              <ul className="space-y-1.5">
-                {openLp.map((lp) => (
-                  <li key={lp.id} className="rounded bg-background/70 p-2 text-sm">
-                    <div className="whitespace-pre-wrap break-words">{lp.message}</div>
-                    <div className="mt-1 text-[11px] text-muted-foreground">
-                      Logged {fmt(lp.created_at)}
-                    </div>
-                    {Array.isArray(lp.photo_paths) && lp.photo_paths.length > 0 && (
-                      <div className="mt-2">
-                        <PhotoAttachments
-                          kind="lost_property"
-                          entryId={lp.id}
-                          paths={lp.photo_paths}
-                          canEdit={false}
-                          onChange={() => {}}
-                        />
+                      {Array.isArray(m.photo_paths) && m.photo_paths.length > 0 && (
+                        <div className="mt-2">
+                          <PhotoAttachments
+                            kind="maintenance"
+                            entryId={m.id}
+                            paths={m.photo_paths}
+                            canEdit={false}
+                            onChange={() => {}}
+                          />
+                        </div>
+                      )}
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            )}
+            {active === "lp" && openLp.length > 0 && (
+              <div className="space-y-2 rounded-xl border border-rose-400/60 bg-rose-50 dark:bg-rose-950/40 p-3">
+                <p className="flex items-center gap-1.5 text-xs font-semibold uppercase tracking-wide text-rose-700 dark:text-rose-300">
+                  <PackageSearch className="h-3.5 w-3.5" />
+                  Lost property ({openLp.length})
+                </p>
+                <ul className="space-y-1.5">
+                  {openLp.map((lp) => (
+                    <li key={lp.id} className="rounded bg-background/70 p-2 text-sm">
+                      <div className="whitespace-pre-wrap break-words">{lp.message}</div>
+                      <div className="mt-1 text-[11px] text-muted-foreground">
+                        Logged {fmt(lp.created_at)}
                       </div>
-                    )}
-                  </li>
-                ))}
-              </ul>
-            </div>
-          )}
+                      {Array.isArray(lp.photo_paths) && lp.photo_paths.length > 0 && (
+                        <div className="mt-2">
+                          <PhotoAttachments
+                            kind="lost_property"
+                            entryId={lp.id}
+                            paths={lp.photo_paths}
+                            canEdit={false}
+                            onChange={() => {}}
+                          />
+                        </div>
+                      )}
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            )}
+          </div>
         </div>
       );
     })()}
