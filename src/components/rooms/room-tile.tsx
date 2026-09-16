@@ -307,16 +307,18 @@ function HousekeepingRoomTileBase({
           style={{ color: meta.accent }}
         />
       )}
-      <span className="text-sm sm:text-base font-bold leading-none inline-flex min-w-0 items-center gap-1 pr-7 @[120px]:pr-12">
-        {n}
-        {!isStaff && isDone && <Check aria-label="Done" className="h-3.5 w-3.5 shrink-0 opacity-80" />}
-        {flags.isDnd && !isStaff && (
-          <span aria-label="DND" className="text-sm sm:text-base font-bold leading-none">DND</span>
+      <div className="flex flex-col items-start gap-0.5 pr-7 @[120px]:pr-12">
+        <span className="text-sm sm:text-base font-bold leading-none inline-flex min-w-0 items-center gap-1">
+          {n}
+          {!isStaff && isDone && <Check aria-label="Done" className="h-3.5 w-3.5 shrink-0 opacity-80" />}
+        </span>
+        {!isStaff && (flags.isDnd || isNR) && (
+          <span className="text-sm sm:text-base font-bold leading-none">
+            {flags.isDnd && <span aria-label="DND">DND</span>}
+            {isNR && <span aria-label="Not Required">NR</span>}
+          </span>
         )}
-        {isNR && !isStaff && (
-          <span aria-label="Not Required" className="text-sm sm:text-base font-bold leading-none">NR</span>
-        )}
-      </span>
+      </div>
       <span className="text-[9px] sm:text-[10px] md:text-xs font-bold uppercase tracking-tight leading-tight opacity-80 whitespace-pre-line pr-5">
         {isStaff ? "Staff" : meta.label}
       </span>
