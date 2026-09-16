@@ -353,11 +353,18 @@ export type Database = {
           checkout_enabled: boolean
           done_enabled: boolean
           messages_enabled: boolean
+          notify_dog_box: boolean
+          notify_early_checkin: boolean
           notify_from_fnb: boolean
           notify_from_housekeeping: boolean
           notify_from_maintenance: boolean
           notify_from_reception: boolean
+          notify_late_checkout: boolean
+          notify_lost_property_collected: boolean
+          notify_lost_property_logged: boolean
+          notify_maintenance_completed: boolean
           notify_maintenance_requests: boolean
+          notify_stayover_out: boolean
           updated_at: string
           user_id: string
         }
@@ -365,11 +372,18 @@ export type Database = {
           checkout_enabled?: boolean
           done_enabled?: boolean
           messages_enabled?: boolean
+          notify_dog_box?: boolean
+          notify_early_checkin?: boolean
           notify_from_fnb?: boolean
           notify_from_housekeeping?: boolean
           notify_from_maintenance?: boolean
           notify_from_reception?: boolean
+          notify_late_checkout?: boolean
+          notify_lost_property_collected?: boolean
+          notify_lost_property_logged?: boolean
+          notify_maintenance_completed?: boolean
           notify_maintenance_requests?: boolean
+          notify_stayover_out?: boolean
           updated_at?: string
           user_id: string
         }
@@ -377,11 +391,18 @@ export type Database = {
           checkout_enabled?: boolean
           done_enabled?: boolean
           messages_enabled?: boolean
+          notify_dog_box?: boolean
+          notify_early_checkin?: boolean
           notify_from_fnb?: boolean
           notify_from_housekeeping?: boolean
           notify_from_maintenance?: boolean
           notify_from_reception?: boolean
+          notify_late_checkout?: boolean
+          notify_lost_property_collected?: boolean
+          notify_lost_property_logged?: boolean
+          notify_maintenance_completed?: boolean
           notify_maintenance_requests?: boolean
+          notify_stayover_out?: boolean
           updated_at?: string
           user_id?: string
         }
