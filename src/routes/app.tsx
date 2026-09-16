@@ -73,6 +73,7 @@ import { DndDoorPhoto } from "@/components/dnd-door-photo";
 import { RoomInfoTiles } from "@/components/rooms/room-info-tiles";
 import { BroomBurst } from "@/components/broom-burst";
 import { CelebrationBurst } from "@/components/celebration-burst";
+import { areOutcomeAnimationsEnabled } from "@/lib/feedback-prefs";
 import { GloomBurst } from "@/components/gloom-burst";
 import {
   deleteTodayStayoverPhotosForRoom,
@@ -838,8 +839,10 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
     if (isShiftComplete) {
       if (!wasShiftCompleteRef.current && markedDoneHereRef.current && !celebratedRef.current) {
         celebratedRef.current = true;
-        if (hasLeftoverDirtyRooms) setGloomActive(true);
-        else setCelebrationActive(true);
+        if (areOutcomeAnimationsEnabled()) {
+          if (hasLeftoverDirtyRooms) setGloomActive(true);
+          else setCelebrationActive(true);
+        }
       }
     } else {
       celebratedRef.current = false;
