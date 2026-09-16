@@ -109,6 +109,7 @@ export function MessagesSheet({
   const [replyTo, setReplyTo] = useState<{ id: string; sender: string; snippet: string } | null>(initialReplyTo ?? null);
   const [alsoMaintenance, setAlsoMaintenance] = useState(false);
   const [alsoLostProperty, setAlsoLostProperty] = useState(false);
+  const [showDone, setShowDone] = useState(false);
   const feedRef = useRef<HTMLDivElement | null>(null);
 
   // "Send to" picker options for non-admin users with a single department.
