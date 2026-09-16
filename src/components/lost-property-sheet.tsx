@@ -17,6 +17,7 @@ import { swipeNavProps, usePullToRefresh, useSwipeNav, useSwipeState } from "@/h
 import { toast } from "sonner";
 import { PhotoAttachments, PhotoComposer } from "@/components/entry-photos";
 import { supabase as sb } from "@/integrations/supabase/client";
+import { notifyLostProperty } from "@/lib/push.functions";
 
 type LostPropertyRow = {
   id: string;
@@ -107,6 +108,9 @@ export function LostPropertySheet({
       return;
     }
     toast.success("Logged to lost property");
+    void notifyLostProperty({
+      data: { kind: "logged", roomNumber, description: body },
+    }).catch(() => {});
     resetAddForm();
     setAddOpen(false);
   };
@@ -242,6 +246,16 @@ export function LostPropertySheet({
       .eq("id", id);
     if (error) toast.error(error.message);
     qc.invalidateQueries({ queryKey: ["lost_property"] });
+    if (status === "collected") {
+      const item = rows.find((r) => r.id === id);
+      void notifyLostProperty({
+        data: {
+          kind: "collected",
+          roomNumber: item?.room_number ?? null,
+          description: item?.message ?? "",
+        },
+      }).catch(() => {});
+    }
   };
 
   const softDelete = async (id: string) => {
