@@ -83,7 +83,12 @@ function useLongPress(onLongPress?: () => void) {
 // Material "Surface Variant" tile: tonal filled container, hairline border,
 // soft elevation, and a press state layer instead of a heavy accent border.
 const TILE_CLASS =
-  "relative overflow-hidden rounded-xl border text-xs sm:text-sm md:text-base font-medium shadow-elevation-2 transition-[transform,box-shadow,background-color] duration-150 active:scale-[0.97] active:shadow-none tabular-nums flex flex-col justify-between aspect-[5/4] p-2 md:p-2.5 text-left select-none touch-callout-none";
+  "@container relative overflow-hidden rounded-xl border text-xs sm:text-sm md:text-base font-medium shadow-elevation-2 transition-[transform,box-shadow,background-color] duration-150 active:scale-[0.97] active:shadow-none tabular-nums flex flex-col justify-between aspect-[5/4] p-2 md:p-2.5 text-left select-none touch-callout-none";
+
+// Corner badges: icon-only on narrow tiles, icon + word once the tile itself is
+// wide enough (container query, so it follows tile size rather than screen size).
+const BADGE_CLASS =
+  "inline-flex max-w-full items-center gap-0.5 rounded-full px-1 @[120px]:px-1.5 py-0.5 text-[8px] font-bold leading-none tracking-wide shadow-sm";
 
 // Tiles re-render only when their own data changes. onClick is an inline
 // closure over the room number, so it's excluded from the comparison, and
@@ -174,7 +179,7 @@ function ReceptionRoomTileBase({
               style={{ color: meta.accent }}
             />
           )}
-          <span className="text-sm sm:text-base font-bold leading-none inline-flex items-center gap-1">
+          <span className="text-sm sm:text-base font-bold leading-none inline-flex min-w-0 items-center gap-1 pr-7 @[120px]:pr-12">
             {n}
             {flags.isDnd && (
               <>
@@ -189,7 +194,7 @@ function ReceptionRoomTileBase({
               </>
             )}
           </span>
-          <span className="text-[9px] sm:text-[10px] md:text-xs font-bold uppercase tracking-tight leading-tight opacity-80 whitespace-pre-line pr-4">
+          <span className="text-[9px] sm:text-[10px] md:text-xs font-bold uppercase tracking-tight leading-tight opacity-80 whitespace-pre-line pr-5">
             {bedLabel ? `${meta.label} - ${bedCode(bedLabel)}` : meta.label}
           </span>
         </>
@@ -201,7 +206,7 @@ function ReceptionRoomTileBase({
         </>
       )}
       {!isStaffRoom && (
-        <span className="absolute top-1.5 right-1.5 flex flex-col items-end gap-1">
+        <span className="absolute top-1.5 right-1.5 flex max-w-[42%] flex-col items-end gap-1">
           {(hasMessage || !!room?.housekeeping_note) && (
             <span
               aria-label="Housekeeping note"
@@ -211,22 +216,22 @@ function ReceptionRoomTileBase({
           {room?.guest_vacated && (
             <DoorOpen
               aria-label="Guest vacated"
-              className="h-3.5 w-3.5 text-emerald-600 dark:text-emerald-400"
+              className="h-3.5 w-3.5 shrink-0 text-emerald-600 dark:text-emerald-400"
             />
           )}
           {room?.stayover_out && !room?.done && (
             <Footprints
               aria-label="Stayover guest out - room empty"
-              className="h-3.5 w-3.5 text-sky-600 dark:text-sky-400"
+              className="h-3.5 w-3.5 shrink-0 text-sky-600 dark:text-sky-400"
             />
           )}
           {room?.dog_box && (
             <span
               aria-label="Dog box needed"
-              className="inline-flex items-center gap-0.5 rounded-full bg-violet-600 px-1.5 py-0.5 text-[8px] font-bold leading-none tracking-wide text-white shadow-sm dark:bg-violet-500 dark:text-violet-950"
+              className={BADGE_CLASS + " bg-violet-600 text-white dark:bg-violet-500 dark:text-violet-950"}
             >
-              <Dog aria-hidden className="h-2.5 w-2.5" />
-              Dog
+              <Dog aria-hidden className="h-2.5 w-2.5 shrink-0" />
+              <span className="hidden @[120px]:inline">Dog</span>
             </span>
           )}
         </span>
@@ -306,9 +311,9 @@ function HousekeepingRoomTileBase({
           style={{ color: meta.accent }}
         />
       )}
-      <span className="text-sm sm:text-base font-bold leading-none inline-flex items-center gap-1">
+      <span className="text-sm sm:text-base font-bold leading-none inline-flex min-w-0 items-center gap-1 pr-7 @[120px]:pr-12">
         {n}
-        {!isStaff && isDone && <Check aria-label="Done" className="h-3.5 w-3.5 opacity-80" />}
+        {!isStaff && isDone && <Check aria-label="Done" className="h-3.5 w-3.5 shrink-0 opacity-80" />}
         {flags.isDnd && !isStaff && (
           <span aria-label="DND" className="text-sm sm:text-base font-bold leading-none">DND</span>
         )}
@@ -316,37 +321,38 @@ function HousekeepingRoomTileBase({
           <span aria-label="Not Required" className="text-sm sm:text-base font-bold leading-none">NR</span>
         )}
       </span>
-      <span className="text-[9px] sm:text-[10px] md:text-xs font-bold uppercase tracking-tight leading-tight opacity-80 whitespace-pre-line pr-4">
+      <span className="text-[9px] sm:text-[10px] md:text-xs font-bold uppercase tracking-tight leading-tight opacity-80 whitespace-pre-line pr-5">
         {isStaff ? "Staff" : meta.label}
       </span>
-      <span className="absolute top-1.5 right-1.5 flex flex-col items-end gap-1">
+      <span className="absolute top-1.5 right-1.5 flex max-w-[42%] flex-col items-end gap-1">
         {hasMessage && (
           <span aria-label="Message" className="h-2 w-2 rounded-full bg-amber-500 ring-2 ring-background" />
         )}
         {room?.guest_vacated && (
           <span
             aria-label="Guest vacated"
-            className="rounded-full bg-emerald-600 px-1.5 py-0.5 text-[8px] font-bold leading-none tracking-wide text-white shadow-sm dark:bg-emerald-500 dark:text-emerald-950"
+            className={BADGE_CLASS + " bg-emerald-600 text-white dark:bg-emerald-500 dark:text-emerald-950"}
           >
-            Vacant
+            <DoorOpen aria-hidden className="h-2.5 w-2.5 shrink-0" />
+            <span className="hidden @[120px]:inline">Vacant</span>
           </span>
         )}
         {room?.stayover_out && !room?.done && !isDone && (
           <span
             aria-label="Stayover guest out - room empty"
-            className="inline-flex items-center gap-0.5 rounded-full bg-sky-500 px-1.5 py-0.5 text-[8px] font-bold leading-none tracking-wide text-white shadow-sm dark:bg-sky-400 dark:text-sky-950"
+            className={BADGE_CLASS + " bg-sky-500 text-white dark:bg-sky-400 dark:text-sky-950"}
           >
-            <Footprints aria-hidden className="h-2 w-2" />
-            Out
+            <Footprints aria-hidden className="h-2.5 w-2.5 shrink-0" />
+            <span className="hidden @[120px]:inline">Out</span>
           </span>
         )}
         {room?.dog_box && (
           <span
             aria-label="Dog box needed"
-            className="inline-flex items-center gap-0.5 rounded-full bg-violet-600 px-1.5 py-0.5 text-[8px] font-bold leading-none tracking-wide text-white shadow-sm dark:bg-violet-500 dark:text-violet-950"
+            className={BADGE_CLASS + " bg-violet-600 text-white dark:bg-violet-500 dark:text-violet-950"}
           >
-            <Dog aria-hidden className="h-2.5 w-2.5" />
-            Dog
+            <Dog aria-hidden className="h-2.5 w-2.5 shrink-0" />
+            <span className="hidden @[120px]:inline">Dog</span>
           </span>
         )}
       </span>
