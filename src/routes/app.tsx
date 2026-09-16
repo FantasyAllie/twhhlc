@@ -3953,7 +3953,32 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
     submitRoomMessage={submitRoomMessage}
     confirmRoomMessage={confirmRoomMessage}
     dismissRoomMessage={dismissRoomMessage}
+    onLogMaintenance={(n) => {
+      setNewMaintenanceRoom(String(n));
+      setMaintenanceComposerOpen(true);
+      setMaintenanceLogOpen(true);
+    }}
+    onLogLostProperty={(n) => {
+      setLostPropertyInitialRoom(n);
+      setLostPropertyOpen(true);
+    }}
+    onMessageReception={(n) => {
+      setMessagesInitial({ thread: "hk_reception", room: n });
+      setMessagesSheetOpen(true);
+    }}
+    hasDnd={(() => {
+      if (notesSheetRoom === null) return false;
+      const room = rooms.find((r) => r.room_number === notesSheetRoom);
+      const occ = room?.reception_status_id ?? room?.default_status ?? null;
+      const dndId = receptionStatuses.find((x) => x.label === "DND")?.id ?? null;
+      return !!dndId && occ === dndId;
+    })()}
+    openMaintenance={(maintenanceRequestsQ.data ?? []).filter(
+      (m) => m.room_number === notesSheetRoom && !m.done,
+    )}
+    openLostProperty={lostPropertyOpenItems.filter((lp) => lp.room_number === notesSheetRoom)}
   />
+
 
  {/* Reception sheet (Admin/User): Done + Status + Bed */}
   <ReceptionStatusSheet
