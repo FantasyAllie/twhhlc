@@ -7,6 +7,7 @@ import type {
   RejectCount,
   RoomCount,
   RoomExtra,
+  RoomPreferredItem,
   TemplateItem,
   TemplateItemRoom,
 } from "@/lib/app-types";
@@ -71,6 +72,18 @@ export const useTemplateItemRoomsQuery = () =>
         .select("id,template_item_id,room_number");
       if (error) throw error;
       return (data ?? []) as TemplateItemRoom[];
+    },
+  });
+
+export const useRoomPreferredItemsQuery = () =>
+  useQuery({
+    queryKey: ["room_preferred_items"],
+    queryFn: async (): Promise<RoomPreferredItem[]> => {
+      const { data, error } = await supabase
+        .from("room_preferred_items" as never)
+        .select("id,template_item_id,room_number");
+      if (error) throw error;
+      return (data ?? []) as RoomPreferredItem[];
     },
   });
 
