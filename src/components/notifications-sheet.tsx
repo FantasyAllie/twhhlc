@@ -356,6 +356,11 @@ export function NotificationsSheet({
                 onChange={(v) => void updatePref({ notify_lost_property_collected: v })}
               />
               <PrefRow
+                label="New maintenance request from Housekeeping or Reception"
+                checked={prefs.notify_maintenance_requests}
+                onChange={(v) => void updatePref({ notify_maintenance_requests: v })}
+              />
+              <PrefRow
                 label="A maintenance request is completed"
                 checked={prefs.notify_maintenance_completed}
                 onChange={(v) => void updatePref({ notify_maintenance_completed: v })}
@@ -365,22 +370,6 @@ export function NotificationsSheet({
               These preferences apply to your account on every device.
             </p>
           </div>
-
-          {(userRole === "admin" || userRole === "maintenance" || (myDepartments ?? []).includes("maintenance")) && (
-            <div className="space-y-2 rounded-xl border bg-background p-3">
-              <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
-                Maintenance requests
-              </p>
-              <PrefRow
-                label="New maintenance request from Housekeeping or Reception"
-                checked={prefs.notify_maintenance_requests}
-                onChange={(v) => void updatePref({ notify_maintenance_requests: v })}
-              />
-              <p className="text-[11px] text-muted-foreground pt-1">
-                Get a push when Housekeeping or Reception log a new maintenance job.
-              </p>
-            </div>
-          )}
         </div>
       </SheetContent>
     </Sheet>
