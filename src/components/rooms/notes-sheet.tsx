@@ -1,10 +1,12 @@
-import { Clock, MessageSquare, DoorOpen, Footprints, Wrench, X, Dog } from "lucide-react";
+import { useState } from "react";
+import { Clock, MessageSquare, DoorOpen, Footprints, Wrench, X, Dog, Inbox, Plus, PackageSearch, ChevronDown } from "lucide-react";
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetDescription } from "@/components/ui/sheet";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Switch } from "@/components/ui/switch";
 import { cn } from "@/lib/utils";
-import type { Room, RoomMessage } from "@/lib/app-types";
+import { RoomInfoTiles, type RoomInfoTab } from "@/components/rooms/room-info-tiles";
+import type { LostPropertyLite, MaintenanceRequest, Room, RoomMessage } from "@/lib/app-types";
 import type { MessagesThread } from "@/components/messages-sheet";
 
 type MessagesInitial = {
@@ -36,6 +38,13 @@ type Props = {
   submitRoomMessage: (n: number) => void;
   confirmRoomMessage: (m: RoomMessage) => void;
   dismissRoomMessage: (id: string) => void;
+  // Room hub extras: quick logging shortcuts and the info tiles.
+  onLogMaintenance?: (n: number) => void;
+  onLogLostProperty?: (n: number) => void;
+  onMessageReception?: (n: number) => void;
+  hasDnd?: boolean;
+  openMaintenance?: MaintenanceRequest[];
+  openLostProperty?: LostPropertyLite[];
 };
 
 export function RoomNotesSheet({
@@ -60,9 +69,26 @@ export function RoomNotesSheet({
   submitRoomMessage,
   confirmRoomMessage,
   dismissRoomMessage,
+  onLogMaintenance,
+  onLogLostProperty,
+  onMessageReception,
+  hasDnd = false,
+  openMaintenance = [],
+  openLostProperty = [],
 }: Props) {
+  const [newLogOpen, setNewLogOpen] = useState(false);
+  const [infoTab, setInfoTab] = useState<RoomInfoTab | null>(null);
   return (
- <Sheet open={notesSheetRoom !== null} onOpenChange={(o) => { if (!o) setNotesSheetRoom(null); }}>
+ <Sheet
+   open={notesSheetRoom !== null}
+   onOpenChange={(o) => {
+     if (!o) {
+       setNotesSheetRoom(null);
+       setNewLogOpen(false);
+       setInfoTab(null);
+     }
+   }}
+ >
    <SheetContent side="bottom" className="overflow-y-auto rounded-t-2xl p-4 sm:p-6">
      {notesSheetRoom !== null && (() => {
        const n = notesSheetRoom;
@@ -71,30 +97,90 @@ export function RoomNotesSheet({
        const maintenance = !!room?.needs_maintenance;
        const vacated = !!room?.guest_vacated;
        const msgs = activeMessagesByRoom(n);
+       const closeHub = () => {
+         setNewLogOpen(false);
+         setInfoTab(null);
+         setNotesSheetRoom(null);
+       };
        return (
          <>
            <SheetHeader className="text-left">
               <SheetTitle className="flex items-center gap-2">
-                <MessageSquare className="h-4 w-4" />
-                 Notifications — Room {n}
+                <Inbox className="h-4 w-4" />
+                 Room hub — Room {n}
              </SheetTitle>
-             <SheetDescription>Shared between Housekeeping and Reception</SheetDescription>
+             <SheetDescription>Messages, logs and room info</SheetDescription>
            </SheetHeader>
             <div className="mt-4 space-y-3">
-              {canUseMessages && (
+              <div className="grid grid-cols-2 gap-2">
                 <Button
                   type="button"
                   variant="outline"
                   className="w-full justify-center gap-2 rounded-full"
+                  disabled={!canUseMessages}
                   onClick={() => {
-                    setNotesSheetRoom(null);
-                    setMessagesInitial({ thread: "hk_reception", room: n });
+                    closeHub();
+                    setMessagesInitial({});
                     setMessagesSheetOpen(true);
                   }}
                 >
                   <MessageSquare className="h-4 w-4" />
-                  Open Messages
+                  All Messages
                 </Button>
+                <Button
+                  type="button"
+                  variant="outline"
+                  className="w-full justify-center gap-2 rounded-full"
+                  aria-expanded={newLogOpen}
+                  onClick={() => setNewLogOpen((v) => !v)}
+                >
+                  <Plus className="h-4 w-4" />
+                  New Log
+                  <ChevronDown className={cn("h-4 w-4 opacity-60 transition-transform", newLogOpen && "rotate-180")} />
+                </Button>
+              </div>
+              {newLogOpen && (
+                <div className="grid gap-2 rounded-xl border bg-background p-3 sm:grid-cols-3">
+                  <Button
+                    type="button"
+                    variant="outline"
+                    className="w-full justify-center gap-2"
+                    onClick={() => {
+                      closeHub();
+                      onLogMaintenance?.(n);
+                    }}
+                    disabled={!onLogMaintenance}
+                  >
+                    <Wrench className="h-4 w-4 text-orange-600 dark:text-orange-400" />
+                    Maintenance issue
+                  </Button>
+                  <Button
+                    type="button"
+                    variant="outline"
+                    className="w-full justify-center gap-2"
+                    onClick={() => {
+                      closeHub();
+                      onLogLostProperty?.(n);
+                    }}
+                    disabled={!onLogLostProperty}
+                  >
+                    <PackageSearch className="h-4 w-4 text-rose-600 dark:text-rose-400" />
+                    Lost property
+                  </Button>
+                  <Button
+                    type="button"
+                    variant="outline"
+                    className="w-full justify-center gap-2"
+                    onClick={() => {
+                      closeHub();
+                      onMessageReception?.(n);
+                    }}
+                    disabled={!onMessageReception || !canUseMessages}
+                  >
+                    <MessageSquare className="h-4 w-4" />
+                    Message reception
+                  </Button>
+                </div>
               )}
              {isReception ? (
                <>
@@ -122,7 +208,7 @@ export function RoomNotesSheet({
                  <div className="flex items-center justify-between gap-2 rounded-xl border bg-background p-3">
                    <span className="flex items-center gap-2 text-sm font-medium">
                      <Footprints className={cn("h-4 w-4", room?.stayover_out ? "text-sky-600 dark:text-sky-400" : "text-muted-foreground")} />
-                     Stayover — guest out for the day
+                     Stayover — guest out
                    </span>
                    <Switch checked={!!room?.stayover_out} onCheckedChange={(v) => setRoomStayoverOut(n, v)} />
                  </div>
@@ -204,7 +290,7 @@ export function RoomNotesSheet({
                           size="sm"
                           className="h-7 text-xs"
                           onClick={() => {
-                            setNotesSheetRoom(null);
+                            closeHub();
                             setMessagesInitial({ thread: "hk_reception", room: n });
                             setMessagesSheetOpen(true);
                           }}
@@ -294,7 +380,7 @@ export function RoomNotesSheet({
                             className="h-7 text-xs"
                             onClick={() => {
                               const first = msgs[0];
-                              setNotesSheetRoom(null);
+                              closeHub();
                               setMessagesInitial({
                                 thread: "hk_reception",
                                 room: n,
@@ -317,6 +403,14 @@ export function RoomNotesSheet({
                  )}
                </>
              )}
+             <RoomInfoTiles
+               roomNumber={n}
+               hasDnd={hasDnd}
+               openMaint={openMaintenance}
+               openLp={openLostProperty}
+               active={infoTab}
+               onToggle={(tab) => setInfoTab((cur) => (cur === tab ? null : tab))}
+             />
            </div>
          </>
        );

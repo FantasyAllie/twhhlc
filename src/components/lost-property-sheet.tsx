@@ -43,6 +43,8 @@ export function LostPropertySheet({
   roomNumbers,
   onAdd,
   onReply,
+  initialAddRoom = null,
+  openComposerOnOpen = false,
 }: {
   open: boolean;
   onOpenChange: (o: boolean) => void;
@@ -63,6 +65,10 @@ export function LostPropertySheet({
     message: string;
     sender: string | null;
   }) => void;
+  // Pre-select a room and open the composer when the panel is opened from a
+  // room hub, so the room doesn't have to be picked again.
+  initialAddRoom?: number | null;
+  openComposerOnOpen?: boolean;
 }) {
   const qc = useQueryClient();
 
@@ -172,6 +178,15 @@ export function LostPropertySheet({
       onPrev: () => setOpenPage(Math.max(0, page - 1)),
     });
   const refresh = usePullToRefresh(() => qc.invalidateQueries({ queryKey: ["lost_property"] }));
+
+  useEffect(() => {
+    if (!open) return;
+    if (initialAddRoom !== null) {
+      setAddRoom(initialAddRoom);
+      setAddOpen(true);
+    }
+    if (openComposerOnOpen) setAddOpen(true);
+  }, [open, initialAddRoom, openComposerOnOpen]);
 
   useEffect(() => {
     if (!open) return;

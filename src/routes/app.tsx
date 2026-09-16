@@ -29,7 +29,7 @@ import {
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Minus, Plus, X, Menu, ArrowUp, ArrowDown, Pencil, Check, Trash2, Sun, SunDim, Moon, MoonStar, List, Bed, House, Ban, History, Users, User, LogOut, Hash, ConciergeBell, ClipboardList, Printer, Filter, Wrench, DoorOpen, Footprints, Bell, Eye, EyeOff, HelpCircle, AlertCircle, MessageSquare, PackageSearch, RotateCcw, ChevronDown, Camera, LayoutGrid, Truck, Clock, Dog, Undo2 } from "lucide-react";
+import { Minus, Plus, X, Menu, ArrowUp, ArrowDown, Pencil, Check, Trash2, Sun, SunDim, Moon, MoonStar, List, Bed, House, Ban, History, Users, User, LogOut, Hash, ConciergeBell, ClipboardList, Printer, Filter, Wrench, DoorOpen, Footprints, Bell, Eye, EyeOff, HelpCircle, AlertCircle, MessageSquare, PackageSearch, RotateCcw, ChevronDown, Camera, LayoutGrid, Truck, Clock, Dog, Undo2, Inbox } from "lucide-react";
 import {
   AccountDialog,
   AddConfigDialogs,
@@ -69,6 +69,7 @@ import { notifyRoomEvent, notifyMaintenanceRequest } from "@/lib/push.functions"
 import type { MessagesThread, Department as MessagesDepartment } from "@/components/messages-sheet";
 import { PhotoAttachments, PhotoComposer } from "@/components/entry-photos";
 import { DndDoorPhoto } from "@/components/dnd-door-photo";
+import { RoomInfoTiles } from "@/components/rooms/room-info-tiles";
 import { BroomBurst } from "@/components/broom-burst";
 import { CelebrationBurst } from "@/components/celebration-burst";
 import { GloomBurst } from "@/components/gloom-burst";
@@ -473,6 +474,10 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
   const [newMaintenanceText, setNewMaintenanceText] = useState<string>("");
   const [maintenanceComposerOpen, setMaintenanceComposerOpen] = useState(false);
   const [lostPropertyOpen, setLostPropertyOpen] = useState(false);
+  // Room number pre-selected in the lost property composer when it's opened
+  // from a room hub, so the user doesn't have to pick the room again.
+  const [lostPropertyInitialRoom, setLostPropertyInitialRoom] = useState<number | null>(null);
+
    // Progress-bar easter egg: 7 taps within a 2-second rolling window →
    // immediate full reset + fancy broom-burst animation. If more than 2 seconds
    // elapses between taps, the counter resets and the user starts again.
@@ -3085,134 +3090,19 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
       );
       const openLp = lostPropertyOpenItems.filter((lp) => lp.room_number === n);
       const active = roomInfoTab?.room === n ? roomInfoTab.tab : null;
-      if (!hasDnd && openMaint.length === 0 && openLp.length === 0) return null;
-      const fmt = (iso: string) =>
-        new Date(iso).toLocaleString(undefined, {
-          month: "short",
-          day: "numeric",
-          hour: "numeric",
-          minute: "2-digit",
-        });
-      const toggle = (tab: "dnd" | "lp" | "maint") =>
-        setRoomInfoTab(active === tab ? null : { room: n, tab });
-      const tile = (
-        tab: "dnd" | "lp" | "maint",
-        label: string,
-        count: number | null,
-        Icon: typeof Wrench,
-        base: string,
-        on: string,
-      ) => (
-        <button
-          type="button"
-          onClick={() => toggle(tab)}
-          aria-pressed={active === tab}
-          className={cn(
-            "flex flex-1 min-w-0 flex-col items-center justify-center gap-1 rounded-xl border p-2 text-center text-[11px] font-semibold uppercase tracking-wide shadow-sm transition-colors active:scale-[0.97]",
-            base,
-            active === tab ? on : "",
-          )}
-        >
-          <Icon className="h-4 w-4" />
-          <span className="leading-tight break-words">{label}</span>
-          {count !== null && <span className="text-sm tabular-nums">{count}</span>}
-        </button>
-      );
       return (
-        <div className="space-y-3">
-          <div className="flex flex-row gap-2">
-            {hasDnd &&
-              tile(
-                "dnd",
-                "DND photos",
-                null,
-                Camera,
-                "border-sky-400/60 bg-sky-50 text-sky-700 dark:bg-sky-950/40 dark:text-sky-300",
-                "ring-2 ring-sky-500/60",
-              )}
-            {openLp.length > 0 &&
-              tile(
-                "lp",
-                "Lost property",
-                openLp.length,
-                PackageSearch,
-                "border-rose-400/60 bg-rose-50 text-rose-700 dark:bg-rose-950/40 dark:text-rose-300",
-                "ring-2 ring-rose-500/60",
-              )}
-            {openMaint.length > 0 &&
-              tile(
-                "maint",
-                "Maintenance",
-                openMaint.length,
-                Wrench,
-                "border-orange-400/60 bg-orange-50 text-orange-700 dark:bg-orange-950/40 dark:text-orange-300",
-                "ring-2 ring-orange-500/60",
-              )}
-          </div>
-          <div ref={roomInfoExpandedRef}>
-            {active === "dnd" && hasDnd && <DndDoorPhoto roomNumber={n} />}
-            {active === "maint" && openMaint.length > 0 && (
-              <div className="space-y-2 rounded-xl border border-orange-400/60 bg-orange-50 dark:bg-orange-950/40 p-3">
-                <p className="flex items-center gap-1.5 text-xs font-semibold uppercase tracking-wide text-orange-700 dark:text-orange-300">
-                  <Wrench className="h-3.5 w-3.5" />
-                  Open maintenance ({openMaint.length})
-                </p>
-                <ul className="space-y-1.5">
-                  {openMaint.map((m) => (
-                    <li key={m.id} className="rounded bg-background/70 p-2 text-sm">
-                      <div className="whitespace-pre-wrap break-words">{m.message}</div>
-                      <div className="mt-1 text-[11px] text-muted-foreground">
-                        {m.created_by_username ?? "Unknown"} · {fmt(m.created_at)}
-                      </div>
-                      {Array.isArray(m.photo_paths) && m.photo_paths.length > 0 && (
-                        <div className="mt-2">
-                          <PhotoAttachments
-                            kind="maintenance"
-                            entryId={m.id}
-                            paths={m.photo_paths}
-                            canEdit={false}
-                            onChange={() => {}}
-                          />
-                        </div>
-                      )}
-                    </li>
-                  ))}
-                </ul>
-              </div>
-            )}
-            {active === "lp" && openLp.length > 0 && (
-              <div className="space-y-2 rounded-xl border border-rose-400/60 bg-rose-50 dark:bg-rose-950/40 p-3">
-                <p className="flex items-center gap-1.5 text-xs font-semibold uppercase tracking-wide text-rose-700 dark:text-rose-300">
-                  <PackageSearch className="h-3.5 w-3.5" />
-                  Lost property ({openLp.length})
-                </p>
-                <ul className="space-y-1.5">
-                  {openLp.map((lp) => (
-                    <li key={lp.id} className="rounded bg-background/70 p-2 text-sm">
-                      <div className="whitespace-pre-wrap break-words">{lp.message}</div>
-                      <div className="mt-1 text-[11px] text-muted-foreground">
-                        Logged {fmt(lp.created_at)}
-                      </div>
-                      {Array.isArray(lp.photo_paths) && lp.photo_paths.length > 0 && (
-                        <div className="mt-2">
-                          <PhotoAttachments
-                            kind="lost_property"
-                            entryId={lp.id}
-                            paths={lp.photo_paths}
-                            canEdit={false}
-                            onChange={() => {}}
-                          />
-                        </div>
-                      )}
-                    </li>
-                  ))}
-                </ul>
-              </div>
-            )}
-          </div>
-        </div>
+        <RoomInfoTiles
+          roomNumber={n}
+          hasDnd={hasDnd}
+          openMaint={openMaint}
+          openLp={openLp}
+          active={active}
+          onToggle={(tab) => setRoomInfoTab(active === tab ? null : { room: n, tab })}
+          expandedRef={roomInfoExpandedRef}
+        />
       );
     })()}
+
 
     {!isReception && (
       <div className="flex flex-row gap-2">
@@ -3272,9 +3162,10 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
               type="button"
               onClick={() => setNotesSheetRoom(n)}
               className="relative inline-flex items-center justify-center h-11 w-11 shrink-0 rounded-xl border bg-background shadow-sm active:scale-[0.97] active:shadow-none text-sm font-medium cursor-pointer transition-colors hover:bg-accent"
-              aria-label="Notifications"
+              aria-label="Room hub"
             >
-              <MessageSquare className="h-4 w-4" />
+              <Inbox className="h-4 w-4" />
+
               {hasIndicator && (
                 <span className="absolute -top-0.5 -right-0.5 flex items-center gap-0.5">
                   {hasMsg && (
@@ -4063,7 +3954,32 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
     submitRoomMessage={submitRoomMessage}
     confirmRoomMessage={confirmRoomMessage}
     dismissRoomMessage={dismissRoomMessage}
+    onLogMaintenance={(n) => {
+      setNewMaintenanceRoom(String(n));
+      setMaintenanceComposerOpen(true);
+      setMaintenanceLogOpen(true);
+    }}
+    onLogLostProperty={(n) => {
+      setLostPropertyInitialRoom(n);
+      setLostPropertyOpen(true);
+    }}
+    onMessageReception={(n) => {
+      setMessagesInitial({ thread: "hk_reception", room: n });
+      setMessagesSheetOpen(true);
+    }}
+    hasDnd={(() => {
+      if (notesSheetRoom === null) return false;
+      const room = rooms.find((r) => r.room_number === notesSheetRoom);
+      const occ = room?.reception_status_id ?? room?.default_status ?? null;
+      const dndId = receptionStatuses.find((x) => x.label === "DND")?.id ?? null;
+      return !!dndId && occ === dndId;
+    })()}
+    openMaintenance={(maintenanceRequestsQ.data ?? []).filter(
+      (m) => m.room_number === notesSheetRoom && !m.done,
+    )}
+    openLostProperty={lostPropertyOpenItems.filter((lp) => lp.room_number === notesSheetRoom)}
   />
+
 
  {/* Reception sheet (Admin/User): Done + Status + Bed */}
   <ReceptionStatusSheet
@@ -4164,7 +4080,12 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
 />
 <LostPropertySheet
   open={lostPropertyOpen}
-  onOpenChange={setLostPropertyOpen}
+  onOpenChange={(o) => {
+    setLostPropertyOpen(o);
+    if (!o) setLostPropertyInitialRoom(null);
+  }}
+  initialAddRoom={lostPropertyInitialRoom}
+  openComposerOnOpen={lostPropertyInitialRoom !== null}
   canResolve={canResolveLostProperty}
   isAdmin={menuIsAdmin}
   currentUsername={authUser?.username ?? null}
