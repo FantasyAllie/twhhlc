@@ -3138,8 +3138,8 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
           </div>
           {active === "dnd" && hasDnd && <DndDoorPhoto roomNumber={n} />}
           {active === "maint" && openMaint.length > 0 && (
-            <div className="space-y-2 rounded-xl border border-amber-400/60 bg-amber-50 dark:bg-amber-950/40 p-3">
-              <p className="flex items-center gap-1.5 text-xs font-semibold uppercase tracking-wide text-amber-700 dark:text-amber-300">
+            <div className="space-y-2 rounded-xl border border-orange-400/60 bg-orange-50 dark:bg-orange-950/40 p-3">
+              <p className="flex items-center gap-1.5 text-xs font-semibold uppercase tracking-wide text-orange-700 dark:text-orange-300">
                 <Wrench className="h-3.5 w-3.5" />
                 Open maintenance ({openMaint.length})
               </p>
@@ -3166,7 +3166,7 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
               </ul>
             </div>
           )}
-          {openLp.length > 0 && (
+          {active === "lp" && openLp.length > 0 && (
             <div className="space-y-2 rounded-xl border border-rose-400/60 bg-rose-50 dark:bg-rose-950/40 p-3">
               <p className="flex items-center gap-1.5 text-xs font-semibold uppercase tracking-wide text-rose-700 dark:text-rose-300">
                 <PackageSearch className="h-3.5 w-3.5" />
