@@ -302,7 +302,14 @@ export const sendTestNotification = createServerFn({ method: "POST" })
     return { ok: true, sent: subs.length };
   });
 
-export type RoomEventKind = "message" | "checkout" | "done";
+export type RoomEventKind =
+  | "message"
+  | "checkout"
+  | "done"
+  | "early_checkin"
+  | "late_checkout"
+  | "stayover_out"
+  | "dog_box";
 
 export const notifyRoomEvent = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
