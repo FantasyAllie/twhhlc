@@ -5253,7 +5253,7 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
                 const pct = total > 0 ? Math.min(100, (progress / total) * 100) : 0;
                 const isComplete = total > 0 && progress >= total;
                   return (
-                       <div className="mt-3 space-y-1.5 rounded-2xl border border-sidebar-border bg-sidebar px-4 py-2 shadow-elevation-2 lg:px-5 max-lg:fixed max-lg:inset-x-0 max-lg:bottom-0 max-lg:z-40 max-lg:mt-0 max-lg:rounded-none max-lg:border-x-0 max-lg:border-b-0 max-lg:border-t max-lg:pl-[calc(env(safe-area-inset-left,0px)+1.5rem)] max-lg:pr-[calc(env(safe-area-inset-right,0px)+1.5rem)] max-lg:pt-2 max-lg:pb-[calc(env(safe-area-inset-bottom,0px)+0.5rem)]">
+                        <div className="mt-3 space-y-1.5 max-lg:space-y-1 rounded-2xl border border-sidebar-border bg-sidebar px-4 py-2 shadow-elevation-2 lg:px-5 max-lg:fixed max-lg:inset-x-0 max-lg:bottom-0 max-lg:z-40 max-lg:mt-0 max-lg:rounded-none max-lg:border-x-0 max-lg:border-b-0 max-lg:border-t max-lg:pl-[calc(env(safe-area-inset-left,0px)+1.5rem)] max-lg:pr-[calc(env(safe-area-inset-right,0px)+1.5rem)] max-lg:pt-1.5 max-lg:pb-[calc(env(safe-area-inset-bottom,0px)+0.375rem)]">
                      <div className="flex items-center justify-between text-[10px] font-bold uppercase tracking-[0.18em] text-sidebar-foreground/60">
                        <span className="flex items-center gap-1.5">
                          {isComplete ? (
@@ -5269,7 +5269,7 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
                        role="button"
                        tabIndex={-1}
                        onClick={handleProgressTap}
-                       className="relative h-3 w-full overflow-hidden rounded-full bg-sidebar-accent shadow-elevation-1 cursor-pointer select-none active:scale-[0.99] transition-transform"
+                       className="relative h-3 max-lg:h-2.5 w-full overflow-hidden rounded-full bg-sidebar-accent shadow-elevation-1 cursor-pointer select-none active:scale-[0.99] transition-transform"
                      >
                       <div
                         className={cn(
@@ -5300,7 +5300,7 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
  </section>
  )}
   {!isReception && (
-    <div className="lg:hidden h-[calc(env(safe-area-inset-bottom,0px)+2.75rem)]" aria-hidden />
+    <div className="lg:hidden h-[calc(env(safe-area-inset-bottom,0px)+2.25rem)]" aria-hidden />
   )}
  </div>
 
