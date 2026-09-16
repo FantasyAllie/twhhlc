@@ -3167,7 +3167,7 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
               <Inbox className="h-4 w-4" />
 
               {hasIndicator && (
-                <span className="absolute -top-0.5 -right-0.5 flex items-center gap-0.5">
+                <span className="absolute -top-0.5 -right-0.5 z-10 flex items-center gap-0.5">
                   {hasMsg && (
                     <span aria-label="Message" className="h-2 w-2 rounded-full bg-amber-500 ring-2 ring-background" />
                   )}
