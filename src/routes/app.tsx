@@ -447,6 +447,18 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
     { room: number; tab: "dnd" | "lp" | "maint" } | null
   >(null);
   const roomInfoExpandedRef = useRef<HTMLDivElement>(null);
+  // When reception expands a bottom tile (DND, maintenance, lost property), scroll
+  // the panel content into view only if it falls below the fold.
+  useEffect(() => {
+    if (!roomInfoTab || !roomInfoExpandedRef.current) return;
+    const el = roomInfoExpandedRef.current;
+    const rect = el.getBoundingClientRect();
+    const margin = 16;
+    if (rect.bottom > window.innerHeight - margin) {
+      const top = window.scrollY + rect.top - margin;
+      window.scrollTo({ top, behavior: "smooth" });
+    }
+  }, [roomInfoTab]);
   const [receptionSheetRoom, setReceptionSheetRoom] = useState<number | null>(null);
   const [quickReceptionOpen, setQuickReceptionOpen] = useState(false);
   const [editDefaultsSheetRoom, setEditDefaultsSheetRoom] = useState<number | null>(null);
