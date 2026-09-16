@@ -66,7 +66,7 @@ import {
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
 import { getToken, getStoredUser, clearSession } from "@/lib/auth-client";
-import { notifyRoomEvent, notifyMaintenanceRequest } from "@/lib/push.functions";
+import { notifyRoomEvent, notifyMaintenanceRequest, notifyMaintenanceCompleted, type RoomEventKind } from "@/lib/push.functions";
 import type { MessagesThread, Department as MessagesDepartment } from "@/components/messages-sheet";
 import { PhotoAttachments, PhotoComposer } from "@/components/entry-photos";
 import { DndDoorPhoto } from "@/components/dnd-door-photo";
@@ -578,7 +578,7 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
 
   // Fire-and-forget push fan-out; never blocks the UI.
   const fireRoomNotification = (
-    kind: "message" | "checkout" | "done",
+    kind: RoomEventKind,
     roomNumber: number,
     messageText?: string,
   ) => {
@@ -1078,6 +1078,14 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
       return;
     }
     qc.invalidateQueries({ queryKey: ["maintenance_requests"] });
+    if (getToken())
+      void notifyMaintenanceCompleted({
+        data: {
+          roomNumber: target?.room_number ?? null,
+          areaLabel: target?.area_label ?? null,
+          message: target?.message ?? "",
+        },
+      }).catch(() => {});
     if (target?.room_number != null) await clearRoomFlagIfNoOpenRequests(target.room_number);
   };
 
@@ -2518,6 +2526,7 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
     );
     if (error) toast.error(error.message);
     qc.invalidateQueries({ queryKey: ["rooms"] });
+    if (value) fireRoomNotification("stayover_out", roomNumber);
   };
 
   // Reception flag: this room's guest has a dog and needs a dog box put in.
@@ -2541,6 +2550,7 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
     );
     if (error) toast.error(error.message);
     qc.invalidateQueries({ queryKey: ["rooms"] });
+    if (value) fireRoomNotification("dog_box", roomNumber);
   };
 
   const setRoomNotRequired = async (roomNumber: number, value: boolean) => {
@@ -2600,6 +2610,7 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
     );
     if (error) toast.error(error.message);
     qc.invalidateQueries({ queryKey: ["rooms"] });
+    if (value) fireRoomNotification("early_checkin", roomNumber);
   };
 
   const setRoomLateCheckout = async (roomNumber: number, value: boolean) => {
@@ -2637,6 +2648,7 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
     );
     if (error) toast.error(error.message);
     qc.invalidateQueries({ queryKey: ["rooms"] });
+    if (value) fireRoomNotification("late_checkout", roomNumber);
   };
 
   // --- Room type management ---

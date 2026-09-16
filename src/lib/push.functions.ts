@@ -182,27 +182,30 @@ export const unsubscribeFromPush = createServerFn({ method: "POST" })
     return { ok: true };
   });
 
-export type NotificationPrefs = {
-  messages_enabled: boolean;
-  checkout_enabled: boolean;
-  done_enabled: boolean;
-  notify_from_reception: boolean;
-  notify_from_housekeeping: boolean;
-  notify_from_fnb: boolean;
-  notify_from_maintenance: boolean;
-  notify_maintenance_requests: boolean;
-};
+const PREF_KEYS = [
+  "messages_enabled",
+  "checkout_enabled",
+  "done_enabled",
+  "notify_from_reception",
+  "notify_from_housekeeping",
+  "notify_from_fnb",
+  "notify_from_maintenance",
+  "notify_maintenance_requests",
+  "notify_early_checkin",
+  "notify_late_checkout",
+  "notify_stayover_out",
+  "notify_dog_box",
+  "notify_lost_property_logged",
+  "notify_lost_property_collected",
+  "notify_maintenance_completed",
+] as const;
 
-const DEFAULT_PREFS: NotificationPrefs = {
-  messages_enabled: true,
-  checkout_enabled: true,
-  done_enabled: true,
-  notify_from_reception: true,
-  notify_from_housekeeping: true,
-  notify_from_fnb: true,
-  notify_from_maintenance: true,
-  notify_maintenance_requests: true,
-};
+export type NotificationPrefs = Record<(typeof PREF_KEYS)[number], boolean>;
+
+const DEFAULT_PREFS: NotificationPrefs = PREF_KEYS.reduce((acc, k) => {
+  acc[k] = true;
+  return acc;
+}, {} as NotificationPrefs);
 
 export const getNotificationPrefs = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
@@ -210,7 +213,7 @@ export const getNotificationPrefs = createServerFn({ method: "POST" })
     const db = await getDb();
     const { data: row } = await db
       .from("notification_preferences" as never)
-      .select("messages_enabled,checkout_enabled,done_enabled,notify_from_reception,notify_from_housekeeping,notify_from_fnb,notify_from_maintenance,notify_maintenance_requests")
+      .select(PREF_KEYS.join(","))
       .eq("user_id", context.userId)
       .maybeSingle();
     if (!row) return DEFAULT_PREFS;
@@ -219,29 +222,13 @@ export const getNotificationPrefs = createServerFn({ method: "POST" })
 
 export const setNotificationPrefs = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
-  .inputValidator(
-    (d: {
-      messages_enabled?: boolean;
-      checkout_enabled?: boolean;
-      done_enabled?: boolean;
-      notify_from_reception?: boolean;
-      notify_from_housekeeping?: boolean;
-      notify_from_fnb?: boolean;
-      notify_from_maintenance?: boolean;
-      notify_maintenance_requests?: boolean;
-    }) => d,
-  )
+  .inputValidator((d: Partial<NotificationPrefs>) => d)
   .handler(async ({ data, context }) => {
     const db = await getDb();
     const patch: Record<string, unknown> = { user_id: context.userId };
-    if (typeof data.messages_enabled === "boolean") patch.messages_enabled = data.messages_enabled;
-    if (typeof data.checkout_enabled === "boolean") patch.checkout_enabled = data.checkout_enabled;
-    if (typeof data.done_enabled === "boolean") patch.done_enabled = data.done_enabled;
-    if (typeof data.notify_from_reception === "boolean") patch.notify_from_reception = data.notify_from_reception;
-    if (typeof data.notify_from_housekeeping === "boolean") patch.notify_from_housekeeping = data.notify_from_housekeeping;
-    if (typeof data.notify_from_fnb === "boolean") patch.notify_from_fnb = data.notify_from_fnb;
-    if (typeof data.notify_from_maintenance === "boolean") patch.notify_from_maintenance = data.notify_from_maintenance;
-    if (typeof data.notify_maintenance_requests === "boolean") patch.notify_maintenance_requests = data.notify_maintenance_requests;
+    for (const k of PREF_KEYS) {
+      if (typeof data[k] === "boolean") patch[k] = data[k];
+    }
     const { error } = await db
       .from("notification_preferences" as never)
       .upsert(patch as never, { onConflict: "user_id" });
@@ -315,7 +302,14 @@ export const sendTestNotification = createServerFn({ method: "POST" })
     return { ok: true, sent: subs.length };
   });
 
-export type RoomEventKind = "message" | "checkout" | "done";
+export type RoomEventKind =
+  | "message"
+  | "checkout"
+  | "done"
+  | "early_checkin"
+  | "late_checkout"
+  | "stayover_out"
+  | "dog_box";
 
 export const notifyRoomEvent = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
@@ -360,6 +354,30 @@ export const notifyRoomEvent = createServerFn({ method: "POST" })
         prefColumn = "done_enabled";
         title = `Room ${data.roomNumber} — Marked done`;
         body = `Housekeeping (${sender.username}) marked room ${data.roomNumber} as done.`;
+        break;
+      case "early_checkin":
+        targetDepts = ["housekeeping"];
+        prefColumn = "notify_early_checkin";
+        title = `Room ${data.roomNumber} — Early check-in`;
+        body = `Reception (${sender.username}) flagged room ${data.roomNumber} as an early check-in.`;
+        break;
+      case "late_checkout":
+        targetDepts = ["housekeeping"];
+        prefColumn = "notify_late_checkout";
+        title = `Room ${data.roomNumber} — Late checkout`;
+        body = `Reception (${sender.username}) flagged room ${data.roomNumber} as a late checkout.`;
+        break;
+      case "stayover_out":
+        targetDepts = ["housekeeping"];
+        prefColumn = "notify_stayover_out";
+        title = `Room ${data.roomNumber} — Stayover, guest out`;
+        body = `Reception (${sender.username}) marked room ${data.roomNumber} as a stayover with the guest out.`;
+        break;
+      case "dog_box":
+        targetDepts = ["housekeeping"];
+        prefColumn = "notify_dog_box";
+        title = `Room ${data.roomNumber} — Dog box needed`;
+        body = `Reception (${sender.username}) flagged room ${data.roomNumber} as needing a dog box.`;
         break;
       default:
         throw new Error("Unknown event kind");
@@ -483,6 +501,52 @@ export const notifyMaintenanceRequest = createServerFn({ method: "POST" })
         body,
         url: `/app`,
         tag: `maintenance-${data.roomNumber ?? data.areaLabel ?? "hotel"}`,
+      },
+    );
+    return { ok: true, recipients };
+  });
+export const notifyLostProperty = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((d: { kind: "logged" | "collected"; roomNumber: number | null; description: string }) => d)
+  .handler(async ({ data, context }) => {
+    const sender = await getActor(context);
+    if (!sender.active) return { ok: true, recipients: 0 };
+    const place = data.roomNumber != null ? `Room ${data.roomNumber}` : "Hotel";
+    const logged = data.kind === "logged";
+    const recipients = await fanOut(
+      ["housekeeping", "reception"],
+      logged ? "notify_lost_property_logged" : "notify_lost_property_collected",
+      sender,
+      {
+        title: logged
+          ? `Lost property logged — ${place}`
+          : `Lost property collected — ${place}`,
+        body:
+          (data.description?.slice(0, 240) || "Lost property item") +
+          ` (${logged ? "logged" : "collected"} by ${sender.username})`,
+        url: `/app`,
+        tag: `lost-property-${data.kind}-${data.roomNumber ?? "hotel"}`,
+      },
+    );
+    return { ok: true, recipients };
+  });
+
+export const notifyMaintenanceCompleted = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((d: { roomNumber: number | null; areaLabel?: string | null; message: string }) => d)
+  .handler(async ({ data, context }) => {
+    const sender = await getActor(context);
+    if (!sender.active) return { ok: true, recipients: 0 };
+    const place = data.roomNumber != null ? `Room ${data.roomNumber}` : (data.areaLabel || "Hotel");
+    const recipients = await fanOut(
+      ["housekeeping", "reception", "fnb"],
+      "notify_maintenance_completed",
+      sender,
+      {
+        title: `Maintenance completed — ${place}`,
+        body: (data.message?.slice(0, 240) || "Job completed") + ` (${sender.username})`,
+        url: `/app`,
+        tag: `maintenance-done-${data.roomNumber ?? data.areaLabel ?? "hotel"}`,
       },
     );
     return { ok: true, recipients };

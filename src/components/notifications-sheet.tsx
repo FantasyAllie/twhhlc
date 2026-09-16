@@ -42,6 +42,13 @@ const DEFAULT_PREFS: NotificationPrefs = {
   notify_from_fnb: true,
   notify_from_maintenance: true,
   notify_maintenance_requests: true,
+  notify_early_checkin: true,
+  notify_late_checkout: true,
+  notify_stayover_out: true,
+  notify_dog_box: true,
+  notify_lost_property_logged: true,
+  notify_lost_property_collected: true,
+  notify_maintenance_completed: true,
 };
 
 export function NotificationsSheet({
@@ -228,6 +235,30 @@ export function NotificationsSheet({
                   onChange={(v) => void updatePref({ done_enabled: v })}
                 />
               )}
+              {userRole !== "reception" && (
+                <>
+                  <PrefRow
+                    label="A room is flagged as an early check-in"
+                    checked={prefs.notify_early_checkin}
+                    onChange={(v) => void updatePref({ notify_early_checkin: v })}
+                  />
+                  <PrefRow
+                    label="A room is flagged as a late checkout"
+                    checked={prefs.notify_late_checkout}
+                    onChange={(v) => void updatePref({ notify_late_checkout: v })}
+                  />
+                  <PrefRow
+                    label="A room is marked stayover — guest out"
+                    checked={prefs.notify_stayover_out}
+                    onChange={(v) => void updatePref({ notify_stayover_out: v })}
+                  />
+                  <PrefRow
+                    label="A room needs a dog box"
+                    checked={prefs.notify_dog_box}
+                    onChange={(v) => void updatePref({ notify_dog_box: v })}
+                  />
+                </>
+              )}
             </div>
             <p className="text-[11px] text-muted-foreground pt-1">
               These preferences apply to your account on every device.
@@ -306,6 +337,32 @@ export function NotificationsSheet({
             </div>
             <p className="text-[11px] text-muted-foreground pt-1">
               These only affect this phone or computer, not your other devices.
+            </p>
+          </div>
+
+          <div className="space-y-2 rounded-xl border bg-background p-3">
+            <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+              Lost property &amp; maintenance updates
+            </p>
+            <div className="space-y-2">
+              <PrefRow
+                label="An item is logged to lost property"
+                checked={prefs.notify_lost_property_logged}
+                onChange={(v) => void updatePref({ notify_lost_property_logged: v })}
+              />
+              <PrefRow
+                label="A lost property item is collected"
+                checked={prefs.notify_lost_property_collected}
+                onChange={(v) => void updatePref({ notify_lost_property_collected: v })}
+              />
+              <PrefRow
+                label="A maintenance request is completed"
+                checked={prefs.notify_maintenance_completed}
+                onChange={(v) => void updatePref({ notify_maintenance_completed: v })}
+              />
+            </div>
+            <p className="text-[11px] text-muted-foreground pt-1">
+              These preferences apply to your account on every device.
             </p>
           </div>
 
