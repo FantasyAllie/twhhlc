@@ -355,6 +355,30 @@ export const notifyRoomEvent = createServerFn({ method: "POST" })
         title = `Room ${data.roomNumber} — Marked done`;
         body = `Housekeeping (${sender.username}) marked room ${data.roomNumber} as done.`;
         break;
+      case "early_checkin":
+        targetDepts = ["housekeeping"];
+        prefColumn = "notify_early_checkin";
+        title = `Room ${data.roomNumber} — Early check-in`;
+        body = `Reception (${sender.username}) flagged room ${data.roomNumber} as an early check-in.`;
+        break;
+      case "late_checkout":
+        targetDepts = ["housekeeping"];
+        prefColumn = "notify_late_checkout";
+        title = `Room ${data.roomNumber} — Late checkout`;
+        body = `Reception (${sender.username}) flagged room ${data.roomNumber} as a late checkout.`;
+        break;
+      case "stayover_out":
+        targetDepts = ["housekeeping"];
+        prefColumn = "notify_stayover_out";
+        title = `Room ${data.roomNumber} — Stayover, guest out`;
+        body = `Reception (${sender.username}) marked room ${data.roomNumber} as a stayover with the guest out.`;
+        break;
+      case "dog_box":
+        targetDepts = ["housekeeping"];
+        prefColumn = "notify_dog_box";
+        title = `Room ${data.roomNumber} — Dog box needed`;
+        body = `Reception (${sender.username}) flagged room ${data.roomNumber} as needing a dog box.`;
+        break;
       default:
         throw new Error("Unknown event kind");
     }
