@@ -3072,17 +3072,6 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
       );
       const openLp = lostPropertyOpenItems.filter((lp) => lp.room_number === n);
       const active = roomInfoTab?.room === n ? roomInfoTab.tab : null;
-      const expandedRef = useRef<HTMLDivElement>(null);
-      useEffect(() => {
-        if (!expandedRef.current || !active) return;
-        const el = expandedRef.current;
-        const rect = el.getBoundingClientRect();
-        const margin = 16;
-        if (rect.bottom > window.innerHeight - margin) {
-          const top = window.scrollY + rect.top - margin;
-          window.scrollTo({ top, behavior: "smooth" });
-        }
-      }, [active]);
       if (!hasDnd && openMaint.length === 0 && openLp.length === 0) return null;
       const fmt = (iso: string) =>
         new Date(iso).toLocaleString(undefined, {
