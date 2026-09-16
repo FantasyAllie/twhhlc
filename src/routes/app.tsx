@@ -3166,7 +3166,7 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
               </ul>
             </div>
           )}
-          {openLp.length > 0 && (
+          {active === "lp" && openLp.length > 0 && (
             <div className="space-y-2 rounded-xl border border-rose-400/60 bg-rose-50 dark:bg-rose-950/40 p-3">
               <p className="flex items-center gap-1.5 text-xs font-semibold uppercase tracking-wide text-rose-700 dark:text-rose-300">
                 <PackageSearch className="h-3.5 w-3.5" />
