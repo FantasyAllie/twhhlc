@@ -5317,7 +5317,7 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
         const bedLabel =
           receptionBeds.find((b) => b.id === r?.reception_bed_id)?.label ??
           (onlyDouble ? "Double" : null);
-        if (!bedLabel) return null;
+        if (!bedLabel || isReception) return null;
         return (
           <SheetDescription className="mt-0.5">Bed: {bedLabel}</SheetDescription>
         );
