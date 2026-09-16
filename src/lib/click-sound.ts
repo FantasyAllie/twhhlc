@@ -21,6 +21,7 @@ function getCtx(): AudioContext | null {
 
 /** Play a very short, quiet click. Safe to call on every press. */
 export function playClick() {
+  if (!areButtonSoundsEnabled()) return;
   // Throttle so rapid taps don't stack into a buzz.
   const now = Date.now();
   if (now - lastAt < 40) return;
