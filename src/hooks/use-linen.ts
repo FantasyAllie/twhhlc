@@ -7,6 +7,7 @@ import type {
   RejectCount,
   RoomCount,
   RoomExtra,
+  RoomPreferredItem,
   TemplateItem,
   TemplateItemRoom,
 } from "@/lib/app-types";

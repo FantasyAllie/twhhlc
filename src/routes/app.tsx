@@ -17,6 +17,7 @@ import {
   useRoomCountsQuery,
   useRoomExtrasQuery,
   useTemplateItemRoomsQuery,
+  useRoomPreferredItemsQuery,
   useTemplateItemsQuery,
 } from "@/hooks/use-linen";
 import {
@@ -648,6 +649,7 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
   const roomFeatureAssignmentsQ = useRoomFeatureAssignmentsQuery();
   const receptionItemsQ = useReceptionItemsQuery();
   const assignmentsQ = useTemplateItemRoomsQuery();
+  const preferredQ = useRoomPreferredItemsQuery();
   const snapshotsQ = useExportSnapshotsQuery();
   const rejectsQ = useRejectCountsQuery();
   const deliveryQ = useDeliveryCountsQuery();
@@ -1419,6 +1421,40 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
       fireRoomNotification("done", roomNumber);
       captureEmergencySnapshot(`Room ${roomNumber} marked done`);
     }
+  };
+
+  const preferredItems = preferredQ.data ?? [];
+
+  const isPreferred = (templateItemId: string, roomNumber: number) =>
+    preferredItems.some(
+      (p) => p.template_item_id === templateItemId && p.room_number === roomNumber,
+    );
+
+  // Mark/unmark a linen item as the room's preferred choice.
+  const togglePreferred = async (templateItemId: string, roomNumber: number) => {
+    const existing = preferredItems.find(
+      (p) => p.template_item_id === templateItemId && p.room_number === roomNumber,
+    );
+    if (existing) {
+      qc.setQueryData<RoomPreferredItem[]>(["room_preferred_items"], (old) =>
+        old?.filter((p) => p.id !== existing.id) ?? [],
+      );
+      const { error } = await supabase
+        .from("room_preferred_items" as never)
+        .delete()
+        .eq("id", existing.id);
+      if (error) toast.error(error.message);
+    } else {
+      qc.setQueryData<RoomPreferredItem[]>(["room_preferred_items"], (old) => [
+        ...(old ?? []),
+        { id: `temp-${templateItemId}-${roomNumber}`, template_item_id: templateItemId, room_number: roomNumber },
+      ]);
+      const { error } = await supabase
+        .from("room_preferred_items" as never)
+        .insert({ template_item_id: templateItemId, room_number: roomNumber } as never);
+      if (error) toast.error(error.message);
+    }
+    qc.invalidateQueries({ queryKey: ["room_preferred_items"] });
   };
 
   const isAssigned = (templateItemId: string, roomNumber: number) =>
@@ -4367,6 +4403,8 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
 
 <EditRoomDefaultsSheet
    editDefaultsSheetRoom={editDefaultsSheetRoom}
+   isPreferred={isPreferred}
+   togglePreferred={togglePreferred}
    setEditDefaultsSheetRoom={setEditDefaultsSheetRoom}
    template={template}
    isAssigned={isAssigned}

@@ -91,6 +91,9 @@ export type Room = {
 
 export type TemplateItemRoom = { id: string; template_item_id: string; room_number: number };
 
+// A linen item marked as the preferred choice for a specific room.
+export type RoomPreferredItem = { id: string; template_item_id: string; room_number: number };
+
 export type SnapshotRow = { name: string; count: number };
 export type RoomStatusRow = { room: number; status: string; bed: string; maintenance?: boolean };
 export type MaintenanceRow = { room: number; note: string };
