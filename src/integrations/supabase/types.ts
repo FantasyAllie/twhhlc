@@ -792,6 +792,45 @@ export type Database = {
           },
         ]
       }
+      room_preferred_items: {
+        Row: {
+          created_at: string
+          hotel_id: string
+          id: string
+          room_number: number
+          template_item_id: string
+        }
+        Insert: {
+          created_at?: string
+          hotel_id?: string
+          id?: string
+          room_number: number
+          template_item_id: string
+        }
+        Update: {
+          created_at?: string
+          hotel_id?: string
+          id?: string
+          room_number?: number
+          template_item_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "room_preferred_items_hotel_id_fkey"
+            columns: ["hotel_id"]
+            isOneToOne: false
+            referencedRelation: "hotels"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "room_preferred_items_template_item_id_fkey"
+            columns: ["template_item_id"]
+            isOneToOne: false
+            referencedRelation: "template_items"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       room_types: {
         Row: {
           created_at: string
