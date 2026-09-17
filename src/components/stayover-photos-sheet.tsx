@@ -2,7 +2,7 @@ import { useEffect, useMemo, useState } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { Sheet, SheetContent, SheetDescription, SheetHeader, SheetTitle } from "@/components/ui/sheet";
 import { Button } from "@/components/ui/button";
-import { Dialog, DialogContent } from "@/components/ui/dialog";
+import { PhotoViewerDialog } from "@/components/photo-viewer-dialog";
 import { Camera, Loader2, Trash2 } from "lucide-react";
 import {
   deleteStayoverPhoto,
@@ -128,13 +128,12 @@ export function StayoverPhotosSheet({
             </div>
           )}
         </div>
-        <Dialog open={!!lightbox} onOpenChange={(o) => !o && setLightbox(null)}>
-          <DialogContent className="max-w-3xl p-0 bg-transparent border-0 shadow-none">
-            {lightbox && (
-              <img src={lightbox} alt="" className="w-full h-auto max-h-[85dvh] object-contain rounded-md" />
-            )}
-          </DialogContent>
-        </Dialog>
+        <PhotoViewerDialog
+          open={!!lightbox}
+          onOpenChange={(open) => !open && setLightbox(null)}
+          src={lightbox}
+          alt="Stayover photo"
+        />
       </SheetContent>
     </Sheet>
   );

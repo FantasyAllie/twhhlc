@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { Camera, Loader2 } from "lucide-react";
-import { Dialog, DialogContent } from "@/components/ui/dialog";
+import { PhotoViewerDialog } from "@/components/photo-viewer-dialog";
 import { getStayoverSignedUrls, listStayoverPhotos } from "@/lib/stayover-photos";
 
 export function DndDoorPhoto({ roomNumber }: { roomNumber: number }) {
@@ -68,13 +68,7 @@ export function DndDoorPhoto({ roomNumber }: { roomNumber: number }) {
           </div>
         </div>
       )}
-      <Dialog open={open} onOpenChange={setOpen}>
-        <DialogContent className="max-w-3xl p-0 bg-transparent border-0 shadow-none">
-          {url && (
-            <img src={url} alt="DND door" className="w-full h-auto max-h-[85vh] object-contain rounded-md" />
-          )}
-        </DialogContent>
-      </Dialog>
+      <PhotoViewerDialog open={open} onOpenChange={setOpen} src={url} alt="DND door" />
     </div>
   );
 }
