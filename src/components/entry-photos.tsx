@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from "react";
 import { Camera, ImagePlus, Loader2, Trash2, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { Dialog, DialogContent } from "@/components/ui/dialog";
+import { PhotoViewerDialog } from "@/components/photo-viewer-dialog";
 import { toast } from "sonner";
 import {
   deleteEntryPhoto,
@@ -285,13 +285,12 @@ export function PhotoAttachments({
           </>
         )}
       </div>
-      <Dialog open={!!lightboxUrl} onOpenChange={(o) => !o && setLightboxUrl(null)}>
-        <DialogContent className="max-w-3xl p-0 bg-transparent border-0 shadow-none">
-          {lightboxUrl && (
-            <img src={lightboxUrl} alt="" className="w-full h-auto max-h-[85vh] object-contain rounded-md" />
-          )}
-        </DialogContent>
-      </Dialog>
+      <PhotoViewerDialog
+        open={!!lightboxUrl}
+        onOpenChange={(open) => !open && setLightboxUrl(null)}
+        src={lightboxUrl}
+        alt="Attached photo"
+      />
     </div>
   );
 }
