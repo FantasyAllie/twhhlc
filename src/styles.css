@@ -421,6 +421,23 @@
     min-width: 44px;
   }
 
+  /* Switches keep their pill shape on touch screens; the generic 44px square
+     rule is opted out via data-touch-exempt and replaced by a larger, still
+     proportional toggle. */
+  [role="switch"][data-touch-exempt] {
+    width: 3.25rem;  /* 52px */
+    height: 1.75rem; /* 28px */
+  }
+
+  [role="switch"][data-touch-exempt] > span {
+    width: 1.5rem;  /* 24px */
+    height: 1.5rem; /* 24px */
+  }
+
+  [role="switch"][data-touch-exempt][data-state="checked"] > span {
+    transform: translateX(1.5rem); /* 24px, matches track travel */
+  }
+
   /* Full-width controls must not be forced wider than their container. */
   button.w-full,
   [role="button"].w-full {
