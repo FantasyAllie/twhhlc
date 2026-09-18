@@ -425,18 +425,25 @@
      rule is opted out via data-touch-exempt and replaced by a larger, still
      proportional toggle. */
   [role="switch"][data-touch-exempt] {
+    position: relative;
     width: 3.25rem;  /* 52px */
     height: 1.75rem; /* 28px */
   }
 
-  [role="switch"][data-touch-exempt] > span {
+  [role="switch"][data-touch-exempt] > [data-switch-thumb] {
+    position: absolute;
+    top: 50%;
+    left: 2px;
     width: 1.5rem;  /* 24px */
     height: 1.5rem; /* 24px */
-    margin-left: 2px;
+    margin-left: 0;
+    transform: translateY(-50%);
+    transition-property: left;
   }
 
-  [role="switch"][data-touch-exempt][data-state="checked"] > span {
-    transform: translateX(1.25rem); /* 20px, keeps an even 4px inset */
+  [role="switch"][data-touch-exempt][data-state="checked"] > [data-switch-thumb] {
+    left: calc(100% - 26px);
+    transform: translateY(-50%);
   }
 
   /* Full-width controls must not be forced wider than their container. */
