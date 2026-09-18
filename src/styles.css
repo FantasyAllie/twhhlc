@@ -432,10 +432,11 @@
   [role="switch"][data-touch-exempt] > span {
     width: 1.5rem;  /* 24px */
     height: 1.5rem; /* 24px */
+    margin-left: 2px;
   }
 
   [role="switch"][data-touch-exempt][data-state="checked"] > span {
-    transform: translateX(1.5rem); /* 24px, matches track travel */
+    transform: translateX(1.25rem); /* 20px, keeps an even 4px inset */
   }
 
   /* Full-width controls must not be forced wider than their container. */
