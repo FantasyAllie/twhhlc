@@ -437,12 +437,14 @@
     width: 1.5rem;  /* 24px */
     height: 1.5rem; /* 24px */
     margin-left: 0;
+    translate: none;
     transform: translateY(-50%);
     transition-property: left;
   }
 
   [role="switch"][data-touch-exempt][data-state="checked"] > [data-switch-thumb] {
     left: calc(100% - 26px);
+    translate: none;
     transform: translateY(-50%);
   }
 
