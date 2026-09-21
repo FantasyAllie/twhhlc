@@ -401,6 +401,31 @@
 }
 
 /*
+ * Pill toggles. Track size and thumb offset live here (not as transforms) so
+ * the larger touch-screen sizing below only has to change the numbers, and the
+ * thumb can never end up outside the track.
+ */
+[data-switch-root] {
+  width: 2.25rem;  /* 36px */
+  height: 1.25rem; /* 20px */
+}
+
+[data-switch-root] > [data-switch-thumb] {
+  position: absolute;
+  top: 50%;
+  left: 2px;
+  width: 1rem; /* 16px */
+  height: 1rem;
+  transform: translateY(-50%);
+  transition: left 150ms ease;
+}
+
+[data-switch-root][data-state="checked"] > [data-switch-thumb] {
+  left: calc(100% - 1rem - 2px);
+}
+
+
+/*
  * Touch ergonomics: on phones/tablets with a coarse pointer every tappable
  * control is at least 44px in both directions, so small pills, page numbers
  * and icon buttons can be hit reliably. Desktop keeps the compact design
