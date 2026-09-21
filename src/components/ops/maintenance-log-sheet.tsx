@@ -518,7 +518,26 @@ export function MaintenanceLogSheet({
                   <Plus className="h-4 w-4 mr-1" /> Log
                 </Button>
               </div>
+              {setNewMaintenanceUrgent && (
+                <Button
+                  type="button"
+                  variant={newMaintenanceUrgent ? "default" : "outline"}
+                  size="sm"
+                  className={
+                    "self-start text-xs " +
+                    (newMaintenanceUrgent
+                      ? "bg-destructive text-destructive-foreground hover:bg-destructive/90"
+                      : "")
+                  }
+                  onClick={() => setNewMaintenanceUrgent(!newMaintenanceUrgent)}
+                  aria-pressed={newMaintenanceUrgent}
+                >
+                  <AlertTriangle className="mr-1 h-4 w-4" />
+                  {newMaintenanceUrgent ? "Urgent action" : "Needs urgent action"}
+                </Button>
+              )}
               <PhotoComposer value={newMaintenancePhotos} onChange={setNewMaintenancePhotos} />
+
               {canManageAreas && onManageAreas && (
                 <Button
                   type="button"
