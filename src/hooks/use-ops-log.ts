@@ -30,7 +30,7 @@ export const useMaintenanceRequestsQuery = () =>
     queryFn: async (): Promise<MaintenanceRequest[]> => {
       const { data, error } = await supabase
         .from("maintenance_requests" as never)
-        .select("id,room_number,area_label,message,created_by_username,done,done_by_username,done_at,created_at,photo_paths,notes")
+        .select("id,room_number,area_label,message,created_by_username,done,done_by_username,done_at,created_at,photo_paths,notes,urgent")
         .order("created_at", { ascending: false });
       if (error) throw error;
       return (data ?? []) as MaintenanceRequest[];
