@@ -4424,6 +4424,10 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
   newMaintenanceRoom={newMaintenanceRoom}
   setNewMaintenanceRoom={setNewMaintenanceRoom}
   newMaintenanceText={newMaintenanceText}
+  newMaintenanceUrgent={newMaintenanceUrgent}
+  setNewMaintenanceUrgent={setNewMaintenanceUrgent}
+  setMaintenanceUrgent={setMaintenanceUrgent}
+
   setNewMaintenanceText={setNewMaintenanceText}
   newMaintenancePhotos={newMaintenancePhotos}
   setNewMaintenancePhotos={setNewMaintenancePhotos}
@@ -4590,6 +4594,8 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
      roomMessages={roomMessages}
      openMaintenanceCount={openMaintenanceCount}
      markMaintenanceDone={markMaintenanceDone}
+     setMaintenanceUrgent={setMaintenanceUrgent}
+
      qc={qc}
      setMessagesInitial={setMessagesInitial}
      setMessagesSheetOpen={setMessagesSheetOpen}
