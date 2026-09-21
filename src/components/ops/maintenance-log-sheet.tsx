@@ -171,9 +171,11 @@ export function MaintenanceLogSheet({
           photoPaths: [],
           notes: m.notes ?? null,
           canEditPhotos: false,
+          urgent: false,
         })),
     [maintenanceMessages],
   );
+
   const reqEntries = useMemo<Entry[]>(
     () =>
       maintenanceRequests.map((m) => ({
