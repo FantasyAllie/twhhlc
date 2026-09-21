@@ -581,9 +581,11 @@ export function MaintenanceLogSheet({
         >
           {([
             { key: "open", label: `Open (${openItems.length})` },
+            { key: "urgent", label: `Urgent (${urgentItems.length})` },
             { key: "completed", label: `Completed (${completedItems.length})` },
-          ] as { key: "open" | "completed"; label: string }[]).map((tab) => {
+          ] as { key: Tab; label: string }[]).map((tab) => {
             const active = activeTab === tab.key;
+            const urgentPill = tab.key === "urgent";
             return (
               <button
                 key={tab.key}
@@ -595,14 +597,19 @@ export function MaintenanceLogSheet({
                 className={
                   "flex-1 px-2 sm:px-4 h-8 text-xs sm:text-sm rounded-full transition-colors whitespace-nowrap " +
                   (active
-                    ? "bg-primary text-primary-foreground shadow-sm font-medium"
-                    : "text-muted-foreground hover:text-foreground")
+                    ? urgentPill
+                      ? "bg-destructive text-destructive-foreground shadow-sm font-medium"
+                      : "bg-primary text-primary-foreground shadow-sm font-medium"
+                    : urgentPill && urgentItems.length > 0
+                      ? "text-destructive font-medium hover:text-destructive"
+                      : "text-muted-foreground hover:text-foreground")
                 }
               >
                 {tab.label}
               </button>
             );
           })}
+
         </div>
 
         {/* Pagination */}
@@ -667,7 +674,12 @@ export function MaintenanceLogSheet({
           )}
           {activeItems.length === 0 ? (
             <p className="text-sm text-muted-foreground">
-              {activeTab === "open" ? "No open maintenance requests." : "No completed maintenance requests."}
+              {activeTab === "open"
+                ? "No open maintenance requests."
+                : activeTab === "urgent"
+                  ? "No urgent maintenance requests."
+                  : "No completed maintenance requests."}
+
             </p>
           ) : (
             <div className="space-y-2">{pagedItems.map((m) => renderItem(m))}</div>
