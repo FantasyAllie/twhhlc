@@ -127,22 +127,25 @@ export function MaintenanceLogSheet({
   };
   const [settingsOpen, setSettingsOpen] = useState(false);
 
-  const [activeTab, setActiveTab] = useState<"open" | "completed">("open");
+  type Tab = "open" | "urgent" | "completed";
+  const TAB_ORDER: Tab[] = ["open", "urgent", "completed"];
+  const [activeTab, setActiveTab] = useState<Tab>("open");
   const [page, setPage] = useState(0);
   const PAGE_SIZE = 15;
   const qc = useQueryClient();
 
   // Swipe across the pills to change section.
+  const goTab = (delta: number) => {
+    const idx = TAB_ORDER.indexOf(activeTab);
+    const next = TAB_ORDER[Math.min(TAB_ORDER.length - 1, Math.max(0, idx + delta))];
+    setActiveTab(next);
+    setPage(0);
+  };
   const tabSwipe = useSwipeNav({
-    onNext: () => {
-      setActiveTab("completed");
-      setPage(0);
-    },
-    onPrev: () => {
-      setActiveTab("open");
-      setPage(0);
-    },
+    onNext: () => goTab(1),
+    onPrev: () => goTab(-1),
   });
+
 
   // Maintenance-thread messages are maintenance work too: show them in the
   // same log so Housekeeping and Reception see everything Maintenance sees.
