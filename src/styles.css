@@ -446,32 +446,22 @@
     min-width: 44px;
   }
 
-  /* Switches keep their pill shape on touch screens; the generic 44px square
-     rule is opted out via data-touch-exempt and replaced by a larger, still
-     proportional toggle. */
-  [role="switch"][data-touch-exempt] {
-    position: relative;
+  /* Switches keep their pill shape on touch screens: a larger but still
+     proportional toggle, with the thumb offsets scaled to match. */
+  [data-switch-root] {
     width: 3.25rem;  /* 52px */
     height: 1.75rem; /* 28px */
   }
 
-  [role="switch"][data-touch-exempt] > [data-switch-thumb] {
-    position: absolute;
-    top: 50%;
-    left: 2px;
+  [data-switch-root] > [data-switch-thumb] {
     width: 1.5rem;  /* 24px */
     height: 1.5rem; /* 24px */
-    margin-left: 0;
-    translate: none;
-    transform: translateY(-50%);
-    transition-property: left;
   }
 
-  [role="switch"][data-touch-exempt][data-state="checked"] > [data-switch-thumb] {
-    left: calc(100% - 26px);
-    translate: none;
-    transform: translateY(-50%);
+  [data-switch-root][data-state="checked"] > [data-switch-thumb] {
+    left: calc(100% - 1.5rem - 2px);
   }
+
 
   /* Full-width controls must not be forced wider than their container. */
   button.w-full,
