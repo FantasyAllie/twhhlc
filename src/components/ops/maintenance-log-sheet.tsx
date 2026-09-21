@@ -61,6 +61,9 @@ export function MaintenanceLogSheet({
   setNewMaintenanceRoom,
   newMaintenanceText,
   setNewMaintenanceText,
+  newMaintenanceUrgent = false,
+  setNewMaintenanceUrgent,
+  setMaintenanceUrgent,
   newMaintenancePhotos,
   setNewMaintenancePhotos,
   submitMaintenanceRequest,
@@ -90,6 +93,9 @@ export function MaintenanceLogSheet({
   setNewMaintenanceRoom: (v: string) => void;
   newMaintenanceText: string;
   setNewMaintenanceText: (v: string) => void;
+  newMaintenanceUrgent?: boolean;
+  setNewMaintenanceUrgent?: (v: boolean) => void;
+  setMaintenanceUrgent?: (id: string, urgent: boolean) => Promise<void> | void;
   newMaintenancePhotos: File[];
   setNewMaintenancePhotos: (f: File[]) => void;
   submitMaintenanceRequest: () => Promise<void> | void;
@@ -97,6 +103,7 @@ export function MaintenanceLogSheet({
   deleteMaintenanceRequest: (id: string) => Promise<void> | void;
   setMaintenancePhotoPaths: (id: string, next: string[]) => void;
 }) {
+
   const canEditPhotos = (m: MaintenanceRequest) =>
     isAdmin || (!!authUsername && m.created_by_username === authUsername);
 
