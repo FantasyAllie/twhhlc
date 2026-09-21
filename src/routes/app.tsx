@@ -75,6 +75,8 @@ import { BroomBurst } from "@/components/broom-burst";
 import { CelebrationBurst } from "@/components/celebration-burst";
 import { areOutcomeAnimationsEnabled } from "@/lib/feedback-prefs";
 import { GloomBurst } from "@/components/gloom-burst";
+import { playFart } from "@/lib/fart-sound";
+
 import {
   deleteTodayStayoverPhotosForRoom,
   listStayoverPhotos,
@@ -475,7 +477,9 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
   const [newMaintenanceRoom, setNewMaintenanceRoom] = useState<string>("");
  const [newMaintenancePhotos, setNewMaintenancePhotos] = useState<File[]>([]);
   const [newMaintenanceText, setNewMaintenanceText] = useState<string>("");
+  const [newMaintenanceUrgent, setNewMaintenanceUrgent] = useState(false);
   const [maintenanceComposerOpen, setMaintenanceComposerOpen] = useState(false);
+
   const [lostPropertyOpen, setLostPropertyOpen] = useState(false);
   // Room number pre-selected in the lost property composer when it's opened
   // from a room hub, so the user doesn't have to pick the room again.
@@ -981,6 +985,7 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
         room_number: roomNumber,
         area_label: areaLabel,
         message: text,
+        urgent: newMaintenanceUrgent,
         created_by_username: authUser?.username ?? null,
       } as never)
       .select("id")
@@ -1008,11 +1013,26 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
     setNewMaintenanceRoom("");
     setNewMaintenanceText("");
     setNewMaintenancePhotos([]);
+    setNewMaintenanceUrgent(false);
     qc.invalidateQueries({ queryKey: ["maintenance_requests"] });
     if (roomNumber != null) await writeRoomMaintenanceFlag(roomNumber, true);
     void notifyMaintenanceRequest({ data: { roomNumber, areaLabel: areaLabel, message: text } });
     toast.success("Maintenance request logged");
   };
+
+  // Flag/unflag a request as needing urgent action (independent of completion).
+  const setMaintenanceUrgent = async (id: string, urgent: boolean) => {
+    qc.setQueryData<MaintenanceRequest[]>(["maintenance_requests"], (old) =>
+      old?.map((m) => (m.id === id ? { ...m, urgent } : m)) ?? [],
+    );
+    const { error } = await supabase
+      .from("maintenance_requests" as never)
+      .update({ urgent, updated_at: new Date().toISOString() } as never)
+      .eq("id", id);
+    if (error) toast.error(error.message);
+    qc.invalidateQueries({ queryKey: ["maintenance_requests"] });
+  };
+
 
   const setMaintenancePhotoPaths = async (id: string, paths: string[]) => {
     qc.setQueryData<MaintenanceRequest[]>(["maintenance_requests"], (old) =>
@@ -2328,8 +2348,16 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
     if (field === "reception_status_id" && value) {
       const dirtyId =
         receptionStatuses.find((s) => s.label.toLowerCase() === "dirty")?.id ?? null;
-      if (dirtyId && value === dirtyId) markedDoneHereRef.current = true;
+      if (dirtyId && value === dirtyId) {
+        markedDoneHereRef.current = true;
+        const wasDirty =
+          (qc.getQueryData<Room[]>(["rooms"]) ?? []).find(
+            (r) => r.room_number === roomNumber,
+          )?.reception_status_id === dirtyId;
+        if (!wasDirty) playFart();
+      }
     }
+
     qc.setQueryData<Room[]>(["rooms"], (old) => {
       const list = old ? [...old] : [];
       const idx = list.findIndex((r) => r.room_number === roomNumber);
@@ -4396,6 +4424,10 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
   newMaintenanceRoom={newMaintenanceRoom}
   setNewMaintenanceRoom={setNewMaintenanceRoom}
   newMaintenanceText={newMaintenanceText}
+  newMaintenanceUrgent={newMaintenanceUrgent}
+  setNewMaintenanceUrgent={setNewMaintenanceUrgent}
+  setMaintenanceUrgent={setMaintenanceUrgent}
+
   setNewMaintenanceText={setNewMaintenanceText}
   newMaintenancePhotos={newMaintenancePhotos}
   setNewMaintenancePhotos={setNewMaintenancePhotos}
@@ -4562,6 +4594,8 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
      roomMessages={roomMessages}
      openMaintenanceCount={openMaintenanceCount}
      markMaintenanceDone={markMaintenanceDone}
+     setMaintenanceUrgent={setMaintenanceUrgent}
+
      qc={qc}
      setMessagesInitial={setMessagesInitial}
      setMessagesSheetOpen={setMessagesSheetOpen}

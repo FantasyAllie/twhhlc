@@ -1,0 +1,13 @@
+{
+  "version": "7",
+  "dialect": "postgresql",
+  "entries": [
+    {
+      "idx": 0,
+      "version": "7",
+      "when": 1790015954059,
+      "tag": "0000_add_urgent_to_maintenance_requests",
+      "breakpoints": true
+    }
+  ]
+}

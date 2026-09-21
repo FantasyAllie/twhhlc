@@ -1,7 +1,7 @@
 // Maintenance Log sheet (composer + open/completed lists).
 // Extracted verbatim from src/routes/app.tsx.
 import { useEffect, useMemo, useState } from "react";
-import { Check, ChevronDown, Loader2, Plus, Settings, Trash2, Wrench, X } from "lucide-react";
+import { AlertTriangle, Check, ChevronDown, Loader2, Plus, Settings, Trash2, Wrench, X } from "lucide-react";
 import { useQueryClient } from "@tanstack/react-query";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -34,7 +34,9 @@ type Entry = {
   photoPaths: string[];
   notes: string | null;
   canEditPhotos: boolean;
+  urgent: boolean;
 };
+
 
 export function MaintenanceLogSheet({
   open,
@@ -59,6 +61,9 @@ export function MaintenanceLogSheet({
   setNewMaintenanceRoom,
   newMaintenanceText,
   setNewMaintenanceText,
+  newMaintenanceUrgent = false,
+  setNewMaintenanceUrgent,
+  setMaintenanceUrgent,
   newMaintenancePhotos,
   setNewMaintenancePhotos,
   submitMaintenanceRequest,
@@ -88,6 +93,9 @@ export function MaintenanceLogSheet({
   setNewMaintenanceRoom: (v: string) => void;
   newMaintenanceText: string;
   setNewMaintenanceText: (v: string) => void;
+  newMaintenanceUrgent?: boolean;
+  setNewMaintenanceUrgent?: (v: boolean) => void;
+  setMaintenanceUrgent?: (id: string, urgent: boolean) => Promise<void> | void;
   newMaintenancePhotos: File[];
   setNewMaintenancePhotos: (f: File[]) => void;
   submitMaintenanceRequest: () => Promise<void> | void;
@@ -95,6 +103,7 @@ export function MaintenanceLogSheet({
   deleteMaintenanceRequest: (id: string) => Promise<void> | void;
   setMaintenancePhotoPaths: (id: string, next: string[]) => void;
 }) {
+
   const canEditPhotos = (m: MaintenanceRequest) =>
     isAdmin || (!!authUsername && m.created_by_username === authUsername);
 
@@ -118,22 +127,25 @@ export function MaintenanceLogSheet({
   };
   const [settingsOpen, setSettingsOpen] = useState(false);
 
-  const [activeTab, setActiveTab] = useState<"open" | "completed">("open");
+  type Tab = "open" | "urgent" | "completed";
+  const TAB_ORDER: Tab[] = ["open", "urgent", "completed"];
+  const [activeTab, setActiveTab] = useState<Tab>("open");
   const [page, setPage] = useState(0);
   const PAGE_SIZE = 15;
   const qc = useQueryClient();
 
   // Swipe across the pills to change section.
+  const goTab = (delta: number) => {
+    const idx = TAB_ORDER.indexOf(activeTab);
+    const next = TAB_ORDER[Math.min(TAB_ORDER.length - 1, Math.max(0, idx + delta))];
+    setActiveTab(next);
+    setPage(0);
+  };
   const tabSwipe = useSwipeNav({
-    onNext: () => {
-      setActiveTab("completed");
-      setPage(0);
-    },
-    onPrev: () => {
-      setActiveTab("open");
-      setPage(0);
-    },
+    onNext: () => goTab(1),
+    onPrev: () => goTab(-1),
   });
+
 
   // Maintenance-thread messages are maintenance work too: show them in the
   // same log so Housekeeping and Reception see everything Maintenance sees.
@@ -159,9 +171,11 @@ export function MaintenanceLogSheet({
           photoPaths: [],
           notes: m.notes ?? null,
           canEditPhotos: false,
+          urgent: false,
         })),
     [maintenanceMessages],
   );
+
   const reqEntries = useMemo<Entry[]>(
     () =>
       maintenanceRequests.map((m) => ({
@@ -178,6 +192,7 @@ export function MaintenanceLogSheet({
         photoPaths: m.photo_paths ?? [],
         notes: m.notes ?? null,
         canEditPhotos: canEditPhotos(m),
+        urgent: !!m.urgent,
       })),
     [maintenanceRequests, isAdmin, authUsername],
   );
@@ -185,13 +200,17 @@ export function MaintenanceLogSheet({
     () => [...reqEntries, ...msgEntries].sort((a, b) => (a.createdAt < b.createdAt ? 1 : -1)),
     [reqEntries, msgEntries],
   );
+  // Open keeps its plain newest-first order; urgent items get their own pill.
   const openItems = useMemo(() => allEntries.filter((e) => !e.done), [allEntries]);
+  const urgentItems = useMemo(() => openItems.filter((e) => e.urgent), [openItems]);
   const completedItems = useMemo(
     () => allEntries.filter((e) => e.done && isWithinRetention(e.doneAt)),
     [allEntries, retentionMonths],
   );
 
-  const activeItems = activeTab === "open" ? openItems : completedItems;
+  const activeItems =
+    activeTab === "open" ? openItems : activeTab === "urgent" ? urgentItems : completedItems;
+
   const pageCount = Math.max(1, Math.ceil(activeItems.length / PAGE_SIZE));
   const safePage = Math.min(page, pageCount - 1);
   const pagedItems = activeItems.slice(
@@ -259,7 +278,8 @@ export function MaintenanceLogSheet({
         data-touch-row
         className={
           "flex items-start gap-2.5 rounded-lg border p-3 " +
-          (isCompleted ? "bg-muted/40" : "bg-background")
+          (isCompleted ? "bg-muted/40 " : "bg-background ") +
+          (e.urgent && !isCompleted ? "border-destructive/60" : "")
         }
       >
         <div className="flex-1 min-w-0">
@@ -274,6 +294,12 @@ export function MaintenanceLogSheet({
             >
               {e.location}
             </span>
+            {e.urgent && !isCompleted && (
+              <span className="inline-flex h-6 items-center gap-1 rounded-full bg-destructive/15 px-2 text-[10px] font-bold uppercase tracking-wide text-destructive">
+                <AlertTriangle className="h-3 w-3" aria-hidden /> Urgent
+              </span>
+            )}
+
             <span className="text-xs text-muted-foreground">
               {isCompleted ? (
                 <>
@@ -310,6 +336,22 @@ export function MaintenanceLogSheet({
             source={e.source === "req" ? "request" : "message"}
             notes={e.notes}
           />
+          {e.source === "req" && setMaintenanceUrgent && !isCompleted && (
+            <Button
+              type="button"
+              size="sm"
+              variant={e.urgent ? "default" : "outline"}
+              className={
+                "mt-2 text-xs " +
+                (e.urgent ? "bg-destructive text-destructive-foreground hover:bg-destructive/90" : "")
+              }
+              onClick={() => void setMaintenanceUrgent(e.rawId, !e.urgent)}
+              aria-pressed={e.urgent}
+            >
+              <AlertTriangle className="mr-1 h-4 w-4" />
+              {e.urgent ? "Urgent action" : "Mark urgent"}
+            </Button>
+          )}
         </div>
         {primary ? (
           <Button type="button" size="sm" variant="outline" onClick={primary} aria-label="Mark as done">
@@ -318,6 +360,7 @@ export function MaintenanceLogSheet({
         ) : !isCompleted ? (
           <span className="text-xs text-muted-foreground shrink-0 pt-1">Awaiting action</span>
         ) : null}
+
         {remove && (
           <Button
             type="button"
@@ -475,7 +518,26 @@ export function MaintenanceLogSheet({
                   <Plus className="h-4 w-4 mr-1" /> Log
                 </Button>
               </div>
+              {setNewMaintenanceUrgent && (
+                <Button
+                  type="button"
+                  variant={newMaintenanceUrgent ? "default" : "outline"}
+                  size="sm"
+                  className={
+                    "self-start text-xs " +
+                    (newMaintenanceUrgent
+                      ? "bg-destructive text-destructive-foreground hover:bg-destructive/90"
+                      : "")
+                  }
+                  onClick={() => setNewMaintenanceUrgent(!newMaintenanceUrgent)}
+                  aria-pressed={newMaintenanceUrgent}
+                >
+                  <AlertTriangle className="mr-1 h-4 w-4" />
+                  {newMaintenanceUrgent ? "Urgent action" : "Needs urgent action"}
+                </Button>
+              )}
               <PhotoComposer value={newMaintenancePhotos} onChange={setNewMaintenancePhotos} />
+
               {canManageAreas && onManageAreas && (
                 <Button
                   type="button"
@@ -538,9 +600,11 @@ export function MaintenanceLogSheet({
         >
           {([
             { key: "open", label: `Open (${openItems.length})` },
+            { key: "urgent", label: `Urgent (${urgentItems.length})` },
             { key: "completed", label: `Completed (${completedItems.length})` },
-          ] as { key: "open" | "completed"; label: string }[]).map((tab) => {
+          ] as { key: Tab; label: string }[]).map((tab) => {
             const active = activeTab === tab.key;
+            const urgentPill = tab.key === "urgent";
             return (
               <button
                 key={tab.key}
@@ -552,14 +616,19 @@ export function MaintenanceLogSheet({
                 className={
                   "flex-1 px-2 sm:px-4 h-8 text-xs sm:text-sm rounded-full transition-colors whitespace-nowrap " +
                   (active
-                    ? "bg-primary text-primary-foreground shadow-sm font-medium"
-                    : "text-muted-foreground hover:text-foreground")
+                    ? urgentPill
+                      ? "bg-destructive text-destructive-foreground shadow-sm font-medium"
+                      : "bg-primary text-primary-foreground shadow-sm font-medium"
+                    : urgentPill && urgentItems.length > 0
+                      ? "text-destructive font-medium hover:text-destructive"
+                      : "text-muted-foreground hover:text-foreground")
                 }
               >
                 {tab.label}
               </button>
             );
           })}
+
         </div>
 
         {/* Pagination */}
@@ -624,7 +693,12 @@ export function MaintenanceLogSheet({
           )}
           {activeItems.length === 0 ? (
             <p className="text-sm text-muted-foreground">
-              {activeTab === "open" ? "No open maintenance requests." : "No completed maintenance requests."}
+              {activeTab === "open"
+                ? "No open maintenance requests."
+                : activeTab === "urgent"
+                  ? "No urgent maintenance requests."
+                  : "No completed maintenance requests."}
+
             </p>
           ) : (
             <div className="space-y-2">{pagedItems.map((m) => renderItem(m))}</div>

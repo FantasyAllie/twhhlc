@@ -148,7 +148,10 @@ export type MaintenanceRequest = {
   photo_paths: string[];
   // Free-text repair notes: what needs doing, parts needed, what's outstanding.
   notes?: string | null;
+  // Flagged as needing urgent action; also listed under the Urgent pill.
+  urgent?: boolean;
 };
+
 
 export type ViewRole = "admin" | "manager" | "user" | "reception" | "fnb" | "maintenance";
 

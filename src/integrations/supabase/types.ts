@@ -300,6 +300,7 @@ export type Database = {
           photo_paths: string[]
           room_number: number | null
           updated_at: string
+          urgent: boolean
           user_id: string
         }
         Insert: {
@@ -318,6 +319,7 @@ export type Database = {
           photo_paths?: string[]
           room_number?: number | null
           updated_at?: string
+          urgent?: boolean
           user_id?: string
         }
         Update: {
@@ -336,6 +338,7 @@ export type Database = {
           photo_paths?: string[]
           room_number?: number | null
           updated_at?: string
+          urgent?: boolean
           user_id?: string
         }
         Relationships: [
