@@ -1,7 +1,7 @@
 // Maintenance department dashboard (open requests + messages, completed list).
 // Extracted verbatim from src/routes/app.tsx.
 import { useMemo, useState } from "react";
-import { Check, MessageSquare, Plus, RotateCcw, Trash2 } from "lucide-react";
+import { AlertTriangle, Check, MessageSquare, Plus, RotateCcw, Trash2 } from "lucide-react";
 import type { QueryClient } from "@tanstack/react-query";
 import { Button } from "@/components/ui/button";
 import { SwipeRow } from "@/components/ui/swipe-row";
@@ -29,6 +29,7 @@ export function MaintenanceDashboard({
   setMessagesInitial,
   setMessagesSheetOpen,
   onLogNewIssue,
+  setMaintenanceUrgent,
 }: {
   maintenanceRequests: MaintenanceRequest[];
   roomMessages: RoomMessage[];
@@ -38,10 +39,14 @@ export function MaintenanceDashboard({
   setMessagesInitial: (v: MessagesInitial) => void;
   setMessagesSheetOpen: (o: boolean) => void;
   onLogNewIssue?: () => void;
+  setMaintenanceUrgent?: (id: string, urgent: boolean) => Promise<void> | void;
 }) {
-  const [activeTab, setActiveTab] = useState<"open" | "completed">("open");
+  type Tab = "open" | "urgent" | "completed";
+  const TAB_ORDER: Tab[] = ["open", "urgent", "completed"];
+  const [activeTab, setActiveTab] = useState<Tab>("open");
   const [page, setPage] = useState(0);
   const PAGE_SIZE = 15;
+
 
   const openReqs = maintenanceRequests.filter((m) => !m.done);
   const doneReqs = maintenanceRequests.filter((m) => m.done);
