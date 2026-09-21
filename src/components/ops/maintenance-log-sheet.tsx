@@ -192,6 +192,7 @@ export function MaintenanceLogSheet({
         photoPaths: m.photo_paths ?? [],
         notes: m.notes ?? null,
         canEditPhotos: canEditPhotos(m),
+        urgent: !!m.urgent,
       })),
     [maintenanceRequests, isAdmin, authUsername],
   );
@@ -199,13 +200,17 @@ export function MaintenanceLogSheet({
     () => [...reqEntries, ...msgEntries].sort((a, b) => (a.createdAt < b.createdAt ? 1 : -1)),
     [reqEntries, msgEntries],
   );
+  // Open keeps its plain newest-first order; urgent items get their own pill.
   const openItems = useMemo(() => allEntries.filter((e) => !e.done), [allEntries]);
+  const urgentItems = useMemo(() => openItems.filter((e) => e.urgent), [openItems]);
   const completedItems = useMemo(
     () => allEntries.filter((e) => e.done && isWithinRetention(e.doneAt)),
     [allEntries, retentionMonths],
   );
 
-  const activeItems = activeTab === "open" ? openItems : completedItems;
+  const activeItems =
+    activeTab === "open" ? openItems : activeTab === "urgent" ? urgentItems : completedItems;
+
   const pageCount = Math.max(1, Math.ceil(activeItems.length / PAGE_SIZE));
   const safePage = Math.min(page, pageCount - 1);
   const pagedItems = activeItems.slice(
