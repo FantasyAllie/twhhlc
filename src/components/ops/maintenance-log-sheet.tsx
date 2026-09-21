@@ -278,7 +278,8 @@ export function MaintenanceLogSheet({
         data-touch-row
         className={
           "flex items-start gap-2.5 rounded-lg border p-3 " +
-          (isCompleted ? "bg-muted/40" : "bg-background")
+          (isCompleted ? "bg-muted/40 " : "bg-background ") +
+          (e.urgent && !isCompleted ? "border-destructive/60" : "")
         }
       >
         <div className="flex-1 min-w-0">
@@ -293,6 +294,12 @@ export function MaintenanceLogSheet({
             >
               {e.location}
             </span>
+            {e.urgent && !isCompleted && (
+              <span className="inline-flex h-6 items-center gap-1 rounded-full bg-destructive/15 px-2 text-[10px] font-bold uppercase tracking-wide text-destructive">
+                <AlertTriangle className="h-3 w-3" aria-hidden /> Urgent
+              </span>
+            )}
+
             <span className="text-xs text-muted-foreground">
               {isCompleted ? (
                 <>
