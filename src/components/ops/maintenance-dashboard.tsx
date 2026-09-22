@@ -302,7 +302,7 @@ export function MaintenanceDashboard({
                       </span>
                     </div>
                     <p className="mt-2 text-sm whitespace-pre-wrap break-words">{it.message}</p>
-                    <div className="mt-2 flex items-start justify-between gap-2">
+                    <div className="mt-2 flex items-end justify-between gap-2">
                       {it.source === "req" && (() => {
                         const req = openReqs.find((r) => r.id === rawId(it.id));
                         const paths = req && Array.isArray(req.photo_paths) ? req.photo_paths : [];
