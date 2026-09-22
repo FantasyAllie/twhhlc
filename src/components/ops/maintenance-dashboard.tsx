@@ -302,59 +302,65 @@ export function MaintenanceDashboard({
                      </span>
                    </div>
                    <p className="mt-2 text-sm whitespace-pre-wrap break-words">{it.message}</p>
-                    {it.source === "req" && (() => {
-                      const req = openReqs.find((r) => r.id === rawId(it.id));
-                      const paths = req && Array.isArray(req.photo_paths) ? req.photo_paths : [];
-                      if (paths.length === 0) return null;
-                      return (
-                        <div className="mt-2">
-                          <PhotoAttachments
-                            kind="maintenance"
-                            entryId={rawId(it.id)}
-                            paths={paths}
-                            canEdit={false}
-                            onChange={() => {}}
-                          />
-                        </div>
-                      );
-                    })()}
-                   <MaintenanceNotes
-                     requestId={rawId(it.id)}
-                     source={it.source === "req" ? "request" : "message"}
-                     notes={
-                       it.source === "req"
-                         ? openReqs.find((r) => r.id === rawId(it.id))?.notes
-                         : openMsgs.find((m) => m.id === rawId(it.id))?.notes
-                     }
-                   />
-                   <div data-touch-row className="mt-3 flex flex-wrap items-center justify-end gap-2.5">
-                     {it.source === "req" && setMaintenanceUrgent && (
-                       <Button
-                         type="button"
-                         size="sm"
-                         variant={it.urgent ? "default" : "outline"}
-                         className={
-                           "mr-auto text-xs " +
-                           (it.urgent ? "bg-destructive text-destructive-foreground hover:bg-destructive/90" : "")
-                         }
-                         aria-pressed={it.urgent}
-                         onClick={() => void setMaintenanceUrgent(rawId(it.id), !it.urgent)}
-                       >
-                         <AlertTriangle className="mr-1 h-4 w-4" />
-                         {it.urgent ? "Urgent action" : "Mark urgent"}
-                       </Button>
-                     )}
-                     <Button type="button" size="sm" variant="outline" className="text-xs" onClick={() => void replyToItem(it)}>
-                       <MessageSquare className="h-4 w-4 mr-1" /> Reply
-                     </Button>
+                    <div className="mt-2 flex items-start justify-between gap-2">
+                      <div className="flex-1 min-w-0">
+                        {it.source === "req" && (() => {
+                          const req = openReqs.find((r) => r.id === rawId(it.id));
+                          const paths = req && Array.isArray(req.photo_paths) ? req.photo_paths : [];
+                          if (paths.length === 0) return null;
+                          return (
+                            <PhotoAttachments
+                              kind="maintenance"
+                              entryId={rawId(it.id)}
+                              paths={paths}
+                              canEdit={false}
+                              onChange={() => {}}
+                            />
+                          );
+                        })()}
+                      </div>
+                      <div className="flex items-center gap-1.5 shrink-0">
+                        <MaintenanceNotes
+                          requestId={rawId(it.id)}
+                          source={it.source === "req" ? "request" : "message"}
+                          notes={
+                            it.source === "req"
+                              ? openReqs.find((r) => r.id === rawId(it.id))?.notes
+                              : openMsgs.find((m) => m.id === rawId(it.id))?.notes
+                          }
+                          iconOnly
+                        />
+                        {it.source === "req" && setMaintenanceUrgent && (
+                          <Button
+                            type="button"
+                            size="icon"
+                            variant={it.urgent ? "default" : "outline"}
+                            className={
+                              "h-9 w-9 " +
+                              (it.urgent ? "bg-destructive text-destructive-foreground hover:bg-destructive/90" : "")
+                            }
+                            aria-pressed={it.urgent}
+                            aria-label={it.urgent ? "Urgent action" : "Mark urgent"}
+                            title={it.urgent ? "Urgent action" : "Mark urgent"}
+                            onClick={() => void setMaintenanceUrgent(rawId(it.id), !it.urgent)}
+                          >
+                            <AlertTriangle className="h-4 w-4" />
+                          </Button>
+                        )}
+                      </div>
+                    </div>
+                    <div data-touch-row className="mt-3 flex flex-wrap items-center justify-end gap-2.5">
+                      <Button type="button" size="sm" variant="outline" className="text-xs" onClick={() => void replyToItem(it)}>
+                        <MessageSquare className="h-4 w-4 mr-1" /> Reply
+                      </Button>
 
-                     <Button type="button" size="sm" variant="default" className="text-xs" onClick={() => void markDoneItem(it)}>
-                       <Check className="h-4 w-4 mr-1" /> Done
-                     </Button>
-                     <Button type="button" size="sm" variant="ghost" className="touch-danger text-xs text-destructive hover:text-destructive" onClick={() => void deleteItem(it)}>
-                       <Trash2 className="h-4 w-4 mr-1" /> Delete
-                     </Button>
-                   </div>
+                      <Button type="button" size="sm" variant="default" className="text-xs" onClick={() => void markDoneItem(it)}>
+                        <Check className="h-4 w-4 mr-1" /> Done
+                      </Button>
+                      <Button type="button" size="sm" variant="ghost" className="touch-danger text-xs text-destructive hover:text-destructive" onClick={() => void deleteItem(it)}>
+                        <Trash2 className="h-4 w-4 mr-1" /> Delete
+                      </Button>
+                    </div>
                  </div>
                  </SwipeRow>
                  </li>

@@ -322,36 +322,44 @@ export function MaintenanceLogSheet({
           >
             {e.message}
           </p>
-          {e.source === "req" && (
-            <PhotoAttachments
-              kind="maintenance"
-              entryId={e.rawId}
-              paths={e.photoPaths}
-              canEdit={e.canEditPhotos}
-              onChange={(next) => setMaintenancePhotoPaths(e.rawId, next)}
-            />
-          )}
-          <MaintenanceNotes
-            requestId={e.rawId}
-            source={e.source === "req" ? "request" : "message"}
-            notes={e.notes}
-          />
-          {e.source === "req" && setMaintenanceUrgent && !isCompleted && (
-            <Button
-              type="button"
-              size="sm"
-              variant={e.urgent ? "default" : "outline"}
-              className={
-                "mt-2 text-xs " +
-                (e.urgent ? "bg-destructive text-destructive-foreground hover:bg-destructive/90" : "")
-              }
-              onClick={() => void setMaintenanceUrgent(e.rawId, !e.urgent)}
-              aria-pressed={e.urgent}
-            >
-              <AlertTriangle className="mr-1 h-4 w-4" />
-              {e.urgent ? "Urgent action" : "Mark urgent"}
-            </Button>
-          )}
+          <div className="mt-2 flex items-center justify-between gap-2">
+            {e.source === "req" ? (
+              <PhotoAttachments
+                kind="maintenance"
+                entryId={e.rawId}
+                paths={e.photoPaths}
+                canEdit={e.canEditPhotos}
+                onChange={(next) => setMaintenancePhotoPaths(e.rawId, next)}
+              />
+            ) : (
+              <span />
+            )}
+            <div className="flex items-center gap-1.5 shrink-0">
+              <MaintenanceNotes
+                requestId={e.rawId}
+                source={e.source === "req" ? "request" : "message"}
+                notes={e.notes}
+                iconOnly
+              />
+              {e.source === "req" && setMaintenanceUrgent && !isCompleted && (
+                <Button
+                  type="button"
+                  size="icon"
+                  variant={e.urgent ? "default" : "outline"}
+                  className={
+                    "h-9 w-9 " +
+                    (e.urgent ? "bg-destructive text-destructive-foreground hover:bg-destructive/90" : "")
+                  }
+                  onClick={() => void setMaintenanceUrgent(e.rawId, !e.urgent)}
+                  aria-pressed={e.urgent}
+                  aria-label={e.urgent ? "Urgent action" : "Mark urgent"}
+                  title={e.urgent ? "Urgent action" : "Mark urgent"}
+                >
+                  <AlertTriangle className="h-4 w-4" />
+                </Button>
+              )}
+            </div>
+          </div>
         </div>
         {primary ? (
           <Button type="button" size="sm" variant="outline" onClick={primary} aria-label="Mark as done">
