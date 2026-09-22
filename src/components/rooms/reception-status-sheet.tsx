@@ -244,21 +244,23 @@ export function ReceptionStatusSheet({
                        }
 
                      };
-                     const renderRow = (s: { id: string; label: string }) => {
-                        const selected =
-                          occ === s.id ||
-                          (dndActive && s.id === stayId) ||
-                          (dirtyActive && s.id === rosId);
-                       return (
-                         <Row
-                           key={s.id}
-                           label={s.label}
-                           selected={selected}
-                           noClickSound={["dirty", "clean", "arrival"].includes(s.label.toLowerCase())}
-                           onClick={() => handleClick(s)}
-                         />
-                       );
-                     };
+                      const renderRow = (s: { id: string; label: string }) => {
+                         const selected =
+                           occ === s.id ||
+                           (dndActive && s.id === stayId) ||
+                           (dirtyActive && s.id === rosId);
+                        const willSelect = occ !== s.id;
+                        const specialSoundLabel = ["dirty", "clean", "arrival"].includes(s.label.toLowerCase());
+                        return (
+                          <Row
+                            key={s.id}
+                            label={s.label}
+                            selected={selected}
+                            noClickSound={specialSoundLabel && willSelect}
+                            onClick={() => handleClick(s)}
+                          />
+                        );
+                      };
                      const nodes: React.ReactNode[] = [];
                      topLabels.forEach((lbl) => {
                        const s = findStatus(lbl);
