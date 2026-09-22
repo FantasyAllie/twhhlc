@@ -16,12 +16,15 @@ export function MaintenanceNotes({
   notes,
   canEdit = true,
   source = "request",
+  iconOnly = false,
 }: {
   requestId: string;
   notes?: string | null;
   canEdit?: boolean;
   /** Where the item lives: a maintenance request or a maintenance message. */
   source?: "request" | "message";
+  /** Render just the notebook icon, with no text label. */
+  iconOnly?: boolean;
 }) {
   const table = source === "message" ? "room_messages" : "maintenance_requests";
   const queryKey = source === "message" ? "room_messages" : "maintenance_requests";
