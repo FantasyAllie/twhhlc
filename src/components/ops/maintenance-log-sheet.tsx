@@ -1,7 +1,7 @@
 // Maintenance Log sheet (composer + open/completed lists).
 // Extracted verbatim from src/routes/app.tsx.
 import { useEffect, useMemo, useState } from "react";
-import { AlertTriangle, Check, ChevronDown, Loader2, Plus, Settings, Trash2, Wrench, X } from "lucide-react";
+import { AlertTriangle, Check, ChevronDown, Loader2, NotebookPen, Plus, Settings, Trash2, Wrench, X } from "lucide-react";
 import { useQueryClient } from "@tanstack/react-query";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
