@@ -265,10 +265,10 @@ export function MaintenanceDashboard({
         </div>
       )}
 
-      {activeTab === "open" ? (
-        openItems.length === 0 ? (
+      {activeTab !== "completed" ? (
+        activeItems.length === 0 ? (
              <p className="text-sm text-muted-foreground py-8 text-center">
-               No open maintenance items.
+               {activeTab === "urgent" ? "No urgent maintenance items." : "No open maintenance items."}
              </p>
            ) : (
              <ul className="space-y-2" {...pageSwipe}>
@@ -278,11 +278,16 @@ export function MaintenanceDashboard({
                    onPrimary={() => void markDoneItem(it)}
                    onDelete={() => void deleteItem(it)}
                  >
-                 <div className="rounded-lg border bg-background p-3">
+                 <div className={"rounded-lg border bg-background p-3 " + (it.urgent ? "border-destructive/60" : "")}>
                    <div className="flex items-center gap-2 flex-wrap text-xs text-muted-foreground">
                      {it.location && (
                        <span className="inline-flex h-6 items-center rounded-full bg-primary/10 text-primary px-2 font-semibold">
                          {it.location}
+                       </span>
+                     )}
+                     {it.urgent && (
+                       <span className="inline-flex h-6 items-center gap-1 rounded-full bg-destructive/15 px-2 text-[10px] font-bold uppercase tracking-wide text-destructive">
+                         <AlertTriangle className="h-3 w-3" aria-hidden /> Urgent
                        </span>
                      )}
                      {it.origin && (
@@ -290,6 +295,7 @@ export function MaintenanceDashboard({
                          {it.origin === "reception" ? "Reception" : "Housekeeping"}
                        </span>
                      )}
+
                      <span>
                        {new Date(it.createdAt).toLocaleString(undefined, { month: "short", day: "numeric", hour: "numeric", minute: "2-digit" })}
                        {it.sender ? ` · ${it.sender}` : ""}
