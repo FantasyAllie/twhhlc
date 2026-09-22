@@ -1077,7 +1077,13 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
     if (room?.needs_maintenance) await writeRoomMaintenanceFlag(roomNumber, false);
   };
 
+  // Completing a job first offers the person the chance to photograph the work.
   const markMaintenanceDone = async (id: string) => {
+    setDonePhotoTarget(id);
+    setDonePhotos([]);
+  };
+
+  const completeMaintenanceRequest = async (id: string, files: File[]) => {
     const who = authUser?.username ?? (isMaintenance ? "Maintenance" : "Reception");
     const target = (qc.getQueryData<MaintenanceRequest[]>(["maintenance_requests"]) ?? [])
       .find((m) => m.id === id);
@@ -1097,6 +1103,19 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
       qc.invalidateQueries({ queryKey: ["maintenance_requests"] });
       return;
     }
+    if (files.length > 0) {
+      const { uploadEntryPhotos } = await import("@/lib/entry-photos");
+      const { paths, errors } = await uploadEntryPhotos("maintenance", id, files);
+      if (errors.length > 0) toast.error(errors[0]);
+      if (paths.length > 0) {
+        const next = [...(target?.photo_paths ?? []), ...paths];
+        const { error: photoErr } = await supabase
+          .from("maintenance_requests" as never)
+          .update({ photo_paths: next } as never)
+          .eq("id", id);
+        if (photoErr) toast.error(photoErr.message);
+      }
+    }
     qc.invalidateQueries({ queryKey: ["maintenance_requests"] });
     if (getToken())
       void notifyMaintenanceCompleted({
@@ -1108,6 +1127,7 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
       }).catch(() => {});
     if (target?.room_number != null) await clearRoomFlagIfNoOpenRequests(target.room_number);
   };
+
 
   const deleteMaintenanceRequest = async (id: string) => {
     const target = (qc.getQueryData<MaintenanceRequest[]>(["maintenance_requests"]) ?? [])
