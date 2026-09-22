@@ -328,9 +328,26 @@ export function MaintenanceDashboard({
                      }
                    />
                    <div data-touch-row className="mt-3 flex flex-wrap items-center justify-end gap-2.5">
+                     {it.source === "req" && setMaintenanceUrgent && (
+                       <Button
+                         type="button"
+                         size="sm"
+                         variant={it.urgent ? "default" : "outline"}
+                         className={
+                           "mr-auto text-xs " +
+                           (it.urgent ? "bg-destructive text-destructive-foreground hover:bg-destructive/90" : "")
+                         }
+                         aria-pressed={it.urgent}
+                         onClick={() => void setMaintenanceUrgent(rawId(it.id), !it.urgent)}
+                       >
+                         <AlertTriangle className="mr-1 h-4 w-4" />
+                         {it.urgent ? "Urgent action" : "Mark urgent"}
+                       </Button>
+                     )}
                      <Button type="button" size="sm" variant="outline" className="text-xs" onClick={() => void replyToItem(it)}>
                        <MessageSquare className="h-4 w-4 mr-1" /> Reply
                      </Button>
+
                      <Button type="button" size="sm" variant="default" className="text-xs" onClick={() => void markDoneItem(it)}>
                        <Check className="h-4 w-4 mr-1" /> Done
                      </Button>
