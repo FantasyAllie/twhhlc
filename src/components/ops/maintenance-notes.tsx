@@ -57,7 +57,7 @@ export function MaintenanceNotes({
   };
 
   return (
-    <div className="mt-2">
+    <div className={iconOnly ? undefined : "mt-2"}>
       {hasNotes && !open && (
         <div className="mb-2 rounded-lg border bg-muted/40 p-2">
           <p className="text-[10px] font-semibold uppercase tracking-wide text-muted-foreground">
