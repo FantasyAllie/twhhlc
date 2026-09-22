@@ -254,7 +254,7 @@ export function ReceptionStatusSheet({
                            key={s.id}
                            label={s.label}
                            selected={selected}
-                           noClickSound={s.label.toLowerCase() === "dirty"}
+                           noClickSound={["dirty", "clean", "arrival"].includes(s.label.toLowerCase())}
                            onClick={() => handleClick(s)}
                          />
                        );
