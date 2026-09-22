@@ -76,6 +76,7 @@ import { CelebrationBurst } from "@/components/celebration-burst";
 import { areOutcomeAnimationsEnabled } from "@/lib/feedback-prefs";
 import { GloomBurst } from "@/components/gloom-burst";
 import { playFart } from "@/lib/fart-sound";
+import { playSparkle } from "@/lib/sparkle-sound";
 
 import {
   deleteTodayStayoverPhotosForRoom,
@@ -2372,13 +2373,22 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
     if (field === "reception_status_id" && value) {
       const dirtyId =
         receptionStatuses.find((s) => s.label.toLowerCase() === "dirty")?.id ?? null;
+      const cleanId =
+        receptionStatuses.find((s) => s.label.toLowerCase() === "clean")?.id ?? null;
+      const arrivalId =
+        receptionStatuses.find((s) => s.label.toLowerCase() === "arrival")?.id ?? null;
+      const previousStatusId = (qc.getQueryData<Room[]>(["rooms"]) ?? []).find(
+        (r) => r.room_number === roomNumber,
+      )?.reception_status_id;
       if (dirtyId && value === dirtyId) {
         markedDoneHereRef.current = true;
-        const wasDirty =
-          (qc.getQueryData<Room[]>(["rooms"]) ?? []).find(
-            (r) => r.room_number === roomNumber,
-          )?.reception_status_id === dirtyId;
-        if (!wasDirty) playFart();
+        if (previousStatusId !== dirtyId) playFart();
+      }
+      if (
+        (cleanId && value === cleanId) ||
+        (arrivalId && value === arrivalId)
+      ) {
+        if (previousStatusId !== value) playSparkle();
       }
     }
 
