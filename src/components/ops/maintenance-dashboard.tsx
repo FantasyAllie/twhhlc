@@ -209,14 +209,24 @@ export function MaintenanceDashboard({
       >
         {([
           { key: "open", label: `Open (${openItems.length})` },
+          { key: "urgent", label: `Urgent (${urgentItems.length})` },
           { key: "completed", label: `Completed (${doneReqs.length})` },
-        ] as const).map((tab) => (
+        ] as { key: Tab; label: string }[]).map((tab) => (
           <Button
             key={tab.key}
             type="button"
             variant={activeTab === tab.key ? "default" : "ghost"}
             size="sm"
-            className="h-8 flex-1 rounded-full px-2 text-xs sm:px-4 sm:text-sm"
+            className={
+              "h-8 flex-1 rounded-full px-2 text-xs sm:px-4 sm:text-sm " +
+              (tab.key === "urgent"
+                ? activeTab === tab.key
+                  ? "bg-destructive text-destructive-foreground hover:bg-destructive/90"
+                  : urgentItems.length > 0
+                    ? "text-destructive hover:text-destructive"
+                    : ""
+                : "")
+            }
             onClick={() => {
               setActiveTab(tab.key);
               setPage(0);
@@ -225,6 +235,7 @@ export function MaintenanceDashboard({
             {tab.label}
           </Button>
         ))}
+
       </div>
 
       {pageCount > 1 && (
