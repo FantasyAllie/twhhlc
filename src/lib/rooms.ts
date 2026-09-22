@@ -154,8 +154,7 @@ export const computeTileMeta = (args: {
       accent: "var(--room-dirty-accent)",
       label: role === "reception" ? "ROS - Dirty" : "Dirty",
     };
-  const inProgress =
-    flags.hasStatus || hasLinenCount || (role === "housekeeping" && state === "progress");
+  const inProgress = hasLinenCount || (role === "housekeeping" && state === "progress");
   if (inProgress) return { ...roomStateMeta.progress, label: "Cleaning in Progress" };
   if (lateCheckout)
     return { bg: "var(--room-late)", fg: "var(--room-late-fg)", accent: "var(--room-late-accent)", label: "Late Checkout" };
