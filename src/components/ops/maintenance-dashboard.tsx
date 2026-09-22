@@ -209,14 +209,24 @@ export function MaintenanceDashboard({
       >
         {([
           { key: "open", label: `Open (${openItems.length})` },
+          { key: "urgent", label: `Urgent (${urgentItems.length})` },
           { key: "completed", label: `Completed (${doneReqs.length})` },
-        ] as const).map((tab) => (
+        ] as { key: Tab; label: string }[]).map((tab) => (
           <Button
             key={tab.key}
             type="button"
             variant={activeTab === tab.key ? "default" : "ghost"}
             size="sm"
-            className="h-8 flex-1 rounded-full px-2 text-xs sm:px-4 sm:text-sm"
+            className={
+              "h-8 flex-1 rounded-full px-2 text-xs sm:px-4 sm:text-sm " +
+              (tab.key === "urgent"
+                ? activeTab === tab.key
+                  ? "bg-destructive text-destructive-foreground hover:bg-destructive/90"
+                  : urgentItems.length > 0
+                    ? "text-destructive hover:text-destructive"
+                    : ""
+                : "")
+            }
             onClick={() => {
               setActiveTab(tab.key);
               setPage(0);
@@ -225,6 +235,7 @@ export function MaintenanceDashboard({
             {tab.label}
           </Button>
         ))}
+
       </div>
 
       {pageCount > 1 && (
@@ -254,10 +265,10 @@ export function MaintenanceDashboard({
         </div>
       )}
 
-      {activeTab === "open" ? (
-        openItems.length === 0 ? (
+      {activeTab !== "completed" ? (
+        activeItems.length === 0 ? (
              <p className="text-sm text-muted-foreground py-8 text-center">
-               No open maintenance items.
+               {activeTab === "urgent" ? "No urgent maintenance items." : "No open maintenance items."}
              </p>
            ) : (
              <ul className="space-y-2" {...pageSwipe}>
@@ -267,11 +278,16 @@ export function MaintenanceDashboard({
                    onPrimary={() => void markDoneItem(it)}
                    onDelete={() => void deleteItem(it)}
                  >
-                 <div className="rounded-lg border bg-background p-3">
+                 <div className={"rounded-lg border bg-background p-3 " + (it.urgent ? "border-destructive/60" : "")}>
                    <div className="flex items-center gap-2 flex-wrap text-xs text-muted-foreground">
                      {it.location && (
                        <span className="inline-flex h-6 items-center rounded-full bg-primary/10 text-primary px-2 font-semibold">
                          {it.location}
+                       </span>
+                     )}
+                     {it.urgent && (
+                       <span className="inline-flex h-6 items-center gap-1 rounded-full bg-destructive/15 px-2 text-[10px] font-bold uppercase tracking-wide text-destructive">
+                         <AlertTriangle className="h-3 w-3" aria-hidden /> Urgent
                        </span>
                      )}
                      {it.origin && (
@@ -279,6 +295,7 @@ export function MaintenanceDashboard({
                          {it.origin === "reception" ? "Reception" : "Housekeeping"}
                        </span>
                      )}
+
                      <span>
                        {new Date(it.createdAt).toLocaleString(undefined, { month: "short", day: "numeric", hour: "numeric", minute: "2-digit" })}
                        {it.sender ? ` · ${it.sender}` : ""}
@@ -311,9 +328,26 @@ export function MaintenanceDashboard({
                      }
                    />
                    <div data-touch-row className="mt-3 flex flex-wrap items-center justify-end gap-2.5">
+                     {it.source === "req" && setMaintenanceUrgent && (
+                       <Button
+                         type="button"
+                         size="sm"
+                         variant={it.urgent ? "default" : "outline"}
+                         className={
+                           "mr-auto text-xs " +
+                           (it.urgent ? "bg-destructive text-destructive-foreground hover:bg-destructive/90" : "")
+                         }
+                         aria-pressed={it.urgent}
+                         onClick={() => void setMaintenanceUrgent(rawId(it.id), !it.urgent)}
+                       >
+                         <AlertTriangle className="mr-1 h-4 w-4" />
+                         {it.urgent ? "Urgent action" : "Mark urgent"}
+                       </Button>
+                     )}
                      <Button type="button" size="sm" variant="outline" className="text-xs" onClick={() => void replyToItem(it)}>
                        <MessageSquare className="h-4 w-4 mr-1" /> Reply
                      </Button>
+
                      <Button type="button" size="sm" variant="default" className="text-xs" onClick={() => void markDoneItem(it)}>
                        <Check className="h-4 w-4 mr-1" /> Done
                      </Button>
