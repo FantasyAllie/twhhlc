@@ -5491,6 +5491,57 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
     onChangeDogBox={(n, v) => void setRoomDogBox(n, v)}
     onToggleDone={isReception ? undefined : (n) => void toggleHousekeepingDone(n)}
   />
+  <Dialog
+    open={!!donePhotoTarget}
+    onOpenChange={(open) => {
+      if (!open && !donePhotoBusy) {
+        setDonePhotoTarget(null);
+        setDonePhotos([]);
+      }
+    }}
+  >
+    <DialogContent className="max-w-sm">
+      <DialogHeader>
+        <DialogTitle>Mark job as done</DialogTitle>
+        <DialogDescription>
+          Add a photo of the work you've done or fixed. This is optional.
+        </DialogDescription>
+      </DialogHeader>
+      <PhotoComposer value={donePhotos} onChange={setDonePhotos} />
+      <DialogFooter className="gap-2">
+        <Button
+          variant="outline"
+          disabled={donePhotoBusy}
+          onClick={async () => {
+            const id = donePhotoTarget;
+            if (!id) return;
+            setDonePhotoBusy(true);
+            await completeMaintenanceRequest(id, []);
+            setDonePhotoBusy(false);
+            setDonePhotoTarget(null);
+            setDonePhotos([]);
+          }}
+        >
+          No photo
+        </Button>
+        <Button
+          disabled={donePhotoBusy}
+          onClick={async () => {
+            const id = donePhotoTarget;
+            if (!id) return;
+            setDonePhotoBusy(true);
+            await completeMaintenanceRequest(id, donePhotos);
+            setDonePhotoBusy(false);
+            setDonePhotoTarget(null);
+            setDonePhotos([]);
+          }}
+        >
+          {donePhotoBusy ? "Saving…" : donePhotos.length > 0 ? "Save & complete" : "Complete"}
+        </Button>
+      </DialogFooter>
+    </DialogContent>
+  </Dialog>
  </main>
+
  );
 }
