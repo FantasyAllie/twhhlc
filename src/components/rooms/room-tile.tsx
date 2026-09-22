@@ -170,14 +170,6 @@ function ReceptionRoomTileBase({
     >
       {!isStaffRoom && (
         <>
-          {showDoneMark && (
-            <Check
-              aria-hidden="true"
-              strokeWidth={2}
-              className="pointer-events-none absolute inset-0 m-auto h-[80%] w-[80%] opacity-25"
-              style={{ color: meta.accent }}
-            />
-          )}
           <div className="flex flex-col items-start gap-0.5 pr-7 @[120px]:pr-12">
             <span className="text-sm sm:text-base font-bold leading-none inline-flex min-w-0 items-baseline gap-1">
               {n}
@@ -195,11 +187,13 @@ function ReceptionRoomTileBase({
               </span>
             )}
           </div>
-          <span className="text-[9px] sm:text-[10px] md:text-xs font-bold uppercase tracking-tight leading-tight opacity-80 whitespace-pre-line pr-5">
-            {meta.label}
+          <span className="inline-flex min-w-0 items-center gap-1 text-[9px] sm:text-[10px] md:text-xs font-bold uppercase tracking-tight leading-tight opacity-80 pr-5">
+            {showDoneMark && <Check aria-label="Done" strokeWidth={3} className="h-3 w-3 shrink-0" />}
+            <span className="whitespace-pre-line">{meta.label}</span>
           </span>
         </>
       )}
+
       {isStaffRoom && (
         <>
           <span className="text-sm sm:text-base font-bold leading-none">{n}</span>
