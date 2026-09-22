@@ -278,47 +278,45 @@ export function MaintenanceDashboard({
                    onPrimary={() => void markDoneItem(it)}
                    onDelete={() => void deleteItem(it)}
                  >
-                 <div className={"rounded-lg border bg-background p-3 " + (it.urgent ? "border-destructive/60" : "")}>
-                   <div className="flex items-center gap-2 flex-wrap text-xs text-muted-foreground">
-                     {it.location && (
-                       <span className="inline-flex h-6 items-center rounded-full bg-primary/10 text-primary px-2 font-semibold">
-                         {it.location}
-                       </span>
-                     )}
-                     {it.urgent && (
-                       <span className="inline-flex h-6 items-center gap-1 rounded-full bg-destructive/15 px-2 text-[10px] font-bold uppercase tracking-wide text-destructive">
-                         <AlertTriangle className="h-3 w-3" aria-hidden /> Urgent
-                       </span>
-                     )}
-                     {it.origin && (
-                       <span className="inline-flex h-5 items-center rounded-full bg-muted px-2 text-[10px] font-semibold uppercase">
-                         {it.origin === "reception" ? "Reception" : "Housekeeping"}
-                       </span>
-                     )}
+                  <div className={"rounded-lg border bg-background p-3 " + (it.urgent ? "border-destructive/60" : "")}>
+                    <div className="flex items-center gap-2 flex-wrap text-xs text-muted-foreground">
+                      {it.location && (
+                        <span className="inline-flex h-6 items-center rounded-full bg-primary/10 text-primary px-2 font-semibold">
+                          {it.location}
+                        </span>
+                      )}
+                      {it.urgent && (
+                        <span className="inline-flex h-6 items-center gap-1 rounded-full bg-destructive/15 px-2 text-[10px] font-bold uppercase tracking-wide text-destructive">
+                          <AlertTriangle className="h-3 w-3" aria-hidden /> Urgent
+                        </span>
+                      )}
+                      {it.origin && (
+                        <span className="inline-flex h-5 items-center rounded-full bg-muted px-2 text-[10px] font-semibold uppercase">
+                          {it.origin === "reception" ? "Reception" : "Housekeeping"}
+                        </span>
+                      )}
 
-                     <span>
-                       {new Date(it.createdAt).toLocaleString(undefined, { month: "short", day: "numeric", hour: "numeric", minute: "2-digit" })}
-                       {it.sender ? ` · ${it.sender}` : ""}
-                     </span>
-                   </div>
-                   <p className="mt-2 text-sm whitespace-pre-wrap break-words">{it.message}</p>
+                      <span>
+                        {new Date(it.createdAt).toLocaleString(undefined, { month: "short", day: "numeric", hour: "numeric", minute: "2-digit" })}
+                        {it.sender ? ` · ${it.sender}` : ""}
+                      </span>
+                    </div>
+                    <p className="mt-2 text-sm whitespace-pre-wrap break-words">{it.message}</p>
                     <div className="mt-2 flex items-start justify-between gap-2">
-                      <div className="flex-1 min-w-0">
-                        {it.source === "req" && (() => {
-                          const req = openReqs.find((r) => r.id === rawId(it.id));
-                          const paths = req && Array.isArray(req.photo_paths) ? req.photo_paths : [];
-                          if (paths.length === 0) return null;
-                          return (
-                            <PhotoAttachments
-                              kind="maintenance"
-                              entryId={rawId(it.id)}
-                              paths={paths}
-                              canEdit={false}
-                              onChange={() => {}}
-                            />
-                          );
-                        })()}
-                      </div>
+                      {it.source === "req" && (() => {
+                        const req = openReqs.find((r) => r.id === rawId(it.id));
+                        const paths = req && Array.isArray(req.photo_paths) ? req.photo_paths : [];
+                        if (paths.length === 0) return null;
+                        return (
+                          <PhotoAttachments
+                            kind="maintenance"
+                            entryId={rawId(it.id)}
+                            paths={paths}
+                            canEdit={false}
+                            onChange={() => {}}
+                          />
+                        );
+                      })()}
                       <div className="flex items-center gap-1.5 shrink-0">
                         <MaintenanceNotes
                           requestId={rawId(it.id)}
@@ -347,9 +345,20 @@ export function MaintenanceDashboard({
                             <AlertTriangle className="h-4 w-4" />
                           </Button>
                         )}
+                        <Button
+                          type="button"
+                          size="icon"
+                          variant="outline"
+                          className="h-9 w-9 hover:text-destructive hover:border-destructive"
+                          onClick={() => void deleteItem(it)}
+                          aria-label="Delete"
+                          title="Delete"
+                        >
+                          <Trash2 className="h-4 w-4" />
+                        </Button>
                       </div>
                     </div>
-                    <div data-touch-row className="mt-3 flex flex-wrap items-center justify-end gap-2.5">
+                    <div data-touch-row className="mt-2 flex flex-wrap items-center justify-end gap-2.5">
                       <Button type="button" size="sm" variant="outline" className="text-xs" onClick={() => void replyToItem(it)}>
                         <MessageSquare className="h-4 w-4 mr-1" /> Reply
                       </Button>
@@ -357,11 +366,8 @@ export function MaintenanceDashboard({
                       <Button type="button" size="sm" variant="default" className="text-xs" onClick={() => void markDoneItem(it)}>
                         <Check className="h-4 w-4 mr-1" /> Done
                       </Button>
-                      <Button type="button" size="sm" variant="ghost" className="touch-danger text-xs text-destructive hover:text-destructive" onClick={() => void deleteItem(it)}>
-                        <Trash2 className="h-4 w-4 mr-1" /> Delete
-                      </Button>
                     </div>
-                 </div>
+                  </div>
                  </SwipeRow>
                  </li>
                ))}

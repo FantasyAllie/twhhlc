@@ -274,15 +274,14 @@ export function MaintenanceLogSheet({
       : undefined;
     return (
       <SwipeRow key={e.id} onPrimary={primary} onDelete={remove}>
-      <div
-        data-touch-row
-        className={
-          "flex items-start gap-2.5 rounded-lg border p-3 " +
-          (isCompleted ? "bg-muted/40 " : "bg-background ") +
-          (e.urgent && !isCompleted ? "border-destructive/60" : "")
-        }
-      >
-        <div className="flex-1 min-w-0">
+        <div
+          data-touch-row
+          className={
+            "rounded-lg border p-3 " +
+            (isCompleted ? "bg-muted/40 " : "bg-background ") +
+            (e.urgent && !isCompleted ? "border-destructive/60" : "")
+          }
+        >
           <div className="flex items-center gap-2 flex-wrap">
             <span
               className={
@@ -313,6 +312,9 @@ export function MaintenanceLogSheet({
                 </>
               )}
             </span>
+            {!isCompleted && !canDone && (
+              <span className="ml-auto text-xs text-muted-foreground">Awaiting action</span>
+            )}
           </div>
           <p
             className={
@@ -322,7 +324,7 @@ export function MaintenanceLogSheet({
           >
             {e.message}
           </p>
-          <div className="mt-2 flex items-center justify-between gap-2">
+          <div className="mt-2 flex items-start justify-between gap-2">
             {e.source === "req" ? (
               <PhotoAttachments
                 kind="maintenance"
@@ -331,9 +333,7 @@ export function MaintenanceLogSheet({
                 canEdit={e.canEditPhotos}
                 onChange={(next) => setMaintenancePhotoPaths(e.rawId, next)}
               />
-            ) : (
-              <span />
-            )}
+            ) : null}
             <div className="flex items-center gap-1.5 shrink-0">
               <MaintenanceNotes
                 requestId={e.rawId}
@@ -358,30 +358,29 @@ export function MaintenanceLogSheet({
                   <AlertTriangle className="h-4 w-4" />
                 </Button>
               )}
+              {remove && (
+                <Button
+                  type="button"
+                  size="icon"
+                  variant="outline"
+                  className="h-9 w-9 hover:text-destructive hover:border-destructive"
+                  onClick={remove}
+                  aria-label="Delete request"
+                  title="Delete request"
+                >
+                  <Trash2 className="h-4 w-4" />
+                </Button>
+              )}
             </div>
           </div>
+          {primary && (
+            <div className="mt-2 flex justify-end">
+              <Button type="button" size="sm" variant="outline" onClick={primary} aria-label="Mark as done">
+                <Check className="h-4 w-4 mr-1" /> Done
+              </Button>
+            </div>
+          )}
         </div>
-        {primary ? (
-          <Button type="button" size="sm" variant="outline" onClick={primary} aria-label="Mark as done">
-            <Check className="h-4 w-4 mr-1" /> Done
-          </Button>
-        ) : !isCompleted ? (
-          <span className="text-xs text-muted-foreground shrink-0 pt-1">Awaiting action</span>
-        ) : null}
-
-        {remove && (
-          <Button
-            type="button"
-            size="icon"
-            variant="ghost"
-            className="touch-danger text-muted-foreground hover:text-destructive"
-            onClick={remove}
-            aria-label="Delete request"
-          >
-            <Trash2 className="h-4 w-4" />
-          </Button>
-        )}
-      </div>
       </SwipeRow>
     );
   };
