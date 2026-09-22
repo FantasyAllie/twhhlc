@@ -1,7 +1,7 @@
 // Uploaded fart sound played when a room is marked Dirty.
 // Respects the button-sound setting.
 import { areButtonSoundsEnabled } from "./feedback-prefs";
-import fartAsset from "@/assets/fart.mp3.asset.json";
+import fartAsset from "@/assets/fart.m4a.asset.json";
 
 let audio: HTMLAudioElement | null = null;
 let lastAt = 0;
