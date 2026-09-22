@@ -324,7 +324,7 @@ export function MaintenanceLogSheet({
           >
             {e.message}
           </p>
-          <div className="mt-2 flex items-start justify-between gap-2">
+          <div className="mt-2 flex items-end justify-between gap-2">
             {e.source === "req" ? (
               <PhotoAttachments
                 kind="maintenance"
