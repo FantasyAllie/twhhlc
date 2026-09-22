@@ -69,14 +69,16 @@ export function MaintenanceNotes({
       {!open ? (
         <Button
           type="button"
-          size="sm"
+          size={iconOnly ? "icon" : "sm"}
           variant="outline"
-          className="h-8 text-xs"
+          className={iconOnly ? "h-9 w-9" : "h-8 text-xs"}
           onClick={() => setOpen(true)}
           aria-expanded={false}
+          aria-label={hasNotes ? (canEdit ? "Edit notes" : "Notes") : "Notes"}
+          title={hasNotes ? (canEdit ? "Edit notes" : "Notes") : "Notes"}
         >
-          <NotebookPen className="mr-1 h-3.5 w-3.5" />
-          {hasNotes ? (canEdit ? "Edit notes" : "Notes") : "Notes"}
+          <NotebookPen className={iconOnly ? "h-4 w-4" : "mr-1 h-3.5 w-3.5"} />
+          {!iconOnly && (hasNotes ? (canEdit ? "Edit notes" : "Notes") : "Notes")}
         </Button>
       ) : (
         <div className="flex flex-col gap-2 rounded-lg border bg-background p-3">
