@@ -87,6 +87,7 @@ export function installGlobalRipple() {
     if (!host) return;
     if (host.hasAttribute("disabled") || host.getAttribute("aria-disabled") === "true") return;
     if (host.closest("[data-no-ripple]")) return;
+    if (host.closest("[data-no-click-sound]")) return;
     playClick();
   };
   document.addEventListener("pointerdown", onPointerDown, true);

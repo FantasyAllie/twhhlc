@@ -89,16 +89,18 @@ export function ReceptionStatusSheet({
          return true;
        });
        const currentBed = room?.reception_bed_id ?? null;
-       const Row = ({
+      const Row = ({
          label,
          selected,
          disabled,
+         noClickSound,
          onClick,
-       }: { label: React.ReactNode; selected: boolean; disabled?: boolean; onClick: () => void }) => (
+       }: { label: React.ReactNode; selected: boolean; disabled?: boolean; noClickSound?: boolean; onClick: () => void }) => (
          <button
            type="button"
            disabled={disabled}
            onClick={onClick}
+           data-no-click-sound={noClickSound ? "true" : undefined}
            className={cn(
             "w-full flex items-center justify-center text-center gap-3 rounded-xl border bg-background shadow-sm px-4 min-h-12 text-sm font-medium transition-colors hover:bg-accent disabled:opacity-60 disabled:cursor-not-allowed",
              selected && "border-primary bg-primary/10 text-primary",
@@ -252,6 +254,7 @@ export function ReceptionStatusSheet({
                            key={s.id}
                            label={s.label}
                            selected={selected}
+                           noClickSound={s.label.toLowerCase() === "dirty"}
                            onClick={() => handleClick(s)}
                          />
                        );
