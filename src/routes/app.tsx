@@ -290,6 +290,8 @@ function AppPage() {
     ) {
       Notification.requestPermission().catch(() => {});
     }
+    let disposed = false;
+    let retryTimer: number | null = null;
     const channel = supabase
       .channel("rooms-realtime")
       .on(
@@ -379,16 +381,25 @@ function AppPage() {
         },
       )
       .subscribe((status) => {
+        // Ignore status events from a channel we tore down ourselves —
+        // removeChannel() emits CLOSED, which previously re-triggered a
+        // rebuild + full refetch in an endless loop.
+        if (disposed) return;
         // iOS/Android suspend sockets in the background; when the socket dies
         // we rebuild the channel instead of silently going stale.
         if (status === "CHANNEL_ERROR" || status === "TIMED_OUT" || status === "CLOSED") {
-          window.setTimeout(() => setRealtimeEpoch((n) => n + 1), 2000);
+          if (retryTimer === null) {
+            retryTimer = window.setTimeout(() => setRealtimeEpoch((n) => n + 1), 5000);
+          }
         }
-        if (status === "SUBSCRIBED") {
+        if (status === "SUBSCRIBED" && realtimeEpoch > 0) {
+          // Only catch up after a reconnect, not on first connect.
           qc.invalidateQueries({ type: "active" });
         }
       });
     return () => {
+      disposed = true;
+      if (retryTimer !== null) window.clearTimeout(retryTimer);
       supabase.removeChannel(channel);
     };
   }, [authUser, qc, viewAsRole, realtimeEpoch]);
@@ -409,7 +420,7 @@ function AppPage() {
     window.addEventListener("focus", resync);
     window.addEventListener("online", onVisible);
     window.addEventListener("pageshow", onVisible);
-    const poll = window.setInterval(resync, 20_000);
+    const poll = window.setInterval(resync, 120_000);
     return () => {
       document.removeEventListener("visibilitychange", onVisible);
       window.removeEventListener("focus", resync);
