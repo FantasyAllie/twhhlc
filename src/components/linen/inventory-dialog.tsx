@@ -165,7 +165,6 @@ export function InventoryDialog({
   const [cupboard, setCupboard] = React.useState<string>(CUPBOARDS[0].key);
 
   const location = section === "delivery" ? "" : section === "room" ? room : cupboard;
-  const total = template.reduce((s, t) => s + getCount(section, location, t.id), 0);
   const locationLabel =
     section === "delivery"
       ? "delivery"
