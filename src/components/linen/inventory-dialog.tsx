@@ -350,7 +350,7 @@ export function InventoryDialog({
             </div>
           </div>
         )}
-        <div className="shrink-0 flex items-center justify-between gap-2 border rounded-xl bg-background/60 px-3 py-2 text-sm">
+        <div className="shrink-0 mt-[5px] flex items-center justify-between gap-2 border rounded-xl bg-background/60 px-3 py-2 text-sm">
           <span className="text-muted-foreground">
             {section === "delivery" ? "Delivery" : section === "rejects" ? "Rejects" : section === "room" ? "Bedrooms" : "Cupboards"} total:{" "}
             <span className="font-semibold text-foreground tabular-nums">{sectionTotal}</span>
