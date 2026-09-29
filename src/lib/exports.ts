@@ -572,3 +572,47 @@ export const printMaintenanceJobs = (
     </body></html>`);
   win.document.close();
 };
+
+// Inventory export: one printout with a table per section (and per cupboard).
+export type InventoryPrintSection = {
+  title: string;
+  groups: { heading?: string; rows: SnapshotRow[] }[];
+};
+export const printInventory = (hotelName: string, sections: InventoryPrintSection[], when: Date) => {
+  const win = window.open("", "_blank");
+  if (!win) {
+    toast.error("Pop-up blocked");
+    return;
+  }
+  const table = (rows: SnapshotRow[]) => {
+    const total = rows.reduce((s, r) => s + r.count, 0);
+    return `<table><thead><tr><th>Item</th><th class="num">Count</th></tr></thead><tbody>${rows
+      .map((r) => `<tr><td>${esc(r.name)}</td><td class="num">${r.count}</td></tr>`)
+      .join("")}</tbody><tfoot><tr><td>Total</td><td class="num">${total}</td></tr></tfoot></table>`;
+  };
+  const body = sections
+    .map(
+      (s) =>
+        `<h2>${esc(s.title)}</h2>` +
+        s.groups.map((g) => (g.heading ? `<h3>${esc(g.heading)}</h3>` : "") + table(g.rows)).join(""),
+    )
+    .join("");
+  win.document.write(`<!doctype html><html><head><title>${esc(hotelName)} Inventory - ${longDate(when)}</title><style>
+      body{font-family:system-ui,-apple-system,sans-serif;color:#000;background:#fff;padding:2rem;max-width:640px;margin:0 auto;}
+      h1{font-size:1.5rem;margin:0 0 .25rem;}
+      h2{font-size:1.2rem;margin:2rem 0 .5rem;}
+      h3{font-size:1rem;margin:1.25rem 0 .25rem;color:#333;}
+      .date{color:#444;margin:0 0 1rem;font-size:.95rem;}
+      table{width:100%;border-collapse:collapse;font-size:1rem;}
+      th,td{text-align:left;padding:.4rem .75rem;border-bottom:1px solid #ccc;}
+      th.num,td.num{text-align:right;font-variant-numeric:tabular-nums;}
+      tfoot td{font-weight:600;border-top:2px solid #000;border-bottom:none;}
+      @media print{body{padding:0;}h2{break-after:avoid;}}
+    </style></head><body>
+      <h1>${esc(hotelName)} Inventory</h1>
+      <p class="date">${longDate(when)}</p>
+      ${body}
+      <script>window.onload=()=>{window.print();}</script>
+    </body></html>`);
+  win.document.close();
+};

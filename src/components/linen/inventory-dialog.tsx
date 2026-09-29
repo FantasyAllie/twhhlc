@@ -145,7 +145,7 @@ export function InventoryDialog({
   getCount,
   setCount,
   onResetSection,
-  onExportDelivery,
+  onExport,
   isRoomDefault,
 }: {
   open: boolean;
@@ -156,7 +156,7 @@ export function InventoryDialog({
   getCount: (section: InventorySection, location: string, itemId: string) => number;
   setCount: (section: InventorySection, location: string, itemId: string, value: number) => void;
   onResetSection: (section: InventorySection, location: string) => void;
-  onExportDelivery: () => void;
+  onExport: () => void;
   isRoomDefault: (itemId: string, room: number) => boolean;
 }) {
   const [section, setSection] = React.useState<InventorySection>("delivery");
@@ -355,15 +355,15 @@ export function InventoryDialog({
                 >
                   Reset
                 </Button>
-                {section === "delivery" && (
-                  <Button variant="outline" size="sm" onClick={onExportDelivery}>
-                    Export
-                  </Button>
-                )}
               </div>
             </div>
           </div>
         )}
+        <div className="shrink-0 flex justify-end">
+          <Button variant="outline" onClick={onExport}>
+            Export
+          </Button>
+        </div>
       </DialogContent>
     </Dialog>
   );
