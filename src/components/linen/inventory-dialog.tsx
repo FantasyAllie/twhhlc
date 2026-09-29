@@ -74,11 +74,34 @@ function CountRow({
     if (next !== count) setCount(next);
   };
   return (
-    <li className="rounded-xl border p-2 space-y-2" style={rowStyle(item, theme)}>
-      <div className="flex items-center gap-2">
+    <li className="rounded-xl border p-2" style={rowStyle(item, theme)}>
+      <div className="flex items-center gap-1.5">
         <span className="flex-1 min-w-0 break-words font-medium" style={textStyle(item, theme)}>
           {item.name}
         </span>
+        <Input
+          type="number"
+          inputMode="numeric"
+          value={add}
+          placeholder="0"
+          onChange={(e) => setAdd(e.target.value)}
+          onKeyDown={(e) => {
+            if (e.key === "Enter") {
+              e.preventDefault();
+              applyAdd();
+            }
+          }}
+          className="h-10 sm:h-9 w-12 shrink-0 px-1 text-center tabular-nums bg-background"
+          aria-label={`Amount to add to ${item.name}`}
+        />
+        <Button
+          variant="secondary"
+          className="h-10 sm:h-9 shrink-0 px-2"
+          onClick={applyAdd}
+          disabled={!canAdd}
+        >
+          Add
+        </Button>
         <Button
           variant="outline"
           size="icon"
@@ -114,31 +137,6 @@ function CountRow({
           aria-label={`Add one ${item.name}`}
         >
           <Plus className="h-4 w-4" />
-        </Button>
-      </div>
-      <div className="flex items-center gap-2 justify-end">
-        <Input
-          type="number"
-          inputMode="numeric"
-          value={add}
-          placeholder="Amount"
-          onChange={(e) => setAdd(e.target.value)}
-          onKeyDown={(e) => {
-            if (e.key === "Enter") {
-              e.preventDefault();
-              applyAdd();
-            }
-          }}
-          className="h-10 sm:h-9 w-24 text-center tabular-nums bg-background"
-          aria-label={`Amount to add to ${item.name}`}
-        />
-        <Button
-          variant="secondary"
-          className="h-10 sm:h-9 shrink-0"
-          onClick={applyAdd}
-          disabled={!canAdd}
-        >
-          Add to total
         </Button>
       </div>
     </li>
