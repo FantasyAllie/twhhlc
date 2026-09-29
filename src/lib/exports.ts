@@ -392,7 +392,7 @@ export const printTotals = (
   rows: SnapshotRow[],
   grand: number,
   when: Date,
-  kind: "totals" | "rejects" | "fnb_totals" | "delivery" = "totals",
+  kind: "totals" | "rejects" | "fnb_totals" | "delivery" | "inventory_rooms" | "inventory_cupboards" = "totals",
   subheading?: string,
   footer?: string,
 ) => {
@@ -402,6 +402,10 @@ export const printTotals = (
       ? `${hotelName} Linen Rejects`
       : kind === "delivery"
         ? `${hotelName} Linen Delivery`
+        : kind === "inventory_rooms"
+          ? `${hotelName} Room Inventory`
+          : kind === "inventory_cupboards"
+            ? `${hotelName} Floor Inventory`
         : kind === "fnb_totals"
           ? `${hotelName} F&B Linen`
           : `${hotelName} Linen`;

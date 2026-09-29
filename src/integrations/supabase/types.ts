@@ -189,6 +189,51 @@ export type Database = {
         }
         Relationships: []
       }
+      inventory_counts: {
+        Row: {
+          count: number
+          hotel_id: string
+          id: string
+          location: string
+          section: string
+          template_item_id: string
+          updated_at: string
+        }
+        Insert: {
+          count?: number
+          hotel_id?: string
+          id?: string
+          location: string
+          section: string
+          template_item_id: string
+          updated_at?: string
+        }
+        Update: {
+          count?: number
+          hotel_id?: string
+          id?: string
+          location?: string
+          section?: string
+          template_item_id?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "inventory_counts_hotel_id_fkey"
+            columns: ["hotel_id"]
+            isOneToOne: false
+            referencedRelation: "hotels"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "inventory_counts_template_item_id_fkey"
+            columns: ["template_item_id"]
+            isOneToOne: false
+            referencedRelation: "template_items"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       lost_property: {
         Row: {
           created_at: string

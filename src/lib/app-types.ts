@@ -105,7 +105,9 @@ export type ExportSnapshotKind =
   | "room_status"
   | "maintenance"
   | "fnb_totals"
-  | "totals_range";
+  | "totals_range"
+  | "inventory_rooms"
+  | "inventory_cupboards";
 
 export type ExportSnapshot = {
   id: string;

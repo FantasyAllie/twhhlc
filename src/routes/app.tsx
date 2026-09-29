@@ -13,6 +13,8 @@ import {
 import {
   useFnbCountsQuery,
   useDeliveryCountsQuery,
+  useInventoryCountsQuery,
+  type InventoryCount,
   useRejectCountsQuery,
   useRoomCountsQuery,
   useRoomExtrasQuery,
@@ -30,11 +32,11 @@ import {
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { InventoryDialog, CUPBOARDS, type InventorySection } from "@/components/linen/inventory-dialog";
 import { Minus, Plus, X, Menu, ArrowUp, ArrowDown, Pencil, Check, Trash2, Sun, SunDim, Moon, MoonStar, List, Bed, House, Ban, History, Users, User, LogOut, Hash, ConciergeBell, ClipboardList, Printer, Filter, Wrench, DoorOpen, Footprints, Bell, Eye, EyeOff, HelpCircle, AlertCircle, MessageSquare, PackageSearch, RotateCcw, ChevronDown, Camera, LayoutGrid, Truck, Clock, Dog, Undo2, Inbox } from "lucide-react";
 import {
   AccountDialog,
   AddConfigDialogs,
-  DeliveryDialog,
   EditRoomDefaultsSheet,
   EditRoomSheet,
   ExportPreviewDialogs,
@@ -368,6 +370,13 @@ function AppPage() {
       )
       .on(
         "postgres_changes",
+        { event: "*", schema: "public", table: "inventory_counts" },
+        () => {
+          qc.invalidateQueries({ queryKey: ["inventory_counts"] });
+        },
+      )
+      .on(
+        "postgres_changes",
         { event: "*", schema: "public", table: "room_item_counts" },
         () => {
           qc.invalidateQueries({ queryKey: ["room_counts"] });
@@ -619,6 +628,8 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
   const [linenPrintOpen, setLinenPrintOpen] = useState(false);
   const [rejectsPrintOpen, setRejectsPrintOpen] = useState(false);
   const [deliveryPrintOpen, setDeliveryPrintOpen] = useState(false);
+  const [invRoomsPrintOpen, setInvRoomsPrintOpen] = useState(false);
+  const [invCupboardsPrintOpen, setInvCupboardsPrintOpen] = useState(false);
   const [fnbPrintOpen, setFnbPrintOpen] = useState(false);
   const [maintenancePrintOpen, setMaintenancePrintOpen] = useState(false);
   const [maintenanceAreasOpen, setMaintenanceAreasOpen] = useState(false);
@@ -675,6 +686,7 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
   const snapshotsQ = useExportSnapshotsQuery();
   const rejectsQ = useRejectCountsQuery();
   const deliveryQ = useDeliveryCountsQuery();
+  const inventoryQ = useInventoryCountsQuery();
   const messagesQ = useRoomMessagesQuery();
   const maintenanceRequestsQ = useMaintenanceRequestsQuery();
   const maintenanceAreasQ = useMaintenanceAreasQuery();
@@ -1224,8 +1236,80 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
     }
   };
 
-  const resetDeliveryCounts = async () => {
-    if (!confirm("Reset all delivery counts?")) return;
+  // --- Inventory (bedrooms + floor cupboards) ------------------------------
+  // Stock counts persist until changed; they are not cleared by Reset all.
+  const inventoryCounts = inventoryQ.data ?? [];
+  const getInventoryCount = (section: InventorySection, location: string, itemId: string) => {
+    if (section === "delivery") return getDeliveryCount(itemId);
+    return (
+      inventoryCounts.find(
+        (r) => r.section === section && r.location === location && r.template_item_id === itemId,
+      )?.count ?? 0
+    );
+  };
+  const setInventoryCount = async (
+    section: InventorySection,
+    location: string,
+    itemId: string,
+    value: number,
+  ) => {
+    if (section === "delivery") return setDeliveryCount(itemId, value);
+    const next = Math.max(0, Math.floor(Number.isFinite(value) ? value : 0));
+    qc.setQueryData<InventoryCount[]>(["inventory_counts"], (old) => {
+      const list = old ? [...old] : [];
+      const idx = list.findIndex(
+        (r) => r.section === section && r.location === location && r.template_item_id === itemId,
+      );
+      if (idx >= 0) list[idx] = { ...list[idx], count: next };
+      else list.push({ id: `temp-${section}-${location}-${itemId}`, section, location, template_item_id: itemId, count: next });
+      return list;
+    });
+    const hotelId = currentHotelQ.data?.id;
+    const { error } = await supabase.from("inventory_counts").upsert(
+      {
+        ...(hotelId ? { hotel_id: hotelId } : {}),
+        section,
+        location,
+        template_item_id: itemId,
+        count: next,
+        updated_at: new Date().toISOString(),
+      },
+      { onConflict: "hotel_id,section,location,template_item_id" },
+    );
+    if (error) {
+      toast.error(error.message);
+      qc.invalidateQueries({ queryKey: ["inventory_counts"] });
+    }
+  };
+  const resetInventorySection = async (section: InventorySection, location: string) => {
+    if (section === "delivery") return resetDeliveryCounts(true);
+    qc.setQueryData<InventoryCount[]>(["inventory_counts"], (old) =>
+      (old ?? []).filter((r) => !(r.section === section && r.location === location)),
+    );
+    const { error } = await supabase
+      .from("inventory_counts")
+      .delete()
+      .eq("section", section)
+      .eq("location", location);
+    if (error) toast.error(error.message);
+    qc.invalidateQueries({ queryKey: ["inventory_counts"] });
+  };
+  const computeInventoryTotals = (section: "room" | "cupboard") => {
+    const nameOf = new Map(template.map((t) => [t.id, t.name]));
+    const locLabel = (loc: string) =>
+      section === "room" ? `Room ${loc}` : (CUPBOARDS.find((c) => c.key === loc)?.label ?? loc);
+    const order = section === "room"
+      ? (loc: string) => Number(loc)
+      : (loc: string) => CUPBOARDS.findIndex((c) => c.key === loc);
+    const rows = inventoryCounts
+      .filter((r) => r.section === section && r.count > 0 && nameOf.has(r.template_item_id))
+      .sort((a, b) => order(a.location) - order(b.location) || (nameOf.get(a.template_item_id) ?? "").localeCompare(nameOf.get(b.template_item_id) ?? ""))
+      .map((r) => ({ name: `${locLabel(r.location)} — ${nameOf.get(r.template_item_id)}`, count: r.count }));
+    return { rows, grand: rows.reduce((s, r) => s + r.count, 0) };
+  };
+
+  const resetDeliveryCounts = async (skipConfirm = false) => {
+    if (!skipConfirm && !confirm("Reset all delivery counts?")) return;
     qc.setQueryData<DeliveryCount[]>(["delivery_counts"], []);
     const { error } = await supabase
       .from("delivery_counts" as never)
@@ -2023,7 +2107,7 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
     rows: SnapshotRow[],
     grand: number,
     when: Date,
-    kind: "totals" | "rejects" | "fnb_totals" | "delivery" = "totals",
+    kind: "totals" | "rejects" | "fnb_totals" | "delivery" | "inventory_rooms" | "inventory_cupboards" = "totals",
     subheading?: string,
     footer?: string,
   ) => Exp.printTotals(hotelName, rows, grand, when, kind, subheading, footer);
@@ -2181,7 +2265,7 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
   // per-kind manual exports remain available in Settings → Actions → Export.
   const runEndOfShiftBackup = async (opts?: { silent?: boolean }) => {
     const silent = opts?.silent === true;
-    type Kind = "totals" | "fnb_totals" | "room_status" | "maintenance" | "delivery";
+    type Kind = "totals" | "fnb_totals" | "room_status" | "maintenance" | "delivery" | "inventory_rooms" | "inventory_cupboards";
     const jobs: Array<{ kind: Kind; rows: unknown[]; grand: number }> = [];
     const t = computeTotals();
     if (t.rows.length) jobs.push({ kind: "totals", rows: t.rows, grand: t.grand });
@@ -2189,6 +2273,10 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
     if (f.rows.length) jobs.push({ kind: "fnb_totals", rows: f.rows, grand: f.grand });
     const d = computeDeliveryTotals();
     if (d.rows.length) jobs.push({ kind: "delivery", rows: d.rows, grand: d.grand });
+    const ir = computeInventoryTotals("room");
+    if (ir.rows.length) jobs.push({ kind: "inventory_rooms", rows: ir.rows, grand: ir.grand });
+    const ic = computeInventoryTotals("cupboard");
+    if (ic.rows.length) jobs.push({ kind: "inventory_cupboards", rows: ic.rows, grand: ic.grand });
     const rs = computeRoomStatus();
     if (rs.rows.length) jobs.push({ kind: "room_status", rows: rs.rows, grand: rs.grand });
     const m = computeMaintenance();
@@ -3570,9 +3658,10 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
       manage.push({
         key: "delivery",
         icon: Truck,
-        label: "Delivery",
+        label: "Inventory",
         onClick: () => {
           qc.invalidateQueries({ queryKey: ["delivery_counts"] });
+          qc.invalidateQueries({ queryKey: ["inventory_counts"] });
           setDeliveryOpen(true);
         },
       });
@@ -3921,6 +4010,28 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
           className="justify-start h-12"
           onClick={() => {
             setEndShiftPrintOpen(false);
+            setInvRoomsPrintOpen(true);
+          }}
+        >
+          <Bed className="h-4 w-4 mr-2" />
+          Room inventory
+        </Button>
+        <Button
+          variant="outline"
+          className="justify-start h-12"
+          onClick={() => {
+            setEndShiftPrintOpen(false);
+            setInvCupboardsPrintOpen(true);
+          }}
+        >
+          <LayoutGrid className="h-4 w-4 mr-2" />
+          Floor inventory
+        </Button>
+        <Button
+          variant="outline"
+          className="justify-start h-12"
+          onClick={() => {
+            setEndShiftPrintOpen(false);
             setFnbPrintOpen(true);
           }}
         >
@@ -3986,6 +4097,36 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
     }
     onBack={() => {
       setRejectsPrintOpen(false);
+      setEndShiftPrintOpen(true);
+    }}
+  />
+  <SnapshotPrintDialog
+    open={invRoomsPrintOpen}
+    onOpenChange={setInvRoomsPrintOpen}
+    snapshots={snapshots}
+    kind="inventory_rooms"
+    title="Room inventory"
+    liveRows={computeInventoryTotals("room").rows}
+    printTotals={(rows, grand, when, footer) =>
+      printTotals(rows, grand, when, "inventory_rooms", undefined, footer)
+    }
+    onBack={() => {
+      setInvRoomsPrintOpen(false);
+      setEndShiftPrintOpen(true);
+    }}
+  />
+  <SnapshotPrintDialog
+    open={invCupboardsPrintOpen}
+    onOpenChange={setInvCupboardsPrintOpen}
+    snapshots={snapshots}
+    kind="inventory_cupboards"
+    title="Floor inventory"
+    liveRows={computeInventoryTotals("cupboard").rows}
+    printTotals={(rows, grand, when, footer) =>
+      printTotals(rows, grand, when, "inventory_cupboards", undefined, footer)
+    }
+    onBack={() => {
+      setInvCupboardsPrintOpen(false);
       setEndShiftPrintOpen(true);
     }}
   />
@@ -4599,19 +4740,22 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
   />
 
   {/* Delivery counter dialog — number entry for large delivery batches. */}
-  <DeliveryDialog
+  <InventoryDialog
     open={deliveryOpen}
     onOpenChange={(o) => {
       setDeliveryOpen(o);
-      if (o) qc.invalidateQueries({ queryKey: ["delivery_counts"] });
+      if (o) {
+        qc.invalidateQueries({ queryKey: ["delivery_counts"] });
+        qc.invalidateQueries({ queryKey: ["inventory_counts"] });
+      }
     }}
     template={template}
     theme={theme}
-    total={deliveryCounts.reduce((s, r) => s + r.count, 0)}
-    getDeliveryCount={getDeliveryCount}
-    setDeliveryCount={setDeliveryCount}
-    onResetAll={resetDeliveryCounts}
-    onExport={() => void openDeliveryExport()}
+    roomNumbers={[...rooms].map((r) => r.room_number).sort((x, y) => x - y)}
+    getCount={getInventoryCount}
+    setCount={(sec, loc, id, v) => void setInventoryCount(sec, loc, id, v)}
+    onResetSection={(sec, loc) => void resetInventorySection(sec, loc)}
+    onExportDelivery={() => void openDeliveryExport()}
   />
 
   {/* Manage Rooms dialogs (Admin) */}

@@ -8,6 +8,13 @@
       "when": 1790015954059,
       "tag": "0000_add_urgent_to_maintenance_requests",
       "breakpoints": true
+    },
+    {
+      "idx": 1,
+      "version": "7",
+      "when": 1790691685153,
+      "tag": "0001_create_inventory_counts",
+      "breakpoints": true
     }
   ]
 }
