@@ -1308,6 +1308,33 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
     return { rows, grand: rows.reduce((s, r) => s + r.count, 0) };
   };
 
+  const exportInventory = () => {
+    const nameOf = new Map(template.map((t) => [t.id, t.name]));
+    const sumBy = (list: { template_item_id: string; count: number }[]) => {
+      const m = new Map<string, number>();
+      for (const r of list) {
+        if (r.count > 0 && nameOf.has(r.template_item_id))
+          m.set(r.template_item_id, (m.get(r.template_item_id) ?? 0) + r.count);
+      }
+      return template.filter((t) => m.has(t.id)).map((t) => ({ name: t.name, count: m.get(t.id)! }));
+    };
+    const sections: Exp.InventoryPrintSection[] = [];
+    const del = sumBy(deliveryCounts);
+    if (del.length) sections.push({ title: "Delivery", groups: [{ rows: del }] });
+    const beds = sumBy(inventoryCounts.filter((r) => r.section === "room"));
+    if (beds.length) sections.push({ title: "Bedrooms", groups: [{ rows: beds }] });
+    const cupGroups = CUPBOARDS.map((c) => ({
+      heading: c.label,
+      rows: sumBy(inventoryCounts.filter((r) => r.section === "cupboard" && r.location === c.key)),
+    })).filter((g) => g.rows.length);
+    if (cupGroups.length) sections.push({ title: "Cupboards", groups: cupGroups });
+    if (!sections.length) {
+      toast.error("Nothing counted yet");
+      return;
+    }
+    Exp.printInventory(hotelName, sections, new Date());
+  };
+
   const resetDeliveryCounts = async (skipConfirm = false) => {
     if (!skipConfirm && !confirm("Reset all delivery counts?")) return;
     qc.setQueryData<DeliveryCount[]>(["delivery_counts"], []);
@@ -4755,7 +4782,7 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
     getCount={getInventoryCount}
     setCount={(sec, loc, id, v) => void setInventoryCount(sec, loc, id, v)}
     onResetSection={(sec, loc) => void resetInventorySection(sec, loc)}
-    onExportDelivery={() => void openDeliveryExport()}
+    onExport={exportInventory}
     isRoomDefault={(id, rn) => isPreferred(id, rn) || isAssigned(id, rn)}
   />
 
