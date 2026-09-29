@@ -12,13 +12,6 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
 import { COLOR_SWATCHES } from "@/lib/app-format";
 import type { TemplateItem } from "@/lib/app-types";
 
@@ -167,9 +160,6 @@ export function InventoryDialog({
   const [section, setSection] = React.useState<InventorySection>("delivery");
   const [room, setRoom] = React.useState<string>("");
   const [cupboard, setCupboard] = React.useState<string>(CUPBOARDS[0].key);
-  React.useEffect(() => {
-    if (!room && roomNumbers.length) setRoom(String(roomNumbers[0]));
-  }, [room, roomNumbers]);
 
   const location = section === "delivery" ? "" : section === "room" ? room : cupboard;
   const total = template.reduce((s, t) => s + getCount(section, location, t.id), 0);
@@ -217,20 +207,6 @@ export function InventoryDialog({
           })}
         </div>
 
-        {section === "room" && (
-          <Select value={room} onValueChange={setRoom}>
-            <SelectTrigger className="shrink-0" aria-label="Room">
-              <SelectValue placeholder="Choose a room" />
-            </SelectTrigger>
-            <SelectContent>
-              {roomNumbers.map((n) => (
-                <SelectItem key={n} value={String(n)}>
-                  Room {n}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-        )}
         {section === "cupboard" && (
           <div className="flex flex-wrap gap-1.5 shrink-0">
             {CUPBOARDS.map((c) => (
@@ -255,8 +231,73 @@ export function InventoryDialog({
           <p className="text-sm text-muted-foreground py-4">
             No linen items yet. Add some from the Linen List.
           </p>
-        ) : section === "room" && !room ? (
-          <p className="text-sm text-muted-foreground py-4">No rooms set up yet.</p>
+        ) : section === "room" ? (
+          roomNumbers.length === 0 ? (
+            <p className="text-sm text-muted-foreground py-4">No rooms set up yet.</p>
+          ) : (
+            <div className="flex-1 min-h-0 overflow-y-auto">
+              <div className="grid grid-cols-3 gap-2">
+                {roomNumbers.flatMap((n, i) => {
+                  const key = String(n);
+                  const active = room === key;
+                  const roomTotal = template.reduce((s, t) => s + getCount("room", key, t.id), 0);
+                  const out: React.ReactNode[] = [
+                    <button
+                      key={n}
+                      type="button"
+                      onClick={() => setRoom(active ? "" : key)}
+                      aria-expanded={active}
+                      className={
+                        "h-14 rounded-xl border flex flex-col items-center justify-center transition-colors " +
+                        (active
+                          ? "bg-primary text-primary-foreground border-primary"
+                          : "bg-background hover:bg-muted")
+                      }
+                    >
+                      <span className="font-semibold">Room {n}</span>
+                      <span className="text-xs opacity-70 tabular-nums">{roomTotal} items</span>
+                    </button>,
+                  ];
+                  const rowEnd = i % 3 === 2 || i === roomNumbers.length - 1;
+                  const rowStart = i - (i % 3);
+                  const selectedInRow = roomNumbers
+                    .slice(rowStart, rowStart + 3)
+                    .some((x) => String(x) === room);
+                  if (rowEnd && selectedInRow) {
+                    out.push(
+                      <div key={`list-${room}`} className="col-span-3 border rounded-xl bg-muted/30 p-2 space-y-2">
+                        <ul className="space-y-2">
+                          {template.map((item) => (
+                            <CountRow
+                              key={`room|${room}|${item.id}`}
+                              item={item}
+                              theme={theme}
+                              count={getCount("room", room, item.id)}
+                              setCount={(v) => setCount("room", room, item.id, v)}
+                            />
+                          ))}
+                        </ul>
+                        <div className="flex items-center justify-between text-sm px-1">
+                          <span className="text-muted-foreground">Total: {total}</span>
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            className="text-destructive hover:text-destructive"
+                            onClick={() => {
+                              if (confirm(`Reset all counts for Room ${room}?`)) onResetSection("room", room);
+                            }}
+                          >
+                            Reset
+                          </Button>
+                        </div>
+                      </div>,
+                    );
+                  }
+                  return out;
+                })}
+              </div>
+            </div>
+          )
         ) : (
           <div className="border rounded-xl bg-muted/30 flex flex-col min-h-0 flex-1 overflow-hidden">
             <div className="flex-1 min-h-0 overflow-y-auto p-3">
