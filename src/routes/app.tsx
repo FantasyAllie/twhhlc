@@ -4782,6 +4782,7 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
     onResetSection={(sec, loc) => void resetInventorySection(sec, loc)}
     onExport={exportInventory}
     isRoomDefault={(id, rn) => isPreferred(id, rn) || isAssigned(id, rn)}
+    isPreferred={isPreferred}
   />
 
   {/* Manage Rooms dialogs (Admin) */}
