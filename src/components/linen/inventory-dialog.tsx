@@ -146,6 +146,7 @@ export function InventoryDialog({
   setCount,
   onResetSection,
   onExportDelivery,
+  isRoomDefault,
 }: {
   open: boolean;
   onOpenChange: (o: boolean) => void;
@@ -156,9 +157,11 @@ export function InventoryDialog({
   setCount: (section: InventorySection, location: string, itemId: string, value: number) => void;
   onResetSection: (section: InventorySection, location: string) => void;
   onExportDelivery: () => void;
+  isRoomDefault: (itemId: string, room: number) => boolean;
 }) {
   const [section, setSection] = React.useState<InventorySection>("delivery");
   const [room, setRoom] = React.useState<string>("");
+  const [showAllLinen, setShowAllLinen] = React.useState(false);
   const [cupboard, setCupboard] = React.useState<string>(CUPBOARDS[0].key);
 
   const location = section === "delivery" ? "" : section === "room" ? room : cupboard;
@@ -245,7 +248,10 @@ export function InventoryDialog({
                     <button
                       key={n}
                       type="button"
-                      onClick={() => setRoom(active ? "" : key)}
+                      onClick={() => {
+                        setRoom(active ? "" : key);
+                        setShowAllLinen(false);
+                      }}
                       aria-expanded={active}
                       className={
                         "h-14 rounded-xl border flex flex-col items-center justify-center transition-colors " +
@@ -266,8 +272,20 @@ export function InventoryDialog({
                   if (rowEnd && selectedInRow) {
                     out.push(
                       <div key={`list-${room}`} className="col-span-3 border rounded-xl bg-muted/30 p-2 space-y-2">
+                        {(() => {
+                          const rn = Number(room);
+                          const list = template.filter(
+                            (t) => showAllLinen || isRoomDefault(t.id, rn) || getCount("room", room, t.id) > 0,
+                          );
+                          return (
+                            <>
+                        {list.length === 0 && (
+                          <p className="text-sm text-muted-foreground px-1 py-2">
+                            No default linen set for this room.
+                          </p>
+                        )}
                         <ul className="space-y-2">
-                          {template.map((item) => (
+                          {list.map((item) => (
                             <CountRow
                               key={`room|${room}|${item.id}`}
                               item={item}
@@ -277,6 +295,17 @@ export function InventoryDialog({
                             />
                           ))}
                         </ul>
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          className="w-full"
+                          onClick={() => setShowAllLinen((v) => !v)}
+                        >
+                          {showAllLinen ? "Show room's default linen" : "Show all linen"}
+                        </Button>
+                            </>
+                          );
+                        })()}
                         <div className="flex items-center justify-between text-sm px-1">
                           <span className="text-muted-foreground">Total: {total}</span>
                           <Button
