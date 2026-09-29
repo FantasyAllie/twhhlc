@@ -1284,13 +1284,11 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
   const resetInventorySection = async (section: InventorySection, location: string) => {
     if (section === "delivery") return resetDeliveryCounts(true);
     qc.setQueryData<InventoryCount[]>(["inventory_counts"], (old) =>
-      (old ?? []).filter((r) => !(r.section === section && r.location === location)),
+      (old ?? []).filter((r) => !(r.section === section && (location === "*" || r.location === location))),
     );
-    const { error } = await supabase
-      .from("inventory_counts")
-      .delete()
-      .eq("section", section)
-      .eq("location", location);
+    let q = supabase.from("inventory_counts").delete().eq("section", section);
+    if (location !== "*") q = q.eq("location", location);
+    const { error } = await q;
     if (error) toast.error(error.message);
     qc.invalidateQueries({ queryKey: ["inventory_counts"] });
   };
