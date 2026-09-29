@@ -110,3 +110,23 @@ export const useDeliveryCountsQuery = () =>
       return (data ?? []) as DeliveryCount[];
     },
   });
+
+export type InventoryCount = {
+  id: string;
+  section: "room" | "cupboard";
+  location: string;
+  template_item_id: string;
+  count: number;
+};
+
+export const useInventoryCountsQuery = () =>
+  useQuery({
+    queryKey: ["inventory_counts"],
+    queryFn: async (): Promise<InventoryCount[]> => {
+      const { data, error } = await supabase
+        .from("inventory_counts")
+        .select("id,section,location,template_item_id,count");
+      if (error) throw error;
+      return (data ?? []) as InventoryCount[];
+    },
+  });
