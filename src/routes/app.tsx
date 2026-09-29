@@ -5484,6 +5484,7 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
                      </div>
                      <div
                        role="button"
+                       data-touch-exempt
                        tabIndex={-1}
                        onClick={handleProgressTap}
                        className="relative h-3 max-lg:h-2.5 w-full overflow-hidden rounded-full bg-sidebar-accent shadow-elevation-1 cursor-pointer select-none active:scale-[0.99] transition-transform"
