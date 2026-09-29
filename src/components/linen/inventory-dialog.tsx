@@ -165,13 +165,23 @@ export function InventoryDialog({
   const [cupboard, setCupboard] = React.useState<string>(CUPBOARDS[0].key);
 
   const location = section === "delivery" ? "" : section === "room" ? room : cupboard;
-  const total = template.reduce((s, t) => s + getCount(section, location, t.id), 0);
   const locationLabel =
     section === "delivery"
       ? "delivery"
       : section === "room"
         ? `Room ${room}`
         : (CUPBOARDS.find((c) => c.key === cupboard)?.label ?? "");
+
+  const sumAt = (sec: InventorySection, loc: string) =>
+    template.reduce((acc, t) => acc + getCount(sec, loc, t.id), 0);
+  const sectionTotal =
+    section === "delivery"
+      ? sumAt("delivery", "")
+      : section === "room"
+        ? roomNumbers.reduce((acc, n) => acc + sumAt("room", String(n)), 0)
+        : CUPBOARDS.reduce((acc, c) => acc + sumAt("cupboard", c.key), 0);
+  const resetLocation = section === "room" && !room ? "*" : location;
+  const resetLabel = resetLocation === "*" ? "every bedroom" : locationLabel;
 
   const tabs: { key: InventorySection; label: string }[] = [
     { key: "delivery", label: "Delivery" },
@@ -306,19 +316,6 @@ export function InventoryDialog({
                             </>
                           );
                         })()}
-                        <div className="flex items-center justify-between text-sm px-1">
-                          <span className="text-muted-foreground">Total: {total}</span>
-                          <Button
-                            variant="ghost"
-                            size="sm"
-                            className="text-destructive hover:text-destructive"
-                            onClick={() => {
-                              if (confirm(`Reset all counts for Room ${room}?`)) onResetSection("room", room);
-                            }}
-                          >
-                            Reset
-                          </Button>
-                        </div>
                       </div>,
                     );
                   }
@@ -342,27 +339,28 @@ export function InventoryDialog({
                 ))}
               </ul>
             </div>
-            <div className="flex items-center justify-between gap-2 border-t bg-background/60 px-3 py-2 text-sm">
-              <span className="text-muted-foreground">Total: {total}</span>
-              <div className="flex items-center gap-2">
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  className="text-destructive hover:text-destructive"
-                  onClick={() => {
-                    if (confirm(`Reset all counts for ${locationLabel}?`)) onResetSection(section, location);
-                  }}
-                >
-                  Reset
-                </Button>
-              </div>
-            </div>
           </div>
         )}
-        <div className="shrink-0 flex justify-end">
-          <Button variant="outline" onClick={onExport}>
-            Export
-          </Button>
+        <div className="shrink-0 flex items-center justify-between gap-2 border rounded-xl bg-background/60 px-3 py-2 text-sm">
+          <span className="text-muted-foreground">
+            {section === "delivery" ? "Delivery" : section === "room" ? "Bedrooms" : "Cupboards"} total:{" "}
+            <span className="font-semibold text-foreground tabular-nums">{sectionTotal}</span>
+          </span>
+          <div className="flex items-center gap-2">
+            <Button
+              variant="ghost"
+              size="sm"
+              className="text-destructive hover:text-destructive"
+              onClick={() => {
+                if (confirm(`Reset all counts for ${resetLabel}?`)) onResetSection(section, resetLocation);
+              }}
+            >
+              Reset
+            </Button>
+            <Button variant="outline" size="sm" onClick={onExport}>
+              Export
+            </Button>
+          </div>
         </div>
       </DialogContent>
     </Dialog>
