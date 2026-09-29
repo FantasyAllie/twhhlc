@@ -15,7 +15,7 @@ import {
 import { COLOR_SWATCHES } from "@/lib/app-format";
 import type { TemplateItem } from "@/lib/app-types";
 
-export type InventorySection = "delivery" | "room" | "cupboard";
+export type InventorySection = "delivery" | "rejects" | "room" | "cupboard";
 
 export const CUPBOARDS: { key: string; label: string }[] = [
   { key: "ground", label: "Ground Floor" },
@@ -169,19 +169,21 @@ export function InventoryDialog({
   const [showAllLinen, setShowAllLinen] = React.useState(false);
   const [cupboard, setCupboard] = React.useState<string>(CUPBOARDS[0].key);
 
-  const location = section === "delivery" ? "" : section === "room" ? room : cupboard;
+  const location = section === "delivery" || section === "rejects" ? "" : section === "room" ? room : cupboard;
   const locationLabel =
     section === "delivery"
       ? "delivery"
-      : section === "room"
+      : section === "rejects"
+        ? "rejects"
+        : section === "room"
         ? `Room ${room}`
         : (CUPBOARDS.find((c) => c.key === cupboard)?.label ?? "");
 
   const sumAt = (sec: InventorySection, loc: string) =>
     template.reduce((acc, t) => acc + getCount(sec, loc, t.id), 0);
   const sectionTotal =
-    section === "delivery"
-      ? sumAt("delivery", "")
+    section === "delivery" || section === "rejects"
+      ? sumAt(section, "")
       : section === "room"
         ? roomNumbers.reduce((acc, n) => acc + sumAt("room", String(n)), 0)
         : CUPBOARDS.reduce((acc, c) => acc + sumAt("cupboard", c.key), 0);
@@ -190,6 +192,7 @@ export function InventoryDialog({
 
   const tabs: { key: InventorySection; label: string }[] = [
     { key: "delivery", label: "Delivery" },
+    { key: "rejects", label: "Rejects" },
     { key: "room", label: "Bedrooms" },
     { key: "cupboard", label: "Cupboards" },
   ];
@@ -200,7 +203,7 @@ export function InventoryDialog({
         <DialogHeader className="shrink-0">
           <DialogTitle>Inventory</DialogTitle>
           <DialogDescription>
-            Count linen delivered, in each bedroom, and in each floor's cupboard
+            Count linen delivered, rejected, in each bedroom, and in each floor's cupboard
           </DialogDescription>
         </DialogHeader>
 
@@ -349,7 +352,7 @@ export function InventoryDialog({
         )}
         <div className="shrink-0 flex items-center justify-between gap-2 border rounded-xl bg-background/60 px-3 py-2 text-sm">
           <span className="text-muted-foreground">
-            {section === "delivery" ? "Delivery" : section === "room" ? "Bedrooms" : "Cupboards"} total:{" "}
+            {section === "delivery" ? "Delivery" : section === "rejects" ? "Rejects" : section === "room" ? "Bedrooms" : "Cupboards"} total:{" "}
             <span className="font-semibold text-foreground tabular-nums">{sectionTotal}</span>
           </span>
           <div className="flex items-center gap-2">

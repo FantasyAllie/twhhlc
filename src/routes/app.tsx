@@ -54,7 +54,6 @@ import {
   QuickReceptionSheet,
   ReceptionItemsSheet,
   ReceptionStatusSheet,
-  RejectsDialog,
   RoomFeaturesSheet,
   RoomNotesSheet,
   RoomStatusPrintDialog,
@@ -373,6 +372,7 @@ function AppPage() {
         { event: "*", schema: "public", table: "inventory_counts" },
         () => {
           qc.invalidateQueries({ queryKey: ["inventory_counts"] });
+          qc.invalidateQueries({ queryKey: ["reject_counts"] });
         },
       )
       .on(
@@ -1198,8 +1198,8 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
     }
   };
 
-  const resetRejects = async () => {
-    if (!confirm("Reset all reject tallies?")) return;
+  const resetRejects = async (skipConfirm = false) => {
+    if (!skipConfirm && !confirm("Reset all reject tallies?")) return;
     qc.setQueryData<RejectCount[]>(["reject_counts"], []);
     const { error } = await supabase
       .from("reject_counts" as never)
@@ -1241,6 +1241,7 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
   const inventoryCounts = inventoryQ.data ?? [];
   const getInventoryCount = (section: InventorySection, location: string, itemId: string) => {
     if (section === "delivery") return getDeliveryCount(itemId);
+    if (section === "rejects") return getRejectCount(itemId);
     return (
       inventoryCounts.find(
         (r) => r.section === section && r.location === location && r.template_item_id === itemId,
@@ -1254,6 +1255,10 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
     value: number,
   ) => {
     if (section === "delivery") return setDeliveryCount(itemId, value);
+    if (section === "rejects") {
+      const next = Math.max(0, Math.floor(Number.isFinite(value) ? value : 0));
+      return updateRejectCount(itemId, next - getRejectCount(itemId));
+    }
     const next = Math.max(0, Math.floor(Number.isFinite(value) ? value : 0));
     qc.setQueryData<InventoryCount[]>(["inventory_counts"], (old) => {
       const list = old ? [...old] : [];
@@ -1283,6 +1288,7 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
   };
   const resetInventorySection = async (section: InventorySection, location: string) => {
     if (section === "delivery") return resetDeliveryCounts(true);
+    if (section === "rejects") return resetRejects(true);
     qc.setQueryData<InventoryCount[]>(["inventory_counts"], (old) =>
       (old ?? []).filter((r) => !(r.section === section && (location === "*" || r.location === location))),
     );
@@ -1319,6 +1325,8 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
     const sections: Exp.InventoryPrintSection[] = [];
     const del = sumBy(deliveryCounts);
     if (del.length) sections.push({ title: "Delivery", groups: [{ rows: del }] });
+    const rej = sumBy(rejects);
+    if (rej.length) sections.push({ title: "Rejects", groups: [{ rows: rej }] });
     const beds = sumBy(inventoryCounts.filter((r) => r.section === "room"));
     if (beds.length) sections.push({ title: "Bedrooms", groups: [{ rows: beds }] });
     const cupGroups = CUPBOARDS.map((c) => ({
@@ -3672,15 +3680,6 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
     if (menuIsAdmin && !isMaintenance) {
       manage.push({ key: "manage-rooms", icon: Hash, label: "Manage Rooms", onClick: () => setManageRoomsOpen(true) });
       manage.push({
-        key: "rejects",
-        icon: Ban,
-        label: "Rejects",
-        onClick: () => {
-          qc.invalidateQueries({ queryKey: ["reject_counts"] });
-          setRejectsOpen(true);
-        },
-      });
-      manage.push({
         key: "delivery",
         icon: Truck,
         label: "Inventory",
@@ -4749,20 +4748,7 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
 
 
  {/* Rejects dialog */}
-  <RejectsDialog
-    open={rejectsOpen}
-    onOpenChange={(o) => {
-      setRejectsOpen(o);
-      if (o) qc.invalidateQueries({ queryKey: ["reject_counts"] });
-    }}
-    template={template}
-    theme={theme}
-    total={rejects.reduce((s, r) => s + r.count, 0)}
-    getRejectCount={getRejectCount}
-    updateRejectCount={updateRejectCount}
-    onResetAll={resetRejects}
-    onExport={openRejectExport}
-  />
+
 
   {/* Delivery counter dialog — number entry for large delivery batches. */}
   <InventoryDialog
