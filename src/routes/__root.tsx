@@ -76,7 +76,7 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
   head: () => ({
     meta: [
       { charSet: "utf-8" },
-      { name: "viewport", content: "width=device-width, initial-scale=1, viewport-fit=cover, interactive-widget=resizes-content" },
+      { name: "viewport", content: "width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover, interactive-widget=resizes-content" },
       { title: "The Hotel Hub" },
       { name: "description", content: "Live room statuses, housekeeping linen counts, F&B tracking, and maintenance alerts in one easy app" },
       { name: "author", content: "Lovable" },
@@ -134,6 +134,19 @@ function RootShell({ children }: { children: React.ReactNode }) {
 function RootComponent() {
   const { queryClient } = Route.useRouteContext();
 
+  // iOS Safari ignores user-scalable=no, so block pinch gestures directly.
+  useEffect(() => {
+    const stop = (e: Event) => e.preventDefault();
+    const pinch = (e: TouchEvent) => {
+      if (e.touches.length > 1) e.preventDefault();
+    };
+    document.addEventListener("gesturestart", stop);
+    document.addEventListener("touchmove", pinch, { passive: false });
+    return () => {
+      document.removeEventListener("gesturestart", stop);
+      document.removeEventListener("touchmove", pinch);
+    };
+  }, []);
   useEffect(() => {
     bootstrapAuth();
   }, []);
