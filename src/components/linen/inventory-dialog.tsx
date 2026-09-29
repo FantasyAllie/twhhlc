@@ -279,6 +279,14 @@ export function InventoryDialog({
                           );
                           return (
                             <>
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          className="w-full"
+                          onClick={() => setShowAllLinen((v) => !v)}
+                        >
+                          {showAllLinen ? "Show room's default linen" : "Show all linen"}
+                        </Button>
                         {list.length === 0 && (
                           <p className="text-sm text-muted-foreground px-1 py-2">
                             No default linen set for this room.
@@ -295,14 +303,6 @@ export function InventoryDialog({
                             />
                           ))}
                         </ul>
-                        <Button
-                          variant="outline"
-                          size="sm"
-                          className="w-full"
-                          onClick={() => setShowAllLinen((v) => !v)}
-                        >
-                          {showAllLinen ? "Show room's default linen" : "Show all linen"}
-                        </Button>
                             </>
                           );
                         })()}
