@@ -4756,6 +4756,7 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
     setCount={(sec, loc, id, v) => void setInventoryCount(sec, loc, id, v)}
     onResetSection={(sec, loc) => void resetInventorySection(sec, loc)}
     onExportDelivery={() => void openDeliveryExport()}
+    isRoomDefault={(id, rn) => isPreferred(id, rn) || isAssigned(id, rn)}
   />
 
   {/* Manage Rooms dialogs (Admin) */}
