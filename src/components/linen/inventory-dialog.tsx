@@ -67,7 +67,7 @@ function CountRow({
     if (next !== count) setCount(next);
   };
   return (
-    <li className="rounded-xl border px-3 py-2.5" style={rowStyle(item, theme)}>
+    <li className="rounded-xl border p-2" style={rowStyle(item, theme)}>
       <div className="flex items-center gap-1.5">
         <span className="flex-1 min-w-0 break-words font-medium" style={textStyle(item, theme)}>
           {item.name}
@@ -189,7 +189,7 @@ export function InventoryDialog({
           </DialogDescription>
         </DialogHeader>
 
-        <div className="inline-flex w-full justify-center rounded-full border p-1 bg-background items-center shrink-0">
+        <div className="inline-flex w-full justify-center rounded-full border p-1 gap-1 bg-background items-center shrink-0">
           {tabs.map((tab) => {
             const active = section === tab.key;
             return (
@@ -198,7 +198,7 @@ export function InventoryDialog({
                 type="button"
                 onClick={() => setSection(tab.key)}
                 className={
-                  "flex-1 px-2 sm:px-4 h-10 text-xs sm:text-sm rounded-full transition-colors whitespace-nowrap " +
+                  "flex-1 px-2 sm:px-4 h-8 text-xs sm:text-sm rounded-full transition-colors whitespace-nowrap " +
                   (active
                     ? "bg-primary text-primary-foreground shadow-sm font-medium"
                     : "text-muted-foreground hover:text-foreground")
@@ -211,14 +211,14 @@ export function InventoryDialog({
         </div>
 
         {section === "cupboard" && (
-          <div className="inline-flex w-full rounded-full border p-1 bg-background items-center shrink-0 overflow-x-auto">
+          <div className="inline-flex w-full rounded-full border p-1 gap-1 bg-background items-center shrink-0 overflow-x-auto">
             {CUPBOARDS.map((c) => (
               <button
                 key={c.key}
                 type="button"
                 onClick={() => setCupboard(c.key)}
                 className={
-                  "flex-1 px-2 sm:px-3 h-10 text-xs sm:text-sm rounded-full transition-colors whitespace-nowrap " +
+                  "flex-1 px-2 sm:px-3 h-8 text-xs sm:text-sm rounded-full transition-colors whitespace-nowrap " +
                   (cupboard === c.key
                     ? "bg-primary text-primary-foreground shadow-sm font-medium"
                     : "text-muted-foreground hover:text-foreground")
@@ -239,7 +239,7 @@ export function InventoryDialog({
             <p className="text-sm text-muted-foreground py-4">No rooms set up yet.</p>
           ) : (
             <div className="flex-1 min-h-0 overflow-y-auto">
-              <div className="grid grid-cols-3 gap-2.5 py-1">
+              <div className="grid grid-cols-3 gap-2">
                 {roomNumbers.flatMap((n, i) => {
                   const key = String(n);
                   const active = room === key;
@@ -271,7 +271,7 @@ export function InventoryDialog({
                     .some((x) => String(x) === room);
                   if (rowEnd && selectedInRow) {
                     out.push(
-                      <div key={`list-${room}`} className="col-span-3 border rounded-xl bg-muted/30 p-3 space-y-3">
+                      <div key={`list-${room}`} className="col-span-3 border rounded-xl bg-muted/30 p-2 space-y-2">
                         {(() => {
                           const rn = Number(room);
                           const list = template.filter(
@@ -292,7 +292,7 @@ export function InventoryDialog({
                             No default linen set for this room.
                           </p>
                         )}
-                        <ul className="space-y-2.5">
+                        <ul className="space-y-2">
                           {list.map((item) => (
                             <CountRow
                               key={`room|${room}|${item.id}`}
@@ -329,8 +329,8 @@ export function InventoryDialog({
           )
         ) : (
           <div className="border rounded-xl bg-muted/30 flex flex-col min-h-0 flex-1 overflow-hidden">
-            <div className="flex-1 min-h-0 overflow-y-auto p-3 sm:p-4">
-              <ul className="space-y-2.5">
+            <div className="flex-1 min-h-0 overflow-y-auto p-3">
+              <ul className="space-y-2">
                 {template.map((item) => (
                   <CountRow
                     key={`${section}|${location}|${item.id}`}
@@ -342,7 +342,7 @@ export function InventoryDialog({
                 ))}
               </ul>
             </div>
-            <div className="flex items-center justify-between gap-2 border-t bg-background/60 px-3 py-2.5 text-sm">
+            <div className="flex items-center justify-between gap-2 border-t bg-background/60 px-3 py-2 text-sm">
               <span className="text-muted-foreground">Total: {total}</span>
               <div className="flex items-center gap-2">
                 <Button
