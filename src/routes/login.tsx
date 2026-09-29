@@ -8,7 +8,8 @@ import { lovable } from "@/integrations/lovable";
 import { refreshSession } from "@/lib/auth-client";
 import { useServerFn } from "@tanstack/react-start";
 import { listMyHotels, setActiveHotel, type HotelOption } from "@/lib/auth.functions";
-import logoUrl from "@/assets/logo-transparent.png";
+import loginLogo from "@/assets/login-logo.png.asset.json";
+const logoUrl = loginLogo.url;
 
 export const Route = createFileRoute("/login")({
   ssr: false,
