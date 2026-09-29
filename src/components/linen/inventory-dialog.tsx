@@ -211,17 +211,17 @@ export function InventoryDialog({
         </div>
 
         {section === "cupboard" && (
-          <div className="flex flex-wrap gap-1.5 shrink-0">
+          <div className="inline-flex w-full rounded-full border p-1 bg-background items-center shrink-0 overflow-x-auto">
             {CUPBOARDS.map((c) => (
               <button
                 key={c.key}
                 type="button"
                 onClick={() => setCupboard(c.key)}
                 className={
-                  "px-3 h-8 text-xs sm:text-sm rounded-full border transition-colors " +
+                  "flex-1 px-2 sm:px-3 h-8 text-xs sm:text-sm rounded-full transition-colors whitespace-nowrap " +
                   (cupboard === c.key
-                    ? "bg-primary text-primary-foreground border-primary font-medium"
-                    : "bg-background text-muted-foreground hover:text-foreground")
+                    ? "bg-primary text-primary-foreground shadow-sm font-medium"
+                    : "text-muted-foreground hover:text-foreground")
                 }
               >
                 {c.label}
