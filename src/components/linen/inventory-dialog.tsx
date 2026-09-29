@@ -189,7 +189,7 @@ export function InventoryDialog({
           </DialogDescription>
         </DialogHeader>
 
-        <div className="inline-flex w-full justify-center rounded-full border p-1 gap-1 bg-background items-center shrink-0">
+        <div className="inline-flex w-full justify-center rounded-full border p-1 bg-background items-center shrink-0">
           {tabs.map((tab) => {
             const active = section === tab.key;
             return (
@@ -211,7 +211,7 @@ export function InventoryDialog({
         </div>
 
         {section === "cupboard" && (
-          <div className="inline-flex w-full rounded-full border p-1 gap-1 bg-background items-center shrink-0 overflow-x-auto">
+          <div className="inline-flex w-full rounded-full border p-1 bg-background items-center shrink-0 overflow-x-auto mt-1">
             {CUPBOARDS.map((c) => (
               <button
                 key={c.key}
