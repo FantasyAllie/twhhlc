@@ -238,7 +238,7 @@ export function InventoryDialog({
           roomNumbers.length === 0 ? (
             <p className="text-sm text-muted-foreground py-4">No rooms set up yet.</p>
           ) : (
-            <div className="flex-1 min-h-0 overflow-y-auto">
+            <div className="flex-1 min-h-0 overflow-y-auto mt-1">
               <div className="grid grid-cols-3 gap-2">
                 {roomNumbers.flatMap((n, i) => {
                   const key = String(n);
@@ -328,7 +328,7 @@ export function InventoryDialog({
             </div>
           )
         ) : (
-          <div className="border rounded-xl bg-muted/30 flex flex-col min-h-0 flex-1 overflow-hidden">
+          <div className="border rounded-xl bg-muted/30 flex flex-col min-h-0 flex-1 overflow-hidden mt-1">
             <div className="flex-1 min-h-0 overflow-y-auto p-3">
               <ul className="space-y-2">
                 {template.map((item) => (
