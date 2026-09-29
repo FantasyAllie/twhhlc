@@ -37,11 +37,13 @@ function CountRow({
   theme,
   count,
   setCount,
+  preferred,
 }: {
   item: TemplateItem;
   theme: string | undefined;
   count: number;
   setCount: (value: number) => void;
+  preferred?: boolean;
 }) {
   const [add, setAdd] = React.useState("");
   const [total, setTotal] = React.useState(String(count));
@@ -71,6 +73,7 @@ function CountRow({
       <div className="flex items-center gap-1.5">
         <span className="flex-1 min-w-0 break-words font-medium" style={textStyle(item, theme)}>
           {item.name}
+          {preferred && <span className="ml-2 text-xs font-semibold opacity-70">(Preferred)</span>}
         </span>
         <Input
           type="number"
@@ -147,6 +150,7 @@ export function InventoryDialog({
   onResetSection,
   onExport,
   isRoomDefault,
+  isPreferred,
 }: {
   open: boolean;
   onOpenChange: (o: boolean) => void;
@@ -158,6 +162,7 @@ export function InventoryDialog({
   onResetSection: (section: InventorySection, location: string) => void;
   onExport: () => void;
   isRoomDefault: (itemId: string, room: number) => boolean;
+  isPreferred: (itemId: string, room: number) => boolean;
 }) {
   const [section, setSection] = React.useState<InventorySection>("delivery");
   const [room, setRoom] = React.useState<string>("");
@@ -310,6 +315,7 @@ export function InventoryDialog({
                               theme={theme}
                               count={getCount("room", room, item.id)}
                               setCount={(v) => setCount("room", room, item.id, v)}
+                              preferred={isPreferred(item.id, Number(room))}
                             />
                           ))}
                         </ul>
