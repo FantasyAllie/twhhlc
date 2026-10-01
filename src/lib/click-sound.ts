@@ -33,19 +33,30 @@ export function playClick() {
   if (!audio) return;
   if (audio.state === "suspended") void audio.resume().catch(() => {});
 
+  // Light haptic pulse where supported (Android; iOS Safari ignores it).
   try {
+    navigator.vibrate?.(8);
+  } catch {
+    /* ignore */
+  }
+
+  try {
+    // Taptic-style tap: a tiny, soft low "tock" rather than a bright click.
     const t = audio.currentTime;
     const osc = audio.createOscillator();
     const gain = audio.createGain();
-    osc.type = "triangle";
-    osc.frequency.setValueAtTime(1500, t);
-    osc.frequency.exponentialRampToValueAtTime(700, t + 0.03);
+    const lp = audio.createBiquadFilter();
+    lp.type = "lowpass";
+    lp.frequency.setValueAtTime(900, t);
+    osc.type = "sine";
+    osc.frequency.setValueAtTime(220, t);
+    osc.frequency.exponentialRampToValueAtTime(90, t + 0.018);
     gain.gain.setValueAtTime(0.0001, t);
-    gain.gain.exponentialRampToValueAtTime(0.06, t + 0.005);
-    gain.gain.exponentialRampToValueAtTime(0.0001, t + 0.045);
-    osc.connect(gain).connect(audio.destination);
+    gain.gain.exponentialRampToValueAtTime(0.12, t + 0.002);
+    gain.gain.exponentialRampToValueAtTime(0.0001, t + 0.025);
+    osc.connect(lp).connect(gain).connect(audio.destination);
     osc.start(t);
-    osc.stop(t + 0.06);
+    osc.stop(t + 0.035);
   } catch {
     // Ignore — audio feedback is non-essential.
   }
