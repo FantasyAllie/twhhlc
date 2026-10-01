@@ -627,6 +627,38 @@ export type Database = {
           },
         ]
       }
+      room_custom_flags: {
+        Row: {
+          created_at: string
+          flag_key: string
+          hotel_id: string
+          id: string
+          room_number: number
+        }
+        Insert: {
+          created_at?: string
+          flag_key: string
+          hotel_id?: string
+          id?: string
+          room_number: number
+        }
+        Update: {
+          created_at?: string
+          flag_key?: string
+          hotel_id?: string
+          id?: string
+          room_number?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "room_custom_flags_hotel_id_fkey"
+            columns: ["hotel_id"]
+            isOneToOne: false
+            referencedRelation: "hotels"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       room_extra_items: {
         Row: {
           created_at: string
@@ -738,6 +770,53 @@ export type Database = {
         Relationships: [
           {
             foreignKeyName: "room_features_hotel_id_fkey"
+            columns: ["hotel_id"]
+            isOneToOne: false
+            referencedRelation: "hotels"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      room_flag_settings: {
+        Row: {
+          color: string
+          created_at: string
+          hidden: boolean
+          hotel_id: string
+          icon: string
+          id: string
+          is_custom: boolean
+          key: string
+          label: string
+          sort_order: number
+        }
+        Insert: {
+          color?: string
+          created_at?: string
+          hidden?: boolean
+          hotel_id?: string
+          icon?: string
+          id?: string
+          is_custom?: boolean
+          key: string
+          label: string
+          sort_order?: number
+        }
+        Update: {
+          color?: string
+          created_at?: string
+          hidden?: boolean
+          hotel_id?: string
+          icon?: string
+          id?: string
+          is_custom?: boolean
+          key?: string
+          label?: string
+          sort_order?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "room_flag_settings_hotel_id_fkey"
             columns: ["hotel_id"]
             isOneToOne: false
             referencedRelation: "hotels"
