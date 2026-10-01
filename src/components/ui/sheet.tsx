@@ -149,7 +149,9 @@ const SheetContent = React.forwardRef<
         ref={setRefs}
         className={cn(
           className,
-          "relative flex flex-col overflow-visible rounded-2xl border bg-background p-4 shadow-elevation-1 sm:p-6",
+          "relative flex h-auto max-h-none flex-col overflow-visible rounded-2xl border bg-background p-4 shadow-elevation-1 sm:p-6",
+          // Inner scroll boxes would trap touches; let the page scroll instead.
+          "[&_.overflow-y-auto]:overflow-visible [&_.overflow-y-auto]:overscroll-auto [&_.overflow-y-auto]:max-h-none [&_.min-h-0]:min-h-fit",
         )}
       >
         <SheetInlineContext.Provider value={{ inline: false, onClose: inlineCtx.onClose }}>
