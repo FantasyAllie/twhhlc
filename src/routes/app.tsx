@@ -3702,7 +3702,7 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
       manage.push({ key: "room-flags", icon: Flag, label: "Guest & room info", onClick: () => setRoomFlagsSheetOpen(true) });
     }
     if ((realIsAdmin || (realIsManager && hasHousekeeperRole)) && !isMaintenance) {
-      linen.push({ key: "linen-days", icon: List, label: "Linen delivery days", onClick: () => setLinenDeliveryOpen(true) });
+      linen.push({ key: "linen-days", icon: CalendarDays, label: "Linen delivery days", onClick: () => setLinenDeliveryOpen(true) });
     }
     const account: MenuAction[] = [];
     // Also exposed as pills on the home header where the screen is wide enough.
