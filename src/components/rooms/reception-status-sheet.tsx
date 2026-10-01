@@ -1,5 +1,5 @@
 import React from "react";
-import { ArrowLeft, ConciergeBell, DoorOpen, Footprints, Camera, Clock, Dog } from "lucide-react";
+import { ArrowLeft, ChevronDown, ConciergeBell, DoorOpen, Footprints, Camera, Clock, Dog } from "lucide-react";
 import type { QueryClient } from "@tanstack/react-query";
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetDescription } from "@/components/ui/sheet";
 import { Button } from "@/components/ui/button";
@@ -160,27 +160,6 @@ export function ReceptionStatusSheet({
                </div>
              )}
            <div className={cn("space-y-4", (!inlineView || isCurrentDnd) && "mt-4")}>
-             <div className="space-y-2">
-                {(() => {
-                  const stayIdLocal = receptionStatuses.find((x) => x.label === "Stayover")?.id ?? null;
-                  const isDoneLocal = isReception
-                    ? receptionDoneSet.has(n)
-                    : housekeepingDoneSet.has(n);
-                  const isStayoverLocal = !!stayIdLocal && occ === stayIdLocal;
-                   void stayIdLocal; void isStayoverLocal;
-                   return (
-                     <Row
-                       label="Mark as Done"
-                       selected={isDoneLocal}
-                       onClick={() => {
-                          void (isReception
-                            ? toggleReceptionDone(n)
-                            : toggleHousekeepingDone(n));
-                       }}
-                     />
-                   );
-                })()}
-             </div>
              <div className="space-y-2">
                <p className="text-center text-xs font-semibold uppercase tracking-wide text-muted-foreground">Status</p>
                {receptionStatuses.length === 0 && (
@@ -352,9 +331,12 @@ export function ReceptionStatusSheet({
                </div>
               </div>
               {!isReception && (
-                <div className="space-y-2">
-                  <p className="text-center text-xs font-semibold uppercase tracking-wide text-muted-foreground">Guest &amp; room info</p>
-                  <div className="grid grid-cols-2 gap-1.5">
+                <details className="group space-y-2">
+                  <summary className="flex cursor-pointer list-none items-center justify-center gap-1.5 py-1 text-xs font-semibold uppercase tracking-wide text-muted-foreground [&::-webkit-details-marker]:hidden">
+                    Guest &amp; room info
+                    <ChevronDown className="h-3.5 w-3.5 transition-transform group-open:rotate-180" />
+                  </summary>
+                  <div className="mt-2 grid grid-cols-2 gap-1.5">
                     {roomFlags.flags.map((d) => {
                       const on = roomFlags.isOn(room, n, d);
                       return (
@@ -372,8 +354,17 @@ export function ReceptionStatusSheet({
                       );
                     })}
                   </div>
-                </div>
+                </details>
               )}
+              <div className="space-y-2">
+                <Row
+                  label="Mark as Done"
+                  selected={isReception ? receptionDoneSet.has(n) : housekeepingDoneSet.has(n)}
+                  onClick={() => {
+                    void (isReception ? toggleReceptionDone(n) : toggleHousekeepingDone(n));
+                  }}
+                />
+              </div>
             </div>
          </>
        );
