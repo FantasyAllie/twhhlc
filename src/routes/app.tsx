@@ -1,6 +1,7 @@
 import React, { useEffect, useMemo, useRef, useState } from "react";
 import { CountRow } from "@/components/linen/inventory-dialog";
 import { Loader2 } from "lucide-react";
+import { LocationsDialog } from "@/components/rooms/locations-dialog";
 import { usePullToRefresh } from "@/hooks/use-touch-gestures";
 import { createFileRoute, useNavigate, Link } from "@tanstack/react-router";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
@@ -637,6 +638,7 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
   const [rejectExportOpen, setRejectExportOpen] = useState(false);
   const [roomStatusExportOpen, setRoomStatusExportOpen] = useState(false);
   const [manageRoomsOpen, setManageRoomsOpen] = useState(false);
+  const [locationsOpen, setLocationsOpen] = useState(false);
   const [linenDeliveryOpen, setLinenDeliveryOpen] = useState(false);
   const [savingDeliveryDays, setSavingDeliveryDays] = useState(false);
   const [receptionHelpOpen, setReceptionHelpOpen] = useState(false);
@@ -3679,7 +3681,7 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
       manage.push({ key: "linen-list", icon: List, label: "Linen List", onClick: () => setTemplateOpen(true) });
     }
     if (menuIsAdmin && !isMaintenance) {
-      manage.push({ key: "manage-rooms", icon: Hash, label: "Manage Rooms", onClick: () => setManageRoomsOpen(true) });
+      manage.push({ key: "locations", icon: Hash, label: "Locations", onClick: () => setLocationsOpen(true) });
       manage.push({
         key: "delivery",
         icon: Truck,
@@ -4622,8 +4624,6 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
   markMessageDone={markMaintenanceMessageDone}
   deleteMessage={deleteRoomMessage}
   maintenanceAreas={maintenanceAreas}
-  canManageAreas={isAdmin}
-  onManageAreas={() => setMaintenanceAreasOpen(true)}
   hasOpenMaintenance={hasOpenMaintenance}
   openMaintenanceCount={openMaintenanceCount}
   isReception={isReception}
@@ -4646,6 +4646,15 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
   markMaintenanceDone={markMaintenanceDone}
   deleteMaintenanceRequest={deleteMaintenanceRequest}
   setMaintenancePhotoPaths={setMaintenancePhotoPaths}
+/>
+
+<LocationsDialog
+  open={locationsOpen}
+  onOpenChange={setLocationsOpen}
+  roomCount={rooms.length}
+  areaCount={maintenanceAreas.length}
+  onManageRooms={() => setManageRoomsOpen(true)}
+  onManageAreas={() => setMaintenanceAreasOpen(true)}
 />
 
 <MaintenanceAreasSheet
