@@ -1,7 +1,8 @@
 import { createPortal } from "react-dom";
 import React, { useEffect, useMemo, useRef, useState } from "react";
 import { CountRow } from "@/components/linen/inventory-dialog";
-import { Loader2, CalendarDays } from "lucide-react";
+import { Loader2, CalendarDays, Trophy } from "lucide-react";
+import { LeaderboardSheet } from "@/components/leaderboard-sheet";
 import { RoomFlagsContext, FlagIcon, FLAG_COLORS, mergeFlagDefs, useFlagSettingsQuery, useCustomFlagsQuery, type FlagDef } from "@/lib/room-flags";
 import { RoomFlagsSheet } from "@/components/rooms/room-flags-sheet";
 import { usePullToRefresh } from "@/hooks/use-touch-gestures";
@@ -697,6 +698,7 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
     void notifyRoomEvent({ data: { kind, roomNumber, messageText } }).catch(() => {});
   };
   const [historySheetOpen, setHistorySheetOpen] = useState(false);
+  const [leaderboardOpen, setLeaderboardOpen] = useState(false);
   const [roomTypesSheetOpen, setRoomTypesSheetOpen] = useState(false);
   const [roomFeaturesSheetOpen, setRoomFeaturesSheetOpen] = useState(false);
   const [receptionItemsSheetOpen, setReceptionItemsSheetOpen] = useState(false);
@@ -3773,6 +3775,9 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
         onClick: () => { setMessagesInitial({}); setMessagesSheetOpen(true); },
       });
     }
+    if (menuIsAdmin) {
+      utilities.push({ key: "leaderboard", icon: Trophy, label: "Leaderboard", onClick: () => setLeaderboardOpen(true) });
+    }
     const linen: MenuAction[] = [];
     const locations: MenuAction[] = [];
     if ((menuHasHk || menuHasFnb) && !isMaintenance) {
@@ -4549,6 +4554,7 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
   onDone={() => setGloomActive(false)}
 />
 <HomeInline active={homeView === "stayover"} target={homeSlotEl}>
+<LeaderboardSheet open={leaderboardOpen} onOpenChange={setLeaderboardOpen} hotelId={currentHotelQ.data?.id} />
 <StayoverPhotosSheet
   open={stayoverPhotosOpen}
   onOpenChange={(o) => {

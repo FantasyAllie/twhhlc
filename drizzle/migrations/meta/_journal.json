@@ -36,6 +36,13 @@
       "when": 1790871596999,
       "tag": "0004_lost_property_area_label",
       "breakpoints": true
+    },
+    {
+      "idx": 5,
+      "version": "7",
+      "when": 1790875179155,
+      "tag": "0005_activity_events_leaderboard",
+      "breakpoints": true
     }
   ]
 }

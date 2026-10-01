@@ -14,6 +14,47 @@ export type Database = {
   }
   public: {
     Tables: {
+      activity_events: {
+        Row: {
+          amount: number
+          created_at: string
+          hotel_id: string
+          id: string
+          kind: string
+          room_number: number | null
+          user_id: string | null
+          username: string | null
+        }
+        Insert: {
+          amount?: number
+          created_at?: string
+          hotel_id: string
+          id?: string
+          kind: string
+          room_number?: number | null
+          user_id?: string | null
+          username?: string | null
+        }
+        Update: {
+          amount?: number
+          created_at?: string
+          hotel_id?: string
+          id?: string
+          kind?: string
+          room_number?: number | null
+          user_id?: string | null
+          username?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "activity_events_hotel_id_fkey"
+            columns: ["hotel_id"]
+            isOneToOne: false
+            referencedRelation: "hotels"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       delivery_counts: {
         Row: {
           count: number
