@@ -119,7 +119,7 @@ export function ReceptionStatusSheet({
        );
        return (
          <>
-           <SheetHeader className={cn("text-left", onBack && "relative pr-12 min-h-9", inlineView && !onBack && "sr-only")}>
+           <SheetHeader className={cn("text-left", onBack && "relative pr-12 min-h-9", inlineView && !onBack && "sr-only !absolute")}>
              {onBack && (
                <Button
                  type="button"
