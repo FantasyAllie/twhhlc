@@ -236,6 +236,7 @@ export type Database = {
       }
       lost_property: {
         Row: {
+          area_label: string | null
           created_at: string
           created_by_role: string | null
           created_by_username: string | null
@@ -252,6 +253,7 @@ export type Database = {
           updated_at: string
         }
         Insert: {
+          area_label?: string | null
           created_at?: string
           created_by_role?: string | null
           created_by_username?: string | null
@@ -268,6 +270,7 @@ export type Database = {
           updated_at?: string
         }
         Update: {
+          area_label?: string | null
           created_at?: string
           created_by_role?: string | null
           created_by_username?: string | null
