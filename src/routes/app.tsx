@@ -3834,40 +3834,6 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
                 </p>
               </>
             )}
-            {canViewAs && !isMobile && (
-              <div className="mt-3 inline-flex flex-wrap rounded-full border p-1 bg-background items-center">
-                {availableViews.map((r) => {
-                  const active = (safeViewAs ?? defaultView) === r;
-                  const label =
-                    r === "user"
-                      ? "Housekeeping"
-                      : r === "fnb"
-                      ? "F&B"
-                      : r === "reception"
-                      ? "Reception"
-                      : r === "admin"
-                      ? "Admin"
-                      : r === "maintenance"
-                      ? "Maintenance"
-                      : "Manager";
-                  return (
-                    <button
-                      key={r}
-                      type="button"
-                      onClick={() => setViewAsRole(active ? null : r)}
-                      className={cn(
-                        "px-4 h-8 text-xs sm:text-sm rounded-full transition-colors whitespace-nowrap",
-                        active
-                          ? "bg-primary text-primary-foreground shadow-sm font-medium"
-                          : "text-muted-foreground hover:text-foreground",
-                      )}
-                    >
-                      {label}
-                    </button>
-                  );
-                })}
-              </div>
-            )}
           </div>
  <div className="flex items-center gap-2 [&_button]:border-sidebar-border [&_button]:bg-transparent [&_button]:text-sidebar-foreground [&_button:hover]:bg-sidebar-accent [&_button:hover]:text-sidebar-foreground">
     {!isMobile && ((isAdmin && !isReception) || isMaintenance) && (
@@ -3972,6 +3938,40 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
     </DropdownMenu>
   )}
  </div>
+            {canViewAs && !isMobile && (
+              <div className="basis-full w-full flex rounded-full border p-1 bg-background items-center">
+                {availableViews.map((r) => {
+                  const active = (safeViewAs ?? defaultView) === r;
+                  const label =
+                    r === "user"
+                      ? "Housekeeping"
+                      : r === "fnb"
+                      ? "F&B"
+                      : r === "reception"
+                      ? "Reception"
+                      : r === "admin"
+                      ? "Admin"
+                      : r === "maintenance"
+                      ? "Maintenance"
+                      : "Manager";
+                  return (
+                    <button
+                      key={r}
+                      type="button"
+                      onClick={() => setViewAsRole(active ? null : r)}
+                      className={cn(
+                        "flex-1 px-4 h-8 text-xs sm:text-sm rounded-full transition-colors whitespace-nowrap",
+                        active
+                          ? "bg-primary text-primary-foreground shadow-sm font-medium"
+                          : "text-muted-foreground hover:text-foreground",
+                      )}
+                    >
+                      {label}
+                    </button>
+                  );
+                })}
+              </div>
+            )}
  </header>
 
  {/* Mobile role-picker sheet (triggered from the burger menu). */}
