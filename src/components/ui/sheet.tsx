@@ -46,7 +46,7 @@ const SheetClose = React.forwardRef<
   React.ComponentPropsWithoutRef<typeof SheetPrimitive.Close>
 >(({ asChild, onClick, ...props }, ref) => {
   const ctx = React.useContext(SheetInlineContext);
-  if (ctx.inline && ctx.onClose) {
+  if (ctx.onClose) {
     const Comp: React.ElementType = asChild ? Slot : "button";
     return (
       <Comp
@@ -152,7 +152,7 @@ const SheetContent = React.forwardRef<
           "relative flex flex-col overflow-visible rounded-2xl border bg-background p-4 shadow-elevation-1 sm:p-6",
         )}
       >
-        <SheetInlineContext.Provider value={{ inline: false }}>
+        <SheetInlineContext.Provider value={{ inline: false, onClose: inlineCtx.onClose }}>
           <SheetInlineBodyContext.Provider value={true}>{children}</SheetInlineBodyContext.Provider>
         </SheetInlineContext.Provider>
       </div>
@@ -214,7 +214,9 @@ const SheetContent = React.forwardRef<
           <X className="h-3.5 w-3.5" />
           <span>Close</span>
         </SheetPrimitive.Close>
-        {children}
+        <SheetInlineContext.Provider value={{ inline: false }}>
+          <SheetInlineBodyContext.Provider value={false}>{children}</SheetInlineBodyContext.Provider>
+        </SheetInlineContext.Provider>
       </SheetPrimitive.Content>
       </SheetDragContext.Provider>
     </SheetPortal>
