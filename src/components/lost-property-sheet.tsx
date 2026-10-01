@@ -22,6 +22,7 @@ import { notifyLostProperty } from "@/lib/push.functions";
 type LostPropertyRow = {
   id: string;
   room_number: number | null;
+  area_label: string | null;
   message: string;
   created_by_username: string | null;
   created_by_role: string | null;
@@ -46,6 +47,8 @@ export function LostPropertySheet({
   onReply,
   initialAddRoom = null,
   openComposerOnOpen = false,
+  scope = "rooms",
+  areaLabels = [],
 }: {
   open: boolean;
   onOpenChange: (o: boolean) => void;
@@ -59,6 +62,7 @@ export function LostPropertySheet({
     roomNumber: number | null,
     message: string,
     photos: File[],
+    areaLabel?: string | null,
   ) => Promise<{ ok: boolean; error?: string }>;
   onReply?: (item: {
     id: string;
@@ -70,18 +74,23 @@ export function LostPropertySheet({
   // room hub, so the room doesn't have to be picked again.
   initialAddRoom?: number | null;
   openComposerOnOpen?: boolean;
+  // Rooms for Housekeeping/Reception; hotel areas for everyone else.
+  scope?: "rooms" | "areas";
+  areaLabels?: string[];
 }) {
   const qc = useQueryClient();
 
   const [addOpen, setAddOpen] = useState(false);
   const [settingsOpen, setSettingsOpen] = useState(false);
   const [addRoom, setAddRoom] = useState<number | "">("");
+  const [addArea, setAddArea] = useState("");
   const [addMessage, setAddMessage] = useState("");
   const [addPhotos, setAddPhotos] = useState<File[]>([]);
   const [submitting, setSubmitting] = useState(false);
 
   const resetAddForm = () => {
     setAddRoom("");
+    setAddArea("");
     setAddMessage("");
     setAddPhotos([]);
   };
@@ -94,14 +103,19 @@ export function LostPropertySheet({
       return;
     }
     let roomNumber: number | null = null;
-    if (typeof addRoom === "number") {
+    if (scope === "areas") {
+      if (!addArea) {
+        toast.error("Select an area");
+        return;
+      }
+    } else if (typeof addRoom === "number") {
       roomNumber = addRoom;
     } else if (requireRoom) {
       toast.error("Room number required");
       return;
     }
     setSubmitting(true);
-    const res = await onAdd(roomNumber, body, addPhotos);
+    const res = await onAdd(roomNumber, body, addPhotos, scope === "areas" ? addArea : null);
     setSubmitting(false);
     if (!res.ok) {
       toast.error(res.error ?? "Could not log item");
@@ -204,7 +218,7 @@ export function LostPropertySheet({
     queryFn: async (): Promise<LostPropertyRow[]> => {
       const { data, error } = await supabase
         .from("lost_property" as never)
-          .select("id,room_number,message,created_by_username,created_by_role,status,resolved_by_username,resolved_at,deleted_at,created_at,photo_paths")
+          .select("id,room_number,area_label,message,created_by_username,created_by_role,status,resolved_by_username,resolved_at,deleted_at,created_at,photo_paths")
         .is("deleted_at", null)
         .order("created_at", { ascending: false })
         .limit(500);
@@ -228,7 +242,13 @@ export function LostPropertySheet({
     };
   }, [open, qc]);
 
-  const rows = useMemo(() => q.data ?? [], [q.data]);
+  const rows = useMemo(
+    () =>
+      (q.data ?? []).filter((r) =>
+        scope === "areas" ? !!r.area_label : !r.area_label,
+      ),
+    [q.data, scope],
+  );
   const allOpen = rows.filter((r) => r.status === "open");
   const openRows = allOpen.filter((r) => !canDiscard(r.created_at));
   const expiredRows = allOpen.filter((r) => canDiscard(r.created_at));
@@ -395,8 +415,21 @@ export function LostPropertySheet({
                   </div>
                   <div className="flex items-center gap-2">
                     <label htmlFor="lp-add-room" className="text-sm shrink-0">
-                      Room
+                      {scope === "areas" ? "Area" : "Room"}
                     </label>
+                    {scope === "areas" ? (
+                      <select
+                        id="lp-add-room"
+                        value={addArea}
+                        onChange={(e) => setAddArea(e.target.value)}
+                        className="h-8 rounded-xl border bg-background px-2 text-sm"
+                      >
+                        <option value="">Select an area</option>
+                        {areaLabels.map((a) => (
+                          <option key={a} value={a}>{a}</option>
+                        ))}
+                      </select>
+                    ) : (
                     <select
                       id="lp-add-room"
                       value={addRoom === "" ? "" : String(addRoom)}
@@ -412,6 +445,7 @@ export function LostPropertySheet({
                         </option>
                       ))}
                     </select>
+                    )}
                   </div>
                   <Textarea
                     placeholder="Describe the item (e.g. black wallet on nightstand)"
@@ -518,6 +552,11 @@ export function LostPropertySheet({
                     {typeof r.room_number === "number" && (
                       <span className="inline-flex h-6 items-center rounded-full bg-primary/10 text-primary px-2 text-xs font-semibold">
                         Room {r.room_number}
+                      </span>
+                    )}
+                    {r.area_label && (
+                      <span className="inline-flex h-6 items-center rounded-full bg-primary/10 text-primary px-2 text-xs font-semibold">
+                        {r.area_label}
                       </span>
                     )}
                     <span className="text-xs text-muted-foreground">
@@ -721,6 +760,11 @@ export function LostPropertySheet({
                           {typeof r.room_number === "number" && (
                             <span className="inline-flex h-6 items-center rounded-full bg-muted text-muted-foreground px-2 text-xs font-semibold">
                               Room {r.room_number}
+                            </span>
+                          )}
+                          {r.area_label && (
+                            <span className="inline-flex h-6 items-center rounded-full bg-muted text-muted-foreground px-2 text-xs font-semibold">
+                              {r.area_label}
                             </span>
                           )}
                           <span
