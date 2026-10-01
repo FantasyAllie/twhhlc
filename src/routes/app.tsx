@@ -511,6 +511,8 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
     }
   }, [roomInfoTab]);
   const [receptionSheetRoom, setReceptionSheetRoom] = useState<number | null>(null);
+  const [statusViaLongPress, setStatusViaLongPress] = useState(false);
+  useEffect(() => { if (receptionSheetRoom === null) setStatusViaLongPress(false); }, [receptionSheetRoom]);
   const [quickReceptionOpen, setQuickReceptionOpen] = useState(false);
   const [editDefaultsSheetRoom, setEditDefaultsSheetRoom] = useState<number | null>(null);
   const [editRoomSheetNumber, setEditRoomSheetNumber] = useState<number | null>(null);
@@ -4422,7 +4424,8 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
  {/* Reception sheet (Admin/User): Done + Status + Bed */}
   <HomeInline active={!isReception && openRoom !== null && receptionSheetRoom === openRoom} target={roomSlotEl}>
   <ReceptionStatusSheet
-    onBack={!isReception && openRoom !== null && receptionSheetRoom === openRoom ? () => setReceptionSheetRoom(null) : undefined}
+    inlineView={!isReception && openRoom !== null && receptionSheetRoom === openRoom}
+    onBack={!isReception && openRoom !== null && receptionSheetRoom === openRoom && !statusViaLongPress ? () => setReceptionSheetRoom(null) : undefined}
     receptionSheetRoom={receptionSheetRoom}
     setReceptionSheetRoom={setReceptionSheetRoom}
     rooms={rooms}
@@ -5592,7 +5595,7 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
          isOpen={isOpen}
          hasMessage={hasActiveMessage(n)}
          onClick={() => openOrToggle(n)}
-         onLongPress={() => { setOpenRoom(n); setReceptionSheetRoom(n); }}
+         onLongPress={() => { setStatusViaLongPress(true); setOpenRoom(n); setReceptionSheetRoom(n); }}
          done={done}
          openTypeLabel={isOpen ? categoryLabel(roomCategory(n), roomTypes) : null}
          openBedLabel={isOpen ? (() => {
