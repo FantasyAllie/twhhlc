@@ -3840,7 +3840,7 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
         Reports
       </Button>
     )}
-    {(isReception || isHousekeeper) && (
+    {(isReception || isHousekeeper || (isAdmin && !isFnb && !isMaintenance)) && (
       <Button
         variant="outline"
         size="sm"
