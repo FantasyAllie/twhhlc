@@ -3643,7 +3643,7 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
         onClick: () => void openReports(),
       });
     }
-    if (isReception) {
+    if (isReception && isMobile) {
       actions.push({
         key: "print", icon: Printer, label: "Print",
         onClick: async () => {
@@ -3707,7 +3707,7 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
     }
     const account: MenuAction[] = [];
     // Also exposed as pills on the home header where the screen is wide enough.
-    if (canViewAs) {
+    if (canViewAs && isMobile) {
       account.push({ key: "departments", icon: LayoutGrid, label: "Departments", onClick: () => setRolePickerSheetOpen(true) });
     }
     if (availableHotels.length > 1 || realIsAdmin) {
