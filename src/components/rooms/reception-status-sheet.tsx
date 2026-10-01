@@ -140,22 +140,8 @@ export function ReceptionStatusSheet({
               Mark status and bed configuration
             </SheetDescription>
            </SheetHeader>
-              {(isAdmin || isCurrentDnd) && (
+              {isCurrentDnd && (
                <div className="mt-2 flex gap-2">
-                 {isAdmin && (
-                   <Button
-                     type="button"
-                     size="sm"
-                     variant="outline"
-                     className="flex-1"
-                     onClick={() => {
-                       setReceptionSheetRoom(null);
-                       setQuickReceptionOpen(true);
-                     }}
-                   >
-                     Edit all rooms
-                   </Button>
-                 )}
                  {isCurrentDnd && (
                    <Button
                      type="button"
