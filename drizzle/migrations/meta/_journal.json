@@ -43,6 +43,13 @@
       "when": 1790875179155,
       "tag": "0005_activity_events_leaderboard",
       "breakpoints": true
+    },
+    {
+      "idx": 6,
+      "version": "7",
+      "when": 1790875687327,
+      "tag": "0006_track_stayover_photo_activity",
+      "breakpoints": true
     }
   ]
 }
