@@ -5,6 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Switch } from "@/components/ui/switch";
 import { cn } from "@/lib/utils";
+import { FlagIcon, FLAG_COLORS, useRoomFlags } from "@/lib/room-flags";
 import { RoomInfoTiles, type RoomInfoTab } from "@/components/rooms/room-info-tiles";
 import type { LostPropertyLite, MaintenanceRequest, Room, RoomMessage } from "@/lib/app-types";
 import type { MessagesThread } from "@/components/messages-sheet";
@@ -76,6 +77,7 @@ export function RoomNotesSheet({
   openMaintenance = [],
   openLostProperty = [],
 }: Props) {
+  const roomFlags = useRoomFlags();
   const [newLogOpen, setNewLogOpen] = useState(false);
   const [infoTab, setInfoTab] = useState<RoomInfoTab | null>(null);
   return (
@@ -184,41 +186,18 @@ export function RoomNotesSheet({
               )}
              {isReception ? (
                <>
-                  <div className="flex items-center justify-between gap-2 rounded-xl border bg-background p-3">
-                    <span className="flex items-center gap-2 text-sm font-medium">
-                      <DoorOpen className={cn("h-4 w-4", room?.early_check_in ? "text-amber-600 dark:text-amber-400" : "text-muted-foreground")} />
-                      Early check-in
-                    </span>
-                    <Switch checked={!!room?.early_check_in} onCheckedChange={(v) => setRoomEarlyCheckIn(n, v)} />
-                  </div>
-                  <div className="flex items-center justify-between gap-2 rounded-xl border bg-background p-3">
-                    <span className="flex items-center gap-2 text-sm font-medium">
-                      <Clock className={cn("h-4 w-4", room?.late_checkout ? "text-red-700 dark:text-red-400" : "text-muted-foreground")} />
-                      Late checkout
-                    </span>
-                    <Switch checked={!!room?.late_checkout} onCheckedChange={(v) => setRoomLateCheckout(n, v)} />
-                  </div>
-                 <div className="flex items-center justify-between gap-2 rounded-xl border bg-background p-3">
-                   <span className="flex items-center gap-2 text-sm font-medium">
-                     <DoorOpen className={cn("h-4 w-4", vacated ? "text-emerald-600 dark:text-emerald-400" : "text-muted-foreground")} />
-                     Guest has checked out
-                   </span>
-                   <Switch checked={vacated} onCheckedChange={(v) => setRoomGuestVacated(n, v)} />
-                 </div>
-                 <div className="flex items-center justify-between gap-2 rounded-xl border bg-background p-3">
-                   <span className="flex items-center gap-2 text-sm font-medium">
-                     <Footprints className={cn("h-4 w-4", room?.stayover_out ? "text-sky-600 dark:text-sky-400" : "text-muted-foreground")} />
-                     Stayover — guest out
-                   </span>
-                   <Switch checked={!!room?.stayover_out} onCheckedChange={(v) => setRoomStayoverOut(n, v)} />
-                 </div>
-                 <div className="flex items-center justify-between gap-2 rounded-xl border bg-background p-3">
-                   <span className="flex items-center gap-2 text-sm font-medium">
-                     <Dog className={cn("h-4 w-4", room?.dog_box ? "text-violet-600 dark:text-violet-400" : "text-muted-foreground")} />
-                     Dog
-                   </span>
-                   <Switch checked={!!room?.dog_box} onCheckedChange={(v) => setRoomDogBox(n, v)} />
-                 </div>
+                 {roomFlags.flags.map((d) => {
+                   const on = roomFlags.isOn(room, n, d);
+                   return (
+                     <div key={d.key} className="flex items-center justify-between gap-2 rounded-xl border bg-background p-3">
+                       <span className="flex items-center gap-2 text-sm font-medium">
+                         <FlagIcon def={d} className={cn("h-4 w-4", on ? (FLAG_COLORS[d.color] ?? FLAG_COLORS.slate).text : "text-muted-foreground")} />
+                         {d.label}
+                       </span>
+                       <Switch checked={on} onCheckedChange={(v) => roomFlags.toggle(n, d, v)} />
+                     </div>
+                   );
+                 })}
                  {maintenance && (
                    <div className="flex items-center gap-2 rounded-xl border border-amber-500/60 bg-amber-50 dark:bg-amber-950/40 p-3 text-sm">
                      <Wrench className="h-4 w-4 text-amber-600 dark:text-amber-400 shrink-0" />
@@ -319,6 +298,15 @@ export function RoomNotesSheet({
                </>
              ) : (
                <>
+                 {roomFlags.flags.filter((d) => d.custom && roomFlags.isOn(room, n, d)).map((d) => (
+                   <div key={d.key} className="flex items-center gap-2 rounded-xl border bg-background p-3 text-sm">
+                     <FlagIcon def={d} className={cn("h-4 w-4 shrink-0", (FLAG_COLORS[d.color] ?? FLAG_COLORS.slate).text)} />
+                     <span className="flex-1 font-medium">{d.label}</span>
+                     <Button type="button" variant="ghost" size="sm" className="h-7 px-2 text-xs" onClick={() => roomFlags.toggle(n, d, false)} aria-label={`Clear ${d.label}`}>
+                       <X className="h-3 w-3" />
+                     </Button>
+                   </div>
+                 ))}
                  {vacated && (
                    <div className="flex items-center gap-2 rounded-xl border border-emerald-500/60 bg-emerald-50 dark:bg-emerald-950/40 p-3 text-sm">
                      <DoorOpen className="h-4 w-4 text-emerald-600 dark:text-emerald-400 shrink-0" />

@@ -5,6 +5,28 @@ import { AlertCircle, Check, Dog, DoorOpen, Footprints, Wrench } from "lucide-re
 import { cn } from "@/lib/utils";
 import { playClick } from "@/lib/click-sound";
 import type { Room } from "@/lib/app-types";
+import { FlagIcon, FLAG_COLORS, useRoomFlags } from "@/lib/room-flags";
+
+// Badges for admin-defined custom guest & room info toggles.
+function CustomFlagBadges({ n }: { n: number }) {
+  const { flags, isOn } = useRoomFlags();
+  const on = flags.filter((d) => d.custom && isOn(undefined, n, d));
+  if (on.length === 0) return null;
+  return (
+    <>
+      {on.map((d) => (
+        <span
+          key={d.key}
+          aria-label={d.label}
+          title={d.label}
+          className={BADGE_CLASS + " " + (FLAG_COLORS[d.color] ?? FLAG_COLORS.slate).badge}
+        >
+          <FlagIcon def={d} className="h-2.5 w-2.5 shrink-0" />
+        </span>
+      ))}
+    </>
+  );
+}
 import {
   computeTileMeta,
   resolveRoomStatusFlags,
@@ -229,6 +251,7 @@ function ReceptionRoomTileBase({
               <span className="hidden @[120px]:inline">Dog</span>
             </span>
           )}
+          <CustomFlagBadges n={n} />
         </span>
       )}
       {room?.needs_maintenance && !isStaffRoom && (
@@ -352,6 +375,7 @@ function HousekeepingRoomTileBase({
             <span className="hidden @[120px]:inline">Dog</span>
           </span>
         )}
+        <CustomFlagBadges n={n} />
       </span>
       {room?.needs_maintenance && (
         <Wrench

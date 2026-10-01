@@ -1,5 +1,6 @@
-import { ConciergeBell, Check, RotateCcw, Clock, DoorOpen, Footprints, Dog } from "lucide-react";
+import { ConciergeBell, Check, RotateCcw } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { FlagIcon, useRoomFlags } from "@/lib/room-flags";
 import {
   Sheet,
   SheetContent,
@@ -111,6 +112,7 @@ export function QuickReceptionSheet({
   /** Reception accounts: only the room flags are editable, not status or bed. */
   flagsOnly?: boolean;
 }) {
+  const roomFlags = useRoomFlags();
   const sorted = [...rooms].sort((a, b) => a.room_number - b.room_number);
 
   return (
@@ -126,7 +128,7 @@ export function QuickReceptionSheet({
           </SheetTitle>
           <SheetDescription>
             {flagsOnly
-              ? "Set Guest has checked out, Early check-in and Stayover — guest out for the day for every room in one place. Tap a chip to toggle it. Changes save instantly."
+              ? "Set the guest & room info for every room in one place. Tap a chip to toggle it. Changes save instantly."
               : "Set the status, bed and flags for every room in one place. Tap the selected chip to clear it. Changes save instantly."}
           </SheetDescription>
         </SheetHeader>
@@ -248,77 +250,23 @@ export function QuickReceptionSheet({
                       Guest &amp; room info
                     </div>
                     <div className="grid grid-cols-2 gap-1.5 flex-1 min-w-0">
-                      {onChangeVacant && (
-                        <Chip
-                          label={
-                            <span className="inline-flex items-center gap-1.5">
-                              <DoorOpen className="h-3.5 w-3.5 shrink-0" />
-                              Guest has checked out
-                            </span>
-                          }
-                          selected={!!room.guest_vacated}
-                          onClick={() => onChangeVacant(n, !room.guest_vacated)}
-                          truncate={false}
-                        />
-                      )}
-                      {onChangeEarlyCheckIn && (
-                        <Chip
-                          label={
-                            <span className="inline-flex items-center gap-1.5">
-                              <Clock className="h-3.5 w-3.5 shrink-0" />
-                              Early check-in
-                            </span>
-                          }
-                          selected={!!room.early_check_in}
-                          onClick={() =>
-                            onChangeEarlyCheckIn(n, !room.early_check_in)
-                          }
-                          truncate={false}
-                        />
-                      )}
-                      {onChangeLateCheckout && (
-                        <Chip
-                          label={
-                            <span className="inline-flex items-center gap-1.5">
-                              <Clock className="h-3.5 w-3.5 shrink-0" />
-                              Late checkout
-                            </span>
-                          }
-                          selected={!!room.late_checkout}
-                          onClick={() =>
-                            onChangeLateCheckout(n, !room.late_checkout)
-                          }
-                          truncate={false}
-                        />
-                      )}
-                      {onChangeStayoverOut && (
-                        <Chip
-                          label={
-                            <span className="inline-flex items-center gap-1.5">
-                              <Footprints className="h-3.5 w-3.5 shrink-0" />
-                              Stayover — guest out
-                            </span>
-                          }
-                          selected={!!room.stayover_out}
-                          onClick={() =>
-                            onChangeStayoverOut(n, !room.stayover_out)
-                          }
-                          truncate={false}
-                        />
-                      )}
-                      {onChangeDogBox && (
-                        <Chip
-                          label={
-                            <span className="inline-flex items-center gap-1.5">
-                              <Dog className="h-3.5 w-3.5 shrink-0" />
-                              Dog
-                            </span>
-                          }
-                          selected={!!room.dog_box}
-                          onClick={() => onChangeDogBox(n, !room.dog_box)}
-                          truncate={false}
-                        />
-                      )}
+                      {roomFlags.flags.map((d) => {
+                        const on = roomFlags.isOn(room as never, n, d);
+                        return (
+                          <Chip
+                            key={d.key}
+                            label={
+                              <span className="inline-flex items-center gap-1.5">
+                                <FlagIcon def={d} className="h-3.5 w-3.5 shrink-0" />
+                                {d.label}
+                              </span>
+                            }
+                            selected={on}
+                            onClick={() => roomFlags.toggle(n, d, !on)}
+                            truncate={false}
+                          />
+                        );
+                      })}
                     </div>
                   </div>
                 )}
