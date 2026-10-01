@@ -602,7 +602,7 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
       const tiles = Array.from(roomGridEl.children).filter(
         (el) => !(el as HTMLElement).hasAttribute("data-room-slot"),
       ) as HTMLElement[];
-      const tile = tiles.find((el) => el.textContent?.trim().startsWith(String(openRoom)));
+      const tile = tiles.find((el) => new RegExp(`^${openRoom}(\\D|$)`).test(el.textContent?.trim() ?? ""));
       const target = tile ?? roomSlotEl;
       const top = target.getBoundingClientRect().top + window.scrollY - 12;
       window.scrollTo({ top, behavior: "smooth" });
