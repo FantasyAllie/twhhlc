@@ -160,10 +160,10 @@ export function MessagesSheet({
   }, [useSendToPicker, thread, myDepartments]);
 
   // Maintenance toggle only makes sense on the Housekeeping↔Reception thread.
-  const canLogMaintenance = thread === "hk_reception" && !!onLogMaintenance;
+  const canLogMaintenance = false;
   // Lost Property mirrors Maintenance — only relevant on HK↔Reception (Reception
   // owns the log; Housekeeping is the usual reporter).
-  const canLogLostProperty = thread === "hk_reception" && !!onLogLostProperty;
+  const canLogLostProperty = false;
   useEffect(() => {
     if (!canLogMaintenance) setAlsoMaintenance(false);
   }, [canLogMaintenance]);
