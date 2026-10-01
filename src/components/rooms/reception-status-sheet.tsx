@@ -1,5 +1,5 @@
 import React from "react";
-import { ArrowLeft, ConciergeBell, DoorOpen, Footprints, Camera, Clock, Dog } from "lucide-react";
+import { ArrowLeft, ChevronDown, ConciergeBell, DoorOpen, Footprints, Camera, Clock, Dog } from "lucide-react";
 import type { QueryClient } from "@tanstack/react-query";
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetDescription } from "@/components/ui/sheet";
 import { Button } from "@/components/ui/button";
