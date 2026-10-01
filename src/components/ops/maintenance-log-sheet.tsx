@@ -70,7 +70,10 @@ export function MaintenanceLogSheet({
   markMaintenanceDone,
   deleteMaintenanceRequest,
   setMaintenancePhotoPaths,
+  scope,
 }: {
+  // When set, only room or only hotel-area entries are shown and loggable.
+  scope?: "rooms" | "areas";
   open: boolean;
   onOpenChange: (o: boolean) => void;
   rooms: Room[];
@@ -174,11 +177,13 @@ export function MaintenanceLogSheet({
           urgent: false,
         })),
     [maintenanceMessages],
-  );
+  ).filter(() => scope !== "areas");
 
   const reqEntries = useMemo<Entry[]>(
     () =>
-      maintenanceRequests.map((m) => ({
+      maintenanceRequests
+        .filter((m) => !scope || (scope === "areas" ? !!m.area_label : !m.area_label))
+        .map((m) => ({
         id: `req-${m.id}`,
         rawId: m.id,
         source: "req" as const,
@@ -194,7 +199,7 @@ export function MaintenanceLogSheet({
         canEditPhotos: canEditPhotos(m),
         urgent: !!m.urgent,
       })),
-    [maintenanceRequests, isAdmin, authUsername],
+    [maintenanceRequests, isAdmin, authUsername, scope],
   );
   const allEntries = useMemo(
     () => [...reqEntries, ...msgEntries].sort((a, b) => (a.createdAt < b.createdAt ? 1 : -1)),
@@ -483,6 +488,7 @@ export function MaintenanceLogSheet({
                   className="h-9 rounded-xl border bg-background px-2 text-sm sm:w-44"
                 >
                   <option value="">Select a location</option>
+                  {scope !== "areas" && (
                   <optgroup label="Rooms">
                     {rooms
                       .map((r) => r.room_number)
@@ -493,7 +499,8 @@ export function MaintenanceLogSheet({
                         </option>
                       ))}
                   </optgroup>
-                  {maintenanceAreas.length > 0 && (
+                  )}
+                  {scope !== "rooms" && maintenanceAreas.length > 0 && (
                     <optgroup label="Other areas">
                       {maintenanceAreas.map((a) => (
                         <option key={a.id} value={`area:${a.label}`}>
