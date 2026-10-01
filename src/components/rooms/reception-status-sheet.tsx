@@ -4,6 +4,7 @@ import type { QueryClient } from "@tanstack/react-query";
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetDescription } from "@/components/ui/sheet";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
+import { FlagIcon, useRoomFlags } from "@/lib/room-flags";
 import type { ReceptionItem, Room } from "@/lib/app-types";
 
 type Props = {
@@ -67,6 +68,7 @@ export function ReceptionStatusSheet({
   deleteTodayStayoverPhotosForRoom,
   setPendingDndRoom,
 }: Props) {
+  const roomFlags = useRoomFlags();
   return (
  <Sheet open={receptionSheetRoom !== null} onOpenChange={(o) => { if (!o) setReceptionSheetRoom(null); }}>
    <SheetContent side="bottom" className="overflow-y-auto rounded-t-2xl p-4 sm:p-6">
@@ -349,56 +351,22 @@ export function ReceptionStatusSheet({
                 <div className="space-y-2">
                   <p className="text-center text-xs font-semibold uppercase tracking-wide text-muted-foreground">Guest &amp; room info</p>
                   <div className="grid grid-cols-2 gap-1.5">
-                    <Row
-                      label={
-                        <span className="inline-flex items-center gap-2">
-                          <DoorOpen className="h-4 w-4 shrink-0" />
-                          Guest has checked out
-                        </span>
-                      }
-                      selected={!!room?.guest_vacated}
-                      onClick={() => setRoomGuestVacated(n, !room?.guest_vacated)}
-                    />
-                    <Row
-                      label={
-                        <span className="inline-flex items-center gap-2">
-                          <Clock className="h-4 w-4 shrink-0" />
-                          Early check-in
-                        </span>
-                      }
-                      selected={!!room?.early_check_in}
-                      onClick={() => void setRoomEarlyCheckIn(n, !room?.early_check_in)}
-                    />
-                    <Row
-                      label={
-                        <span className="inline-flex items-center gap-2">
-                          <Clock className="h-4 w-4 shrink-0" />
-                          Late checkout
-                        </span>
-                      }
-                      selected={!!room?.late_checkout}
-                      onClick={() => void setRoomLateCheckout(n, !room?.late_checkout)}
-                    />
-                    <Row
-                      label={
-                        <span className="inline-flex items-center gap-2">
-                          <Footprints className="h-4 w-4 shrink-0" />
-                          Stayover — guest out
-                        </span>
-                      }
-                      selected={!!room?.stayover_out}
-                      onClick={() => setRoomStayoverOut(n, !room?.stayover_out)}
-                    />
-                    <Row
-                      label={
-                        <span className="inline-flex items-center gap-2">
-                          <Dog className="h-4 w-4 shrink-0" />
-                          Dog
-                        </span>
-                      }
-                      selected={!!room?.dog_box}
-                      onClick={() => void setRoomDogBox(n, !room?.dog_box)}
-                    />
+                    {roomFlags.flags.map((d) => {
+                      const on = roomFlags.isOn(room, n, d);
+                      return (
+                        <Row
+                          key={d.key}
+                          label={
+                            <span className="inline-flex items-center gap-2">
+                              <FlagIcon def={d} className="h-4 w-4 shrink-0" />
+                              {d.label}
+                            </span>
+                          }
+                          selected={on}
+                          onClick={() => roomFlags.toggle(n, d, !on)}
+                        />
+                      );
+                    })}
                   </div>
                 </div>
               )}
