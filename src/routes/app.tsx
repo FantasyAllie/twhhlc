@@ -4925,7 +4925,7 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
 <MaintenanceDashboard
      maintenanceRequests={maintenanceRequests}
      roomMessages={roomMessages}
-     scopedMaintenanceCount={scopedMaintenanceCount}
+     openMaintenanceCount={openMaintenanceCount}
      markMaintenanceDone={markMaintenanceDone}
      setMaintenanceUrgent={setMaintenanceUrgent}
 
