@@ -580,6 +580,21 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
     setHomeView(view);
     setOpen(true);
   };
+  // Housekeeping room grid: the open room expands inline below its row.
+  const [roomGridEl, setRoomGridEl] = useState<HTMLDivElement | null>(null);
+  const [roomSlotEl, setRoomSlotEl] = useState<HTMLDivElement | null>(null);
+  const [roomGridCols, setRoomGridCols] = useState(4);
+  useEffect(() => {
+    if (!roomGridEl) return;
+    const measure = () => {
+      const cols = getComputedStyle(roomGridEl).gridTemplateColumns.split(" ").filter(Boolean).length;
+      setRoomGridCols(Math.max(1, cols));
+    };
+    measure();
+    const ro = new ResizeObserver(measure);
+    ro.observe(roomGridEl);
+    return () => ro.disconnect();
+  }, [roomGridEl]);
   // Stayover / DND photo state
   const [stayoverPhotosOpen, setStayoverPhotosOpen] = useState(false);
   const [stayoverPhotosRoomFilter, setStayoverPhotosRoomFilter] = useState<number | undefined>(undefined);
@@ -5395,7 +5410,7 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
  </div>
 
  {/* On-screen interactive accordion */}
- <div className="grid grid-cols-4 sm:grid-cols-6 md:grid-cols-7 lg:grid-cols-8 xl:grid-cols-10 gap-2 md:gap-3">
+ <div ref={setRoomGridEl} className="grid grid-cols-4 sm:grid-cols-6 md:grid-cols-7 lg:grid-cols-8 xl:grid-cols-10 gap-2 md:gap-3">
  {(() => {
   const allRooms = rooms.map((r) => r.room_number);
     let visibleRooms = (isReception && (receptionFeatureFilter.length > 0 || receptionStatusFilter.length > 0 || receptionRoomTypeFilter.length > 0 || receptionDoneOnlyFilter))
@@ -5471,6 +5486,11 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
     const bedLabelById = new Map<string, string>();
     for (const b of receptionBeds) bedLabelById.set(b.id, b.label);
     for (const c of counts) if ((c.count ?? 0) > 0) countedRooms.add(c.room_number);
+   const openIdx = !isReception && openRoom !== null ? visibleRooms.indexOf(openRoom) : -1;
+   const slotAfter =
+     openIdx >= 0
+       ? Math.min(visibleRooms.length - 1, (Math.floor(openIdx / roomGridCols) + 1) * roomGridCols - 1)
+       : -1;
    for (let i = 0; i < visibleRooms.length; i++) {
    const n = visibleRooms[i];
  const done = doneSet.has(n);
@@ -5510,6 +5530,11 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
          onLongPress={() => setReceptionSheetRoom(n)}
          done={done}
        />,
+     );
+   }
+   if (i === slotAfter) {
+     nodes.push(
+       <div key="room-inline-slot" data-room-slot ref={setRoomSlotEl} className="col-span-full" />,
      );
    }
    }
@@ -5599,6 +5624,7 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
   )}
  </div>
 
+ <HomeInline active={!isReception && openRoom !== null} target={roomSlotEl}>
  <Sheet open={openRoom !== null} onOpenChange={(o) => { if (!o) { if (openRoom !== null) setShowAllLinen(prev => ({ ...prev, [openRoom]: false })); setOpenRoom(null); setNewMessageText(""); } }}>
    <SheetContent side="bottom" className="flex flex-col overflow-hidden rounded-t-2xl p-4 sm:p-6">
      <SheetHeader className="text-left space-y-0">
@@ -5623,6 +5649,7 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
      </div>
    </SheetContent>
  </Sheet>
+ </HomeInline>
 
   <ExportPreviewDialogs
     exportOpen={exportOpen}
