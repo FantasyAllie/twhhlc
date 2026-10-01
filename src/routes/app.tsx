@@ -1460,6 +1460,13 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
    const isHousekeeper = effectiveRole === "user";
    const isFnb = effectiveRole === "fnb";
    const isMaintenance = effectiveRole === "maintenance";
+   useEffect(() => {
+     setHomeView(null);
+     setMaintenanceLogOpen(false);
+     setMessagesSheetOpen(false);
+     setLostPropertyOpen(false);
+     setStayoverPhotosOpen(false);
+   }, [effectiveRole]);
     // Settings-menu permissions: derived from real position/sub-roles,
     // not the active home-screen pill. The settings menu should stay the
     // same regardless of which view the user is currently in.
