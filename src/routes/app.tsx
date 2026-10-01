@@ -1,7 +1,6 @@
 import React, { useEffect, useMemo, useRef, useState } from "react";
 import { CountRow } from "@/components/linen/inventory-dialog";
 import { Loader2 } from "lucide-react";
-import { LocationsDialog } from "@/components/rooms/locations-dialog";
 import { usePullToRefresh } from "@/hooks/use-touch-gestures";
 import { createFileRoute, useNavigate, Link } from "@tanstack/react-router";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
@@ -35,7 +34,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { InventoryDialog, CUPBOARDS, type InventorySection } from "@/components/linen/inventory-dialog";
-import { Minus, Plus, X, Menu, ArrowUp, ArrowDown, Pencil, Check, Trash2, Sun, SunDim, Moon, MoonStar, List, Bed, House, Ban, History, Users, User, LogOut, Hash, ConciergeBell, ClipboardList, Printer, Filter, Wrench, DoorOpen, Footprints, Bell, Eye, EyeOff, HelpCircle, AlertCircle, MessageSquare, PackageSearch, RotateCcw, ChevronDown, Camera, LayoutGrid, Truck, Clock, Dog, Undo2, Inbox } from "lucide-react";
+import { Minus, Plus, X, Menu, ArrowUp, ArrowDown, Pencil, Check, Trash2, Sun, SunDim, Moon, MoonStar, List, Bed, House, Ban, History, Users, User, LogOut, Hash, ConciergeBell, ClipboardList, Printer, Filter, Wrench, DoorOpen, Footprints, Bell, Eye, EyeOff, HelpCircle, AlertCircle, MessageSquare, PackageSearch, RotateCcw, ChevronDown, Camera, LayoutGrid, Truck, Clock, Dog, Undo2, Inbox, MapPin } from "lucide-react";
 import {
   AccountDialog,
   AddConfigDialogs,
@@ -638,7 +637,6 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
   const [rejectExportOpen, setRejectExportOpen] = useState(false);
   const [roomStatusExportOpen, setRoomStatusExportOpen] = useState(false);
   const [manageRoomsOpen, setManageRoomsOpen] = useState(false);
-  const [locationsOpen, setLocationsOpen] = useState(false);
   const [linenDeliveryOpen, setLinenDeliveryOpen] = useState(false);
   const [savingDeliveryDays, setSavingDeliveryDays] = useState(false);
   const [receptionHelpOpen, setReceptionHelpOpen] = useState(false);
@@ -3678,11 +3676,13 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
     }
     const manage: MenuAction[] = [];
     const linen: MenuAction[] = [];
+    const locations: MenuAction[] = [];
     if ((menuHasHk || menuHasFnb) && !isMaintenance) {
       linen.push({ key: "linen-list", icon: List, label: "Linen List", onClick: () => setTemplateOpen(true) });
     }
     if (menuIsAdmin && !isMaintenance) {
-      manage.push({ key: "locations", icon: Hash, label: "Locations", onClick: () => setLocationsOpen(true) });
+      locations.push({ key: "manage-rooms", icon: Hash, label: "Rooms", onClick: () => setManageRoomsOpen(true) });
+      locations.push({ key: "hotel-areas", icon: MapPin, label: "Hotel areas", onClick: () => setMaintenanceAreasOpen(true) });
       linen.push({
         key: "delivery",
         icon: Truck,
@@ -3727,6 +3727,7 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
       { id: "actions", title: "Actions", items: actions },
       { id: "utilities", title: "Utilities", items: utilities },
       { id: "linen", title: "Linen", items: linen },
+      { id: "locations", title: "Locations", items: locations },
       { id: "manage", title: "Manage", items: manage },
       { id: "account", title: "Account", items: account },
       { id: "appearance", title: "Appearance", items: appearance },
@@ -4648,15 +4649,6 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
   markMaintenanceDone={markMaintenanceDone}
   deleteMaintenanceRequest={deleteMaintenanceRequest}
   setMaintenancePhotoPaths={setMaintenancePhotoPaths}
-/>
-
-<LocationsDialog
-  open={locationsOpen}
-  onOpenChange={setLocationsOpen}
-  roomCount={rooms.length}
-  areaCount={maintenanceAreas.length}
-  onManageRooms={() => setManageRoomsOpen(true)}
-  onManageAreas={() => setMaintenanceAreasOpen(true)}
 />
 
 <MaintenanceAreasSheet
