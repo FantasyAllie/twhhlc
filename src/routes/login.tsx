@@ -23,7 +23,7 @@ export const Route = createFileRoute("/login")({
   errorComponent: ({ error, reset }) => (
     <div className="min-h-screen flex items-center justify-center p-6 text-sm text-muted-foreground">
       <div className="max-w-sm text-center">
-        <p className="mb-4">{error.message}</p>
+        <p className="mb-4">{error instanceof Error ? error.message : String(error)}</p>
         <Button onClick={reset} size="sm">Try again</Button>
       </div>
     </div>
