@@ -32,7 +32,7 @@ const rowStyle = (item: TemplateItem, theme: string | undefined): React.CSSPrope
 const textStyle = (item: TemplateItem, theme: string | undefined) =>
   item.color ? { color: theme === "dark" ? "#f8fafc" : "#0f172a" } : undefined;
 
-function CountRow({
+export function CountRow({
   item,
   theme,
   count,

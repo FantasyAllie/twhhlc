@@ -1,4 +1,5 @@
 import React, { useEffect, useMemo, useRef, useState } from "react";
+import { CountRow } from "@/components/linen/inventory-dialog";
 import { Loader2 } from "lucide-react";
 import { usePullToRefresh } from "@/hooks/use-touch-gestures";
 import { createFileRoute, useNavigate, Link } from "@tanstack/react-router";
@@ -4818,57 +4819,45 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
           No F&amp;B linen items yet. Add some from the Linen List (F&amp;B tab).
        </p>
      ) : (
-       <ul className="divide-y border rounded-xl bg-muted/30">
-          {templateFnbList.map((item) => {
-           const value = fnbCountByItem.get(item.id) ?? 0;
-           const swatch = item.color ? COLOR_SWATCHES[item.color] : null;
-           return (
-             <li key={item.id} className="flex items-center gap-3 p-3">
-               <span
-                 className="h-3 w-3 rounded-full border-2 shrink-0"
-                 style={{
-                   backgroundColor: swatch
-                     ? theme === "dark"
-                       ? swatch.darkBg
-                       : swatch.bg
-                     : "transparent",
-                   borderColor: swatch ? swatch.border : "hsl(var(--border))",
-                 }}
-                 aria-hidden
-               />
-               <span className="flex-1 min-w-0 break-words text-sm font-medium">{item.name}</span>
-               <div className="flex items-center gap-2 shrink-0">
-                 <Button
-                   variant="outline"
-                   size="icon"
-                   className="h-10 w-10"
-                   onClick={() => setFnbCount(item.id, value - 1)}
-                   disabled={value <= 0}
-                   aria-label={`Decrease ${item.name}`}
-                 >
-                   -
-                 </Button>
-                 <Input
-                   type="number"
-                   min={0}
-                   value={value}
-                   onChange={(e) => setFnbCount(item.id, Number(e.target.value))}
-                   className="h-10 w-20 text-center tabular-nums"
-                 />
-                 <Button
-                   variant="outline"
-                   size="icon"
-                   className="h-10 w-10"
-                   onClick={() => setFnbCount(item.id, value + 1)}
-                   aria-label={`Increase ${item.name}`}
-                 >
-                   +
-                 </Button>
-               </div>
-             </li>
-           );
-         })}
+       <>
+       <ul className="space-y-2">
+          {templateFnbList.map((item) => (
+           <CountRow
+             key={item.id}
+             item={item}
+             theme={theme}
+             count={fnbCountByItem.get(item.id) ?? 0}
+             setCount={(v) => void setFnbCount(item.id, Math.max(0, v))}
+           />
+         ))}
        </ul>
+       <div className="mt-[5px] flex items-center justify-between gap-2 border rounded-xl bg-background/60 px-3 py-2 text-sm">
+         <span className="text-muted-foreground">
+           F&amp;B total:{" "}
+           <span className="font-semibold text-foreground tabular-nums">
+             {templateFnbList.reduce((s, t) => s + (fnbCountByItem.get(t.id) ?? 0), 0)}
+           </span>
+         </span>
+         <div className="flex items-center gap-2">
+           <Button
+             variant="ghost"
+             size="sm"
+             className="text-destructive hover:text-destructive"
+             onClick={async () => {
+               if (!confirm("Reset all F&B counts?")) return;
+               for (const t of templateFnbList) {
+                 if ((fnbCountByItem.get(t.id) ?? 0) !== 0) await setFnbCount(t.id, 0);
+               }
+             }}
+           >
+             Reset
+           </Button>
+           <Button variant="outline" size="sm" onClick={() => void openFnbExport()}>
+             Export
+           </Button>
+         </div>
+       </div>
+       </>
      )}
    </section>
  ) : (
