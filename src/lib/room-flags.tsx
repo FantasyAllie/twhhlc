@@ -41,7 +41,7 @@ export const BUILTIN_FLAGS: { key: BuiltinFlagKey; label: string; icon: string; 
 
 export type FlagSettingRow = {
   id: string; key: string; label: string; icon: string; color: string;
-  hidden: boolean; is_custom: boolean; sort_order: number;
+  hidden: boolean; is_custom: boolean; sort_order: number; removed?: boolean;
 };
 
 export type FlagDef = {
@@ -57,7 +57,7 @@ export const useFlagSettingsQuery = () =>
     queryFn: async (): Promise<FlagSettingRow[]> => {
       const { data, error } = await supabase
         .from("room_flag_settings" as never)
-        .select("id,key,label,icon,color,hidden,is_custom,sort_order");
+        .select("id,key,label,icon,color,hidden,is_custom,sort_order,removed");
       if (error) throw error;
       return (data ?? []) as FlagSettingRow[];
     },
@@ -77,7 +77,7 @@ export const useCustomFlagsQuery = () =>
 
 export function mergeFlagDefs(rows: FlagSettingRow[]): FlagDef[] {
   const byKey = new Map(rows.map((r) => [r.key, r]));
-  const out: FlagDef[] = BUILTIN_FLAGS.map((b, i) => {
+  const out: FlagDef[] = BUILTIN_FLAGS.filter((b) => !byKey.get(b.key)?.removed).map((b, i) => {
     const r = byKey.get(b.key);
     return {
       key: b.key,

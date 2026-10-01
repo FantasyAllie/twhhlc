@@ -48,7 +48,14 @@ export function RoomFlagsSheet({ open, onOpenChange }: { open: boolean; onOpenCh
     setEditing(key);
   };
   const remove = async (d: FlagDef) => {
-    if (!d.custom || !confirm(`Remove "${d.label}"? It will be cleared from every room.`)) return;
+    if (!confirm(`Remove "${d.label}"? It will be cleared from every room.`)) return;
+    if (!d.custom) {
+      const idx = all.findIndex((x) => x.key === d.key);
+      await save([{ ...toRow(d, idx), removed: true } as ReturnType<typeof toRow>]);
+      await supabase.from("rooms").update({ [d.key]: false } as never).eq(d.key as never, true as never);
+      await qc.invalidateQueries({ queryKey: ["rooms"] });
+      return;
+    }
     await supabase.from("room_custom_flags" as never).delete().eq("flag_key", d.key);
     await supabase.from("room_flag_settings" as never).delete().eq("key", d.key);
     await qc.invalidateQueries({ queryKey: ["room_flag_settings"] });
@@ -61,8 +68,8 @@ export function RoomFlagsSheet({ open, onOpenChange }: { open: boolean; onOpenCh
         <SheetHeader className="text-left">
           <SheetTitle>Guest &amp; room info</SheetTitle>
           <SheetDescription>
-            Rename, reorder, hide or restyle the toggles reception and housekeeping use. Built-in toggles keep
-            their special behaviour; your own toggles show a badge on the room and clear on Reset all.
+            Rename, reorder, hide or restyle the toggles reception and housekeeping use. Add, remove, rename,
+            reorder, hide or restyle any toggle.
           </SheetDescription>
         </SheetHeader>
 
@@ -88,7 +95,6 @@ export function RoomFlagsSheet({ open, onOpenChange }: { open: boolean; onOpenCh
                   <FlagIcon def={d} className={cn("h-5 w-5 shrink-0", col.text)} />
                   <span className="flex-1 min-w-0 text-sm font-medium truncate">
                     {d.label}
-                    {!d.custom && <span className="ml-2 text-[10px] uppercase tracking-wide text-muted-foreground">Built-in</span>}
                   </span>
                   <Button size="icon" variant="ghost" className="h-8 w-8" aria-label="Edit" onClick={() => setEditing(isEditing ? null : d.key)}>
                     <Pencil className="h-4 w-4" />
@@ -102,7 +108,7 @@ export function RoomFlagsSheet({ open, onOpenChange }: { open: boolean; onOpenCh
                   <Button size="icon" variant="ghost" className="h-8 w-8" aria-label="Move down" disabled={idx === all.length - 1} onClick={() => void move(idx, 1)}>
                     <ArrowDown className="h-4 w-4" />
                   </Button>
-                  {d.custom && (
+                  {(
                     <Button size="icon" variant="ghost" className="h-8 w-8 hover:text-destructive" aria-label="Remove" onClick={() => void remove(d)}>
                       <Trash2 className="h-4 w-4" />
                     </Button>
