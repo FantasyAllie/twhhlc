@@ -3628,14 +3628,14 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
     }
     // Settings menu content is uniform across screen sizes. Larger screens also
     // surface End of shift / Departments on the home header, but they stay here too.
-    if ((realIsAdmin || (realIsManager && hasHousekeeperRole)) && !isReception && !menuIsFnbOnly) {
+    if ((realIsAdmin || (realIsManager && hasHousekeeperRole)) && !isReception && !menuIsFnbOnly && isMobile) {
       actions.push({
         key: "end-of-shift",
         icon: ClipboardList,
         label: "Reports",
         onClick: () => void openReports(),
       });
-    } else if (isMaintenance) {
+    } else if (isMaintenance && isMobile) {
       actions.push({
         key: "end-of-shift",
         icon: ClipboardList,
@@ -3700,7 +3700,6 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
         manage.push({ key: "history", icon: History, label: "History", onClick: () => setHistorySheetOpen(true) });
       }
       manage.push({ key: "room-flags", icon: Flag, label: "Guest & room info", onClick: () => setRoomFlagsSheetOpen(true) });
-      manage.push({ key: "bulk", icon: ConciergeBell, label: "Quick Room Setup", onClick: () => setQuickReceptionOpen(true) });
     }
     if ((realIsAdmin || (realIsManager && hasHousekeeperRole)) && !isMaintenance) {
       linen.push({ key: "linen-days", icon: List, label: "Linen delivery days", onClick: () => setLinenDeliveryOpen(true) });
