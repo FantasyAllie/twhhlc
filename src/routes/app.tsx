@@ -3681,7 +3681,6 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
     }
     if (menuIsAdmin && !isMaintenance) {
       locations.push({ key: "manage-rooms", icon: Hash, label: "Rooms", onClick: () => setManageRoomsOpen(true) });
-      locations.push({ key: "room-flags", icon: Flag, label: "Guest & room info", onClick: () => setRoomFlagsSheetOpen(true) });
       locations.push({ key: "hotel-areas", icon: MapPin, label: "Hotel areas", onClick: () => setMaintenanceAreasOpen(true) });
       linen.push({
         key: "delivery",
@@ -3696,6 +3695,7 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
       if (!isReception) {
         manage.push({ key: "history", icon: History, label: "History", onClick: () => setHistorySheetOpen(true) });
       }
+      manage.push({ key: "room-flags", icon: Flag, label: "Guest & room info", onClick: () => setRoomFlagsSheetOpen(true) });
       manage.push({ key: "bulk", icon: ConciergeBell, label: "Quick Room Setup", onClick: () => setQuickReceptionOpen(true) });
     }
     if ((realIsAdmin || (realIsManager && hasHousekeeperRole)) && !isMaintenance) {
