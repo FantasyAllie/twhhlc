@@ -3775,8 +3775,9 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
         onClick: () => { setMessagesInitial({}); setMessagesSheetOpen(true); },
       });
     }
-    if (menuIsAdmin) {
-      utilities.push({ key: "leaderboard", icon: Trophy, label: "Leaderboard", onClick: () => setLeaderboardOpen(true) });
+    const developer: MenuAction[] = [];
+    if (realIsDeveloper) {
+      developer.push({ key: "leaderboard", icon: Trophy, label: "Leaderboard", onClick: () => setLeaderboardOpen(true) });
     }
     const linen: MenuAction[] = [];
     const locations: MenuAction[] = [];
@@ -3833,6 +3834,7 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
       { id: "locations", title: "Locations", items: locations },
       { id: "account", title: "Account", items: account },
       { id: "appearance", title: "Appearance", items: appearance },
+      { id: "developer", title: "Developer", items: developer },
     ].filter((g) => g.items.length > 0);
   })();
 
