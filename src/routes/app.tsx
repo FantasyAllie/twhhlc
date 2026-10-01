@@ -1951,9 +1951,35 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
   };
 
 
+ // Collapse the inline room panel with an animation, then run `done`.
+ const collapseRoomSlot = (done: () => void) => {
+    const el = roomSlotEl;
+    if (isReception || !el || !el.firstElementChild || typeof el.animate !== "function" ||
+        window.matchMedia("(prefers-reduced-motion: reduce)").matches) {
+      done();
+      return;
+    }
+    const h = el.getBoundingClientRect().height;
+    el.style.overflow = "hidden";
+    const anim = el.animate(
+      [
+        { height: `${h}px`, opacity: 1, transform: "translateY(0)" },
+        { height: "0px", opacity: 0, transform: "translateY(-8px)" },
+      ],
+      { duration: 260, easing: "cubic-bezier(0.4, 0, 0.2, 1)", fill: "forwards" },
+    );
+    anim.onfinish = () => {
+      done();
+      requestAnimationFrame(() => {
+        anim.cancel();
+        el.style.overflow = "";
+      });
+    };
+  };
+
  const openOrToggle = (roomNumber: number) => {
     if (openRoom === roomNumber) {
-      setOpenRoom(null);
+      collapseRoomSlot(() => setOpenRoom(null));
       return;
     }
     setOpenRoom(roomNumber);
