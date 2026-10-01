@@ -3677,7 +3677,6 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
         onClick: () => { setMessagesInitial({}); setMessagesSheetOpen(true); },
       });
     }
-    const manage: MenuAction[] = [];
     const linen: MenuAction[] = [];
     const locations: MenuAction[] = [];
     if ((menuHasHk || menuHasFnb) && !isMaintenance) {
@@ -3699,7 +3698,7 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
       if (!isReception) {
         actions.push({ key: "history", icon: History, label: "History", onClick: () => setHistorySheetOpen(true) });
       }
-      manage.push({ key: "room-flags", icon: Flag, label: "Guest & room info", onClick: () => setRoomFlagsSheetOpen(true) });
+      locations.push({ key: "room-flags", icon: Flag, label: "Guest & room info", onClick: () => setRoomFlagsSheetOpen(true) });
     }
     if ((realIsAdmin || (realIsManager && hasHousekeeperRole)) && !isMaintenance) {
       linen.push({ key: "linen-days", icon: CalendarDays, label: "Linen delivery days", onClick: () => setLinenDeliveryOpen(true) });
@@ -3731,7 +3730,6 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
       { id: "utilities", title: "Utilities", items: utilities },
       { id: "linen", title: "Linen", items: linen },
       { id: "locations", title: "Locations", items: locations },
-      { id: "manage", title: "Manage", items: manage },
       { id: "account", title: "Account", items: account },
       { id: "appearance", title: "Appearance", items: appearance },
     ].filter((g) => g.items.length > 0);
