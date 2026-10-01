@@ -12,6 +12,8 @@ type Props = {
   setReceptionSheetRoom: (n: number | null) => void;
   /** When set, the sheet is shown inline in the room view; renders a back button. */
   onBack?: () => void;
+  /** Shown inside the room's slot: hide the title/description visually. */
+  inlineView?: boolean;
   rooms: Room[];
   receptionStatuses: ReceptionItem[];
   receptionBeds: ReceptionItem[];
@@ -44,6 +46,7 @@ export function ReceptionStatusSheet({
   receptionSheetRoom,
   setReceptionSheetRoom,
   onBack,
+  inlineView,
   rooms,
   receptionStatuses,
   receptionBeds,
@@ -116,7 +119,7 @@ export function ReceptionStatusSheet({
        );
        return (
          <>
-           <SheetHeader className={cn("text-left", onBack && "relative pr-12")}>
+           <SheetHeader className={cn("text-left", onBack && "relative pr-12 min-h-9", inlineView && !onBack && "sr-only")}>
              {onBack && (
                <Button
                  type="button"
@@ -129,11 +132,11 @@ export function ReceptionStatusSheet({
                  <ArrowLeft className="h-4 w-4" />
                </Button>
              )}
-             <SheetTitle className="flex items-center gap-2">
+             <SheetTitle className={cn("flex items-center gap-2", inlineView && "sr-only")}>
                 <ConciergeBell className="h-4 w-4" />
                 Status — Room {n}
              </SheetTitle>
-            <SheetDescription>
+            <SheetDescription className={cn(inlineView && "sr-only")}>
               Mark status and bed configuration
             </SheetDescription>
            </SheetHeader>
