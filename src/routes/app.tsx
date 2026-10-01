@@ -589,11 +589,15 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
     },
   });
   const menuCollapsed = (menuPrefsQ.data?.menu_collapsed as Record<string, boolean> | undefined) ?? {};
+  const isMenuCollapsed = (key: string) => {
+    const v = menuCollapsed[key];
+    return v === undefined ? key !== "account" : v;
+  };
   const toggleMenuSection = async (key: string) => {
     if (!authUser?.id) return;
     const currentPrefs = (menuPrefsQ.data ?? {}) as Record<string, unknown>;
     const currentCollapsed = (currentPrefs.menu_collapsed as Record<string, boolean> | undefined) ?? {};
-    const nextCollapsed = { ...currentCollapsed, [key]: !currentCollapsed[key] };
+    const nextCollapsed = { ...currentCollapsed, [key]: !(currentCollapsed[key] ?? key !== "account") };
     const nextPrefs = { ...currentPrefs, menu_collapsed: nextCollapsed };
     qc.setQueryData(["profile_preferences", authUser.id], nextPrefs);
     await supabase
@@ -4548,7 +4552,7 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
         title,
         children,
       }: { id: string; title: string; children: React.ReactNode }) => {
-        const collapsed = !!menuCollapsed[id];
+        const collapsed = isMenuCollapsed(id);
         return (
           <div className="space-y-2">
             <button
