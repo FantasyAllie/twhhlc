@@ -3677,12 +3677,13 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
       });
     }
     const manage: MenuAction[] = [];
+    const linen: MenuAction[] = [];
     if ((menuHasHk || menuHasFnb) && !isMaintenance) {
-      manage.push({ key: "linen-list", icon: List, label: "Linen List", onClick: () => setTemplateOpen(true) });
+      linen.push({ key: "linen-list", icon: List, label: "Linen List", onClick: () => setTemplateOpen(true) });
     }
     if (menuIsAdmin && !isMaintenance) {
       manage.push({ key: "locations", icon: Hash, label: "Locations", onClick: () => setLocationsOpen(true) });
-      manage.push({
+      linen.push({
         key: "delivery",
         icon: Truck,
         label: "Inventory",
@@ -3698,7 +3699,7 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
       manage.push({ key: "bulk", icon: ConciergeBell, label: "Quick Room Setup", onClick: () => setQuickReceptionOpen(true) });
     }
     if ((realIsAdmin || (realIsManager && hasHousekeeperRole)) && !isMaintenance) {
-      manage.push({ key: "linen-days", icon: List, label: "Linen delivery days", onClick: () => setLinenDeliveryOpen(true) });
+      linen.push({ key: "linen-days", icon: List, label: "Linen delivery days", onClick: () => setLinenDeliveryOpen(true) });
     }
     const account: MenuAction[] = [];
     // Also exposed as pills on the home header where the screen is wide enough.
@@ -3725,6 +3726,7 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
     return [
       { id: "actions", title: "Actions", items: actions },
       { id: "utilities", title: "Utilities", items: utilities },
+      { id: "linen", title: "Linen", items: linen },
       { id: "manage", title: "Manage", items: manage },
       { id: "account", title: "Account", items: account },
       { id: "appearance", title: "Appearance", items: appearance },
