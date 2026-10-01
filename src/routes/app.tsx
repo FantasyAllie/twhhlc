@@ -1,6 +1,8 @@
 import React, { useEffect, useMemo, useRef, useState } from "react";
 import { CountRow } from "@/components/linen/inventory-dialog";
 import { Loader2 } from "lucide-react";
+import { RoomFlagsContext, mergeFlagDefs, useFlagSettingsQuery, useCustomFlagsQuery, type FlagDef } from "@/lib/room-flags";
+import { RoomFlagsSheet } from "@/components/rooms/room-flags-sheet";
 import { usePullToRefresh } from "@/hooks/use-touch-gestures";
 import { createFileRoute, useNavigate, Link } from "@tanstack/react-router";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
@@ -34,7 +36,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { InventoryDialog, CUPBOARDS, type InventorySection } from "@/components/linen/inventory-dialog";
-import { Minus, Plus, X, Menu, ArrowUp, ArrowDown, Pencil, Check, Trash2, Sun, SunDim, Moon, MoonStar, List, Bed, House, Ban, History, Users, User, LogOut, Hash, ConciergeBell, ClipboardList, Printer, Filter, Wrench, DoorOpen, Footprints, Bell, Eye, EyeOff, HelpCircle, AlertCircle, MessageSquare, PackageSearch, RotateCcw, ChevronDown, Camera, LayoutGrid, Truck, Clock, Dog, Undo2, Inbox, MapPin } from "lucide-react";
+import { Minus, Plus, X, Menu, ArrowUp, ArrowDown, Pencil, Check, Trash2, Sun, SunDim, Moon, MoonStar, List, Bed, House, Ban, History, Users, User, LogOut, Hash, ConciergeBell, ClipboardList, Printer, Filter, Wrench, DoorOpen, Footprints, Bell, Eye, EyeOff, HelpCircle, AlertCircle, MessageSquare, PackageSearch, RotateCcw, ChevronDown, Camera, LayoutGrid, Truck, Clock, Dog, Undo2, Inbox, MapPin, Flag } from "lucide-react";
 import {
   AccountDialog,
   AddConfigDialogs,
@@ -279,6 +281,9 @@ function AppPage() {
       vv?.removeEventListener("resize", scrollFocused);
     };
   }, []);
+  const flagSettingsQ = useFlagSettingsQuery();
+  const customFlagsQ = useCustomFlagsQuery();
+  const [roomFlagsSheetOpen, setRoomFlagsSheetOpen] = useState(false);
   // Realtime: push room status changes to all signed-in clients (esp. reception)
   const [realtimeEpoch, setRealtimeEpoch] = useState(0);
   useEffect(() => {
@@ -301,6 +306,20 @@ function AppPage() {
         { event: "*", schema: "public", table: "rooms" },
         () => {
           qc.invalidateQueries({ queryKey: ["rooms"] });
+        },
+      )
+      .on(
+        "postgres_changes",
+        { event: "*", schema: "public", table: "room_custom_flags" },
+        () => {
+          qc.invalidateQueries({ queryKey: ["room_custom_flags"] });
+        },
+      )
+      .on(
+        "postgres_changes",
+        { event: "*", schema: "public", table: "room_flag_settings" },
+        () => {
+          qc.invalidateQueries({ queryKey: ["room_flag_settings"] });
         },
       )
       .on(
@@ -2017,6 +2036,9 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
     // the day.
     const activeHotelId = currentHotelQ.data?.id;
     if (activeHotelId) {
+      // Custom guest & room info toggles always clear on Reset all.
+      await supabase.from("room_custom_flags" as never).delete().eq("hotel_id", activeHotelId);
+      qc.setQueryData(["room_custom_flags"], []);
       const { error: hErr } = await supabase
         .from("hotels")
         .update({ last_hk_reset_at: nowIso } as never)
@@ -3682,6 +3704,7 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
     }
     if (menuIsAdmin && !isMaintenance) {
       locations.push({ key: "manage-rooms", icon: Hash, label: "Rooms", onClick: () => setManageRoomsOpen(true) });
+      locations.push({ key: "room-flags", icon: Flag, label: "Guest & room info", onClick: () => setRoomFlagsSheetOpen(true) });
       locations.push({ key: "hotel-areas", icon: MapPin, label: "Hotel areas", onClick: () => setMaintenanceAreasOpen(true) });
       linen.push({
         key: "delivery",
@@ -3742,7 +3765,45 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
     { atTop: () => (typeof window === "undefined" ? false : window.scrollY <= 0) },
   );
 
+  const allFlagDefs = mergeFlagDefs(flagSettingsQ.data ?? []);
+  const customFlagRows = customFlagsQ.data ?? [];
+  const roomFlagsCtx = {
+    all: allFlagDefs,
+    flags: allFlagDefs.filter((d) => !d.hidden),
+    isOn: (room: Partial<Room> | undefined, roomNumber: number, def: FlagDef) =>
+      def.custom
+        ? customFlagRows.some((r) => r.room_number === roomNumber && r.flag_key === def.key)
+        : !!(room as Record<string, unknown> | undefined)?.[def.key],
+    toggle: (roomNumber: number, def: FlagDef, value: boolean) => {
+      if (!def.custom) {
+        const fn = {
+          guest_vacated: setRoomGuestVacated,
+          early_check_in: setRoomEarlyCheckIn,
+          late_checkout: setRoomLateCheckout,
+          stayover_out: setRoomStayoverOut,
+          dog_box: setRoomDogBox,
+        }[def.key as "dog_box"];
+        void fn?.(roomNumber, value);
+        return;
+      }
+      qc.setQueryData<typeof customFlagRows>(["room_custom_flags"], (old = []) =>
+        value
+          ? [...old, { id: "tmp-" + def.key + roomNumber, room_number: roomNumber, flag_key: def.key }]
+          : old.filter((r) => !(r.room_number === roomNumber && r.flag_key === def.key)),
+      );
+      void (async () => {
+        const res = value
+          ? await supabase.from("room_custom_flags" as never).upsert({ room_number: roomNumber, flag_key: def.key } as never, { onConflict: "hotel_id,room_number,flag_key" })
+          : await supabase.from("room_custom_flags" as never).delete().eq("room_number", roomNumber).eq("flag_key", def.key);
+        if (res.error) toast.error(res.error.message);
+        qc.invalidateQueries({ queryKey: ["room_custom_flags"] });
+      })();
+    },
+  };
+
   return (
+<RoomFlagsContext.Provider value={roomFlagsCtx}>
+<RoomFlagsSheet open={roomFlagsSheetOpen} onOpenChange={setRoomFlagsSheetOpen} />
 <main
   className="min-h-[100dvh] bg-background"
   style={{ paddingBottom: "max(1.5rem, env(safe-area-inset-bottom))" }}
@@ -5714,6 +5775,6 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
     </DialogContent>
   </Dialog>
  </main>
-
+</RoomFlagsContext.Provider>
  );
 }
