@@ -4,6 +4,16 @@ import { areButtonSoundsEnabled } from "./feedback-prefs";
 
 let ctx: AudioContext | null = null;
 let lastAt = 0;
+let variant = 0;
+
+// Five subtly different key clicks, rotated so repeated taps don't sound identical.
+const VARIANTS = [
+  { freq: 3200, q: 1.2, dur: 0.012, gain: 0.18 },
+  { freq: 2850, q: 1.4, dur: 0.013, gain: 0.17 },
+  { freq: 3550, q: 1.1, dur: 0.011, gain: 0.17 },
+  { freq: 3000, q: 1.6, dur: 0.012, gain: 0.19 },
+  { freq: 3400, q: 1.3, dur: 0.010, gain: 0.18 },
+];
 
 function getCtx(): AudioContext | null {
   if (typeof window === "undefined") return null;
@@ -43,7 +53,9 @@ export function playClick() {
   try {
     // Keyboard-style click: a very short burst of filtered noise.
     const t = audio.currentTime;
-    const len = Math.floor(audio.sampleRate * 0.012);
+    const v = VARIANTS[variant];
+    variant = (variant + 1 + Math.floor(Math.random() * 2)) % VARIANTS.length;
+    const len = Math.floor(audio.sampleRate * v.dur);
     const buf = audio.createBuffer(1, len, audio.sampleRate);
     const data = buf.getChannelData(0);
     for (let i = 0; i < len; i++) {
@@ -53,10 +65,10 @@ export function playClick() {
     src.buffer = buf;
     const bp = audio.createBiquadFilter();
     bp.type = "bandpass";
-    bp.frequency.setValueAtTime(3200, t);
-    bp.Q.setValueAtTime(1.2, t);
+    bp.frequency.setValueAtTime(v.freq, t);
+    bp.Q.setValueAtTime(v.q, t);
     const gain = audio.createGain();
-    gain.gain.setValueAtTime(0.18, t);
+    gain.gain.setValueAtTime(v.gain, t);
     src.connect(bp).connect(gain).connect(audio.destination);
     src.start(t);
     src.stop(t + 0.015);
