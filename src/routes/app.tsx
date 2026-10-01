@@ -1,3 +1,4 @@
+import { createPortal } from "react-dom";
 import React, { useEffect, useMemo, useRef, useState } from "react";
 import { CountRow } from "@/components/linen/inventory-dialog";
 import { Loader2, CalendarDays } from "lucide-react";
@@ -117,6 +118,7 @@ import { Switch } from "@/components/ui/switch";
 import {
   Sheet,
   SheetContent,
+  SheetInlineProvider,
   SheetHeader,
   SheetTitle,
   SheetDescription,
@@ -581,6 +583,16 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
   // Stayover / DND photo state
   const [stayoverPhotosOpen, setStayoverPhotosOpen] = useState(false);
   const [stayoverPhotosRoomFilter, setStayoverPhotosRoomFilter] = useState<number | undefined>(undefined);
+  // Leave the home takeover when its panel is closed from inside.
+  useEffect(() => {
+    if (
+      (homeView === "maintenance" && !maintenanceLogOpen) ||
+      (homeView === "messages" && !messagesSheetOpen) ||
+      (homeView === "lost" && !lostPropertyOpen) ||
+      (homeView === "stayover" && !stayoverPhotosOpen)
+    )
+      setHomeView(null);
+  }, [homeView, maintenanceLogOpen, messagesSheetOpen, lostPropertyOpen, stayoverPhotosOpen]);
   const [pendingDndRoom, setPendingDndRoom] = useState<number | null>(null);
   const dndFileInputRef = useRef<HTMLInputElement | null>(null);
   // Count for the stayover photos bento card.
@@ -5782,4 +5794,18 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
  </main>
 </RoomFlagsContext.Provider>
  );
+}
+
+// Renders a panel in place of the Home screen (via portal) when active.
+function HomeInline({
+  active,
+  target,
+  children,
+}: {
+  active: boolean;
+  target: HTMLElement | null;
+  children: React.ReactNode;
+}) {
+  const content = <SheetInlineProvider inline={active && !!target}>{children}</SheetInlineProvider>;
+  return active && target ? createPortal(content, target) : content;
 }
