@@ -4,14 +4,64 @@ import * as React from "react";
 import * as SheetPrimitive from "@radix-ui/react-dialog";
 import { cva, type VariantProps } from "class-variance-authority";
 import { X } from "lucide-react";
+import { Slot } from "@radix-ui/react-slot";
 
 import { cn } from "@/lib/utils";
 
-const Sheet = SheetPrimitive.Root;
+// Inline mode: when a Sheet is rendered inside <SheetInlineProvider inline>,
+// it renders in-flow (e.g. replacing the Home screen) instead of as an overlay.
+type SheetInlineCtx = { inline: boolean; onClose?: () => void };
+const SheetInlineContext = React.createContext<SheetInlineCtx>({ inline: false });
+// True for descendants of an inline SheetContent (titles must not use Radix Dialog parts).
+const SheetInlineBodyContext = React.createContext(false);
+const SheetInlineProvider = ({
+  inline,
+  children,
+}: {
+  inline: boolean;
+  children: React.ReactNode;
+}) => (
+  <SheetInlineContext.Provider value={{ inline }}>{children}</SheetInlineContext.Provider>
+);
+
+const Sheet = (props: React.ComponentProps<typeof SheetPrimitive.Root>) => {
+  const ctx = React.useContext(SheetInlineContext);
+  if (ctx.inline && !ctx.onClose) {
+    if (!props.open) return null;
+    return (
+      <SheetInlineContext.Provider
+        value={{ inline: true, onClose: () => props.onOpenChange?.(false) }}
+      >
+        {props.children}
+      </SheetInlineContext.Provider>
+    );
+  }
+  return <SheetPrimitive.Root {...props} />;
+};
 
 const SheetTrigger = SheetPrimitive.Trigger;
 
-const SheetClose = SheetPrimitive.Close;
+const SheetClose = React.forwardRef<
+  React.ElementRef<typeof SheetPrimitive.Close>,
+  React.ComponentPropsWithoutRef<typeof SheetPrimitive.Close>
+>(({ asChild, onClick, ...props }, ref) => {
+  const ctx = React.useContext(SheetInlineContext);
+  if (ctx.inline && ctx.onClose) {
+    const Comp: React.ElementType = asChild ? Slot : "button";
+    return (
+      <Comp
+        ref={ref}
+        {...props}
+        onClick={(e: React.MouseEvent<HTMLButtonElement>) => {
+          onClick?.(e);
+          ctx.onClose?.();
+        }}
+      />
+    );
+  }
+  return <SheetPrimitive.Close ref={ref} asChild={asChild} onClick={onClick} {...props} />;
+});
+SheetClose.displayName = "SheetClose";
 
 const SheetPortal = SheetPrimitive.Portal;
 
@@ -72,6 +122,7 @@ const SheetContent = React.forwardRef<
   React.ElementRef<typeof SheetPrimitive.Content>,
   SheetContentProps
 >(({ side = "right", className, children, disableDragDismiss, ...props }, ref) => {
+  const inlineCtx = React.useContext(SheetInlineContext);
   const innerRef = React.useRef<HTMLDivElement | null>(null);
   const closeRef = React.useRef<HTMLButtonElement | null>(null);
   const setRefs = React.useCallback(
@@ -91,6 +142,22 @@ const SheetContent = React.forwardRef<
     () => ({ enabled: isDraggable, contentRef: innerRef, closeRef }),
     [isDraggable],
   );
+
+  if (inlineCtx.inline && inlineCtx.onClose) {
+    return (
+      <div
+        ref={setRefs}
+        className={cn(
+          className,
+          "relative flex flex-col overflow-visible rounded-2xl border bg-background p-4 shadow-elevation-1 sm:p-6",
+        )}
+      >
+        <SheetInlineContext.Provider value={{ inline: false }}>
+          <SheetInlineBodyContext.Provider value={true}>{children}</SheetInlineBodyContext.Provider>
+        </SheetInlineContext.Provider>
+      </div>
+    );
+  }
 
   return (
     <SheetPortal>
@@ -235,29 +302,28 @@ SheetFooter.displayName = "SheetFooter";
 const SheetTitle = React.forwardRef<
   React.ElementRef<typeof SheetPrimitive.Title>,
   React.ComponentPropsWithoutRef<typeof SheetPrimitive.Title>
->(({ className, ...props }, ref) => (
-  <SheetPrimitive.Title
-    ref={ref}
-    className={cn("pr-16 text-lg font-semibold text-foreground", className)}
-    {...props}
-  />
-));
+>(({ className, asChild: _a, ...props }, ref) => {
+  const inlineBody = React.useContext(SheetInlineBodyContext);
+  const cls = cn("text-lg font-semibold text-foreground", !inlineBody && "pr-16", className);
+  if (inlineBody) return <h2 ref={ref} className={cls} {...props} />;
+  return <SheetPrimitive.Title ref={ref} className={cls} {...props} />;
+});
 SheetTitle.displayName = SheetPrimitive.Title.displayName;
 
 const SheetDescription = React.forwardRef<
   React.ElementRef<typeof SheetPrimitive.Description>,
   React.ComponentPropsWithoutRef<typeof SheetPrimitive.Description>
->(({ className, ...props }, ref) => (
-  <SheetPrimitive.Description
-    ref={ref}
-    className={cn("text-sm leading-relaxed text-muted-foreground", className)}
-    {...props}
-  />
-));
+>(({ className, asChild: _a, ...props }, ref) => {
+  const inlineBody = React.useContext(SheetInlineBodyContext);
+  const cls = cn("text-sm leading-relaxed text-muted-foreground", className);
+  if (inlineBody) return <p ref={ref} className={cls} {...props} />;
+  return <SheetPrimitive.Description ref={ref} className={cls} {...props} />;
+});
 SheetDescription.displayName = SheetPrimitive.Description.displayName;
 
 export {
   Sheet,
+  SheetInlineProvider,
   SheetPortal,
   SheetOverlay,
   SheetTrigger,
