@@ -260,8 +260,7 @@ function ReceptionRoomTileBase({
           className="absolute bottom-1.5 right-1.5 h-3 w-3 text-amber-600 dark:text-amber-400"
         />
       )}
-
-
+      </>)}
     </button>
   );
 }
@@ -278,7 +277,9 @@ function HousekeepingRoomTileBase({
   onClick,
   onLongPress,
   done,
-}: BaseProps & { done: boolean }) {
+  openTypeLabel,
+  openBedLabel,
+}: BaseProps & { done: boolean; openTypeLabel?: string | null; openBedLabel?: string | null }) {
   const longPress = useLongPress(onLongPress);
   const flags = resolveRoomStatusFlags(room, statusIds);
   const isStaff = flags.isStaff;
@@ -314,6 +315,20 @@ function HousekeepingRoomTileBase({
       aria-expanded={isOpen}
       aria-label={`Room ${n} ${isStaff ? "staff" : meta.label}`}
     >
+      {isOpen ? (
+        <div className="flex h-full flex-col justify-between animate-in fade-in duration-200">
+          <span className="text-[9px] sm:text-[10px] font-bold uppercase tracking-[0.18em] opacity-60">Room</span>
+          <span className="text-2xl sm:text-3xl font-bold leading-none">{n}</span>
+          <span className="flex flex-col gap-0.5 min-w-0">
+            {openTypeLabel && (
+              <span className="truncate text-[10px] sm:text-xs font-bold uppercase tracking-tight">{openTypeLabel}</span>
+            )}
+            {openBedLabel && (
+              <span className="truncate text-[9px] sm:text-[10px] md:text-xs font-medium opacity-80">Bed: {openBedLabel}</span>
+            )}
+          </span>
+        </div>
+      ) : (<>
       {flags.isDirty && !isStaff && (
         <span
           aria-hidden="true"
@@ -383,8 +398,7 @@ function HousekeepingRoomTileBase({
           className="absolute bottom-1.5 right-1.5 h-3 w-3 text-amber-600 dark:text-amber-400"
         />
       )}
-
-
+      </>)}
     </button>
   );
 }
