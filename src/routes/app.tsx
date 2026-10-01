@@ -4826,6 +4826,90 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
     moveRoom={moveRoom}
   />
 
+ {/* Bento live cards: tap a card to open its panel. */}
+ {(() => {
+   const showStayover = !isReception && !isMaintenance && !isFnb;
+
+   const activeMessageCount = roomMessages.filter(
+     (m) => m.thread === "hk_reception" && !m.done_at && !m.deleted_at && !m.dismissed,
+   ).length;
+   const cards = [
+     {
+       key: "stayover-photos",
+       icon: Camera,
+       label: "Stayover photos",
+       value: `${stayoverPhotoCount} saved`,
+       tone: stayoverPhotoCount > 0 ? ("brass" as const) : ("calm" as const),
+       onClick: () => {
+         setStayoverPhotosRoomFilter(undefined);
+         setStayoverPhotosOpen(true);
+       },
+     },
+     {
+       key: "maintenance",
+       icon: Wrench,
+       label: "Maintenance",
+       value: `${openMaintenanceCount} open`,
+       tone: openMaintenanceCount > 0 ? ("alert" as const) : ("calm" as const),
+       onClick: () => setMaintenanceLogOpen(true),
+     },
+     {
+       key: "messages",
+       icon: MessageSquare,
+       label: "Messages",
+       value: `${activeMessageCount} active`,
+       tone: activeMessageCount > 0 ? ("brass" as const) : ("calm" as const),
+       onClick: () => {
+         setMessagesInitial({});
+         setMessagesSheetOpen(true);
+       },
+     },
+     {
+       key: "lost",
+       icon: PackageSearch,
+       label: "Lost property",
+       value: `${lostPropertyOpenItems.length} open`,
+       tone: lostPropertyOpenItems.length > 0 ? ("brass" as const) : ("calm" as const),
+       onClick: () => setLostPropertyOpen(true),
+     },
+   ].filter((c) => showStayover || c.key !== "stayover-photos");
+   return (
+     <div className={cn("mb-4 grid grid-cols-2 gap-2 md:gap-3", showStayover ? "lg:grid-cols-4" : "lg:grid-cols-3")}>
+       {cards.map((c) => {
+         const Icon = c.icon;
+         return (
+           <button
+             key={c.key}
+             type="button"
+             onClick={c.onClick}
+             className="relative flex items-center gap-3 overflow-hidden rounded-2xl border border-sidebar-border bg-sidebar px-3 py-2.5 text-left shadow-elevation-1 transition-[transform,box-shadow,background-color] duration-150 hover:bg-sidebar-accent active:scale-[0.985] active:shadow-none"
+           >
+             <span
+               className={cn(
+                 "flex h-9 w-9 shrink-0 items-center justify-center rounded-xl",
+                 c.tone === "alert"
+                   ? "bg-amber-500/15 text-amber-400"
+                   : c.tone === "brass"
+                     ? "bg-sidebar-primary/15 text-sidebar-primary"
+                     : "bg-sidebar-accent text-sidebar-foreground/70",
+               )}
+             >
+               <Icon className="h-4 w-4" />
+             </span>
+             <div className="min-w-0">
+               <p className="text-[10px] font-bold uppercase tracking-[0.18em] text-sidebar-foreground/60">
+                 {c.label}
+               </p>
+               <p className="truncate text-sm font-semibold tabular-nums text-sidebar-foreground">
+                 {c.value}
+               </p>
+             </div>
+           </button>
+         );
+       })}
+     </div>
+   );
+ })()}
  {/* Rooms */}
  {isMaintenance ? (
 <MaintenanceDashboard
@@ -4899,89 +4983,6 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
  ) : (
   <section className="space-y-4">
 
- {/* Bento live cards: tap a card to open its panel. */}
- {!isReception && (() => {
-
-   const activeMessageCount = roomMessages.filter(
-     (m) => m.thread === "hk_reception" && !m.done_at && !m.deleted_at && !m.dismissed,
-   ).length;
-   const cards = [
-     {
-       key: "stayover-photos",
-       icon: Camera,
-       label: "Stayover photos",
-       value: `${stayoverPhotoCount} saved`,
-       tone: stayoverPhotoCount > 0 ? ("brass" as const) : ("calm" as const),
-       onClick: () => {
-         setStayoverPhotosRoomFilter(undefined);
-         setStayoverPhotosOpen(true);
-       },
-     },
-     {
-       key: "maintenance",
-       icon: Wrench,
-       label: "Maintenance",
-       value: `${openMaintenanceCount} open`,
-       tone: openMaintenanceCount > 0 ? ("alert" as const) : ("calm" as const),
-       onClick: () => setMaintenanceLogOpen(true),
-     },
-     {
-       key: "messages",
-       icon: MessageSquare,
-       label: "Messages",
-       value: `${activeMessageCount} active`,
-       tone: activeMessageCount > 0 ? ("brass" as const) : ("calm" as const),
-       onClick: () => {
-         setMessagesInitial({});
-         setMessagesSheetOpen(true);
-       },
-     },
-     {
-       key: "lost",
-       icon: PackageSearch,
-       label: "Lost property",
-       value: `${lostPropertyOpenItems.length} open`,
-       tone: lostPropertyOpenItems.length > 0 ? ("brass" as const) : ("calm" as const),
-       onClick: () => setLostPropertyOpen(true),
-     },
-   ];
-   return (
-     <div className="grid grid-cols-2 lg:grid-cols-4 gap-2 md:gap-3">
-       {cards.map((c) => {
-         const Icon = c.icon;
-         return (
-           <button
-             key={c.key}
-             type="button"
-             onClick={c.onClick}
-             className="relative flex items-center gap-3 overflow-hidden rounded-2xl border border-sidebar-border bg-sidebar px-3 py-2.5 text-left shadow-elevation-1 transition-[transform,box-shadow,background-color] duration-150 hover:bg-sidebar-accent active:scale-[0.985] active:shadow-none"
-           >
-             <span
-               className={cn(
-                 "flex h-9 w-9 shrink-0 items-center justify-center rounded-xl",
-                 c.tone === "alert"
-                   ? "bg-amber-500/15 text-amber-400"
-                   : c.tone === "brass"
-                     ? "bg-sidebar-primary/15 text-sidebar-primary"
-                     : "bg-sidebar-accent text-sidebar-foreground/70",
-               )}
-             >
-               <Icon className="h-4 w-4" />
-             </span>
-             <div className="min-w-0">
-               <p className="text-[10px] font-bold uppercase tracking-[0.18em] text-sidebar-foreground/60">
-                 {c.label}
-               </p>
-               <p className="truncate text-sm font-semibold tabular-nums text-sidebar-foreground">
-                 {c.value}
-               </p>
-             </div>
-           </button>
-         );
-       })}
-     </div>
-   );
- })()}
 
  <div className="relative flex items-center justify-between">
  <h2 className="text-sm font-medium text-muted-foreground uppercase tracking-wide">
