@@ -1,7 +1,7 @@
 // Room tiles for the home grid. JSX moved verbatim from src/routes/app.tsx
 // (stage 5 of the staged refactor); colour/label rules live in @/lib/rooms.
 import { memo, useRef } from "react";
-import { AlertCircle, Check, Dog, DoorOpen, Footprints, Wrench } from "lucide-react";
+import { AlertCircle, ArrowLeft, Check, Dog, DoorOpen, Footprints, Wrench } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { playClick } from "@/lib/click-sound";
 import type { Room } from "@/lib/app-types";
@@ -278,7 +278,8 @@ function HousekeepingRoomTileBase({
   done,
   openTypeLabel,
   openBedLabel,
-}: BaseProps & { done: boolean; openTypeLabel?: string | null; openBedLabel?: string | null }) {
+  openBack,
+}: BaseProps & { done: boolean; openTypeLabel?: string | null; openBedLabel?: string | null; openBack?: boolean }) {
   const longPress = useLongPress(onLongPress);
   const flags = resolveRoomStatusFlags(room, statusIds);
   const isStaff = flags.isStaff;

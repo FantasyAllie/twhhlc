@@ -119,7 +119,7 @@ export function ReceptionStatusSheet({
        );
        return (
          <>
-           <SheetHeader className={cn("text-left", onBack && "relative pr-12 min-h-9", inlineView && !onBack && "hidden")}>
+           <SheetHeader className={cn("text-left", onBack && "relative pr-12 min-h-9", inlineView && "hidden")}>
              {onBack && (
                <Button
                  type="button"
@@ -159,7 +159,7 @@ export function ReceptionStatusSheet({
                  )}
                </div>
              )}
-           <div className="mt-4 space-y-4">
+           <div className={cn("space-y-4", !inlineView && "mt-4")}>
              <div className="space-y-2">
                 {(() => {
                   const stayIdLocal = receptionStatuses.find((x) => x.label === "Stayover")?.id ?? null;

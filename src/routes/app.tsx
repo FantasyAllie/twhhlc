@@ -4425,7 +4425,6 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
   <HomeInline active={!isReception && openRoom !== null && receptionSheetRoom === openRoom} target={roomSlotEl}>
   <ReceptionStatusSheet
     inlineView={!isReception && openRoom !== null && receptionSheetRoom === openRoom}
-    onBack={!isReception && openRoom !== null && receptionSheetRoom === openRoom && !statusViaLongPress ? () => setReceptionSheetRoom(null) : undefined}
     receptionSheetRoom={receptionSheetRoom}
     setReceptionSheetRoom={setReceptionSheetRoom}
     rooms={rooms}
@@ -5594,7 +5593,8 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
          hasLinenCount={hasLinenCount}
          isOpen={isOpen}
          hasMessage={hasActiveMessage(n)}
-         onClick={() => openOrToggle(n)}
+         onClick={() => (isOpen && receptionSheetRoom === n && !statusViaLongPress ? setReceptionSheetRoom(null) : openOrToggle(n))}
+         openBack={isOpen && receptionSheetRoom === n && !statusViaLongPress}
          onLongPress={() => { setStatusViaLongPress(true); setOpenRoom(n); setReceptionSheetRoom(n); }}
          done={done}
          openTypeLabel={isOpen ? categoryLabel(roomCategory(n), roomTypes) : null}
