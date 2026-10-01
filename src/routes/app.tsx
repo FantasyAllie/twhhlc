@@ -1439,7 +1439,10 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
     const menuHasHk = menuIsAdmin || hasHousekeeperRole;
     const menuHasMaintenance = menuIsAdmin || hasMaintenanceRole;
     // Lost Property log is only meaningful to Reception + Housekeeping.
-    const menuCanUseLostProperty = menuIsAdmin || hasReceptionRole || hasHousekeeperRole;
+    const menuCanUseLostProperty = true;
+    // Housekeeping & Reception log against rooms; every other department
+    // logs against hotel areas.
+    const logScope: "rooms" | "areas" = isHousekeeper || isReception ? "rooms" : "areas";
     // Reception can resolve entries; Housekeeping views them read-only.
     const canResolveLostProperty = menuIsAdmin || hasReceptionRole;
     const availableThreads: MessagesThread[] = (() => {
@@ -1492,6 +1495,7 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
       roomNumber: number | null,
       message: string,
       photos: File[] = [],
+      areaLabel: string | null = null,
     ) => {
       const senderRole =
         myMessageDepartments.includes("housekeeping") && !myMessageDepartments.includes("reception")
@@ -1503,6 +1507,7 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
         .from("lost_property" as never)
         .insert({
           room_number: roomNumber,
+          area_label: areaLabel,
           message,
           created_by_username: authUser?.username ?? null,
           created_by_role: senderRole,
@@ -3654,7 +3659,7 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
       actions.push({ key: "help", icon: HelpCircle, label: "Help", onClick: () => setReceptionHelpOpen(true) });
     }
     const utilities: MenuAction[] = [];
-    if (!menuIsFnbOnly && !isMaintenance) {
+    {
       utilities.push({
         key: "maintenance-log", icon: Wrench,
         label: "Maintenance Log",
@@ -3662,7 +3667,7 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
         onClick: () => setMaintenanceLogOpen(true),
       });
     }
-    if (menuCanUseLostProperty && !isMaintenance) {
+    {
       utilities.push({ key: "lost-property", icon: PackageSearch, label: "Lost Property", onClick: () => setLostPropertyOpen(true) });
     }
     if ((menuIsAdmin || hasHousekeeperRole || hasReceptionRole) && !isMaintenance) {
@@ -4418,6 +4423,8 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
   currentUsername={authUser?.username ?? null}
   canAdd={menuCanUseLostProperty}
   requireRoom={hasHousekeeperRole && !hasReceptionRole}
+  scope={logScope}
+  areaLabels={maintenanceAreas.map((a) => a.label)}
   roomNumbers={rooms.map((r) => r.room_number).sort((a, b) => a - b)}
   onAdd={logLostProperty}
   onReply={(item) => {
@@ -4652,6 +4659,7 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
   markMessageDone={markMaintenanceMessageDone}
   deleteMessage={deleteRoomMessage}
   maintenanceAreas={maintenanceAreas}
+  scope={logScope}
   hasOpenMaintenance={hasOpenMaintenance}
   openMaintenanceCount={openMaintenanceCount}
   isReception={isReception}

@@ -1,0 +1,1 @@
+ALTER TABLE public.lost_property ADD COLUMN IF NOT EXISTS area_label text;
