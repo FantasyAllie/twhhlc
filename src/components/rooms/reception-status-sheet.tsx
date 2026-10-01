@@ -159,7 +159,7 @@ export function ReceptionStatusSheet({
                  )}
                </div>
              )}
-           <div className={cn("space-y-4", !inlineView && "mt-4")}>
+           <div className={cn("space-y-4", (!inlineView || isCurrentDnd) && "mt-4")}>
              <div className="space-y-2">
                 {(() => {
                   const stayIdLocal = receptionStatuses.find((x) => x.label === "Stayover")?.id ?? null;
