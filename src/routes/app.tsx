@@ -4830,8 +4830,18 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
  {(() => {
    const showStayover = !isReception && !isMaintenance && !isFnb;
 
+   const deptKey = isReception ? "reception" : isFnb ? "fnb" : isMaintenance ? "maintenance" : "hk";
    const activeMessageCount = roomMessages.filter(
-     (m) => m.thread === "hk_reception" && !m.done_at && !m.deleted_at && !m.dismissed,
+     (m) =>
+       String(m.thread ?? "").split("_").includes(deptKey) &&
+       !m.done_at && !m.deleted_at && !m.dismissed,
+   ).length;
+   const roomScoped = !isMaintenance && !isFnb;
+   const scopedMaintenanceCount = maintenanceRequests.filter(
+     (m) => !m.done && (roomScoped ? m.room_number != null : m.room_number == null),
+   ).length;
+   const scopedLostCount = lostPropertyOpenItems.filter((l) =>
+     roomScoped ? l.room_number != null : l.room_number == null,
    ).length;
    const cards = [
      {
@@ -4849,8 +4859,8 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
        key: "maintenance",
        icon: Wrench,
        label: "Maintenance",
-       value: `${openMaintenanceCount} open`,
-       tone: openMaintenanceCount > 0 ? ("alert" as const) : ("calm" as const),
+       value: `${scopedMaintenanceCount} open`,
+       tone: scopedMaintenanceCount > 0 ? ("alert" as const) : ("calm" as const),
        onClick: () => setMaintenanceLogOpen(true),
      },
      {
@@ -4868,8 +4878,8 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
        key: "lost",
        icon: PackageSearch,
        label: "Lost property",
-       value: `${lostPropertyOpenItems.length} open`,
-       tone: lostPropertyOpenItems.length > 0 ? ("brass" as const) : ("calm" as const),
+       value: `${scopedLostCount} open`,
+       tone: scopedLostCount > 0 ? ("brass" as const) : ("calm" as const),
        onClick: () => setLostPropertyOpen(true),
      },
    ].filter((c) => showStayover || c.key !== "stayover-photos");
