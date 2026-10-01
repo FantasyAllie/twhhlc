@@ -68,8 +68,7 @@ export function RoomFlagsSheet({ open, onOpenChange }: { open: boolean; onOpenCh
         <SheetHeader className="text-left">
           <SheetTitle>Guest &amp; room info</SheetTitle>
           <SheetDescription>
-            Rename, reorder, hide or restyle the toggles reception and housekeeping use. Add, remove, rename,
-            reorder, hide or restyle any toggle.
+            Add, remove, rename, reorder, hide or restyle the toggles reception and housekeeping use.
           </SheetDescription>
         </SheetHeader>
 
