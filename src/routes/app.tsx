@@ -4838,7 +4838,7 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
    ).length;
    const roomScoped = !isMaintenance && !isFnb;
    const scopedMaintenanceCount = maintenanceRequests.filter(
-     (m) => !m.done && (roomScoped ? m.room_number != null : m.room_number == null),
+     (m) => !m.done && (isMaintenance || (roomScoped ? m.room_number != null : m.room_number == null)),
    ).length;
    const scopedLostCount = lostPropertyOpenItems.filter((l) =>
      roomScoped ? l.room_number != null : l.room_number == null,
@@ -4882,9 +4882,9 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
        tone: scopedLostCount > 0 ? ("brass" as const) : ("calm" as const),
        onClick: () => setLostPropertyOpen(true),
      },
-   ].filter((c) => showStayover || c.key !== "stayover-photos");
+   ].filter((c) => (showStayover || c.key !== "stayover-photos") && !(isMaintenance && c.key === "lost"));
    return (
-     <div className={cn("mb-4 grid grid-cols-2 gap-2 md:gap-3", showStayover ? "lg:grid-cols-4" : "lg:grid-cols-3")}>
+     <div className={cn("mb-4 grid grid-cols-2 gap-2 md:gap-3", showStayover ? "lg:grid-cols-4" : isMaintenance ? "" : "lg:grid-cols-3")}>
        {cards.map((c) => {
          const Icon = c.icon;
          return (
