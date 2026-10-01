@@ -5583,6 +5583,13 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
          onClick={() => openOrToggle(n)}
          onLongPress={() => setReceptionSheetRoom(n)}
          done={done}
+         openTypeLabel={isOpen ? categoryLabel(roomCategory(n), roomTypes) : null}
+         openBedLabel={isOpen ? (() => {
+           const norm = (s: string) => s.toLowerCase().replace(/[^a-z0-9]/g, "");
+           const cats = parseCats(room?.category).map(norm);
+           const onlyDouble = cats.includes("double") && !cats.includes("superking");
+           return receptionBeds.find((b) => b.id === room?.reception_bed_id)?.label ?? (onlyDouble ? "Double" : null);
+         })() : null}
        />,
      );
    }
@@ -5681,7 +5688,7 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
  <HomeInline active={!isReception && openRoom !== null} target={roomSlotEl}>
  <Sheet open={openRoom !== null} onOpenChange={(o) => { if (!o) { const closing = openRoom; collapseRoomSlot(() => { if (closing !== null) setShowAllLinen(prev => ({ ...prev, [closing]: false })); setOpenRoom(null); setNewMessageText(""); }); } }}>
    <SheetContent side="bottom" className="flex flex-col overflow-hidden rounded-t-2xl p-4 sm:p-6">
-     <SheetHeader className="text-left space-y-0">
+     <SheetHeader className={cn("text-left space-y-0", !isReception && "sr-only")}>
        <SheetTitle>Room {openRoom} — {categoryLabel(roomCategory(openRoom ?? 0), roomTypes)}</SheetTitle>
       {(() => {
         if (openRoom === null) return null;
@@ -5698,7 +5705,7 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
         );
       })()}
      </SheetHeader>
-     <div className="flex flex-col flex-1 min-h-0 mt-3">
+     <div className={cn("flex flex-col flex-1 min-h-0", isReception && "mt-3")}>
        {openRoom !== null && renderRoomPanel(openRoom)}
      </div>
    </SheetContent>
