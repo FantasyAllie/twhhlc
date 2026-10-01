@@ -260,7 +260,6 @@ function ReceptionRoomTileBase({
           className="absolute bottom-1.5 right-1.5 h-3 w-3 text-amber-600 dark:text-amber-400"
         />
       )}
-      </>)}
     </button>
   );
 }
