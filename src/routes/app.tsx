@@ -3807,7 +3807,7 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
     paddingRight: "max(1rem, env(safe-area-inset-right))",
   }}
 >
- <header className="flex items-start sm:items-center justify-between gap-3 flex-wrap rounded-2xl border border-primary/20 bg-sidebar px-4 py-3 sm:px-5 sm:py-4 shadow-elevation-2">
+ <header className="flex items-start justify-between gap-3 flex-wrap rounded-2xl border border-primary/20 bg-sidebar px-4 pt-4 pb-3 sm:px-5 sm:pt-5 sm:pb-4 shadow-elevation-2">
           <div className="min-w-0 flex-1">
             <p className="text-[10px] font-bold uppercase tracking-[0.22em] text-sidebar-primary">
               The Hotel <span className="text-sidebar-foreground">Hub</span>
