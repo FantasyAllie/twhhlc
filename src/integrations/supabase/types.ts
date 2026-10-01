@@ -788,6 +788,7 @@ export type Database = {
           is_custom: boolean
           key: string
           label: string
+          removed: boolean
           sort_order: number
         }
         Insert: {
@@ -800,6 +801,7 @@ export type Database = {
           is_custom?: boolean
           key: string
           label: string
+          removed?: boolean
           sort_order?: number
         }
         Update: {
@@ -812,6 +814,7 @@ export type Database = {
           is_custom?: boolean
           key?: string
           label?: string
+          removed?: boolean
           sort_order?: number
         }
         Relationships: [

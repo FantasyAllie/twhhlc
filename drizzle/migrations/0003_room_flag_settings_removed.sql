@@ -1,0 +1,1 @@
+ALTER TABLE public.room_flag_settings ADD COLUMN removed boolean NOT NULL DEFAULT false;
