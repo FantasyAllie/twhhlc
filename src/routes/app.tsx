@@ -4975,7 +4975,13 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
        tone: scopedLostCount > 0 ? ("brass" as const) : ("calm" as const),
        onClick: () => toggleHomeView("lost", setLostPropertyOpen),
      },
-   ].filter((c) => (showStayover || c.key !== "stayover-photos") && !(isMaintenance && (c.key === "lost" || c.key === "maintenance")));
+   ].filter((c) => (showStayover || c.key !== "stayover-photos") && !(isMaintenance && (c.key === "lost" || c.key === "maintenance")))
+    .map((c) => {
+      const activeKey = homeView === "stayover" ? "stayover-photos" : homeView;
+      return c.key === activeKey
+        ? { ...c, icon: House, label: "Home", value: "Return home", tone: "calm" as const }
+        : c;
+    });
    return (
      <div className={cn("mb-4 grid grid-cols-2 gap-2 md:gap-3", showStayover ? "lg:grid-cols-4" : isMaintenance ? "grid-cols-1" : "lg:grid-cols-3")}>
        {cards.map((c) => {
