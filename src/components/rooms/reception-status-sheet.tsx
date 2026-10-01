@@ -141,7 +141,7 @@ export function ReceptionStatusSheet({
             </SheetDescription>
            </SheetHeader>
               {isCurrentDnd && (
-               <div className="mt-2 flex gap-2">
+               <div className={cn("flex gap-2", !inlineView && "mt-2")}>
                  {isCurrentDnd && (
                    <Button
                      type="button"
