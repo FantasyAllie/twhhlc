@@ -41,22 +41,25 @@ export function playClick() {
   }
 
   try {
-    // Taptic-style tap: a tiny, soft low "tock" rather than a bright click.
+    // Keyboard-style click: a very short burst of filtered noise.
     const t = audio.currentTime;
-    const osc = audio.createOscillator();
+    const len = Math.floor(audio.sampleRate * 0.012);
+    const buf = audio.createBuffer(1, len, audio.sampleRate);
+    const data = buf.getChannelData(0);
+    for (let i = 0; i < len; i++) {
+      data[i] = (Math.random() * 2 - 1) * Math.pow(1 - i / len, 3);
+    }
+    const src = audio.createBufferSource();
+    src.buffer = buf;
+    const bp = audio.createBiquadFilter();
+    bp.type = "bandpass";
+    bp.frequency.setValueAtTime(3200, t);
+    bp.Q.setValueAtTime(1.2, t);
     const gain = audio.createGain();
-    const lp = audio.createBiquadFilter();
-    lp.type = "lowpass";
-    lp.frequency.setValueAtTime(900, t);
-    osc.type = "sine";
-    osc.frequency.setValueAtTime(220, t);
-    osc.frequency.exponentialRampToValueAtTime(90, t + 0.018);
-    gain.gain.setValueAtTime(0.0001, t);
-    gain.gain.exponentialRampToValueAtTime(0.12, t + 0.002);
-    gain.gain.exponentialRampToValueAtTime(0.0001, t + 0.025);
-    osc.connect(lp).connect(gain).connect(audio.destination);
-    osc.start(t);
-    osc.stop(t + 0.035);
+    gain.gain.setValueAtTime(0.18, t);
+    src.connect(bp).connect(gain).connect(audio.destination);
+    src.start(t);
+    src.stop(t + 0.015);
   } catch {
     // Ignore — audio feedback is non-essential.
   }
