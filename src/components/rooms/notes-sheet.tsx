@@ -5,6 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Switch } from "@/components/ui/switch";
 import { cn } from "@/lib/utils";
+import { FlagIcon, FLAG_COLORS, useRoomFlags } from "@/lib/room-flags";
 import { RoomInfoTiles, type RoomInfoTab } from "@/components/rooms/room-info-tiles";
 import type { LostPropertyLite, MaintenanceRequest, Room, RoomMessage } from "@/lib/app-types";
 import type { MessagesThread } from "@/components/messages-sheet";
@@ -76,6 +77,7 @@ export function RoomNotesSheet({
   openMaintenance = [],
   openLostProperty = [],
 }: Props) {
+  const roomFlags = useRoomFlags();
   const [newLogOpen, setNewLogOpen] = useState(false);
   const [infoTab, setInfoTab] = useState<RoomInfoTab | null>(null);
   return (
