@@ -1951,9 +1951,35 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
   };
 
 
+ // Collapse the inline room panel with an animation, then run `done`.
+ const collapseRoomSlot = (done: () => void) => {
+    const el = roomSlotEl;
+    if (isReception || !el || !el.firstElementChild || typeof el.animate !== "function" ||
+        window.matchMedia("(prefers-reduced-motion: reduce)").matches) {
+      done();
+      return;
+    }
+    const h = el.getBoundingClientRect().height;
+    el.style.overflow = "hidden";
+    const anim = el.animate(
+      [
+        { height: `${h}px`, opacity: 1, transform: "translateY(0)" },
+        { height: "0px", opacity: 0, transform: "translateY(-8px)" },
+      ],
+      { duration: 260, easing: "cubic-bezier(0.4, 0, 0.2, 1)", fill: "forwards" },
+    );
+    anim.onfinish = () => {
+      done();
+      requestAnimationFrame(() => {
+        anim.cancel();
+        el.style.overflow = "";
+      });
+    };
+  };
+
  const openOrToggle = (roomNumber: number) => {
     if (openRoom === roomNumber) {
-      setOpenRoom(null);
+      collapseRoomSlot(() => setOpenRoom(null));
       return;
     }
     setOpenRoom(roomNumber);
@@ -5639,7 +5665,7 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
  </div>
 
  <HomeInline active={!isReception && openRoom !== null} target={roomSlotEl}>
- <Sheet open={openRoom !== null} onOpenChange={(o) => { if (!o) { if (openRoom !== null) setShowAllLinen(prev => ({ ...prev, [openRoom]: false })); setOpenRoom(null); setNewMessageText(""); } }}>
+ <Sheet open={openRoom !== null} onOpenChange={(o) => { if (!o) { const closing = openRoom; collapseRoomSlot(() => { if (closing !== null) setShowAllLinen(prev => ({ ...prev, [closing]: false })); setOpenRoom(null); setNewMessageText(""); }); } }}>
    <SheetContent side="bottom" className="flex flex-col overflow-hidden rounded-t-2xl p-4 sm:p-6">
      <SheetHeader className="text-left space-y-0">
        <SheetTitle>Room {openRoom} — {categoryLabel(roomCategory(openRoom ?? 0), roomTypes)}</SheetTitle>
