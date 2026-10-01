@@ -3812,28 +3812,7 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
             <p className="text-[10px] font-bold uppercase tracking-[0.22em] text-sidebar-primary">
               The Hotel <span className="text-sidebar-foreground">Hub</span>
             </p>
-            {isReception ? (
-              <>
-                <h1 className="mt-1 text-xl sm:text-2xl font-semibold tracking-tight text-sidebar-foreground">{hotelName}</h1>
-                <p className="text-xs text-sidebar-foreground/60 mt-1 whitespace-pre-line">
-                  An auto-updating room tracker for Housekeeping. Use the help button if you're stuck
-                </p>
-              </>
-            ) : isFnb ? (
-              <>
-                <h1 className="mt-1 text-xl sm:text-2xl font-semibold tracking-tight text-sidebar-foreground">{hotelName}</h1>
-                <p className="text-xs text-sidebar-foreground/60 mt-1">
-                  Shared workspace for F&B staff
-                </p>
-              </>
-            ) : (
-              <>
-                <h1 className="mt-1 text-xl sm:text-2xl font-semibold tracking-tight text-sidebar-foreground">{hotelName}</h1>
-                <p className="text-xs text-sidebar-foreground/60 mt-1">
-                  Shared workspace for Housekeeping staff
-                </p>
-              </>
-            )}
+            <h1 className="mt-1 text-xl sm:text-2xl font-semibold tracking-tight text-sidebar-foreground">{hotelName}</h1>
           </div>
  <div className="flex items-center gap-2 [&_button]:border-sidebar-border [&_button]:bg-transparent [&_button]:text-sidebar-foreground [&_button:hover]:bg-sidebar-accent [&_button:hover]:text-sidebar-foreground">
     {!isMobile && ((isAdmin && !isReception) || isMaintenance) && (
@@ -3938,6 +3917,13 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
     </DropdownMenu>
   )}
  </div>
+            <p className="basis-full -mt-2 text-xs text-sidebar-foreground/60 whitespace-pre-line">
+              {isReception
+                ? "An auto-updating room tracker for Housekeeping. Use the help button if you're stuck"
+                : isFnb
+                ? "Shared workspace for F&B staff"
+                : "Shared workspace for Housekeeping staff"}
+            </p>
             {canViewAs && !isMobile && (
               <div className="basis-full w-full flex rounded-full border p-1 bg-background items-center">
                 {availableViews.map((r) => {
