@@ -561,6 +561,23 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
       progressTapTimerRef.current = null;
     }, 2000);
   };
+  // Home-screen takeover: a shortcut card can swap the department home for a panel.
+  type HomeView = "maintenance" | "messages" | "lost" | "stayover";
+  const [homeView, setHomeView] = useState<HomeView | null>(null);
+  const [homeSlotEl, setHomeSlotEl] = useState<HTMLDivElement | null>(null);
+  const toggleHomeView = (view: HomeView, setOpen: (o: boolean) => void) => {
+    if (homeView === view) {
+      setHomeView(null);
+      setOpen(false);
+      return;
+    }
+    if (homeView === "maintenance") setMaintenanceLogOpen(false);
+    if (homeView === "messages") setMessagesSheetOpen(false);
+    if (homeView === "lost") setLostPropertyOpen(false);
+    if (homeView === "stayover") setStayoverPhotosOpen(false);
+    setHomeView(view);
+    setOpen(true);
+  };
   // Stayover / DND photo state
   const [stayoverPhotosOpen, setStayoverPhotosOpen] = useState(false);
   const [stayoverPhotosRoomFilter, setStayoverPhotosRoomFilter] = useState<number | undefined>(undefined);
@@ -4366,6 +4383,7 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
     />
   );
 })()}
+<HomeInline active={homeView === "messages"} target={homeSlotEl}>
 <MessagesSheet
   open={messagesSheetOpen}
   onOpenChange={setMessagesSheetOpen}
@@ -4410,6 +4428,8 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
     return logLostProperty(roomNumber, message);
   }}
 />
+</HomeInline>
+<HomeInline active={homeView === "lost"} target={homeSlotEl}>
 <LostPropertySheet
   open={lostPropertyOpen}
   onOpenChange={(o) => {
@@ -4441,6 +4461,7 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
     setMessagesSheetOpen(true);
   }}
 />
+</HomeInline>
 <BroomBurst
   active={broomBurstActive}
   onDone={() => setBroomBurstActive(false)}
@@ -4453,6 +4474,7 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
   active={gloomActive}
   onDone={() => setGloomActive(false)}
 />
+<HomeInline active={homeView === "stayover"} target={homeSlotEl}>
 <StayoverPhotosSheet
   open={stayoverPhotosOpen}
   onOpenChange={(o) => {
@@ -4466,6 +4488,7 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
       : "Stayover Photos"
   }
 />
+</HomeInline>
 <input
   ref={dndFileInputRef}
   type="file"
@@ -4650,6 +4673,7 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
   </SheetContent>
 </Sheet>
 
+<HomeInline active={homeView === "maintenance"} target={homeSlotEl}>
 <MaintenanceLogSheet
   open={maintenanceLogOpen}
   onOpenChange={setMaintenanceLogOpen}
@@ -4683,6 +4707,7 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
   deleteMaintenanceRequest={deleteMaintenanceRequest}
   setMaintenancePhotoPaths={setMaintenancePhotoPaths}
 />
+</HomeInline>
 
 <MaintenanceAreasSheet
   open={maintenanceAreasOpen}
@@ -4850,10 +4875,7 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
        label: "Stayover photos",
        value: `${stayoverPhotoCount} saved`,
        tone: stayoverPhotoCount > 0 ? ("brass" as const) : ("calm" as const),
-       onClick: () => {
-         setStayoverPhotosRoomFilter(undefined);
-         setStayoverPhotosOpen(true);
-       },
+       onClick: () => toggleHomeView("stayover", (o) => { setStayoverPhotosRoomFilter(undefined); setStayoverPhotosOpen(o); }),
      },
      {
        key: "maintenance",
@@ -4861,7 +4883,7 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
        label: "Maintenance",
        value: `${scopedMaintenanceCount} open`,
        tone: scopedMaintenanceCount > 0 ? ("alert" as const) : ("calm" as const),
-       onClick: () => setMaintenanceLogOpen(true),
+       onClick: () => toggleHomeView("maintenance", setMaintenanceLogOpen),
      },
      {
        key: "messages",
@@ -4869,10 +4891,7 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
        label: "Messages",
        value: `${activeMessageCount} active`,
        tone: activeMessageCount > 0 ? ("brass" as const) : ("calm" as const),
-       onClick: () => {
-         setMessagesInitial({});
-         setMessagesSheetOpen(true);
-       },
+       onClick: () => toggleHomeView("messages", (o) => { if (o) setMessagesInitial({}); setMessagesSheetOpen(o); }),
      },
      {
        key: "lost",
@@ -4880,11 +4899,11 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
        label: "Lost property",
        value: `${scopedLostCount} open`,
        tone: scopedLostCount > 0 ? ("brass" as const) : ("calm" as const),
-       onClick: () => setLostPropertyOpen(true),
+       onClick: () => toggleHomeView("lost", setLostPropertyOpen),
      },
-   ].filter((c) => (showStayover || c.key !== "stayover-photos") && !(isMaintenance && c.key === "lost"));
+   ].filter((c) => (showStayover || c.key !== "stayover-photos") && !(isMaintenance && (c.key === "lost" || c.key === "maintenance")));
    return (
-     <div className={cn("mb-4 grid grid-cols-2 gap-2 md:gap-3", showStayover ? "lg:grid-cols-4" : isMaintenance ? "" : "lg:grid-cols-3")}>
+     <div className={cn("mb-4 grid grid-cols-2 gap-2 md:gap-3", showStayover ? "lg:grid-cols-4" : isMaintenance ? "grid-cols-1" : "lg:grid-cols-3")}>
        {cards.map((c) => {
          const Icon = c.icon;
          return (
@@ -4921,6 +4940,8 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
    );
  })()}
  {/* Rooms */}
+ {homeView && <div ref={setHomeSlotEl} className="mb-4" />}
+ <div className={homeView ? "hidden" : undefined}>
  {isMaintenance ? (
 <MaintenanceDashboard
      maintenanceRequests={maintenanceRequests}
@@ -5553,6 +5574,7 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
             )}
  </section>
  )}
+ </div>
   {!isReception && (
     <div className="lg:hidden h-[calc(env(safe-area-inset-bottom,0px)+2.25rem)]" aria-hidden />
   )}
