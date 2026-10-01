@@ -3697,7 +3697,7 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
         },
       });
       if (!isReception) {
-        manage.push({ key: "history", icon: History, label: "History", onClick: () => setHistorySheetOpen(true) });
+        actions.push({ key: "history", icon: History, label: "History", onClick: () => setHistorySheetOpen(true) });
       }
       manage.push({ key: "room-flags", icon: Flag, label: "Guest & room info", onClick: () => setRoomFlagsSheetOpen(true) });
     }
@@ -3707,7 +3707,7 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
     const account: MenuAction[] = [];
     // Also exposed as pills on the home header where the screen is wide enough.
     if (canViewAs && isMobile) {
-      account.push({ key: "departments", icon: LayoutGrid, label: "Departments", onClick: () => setRolePickerSheetOpen(true) });
+      actions.push({ key: "departments", icon: LayoutGrid, label: "Departments", onClick: () => setRolePickerSheetOpen(true) });
     }
     if (availableHotels.length > 1 || realIsAdmin) {
       account.push({ key: "switch-hotel", icon: RotateCcw, label: "Switch hotel", onClick: () => setHotelSwitcherOpen(true) });
