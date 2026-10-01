@@ -5703,7 +5703,7 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
  <div className={cn(!isReception && openRoom !== null && receptionSheetRoom === openRoom && "hidden")}>
  <Sheet open={openRoom !== null} onOpenChange={(o) => { if (!o) { const closing = openRoom; collapseRoomSlot(() => { if (closing !== null) setShowAllLinen(prev => ({ ...prev, [closing]: false })); setOpenRoom(null); setNewMessageText(""); }); } }}>
    <SheetContent side="bottom" className={cn("flex flex-col overflow-hidden rounded-t-2xl p-4 sm:p-6")}>
-     <SheetHeader className={cn("text-left space-y-0", !isReception && "sr-only !absolute")}>
+     <SheetHeader className={cn("text-left space-y-0", !isReception && "hidden")}>
        <SheetTitle>Room {openRoom} — {categoryLabel(roomCategory(openRoom ?? 0), roomTypes)}</SheetTitle>
       {(() => {
         if (openRoom === null) return null;
