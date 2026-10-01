@@ -20,62 +20,59 @@ export function playSparkle() {
   if (now - lastAt < 250) return;
   lastAt = now;
 
+  if (ctx.state === "suspended") void ctx.resume().catch(() => {});
   const t = ctx.currentTime;
   const master = ctx.createGain();
-  master.gain.setValueAtTime(0.35, t);
-  master.gain.exponentialRampToValueAtTime(0.001, t + 1.2);
+  master.gain.setValueAtTime(0.28, t);
   master.connect(ctx.destination);
 
-  // Main bell-like tone with a bright attack
-  const osc = ctx.createOscillator();
-  osc.type = "sine";
-  osc.frequency.setValueAtTime(1760, t);
-  osc.frequency.exponentialRampToValueAtTime(880, t + 0.6);
-  const oscGain = ctx.createGain();
-  oscGain.gain.setValueAtTime(0, t);
-  oscGain.gain.linearRampToValueAtTime(0.7, t + 0.02);
-  oscGain.gain.exponentialRampToValueAtTime(0.001, t + 1.0);
-  osc.connect(oscGain);
-  oscGain.connect(master);
-  osc.start(t);
-  osc.stop(t + 1.1);
-
-  // High shimmer overtones
-  const shimmerFreqs = [2637, 3136, 3520, 4186];
-  shimmerFreqs.forEach((freq, i) => {
-    const s = ctx.createOscillator();
-    s.type = "triangle";
-    s.frequency.setValueAtTime(freq, t);
+  // Twinkles: scattered tiny glockenspiel pings rising up a pentatonic scale,
+  // like fairy dust being sprinkled.
+  const scale = [2093, 2349, 2637, 3136, 3520, 4186, 4699, 5274, 6272];
+  const count = 14;
+  for (let i = 0; i < count; i++) {
+    const delay = (i / count) * 0.7 + Math.random() * 0.04;
+    const idx = Math.min(scale.length - 1, Math.floor((i / count) * scale.length + Math.random() * 2));
+    const freq = scale[idx];
+    const o = ctx.createOscillator();
+    o.type = "sine";
+    o.frequency.setValueAtTime(freq, t + delay);
+    const o2 = ctx.createOscillator(); // bell partial
+    o2.type = "sine";
+    o2.frequency.setValueAtTime(freq * 2.76, t + delay);
     const g = ctx.createGain();
-    const delay = i * 0.04;
-    g.gain.setValueAtTime(0, t + delay);
-    g.gain.linearRampToValueAtTime(0.12, t + delay + 0.03);
-    g.gain.exponentialRampToValueAtTime(0.001, t + delay + 0.55);
-    s.connect(g);
+    const vol = 0.18 * (1 - (i / count) * 0.5);
+    g.gain.setValueAtTime(0.0001, t + delay);
+    g.gain.exponentialRampToValueAtTime(vol, t + delay + 0.004);
+    g.gain.exponentialRampToValueAtTime(0.0001, t + delay + 0.35);
+    const g2 = ctx.createGain();
+    g2.gain.setValueAtTime(0.25, t + delay);
+    o.connect(g);
+    o2.connect(g2).connect(g);
     g.connect(master);
-    s.start(t + delay);
-    s.stop(t + delay + 0.6);
-  });
-
-  // White-noise sparkle burst
-  const bufferSize = ctx.sampleRate * 0.5;
-  const buffer = ctx.createBuffer(1, bufferSize, ctx.sampleRate);
-  const data = buffer.getChannelData(0);
-  for (let i = 0; i < bufferSize; i++) {
-    data[i] = Math.random() * 2 - 1;
+    o.start(t + delay);
+    o2.start(t + delay);
+    o.stop(t + delay + 0.4);
+    o2.stop(t + delay + 0.4);
   }
+
+  // Soft airy shimmer underneath.
+  const len = Math.floor(ctx.sampleRate * 1.0);
+  const buffer = ctx.createBuffer(1, len, ctx.sampleRate);
+  const data = buffer.getChannelData(0);
+  for (let i = 0; i < len; i++) data[i] = Math.random() * 2 - 1;
   const noise = ctx.createBufferSource();
   noise.buffer = buffer;
-  const noiseFilter = ctx.createBiquadFilter();
-  noiseFilter.type = "highpass";
-  noiseFilter.frequency.setValueAtTime(4000, t);
-  const noiseGain = ctx.createGain();
-  noiseGain.gain.setValueAtTime(0, t);
-  noiseGain.gain.linearRampToValueAtTime(0.25, t + 0.01);
-  noiseGain.gain.exponentialRampToValueAtTime(0.001, t + 0.35);
-  noise.connect(noiseFilter);
-  noiseFilter.connect(noiseGain);
-  noiseGain.connect(master);
+  const bp = ctx.createBiquadFilter();
+  bp.type = "bandpass";
+  bp.Q.setValueAtTime(1.5, t);
+  bp.frequency.setValueAtTime(6000, t);
+  bp.frequency.exponentialRampToValueAtTime(10000, t + 0.9);
+  const ng = ctx.createGain();
+  ng.gain.setValueAtTime(0.0001, t);
+  ng.gain.exponentialRampToValueAtTime(0.04, t + 0.2);
+  ng.gain.exponentialRampToValueAtTime(0.0001, t + 1.0);
+  noise.connect(bp).connect(ng).connect(master);
   noise.start(t);
-  noise.stop(t + 0.4);
+  noise.stop(t + 1.0);
 }
