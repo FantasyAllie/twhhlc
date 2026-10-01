@@ -3580,7 +3580,7 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
     </div>
 
     {isReception ? null : (
-    <div className="flex-1 min-h-0 overflow-y-auto px-4 pb-4 space-y-4">
+    <div className="flex-1 min-h-0 overflow-y-auto mt-3 space-y-4">
     {visibleTemplate.length === 0 && roomExtras.length === 0 ? (
     <p className="text-sm text-muted-foreground">
     No items yet. Add linen list items from the menu, or add an extra below.
@@ -3592,7 +3592,7 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
     return (
      <li
        key={`t-${item.id}`}
-        className="flex items-center gap-3 py-2 px-2 rounded-xl border"
+        className="flex items-center gap-3 py-2 px-3 rounded-xl border"
         style={colorStyle(item.color)}
      >
         <span
@@ -3647,7 +3647,7 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
    return (
     <li
       key={`e-${item.id}`}
-      className="flex items-center gap-3 py-2 px-2 rounded-xl border"
+      className="flex items-center gap-3 py-2 px-3 rounded-xl border"
     >
      <span className="flex-1 min-w-0 break-words">
    {item.name}
