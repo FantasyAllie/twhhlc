@@ -1478,7 +1478,7 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
     const menuCanUseLostProperty = true;
     // Housekeeping & Reception log against rooms; every other department
     // logs against hotel areas.
-    const logScope: "rooms" | "areas" = isHousekeeper || isReception ? "rooms" : "areas";
+    const logScope: "rooms" | "areas" = isFnb || isMaintenance ? "areas" : "rooms";
     // Reception can resolve entries; Housekeeping views them read-only.
     const canResolveLostProperty = menuIsAdmin || hasReceptionRole;
     const availableThreads: MessagesThread[] = (() => {
