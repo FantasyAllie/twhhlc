@@ -1953,7 +1953,7 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
 
  // Collapse the inline room panel with an animation, then run `done`.
  const collapseRoomSlot = (done: () => void) => {
-    const el = roomSlotEl; console.log("COLLAPSE", !!el, !!el?.firstElementChild, isReception);
+    const el = document.querySelector<HTMLDivElement>("[data-room-slot]");
     if (isReception || !el || !el.firstElementChild || typeof el.animate !== "function" ||
         window.matchMedia("(prefers-reduced-motion: reduce)").matches) {
       done();
