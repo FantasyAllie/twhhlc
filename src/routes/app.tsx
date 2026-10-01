@@ -1987,6 +1987,14 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
     setOpenRoom(roomNumber);
   };
 
+  // Housekeeping shows the status view inside the open room's slot; drop it
+  // when the room closes or a different room opens.
+  useEffect(() => {
+    if (isReception) return;
+    setReceptionSheetRoom((cur) => (cur !== null && cur !== openRoom ? null : cur));
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [openRoom]);
+
   const resetRoomCounts = async (roomNumber: number) => {
     pendingCounts.clearAll();
     qc.setQueryData<RoomCount[]>(["room_counts"], (old) =>
@@ -4412,7 +4420,9 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
 
 
  {/* Reception sheet (Admin/User): Done + Status + Bed */}
+  <HomeInline active={!isReception && openRoom !== null && receptionSheetRoom === openRoom} target={roomSlotEl}>
   <ReceptionStatusSheet
+    onBack={!isReception && openRoom !== null && receptionSheetRoom === openRoom ? () => setReceptionSheetRoom(null) : undefined}
     receptionSheetRoom={receptionSheetRoom}
     setReceptionSheetRoom={setReceptionSheetRoom}
     rooms={rooms}
@@ -4442,6 +4452,7 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
     deleteTodayStayoverPhotosForRoom={deleteTodayStayoverPhotosForRoom}
     setPendingDndRoom={setPendingDndRoom}
   />
+  </HomeInline>
 
 {/* App menu sheet (burger) */}
 {authUser && (() => {
@@ -5581,7 +5592,7 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
          isOpen={isOpen}
          hasMessage={hasActiveMessage(n)}
          onClick={() => openOrToggle(n)}
-         onLongPress={() => setReceptionSheetRoom(n)}
+         onLongPress={() => { setOpenRoom(n); setReceptionSheetRoom(n); }}
          done={done}
          openTypeLabel={isOpen ? categoryLabel(roomCategory(n), roomTypes) : null}
          openBedLabel={isOpen ? (() => {
@@ -5687,7 +5698,7 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
 
  <HomeInline active={!isReception && openRoom !== null} target={roomSlotEl}>
  <Sheet open={openRoom !== null} onOpenChange={(o) => { if (!o) { const closing = openRoom; collapseRoomSlot(() => { if (closing !== null) setShowAllLinen(prev => ({ ...prev, [closing]: false })); setOpenRoom(null); setNewMessageText(""); }); } }}>
-   <SheetContent side="bottom" className="flex flex-col overflow-hidden rounded-t-2xl p-4 sm:p-6">
+   <SheetContent side="bottom" className={cn("flex flex-col overflow-hidden rounded-t-2xl p-4 sm:p-6", !isReception && openRoom !== null && receptionSheetRoom === openRoom && "hidden")}>
      <SheetHeader className={cn("text-left space-y-0", !isReception && "sr-only")}>
        <SheetTitle>Room {openRoom} — {categoryLabel(roomCategory(openRoom ?? 0), roomTypes)}</SheetTitle>
       {(() => {

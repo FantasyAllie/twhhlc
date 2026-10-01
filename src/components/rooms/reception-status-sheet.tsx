@@ -1,5 +1,5 @@
 import React from "react";
-import { ConciergeBell, DoorOpen, Footprints, Camera, Clock, Dog } from "lucide-react";
+import { ArrowLeft, ConciergeBell, DoorOpen, Footprints, Camera, Clock, Dog } from "lucide-react";
 import type { QueryClient } from "@tanstack/react-query";
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetDescription } from "@/components/ui/sheet";
 import { Button } from "@/components/ui/button";
@@ -10,6 +10,8 @@ import type { ReceptionItem, Room } from "@/lib/app-types";
 type Props = {
   receptionSheetRoom: number | null;
   setReceptionSheetRoom: (n: number | null) => void;
+  /** When set, the sheet is shown inline in the room view; renders a back button. */
+  onBack?: () => void;
   rooms: Room[];
   receptionStatuses: ReceptionItem[];
   receptionBeds: ReceptionItem[];
@@ -41,6 +43,7 @@ type Props = {
 export function ReceptionStatusSheet({
   receptionSheetRoom,
   setReceptionSheetRoom,
+  onBack,
   rooms,
   receptionStatuses,
   receptionBeds,
@@ -113,7 +116,19 @@ export function ReceptionStatusSheet({
        );
        return (
          <>
-           <SheetHeader className="text-left">
+           <SheetHeader className={cn("text-left", onBack && "relative pr-12")}>
+             {onBack && (
+               <Button
+                 type="button"
+                 variant="outline"
+                 size="icon"
+                 aria-label="Back to room"
+                 onClick={onBack}
+                 className="absolute right-0 top-0 h-9 w-9 rounded-full"
+               >
+                 <ArrowLeft className="h-4 w-4" />
+               </Button>
+             )}
              <SheetTitle className="flex items-center gap-2">
                 <ConciergeBell className="h-4 w-4" />
                 Status — Room {n}
