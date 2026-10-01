@@ -76,16 +76,14 @@ export function LeaderboardSheet({
         if (!name || n <= 0) return;
         (t[k] ??= new Map()).set(name, (t[k].get(name) ?? 0) + n);
       };
-      const [acts, photos, maint, fixed, lost, msgs] = await Promise.all([
+      const [acts, maint, fixed, lost, msgs] = await Promise.all([
         fetchAll<{ kind: string; username: string | null; amount: number }>("activity_events", "kind,username,amount", hotelId!, s, e),
-        fetchAll<{ created_by_username: string | null }>("stayover_photos", "created_by_username", hotelId!, s, e),
         fetchAll<{ created_by_username: string | null }>("maintenance_requests", "created_by_username", hotelId!, s, e),
         fetchAll<{ done_by_username: string | null }>("maintenance_requests", "done_by_username", hotelId!, s, e, "done_at"),
         fetchAll<{ created_by_username: string | null }>("lost_property", "created_by_username", hotelId!, s, e),
         fetchAll<{ created_by_username: string | null }>("room_messages", "created_by_username", hotelId!, s, e),
       ]);
       for (const a of acts) add(a.kind, a.username, a.amount);
-      for (const p of photos) add("stayover_photo", p.created_by_username);
       for (const m of maint) add("maintenance_logged", m.created_by_username);
       for (const m of fixed) add("maintenance_fixed", m.done_by_username);
       for (const l of lost) add("lost_logged", l.created_by_username);
