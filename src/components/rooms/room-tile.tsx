@@ -315,15 +315,17 @@ function HousekeepingRoomTileBase({
       aria-label={`Room ${n} ${isStaff ? "staff" : meta.label}`}
     >
       {isOpen ? (
-        <div className="flex h-full w-full min-w-0 flex-col justify-center gap-0.5 sm:gap-1 overflow-hidden text-left animate-in fade-in duration-200">
-          <span className="text-lg sm:text-2xl md:text-3xl lg:text-4xl font-bold leading-none">{n}</span>
-          {openTypeLabel && (
-            <span className="w-full line-clamp-2 break-words text-[8px] sm:text-[11px] md:text-xs lg:text-sm font-bold uppercase leading-tight tracking-tight">{openTypeLabel}</span>
-          )}
-          {openBedLabel && (
-            <span className="block w-full truncate text-[8px] sm:text-[11px] md:text-xs lg:text-sm font-medium leading-tight opacity-80">{openBedLabel}</span>
-          )}
-        </div>
+        <>
+          <span className="text-sm sm:text-base font-bold leading-none">{n}</span>
+          <span className="flex w-full min-w-0 flex-col items-start gap-0.5 text-left animate-in fade-in duration-200">
+            {openTypeLabel && (
+              <span className="w-full line-clamp-2 break-words text-[9px] sm:text-[10px] md:text-xs font-bold uppercase leading-tight tracking-tight">{openTypeLabel}</span>
+            )}
+            {openBedLabel && (
+              <span className="block w-full truncate text-[9px] sm:text-[10px] md:text-xs font-medium leading-tight opacity-80">{openBedLabel}</span>
+            )}
+          </span>
+        </>
       ) : (<>
       {flags.isDirty && !isStaff && (
         <span
