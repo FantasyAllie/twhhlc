@@ -1,7 +1,7 @@
 import React, { useEffect, useMemo, useRef, useState } from "react";
 import { CountRow } from "@/components/linen/inventory-dialog";
 import { Loader2 } from "lucide-react";
-import { RoomFlagsContext, mergeFlagDefs, useFlagSettingsQuery, useCustomFlagsQuery, type FlagDef } from "@/lib/room-flags";
+import { RoomFlagsContext, FlagIcon, FLAG_COLORS, mergeFlagDefs, useFlagSettingsQuery, useCustomFlagsQuery, type FlagDef } from "@/lib/room-flags";
 import { RoomFlagsSheet } from "@/components/rooms/room-flags-sheet";
 import { usePullToRefresh } from "@/hooks/use-touch-gestures";
 import { createFileRoute, useNavigate, Link } from "@tanstack/react-router";
@@ -3225,41 +3225,18 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
                 </div>
               );
             })()}
-            <div className="flex items-center justify-between gap-2 rounded-xl border bg-background p-3">
-              <span className="flex items-center gap-2 text-sm font-medium">
-                <Clock className={cn("h-4 w-4", room?.early_check_in ? "text-amber-600 dark:text-amber-400" : "text-muted-foreground")} />
-                Early check-in
-              </span>
-              <Switch checked={!!room?.early_check_in} onCheckedChange={(v) => setRoomEarlyCheckIn(n, v)} />
-            </div>
-            <div className="flex items-center justify-between gap-2 rounded-xl border bg-background p-3">
-              <span className="flex items-center gap-2 text-sm font-medium">
-                <Clock className={cn("h-4 w-4", room?.late_checkout ? "text-red-700 dark:text-red-400" : "text-muted-foreground")} />
-                Late checkout
-              </span>
-              <Switch checked={!!room?.late_checkout} onCheckedChange={(v) => setRoomLateCheckout(n, v)} />
-            </div>
-            <div className="flex items-center justify-between gap-2 rounded-xl border bg-background p-3">
-              <span className="flex items-center gap-2 text-sm font-medium">
-                <DoorOpen className={cn("h-4 w-4", vacated ? "text-emerald-600 dark:text-emerald-400" : "text-muted-foreground")} />
-                Guest has checked out
-              </span>
-              <Switch checked={vacated} onCheckedChange={(v) => setRoomGuestVacated(n, v)} />
-            </div>
-            <div className="flex items-center justify-between gap-2 rounded-xl border bg-background p-3">
-              <span className="flex items-center gap-2 text-sm font-medium">
-                <Footprints className={cn("h-4 w-4", room?.stayover_out ? "text-sky-600 dark:text-sky-400" : "text-muted-foreground")} />
-                Stayover — guest out for the day
-              </span>
-              <Switch checked={!!room?.stayover_out} onCheckedChange={(v) => setRoomStayoverOut(n, v)} />
-            </div>
-            <div className="flex items-center justify-between gap-2 rounded-xl border bg-background p-3">
-              <span className="flex items-center gap-2 text-sm font-medium">
-                <Dog className={cn("h-4 w-4", room?.dog_box ? "text-violet-600 dark:text-violet-400" : "text-muted-foreground")} />
-                Dog
-              </span>
-              <Switch checked={!!room?.dog_box} onCheckedChange={(v) => setRoomDogBox(n, v)} />
-            </div>
+            {roomFlagsCtx.flags.map((d) => {
+              const on = roomFlagsCtx.isOn(room, n, d);
+              return (
+                <div key={d.key} className="flex items-center justify-between gap-2 rounded-xl border bg-background p-3">
+                  <span className="flex items-center gap-2 text-sm font-medium">
+                    <FlagIcon def={d} className={cn("h-4 w-4", on ? (FLAG_COLORS[d.color] ?? FLAG_COLORS.slate).text : "text-muted-foreground")} />
+                    {d.label}
+                  </span>
+                  <Switch checked={on} onCheckedChange={(v) => roomFlagsCtx.toggle(n, d, v)} />
+                </div>
+              );
+            })}
             {maintenance && (
               <div className="flex items-center gap-2 rounded-xl border border-amber-500/60 bg-amber-50 dark:bg-amber-950/40 p-3 text-sm">
                 <Wrench className="h-4 w-4 text-amber-600 dark:text-amber-400 shrink-0" />
