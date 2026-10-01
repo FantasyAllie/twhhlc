@@ -4452,6 +4452,7 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
     deleteTodayStayoverPhotosForRoom={deleteTodayStayoverPhotosForRoom}
     setPendingDndRoom={setPendingDndRoom}
   />
+  </HomeInline>
 
 {/* App menu sheet (burger) */}
 {authUser && (() => {
