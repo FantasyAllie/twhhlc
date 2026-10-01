@@ -595,6 +595,20 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
     ro.observe(roomGridEl);
     return () => ro.disconnect();
   }, [roomGridEl]);
+  // Bring the tapped tile to the top of the screen once its room has expanded.
+  useEffect(() => {
+    if (openRoom === null || !roomGridEl || !roomSlotEl) return;
+    const raf = requestAnimationFrame(() => {
+      const tiles = Array.from(roomGridEl.children).filter(
+        (el) => !(el as HTMLElement).hasAttribute("data-room-slot"),
+      ) as HTMLElement[];
+      const tile = tiles.find((el) => el.textContent?.trim().startsWith(String(openRoom)));
+      const target = tile ?? roomSlotEl;
+      const top = target.getBoundingClientRect().top + window.scrollY - 12;
+      window.scrollTo({ top, behavior: "smooth" });
+    });
+    return () => cancelAnimationFrame(raf);
+  }, [openRoom, roomGridEl, roomSlotEl]);
   // Stayover / DND photo state
   const [stayoverPhotosOpen, setStayoverPhotosOpen] = useState(false);
   const [stayoverPhotosRoomFilter, setStayoverPhotosRoomFilter] = useState<number | undefined>(undefined);
