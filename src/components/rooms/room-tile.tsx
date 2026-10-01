@@ -318,7 +318,7 @@ function HousekeepingRoomTileBase({
         <div className="flex h-full w-full min-w-0 flex-col justify-center gap-0.5 overflow-hidden text-left animate-in fade-in duration-200">
           <span className="text-lg sm:text-xl font-bold leading-none">{n}</span>
           {openTypeLabel && (
-            <span className="block w-full truncate text-[8px] sm:text-[10px] font-bold uppercase leading-tight tracking-tight">{openTypeLabel}</span>
+            <span className="block w-full line-clamp-2 break-words text-[8px] sm:text-[10px] font-bold uppercase leading-tight tracking-tight">{openTypeLabel}</span>
           )}
           {openBedLabel && (
             <span className="block w-full truncate text-[8px] sm:text-[10px] font-medium leading-tight opacity-80">{openBedLabel}</span>
