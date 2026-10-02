@@ -1484,8 +1484,13 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
      const canViewAs = availableViews.length >= 2;
    const safeViewAs: ViewRole | null =
      viewAsRole && availableViews.includes(viewAsRole) ? viewAsRole : null;
+   // Always land in a real department so the pill and behaviour match.
+   const fallbackView: ViewRole | undefined =
+     defaultView && availableViews.includes(defaultView)
+       ? defaultView
+       : availableViews[0] ?? defaultView;
    const effectiveRole: ViewRole | undefined =
-     canViewAs && safeViewAs ? safeViewAs : defaultView;
+     canViewAs && safeViewAs ? safeViewAs : fallbackView;
    const realRole: ViewRole | undefined = defaultView;
    const isReception = effectiveRole === "reception";
    const quickSetupInline = quickReceptionOpen && effectiveRole === "user";
@@ -4040,7 +4045,7 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
             {canViewAs && !isMobile && (
               <div className="basis-full w-full flex rounded-full border p-1 bg-background items-center">
                 {availableViews.map((r) => {
-                  const active = (safeViewAs ?? defaultView) === r;
+                  const active = effectiveRole === r;
                   const label =
                     r === "user"
                       ? "Housekeeping"
@@ -4083,7 +4088,7 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
        </SheetHeader>
        <div className="mt-4 grid gap-2">
          {availableViews.map((r) => {
-           const active = (safeViewAs ?? defaultView) === r;
+           const active = effectiveRole === r;
            const label =
              r === "user" ? "Housekeeping"
              : r === "fnb" ? "F&B"
