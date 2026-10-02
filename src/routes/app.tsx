@@ -5618,7 +5618,8 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
            const norm = (s: string) => s.toLowerCase().replace(/[^a-z0-9]/g, "");
            const cats = parseCats(room?.category).map(norm);
            const onlyDouble = cats.includes("double") && !cats.includes("superking");
-           return receptionBeds.find((b) => b.id === room?.reception_bed_id)?.label ?? (onlyDouble ? "Double" : null);
+           if (onlyDouble) return null;
+           return receptionBeds.find((b) => b.id === room?.reception_bed_id)?.label ?? null;
          })() : null}
        />,
      );
