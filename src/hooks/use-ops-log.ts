@@ -60,7 +60,8 @@ export const useExportSnapshotsQuery = () =>
         .from("export_snapshots")
         .select("id,created_at,totals,grand_total,kind")
         .order("created_at", { ascending: false })
-        .limit(100);
+        // A year of daily snapshots for every report kind.
+        .limit(5000);
       if (error) throw error;
       return (data ?? []) as ExportSnapshot[];
     },

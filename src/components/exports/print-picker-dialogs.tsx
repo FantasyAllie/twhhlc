@@ -118,8 +118,8 @@ const missingDaysInRange = (
   return out;
 };
 
-// Generic single-date print picker for snapshot kinds that only ever print one
-// day at a time (rejects, delivery, F&B linen).
+// Generic print picker for count-style snapshot kinds (rejects, delivery,
+// inventory, F&B linen): single day, date range, or since the last delivery.
 export const SnapshotPrintDialog = ({
   open,
   onOpenChange,
@@ -129,6 +129,7 @@ export const SnapshotPrintDialog = ({
   description,
   liveRows = [],
   printTotals,
+  linenDeliveryDays = [],
   onBack,
 }: {
   open: boolean;
@@ -139,17 +140,24 @@ export const SnapshotPrintDialog = ({
   description?: string;
   liveRows?: SnapshotRow[];
   printTotals: (rows: SnapshotRow[], grand: number, when: Date, footer?: string) => void;
+  linenDeliveryDays?: number[];
   onBack?: () => void;
 }) => {
+  const [mode, setMode] = useState<"single" | "range" | "delivery">("single");
   const [date, setDate] = useState<Date>(new Date());
+  const [from, setFrom] = useState<Date | undefined>(undefined);
+  const [to, setTo] = useState<Date | undefined>(undefined);
+  const [gapWarning, setGapWarning] = useState<Date[] | null>(null);
   const available = savedDays(snapshots, kind);
   const hasLiveToday = liveRows.length > 0;
+  const win = Exp.deliveryWindow(new Date(), linenDeliveryDays);
   const footer = () => `Date Printed: ${Exp.formatLongDate(new Date(), true)}`;
+  const lower = title.toLowerCase();
 
   const doPrint = () => {
     if (Exp.isSameDay(date, new Date()) && !available.has(date.toDateString())) {
       if (!hasLiveToday) {
-        toast.error(`Nothing counted today for ${title.toLowerCase()}`);
+        toast.error(`Nothing counted today for ${lower}`);
         return;
       }
       const grand = liveRows.reduce((s, r) => s + r.count, 0);
@@ -160,11 +168,57 @@ export const SnapshotPrintDialog = ({
     const snap = Exp.snapshotForDay(snapshots, kind, date);
     const rows = (snap?.totals as SnapshotRow[] | undefined) ?? [];
     if (!snap || rows.length === 0) {
-      toast.error(`No ${title.toLowerCase()} export saved for ${Exp.formatLongDate(date, false)}`);
+      toast.error(`No ${lower} export saved for ${Exp.formatLongDate(date, false)}`);
       return;
     }
     printTotals(rows, snap.grand_total, date, footer());
     onOpenChange(false);
+  };
+
+  const tally = (start: Date, end: Date) => {
+    const s0 = Exp.startOfDay(start);
+    const e0 = Exp.endOfDay(end);
+    const map = new Map<string, number>();
+    const add = (list: SnapshotRow[]) => {
+      for (const r of list) {
+        const k = (r.name ?? "").trim();
+        if (k) map.set(k, (map.get(k) ?? 0) + (r.count ?? 0));
+      }
+    };
+    const { rows: saved } = Exp.sumSnapshotsInRange(snapshots, kind, s0, e0);
+    add(saved);
+    const today = new Date();
+    if (today >= s0 && today <= e0 && !available.has(today.toDateString())) add(liveRows);
+    const rows = Array.from(map.entries()).map(([name, count]) => ({ name, count }) as SnapshotRow);
+    return { rows, grand: rows.reduce((s, r) => s + r.count, 0) };
+  };
+
+  const printTally = (start: Date, end: Date) => {
+    const { rows, grand } = tally(start, end);
+    if (rows.length === 0) {
+      toast.error(`No ${lower} recorded in that range`);
+      return;
+    }
+    const sub = `Printed Range: ${Exp.formatLongDate(start, false)} - ${Exp.formatLongDate(end, false)}`;
+    printTotals(rows, grand, end, `${sub} · ${footer()}`);
+    setGapWarning(null);
+    onOpenChange(false);
+  };
+
+  const printRange = (force = false) => {
+    if (!from || !to) {
+      toast.error("Pick both dates");
+      return;
+    }
+    const [start, end] = from.getTime() <= to.getTime() ? [from, to] : [to, from];
+    if (!force) {
+      const missing = missingDaysInRange(snapshots, kind, start, end, hasLiveToday);
+      if (missing.length > 0) {
+        setGapWarning(missing);
+        return;
+      }
+    }
+    printTally(start, end);
   };
 
   return (
@@ -173,23 +227,89 @@ export const SnapshotPrintDialog = ({
         <DialogHeader>
           <DialogTitle>{title}</DialogTitle>
           <DialogDescription>
-            {description ?? "Pick a date. Only days with a saved export can be selected."}
+            {description ?? "Print a single day, or tally everything between two dates."}
           </DialogDescription>
         </DialogHeader>
         <div className="mt-2 grid gap-3">
-          <DateField
-            value={date}
-            onChange={(d) => d && setDate(d)}
-            availableDays={available}
-            allowToday={hasLiveToday || available.has(new Date().toDateString())}
-          />
-          <p className="text-xs text-muted-foreground">
-            Days without an export are greyed out.
-          </p>
-          <Button className="h-12" onClick={doPrint}>
-            <Printer className="h-4 w-4 mr-2" />
-            Print
-          </Button>
+          <div className="grid grid-cols-2 gap-2">
+            <Button variant={mode === "single" ? "default" : "outline"} onClick={() => setMode("single")}>
+              Single date
+            </Button>
+            <Button variant={mode === "range" ? "default" : "outline"} onClick={() => setMode("range")}>
+              Date range
+            </Button>
+            <Button
+              variant={mode === "delivery" ? "default" : "outline"}
+              className="col-span-2"
+              onClick={() => setMode("delivery")}
+            >
+              Last Delivery Dates
+            </Button>
+          </div>
+          {mode === "single" ? (
+            <>
+              <DateField
+                value={date}
+                onChange={(d) => d && setDate(d)}
+                availableDays={available}
+                allowToday={hasLiveToday || available.has(new Date().toDateString())}
+              />
+              <p className="text-xs text-muted-foreground">Days without an export are greyed out.</p>
+              <Button className="h-12" onClick={doPrint}>
+                <Printer className="h-4 w-4 mr-2" />
+                Print
+              </Button>
+            </>
+          ) : mode === "delivery" ? (
+            <>
+              <div className="rounded-xl border bg-muted/40 p-3 text-sm">
+                <div className="text-xs uppercase tracking-wide text-muted-foreground">Range</div>
+                <div className="mt-1 font-medium">
+                  {Exp.formatLongDate(win.start, false)} - {Exp.formatLongDate(win.end, false)}
+                </div>
+                {linenDeliveryDays.length === 0 && (
+                  <p className="mt-2 text-xs text-muted-foreground">
+                    No delivery days set, so the last 7 days are used.
+                  </p>
+                )}
+              </div>
+              <Button className="h-12" onClick={() => printTally(win.start, win.end)}>
+                <Printer className="h-4 w-4 mr-2" />
+                Print tally
+              </Button>
+            </>
+          ) : (
+            <>
+              <div className="grid gap-2">
+                <span className="text-xs uppercase tracking-wide text-muted-foreground">From</span>
+                <DateField value={from} onChange={setFrom} />
+                <span className="text-xs uppercase tracking-wide text-muted-foreground">To</span>
+                <DateField value={to} onChange={setTo} />
+              </div>
+              <Button className="h-12" onClick={() => printRange()}>
+                <Printer className="h-4 w-4 mr-2" />
+                Print tally
+              </Button>
+              {gapWarning && (
+                <div className="rounded-xl border bg-muted/40 p-3 text-sm">
+                  <p className="font-medium">
+                    {gapWarning.length} day{gapWarning.length === 1 ? "" : "s"} in this range have no saved export
+                  </p>
+                  <p className="mt-1 max-h-24 overflow-y-auto text-xs text-muted-foreground">
+                    {gapWarning.map((d) => Exp.formatLongDate(d, false)).join(", ")}
+                  </p>
+                  <div className="mt-3 flex justify-end gap-2">
+                    <Button variant="ghost" size="sm" onClick={() => setGapWarning(null)}>
+                      Cancel
+                    </Button>
+                    <Button size="sm" onClick={() => printRange(true)}>
+                      Print anyway
+                    </Button>
+                  </div>
+                </div>
+              )}
+            </>
+          )}
           <BackRow onBack={onBack} />
         </div>
       </DialogContent>
