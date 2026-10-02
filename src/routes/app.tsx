@@ -2048,7 +2048,13 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
         if (now - last < 25 || now - t0 > 500) {
           anim.play();
           // If the first played frame stalled, rewind so no part is skipped.
-          requestAnimationFrame(() => { if (anim.playState === "running") anim.currentTime = 0; });
+          let prev = performance.now(); let n = 0;
+          const rewind = (t: number) => {
+            if (anim.playState !== "running" || n++ > 6) return;
+            if (t - prev > 40) anim.currentTime = 0;
+            prev = t; requestAnimationFrame(rewind);
+          };
+          requestAnimationFrame(rewind);
           return;
         }
         last = now; requestAnimationFrame(waitIdle);
