@@ -2039,6 +2039,10 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
         ],
         { duration: 280, easing: "cubic-bezier(0.4, 0, 0.2, 1)" },
       );
+      // Hold the first frame until the browser is free to paint, so the
+      // heavy first render doesn't eat the start of the animation.
+      anim.pause();
+      requestAnimationFrame(() => requestAnimationFrame(() => anim.play()));
       anim.onfinish = () => { el.style.overflow = ""; heights.set(el, el.getBoundingClientRect().height); };
     });
     mo.observe(grid, { childList: true, subtree: true, attributes: true, attributeFilter: ["class", "hidden"] });
