@@ -121,7 +121,15 @@ export function QuickReceptionSheet({
         side="bottom"
         className="overflow-hidden rounded-t-2xl p-4 sm:p-6"
       >
-        <SheetHeader className="text-left">
+        <SheetHeader className="relative pr-12 text-left">
+          <button
+            type="button"
+            aria-label="Close quick setup"
+            onClick={() => onOpenChange(false)}
+            className="absolute right-0 top-0 inline-flex h-9 w-9 items-center justify-center rounded-full border bg-background shadow-sm transition-colors hover:bg-accent"
+          >
+            <ChevronLeft className="h-4 w-4" />
+          </button>
           <SheetTitle className="flex items-center gap-2">
             <ConciergeBell className="h-4 w-4" />
             Quick Room Setup

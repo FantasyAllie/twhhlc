@@ -3943,7 +3943,7 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
       <Button
         variant="outline"
         size="sm"
-        onClick={() => setQuickReceptionOpen(true)}
+        onClick={() => setQuickReceptionOpen((o) => !o)}
         title="Set status, bed and flags for every room in one place"
       >
         <ConciergeBell className="h-4 w-4 sm:mr-2" />
