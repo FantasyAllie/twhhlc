@@ -1488,7 +1488,7 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
      canViewAs && safeViewAs ? safeViewAs : defaultView;
    const realRole: ViewRole | undefined = defaultView;
    const isReception = effectiveRole === "reception";
-   const quickSetupInline = quickReceptionOpen && effectiveRole === "housekeeping";
+   const quickSetupInline = quickReceptionOpen && effectiveRole === "user";
     // A real admin/manager keeps admin capabilities in every view — the
     // pill only changes which home screen they land on.
     const isAdmin = realIsAdmin || realIsManager;
