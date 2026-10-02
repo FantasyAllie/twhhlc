@@ -4045,7 +4045,7 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
             {canViewAs && !isMobile && (
               <div className="basis-full w-full flex rounded-full border p-1 bg-background items-center">
                 {availableViews.map((r) => {
-                  const active = (safeViewAs ?? defaultView) === r;
+                  const active = effectiveRole === r;
                   const label =
                     r === "user"
                       ? "Housekeeping"
@@ -4088,7 +4088,7 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
        </SheetHeader>
        <div className="mt-4 grid gap-2">
          {availableViews.map((r) => {
-           const active = (safeViewAs ?? defaultView) === r;
+           const active = effectiveRole === r;
            const label =
              r === "user" ? "Housekeeping"
              : r === "fnb" ? "F&B"
