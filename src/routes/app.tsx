@@ -1980,11 +1980,20 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
       { duration: 260, easing: "cubic-bezier(0.4, 0, 0.2, 1)", fill: "forwards" },
     );
     anim.onfinish = () => {
+      el.dataset.collapsed = "1";
       done();
-      requestAnimationFrame(() => {
+      // Keep the collapsed frame until React has removed the panel, otherwise
+      // the slot pops back to full height for a frame (tiles flash).
+      let tries = 0;
+      const release = () => {
+        if (el.isConnected && el.childElementCount > 0 && tries++ < 30) {
+          requestAnimationFrame(release);
+          return;
+        }
         anim.cancel();
         el.style.overflow = "";
-      });
+      };
+      requestAnimationFrame(release);
     };
   };
 
