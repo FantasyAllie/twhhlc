@@ -2042,24 +2042,18 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
       // Hold the first frame until the browser is free to paint, so the
       // heavy first render doesn't eat the start of the animation.
       anim.pause();
-      // Start once frames are flowing smoothly again (two quick frames in a row).
-      let last = performance.now(); const t0 = last;
-      const waitIdle = (now: number) => {
-        if (now - last < 25 || now - t0 > 500) {
-          anim.play();
-          // If the first played frame stalled, rewind so no part is skipped.
-          let prev = performance.now(); let n = 0;
-          const rewind = (t: number) => {
-            if (anim.playState !== "running" || n++ > 6) return;
-            if (t - prev > 40) anim.currentTime = 0;
-            prev = t; requestAnimationFrame(rewind);
-          };
-          requestAnimationFrame(rewind);
-          return;
-        }
-        last = now; requestAnimationFrame(waitIdle);
+      // Drive the clock by hand with each step capped at one frame, so a
+      // stalled frame (the panel's first render) can't skip part of the motion.
+      let t = 0; let prev = -1;
+      const step = (now: number) => {
+        if (anim.playState === "finished" || anim.playState === "idle") return;
+        if (prev >= 0) t += Math.min(now - prev, 20);
+        prev = now;
+        if (t >= 280) { anim.finish(); return; }
+        anim.currentTime = t;
+        requestAnimationFrame(step);
       };
-      requestAnimationFrame(waitIdle);
+      requestAnimationFrame(step);
       anim.onfinish = () => { el.style.overflow = ""; heights.set(el, el.getBoundingClientRect().height); };
     });
     mo.observe(grid, { childList: true, subtree: true, attributes: true, attributeFilter: ["class", "hidden"] });
