@@ -1488,6 +1488,7 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
      canViewAs && safeViewAs ? safeViewAs : defaultView;
    const realRole: ViewRole | undefined = defaultView;
    const isReception = effectiveRole === "reception";
+   const quickSetupInline = quickReceptionOpen && effectiveRole === "housekeeping";
     // A real admin/manager keeps admin capabilities in every view — the
     // pill only changes which home screen they land on.
     const isAdmin = realIsAdmin || realIsManager;
@@ -5043,9 +5044,10 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
      </div>
    );
  })()}
+ </div>
  {/* Rooms */}
  {homeView && <div ref={setHomeSlotEl} className="mb-4" />}
- <div className={homeView ? "hidden" : undefined}>
+ <div className={homeView || quickSetupInline ? "hidden" : undefined}>
  {isMaintenance ? (
 <MaintenanceDashboard
      maintenanceRequests={maintenanceRequests}
