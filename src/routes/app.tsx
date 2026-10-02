@@ -2004,6 +2004,43 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [openRoom]);
 
+  // Animate the inline room slot opening and swapping between room view and
+  // status view: whenever its content changes, grow/shrink from the old height.
+  useEffect(() => {
+    const el = roomSlotEl;
+    if (isReception || !el || typeof el.animate !== "function") return;
+    let lastH = el.getBoundingClientRect().height;
+    let pending = false;
+    const ro = new ResizeObserver(() => {
+      if (!pending && el.getAnimations().length === 0) lastH = el.getBoundingClientRect().height;
+    });
+    ro.observe(el);
+    const mo = new MutationObserver(() => {
+      if (pending || el.getAnimations().length > 0) return;
+      pending = true;
+      const from = lastH;
+      requestAnimationFrame(() => {
+        pending = false;
+        const to = el.getBoundingClientRect().height;
+        lastH = to;
+        if (Math.abs(to - from) < 24 || to === 0 ||
+            window.matchMedia("(prefers-reduced-motion: reduce)").matches) return;
+        el.style.overflow = "hidden";
+        const opening = from === 0;
+        const anim = el.animate(
+          [
+            { height: `${from}px`, opacity: opening ? 0 : 1, transform: opening ? "translateY(-8px)" : "none" },
+            { height: `${to}px`, opacity: 1, transform: "none" },
+          ],
+          { duration: 280, easing: "cubic-bezier(0.4, 0, 0.2, 1)" },
+        );
+        anim.onfinish = anim.oncancel = () => { el.style.overflow = ""; lastH = el.getBoundingClientRect().height; };
+      });
+    });
+    mo.observe(el, { childList: true, subtree: true, attributes: true, attributeFilter: ["class", "hidden", "style"] });
+    return () => { ro.disconnect(); mo.disconnect(); };
+  }, [roomSlotEl, isReception]);
+
   const resetRoomCounts = async (roomNumber: number) => {
     pendingCounts.clearAll();
     qc.setQueryData<RoomCount[]>(["room_counts"], (old) =>
