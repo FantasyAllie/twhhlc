@@ -2039,6 +2039,21 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
         ],
         { duration: 280, easing: "cubic-bezier(0.4, 0, 0.2, 1)" },
       );
+      // Hold the first frame until the browser is free to paint, so the
+      // heavy first render doesn't eat the start of the animation.
+      anim.pause();
+      // Drive the clock by hand with each step capped at one frame, so a
+      // stalled frame (the panel's first render) can't skip part of the motion.
+      let t = 0; let prev = -1;
+      const step = (now: number) => {
+        if (anim.playState === "finished" || anim.playState === "idle") return;
+        if (prev >= 0) t += Math.min(now - prev, 20);
+        prev = now;
+        if (t >= 280) { anim.finish(); return; }
+        anim.currentTime = t;
+        requestAnimationFrame(step);
+      };
+      requestAnimationFrame(step);
       anim.onfinish = () => { el.style.overflow = ""; heights.set(el, el.getBoundingClientRect().height); };
     });
     mo.observe(grid, { childList: true, subtree: true, attributes: true, attributeFilter: ["class", "hidden"] });
