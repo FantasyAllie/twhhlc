@@ -19,6 +19,7 @@ export function HistorySheet({
   setViewingSnapshot,
   removeSnapshot,
   clearAllSnapshots,
+  showAll,
 }: {
   open: boolean;
   onOpenChange: (o: boolean) => void;
