@@ -1980,11 +1980,20 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
       { duration: 260, easing: "cubic-bezier(0.4, 0, 0.2, 1)", fill: "forwards" },
     );
     anim.onfinish = () => {
+      el.dataset.collapsed = "1";
       done();
-      requestAnimationFrame(() => {
+      // Keep the collapsed frame until React has removed the panel, otherwise
+      // the slot pops back to full height for a frame (tiles flash).
+      let tries = 0;
+      const release = () => {
+        if (el.isConnected && el.childElementCount > 0 && tries++ < 30) {
+          requestAnimationFrame(release);
+          return;
+        }
         anim.cancel();
         el.style.overflow = "";
-      });
+      };
+      requestAnimationFrame(release);
     };
   };
 
@@ -2006,40 +2015,35 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
 
   // Animate the inline room slot opening and swapping between room view and
   // status view: whenever its content changes, grow/shrink from the old height.
+  // Observes the stable grid and runs synchronously (MutationObserver fires
+  // before paint), so the new content never flashes at full height first.
   useEffect(() => {
-    const el = roomSlotEl;
-    if (isReception || !el || typeof el.animate !== "function") return;
-    let lastH = el.getBoundingClientRect().height;
-    let pending = false;
-    const ro = new ResizeObserver(() => {
-      if (!pending && el.getAnimations().length === 0) lastH = el.getBoundingClientRect().height;
-    });
-    ro.observe(el);
+    const grid = roomGridEl;
+    if (isReception || !grid) return;
+    const heights = new WeakMap<HTMLElement, number>();
     const mo = new MutationObserver(() => {
-      if (pending || el.getAnimations().length > 0) return;
-      pending = true;
-      const from = lastH;
-      requestAnimationFrame(() => {
-        pending = false;
-        const to = el.getBoundingClientRect().height;
-        lastH = to;
-        if (Math.abs(to - from) < 24 || to === 0 ||
-            window.matchMedia("(prefers-reduced-motion: reduce)").matches) return;
-        el.style.overflow = "hidden";
-        const opening = from === 0;
-        const anim = el.animate(
-          [
-            { height: `${from}px`, opacity: opening ? 0 : 1, transform: opening ? "translateY(-8px)" : "none" },
-            { height: `${to}px`, opacity: 1, transform: "none" },
-          ],
-          { duration: 280, easing: "cubic-bezier(0.4, 0, 0.2, 1)" },
-        );
-        anim.onfinish = anim.oncancel = () => { el.style.overflow = ""; lastH = el.getBoundingClientRect().height; };
-      });
+      const el = grid.querySelector<HTMLDivElement>("[data-room-slot]");
+      if (!el || typeof el.animate !== "function") return;
+      if (el.getAnimations().length > 0) return; // collapsing or already animating
+      const from = heights.get(el) ?? 0;
+      const to = el.getBoundingClientRect().height;
+      heights.set(el, to);
+      if (to === 0 || Math.abs(to - from) < 24 ||
+          window.matchMedia("(prefers-reduced-motion: reduce)").matches) return;
+      const opening = from === 0;
+      el.style.overflow = "hidden";
+      const anim = el.animate(
+        [
+          { height: `${from}px`, opacity: opening ? 0 : 1, transform: opening ? "translateY(-8px)" : "none" },
+          { height: `${to}px`, opacity: 1, transform: "none" },
+        ],
+        { duration: 280, easing: "cubic-bezier(0.4, 0, 0.2, 1)" },
+      );
+      anim.onfinish = () => { el.style.overflow = ""; heights.set(el, el.getBoundingClientRect().height); };
     });
-    mo.observe(el, { childList: true, subtree: true, attributes: true, attributeFilter: ["class", "hidden", "style"] });
-    return () => { ro.disconnect(); mo.disconnect(); };
-  }, [roomSlotEl, isReception]);
+    mo.observe(grid, { childList: true, subtree: true, attributes: true, attributeFilter: ["class", "hidden"] });
+    return () => mo.disconnect();
+  }, [roomGridEl, isReception]);
 
   const resetRoomCounts = async (roomNumber: number) => {
     pendingCounts.clearAll();
