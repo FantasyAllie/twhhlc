@@ -27,8 +27,12 @@ export function HistorySheet({
   setViewingSnapshot: (s: ExportSnapshot | null) => void;
   removeSnapshot: (id: string) => void;
   clearAllSnapshots: (kind?: ExportSnapshotKind) => void;
+  /** Admins and developers see every department's reports. */
+  showAll?: boolean;
 }) {
-  const visible = isFnb
+  const visible = showAll
+    ? snapshots
+    : isFnb
     ? snapshots.filter((s) => s.kind === "fnb_totals")
     : snapshots.filter((s) => s.kind !== "fnb_totals");
   return (
@@ -50,10 +54,10 @@ export function HistorySheet({
           for (const s of visible) {
             const key = new Date(s.created_at).toDateString();
             const list = groups.get(key) ?? [];
-            if (list.length < 6) list.push(s);
+            list.push(s);
             groups.set(key, list);
           }
-          const days = Array.from(groups.entries()).slice(0, 6);
+          const days = Array.from(groups.entries());
           return days.map(([day, items]) => (
             <div key={day} className="space-y-1.5">
               <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
