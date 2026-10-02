@@ -1,4 +1,4 @@
-import { ConciergeBell, Check, RotateCcw } from "lucide-react";
+import { ConciergeBell, ChevronLeft, Check, RotateCcw } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { FlagIcon, useRoomFlags } from "@/lib/room-flags";
 import {
