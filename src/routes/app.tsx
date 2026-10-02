@@ -514,6 +514,7 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
   const [statusViaLongPress, setStatusViaLongPress] = useState(false);
   useEffect(() => { if (receptionSheetRoom === null) setStatusViaLongPress(false); }, [receptionSheetRoom]);
   const [quickReceptionOpen, setQuickReceptionOpen] = useState(false);
+  const [quickSlotEl, setQuickSlotEl] = useState<HTMLDivElement | null>(null);
   const [editDefaultsSheetRoom, setEditDefaultsSheetRoom] = useState<number | null>(null);
   const [editRoomSheetNumber, setEditRoomSheetNumber] = useState<number | null>(null);
   const [menuSheetOpen, setMenuSheetOpen] = useState(false);
@@ -1487,6 +1488,7 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
      canViewAs && safeViewAs ? safeViewAs : defaultView;
    const realRole: ViewRole | undefined = defaultView;
    const isReception = effectiveRole === "reception";
+   const quickSetupInline = quickReceptionOpen && effectiveRole === "user";
     // A real admin/manager keeps admin capabilities in every view — the
     // pill only changes which home screen they land on.
     const isAdmin = realIsAdmin || realIsManager;
@@ -4946,6 +4948,8 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
     moveRoom={moveRoom}
   />
 
+ {quickSetupInline && <div ref={setQuickSlotEl} className="mb-4" />}
+ <div className={quickSetupInline ? "hidden" : undefined}>
  {/* Bento live cards: tap a card to open its panel. */}
  {(() => {
    const showStayover = !isReception && !isMaintenance && !isFnb;
@@ -5040,9 +5044,10 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
      </div>
    );
  })()}
+ </div>
  {/* Rooms */}
  {homeView && <div ref={setHomeSlotEl} className="mb-4" />}
- <div className={homeView ? "hidden" : undefined}>
+ <div className={homeView || quickSetupInline ? "hidden" : undefined}>
  {isMaintenance ? (
 <MaintenanceDashboard
      maintenanceRequests={maintenanceRequests}
@@ -5821,6 +5826,7 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
     </SheetContent>
   </Sheet>
   <UserApprovalDialog open={userApprovalOpen} onOpenChange={setUserApprovalOpen} />
+  <HomeInline active={quickSetupInline} target={quickSlotEl}>
   <QuickReceptionSheet
     open={quickReceptionOpen}
     onOpenChange={setQuickReceptionOpen}
@@ -5852,6 +5858,7 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
     onChangeDogBox={(n, v) => void setRoomDogBox(n, v)}
     onToggleDone={isReception ? undefined : (n) => void toggleHousekeepingDone(n)}
   />
+  </HomeInline>
   <Dialog
     open={!!donePhotoTarget}
     onOpenChange={(open) => {
