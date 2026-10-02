@@ -2045,7 +2045,12 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
       // Start once frames are flowing smoothly again (two quick frames in a row).
       let last = performance.now(); const t0 = last;
       const waitIdle = (now: number) => {
-        if (now - last < 25 || now - t0 > 500) { anim.play(); return; }
+        if (now - last < 25 || now - t0 > 500) {
+          anim.play();
+          // If the first played frame stalled, rewind so no part is skipped.
+          requestAnimationFrame(() => { if (anim.playState === "running") anim.currentTime = 0; });
+          return;
+        }
         last = now; requestAnimationFrame(waitIdle);
       };
       requestAnimationFrame(waitIdle);
