@@ -31,11 +31,13 @@ export function HistorySheet({
   /** Admins and developers see every department's reports. */
   showAll?: boolean;
 }) {
+  const cutoff = Date.now() - 7 * 24 * 60 * 60 * 1000;
+  const recent = snapshots.filter((s) => new Date(s.created_at).getTime() >= cutoff);
   const visible = showAll
-    ? snapshots
+    ? recent
     : isFnb
-    ? snapshots.filter((s) => s.kind === "fnb_totals")
-    : snapshots.filter((s) => s.kind !== "fnb_totals");
+    ? recent.filter((s) => s.kind === "fnb_totals")
+    : recent.filter((s) => s.kind !== "fnb_totals");
   return (
 <Sheet open={open} onOpenChange={onOpenChange}>
    <SheetContent side="bottom" className="overflow-hidden rounded-t-2xl p-4 sm:p-6">
