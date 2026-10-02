@@ -2042,7 +2042,13 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
       // Hold the first frame until the browser is free to paint, so the
       // heavy first render doesn't eat the start of the animation.
       anim.pause();
-      requestAnimationFrame(() => requestAnimationFrame(() => anim.play()));
+      // Start once frames are flowing smoothly again (two quick frames in a row).
+      let last = performance.now(); const t0 = last;
+      const waitIdle = (now: number) => {
+        if (now - last < 25 || now - t0 > 500) { anim.play(); return; }
+        last = now; requestAnimationFrame(waitIdle);
+      };
+      requestAnimationFrame(waitIdle);
       anim.onfinish = () => { el.style.overflow = ""; heights.set(el, el.getBoundingClientRect().height); };
     });
     mo.observe(grid, { childList: true, subtree: true, attributes: true, attributeFilter: ["class", "hidden"] });
