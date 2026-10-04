@@ -2209,6 +2209,7 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
     }
     // Room messages are NOT cleared by Reset all — they stay pinned to the
     // room until someone actions (dismisses) them.
+    const nowIso = new Date().toISOString();
     // Record the housekeeping reset on the active hotel so Reception's own
     // "Reset all" button (visible after 7am) can hide itself for the rest of
     // the day.
