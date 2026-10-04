@@ -307,7 +307,18 @@ function AppPage() {
       .on(
         "postgres_changes",
         { event: "*", schema: "public", table: "rooms" },
-        () => {
+        (payload) => {
+          // Shop door bell when another device marks a guest as checked out.
+          // Comparing with the cached row skips this device's own changes
+          // (already applied optimistically).
+          const next = payload.new as { room_number?: number; guest_vacated?: boolean } | undefined;
+          if (payload.eventType === "UPDATE" && next?.guest_vacated) {
+            const cached = qc
+              .getQueriesData<{ room_number: number; guest_vacated?: boolean }[]>({ queryKey: ["rooms"] })
+              .flatMap(([, d]) => (Array.isArray(d) ? d : []))
+              .find((r) => r.room_number === next.room_number);
+            if (cached && !cached.guest_vacated) playDoorBell();
+          }
           qc.invalidateQueries({ queryKey: ["rooms"] });
         },
       )
@@ -2195,17 +2206,8 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
     if (leftover && leftover.length > 0) {
       toast.error("Some linen counts could not be cleared.");
     }
-    // Clear pinned room messages from the tiles WITHOUT deleting them —
-    // marking them dismissed + done removes the amber dot / peek but keeps
-    // them visible in the corresponding chat thread (Messages window).
-    const nowIso = new Date().toISOString();
-    const r3 = await supabase
-      .from("room_messages" as never)
-      .update({ dismissed: true, done_at: nowIso, updated_at: nowIso } as never)
-      .not("room_number", "is", null)
-      .is("deleted_at", null)
-      .eq("dismissed", false);
-    if (r3.error) toast.error(r3.error.message);
+    // Room messages are NOT cleared by Reset all — they stay pinned to the
+    // room until someone actions (dismisses) them.
     // Record the housekeeping reset on the active hotel so Reception's own
     // "Reset all" button (visible after 7am) can hide itself for the rest of
     // the day.
