@@ -5,6 +5,7 @@ import * as SheetPrimitive from "@radix-ui/react-dialog";
 import { cva, type VariantProps } from "class-variance-authority";
 import { X } from "lucide-react";
 import { Slot } from "@radix-ui/react-slot";
+import { createPortal } from "react-dom";
 
 import { cn } from "@/lib/utils";
 
@@ -24,8 +25,81 @@ const SheetInlineProvider = ({
   <SheetInlineContext.Provider value={{ inline }}>{children}</SheetInlineContext.Provider>
 );
 
+// Home-screen takeover: a menu tap "arms" the next opening Sheet, which then
+// renders in-flow inside the registered slot instead of as an overlay.
+type TakeoverOwner = { id: number; close: () => void };
+const takeover = {
+  armedUntil: 0,
+  slot: null as HTMLElement | null,
+  owner: null as TakeoverOwner | null,
+  listeners: new Set<() => void>(),
+};
+const emitTakeover = () => takeover.listeners.forEach((l) => l());
+let takeoverSeq = 0;
+export function armSheetTakeover() {
+  takeover.armedUntil = Date.now() + 600;
+}
+export function setSheetTakeoverSlot(el: HTMLElement | null) {
+  takeover.slot = el;
+  emitTakeover();
+}
+/** Close whichever panel currently owns the home takeover. */
+export function releaseSheetTakeover() {
+  const o = takeover.owner;
+  if (o) o.close();
+}
+export function useSheetTakeoverActive() {
+  return React.useSyncExternalStore(
+    (l) => {
+      takeover.listeners.add(l);
+      return () => takeover.listeners.delete(l);
+    },
+    () => !!takeover.owner,
+    () => false,
+  );
+}
+
 const Sheet = (props: React.ComponentProps<typeof SheetPrimitive.Root>) => {
   const ctx = React.useContext(SheetInlineContext);
+  const idRef = React.useRef(0);
+  if (!idRef.current) idRef.current = ++takeoverSeq;
+  const wasOpenRef = React.useRef(false);
+  const claimRef = React.useRef(false);
+  const closeRef = React.useRef(() => props.onOpenChange?.(false));
+  closeRef.current = () => props.onOpenChange?.(false);
+  const nestedInline = ctx.inline;
+  if (!nestedInline) {
+    if (props.open && !wasOpenRef.current && Date.now() < takeover.armedUntil && takeover.slot) {
+      takeover.armedUntil = 0;
+      claimRef.current = true;
+    }
+    if (!props.open) claimRef.current = false;
+    wasOpenRef.current = !!props.open;
+  }
+  const claimed = claimRef.current && !!props.open;
+  React.useEffect(() => {
+    if (!claimed) return;
+    const prev = takeover.owner;
+    const me: TakeoverOwner = { id: idRef.current, close: () => closeRef.current() };
+    takeover.owner = me;
+    emitTakeover();
+    if (prev && prev.id !== me.id) prev.close();
+    window.scrollTo({ top: 0, behavior: "smooth" });
+    return () => {
+      if (takeover.owner === me) {
+        takeover.owner = null;
+        emitTakeover();
+      }
+    };
+  }, [claimed]);
+  if (claimed && takeover.slot) {
+    return createPortal(
+      <SheetInlineContext.Provider value={{ inline: true, onClose: () => props.onOpenChange?.(false) }}>
+        {props.children}
+      </SheetInlineContext.Provider>,
+      takeover.slot,
+    );
+  }
   if (ctx.inline && !ctx.onClose) {
     if (!props.open) return null;
     return (

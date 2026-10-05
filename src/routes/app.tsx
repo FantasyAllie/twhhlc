@@ -127,6 +127,7 @@ import {
   SheetTrigger,
 } from "@/components/ui/sheet";
 import { useTheme } from "@/components/theme-provider";
+import { armSheetTakeover, setSheetTakeoverSlot, releaseSheetTakeover, useSheetTakeoverActive } from "@/components/ui/sheet";
 import { Palette } from "lucide-react";
 import { ACCENTS, readAccent, applyAccent, type AccentId } from "@/lib/accent-colour";
 import { useCurrentHotel, DEFAULT_HOTEL_NAME } from "@/lib/hotels";
@@ -590,8 +591,10 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
   // Home-screen takeover: a shortcut card can swap the department home for a panel.
   type HomeView = "maintenance" | "messages" | "lost" | "stayover";
   const [homeView, setHomeView] = useState<HomeView | null>(null);
+  const menuTakeoverActive = useSheetTakeoverActive();
   const [homeSlotEl, setHomeSlotEl] = useState<HTMLDivElement | null>(null);
   const toggleHomeView = (view: HomeView, setOpen: (o: boolean) => void) => {
+    releaseSheetTakeover();
     if (homeView === view) {
       setHomeView(null);
       setOpen(false);
@@ -4117,6 +4120,10 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
                   key={item.key}
                   onSelect={(e) => {
                     if (keepOpen) e.preventDefault();
+                    else if (item.key !== "signout") {
+                      setHomeView(null);
+                      armSheetTakeover();
+                    }
                     item.onClick();
                   }}
                   className={item.destructive ? "text-destructive focus:text-destructive" : undefined}
@@ -4798,7 +4805,7 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
                   label={item.label}
                   destructive={item.destructive}
                   notify={item.notify}
-                  onClick={() => { close(); item.onClick(); }}
+                  onClick={() => { close(); if (item.key !== "signout" && item.key !== "theme" && item.key !== "accent") { setHomeView(null); armSheetTakeover(); } item.onClick(); }}
                 />
               ))}
             </Section>
@@ -5155,7 +5162,8 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
  </div>
  {/* Rooms */}
  {homeView && <div ref={setHomeSlotEl} className="mb-4" />}
- <div className={homeView || quickSetupInline ? "hidden" : undefined}>
+ <div ref={setSheetTakeoverSlot} className="[&:not(:empty)]:mb-4" />
+ <div className={homeView || quickSetupInline || menuTakeoverActive ? "hidden" : undefined}>
  {isMaintenance ? (
 <MaintenanceDashboard
      maintenanceRequests={maintenanceRequests}
