@@ -4809,7 +4809,25 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
       };
       return (
         <div className="space-y-4">
-          {menuGroups.filter((g) => g.id !== "appearance").map((group) => (
+          <div className="grid grid-cols-2 gap-1 rounded-full border bg-muted p-1">
+            <button
+              type="button"
+              onClick={() => cycleTheme()}
+              className="flex min-w-0 items-center justify-center gap-2 rounded-full bg-background px-3 py-2 text-sm font-medium shadow-sm active:scale-[0.98]"
+            >
+              <ThemeGlyph className="h-4 w-4 shrink-0" />
+              <span className="truncate">{levelLabel}</span>
+            </button>
+            <button
+              type="button"
+              onClick={() => cycleAccent()}
+              className="flex min-w-0 items-center justify-center gap-2 rounded-full bg-background px-3 py-2 text-sm font-medium shadow-sm active:scale-[0.98]"
+            >
+              <span className="h-3.5 w-3.5 shrink-0 rounded-full bg-brass" aria-hidden />
+              <span className="truncate">{ACCENTS.find((a) => a.id === accent)?.label ?? "Brass"}</span>
+            </button>
+          </div>
+          {menuGroups.filter((g) => g.id !== "appearance").map((group) => ({ ...group, items: group.items.filter((i) => i.key !== "theme" && i.key !== "accent") })).filter((g) => g.items.length > 0).map((group) => (
             <Section key={group.id} id={group.id} title={group.title}>
               {group.items.map((item) => (
                 <Row
