@@ -2035,7 +2035,7 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
   // before paint), so the new content never flashes at full height first.
   useEffect(() => {
     const grid = roomGridEl;
-    if (!grid) return;
+    if (isReception || !grid) return;
     const heights = new WeakMap<HTMLElement, number>();
     const mo = new MutationObserver(() => {
       const el = grid.querySelector<HTMLDivElement>("[data-room-slot]");
@@ -3987,7 +3987,7 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
 <RoomFlagsContext.Provider value={roomFlagsCtx}>
 <RoomFlagsSheet open={roomFlagsSheetOpen} onOpenChange={setRoomFlagsSheetOpen} />
 <main
-  className={cn("min-h-[100dvh] bg-background", isReception && "ios-glass")}
+  className="min-h-[100dvh] bg-background"
   style={{ paddingBottom: "max(1.5rem, env(safe-area-inset-bottom))" }}
   {...homeRefresh.handlers}
 >
@@ -4127,22 +4127,7 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
                 : "Shared workspace for Housekeeping staff"}
             </p>
             {canViewAs && !isMobile && (
-              <div className="glass-segmented basis-full w-full relative flex rounded-full p-1 items-center">
-                {(() => {
-                  const idx = availableViews.indexOf(effectiveRole as (typeof availableViews)[number]);
-                  if (idx < 0) return null;
-                  const n = availableViews.length;
-                  return (
-                    <span
-                      aria-hidden
-                      className="glass-thumb absolute top-1 bottom-1 rounded-full pointer-events-none"
-                      style={{
-                        left: `calc(4px + (100% - 8px) * ${idx / n})`,
-                        width: `calc((100% - 8px) / ${n})`,
-                      }}
-                    />
-                  );
-                })()}
+              <div className="basis-full w-full flex rounded-full border p-1 bg-background items-center">
                 {availableViews.map((r) => {
                   const active = effectiveRole === r;
                   const label =
@@ -4163,9 +4148,9 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
                       type="button"
                       onClick={() => setViewAsRole(active ? null : r)}
                       className={cn(
-                        "relative z-10 flex-1 px-4 h-9 text-xs sm:text-sm rounded-full whitespace-nowrap transition-[color,transform] duration-300 active:scale-95",
+                        "flex-1 px-4 h-8 text-xs sm:text-sm rounded-full transition-colors whitespace-nowrap",
                         active
-                          ? "text-foreground font-semibold"
+                          ? "bg-primary text-primary-foreground shadow-sm font-medium"
                           : "text-muted-foreground hover:text-foreground",
                       )}
                     >
@@ -5668,7 +5653,7 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
     const bedLabelById = new Map<string, string>();
     for (const b of receptionBeds) bedLabelById.set(b.id, b.label);
     for (const c of counts) if ((c.count ?? 0) > 0) countedRooms.add(c.room_number);
-   const openIdx = openRoom !== null ? visibleRooms.indexOf(openRoom) : -1;
+   const openIdx = !isReception && openRoom !== null ? visibleRooms.indexOf(openRoom) : -1;
    const slotAfter =
      openIdx >= 0
        ? Math.min(visibleRooms.length - 1, (Math.floor(openIdx / roomGridCols) + 1) * roomGridCols - 1)
@@ -5815,7 +5800,7 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
   )}
  </div>
 
- <HomeInline active={openRoom !== null} target={roomSlotEl}>
+ <HomeInline active={!isReception && openRoom !== null} target={roomSlotEl}>
  <div className={cn(!isReception && openRoom !== null && receptionSheetRoom === openRoom && "hidden")}>
  <Sheet open={openRoom !== null} onOpenChange={(o) => { if (!o) { const closing = openRoom; collapseRoomSlot(() => { if (closing !== null) setShowAllLinen(prev => ({ ...prev, [closing]: false })); setOpenRoom(null); setNewMessageText(""); }); } }}>
    <SheetContent side="bottom" className={cn("flex flex-col overflow-hidden rounded-t-2xl p-4 sm:p-6")}>
