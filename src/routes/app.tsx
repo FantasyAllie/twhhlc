@@ -5136,7 +5136,7 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
         : c;
     });
    return (
-     <div className={cn("mb-4 grid grid-cols-2 gap-2 md:gap-3", showStayover ? "lg:grid-cols-4" : isMaintenance ? "grid-cols-1" : "lg:grid-cols-3")}>
+     <div className={cn("mb-4 grid grid-cols-2 gap-2 md:gap-3", (homeView || menuTakeoverActive || quickSetupInline) && "max-md:hidden", showStayover ? "lg:grid-cols-4" : isMaintenance ? "grid-cols-1" : "lg:grid-cols-3")}>
        {cards.map((c) => {
          const Icon = c.icon;
          return (
