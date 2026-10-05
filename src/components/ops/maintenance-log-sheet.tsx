@@ -33,6 +33,7 @@ type Entry = {
   doneBy: string | null;
   photoPaths: string[];
   notes: string | null;
+  workDone?: string | null;
   canEditPhotos: boolean;
   urgent: boolean;
 };
@@ -196,6 +197,7 @@ export function MaintenanceLogSheet({
         doneBy: m.done_by_username,
         photoPaths: m.photo_paths ?? [],
         notes: m.notes ?? null,
+        workDone: m.completion_notes ?? null,
         canEditPhotos: canEditPhotos(m),
         urgent: !!m.urgent,
       })),
@@ -309,6 +311,7 @@ export function MaintenanceLogSheet({
                 <>
                   Done{e.doneBy ? ` by ${e.doneBy}` : ""}
                   {e.doneAt ? ` · ${fmt(e.doneAt)}` : ""}
+                  {e.workDone ? <span className="block whitespace-pre-wrap text-foreground">Work done: {e.workDone}</span> : null}
                 </>
               ) : (
                 <>
