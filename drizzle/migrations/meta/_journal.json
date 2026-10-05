@@ -57,6 +57,13 @@
       "when": 1791214941717,
       "tag": "0007_leaderboard_ignore_bulk_dirty",
       "breakpoints": true
+    },
+    {
+      "idx": 8,
+      "version": "7",
+      "when": 1791231926544,
+      "tag": "0008_maintenance_completion_notes",
+      "breakpoints": true
     }
   ]
 }
