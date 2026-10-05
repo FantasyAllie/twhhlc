@@ -139,7 +139,7 @@
   --sidebar-primary-foreground: oklch(0.99 0.004 85);
   --sidebar-accent: oklch(0.925 0.009 85);
   --sidebar-accent-foreground: oklch(0.203 0.033 264);
-  --sidebar-border: oklch(0.6 0.115 82 / 28%);
+  --sidebar-border: oklch(0.6 0.115  var(--accent-h) / 28%);
   --sidebar-ring: oklch(0.6 0.115 var(--accent-h));
   /* Material elevation tiers: ambient + key light for tactile depth. */
   --shadow-1: 0 1px 2px 0 rgb(0 0 0 / 0.08), 0 1px 1px -1px rgb(0 0 0 / 0.06);
@@ -202,7 +202,7 @@
   --accent-foreground: oklch(0.9 0.09 var(--accent-h));
   --destructive: oklch(0.62 0.19 22.216);
   --destructive-foreground: oklch(0.95 0 0);
-  --border: oklch(0.762 0.135 88 / 20%);
+  --border: oklch(0.762 0.135  var(--accent-h) / 20%);
   --input: oklch(1 0 0 / 15%);
   --ring: oklch(0.762 0.135 var(--accent-h));
   --chart-1: oklch(0.762 0.135 var(--accent-h));
@@ -216,7 +216,7 @@
   --sidebar-primary-foreground: oklch(0.203 0.033 264);
   --sidebar-accent: oklch(0.32 0.045 264);
   --sidebar-accent-foreground: oklch(0.962 0.006 85);
-  --sidebar-border: oklch(0.762 0.135 88 / 22%);
+  --sidebar-border: oklch(0.762 0.135  var(--accent-h) / 22%);
   --sidebar-ring: oklch(0.762 0.135 var(--accent-h));
   /* Dark surfaces need slightly stronger key lights to read depth. */
   --shadow-1: 0 1px 2px 0 rgb(0 0 0 / 0.25), 0 1px 1px -1px rgb(0 0 0 / 0.18);
@@ -276,7 +276,7 @@
   --sidebar-foreground: oklch(0.19 0.03 264);
   --sidebar-accent: oklch(0.962 0.002 264);
   --sidebar-accent-foreground: oklch(0.19 0.03 264);
-  --sidebar-border: oklch(0.6 0.115 82 / 24%);
+  --sidebar-border: oklch(0.6 0.115  var(--accent-h) / 24%);
 }
 
 /* Theme level 4 — OLED black: true black surfaces, minimal ambient glow. */
@@ -292,13 +292,13 @@
   --muted-foreground: oklch(0.7 0.012 262);
   --accent: oklch(0.22 0.012 264);
   --accent-foreground: oklch(0.88 0.09 var(--accent-h));
-  --border: oklch(0.762 0.135 88 / 16%);
+  --border: oklch(0.762 0.135  var(--accent-h) / 16%);
   --input: oklch(1 0 0 / 12%);
   --sidebar: oklch(0.06 0.004 264);
   --sidebar-foreground: oklch(0.95 0.004 85);
   --sidebar-accent: oklch(0.2 0.01 264);
   --sidebar-accent-foreground: oklch(0.95 0.004 85);
-  --sidebar-border: oklch(0.762 0.135 88 / 18%);
+  --sidebar-border: oklch(0.762 0.135  var(--accent-h) / 18%);
   --shadow-1: 0 1px 2px 0 rgb(0 0 0 / 0.6), 0 1px 1px -1px rgb(0 0 0 / 0.5);
   --shadow-2: 0 4px 6px -1px rgb(0 0 0 / 0.65), 0 2px 4px -2px rgb(0 0 0 / 0.5);
   --shadow-3: 0 20px 25px -5px rgb(0 0 0 / 0.75), 0 8px 10px -6px rgb(0 0 0 / 0.6);
