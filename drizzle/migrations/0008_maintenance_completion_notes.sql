@@ -1,0 +1,1 @@
+ALTER TABLE public.maintenance_requests ADD COLUMN IF NOT EXISTS completion_notes text;

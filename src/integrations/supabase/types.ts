@@ -375,6 +375,7 @@ export type Database = {
       maintenance_requests: {
         Row: {
           area_label: string | null
+          completion_notes: string | null
           created_at: string
           created_by_username: string | null
           deleted_at: string | null
@@ -394,6 +395,7 @@ export type Database = {
         }
         Insert: {
           area_label?: string | null
+          completion_notes?: string | null
           created_at?: string
           created_by_username?: string | null
           deleted_at?: string | null
@@ -413,6 +415,7 @@ export type Database = {
         }
         Update: {
           area_label?: string | null
+          completion_notes?: string | null
           created_at?: string
           created_by_username?: string | null
           deleted_at?: string | null
