@@ -554,3 +554,11 @@ html {
 :root[data-accent="violet"] { --accent-h: 300; }
 :root[data-accent="rose"] { --accent-h: 10; }
 :root[data-accent="green"] { --accent-h: 145; }
+:root[data-accent="orange"] { --accent-h: 55; }
+:root[data-accent="red"] { --accent-h: 27; }
+:root[data-accent="pink"] { --accent-h: 350; }
+:root[data-accent="purple"] { --accent-h: 320; }
+:root[data-accent="indigo"] { --accent-h: 275; }
+:root[data-accent="sky"] { --accent-h: 225; }
+:root[data-accent="mint"] { --accent-h: 170; }
+:root[data-accent="lime"] { --accent-h: 120; }
