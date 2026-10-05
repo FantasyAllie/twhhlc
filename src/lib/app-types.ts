@@ -152,6 +152,8 @@ export type MaintenanceRequest = {
   notes?: string | null;
   // Flagged as needing urgent action; also listed under the Urgent pill.
   urgent?: boolean;
+  // What the person who completed the job says they did.
+  completion_notes?: string | null;
 };
 
 

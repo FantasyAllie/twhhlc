@@ -1,3 +1,4 @@
+import { Textarea } from "@/components/ui/textarea";
 import { playDoorBell } from "@/lib/door-bell";
 import { createPortal } from "react-dom";
 import React, { useEffect, useMemo, useRef, useState } from "react";
@@ -547,6 +548,7 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
  const [newMaintenancePhotos, setNewMaintenancePhotos] = useState<File[]>([]);
  const [donePhotoTarget, setDonePhotoTarget] = useState<string | null>(null);
  const [donePhotos, setDonePhotos] = useState<File[]>([]);
+ const [doneNotes, setDoneNotes] = useState("");
  const [donePhotoBusy, setDonePhotoBusy] = useState(false);
   const [newMaintenanceText, setNewMaintenanceText] = useState<string>("");
   const [newMaintenanceUrgent, setNewMaintenanceUrgent] = useState(false);
@@ -1223,22 +1225,23 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
   const markMaintenanceDone = async (id: string) => {
     setDonePhotoTarget(id);
     setDonePhotos([]);
+    setDoneNotes("");
   };
 
-  const completeMaintenanceRequest = async (id: string, files: File[]) => {
+  const completeMaintenanceRequest = async (id: string, files: File[], workNotes: string) => {
     const who = authUser?.username ?? (isMaintenance ? "Maintenance" : "Reception");
     const target = (qc.getQueryData<MaintenanceRequest[]>(["maintenance_requests"]) ?? [])
       .find((m) => m.id === id);
     qc.setQueryData<MaintenanceRequest[]>(["maintenance_requests"], (old) =>
       old?.map((m) =>
         m.id === id
-          ? { ...m, done: true, done_by_username: who, done_at: new Date().toISOString() }
+          ? { ...m, done: true, done_by_username: who, done_at: new Date().toISOString(), completion_notes: workNotes }
           : m,
       ) ?? [],
     );
     const { error } = await supabase
       .from("maintenance_requests" as never)
-      .update({ done: true, done_by_username: who, done_at: new Date().toISOString() } as never)
+      .update({ done: true, done_by_username: who, done_at: new Date().toISOString(), completion_notes: workNotes } as never)
       .eq("id", id);
     if (error) {
       toast.error(error.message);
@@ -5989,39 +5992,39 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
       <DialogHeader>
         <DialogTitle>Mark job as done</DialogTitle>
         <DialogDescription>
-          Add a photo of the work you've done or fixed. This is optional.
+          Describe the work carried out (required). You can also add a photo of the finished work.
         </DialogDescription>
       </DialogHeader>
+      <Textarea
+        value={doneNotes}
+        onChange={(e) => setDoneNotes(e.target.value.slice(0, 2000))}
+        placeholder="e.g. Replaced shower cartridge and tested"
+        rows={4}
+        autoFocus
+      />
       <PhotoComposer value={donePhotos} onChange={setDonePhotos} />
       <DialogFooter className="gap-2">
         <Button
           variant="outline"
           disabled={donePhotoBusy}
-          onClick={async () => {
-            const id = donePhotoTarget;
-            if (!id) return;
-            setDonePhotoBusy(true);
-            await completeMaintenanceRequest(id, []);
-            setDonePhotoBusy(false);
-            setDonePhotoTarget(null);
-            setDonePhotos([]);
-          }}
+          onClick={() => { setDonePhotoTarget(null); setDonePhotos([]); setDoneNotes(""); }}
         >
-          No photo
+          Cancel
         </Button>
         <Button
-          disabled={donePhotoBusy}
+          disabled={donePhotoBusy || doneNotes.trim().length === 0}
           onClick={async () => {
             const id = donePhotoTarget;
-            if (!id) return;
+            if (!id || !doneNotes.trim()) return;
             setDonePhotoBusy(true);
-            await completeMaintenanceRequest(id, donePhotos);
+            await completeMaintenanceRequest(id, donePhotos, doneNotes.trim());
             setDonePhotoBusy(false);
             setDonePhotoTarget(null);
             setDonePhotos([]);
+            setDoneNotes("");
           }}
         >
-          {donePhotoBusy ? "Saving…" : donePhotos.length > 0 ? "Save & complete" : "Complete"}
+          {donePhotoBusy ? "Saving…" : "Complete"}
         </Button>
       </DialogFooter>
     </DialogContent>
