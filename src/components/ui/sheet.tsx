@@ -102,12 +102,24 @@ export function useFitToScreen(ref: React.MutableRefObject<HTMLElement | null>, 
   React.useLayoutEffect(() => {
     const node = ref.current;
     if (!active || !node) return;
+    const isPhone = () => window.innerWidth < 768;
     const fit = () => {
+      if (isPhone()) {
+        // Phones: panel fills the whole screen; the header scrolls off above it.
+        node.style.height = `${window.innerHeight - 16}px`;
+        return;
+      }
       const top = node.getBoundingClientRect().top + window.scrollY;
       const h = Math.max(320, window.innerHeight - top - 16);
       node.style.height = `${h}px`;
     };
     fit();
+    if (isPhone()) {
+      requestAnimationFrame(() => {
+        const top = node.getBoundingClientRect().top + window.scrollY - 8;
+        window.scrollTo({ top: Math.max(0, top), behavior: "smooth" });
+      });
+    }
     window.addEventListener("resize", fit);
     const ro = new ResizeObserver(fit);
     if (node.parentElement?.parentElement) ro.observe(node.parentElement.parentElement);
@@ -273,7 +285,7 @@ const SheetContent = React.forwardRef<
         )}
       >
         {!inlineCtx.noFit && <TakeoverCloseButton onClose={inlineCtx.onClose} />}
-        <div className="flex min-h-0 flex-1 flex-col overflow-y-auto overscroll-contain">
+        <div className="flex min-h-0 flex-1 flex-col overflow-y-auto md:overscroll-contain">
           <SheetInlineContext.Provider value={{ inline: false, onClose: inlineCtx.onClose }}>
             <SheetInlineBodyContext.Provider value={true}>{children}</SheetInlineBodyContext.Provider>
           </SheetInlineContext.Provider>
