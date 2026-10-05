@@ -99,7 +99,6 @@ const DialogContent = React.forwardRef<
   const ctx = React.useMemo<DialogDragCtx>(() => ({ contentRef: innerRef, closeRef }), []);
   const inlineClose = React.useContext(DialogInlineContext);
   useFitToScreen(innerRef, !!inlineClose);
-  useFitToScreen(innerRef, !!inlineClose);
   if (inlineClose) {
     return (
       <div
