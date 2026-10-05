@@ -431,7 +431,7 @@ export function MaintenanceLogSheet({
             >
               <span className="flex min-w-0 items-center gap-2">
                 <Plus className="h-4 w-4 shrink-0" />
-                <span className="truncate">Log a new issue</span>
+                <span className="truncate"><span className="sm:hidden">New issue</span><span className="max-sm:hidden">Log a new issue</span></span>
               </span>
               <ChevronDown
                 className={
