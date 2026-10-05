@@ -39,7 +39,6 @@ const DialogClose = React.forwardRef<
   React.ComponentPropsWithoutRef<typeof DialogPrimitive.Close>
 >(({ asChild, onClick, ...props }, ref) => {
   const inlineClose = React.useContext(DialogInlineContext);
-  useFitToScreen(innerRef, !!inlineClose);
   if (inlineClose) {
     const Comp: React.ElementType = asChild ? Slot : "button";
     return (
@@ -99,6 +98,7 @@ const DialogContent = React.forwardRef<
   );
   const ctx = React.useMemo<DialogDragCtx>(() => ({ contentRef: innerRef, closeRef }), []);
   const inlineClose = React.useContext(DialogInlineContext);
+  useFitToScreen(innerRef, !!inlineClose);
   useFitToScreen(innerRef, !!inlineClose);
   if (inlineClose) {
     return (
