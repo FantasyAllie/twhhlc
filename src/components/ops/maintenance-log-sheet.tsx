@@ -414,7 +414,7 @@ export function MaintenanceLogSheet({
           </SheetDescription>
         </SheetHeader>
         <div className="mt-4 border-b pb-4 space-y-2">
-          <div className={isAdmin ? "grid grid-cols-2 gap-2" : undefined}>
+          <div className={isAdmin ? "grid grid-cols-[minmax(0,1fr)_minmax(0,1fr)] gap-2" : undefined}>
             <Button
               type="button"
               variant="outline"
