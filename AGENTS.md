@@ -1,0 +1,1 @@
+- Menu-opened Sheets/Dialogs render in place of the home screen via the takeover slot in ui/sheet.tsx (armSheetTakeover before opening); why: one consistent in-page panel pattern instead of popups.

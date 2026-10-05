@@ -5,14 +5,56 @@ import * as DialogPrimitive from "@radix-ui/react-dialog";
 import { X } from "lucide-react";
 
 import { cn } from "@/lib/utils";
+import { createPortal } from "react-dom";
+import { Slot } from "@radix-ui/react-slot";
+import { useTakeoverClaim, TakeoverCloseButton } from "@/components/ui/sheet";
 
-const Dialog = DialogPrimitive.Root;
+// When a menu tap claims the home takeover, the dialog renders in-flow there.
+const DialogInlineContext = React.createContext<null | (() => void)>(null);
+
+const Dialog = (props: React.ComponentProps<typeof DialogPrimitive.Root>) => {
+  const slot = useTakeoverClaim(props.open, props.onOpenChange);
+  if (slot) {
+    if (!props.open) return null;
+    return createPortal(
+      <DialogInlineContext.Provider value={() => props.onOpenChange?.(false)}>
+        {props.children}
+      </DialogInlineContext.Provider>,
+      slot,
+    );
+  }
+  return (
+    <DialogInlineContext.Provider value={null}>
+      <DialogPrimitive.Root {...props} />
+    </DialogInlineContext.Provider>
+  );
+};
 
 const DialogTrigger = DialogPrimitive.Trigger;
 
 const DialogPortal = DialogPrimitive.Portal;
 
-const DialogClose = DialogPrimitive.Close;
+const DialogClose = React.forwardRef<
+  React.ElementRef<typeof DialogPrimitive.Close>,
+  React.ComponentPropsWithoutRef<typeof DialogPrimitive.Close>
+>(({ asChild, onClick, ...props }, ref) => {
+  const inlineClose = React.useContext(DialogInlineContext);
+  if (inlineClose) {
+    const Comp: React.ElementType = asChild ? Slot : "button";
+    return (
+      <Comp
+        ref={ref}
+        {...props}
+        onClick={(e: React.MouseEvent<HTMLButtonElement>) => {
+          onClick?.(e);
+          inlineClose();
+        }}
+      />
+    );
+  }
+  return <DialogPrimitive.Close ref={ref} asChild={asChild} onClick={onClick} {...props} />;
+});
+DialogClose.displayName = "DialogClose";
 
 type DialogDragCtx = {
   contentRef: React.MutableRefObject<HTMLDivElement | null>;
@@ -55,6 +97,22 @@ const DialogContent = React.forwardRef<
     [ref],
   );
   const ctx = React.useMemo<DialogDragCtx>(() => ({ contentRef: innerRef, closeRef }), []);
+  const inlineClose = React.useContext(DialogInlineContext);
+  if (inlineClose) {
+    return (
+      <div
+        ref={setRefs}
+        className={cn(
+          className,
+          "relative flex h-auto max-h-none w-full max-w-none flex-col gap-0 overflow-visible rounded-2xl border bg-background p-4 shadow-elevation-1 sm:p-6",
+          "[&_.overflow-y-auto]:overflow-visible [&_.overflow-y-auto]:max-h-none [&_.min-h-0]:min-h-fit",
+        )}
+      >
+        <TakeoverCloseButton onClose={inlineClose} />
+        {children}
+      </div>
+    );
+  }
   return (
   <DialogPortal>
     <DialogOverlay />
@@ -183,25 +241,23 @@ DialogFooter.displayName = "DialogFooter";
 const DialogTitle = React.forwardRef<
   React.ElementRef<typeof DialogPrimitive.Title>,
   React.ComponentPropsWithoutRef<typeof DialogPrimitive.Title>
->(({ className, ...props }, ref) => (
-  <DialogPrimitive.Title
-    ref={ref}
-    className={cn("pr-16 text-lg font-semibold leading-none tracking-tight", className)}
-    {...props}
-  />
-));
+>(({ className, asChild: _a, ...props }, ref) => {
+  const inline = React.useContext(DialogInlineContext);
+  const cls = cn("pr-16 text-lg font-semibold leading-none tracking-tight", className);
+  if (inline) return <h2 ref={ref} className={cls} {...props} />;
+  return <DialogPrimitive.Title ref={ref} className={cls} {...props} />;
+});
 DialogTitle.displayName = DialogPrimitive.Title.displayName;
 
 const DialogDescription = React.forwardRef<
   React.ElementRef<typeof DialogPrimitive.Description>,
   React.ComponentPropsWithoutRef<typeof DialogPrimitive.Description>
->(({ className, ...props }, ref) => (
-  <DialogPrimitive.Description
-    ref={ref}
-    className={cn("text-sm leading-relaxed text-muted-foreground", className)}
-    {...props}
-  />
-));
+>(({ className, asChild: _a, ...props }, ref) => {
+  const inline = React.useContext(DialogInlineContext);
+  const cls = cn("text-sm leading-relaxed text-muted-foreground", className);
+  if (inline) return <p ref={ref} className={cls} {...props} />;
+  return <DialogPrimitive.Description ref={ref} className={cls} {...props} />;
+});
 DialogDescription.displayName = DialogPrimitive.Description.displayName;
 
 export {
