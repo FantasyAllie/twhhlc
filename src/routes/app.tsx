@@ -4805,7 +4805,7 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
                   label={item.label}
                   destructive={item.destructive}
                   notify={item.notify}
-                  onClick={() => { close(); item.onClick(); }}
+                  onClick={() => { close(); if (item.key !== "signout" && item.key !== "theme" && item.key !== "accent") { setHomeView(null); armSheetTakeover(); } item.onClick(); }}
                 />
               ))}
             </Section>
