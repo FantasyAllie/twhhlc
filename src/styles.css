@@ -551,7 +551,6 @@ html {
 .glass-segmented {
   background: color-mix(in oklab, var(--background) 55%, transparent);
   backdrop-filter: blur(20px) saturate(180%);
-  -webkit-backdrop-filter: blur(20px) saturate(180%);
   border: 1px solid color-mix(in oklab, var(--foreground) 10%, transparent);
   box-shadow:
     inset 0 1px 0 color-mix(in oklab, white 35%, transparent),
@@ -585,7 +584,6 @@ html {
 .ios-glass .shadow-elevation-1.bg-background {
   background: color-mix(in oklab, var(--sidebar) 55%, transparent) !important;
   backdrop-filter: blur(24px) saturate(180%);
-  -webkit-backdrop-filter: blur(24px) saturate(180%);
   border-color: color-mix(in oklab, var(--foreground) 10%, transparent) !important;
   border-radius: 1.5rem;
   box-shadow:
@@ -600,7 +598,6 @@ html {
 .ios-glass button[aria-label^="Room "] {
   border-radius: 1.25rem;
   backdrop-filter: blur(12px) saturate(160%);
-  -webkit-backdrop-filter: blur(12px) saturate(160%);
   background-image: linear-gradient(180deg,
     color-mix(in oklab, white 28%, transparent) 0%,
     transparent 55%);
@@ -612,3 +609,57 @@ html {
 .ios-glass button[aria-label^="Room "]:active { transform: scale(0.95); }
 /* Springier presses on every other control. */
 .ios-glass button { transition-timing-function: cubic-bezier(0.34, 1.4, 0.64, 1); }
+
+/* Liquid Glass panels v2 — Reception only. */
+.ios-glass header,
+.ios-glass .bg-sidebar,
+.ios-glass .shadow-elevation-1.bg-background {
+  position: relative;
+  isolation: isolate;
+  background:
+    linear-gradient(135deg,
+      color-mix(in oklab, white 22%, transparent) 0%,
+      color-mix(in oklab, white 4%, transparent) 40%,
+      color-mix(in oklab, white 0%, transparent) 60%,
+      color-mix(in oklab, white 10%, transparent) 100%),
+    color-mix(in oklab, var(--sidebar) 38%, transparent) !important;
+  backdrop-filter: blur(30px) saturate(200%) brightness(1.06);
+  border: 1px solid transparent !important;
+  border-radius: 1.75rem;
+  box-shadow:
+    inset 0 1.5px 0 color-mix(in oklab, white 65%, transparent),
+    inset 1px 0 0 color-mix(in oklab, white 25%, transparent),
+    inset 0 -1px 1px color-mix(in oklab, var(--foreground) 8%, transparent),
+    0 1px 2px color-mix(in oklab, var(--foreground) 10%, transparent),
+    0 18px 40px -20px color-mix(in oklab, var(--foreground) 45%, transparent) !important;
+}
+/* Specular rim: bright top-left edge fading around the panel. */
+.ios-glass header::before,
+.ios-glass .bg-sidebar::before,
+.ios-glass .shadow-elevation-1.bg-background::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  padding: 1px;
+  background: linear-gradient(145deg,
+    color-mix(in oklab, white 80%, transparent) 0%,
+    color-mix(in oklab, white 10%, transparent) 35%,
+    color-mix(in oklab, var(--brass) 25%, transparent) 70%,
+    color-mix(in oklab, white 40%, transparent) 100%);
+  mask: linear-gradient(#000 0 0) content-box exclude, linear-gradient(#000 0 0);
+  pointer-events: none;
+  z-index: -1;
+}
+.ios-glass .shadow-elevation-1.bg-background { border-radius: 1.25rem; }
+.ios-glass button.bg-sidebar:active,
+.ios-glass .shadow-elevation-1.bg-background:active {
+  transform: scale(0.97);
+  backdrop-filter: blur(30px) saturate(220%) brightness(1.12);
+}
+.dark .ios-glass header,
+.dark .ios-glass .bg-sidebar {
+  background:
+    linear-gradient(135deg, color-mix(in oklab, white 10%, transparent), transparent 50%),
+    color-mix(in oklab, var(--sidebar) 45%, transparent) !important;
+}
