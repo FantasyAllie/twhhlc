@@ -2035,7 +2035,7 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
   // before paint), so the new content never flashes at full height first.
   useEffect(() => {
     const grid = roomGridEl;
-    if (isReception || !grid) return;
+    if (!grid) return;
     const heights = new WeakMap<HTMLElement, number>();
     const mo = new MutationObserver(() => {
       const el = grid.querySelector<HTMLDivElement>("[data-room-slot]");
@@ -5668,7 +5668,7 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
     const bedLabelById = new Map<string, string>();
     for (const b of receptionBeds) bedLabelById.set(b.id, b.label);
     for (const c of counts) if ((c.count ?? 0) > 0) countedRooms.add(c.room_number);
-   const openIdx = !isReception && openRoom !== null ? visibleRooms.indexOf(openRoom) : -1;
+   const openIdx = openRoom !== null ? visibleRooms.indexOf(openRoom) : -1;
    const slotAfter =
      openIdx >= 0
        ? Math.min(visibleRooms.length - 1, (Math.floor(openIdx / roomGridCols) + 1) * roomGridCols - 1)
@@ -5815,7 +5815,7 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
   )}
  </div>
 
- <HomeInline active={!isReception && openRoom !== null} target={roomSlotEl}>
+ <HomeInline active={openRoom !== null} target={roomSlotEl}>
  <div className={cn(!isReception && openRoom !== null && receptionSheetRoom === openRoom && "hidden")}>
  <Sheet open={openRoom !== null} onOpenChange={(o) => { if (!o) { const closing = openRoom; collapseRoomSlot(() => { if (closing !== null) setShowAllLinen(prev => ({ ...prev, [closing]: false })); setOpenRoom(null); setNewMessageText(""); }); } }}>
    <SheetContent side="bottom" className={cn("flex flex-col overflow-hidden rounded-t-2xl p-4 sm:p-6")}>
