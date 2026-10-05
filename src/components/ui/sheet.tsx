@@ -107,8 +107,14 @@ export function useFitToScreen(ref: React.MutableRefObject<HTMLElement | null>, 
       if (isPhone()) {
         // Phones: panel fills the whole screen; the header scrolls off above it.
         node.style.height = `${window.innerHeight - 16}px`;
+        // Pull up the page's trailing space so scrolling can't reveal a gap.
+        node.style.marginBottom = "0px";
+        const r = node.getBoundingClientRect();
+        const below = document.documentElement.scrollHeight - (r.bottom + window.scrollY);
+        node.style.marginBottom = `${-Math.max(0, below - 8)}px`;
         return;
       }
+      node.style.marginBottom = "";
       const top = node.getBoundingClientRect().top + window.scrollY;
       const h = Math.max(320, window.innerHeight - top - 16);
       node.style.height = `${h}px`;
