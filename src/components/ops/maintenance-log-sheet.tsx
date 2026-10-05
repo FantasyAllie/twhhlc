@@ -414,11 +414,11 @@ export function MaintenanceLogSheet({
           </SheetDescription>
         </SheetHeader>
         <div className="mt-4 border-b pb-4 space-y-2">
-          <div className={isAdmin ? "grid grid-cols-2 gap-2" : undefined}>
+          <div className={isAdmin ? "grid grid-cols-[minmax(0,1fr)_minmax(0,1fr)] gap-2" : undefined}>
             <Button
               type="button"
               variant="outline"
-              className="w-full justify-between"
+              className="w-full min-w-0 justify-between gap-1 px-3"
               onClick={() => {
                 setMaintenanceComposerOpen(!maintenanceComposerOpen);
                 if (maintenanceComposerOpen) {
@@ -429,13 +429,13 @@ export function MaintenanceLogSheet({
               }}
               aria-expanded={maintenanceComposerOpen}
             >
-              <span className="flex items-center gap-2">
-                <Plus className="h-4 w-4" />
-                Log a new issue
+              <span className="flex min-w-0 items-center gap-2">
+                <Plus className="h-4 w-4 shrink-0" />
+                <span className="truncate"><span className="sm:hidden">New issue</span><span className="max-sm:hidden">Log a new issue</span></span>
               </span>
               <ChevronDown
                 className={
-                  "h-4 w-4 opacity-60 transition-transform " +
+                  "h-4 w-4 shrink-0 opacity-60 transition-transform " +
                   (maintenanceComposerOpen ? "rotate-180" : "")
                 }
               />
