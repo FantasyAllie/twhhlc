@@ -37,6 +37,7 @@ const takeover = {
 const emitTakeover = () => takeover.listeners.forEach((l) => l());
 let takeoverSeq = 0;
 export function armSheetTakeover() {
+  console.log("ARM");
   takeover.armedUntil = Date.now() + 600;
 }
 export function setSheetTakeoverSlot(el: HTMLElement | null) {
@@ -68,6 +69,7 @@ export function useTakeoverClaim(open: boolean | undefined, onOpenChange?: (o: b
   const closeRef = React.useRef(() => onOpenChange?.(false));
   closeRef.current = () => onOpenChange?.(false);
   if (!skip) {
+    if (open && !wasOpenRef.current) console.log("OPEN", Date.now() < takeover.armedUntil, !!takeover.slot);
     if (open && !wasOpenRef.current && Date.now() < takeover.armedUntil && takeover.slot) {
       takeover.armedUntil = 0;
       claimRef.current = true;
