@@ -7,7 +7,7 @@ import { X } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { createPortal } from "react-dom";
 import { Slot } from "@radix-ui/react-slot";
-import { useTakeoverClaim, TakeoverCloseButton } from "@/components/ui/sheet";
+import { useTakeoverClaim, TakeoverCloseButton, useFitToScreen } from "@/components/ui/sheet";
 
 // When a menu tap claims the home takeover, the dialog renders in-flow there.
 const DialogInlineContext = React.createContext<null | (() => void)>(null);
@@ -39,6 +39,7 @@ const DialogClose = React.forwardRef<
   React.ComponentPropsWithoutRef<typeof DialogPrimitive.Close>
 >(({ asChild, onClick, ...props }, ref) => {
   const inlineClose = React.useContext(DialogInlineContext);
+  useFitToScreen(innerRef, !!inlineClose);
   if (inlineClose) {
     const Comp: React.ElementType = asChild ? Slot : "button";
     return (
@@ -98,18 +99,18 @@ const DialogContent = React.forwardRef<
   );
   const ctx = React.useMemo<DialogDragCtx>(() => ({ contentRef: innerRef, closeRef }), []);
   const inlineClose = React.useContext(DialogInlineContext);
+  useFitToScreen(innerRef, !!inlineClose);
   if (inlineClose) {
     return (
       <div
         ref={setRefs}
         className={cn(
           className,
-          "relative flex h-auto max-h-none w-full max-w-none flex-col gap-0 overflow-visible rounded-2xl border bg-background p-4 shadow-elevation-1 sm:p-6",
-          "[&_.overflow-y-auto]:overflow-visible [&_.overflow-y-auto]:max-h-none [&_.min-h-0]:min-h-fit",
+          "relative flex max-h-none w-full max-w-none flex-col gap-0 overflow-hidden rounded-2xl border bg-background p-4 shadow-elevation-1 sm:p-6",
         )}
       >
         <TakeoverCloseButton onClose={inlineClose} />
-        {children}
+        <div className="flex min-h-0 flex-1 flex-col overflow-y-auto overscroll-contain">{children}</div>
       </div>
     );
   }

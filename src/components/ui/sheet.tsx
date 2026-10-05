@@ -94,6 +94,27 @@ export function useTakeoverClaim(open: boolean | undefined, onOpenChange?: (o: b
   return claimed ? takeover.slot : null;
 }
 
+/** Fits an in-place panel to the screen height left below its top edge. */
+export function useFitToScreen(ref: React.MutableRefObject<HTMLElement | null>, active: boolean) {
+  React.useLayoutEffect(() => {
+    const node = ref.current;
+    if (!active || !node) return;
+    const fit = () => {
+      const top = node.getBoundingClientRect().top + window.scrollY;
+      const h = Math.max(320, window.innerHeight - top - 16);
+      node.style.height = `${h}px`;
+    };
+    fit();
+    window.addEventListener("resize", fit);
+    const ro = new ResizeObserver(fit);
+    if (node.parentElement?.parentElement) ro.observe(node.parentElement.parentElement);
+    return () => {
+      window.removeEventListener("resize", fit);
+      ro.disconnect();
+    };
+  }, [ref, active]);
+}
+
 /** Round "<" button that closes an in-place panel. */
 export function TakeoverCloseButton({ onClose }: { onClose: () => void }) {
   return (
@@ -236,21 +257,23 @@ const SheetContent = React.forwardRef<
     [isDraggable],
   );
 
+  const isInline = !!(inlineCtx.inline && inlineCtx.onClose);
+  useFitToScreen(innerRef, isInline);
   if (inlineCtx.inline && inlineCtx.onClose) {
     return (
       <div
         ref={setRefs}
         className={cn(
           className,
-          "relative flex h-auto max-h-none flex-col overflow-visible rounded-2xl border bg-background p-4 shadow-elevation-1 sm:p-6",
-          // Inner scroll boxes would trap touches; let the page scroll instead.
-          "[&_.overflow-y-auto]:overflow-visible [&_.overflow-y-auto]:overscroll-auto [&_.overflow-y-auto]:max-h-none [&_.min-h-0]:min-h-fit",
+          "relative flex max-h-none flex-col overflow-hidden rounded-2xl border bg-background p-4 shadow-elevation-1 sm:p-6",
         )}
       >
         <TakeoverCloseButton onClose={inlineCtx.onClose} />
-        <SheetInlineContext.Provider value={{ inline: false, onClose: inlineCtx.onClose }}>
-          <SheetInlineBodyContext.Provider value={true}>{children}</SheetInlineBodyContext.Provider>
-        </SheetInlineContext.Provider>
+        <div className="flex min-h-0 flex-1 flex-col overflow-y-auto overscroll-contain">
+          <SheetInlineContext.Provider value={{ inline: false, onClose: inlineCtx.onClose }}>
+            <SheetInlineBodyContext.Provider value={true}>{children}</SheetInlineBodyContext.Provider>
+          </SheetInlineContext.Provider>
+        </div>
       </div>
     );
   }
