@@ -11,18 +11,21 @@ import { cn } from "@/lib/utils";
 
 // Inline mode: when a Sheet is rendered inside <SheetInlineProvider inline>,
 // it renders in-flow (e.g. replacing the Home screen) instead of as an overlay.
-type SheetInlineCtx = { inline: boolean; onClose?: () => void };
+type SheetInlineCtx = { inline: boolean; onClose?: () => void; noFit?: boolean };
 const SheetInlineContext = React.createContext<SheetInlineCtx>({ inline: false });
 // True for descendants of an inline SheetContent (titles must not use Radix Dialog parts).
 const SheetInlineBodyContext = React.createContext(false);
 const SheetInlineProvider = ({
   inline,
+  noFit,
   children,
 }: {
   inline: boolean;
+  /** Grow with the content instead of fitting the screen height. */
+  noFit?: boolean;
   children: React.ReactNode;
 }) => (
-  <SheetInlineContext.Provider value={{ inline }}>{children}</SheetInlineContext.Provider>
+  <SheetInlineContext.Provider value={{ inline, noFit }}>{children}</SheetInlineContext.Provider>
 );
 
 // Home-screen takeover: a menu tap "arms" the next opening Sheet, which then
@@ -144,7 +147,7 @@ const Sheet = (props: React.ComponentProps<typeof SheetPrimitive.Root>) => {
     if (!props.open) return null;
     return (
       <SheetInlineContext.Provider
-        value={{ inline: true, onClose: () => props.onOpenChange?.(false) }}
+        value={{ inline: true, noFit: ctx.noFit, onClose: () => props.onOpenChange?.(false) }}
       >
         {props.children}
       </SheetInlineContext.Provider>
@@ -258,7 +261,7 @@ const SheetContent = React.forwardRef<
   );
 
   const isInline = !!(inlineCtx.inline && inlineCtx.onClose);
-  useFitToScreen(innerRef, isInline);
+  useFitToScreen(innerRef, isInline && !inlineCtx.noFit);
   if (inlineCtx.inline && inlineCtx.onClose) {
     return (
       <div
@@ -268,7 +271,7 @@ const SheetContent = React.forwardRef<
           "relative flex max-h-none flex-col overflow-hidden rounded-2xl border bg-background p-4 shadow-elevation-1 sm:p-6",
         )}
       >
-        <TakeoverCloseButton onClose={inlineCtx.onClose} />
+        {!inlineCtx.noFit && <TakeoverCloseButton onClose={inlineCtx.onClose} />}
         <div className="flex min-h-0 flex-1 flex-col overflow-y-auto overscroll-contain">
           <SheetInlineContext.Provider value={{ inline: false, onClose: inlineCtx.onClose }}>
             <SheetInlineBodyContext.Provider value={true}>{children}</SheetInlineBodyContext.Provider>
