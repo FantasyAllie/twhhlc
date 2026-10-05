@@ -4551,7 +4551,7 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
 
 
  {/* Reception sheet (Admin/User): Done + Status + Bed */}
-  <HomeInline active={!isReception && openRoom !== null && receptionSheetRoom === openRoom} target={roomSlotEl}>
+  <HomeInline active={!isReception && openRoom !== null && receptionSheetRoom === openRoom} target={roomSlotEl} noFit>
   <ReceptionStatusSheet
     inlineView={!isReception && openRoom !== null && receptionSheetRoom === openRoom}
     receptionSheetRoom={receptionSheetRoom}
@@ -5834,7 +5834,7 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
   )}
  </div>
 
- <HomeInline active={openRoom !== null} target={roomSlotEl}>
+ <HomeInline active={openRoom !== null} target={roomSlotEl} noFit>
  <div className={cn(!isReception && openRoom !== null && receptionSheetRoom === openRoom && "hidden")}>
  <Sheet open={openRoom !== null} onOpenChange={(o) => { if (!o) { const closing = openRoom; collapseRoomSlot(() => { if (closing !== null) setShowAllLinen(prev => ({ ...prev, [closing]: false })); setOpenRoom(null); setNewMessageText(""); }); } }}>
    <SheetContent side="bottom" className={cn("flex flex-col overflow-hidden rounded-t-2xl p-4 sm:p-6")}>
@@ -6048,12 +6048,14 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
 function HomeInline({
   active,
   target,
+  noFit,
   children,
 }: {
   active: boolean;
   target: HTMLElement | null;
+  noFit?: boolean;
   children: React.ReactNode;
 }) {
-  const content = <SheetInlineProvider inline={active && !!target}>{children}</SheetInlineProvider>;
+  const content = <SheetInlineProvider inline={active && !!target} noFit={noFit}>{children}</SheetInlineProvider>;
   return active && target ? createPortal(content, target) : content;
 }
