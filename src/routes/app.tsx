@@ -5130,7 +5130,7 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
                className={cn(
                  "flex h-9 w-9 shrink-0 items-center justify-center rounded-xl",
                  c.tone === "alert"
-                   ? "bg-amber-500/15 text-amber-400"
+                   ? "bg-brass/15 text-brass"
                    : c.tone === "brass"
                      ? "bg-sidebar-primary/15 text-sidebar-primary"
                      : "bg-sidebar-accent text-sidebar-foreground/70",
