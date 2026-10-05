@@ -4,7 +4,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { Sheet, SheetContent, SheetDescription, SheetHeader, SheetTitle } from "@/components/ui/sheet";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { MessageSquare, Check, X, RotateCcw, Wrench, PackageSearch } from "lucide-react";
+import { MessageSquare, Check, X, RotateCcw, Wrench, PackageSearch, ChevronDown } from "lucide-react";
 import { Switch } from "@/components/ui/switch";
 import { cn } from "@/lib/utils";
 import { toast } from "sonner";
@@ -109,6 +109,7 @@ export function MessagesSheet({
   const [replyTo, setReplyTo] = useState<{ id: string; sender: string; snippet: string } | null>(initialReplyTo ?? null);
   const [alsoMaintenance, setAlsoMaintenance] = useState(false);
   const [alsoLostProperty, setAlsoLostProperty] = useState(false);
+  const [pickerOpen, setPickerOpen] = useState(false);
   const [showDone, setShowDone] = useState(false);
   const feedRef = useRef<HTMLDivElement | null>(null);
 
@@ -428,9 +429,24 @@ export function MessagesSheet({
           <SheetDescription>Shared thread — everyone in these roles sees it.</SheetDescription>
         </SheetHeader>
 
-        {useSendToPicker && sendToTargets.length > 1 && (
-          <div className="mt-3 flex flex-wrap items-center gap-2">
-            <span className="text-xs text-muted-foreground">Send to</span>
+        {((useSendToPicker && sendToTargets.length > 1) || (!useSendToPicker && availableThreads.length > 1)) && (
+          <button
+            type="button"
+            onClick={() => setPickerOpen((v) => !v)}
+            aria-expanded={pickerOpen}
+            className="mt-3 flex w-full items-center gap-2 rounded-lg border bg-background px-3 py-2 text-left text-sm"
+          >
+            <span className="text-xs text-muted-foreground shrink-0">{useSendToPicker ? "Send to" : "Thread"}</span>
+            <span className="min-w-0 flex-1 truncate font-medium">
+              {useSendToPicker
+                ? (activeTarget ? DEPT_LABELS[activeTarget] : "Choose")
+                : THREAD_LABELS[thread]}
+            </span>
+            <ChevronDown className={cn("h-4 w-4 shrink-0 text-muted-foreground transition-transform", pickerOpen && "rotate-180")} />
+          </button>
+        )}
+        {pickerOpen && useSendToPicker && sendToTargets.length > 1 && (
+          <div className="mt-2 flex flex-wrap items-center gap-2">
             {sendToTargets.map((target) => {
               const t = threadForTarget(target);
               const active = activeTarget === target;
@@ -442,7 +458,7 @@ export function MessagesSheet({
                   variant={active ? "default" : "outline"}
                   className="rounded-full"
                   disabled={!t}
-                  onClick={() => { if (t) setThread(t); }}
+                  onClick={() => { if (t) { setThread(t); setPickerOpen(false); } }}
                 >
                   {DEPT_LABELS[target]}
                 </Button>
@@ -450,8 +466,8 @@ export function MessagesSheet({
             })}
           </div>
         )}
-        {!useSendToPicker && availableThreads.length > 1 && (
-          <div className="mt-3 flex flex-wrap gap-2">
+        {pickerOpen && !useSendToPicker && availableThreads.length > 1 && (
+          <div className="mt-2 flex flex-wrap gap-2">
             {availableThreads.map((t) => (
               <Button
                 key={t}
@@ -459,13 +475,14 @@ export function MessagesSheet({
                 size="sm"
                 variant={t === thread ? "default" : "outline"}
                 className="rounded-full"
-                onClick={() => setThread(t)}
+                onClick={() => { setThread(t); setPickerOpen(false); }}
               >
                 {THREAD_LABELS[t]}
               </Button>
             ))}
           </div>
         )}
+
 
         {doneCount > 0 && (
           <div className="mt-3 flex justify-end">

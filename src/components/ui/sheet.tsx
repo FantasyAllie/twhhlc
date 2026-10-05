@@ -124,8 +124,9 @@ export function TakeoverCloseButton({ onClose }: { onClose: () => void }) {
     <button
       type="button"
       aria-label="Close"
+      data-touch-exempt
       onClick={onClose}
-      className="absolute right-4 top-4 z-30 inline-flex h-8 items-center justify-center rounded-full border bg-background px-3 text-sm font-medium text-muted-foreground transition-colors hover:bg-accent hover:text-foreground"
+      className="absolute right-4 top-4 z-30 inline-flex h-8 min-h-0 min-w-0 shrink-0 items-center justify-center rounded-full border bg-background px-3 text-xs font-medium leading-none text-muted-foreground transition-colors hover:bg-accent hover:text-foreground"
     >
       Close
     </button>
