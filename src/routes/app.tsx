@@ -2520,6 +2520,25 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
       if (!silent) toast.error("Nothing to back up yet");
       return;
     }
+    // Counters whose numbers haven't changed since the last saved day are
+    // left out, so idle counters (e.g. an unused F&B list) don't fill History.
+    const counterKinds = new Set<Kind>(["totals", "fnb_totals", "delivery", "inventory_rooms", "inventory_cupboards"]);
+    const todayStr = new Date().toDateString();
+    const sig = (rows: unknown) => JSON.stringify(rows);
+    const kept = jobs.filter((job) => {
+      if (!counterKinds.has(job.kind)) return true;
+      if (job.kind === "fnb_totals" && fnbCounts.length === 0) return false;
+      const prev = snapshots
+        .filter((s) => s.kind === job.kind && new Date(s.created_at).toDateString() !== todayStr)
+        .sort((a, b) => b.created_at.localeCompare(a.created_at))[0];
+      return !prev || sig(prev.totals) !== sig(job.rows);
+    });
+    if (kept.length === 0) {
+      if (!silent) toast.error("Nothing has changed to back up");
+      return;
+    }
+    jobs.length = 0;
+    jobs.push(...kept);
     for (const job of jobs) {
       const ok = await saveSnapshot(job.kind, job.rows, job.grand);
       if (!ok) return;
