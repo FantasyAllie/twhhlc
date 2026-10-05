@@ -4127,7 +4127,22 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
                 : "Shared workspace for Housekeeping staff"}
             </p>
             {canViewAs && !isMobile && (
-              <div className="basis-full w-full flex rounded-full border p-1 bg-background items-center">
+              <div className="glass-segmented basis-full w-full relative flex rounded-full p-1 items-center">
+                {(() => {
+                  const idx = availableViews.indexOf(effectiveRole as (typeof availableViews)[number]);
+                  if (idx < 0) return null;
+                  const n = availableViews.length;
+                  return (
+                    <span
+                      aria-hidden
+                      className="glass-thumb absolute top-1 bottom-1 rounded-full pointer-events-none"
+                      style={{
+                        left: `calc(4px + (100% - 8px) * ${idx / n})`,
+                        width: `calc((100% - 8px) / ${n})`,
+                      }}
+                    />
+                  );
+                })()}
                 {availableViews.map((r) => {
                   const active = effectiveRole === r;
                   const label =
@@ -4148,9 +4163,9 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
                       type="button"
                       onClick={() => setViewAsRole(active ? null : r)}
                       className={cn(
-                        "flex-1 px-4 h-8 text-xs sm:text-sm rounded-full transition-colors whitespace-nowrap",
+                        "relative z-10 flex-1 px-4 h-9 text-xs sm:text-sm rounded-full whitespace-nowrap transition-[color,transform] duration-300 active:scale-95",
                         active
-                          ? "bg-primary text-primary-foreground shadow-sm font-medium"
+                          ? "text-foreground font-semibold"
                           : "text-muted-foreground hover:text-foreground",
                       )}
                     >
