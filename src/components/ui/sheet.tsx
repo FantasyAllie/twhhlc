@@ -122,9 +122,9 @@ export function TakeoverCloseButton({ onClose }: { onClose: () => void }) {
       type="button"
       aria-label="Close"
       onClick={onClose}
-      className="absolute right-4 top-4 z-30 inline-flex h-8 w-8 items-center justify-center rounded-full border bg-background text-muted-foreground transition-colors hover:bg-accent hover:text-foreground"
+      className="absolute right-4 top-4 z-30 inline-flex h-8 items-center justify-center rounded-full border bg-background px-3 text-sm font-medium text-muted-foreground transition-colors hover:bg-accent hover:text-foreground"
     >
-      <ChevronLeft className="h-4 w-4" />
+      Close
     </button>
   );
 }
