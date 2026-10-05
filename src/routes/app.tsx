@@ -127,6 +127,8 @@ import {
   SheetTrigger,
 } from "@/components/ui/sheet";
 import { useTheme } from "@/components/theme-provider";
+import { Palette } from "lucide-react";
+import { ACCENTS, readAccent, applyAccent, type AccentId } from "@/lib/accent-colour";
 import { useCurrentHotel, DEFAULT_HOTEL_NAME } from "@/lib/hotels";
 import { listHotels, setActiveHotel, createHotel, type HotelOption } from "@/lib/auth.functions";
 import { parseCats, categoryLabel, valueFromLabel, maintenanceLocation, COLOR_SWATCHES } from "@/lib/app-format";
@@ -184,6 +186,12 @@ function AppPage() {
  const qc = useQueryClient();
   const navigate = useNavigate();
   const { theme, level, levelLabel, cycleTheme } = useTheme();
+  const [accent, setAccent] = useState<AccentId>("brass");
+  useEffect(() => { const a = readAccent(); setAccent(a); applyAccent(a); }, []);
+  const cycleAccent = () => {
+    const next = ACCENTS[(ACCENTS.findIndex((a) => a.id === accent) + 1) % ACCENTS.length].id;
+    setAccent(next); applyAccent(next);
+  };
   const ThemeGlyph =
     level === "white" ? Sun : level === "cream" ? SunDim : level === "navy" ? Moon : MoonStar;
   const isMobile = useIsMobile();
@@ -3927,6 +3935,11 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
       icon: ThemeGlyph,
       label: `Theme: ${levelLabel}`,
       onClick: () => cycleTheme(),
+    }, {
+      key: "accent",
+      icon: Palette,
+      label: `Accent: ${ACCENTS.find((a) => a.id === accent)?.label ?? "Brass"}`,
+      onClick: () => cycleAccent(),
     }];
     return [
       { id: "actions", title: "Actions", items: actions },
@@ -4098,7 +4111,7 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
             </DropdownMenuLabel>
             {group.items.map((item) => {
               const Icon = item.icon;
-              const keepOpen = item.key === "theme";
+              const keepOpen = item.key === "theme" || item.key === "accent";
               return (
                 <DropdownMenuItem
                   key={item.key}
