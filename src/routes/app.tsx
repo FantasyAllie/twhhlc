@@ -595,8 +595,18 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
   const [homeView, setHomeView] = useState<HomeView | null>(null);
   const menuTakeoverActive = useSheetTakeoverActive();
   const [homeSlotEl, setHomeSlotEl] = useState<HTMLDivElement | null>(null);
-  const toggleHomeView = (view: HomeView, setOpen: (o: boolean) => void) => {
+  // Only one panel may occupy the home screen: close every other one first.
+  const closeHomePanels = (keep?: HomeView | "quick") => {
     releaseSheetTakeover();
+    if (keep !== "maintenance") setMaintenanceLogOpen(false);
+    if (keep !== "messages") setMessagesSheetOpen(false);
+    if (keep !== "lost") setLostPropertyOpen(false);
+    if (keep !== "stayover") setStayoverPhotosOpen(false);
+    if (keep !== "quick") setQuickReceptionOpen(false);
+    if (keep === undefined || keep === "quick") setHomeView(null);
+  };
+  const toggleHomeView = (view: HomeView, setOpen: (o: boolean) => void) => {
+    closeHomePanels(view);
     if (homeView === view) {
       setHomeView(null);
       setOpen(false);
@@ -4051,7 +4061,7 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
       <Button
         variant="outline"
         size="sm"
-        onClick={() => setQuickReceptionOpen((o) => !o)}
+        onClick={() => { if (quickReceptionOpen) setQuickReceptionOpen(false); else { closeHomePanels("quick"); setQuickReceptionOpen(true); } }}
         title="Set status, bed and flags for every room in one place"
       >
         <ConciergeBell className="h-4 w-4 sm:mr-2" />
@@ -4124,7 +4134,7 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
                   onSelect={(e) => {
                     if (keepOpen) e.preventDefault();
                     else if (item.key !== "signout") {
-                      setHomeView(null);
+                      closeHomePanels();
                       armSheetTakeover();
                     }
                     item.onClick();
@@ -4808,7 +4818,7 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
                   label={item.label}
                   destructive={item.destructive}
                   notify={item.notify}
-                  onClick={() => { close(); if (item.key !== "signout" && item.key !== "theme" && item.key !== "accent") { setHomeView(null); armSheetTakeover(); } item.onClick(); }}
+                  onClick={() => { close(); if (item.key !== "signout" && item.key !== "theme" && item.key !== "accent") { closeHomePanels(); armSheetTakeover(); } item.onClick(); }}
                 />
               ))}
             </Section>
