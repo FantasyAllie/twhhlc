@@ -966,10 +966,14 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
   const wasShiftCompleteRef = useRef(false);
   const markedDoneHereRef = useRef(false);
   const celebratedRef = useRef(false);
+  const autoBackupRef = useRef<(() => Promise<void>) | null>(null);
   useEffect(() => {
     if (isShiftComplete) {
       if (!wasShiftCompleteRef.current && markedDoneHereRef.current && !celebratedRef.current) {
         celebratedRef.current = true;
+        // Full progress bar = end of shift: save today's backup automatically
+        // (only on the device that finished the last room, to avoid duplicates).
+        void autoBackupRef.current?.();
         if (areOutcomeAnimationsEnabled()) {
           if (hasLeftoverDirtyRooms) setGloomActive(true);
           else setCelebrationActive(true);
@@ -2558,6 +2562,7 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
     if (hasToday) return;
     await runEndOfShiftBackup({ silent: true });
   };
+  autoBackupRef.current = () => runEndOfShiftBackup({ silent: true });
 
   // Reports entry point: record today's data automatically on first open.
   // Emergency undo: rolls the shared state back to the most recent hidden
