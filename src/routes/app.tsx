@@ -3987,7 +3987,7 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
 <RoomFlagsContext.Provider value={roomFlagsCtx}>
 <RoomFlagsSheet open={roomFlagsSheetOpen} onOpenChange={setRoomFlagsSheetOpen} />
 <main
-  className="min-h-[100dvh] bg-background"
+  className={cn("min-h-[100dvh] bg-background", isReception && "ios-glass")}
   style={{ paddingBottom: "max(1.5rem, env(safe-area-inset-bottom))" }}
   {...homeRefresh.handlers}
 >
