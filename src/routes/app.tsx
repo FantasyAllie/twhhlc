@@ -4801,7 +4801,7 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
       return (
         <div className="space-y-4">
           <div className="space-y-2">
-          <div className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">Theme/Accent</div>
+          <div className="text-center text-xs font-semibold uppercase tracking-wide text-muted-foreground">Theme/Accent</div>
           <div className="grid grid-cols-2 gap-1 rounded-full border bg-muted p-1">
             <button
               type="button"
