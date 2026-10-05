@@ -3,7 +3,7 @@
 import * as React from "react";
 import * as SheetPrimitive from "@radix-ui/react-dialog";
 import { cva, type VariantProps } from "class-variance-authority";
-import { X } from "lucide-react";
+import { X, ChevronLeft } from "lucide-react";
 import { Slot } from "@radix-ui/react-slot";
 import { createPortal } from "react-dom";
 
@@ -59,24 +59,23 @@ export function useSheetTakeoverActive() {
   );
 }
 
-const Sheet = (props: React.ComponentProps<typeof SheetPrimitive.Root>) => {
-  const ctx = React.useContext(SheetInlineContext);
+/** Claims the home takeover slot when an armed panel opens; returns the slot or null. */
+export function useTakeoverClaim(open: boolean | undefined, onOpenChange?: (o: boolean) => void, skip = false) {
   const idRef = React.useRef(0);
   if (!idRef.current) idRef.current = ++takeoverSeq;
   const wasOpenRef = React.useRef(false);
   const claimRef = React.useRef(false);
-  const closeRef = React.useRef(() => props.onOpenChange?.(false));
-  closeRef.current = () => props.onOpenChange?.(false);
-  const nestedInline = ctx.inline;
-  if (!nestedInline) {
-    if (props.open && !wasOpenRef.current && Date.now() < takeover.armedUntil && takeover.slot) {
+  const closeRef = React.useRef(() => onOpenChange?.(false));
+  closeRef.current = () => onOpenChange?.(false);
+  if (!skip) {
+    if (open && !wasOpenRef.current && Date.now() < takeover.armedUntil && takeover.slot) {
       takeover.armedUntil = 0;
       claimRef.current = true;
     }
-    if (!props.open) claimRef.current = false;
-    wasOpenRef.current = !!props.open;
+    if (!open) claimRef.current = false;
+    wasOpenRef.current = !!open;
   }
-  const claimed = claimRef.current && !!props.open;
+  const claimed = claimRef.current && !!open;
   React.useEffect(() => {
     if (!claimed) return;
     const prev = takeover.owner;
@@ -92,12 +91,32 @@ const Sheet = (props: React.ComponentProps<typeof SheetPrimitive.Root>) => {
       }
     };
   }, [claimed]);
-  if (claimed && takeover.slot) {
+  return claimed ? takeover.slot : null;
+}
+
+/** Round "<" button that closes an in-place panel. */
+export function TakeoverCloseButton({ onClose }: { onClose: () => void }) {
+  return (
+    <button
+      type="button"
+      aria-label="Close"
+      onClick={onClose}
+      className="absolute right-4 top-4 z-30 inline-flex h-8 w-8 items-center justify-center rounded-full border bg-background text-muted-foreground transition-colors hover:bg-accent hover:text-foreground"
+    >
+      <ChevronLeft className="h-4 w-4" />
+    </button>
+  );
+}
+
+const Sheet = (props: React.ComponentProps<typeof SheetPrimitive.Root>) => {
+  const ctx = React.useContext(SheetInlineContext);
+  const slot = useTakeoverClaim(props.open, props.onOpenChange, ctx.inline);
+  if (slot) {
     return createPortal(
       <SheetInlineContext.Provider value={{ inline: true, onClose: () => props.onOpenChange?.(false) }}>
         {props.children}
       </SheetInlineContext.Provider>,
-      takeover.slot,
+      slot,
     );
   }
   if (ctx.inline && !ctx.onClose) {
@@ -228,6 +247,7 @@ const SheetContent = React.forwardRef<
           "[&_.overflow-y-auto]:overflow-visible [&_.overflow-y-auto]:overscroll-auto [&_.overflow-y-auto]:max-h-none [&_.min-h-0]:min-h-fit",
         )}
       >
+        <TakeoverCloseButton onClose={inlineCtx.onClose} />
         <SheetInlineContext.Provider value={{ inline: false, onClose: inlineCtx.onClose }}>
           <SheetInlineBodyContext.Provider value={true}>{children}</SheetInlineBodyContext.Provider>
         </SheetInlineContext.Provider>
