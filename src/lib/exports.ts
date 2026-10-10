@@ -441,7 +441,7 @@ export const printTotals = (
   win.document.close();
 };
 
-export const printChecklists = (hotelName: string, rows: ChecklistSnapshotRow[], when: Date) => {
+export const printChecklists = (rows: ChecklistSnapshotRow[], when: Date) => {
   const dateStr = longDate(when);
   const win = window.open("", "_blank");
   if (!win) {
