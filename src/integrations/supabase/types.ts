@@ -674,6 +674,70 @@ export type Database = {
           },
         ]
       }
+      room_checklist_completions: {
+        Row: {
+          completed_at: string
+          completed_by: string
+          completed_by_name: string | null
+          department: string
+          hotel_id: string
+          id: string
+          items: Json
+          room_number: number
+        }
+        Insert: {
+          completed_at?: string
+          completed_by?: string
+          completed_by_name?: string | null
+          department: string
+          hotel_id?: string
+          id?: string
+          items: Json
+          room_number: number
+        }
+        Update: {
+          completed_at?: string
+          completed_by?: string
+          completed_by_name?: string | null
+          department?: string
+          hotel_id?: string
+          id?: string
+          items?: Json
+          room_number?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "room_checklist_completions_hotel_id_fkey"
+            columns: ["hotel_id"]
+            isOneToOne: false
+            referencedRelation: "hotels"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      room_checklist_settings: {
+        Row: {
+          hotel_id: string
+          items: Json
+        }
+        Insert: {
+          hotel_id?: string
+          items?: Json
+        }
+        Update: {
+          hotel_id?: string
+          items?: Json
+        }
+        Relationships: [
+          {
+            foreignKeyName: "room_checklist_settings_hotel_id_fkey"
+            columns: ["hotel_id"]
+            isOneToOne: true
+            referencedRelation: "hotels"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       room_custom_flags: {
         Row: {
           created_at: string
@@ -1347,7 +1411,10 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
-      [_ in never]: never
+      complete_room_checklist: {
+        Args: { p_department: string; p_items: Json; p_room_number: number }
+        Returns: string
+      }
     }
     Enums: {
       app_role:
