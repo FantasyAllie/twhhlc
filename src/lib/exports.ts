@@ -459,7 +459,7 @@ export const printChecklists = (rows: ChecklistSnapshotRow[], when: Date) => {
         )}</td></tr>`,
     )
     .join("");
-  win.document.write(`<!doctype html><html><head><title>${esc(hotelName)} Completed Checklists - ${dateStr}</title><style>
+  win.document.write(`<!doctype html><html><head><title>Completed Checklists - ${dateStr}</title><style>
       body{font-family:system-ui,-apple-system,sans-serif;color:#000;background:#fff;padding:2rem;max-width:760px;margin:0 auto;}
       h1{font-size:1.5rem;margin:0 0 .25rem;}
       .date{color:#444;margin:0 0 1.5rem;font-size:.95rem;}
@@ -468,7 +468,7 @@ export const printChecklists = (rows: ChecklistSnapshotRow[], when: Date) => {
       th.num,td.num{text-align:right;font-variant-numeric:tabular-nums;}
       @media print{body{padding:0;}}
     </style></head><body>
-      <h1>${esc(hotelName)} Completed Checklists</h1>
+      <h1>Completed Checklists</h1>
       <p class="date">${dateStr}</p>
       <table>
         <thead><tr><th class="num">Room</th><th>Department</th><th>Items checked</th><th>Completed by</th><th>Time</th></tr></thead>
