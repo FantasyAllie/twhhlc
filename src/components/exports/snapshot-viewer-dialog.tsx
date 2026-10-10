@@ -110,6 +110,68 @@ export function SnapshotViewerDialog({
             </Button>
           </div>
         </div>
+        ) : viewingSnapshot.kind === "checklists" ? (
+        <div className="space-y-4">
+          {viewingSnapshot.totals.length === 0 ? (
+            <p className="text-sm text-muted-foreground py-4">No checklists in this snapshot.</p>
+          ) : (
+            <div className="rounded-xl border max-h-[60dvh] overflow-y-auto">
+              <table className="w-full text-sm">
+                <thead className="bg-muted/50 sticky top-0">
+                  <tr>
+                    <th className="text-left px-3 py-2 w-16">Room</th>
+                    <th className="text-left px-3 py-2">Department</th>
+                    <th className="text-left px-3 py-2">Items checked</th>
+                    <th className="text-left px-3 py-2">By</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {(viewingSnapshot.totals as ChecklistSnapshotRow[]).map((r, i) => (
+                    <tr key={`${r.room}-${r.department}-${i}`} className="border-t align-top">
+                      <td className="px-3 py-1.5 font-mono tabular-nums">{r.room}</td>
+                      <td className="px-3 py-1.5">{r.department === "reception" ? "Reception" : "Housekeeping"}</td>
+                      <td className="px-3 py-1.5">{r.items.join(", ")}</td>
+                      <td className="px-3 py-1.5">{r.by ?? "—"}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          )}
+          <div className="flex items-center justify-between text-sm">
+            <span className="text-muted-foreground">
+              {viewingSnapshot.totals.length} checklist
+              {viewingSnapshot.totals.length === 1 ? "" : "s"}
+            </span>
+          </div>
+          <div className="flex justify-between gap-2">
+            <Button
+              variant="ghost"
+              size="sm"
+              className="text-destructive hover:text-destructive"
+              onClick={async () => {
+                if (!confirm("Delete this snapshot?")) return;
+                const id = viewingSnapshot.id;
+                setViewingSnapshot(null);
+                await deleteSnapshot(id);
+              }}
+            >
+              Delete
+            </Button>
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() =>
+                printChecklists(
+                  viewingSnapshot.totals as ChecklistSnapshotRow[],
+                  new Date(viewingSnapshot.created_at),
+                )
+              }
+            >
+              Print
+            </Button>
+          </div>
+        </div>
         ) : viewingSnapshot.kind === "room_status" ? (
         <div className="space-y-4">
           {viewingSnapshot.totals.length === 0 ? (

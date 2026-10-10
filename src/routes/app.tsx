@@ -137,6 +137,7 @@ import { listHotels, setActiveHotel, createHotel, type HotelOption } from "@/lib
 import { parseCats, categoryLabel, valueFromLabel, maintenanceLocation, COLOR_SWATCHES } from "@/lib/app-format";
 import type {
   Category,
+  ChecklistSnapshotRow,
   ItemColor,
   RoomType,
   RoomFeature,
