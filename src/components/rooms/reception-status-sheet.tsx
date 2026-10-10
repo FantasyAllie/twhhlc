@@ -6,6 +6,7 @@ import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import { FlagIcon, useRoomFlags } from "@/lib/room-flags";
 import type { ReceptionItem, Room } from "@/lib/app-types";
+import { RoomChecklistRecords } from "@/components/rooms/room-checklists";
 
 type Props = {
   receptionSheetRoom: number | null;
@@ -104,7 +105,8 @@ export function ReceptionStatusSheet({
          noClickSound,
          onClick,
        }: { label: React.ReactNode; selected: boolean; disabled?: boolean; noClickSound?: boolean; onClick: () => void }) => (
-         <button
+          <Button
+            variant="outline"
            type="button"
            disabled={disabled}
            onClick={onClick}
@@ -115,7 +117,7 @@ export function ReceptionStatusSheet({
            )}
          >
           <span className="text-center">{label}</span>
-         </button>
+          </Button>
        );
        return (
          <>
@@ -330,7 +332,15 @@ export function ReceptionStatusSheet({
                  })}
                </div>
               </div>
-              {!isReception && (
+               <div className="border-y py-4">
+                 <Row
+                   label="Mark as Done"
+                   selected={isReception ? receptionDoneSet.has(n) : housekeepingDoneSet.has(n)}
+                   onClick={() => {
+                     void (isReception ? toggleReceptionDone(n) : toggleHousekeepingDone(n));
+                   }}
+                 />
+               </div>
                 <details className="group space-y-2">
                   <summary className="flex cursor-pointer list-none items-center justify-center gap-1.5 py-1 text-xs font-semibold uppercase tracking-wide text-muted-foreground [&::-webkit-details-marker]:hidden">
                     Guest &amp; room info
@@ -354,17 +364,8 @@ export function ReceptionStatusSheet({
                       );
                     })}
                   </div>
+                   <RoomChecklistRecords roomNumber={n} />
                 </details>
-              )}
-              <div className="space-y-2">
-                <Row
-                  label="Mark as Done"
-                  selected={isReception ? receptionDoneSet.has(n) : housekeepingDoneSet.has(n)}
-                  onClick={() => {
-                    void (isReception ? toggleReceptionDone(n) : toggleHousekeepingDone(n));
-                  }}
-                />
-              </div>
             </div>
          </>
        );

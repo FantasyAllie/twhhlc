@@ -1,4 +1,4 @@
-import { createContext, useContext, useState } from "react";
+import { useState } from "react";
 import { useQueryClient } from "@tanstack/react-query";
 import { ArrowDown, ArrowUp, Check, ClipboardCheck, Plus, Trash2 } from "lucide-react";
 import { toast } from "sonner";
@@ -13,21 +13,17 @@ import { isChecklistComplete, normalizeChecklist } from "@/lib/room-checklist-ru
 
 type Department = "housekeeping" | "reception";
 type Target = { room: number; department: Department; hotelId: string };
-export const RoomChecklistContext = createContext<(room: number, department: Department) => void>(() => {});
-export const useRequestRoomChecklist = () => useContext(RoomChecklistContext);
-
-export function RoomChecklistProvider({ children, onCompleted }: {
+export function RoomChecklistProvider({ children, onCompleted, target, onClose }: {
   children: React.ReactNode;
   onCompleted: (room: number, department: Department) => void;
+  target: Target | null;
+  onClose: () => void;
 }) {
   const hotel = useCurrentHotel().data;
-  const [target, setTarget] = useState<Target | null>(null);
-  return <RoomChecklistContext.Provider value={(room, department) => {
-    if (hotel) setTarget({ room, department, hotelId: hotel.id });
-  }}>
+  return <>
     {children}
-    {target && hotel?.id === target.hotelId && <RoomCompletionDialog key={`${target.hotelId}-${target.department}-${target.room}`} target={target} onClose={() => setTarget(null)} onCompleted={onCompleted} />}
-  </RoomChecklistContext.Provider>;
+    {target && hotel?.id === target.hotelId && <RoomCompletionDialog key={`${target.hotelId}-${target.department}-${target.room}`} target={target} onClose={onClose} onCompleted={onCompleted} />}
+  </>;
 }
 
 function RoomCompletionDialog({ target, onClose, onCompleted }: {
@@ -38,7 +34,7 @@ function RoomCompletionDialog({ target, onClose, onCompleted }: {
   const [busy, setBusy] = useState(false);
   const qc = useQueryClient();
   const items = settings.data;
-  const complete = !!items && isChecklistComplete(items, checked);
+  const complete = !!items && !settings.isFetching && !settings.isError && (items.length === 0 || isChecklistComplete(items, checked));
   return <Dialog open onOpenChange={(open) => { if (!open && !busy) onClose(); }}>
     <DialogContent className="p-4 sm:p-6">
       <DialogHeader>

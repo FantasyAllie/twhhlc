@@ -4,6 +4,9 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } f
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import type { Room } from "@/lib/app-types";
+import { useState } from "react";
+import { ClipboardCheck } from "lucide-react";
+import { RoomChecklistEditor } from "@/components/rooms/room-checklists";
 
 type Props = {
   manageRoomsOpen: boolean;
@@ -38,6 +41,7 @@ export function ManageRoomsDialogs({
   removeRoom,
   moveRoom,
 }: Props) {
+  const [checklistOpen, setChecklistOpen] = useState(false);
   return (
     <>
   <Dialog open={manageRoomsOpen} onOpenChange={setManageRoomsOpen}>
@@ -77,8 +81,12 @@ export function ManageRoomsDialogs({
             <Plus className="h-4 w-4 shrink-0" />
             <span className="truncate">Add Room</span>
           </Button>
+          <Button variant="outline" size="sm" className="col-span-2 gap-2 rounded-full" aria-expanded={checklistOpen} onClick={() => setChecklistOpen(!checklistOpen)}>
+            <ClipboardCheck className="h-4 w-4" />Room completion checklist
+          </Button>
         </div>
       </DialogHeader>
+      {checklistOpen && <RoomChecklistEditor />}
       <div className="space-y-3">
         <div className="text-xs text-muted-foreground">
           {rooms.length} room{rooms.length === 1 ? "" : "s"} total
