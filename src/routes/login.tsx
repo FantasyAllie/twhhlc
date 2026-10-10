@@ -17,6 +17,10 @@ export const Route = createFileRoute("/login")({
     meta: [
       { title: "Sign in — The Hotel Hub" },
       { name: "description", content: "Sign in to The Hotel Hub." },
+      { property: "og:title", content: "Sign in — The Hotel Hub" },
+      { property: "og:description", content: "Sign in to The Hotel Hub." },
+      { property: "og:type", content: "website" },
+      { name: "twitter:card", content: "summary" },
     ],
   }),
   component: LoginPage,

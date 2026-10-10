@@ -7,6 +7,7 @@ import { Loader2, CalendarDays, Trophy } from "lucide-react";
 import { LeaderboardSheet } from "@/components/leaderboard-sheet";
 import { RoomFlagsContext, FlagIcon, FLAG_COLORS, mergeFlagDefs, useFlagSettingsQuery, useCustomFlagsQuery, type FlagDef } from "@/lib/room-flags";
 import { RoomFlagsSheet } from "@/components/rooms/room-flags-sheet";
+import { RoomChecklistProvider, RoomChecklistRecords } from "@/components/rooms/room-checklists";
 import { usePullToRefresh } from "@/hooks/use-touch-gestures";
 import { createFileRoute, useNavigate, Link } from "@tanstack/react-router";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
@@ -178,13 +179,18 @@ export const Route = createFileRoute("/app")({
   head: () => ({
     meta: [
       { title: "The Hotel Hub" },
-      { name: "description", content: "Count items per room across 50 rooms." },
+      { name: "description", content: "Manage rooms, housekeeping, linen and hotel operations in The Hotel Hub." },
+      { property: "og:title", content: "Operations — The Hotel Hub" },
+      { property: "og:description", content: "Manage rooms, housekeeping, linen and hotel operations in The Hotel Hub." },
+      { property: "og:type", content: "website" },
+      { name: "twitter:card", content: "summary" },
     ],
   }),
   component: AppPage,
 });
 
 function AppPage() {
+  const [checklistTarget, setChecklistTarget] = useState<{ room: number; department: "housekeeping" | "reception"; hotelId: string } | null>(null);
  const qc = useQueryClient();
   const navigate = useNavigate();
   const { theme, level, levelLabel, cycleTheme } = useTheme();
@@ -1667,6 +1673,11 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
   const toggleReceptionDone = async (roomNumber: number) => {
     const current = receptionDoneSet.has(roomNumber);
     const next = !current;
+    if (next) {
+      const hotelId = currentHotelQ.data?.id;
+      if (hotelId) setChecklistTarget({ room: roomNumber, department: "reception", hotelId });
+      return;
+    }
     // Flag before the optimistic cache update so the celebration effect,
     // which runs on the resulting re-render, sees that this user did it.
     if (next) markedDoneHereRef.current = true;
@@ -1713,6 +1724,11 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
   const toggleHousekeepingDone = async (roomNumber: number) => {
     const room = rooms.find((r) => r.room_number === roomNumber);
     const next = !room?.done;
+    if (next) {
+      const hotelId = currentHotelQ.data?.id;
+      if (hotelId) setChecklistTarget({ room: roomNumber, department: "housekeeping", hotelId });
+      return;
+    }
     // Flag before the optimistic cache update so the celebration effect,
     // which runs on the resulting re-render, sees that this user did it.
     if (next) markedDoneHereRef.current = true;
@@ -3464,6 +3480,7 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
                 </div>
               );
             })}
+            <RoomChecklistRecords roomNumber={n} />
             {maintenance && (
               <div className="flex items-center gap-2 rounded-xl border border-amber-500/60 bg-amber-50 dark:bg-amber-950/40 p-3 text-sm">
                 <Wrench className="h-4 w-4 text-amber-600 dark:text-amber-400 shrink-0" />
@@ -4014,6 +4031,19 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
 
   return (
 <RoomFlagsContext.Provider value={roomFlagsCtx}>
+<RoomChecklistProvider target={checklistTarget} onClose={() => setChecklistTarget(null)} onCompleted={(roomNumber, department) => {
+  markedDoneHereRef.current = true;
+  qc.setQueryData<Room[]>(["rooms"], (old) => (old ?? []).map((room) => room.room_number === roomNumber ? {
+    ...room,
+    ...(department === "housekeeping" ? { done: true } : { done_reception: true }),
+    guest_vacated: false, guest_vacated_at: null,
+    early_check_in: false, early_check_in_at: null,
+    late_checkout: false, late_checkout_at: null,
+    stayover_out: false, stayover_out_at: null,
+  } : room));
+  fireRoomNotification("done", roomNumber);
+  captureEmergencySnapshot(`Room ${roomNumber} marked done`);
+}}>
 <RoomFlagsSheet open={roomFlagsSheetOpen} onOpenChange={setRoomFlagsSheetOpen} />
 <main
   className="min-h-[100dvh] bg-background"
@@ -6052,6 +6082,7 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
     </DialogContent>
   </Dialog>
  </main>
+</RoomChecklistProvider>
 </RoomFlagsContext.Provider>
  );
 }

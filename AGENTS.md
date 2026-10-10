@@ -1,1 +1,2 @@
 - Menu-opened Sheets/Dialogs render in place of the home screen via the takeover slot in ui/sheet.tsx (armSheetTakeover before opening); why: one consistent in-page panel pattern instead of popups.
+- Room completion checklists use hotel-scoped editable settings and immutable completion snapshots saved atomically with the room's done flag through a database function; why: preserve accurate records when settings change or rooms reset.

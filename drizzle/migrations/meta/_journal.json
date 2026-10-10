@@ -64,6 +64,13 @@
       "when": 1791231926544,
       "tag": "0008_maintenance_completion_notes",
       "breakpoints": true
+    },
+    {
+      "idx": 9,
+      "version": "7",
+      "when": 1791648611889,
+      "tag": "0009_room_completion_checklists",
+      "breakpoints": true
     }
   ]
 }
