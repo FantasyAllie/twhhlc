@@ -4,6 +4,7 @@ import type { QueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import type {
+  ChecklistSnapshotRow,
   ExportSnapshot,
   ExportSnapshotKind,
   MaintenanceRow,
@@ -435,6 +436,44 @@ export const printTotals = (
         <tfoot><tr><td>Total</td><td class="num">${grand}</td></tr></tfoot>
       </table>
       ${footer ? `<p class="date" style="margin-top:1.5rem;">${esc(footer)}</p>` : ""}
+      <script>window.onload=()=>{window.print();}</script>
+    </body></html>`);
+  win.document.close();
+};
+
+export const printChecklists = (rows: ChecklistSnapshotRow[], when: Date) => {
+  const dateStr = longDate(when);
+  const win = window.open("", "_blank");
+  if (!win) {
+    toast.error("Pop-up blocked");
+    return;
+  }
+  const deptLabel = (d: string) => (d === "reception" ? "Reception" : "Housekeeping");
+  const trs = rows
+    .map(
+      (r) =>
+        `<tr><td class="num">${r.room}</td><td>${esc(deptLabel(r.department))}</td><td>${esc(
+          r.items.join(", "),
+        )}</td><td>${esc(r.by ?? "—")}</td><td>${esc(
+          new Date(r.at).toLocaleTimeString(undefined, { hour: "numeric", minute: "2-digit" }),
+        )}</td></tr>`,
+    )
+    .join("");
+  win.document.write(`<!doctype html><html><head><title>Completed Checklists - ${dateStr}</title><style>
+      body{font-family:system-ui,-apple-system,sans-serif;color:#000;background:#fff;padding:2rem;max-width:760px;margin:0 auto;}
+      h1{font-size:1.5rem;margin:0 0 .25rem;}
+      .date{color:#444;margin:0 0 1.5rem;font-size:.95rem;}
+      table{width:100%;border-collapse:collapse;font-size:.95rem;}
+      th,td{text-align:left;padding:.5rem .75rem;border-bottom:1px solid #ccc;vertical-align:top;}
+      th.num,td.num{text-align:right;font-variant-numeric:tabular-nums;}
+      @media print{body{padding:0;}}
+    </style></head><body>
+      <h1>Completed Checklists</h1>
+      <p class="date">${dateStr}</p>
+      <table>
+        <thead><tr><th class="num">Room</th><th>Department</th><th>Items checked</th><th>Completed by</th><th>Time</th></tr></thead>
+        <tbody>${trs}</tbody>
+      </table>
       <script>window.onload=()=>{window.print();}</script>
     </body></html>`);
   win.document.close();

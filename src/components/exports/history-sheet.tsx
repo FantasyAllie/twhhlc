@@ -110,6 +110,9 @@ export function HistorySheet({
                     {s.kind === "delivery" && (
                       <span className="text-xs uppercase tracking-wide text-muted-foreground">Delivery</span>
                     )}
+                    {s.kind === "checklists" && (
+                      <span className="text-xs uppercase tracking-wide text-muted-foreground">Checklists</span>
+                    )}
                     <span className="text-xs text-muted-foreground">({s.grand_total})</span>
                   </button>
                   <Button

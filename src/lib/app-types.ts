@@ -107,7 +107,16 @@ export type ExportSnapshotKind =
   | "fnb_totals"
   | "totals_range"
   | "inventory_rooms"
-  | "inventory_cupboards";
+  | "inventory_cupboards"
+  | "checklists";
+
+export type ChecklistSnapshotRow = {
+  room: number;
+  department: string;
+  items: string[];
+  by: string | null;
+  at: string;
+};
 
 export type ExportSnapshot = {
   id: string;
