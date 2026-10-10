@@ -3480,6 +3480,7 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
                 </div>
               );
             })}
+            <RoomChecklistRecords roomNumber={n} />
             {maintenance && (
               <div className="flex items-center gap-2 rounded-xl border border-amber-500/60 bg-amber-50 dark:bg-amber-950/40 p-3 text-sm">
                 <Wrench className="h-4 w-4 text-amber-600 dark:text-amber-400 shrink-0" />

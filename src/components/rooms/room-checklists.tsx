@@ -43,7 +43,7 @@ function RoomCompletionDialog({ target, onClose, onCompleted }: {
       </DialogHeader>
       {settings.isPending && <p className="py-4 text-sm text-muted-foreground">Loading checklist…</p>}
       {settings.isError && <Button variant="outline" onClick={() => void settings.refetch()}>Retry loading checklist</Button>}
-      <div className="space-y-2 py-3">
+      <div className="min-h-0 overflow-y-auto space-y-2 py-3">
         {items?.map((item, i) => <label key={item} className="flex min-h-12 cursor-pointer items-center gap-3 rounded-lg border p-3">
           <Checkbox disabled={busy} checked={checked[i] ?? false} onCheckedChange={(value) => setChecked(items.map((_, j) => j === i ? value === true : checked[j] ?? false))} />
           <span className="min-w-0 break-words text-sm">{item}</span>
