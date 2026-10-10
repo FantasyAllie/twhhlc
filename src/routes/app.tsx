@@ -2544,8 +2544,30 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
   // per-kind manual exports remain available in Settings → Actions → Export.
   const runEndOfShiftBackup = async (opts?: { silent?: boolean }) => {
     const silent = opts?.silent === true;
-    type Kind = "totals" | "fnb_totals" | "room_status" | "maintenance" | "delivery" | "inventory_rooms" | "inventory_cupboards";
+    type Kind = "totals" | "fnb_totals" | "room_status" | "maintenance" | "delivery" | "inventory_rooms" | "inventory_cupboards" | "checklists";
     const jobs: Array<{ kind: Kind; rows: unknown[]; grand: number }> = [];
+    // Completed room checklists from today, so the records export with the rest.
+    const hotelId = currentHotelQ.data?.id;
+    if (hotelId) {
+      const startOfToday = new Date();
+      startOfToday.setHours(0, 0, 0, 0);
+      const { data: completions } = await supabase
+        .from("room_checklist_completions")
+        .select("room_number,department,items,completed_by_name,completed_at")
+        .eq("hotel_id", hotelId)
+        .gte("completed_at", startOfToday.toISOString())
+        .order("room_number", { ascending: true });
+      const checklistRows: ChecklistSnapshotRow[] = (completions ?? []).map((c) => ({
+        room: c.room_number,
+        department: c.department,
+        items: (c.items as string[]) ?? [],
+        by: c.completed_by_name,
+        at: c.completed_at,
+      }));
+      if (checklistRows.length) {
+        jobs.push({ kind: "checklists", rows: checklistRows, grand: checklistRows.length });
+      }
+    }
     const t = computeTotals();
     if (t.rows.length) jobs.push({ kind: "totals", rows: t.rows, grand: t.grand });
     const f = computeFnbTotals();

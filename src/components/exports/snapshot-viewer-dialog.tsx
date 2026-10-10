@@ -9,8 +9,9 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
-import { printMaintenance, printRoomStatus } from "@/lib/exports";
+import { printChecklists, printMaintenance, printRoomStatus } from "@/lib/exports";
 import type {
+  ChecklistSnapshotRow,
   ExportSnapshot,
   MaintenanceRow,
   RoomStatusRow,
