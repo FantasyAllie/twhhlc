@@ -126,7 +126,7 @@ export function SnapshotViewerDialog({
                   </tr>
                 </thead>
                 <tbody>
-                  {(viewingSnapshot.totals as ChecklistSnapshotRow[]).map((r, i) => (
+                  {(viewingSnapshot.totals as unknown as ChecklistSnapshotRow[]).map((r, i) => (
                     <tr key={`${r.room}-${r.department}-${i}`} className="border-t align-top">
                       <td className="px-3 py-1.5 font-mono tabular-nums">{r.room}</td>
                       <td className="px-3 py-1.5">{r.department === "reception" ? "Reception" : "Housekeeping"}</td>
@@ -163,7 +163,7 @@ export function SnapshotViewerDialog({
               size="sm"
               onClick={() =>
                 printChecklists(
-                  viewingSnapshot.totals as ChecklistSnapshotRow[],
+                  viewingSnapshot.totals as unknown as ChecklistSnapshotRow[],
                   new Date(viewingSnapshot.created_at),
                 )
               }
