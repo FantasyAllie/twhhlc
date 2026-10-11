@@ -9,7 +9,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } f
 import { useRoomChecklistSettings, useRoomChecklistRecords } from "@/hooks/use-room-checklists";
 import { supabase } from "@/integrations/supabase/client";
 import { useCurrentHotel } from "@/lib/hotels";
-import { isChecklistComplete, normalizeChecklist } from "@/lib/room-checklist-rules";
+import { selectedChecklistItems, normalizeChecklist } from "@/lib/room-checklist-rules";
 
 type Department = "housekeeping" | "reception";
 type Target = { room: number; department: Department; hotelId: string };
@@ -34,12 +34,12 @@ function RoomCompletionDialog({ target, onClose, onCompleted }: {
   const [busy, setBusy] = useState(false);
   const qc = useQueryClient();
   const items = settings.data;
-  const complete = !!items && !settings.isFetching && !settings.isError && (items.length === 0 || isChecklistComplete(items, checked));
+  const complete = !!items && !settings.isFetching && !settings.isError;
   return <Dialog open onOpenChange={(open) => { if (!open && !busy) onClose(); }}>
     <DialogContent className="p-4 sm:p-6">
       <DialogHeader>
         <DialogTitle>Room {target.room} checklist</DialogTitle>
-        <DialogDescription>{target.department === "housekeeping" ? "Housekeeping" : "Reception"}</DialogDescription>
+        <DialogDescription>Tick what's in this room. Leave anything the room doesn't need.</DialogDescription>
       </DialogHeader>
       {settings.isPending && <p className="py-4 text-sm text-muted-foreground">Loading checklist…</p>}
       {settings.isError && <Button variant="outline" onClick={() => void settings.refetch()}>Retry loading checklist</Button>}
@@ -50,12 +50,12 @@ function RoomCompletionDialog({ target, onClose, onCompleted }: {
         </label>)}
       </div>
       <div className="flex gap-2 pt-2">
-        <Button variant="outline" disabled={busy} onClick={onClose} className="flex-1">Cancel</Button>
+        <Button variant="outline" disabled={busy} onClick={onClose} className="flex-1">Skip</Button>
         <Button className="flex-1" disabled={!complete || busy} onClick={async () => {
           if (!items || !complete) return;
           setBusy(true);
           try {
-            const { error } = await supabase.rpc("complete_room_checklist", { p_room_number: target.room, p_department: target.department, p_items: items });
+            const { error } = await supabase.rpc("complete_room_checklist", { p_room_number: target.room, p_department: target.department, p_items: selectedChecklistItems(items, checked) });
             if (error) throw error;
             onCompleted(target.room, target.department);
             await Promise.all([qc.invalidateQueries({ queryKey: ["rooms"] }), qc.invalidateQueries({ queryKey: ["room-checklist-records"] })]);
