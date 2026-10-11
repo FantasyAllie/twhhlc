@@ -12,22 +12,23 @@ import { useCurrentHotel } from "@/lib/hotels";
 import { selectedChecklistItems, normalizeChecklist } from "@/lib/room-checklist-rules";
 
 type Department = "housekeeping" | "reception";
-type Target = { room: number; department: Department; hotelId: string };
-export function RoomChecklistProvider({ children, onCompleted, target, onClose }: {
+export type Target = { room: number; department: Department; hotelId: string; markDone: boolean };
+export function RoomChecklistProvider({ children, onCompleted, target, onClose, onSkip }: {
   children: React.ReactNode;
   onCompleted: (room: number, department: Department) => void;
   target: Target | null;
   onClose: () => void;
+  onSkip: (target: Target) => void;
 }) {
   const hotel = useCurrentHotel().data;
   return <>
     {children}
-    {target && hotel?.id === target.hotelId && <RoomCompletionDialog key={`${target.hotelId}-${target.department}-${target.room}`} target={target} onClose={onClose} onCompleted={onCompleted} />}
+    {target && hotel?.id === target.hotelId && <RoomCompletionDialog key={`${target.hotelId}-${target.department}-${target.room}`} target={target} onClose={onClose} onSkip={() => onSkip(target)} onCompleted={onCompleted} />}
   </>;
 }
 
-function RoomCompletionDialog({ target, onClose, onCompleted }: {
-  target: Target; onClose: () => void; onCompleted: (room: number, department: Department) => void;
+function RoomCompletionDialog({ target, onClose, onSkip, onCompleted }: {
+  target: Target; onClose: () => void; onSkip: () => void; onCompleted: (room: number, department: Department) => void;
 }) {
   const settings = useRoomChecklistSettings();
   const [checked, setChecked] = useState<boolean[]>([]);
@@ -50,7 +51,7 @@ function RoomCompletionDialog({ target, onClose, onCompleted }: {
         </label>)}
       </div>
       <div className="flex gap-2 pt-2">
-        <Button variant="outline" disabled={busy} onClick={onClose} className="flex-1">Skip</Button>
+        <Button variant="outline" disabled={busy} onClick={onSkip} className="flex-1">Skip</Button>
         <Button className="flex-1" disabled={!complete || busy} onClick={async () => {
           if (!items || !complete) return;
           setBusy(true);
@@ -119,6 +120,7 @@ export function RoomChecklistRecords({ roomNumber }: { roomNumber: number }) {
     {open && <ul className="mt-2 divide-y">
       {records.data.map((record) => <li key={record.id} className="space-y-2 py-3 text-sm">
         <div className="text-xs text-muted-foreground">{new Date(record.completed_at).toLocaleString()} · {record.completed_by_name ?? "Team member"} · {record.department === "reception" ? "Reception" : "Housekeeping"}</div>
+        {(record.items as string[]).length === 0 && <div className="text-muted-foreground">No items ticked</div>}
         {(record.items as string[]).map((item, i) => <div key={i} className="flex items-center gap-2"><Check className="h-4 w-4 shrink-0 text-primary" /><span className="break-words">{item}</span></div>)}
       </li>)}
     </ul>}
