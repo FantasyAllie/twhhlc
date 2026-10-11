@@ -1,7 +1,13 @@
 export const DEFAULT_ROOM_CHECKLIST = ["TV Remote", "Fan", "Water"];
 
-export function isChecklistComplete(items: string[], checked: boolean[]): boolean {
-  return checked.length === items.length && items.every((_, i) => checked[i] === true);
+/** Items ticked as present in this room (none are required). */
+export function selectedChecklistItems(items: string[], checked: boolean[]): string[] {
+  return items.filter((_, i) => checked[i] === true);
+}
+
+/** The checklist only appears for a room that is both marked done and set to Clean or Arrival. */
+export function shouldOpenChecklist(done: boolean, isCleanOrArrival: boolean): boolean {
+  return done && isCleanOrArrival;
 }
 
 export function normalizeChecklist(items: string[]): string[] {

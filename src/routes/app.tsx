@@ -7,7 +7,8 @@ import { Loader2, CalendarDays, Trophy } from "lucide-react";
 import { LeaderboardSheet } from "@/components/leaderboard-sheet";
 import { RoomFlagsContext, FlagIcon, FLAG_COLORS, mergeFlagDefs, useFlagSettingsQuery, useCustomFlagsQuery, type FlagDef } from "@/lib/room-flags";
 import { RoomFlagsSheet } from "@/components/rooms/room-flags-sheet";
-import { RoomChecklistProvider, RoomChecklistRecords } from "@/components/rooms/room-checklists";
+import { RoomChecklistProvider, RoomChecklistRecords, type Target as ChecklistTarget } from "@/components/rooms/room-checklists";
+import { shouldOpenChecklist } from "@/lib/room-checklist-rules";
 import { usePullToRefresh } from "@/hooks/use-touch-gestures";
 import { createFileRoute, useNavigate, Link } from "@tanstack/react-router";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
@@ -191,7 +192,7 @@ export const Route = createFileRoute("/app")({
 });
 
 function AppPage() {
-  const [checklistTarget, setChecklistTarget] = useState<{ room: number; department: "housekeeping" | "reception"; hotelId: string } | null>(null);
+  const [checklistTarget, setChecklistTarget] = useState<ChecklistTarget | null>(null);
  const qc = useQueryClient();
   const navigate = useNavigate();
   const { theme, level, levelLabel, cycleTheme } = useTheme();
@@ -1671,13 +1672,23 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
   const getRoomTileState = (n: number, isDone: boolean): RoomTileState =>
     computeRoomTileState(isDone, roomsWithCounts.has(n));
 
-  const toggleReceptionDone = async (roomNumber: number) => {
+  // Clean / Arrival rooms get the "what's in the room" checklist when done.
+  const isCleanOrArrivalStatus = (statusId: string | null | undefined) => {
+    if (!statusId) return false;
+    const label = receptionStatuses.find((s) => s.id === statusId)?.label.toLowerCase();
+    return label === "clean" || label === "arrival";
+  };
+  const roomIsCleanOrArrival = (roomNumber: number) => {
+    const r = rooms.find((x) => x.room_number === roomNumber);
+    return isCleanOrArrivalStatus(r?.reception_status_id ?? r?.default_status);
+  };
+
+  const toggleReceptionDone = async (roomNumber: number, skipChecklist = false) => {
     const current = receptionDoneSet.has(roomNumber);
     const next = !current;
-    if (next) {
+    if (next && !skipChecklist && shouldOpenChecklist(true, roomIsCleanOrArrival(roomNumber))) {
       const hotelId = currentHotelQ.data?.id;
-      if (hotelId) setChecklistTarget({ room: roomNumber, department: "reception", hotelId });
-      return;
+      if (hotelId) { setChecklistTarget({ room: roomNumber, department: "reception", hotelId, markDone: true }); return; }
     }
     // Flag before the optimistic cache update so the celebration effect,
     // which runs on the resulting re-render, sees that this user did it.
@@ -1722,13 +1733,12 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
     }
   };
 
-  const toggleHousekeepingDone = async (roomNumber: number) => {
+  const toggleHousekeepingDone = async (roomNumber: number, skipChecklist = false) => {
     const room = rooms.find((r) => r.room_number === roomNumber);
     const next = !room?.done;
-    if (next) {
+    if (next && !skipChecklist && shouldOpenChecklist(true, roomIsCleanOrArrival(roomNumber))) {
       const hotelId = currentHotelQ.data?.id;
-      if (hotelId) setChecklistTarget({ room: roomNumber, department: "housekeeping", hotelId });
-      return;
+      if (hotelId) { setChecklistTarget({ room: roomNumber, department: "housekeeping", hotelId, markDone: true }); return; }
     }
     // Flag before the optimistic cache update so the celebration effect,
     // which runs on the resulting re-render, sees that this user did it.
@@ -2789,6 +2799,9 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
     field: "reception_status_id" | "reception_bed_id",
     value: string | null,
   ) => {
+    const previousStatusForChecklist = (qc.getQueryData<Room[]>(["rooms"]) ?? []).find(
+      (r) => r.room_number === roomNumber,
+    )?.reception_status_id;
     // Marking a room Dirty can be the action that fills the progress bar, so it
     // counts as "the outcome happened on this device" just like Mark as done.
     if (field === "reception_status_id" && value) {
@@ -2840,6 +2853,15 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
     );
     if (error) toast.error(error.message);
     qc.invalidateQueries({ queryKey: ["rooms"] });
+    // Room already marked done and now set to Clean / Arrival: open the checklist.
+    if (!error && field === "reception_status_id" && isCleanOrArrivalStatus(value) && previousStatusForChecklist !== value) {
+      const r = rooms.find((x) => x.room_number === roomNumber);
+      const done = isReception ? !!r?.done_reception : !!r?.done;
+      const hotelId = currentHotelQ.data?.id;
+      if (hotelId && shouldOpenChecklist(done, true)) {
+        setChecklistTarget({ room: roomNumber, department: isReception ? "reception" : "housekeeping", hotelId, markDone: false });
+      }
+    }
   };
   const setRoomReceptionStatus = (n: number, v: string | null) =>
     setRoomReceptionField(n, "reception_status_id", v);
@@ -4054,7 +4076,7 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
 
   return (
 <RoomFlagsContext.Provider value={roomFlagsCtx}>
-<RoomChecklistProvider target={checklistTarget} onClose={() => setChecklistTarget(null)} onCompleted={(roomNumber, department) => {
+<RoomChecklistProvider target={checklistTarget} onClose={() => setChecklistTarget(null)} onSkip={(t) => { setChecklistTarget(null); if (t.markDone) void (t.department === "reception" ? toggleReceptionDone(t.room, true) : toggleHousekeepingDone(t.room, true)); }} onCompleted={(roomNumber, department) => {
   markedDoneHereRef.current = true;
   qc.setQueryData<Room[]>(["rooms"], (old) => (old ?? []).map((room) => room.room_number === roomNumber ? {
     ...room,

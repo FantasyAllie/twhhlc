@@ -9,37 +9,38 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } f
 import { useRoomChecklistSettings, useRoomChecklistRecords } from "@/hooks/use-room-checklists";
 import { supabase } from "@/integrations/supabase/client";
 import { useCurrentHotel } from "@/lib/hotels";
-import { isChecklistComplete, normalizeChecklist } from "@/lib/room-checklist-rules";
+import { selectedChecklistItems, normalizeChecklist } from "@/lib/room-checklist-rules";
 
 type Department = "housekeeping" | "reception";
-type Target = { room: number; department: Department; hotelId: string };
-export function RoomChecklistProvider({ children, onCompleted, target, onClose }: {
+export type Target = { room: number; department: Department; hotelId: string; markDone: boolean };
+export function RoomChecklistProvider({ children, onCompleted, target, onClose, onSkip }: {
   children: React.ReactNode;
   onCompleted: (room: number, department: Department) => void;
   target: Target | null;
   onClose: () => void;
+  onSkip: (target: Target) => void;
 }) {
   const hotel = useCurrentHotel().data;
   return <>
     {children}
-    {target && hotel?.id === target.hotelId && <RoomCompletionDialog key={`${target.hotelId}-${target.department}-${target.room}`} target={target} onClose={onClose} onCompleted={onCompleted} />}
+    {target && hotel?.id === target.hotelId && <RoomCompletionDialog key={`${target.hotelId}-${target.department}-${target.room}`} target={target} onClose={onClose} onSkip={() => onSkip(target)} onCompleted={onCompleted} />}
   </>;
 }
 
-function RoomCompletionDialog({ target, onClose, onCompleted }: {
-  target: Target; onClose: () => void; onCompleted: (room: number, department: Department) => void;
+function RoomCompletionDialog({ target, onClose, onSkip, onCompleted }: {
+  target: Target; onClose: () => void; onSkip: () => void; onCompleted: (room: number, department: Department) => void;
 }) {
   const settings = useRoomChecklistSettings();
   const [checked, setChecked] = useState<boolean[]>([]);
   const [busy, setBusy] = useState(false);
   const qc = useQueryClient();
   const items = settings.data;
-  const complete = !!items && !settings.isFetching && !settings.isError && (items.length === 0 || isChecklistComplete(items, checked));
+  const complete = !!items && !settings.isFetching && !settings.isError;
   return <Dialog open onOpenChange={(open) => { if (!open && !busy) onClose(); }}>
     <DialogContent className="p-4 sm:p-6">
       <DialogHeader>
         <DialogTitle>Room {target.room} checklist</DialogTitle>
-        <DialogDescription>{target.department === "housekeeping" ? "Housekeeping" : "Reception"}</DialogDescription>
+        <DialogDescription>Tick what's in this room. Leave anything the room doesn't need.</DialogDescription>
       </DialogHeader>
       {settings.isPending && <p className="py-4 text-sm text-muted-foreground">Loading checklist…</p>}
       {settings.isError && <Button variant="outline" onClick={() => void settings.refetch()}>Retry loading checklist</Button>}
@@ -50,12 +51,12 @@ function RoomCompletionDialog({ target, onClose, onCompleted }: {
         </label>)}
       </div>
       <div className="flex gap-2 pt-2">
-        <Button variant="outline" disabled={busy} onClick={onClose} className="flex-1">Cancel</Button>
+        <Button variant="outline" disabled={busy} onClick={onSkip} className="flex-1">Skip</Button>
         <Button className="flex-1" disabled={!complete || busy} onClick={async () => {
           if (!items || !complete) return;
           setBusy(true);
           try {
-            const { error } = await supabase.rpc("complete_room_checklist", { p_room_number: target.room, p_department: target.department, p_items: items });
+            const { error } = await supabase.rpc("complete_room_checklist", { p_room_number: target.room, p_department: target.department, p_items: selectedChecklistItems(items, checked) });
             if (error) throw error;
             onCompleted(target.room, target.department);
             await Promise.all([qc.invalidateQueries({ queryKey: ["rooms"] }), qc.invalidateQueries({ queryKey: ["room-checklist-records"] })]);
@@ -119,6 +120,7 @@ export function RoomChecklistRecords({ roomNumber }: { roomNumber: number }) {
     {open && <ul className="mt-2 divide-y">
       {records.data.map((record) => <li key={record.id} className="space-y-2 py-3 text-sm">
         <div className="text-xs text-muted-foreground">{new Date(record.completed_at).toLocaleString()} · {record.completed_by_name ?? "Team member"} · {record.department === "reception" ? "Reception" : "Housekeeping"}</div>
+        {(record.items as string[]).length === 0 && <div className="text-muted-foreground">No items ticked</div>}
         {(record.items as string[]).map((item, i) => <div key={i} className="flex items-center gap-2"><Check className="h-4 w-4 shrink-0 text-primary" /><span className="break-words">{item}</span></div>)}
       </li>)}
     </ul>}
