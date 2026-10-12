@@ -115,10 +115,11 @@ export function RoomChecklistItems({ roomNumber }: { roomNumber: number }) {
   const records = useRoomChecklistRecords(roomNumber);
   const latest = records.data?.[0];
   return <div className="space-y-1.5 border-t border-border/60 pt-2">
-    <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">Checklist</p>
-    {records.isPending ? <p className="text-sm text-muted-foreground">Loading checklist…</p> : records.isError ?
-      <Button variant="outline" size="sm" onClick={() => void records.refetch()}>Retry loading checklist</Button> : !latest ?
-      <p className="text-sm text-muted-foreground">No checklist recorded</p> : (latest.items as string[]).length === 0 ?
+    <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">Checked Items</p>
+    <p className="text-xs leading-snug text-muted-foreground/90">Room has been checked and includes the following items</p>
+    {records.isPending ? <p className="text-sm text-muted-foreground">Loading checked items…</p> : records.isError ?
+      <Button variant="outline" size="sm" onClick={() => void records.refetch()}>Retry</Button> : !latest ?
+      <p className="text-sm text-muted-foreground">No checked items recorded</p> : (latest.items as string[]).length === 0 ?
       <p className="text-sm text-muted-foreground">No items ticked</p> :
       <ul className="grid grid-cols-1 gap-1.5 sm:grid-cols-2">
         {(latest.items as string[]).map((item, i) => <li key={i} className="flex min-w-0 items-center gap-2 text-sm">

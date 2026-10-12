@@ -5,6 +5,8 @@
 - [x] Sad full-screen outcome + sad trombone sound when completion happens with Dirty rooms present
 
 ## Current work
+- [x] Drop Reception's inner inset frame so the room panel has a single enclosure
+- [x] Rename the room checklist section to "Checked Items" with the checked-room sentence
 - [x] Simplify Reception room heading and bed display
 - [x] Show ticked checklist items beneath features and replace flag switches with two-column accent toggles
 - [x] Verify Reception room view with saved checklist data
