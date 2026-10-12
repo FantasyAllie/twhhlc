@@ -5,9 +5,9 @@ import React, { useEffect, useMemo, useRef, useState } from "react";
 import { CountRow } from "@/components/linen/inventory-dialog";
 import { Loader2, CalendarDays, Trophy } from "lucide-react";
 import { LeaderboardSheet } from "@/components/leaderboard-sheet";
-import { RoomFlagsContext, FlagIcon, FLAG_COLORS, mergeFlagDefs, useFlagSettingsQuery, useCustomFlagsQuery, type FlagDef } from "@/lib/room-flags";
+import { RoomFlagsContext, FlagIcon, mergeFlagDefs, useFlagSettingsQuery, useCustomFlagsQuery, type FlagDef } from "@/lib/room-flags";
 import { RoomFlagsSheet } from "@/components/rooms/room-flags-sheet";
-import { RoomChecklistProvider, RoomChecklistRecords, type Target as ChecklistTarget } from "@/components/rooms/room-checklists";
+import { RoomChecklistProvider, RoomChecklistItems, type Target as ChecklistTarget } from "@/components/rooms/room-checklists";
 import { shouldOpenChecklist } from "@/lib/room-checklist-rules";
 import { usePullToRefresh } from "@/hooks/use-touch-gestures";
 import { createFileRoute, useNavigate, Link } from "@tanstack/react-router";
@@ -3462,10 +3462,6 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
                   : rawStatus?.toLowerCase() === "dirty"
                     ? "ROS - Dirty"
                     : rawStatus;
-              const bedText = room?.reception_bed_id
-                ? receptionBeds.find((b) => b.id === room.reception_bed_id)?.label ?? null
-                : null;
-              const hasAny = !!statusText || !!bedText;
               const assigned = roomFeatures.filter((f) =>
                 roomFeatureAssignments.some(
                   (a) => a.feature_id === f.id && a.room_number === n,
@@ -3476,15 +3472,11 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
                   <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
                     Room status
                   </p>
-                  {hasAny ? (
-                    <div className="grid grid-cols-2 gap-3">
+                  {statusText ? (
+                    <div>
                       <p className="text-foreground">
                         <span className="font-medium">Status:</span>{" "}
                         {statusText ?? <span className="text-muted-foreground">Not set</span>}
-                      </p>
-                      <p className="text-foreground">
-                        <span className="font-medium">Bed:</span>{" "}
-                        {bedText ?? <span className="text-muted-foreground">Not set</span>}
                       </p>
                     </div>
                   ) : (
@@ -3510,22 +3502,25 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
                       </div>
                     </>
                   )}
+                  <RoomChecklistItems roomNumber={n} />
                 </div>
               );
             })()}
+            <div className="grid grid-cols-1 gap-1.5 sm:grid-cols-2">
             {roomFlagsCtx.flags.map((d) => {
               const on = roomFlagsCtx.isOn(room, n, d);
               return (
-                <div key={d.key} className="flex items-center justify-between gap-2 rounded-xl border bg-background p-3">
-                  <span className="flex items-center gap-2 text-sm font-medium">
-                    <FlagIcon def={d} className={cn("h-4 w-4", on ? (FLAG_COLORS[d.color] ?? FLAG_COLORS.slate).text : "text-muted-foreground")} />
+                <Button key={d.key} type="button" variant="outline" aria-pressed={on}
+                  onClick={() => roomFlagsCtx.toggle(n, d, !on)}
+                  className={cn("h-auto min-h-12 w-full min-w-0 justify-center gap-2 whitespace-normal rounded-xl px-3 py-3 text-center text-sm font-medium", on && "border-primary bg-primary/10 text-primary hover:bg-primary/15")}>
+                  <FlagIcon def={d} className="h-4 w-4 shrink-0" />
+                  <span className="min-w-0 break-words">
                     {d.label}
                   </span>
-                  <Switch checked={on} onCheckedChange={(v) => roomFlagsCtx.toggle(n, d, v)} />
-                </div>
+                </Button>
               );
             })}
-            <RoomChecklistRecords roomNumber={n} />
+            </div>
             {maintenance && (
               <div className="flex items-center gap-2 rounded-xl border border-amber-500/60 bg-amber-50 dark:bg-amber-950/40 p-3 text-sm">
                 <Wrench className="h-4 w-4 text-amber-600 dark:text-amber-400 shrink-0" />
@@ -5925,7 +5920,7 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
  <div className={cn(!isReception && openRoom !== null && receptionSheetRoom === openRoom && "hidden")}>
  <Sheet open={openRoom !== null} onOpenChange={(o) => { if (!o) { const closing = openRoom; collapseRoomSlot(() => { if (closing !== null) setShowAllLinen(prev => ({ ...prev, [closing]: false })); setOpenRoom(null); setNewMessageText(""); }); } }}>
    <SheetContent side="bottom" className={cn("flex flex-col overflow-hidden rounded-t-2xl p-4 sm:p-6")}>
-     <SheetHeader className={cn("text-left space-y-0", !isReception && "hidden")}>
+      <SheetHeader className="sr-only">
        <SheetTitle>Room {openRoom} — {categoryLabel(roomCategory(openRoom ?? 0), roomTypes)}</SheetTitle>
       {(() => {
         if (openRoom === null) return null;
@@ -5942,7 +5937,7 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
         );
       })()}
      </SheetHeader>
-     <div className={cn("flex flex-col flex-1 min-h-0", isReception && "mt-3")}>
+      <div className="flex flex-col flex-1 min-h-0">
        {openRoom !== null && renderRoomPanel(openRoom)}
      </div>
    </SheetContent>
