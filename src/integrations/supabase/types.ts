@@ -1137,6 +1137,7 @@ export type Database = {
       rooms: {
         Row: {
           category: string | null
+          checked_items: Json | null
           default_status: string | null
           dog_box: boolean
           dog_box_at: string | null
@@ -1167,6 +1168,7 @@ export type Database = {
         }
         Insert: {
           category?: string | null
+          checked_items?: Json | null
           default_status?: string | null
           dog_box?: boolean
           dog_box_at?: string | null
@@ -1197,6 +1199,7 @@ export type Database = {
         }
         Update: {
           category?: string | null
+          checked_items?: Json | null
           default_status?: string | null
           dog_box?: boolean
           dog_box_at?: string | null
@@ -1414,6 +1417,14 @@ export type Database = {
       complete_room_checklist: {
         Args: { p_department: string; p_items: Json; p_room_number: number }
         Returns: string
+      }
+      complete_selected_room_items: {
+        Args: { p_department: string; p_room_number: number }
+        Returns: string
+      }
+      set_room_checked_item: {
+        Args: { p_item: string; p_room_number: number; p_selected: boolean }
+        Returns: Json
       }
     }
     Enums: {

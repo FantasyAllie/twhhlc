@@ -78,6 +78,13 @@
       "when": 1791733334405,
       "tag": "0010_room_checklist_selectable",
       "breakpoints": true
+    },
+    {
+      "idx": 11,
+      "version": "7",
+      "when": 1792096158832,
+      "tag": "0011_inline_room_checked_items",
+      "breakpoints": true
     }
   ]
 }
