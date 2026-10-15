@@ -4,70 +4,40 @@ import { ArrowDown, ArrowUp, Check, ClipboardCheck, Plus, Trash2 } from "lucide-
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Checkbox } from "@/components/ui/checkbox";
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 import { useRoomChecklistSettings, useRoomChecklistRecords } from "@/hooks/use-room-checklists";
 import { supabase } from "@/integrations/supabase/client";
 import { useCurrentHotel } from "@/lib/hotels";
-import { selectedChecklistItems, normalizeChecklist } from "@/lib/room-checklist-rules";
+import { normalizeChecklist } from "@/lib/room-checklist-rules";
 
-type Department = "housekeeping" | "reception";
-export type Target = { room: number; department: Department; hotelId: string; markDone: boolean };
-export function RoomChecklistProvider({ children, onCompleted, target, onClose, onSkip }: {
-  children: React.ReactNode;
-  onCompleted: (room: number, department: Department) => void;
-  target: Target | null;
-  onClose: () => void;
-  onSkip: (target: Target) => void;
-}) {
-  const hotel = useCurrentHotel().data;
-  return <>
-    {children}
-    {target && hotel?.id === target.hotelId && <RoomCompletionDialog key={`${target.hotelId}-${target.department}-${target.room}`} target={target} onClose={onClose} onSkip={() => onSkip(target)} onCompleted={onCompleted} />}
-  </>;
-}
-
-function RoomCompletionDialog({ target, onClose, onSkip, onCompleted }: {
-  target: Target; onClose: () => void; onSkip: () => void; onCompleted: (room: number, department: Department) => void;
-}) {
+export function RoomCheckedItemSelectors({ roomNumber, selectedItems }: { roomNumber: number; selectedItems: string[] | null }) {
   const settings = useRoomChecklistSettings();
-  const [checked, setChecked] = useState<boolean[]>([]);
-  const [busy, setBusy] = useState(false);
+  const hotel = useCurrentHotel().data;
   const qc = useQueryClient();
-  const items = settings.data;
-  const complete = !!items && !settings.isFetching && !settings.isError;
-  return <Dialog open onOpenChange={(open) => { if (!open && !busy) onClose(); }}>
-    <DialogContent className="p-4 sm:p-6">
-      <DialogHeader>
-        <DialogTitle>Room {target.room} checklist</DialogTitle>
-        <DialogDescription>Tick what's in this room. Leave anything the room doesn't need.</DialogDescription>
-      </DialogHeader>
-      {settings.isPending && <p className="py-4 text-sm text-muted-foreground">Loading checklist…</p>}
-      {settings.isError && <Button variant="outline" onClick={() => void settings.refetch()}>Retry loading checklist</Button>}
-      <div className="min-h-0 overflow-y-auto space-y-2 py-3">
-        {items?.map((item, i) => <label key={item} className="flex min-h-12 cursor-pointer items-center gap-3 rounded-lg border p-3">
-          <Checkbox disabled={busy} checked={checked[i] ?? false} onCheckedChange={(value) => setChecked(items.map((_, j) => j === i ? value === true : checked[j] ?? false))} />
-          <span className="min-w-0 break-words text-sm">{item}</span>
-        </label>)}
-      </div>
-      <div className="flex gap-2 pt-2">
-        <Button variant="outline" disabled={busy} onClick={onSkip} className="flex-1">Skip</Button>
-        <Button className="flex-1" disabled={!complete || busy} onClick={async () => {
-          if (!items || !complete) return;
-          setBusy(true);
-          try {
-            const { error } = await supabase.rpc("complete_room_checklist", { p_room_number: target.room, p_department: target.department, p_items: selectedChecklistItems(items, checked) });
-            if (error) throw error;
-            onCompleted(target.room, target.department);
-            await Promise.all([qc.invalidateQueries({ queryKey: ["rooms"] }), qc.invalidateQueries({ queryKey: ["room-checklist-records"] })]);
-            onClose();
-          } catch (error) {
-            toast.error(error instanceof Error ? error.message : (error as { message?: string }).message ?? "Could not complete the room.");
-          } finally { setBusy(false); }
-        }}><Check className="mr-1 h-4 w-4" />{busy ? "Saving…" : "Complete"}</Button>
-      </div>
-    </DialogContent>
-  </Dialog>;
+  const [busy, setBusy] = useState(false);
+  return <div className="space-y-2 border-t border-border/60 pt-4">
+    <p className="text-center text-xs font-semibold uppercase tracking-wide text-muted-foreground">Checked Items</p>
+    {settings.isPending ? <p className="text-center text-sm text-muted-foreground">Loading items…</p> : settings.isError ?
+      <Button variant="outline" onClick={() => void settings.refetch()}>Retry</Button> :
+      <div className="grid grid-cols-2 gap-1.5">
+        {settings.data?.map((item) => {
+          const selected = selectedItems?.includes(item) ?? false;
+          return <Button key={item} variant="outline" type="button" aria-pressed={selected} disabled={busy || !hotel}
+            className={`h-auto min-h-12 w-full min-w-0 justify-center gap-2 whitespace-normal rounded-xl px-3 py-3 text-center text-sm font-medium ${selected ? "border-primary bg-primary/10 text-primary hover:bg-primary/15" : ""}`}
+            onClick={async () => {
+              if (!hotel) return;
+              setBusy(true);
+              try {
+                const { error } = await supabase.rpc("set_room_checked_item", { p_room_number: roomNumber, p_item: item, p_selected: !selected });
+                if (error) throw error;
+                await qc.invalidateQueries({ queryKey: ["rooms"] });
+              } catch (error) { toast.error((error as { message?: string }).message ?? "Could not save room items."); }
+              finally { setBusy(false); }
+            }}>
+            {selected && <Check className="h-4 w-4 shrink-0" />}<span className="min-w-0 break-words">{item}</span>
+          </Button>;
+        })}
+      </div>}
+  </div>;
 }
 
 export function RoomChecklistEditor() {
@@ -108,24 +78,6 @@ export function RoomChecklistEditor() {
         }}>{busy ? "Saving…" : "Save checklist"}</Button>
       </div>
     </>}
-  </div>;
-}
-
-export function RoomChecklistItems({ roomNumber }: { roomNumber: number }) {
-  const records = useRoomChecklistRecords(roomNumber);
-  const latest = records.data?.[0];
-  return <div className="space-y-1.5 border-t border-border/60 pt-2">
-    <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">Checked Items</p>
-    <p className="text-xs leading-snug text-muted-foreground/90">Room has been checked and includes the following items</p>
-    {records.isPending ? <p className="text-sm text-muted-foreground">Loading checked items…</p> : records.isError ?
-      <Button variant="outline" size="sm" onClick={() => void records.refetch()}>Retry</Button> : !latest ?
-      <p className="text-sm text-muted-foreground">No checked items recorded</p> : (latest.items as string[]).length === 0 ?
-      <p className="text-sm text-muted-foreground">No items ticked</p> :
-      <ul className="grid grid-cols-1 gap-1.5 sm:grid-cols-2">
-        {(latest.items as string[]).map((item, i) => <li key={i} className="flex min-w-0 items-center gap-2 text-sm">
-          <Check className="h-4 w-4 shrink-0 text-primary" /><span className="break-words">{item}</span>
-        </li>)}
-      </ul>}
   </div>;
 }
 

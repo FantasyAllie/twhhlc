@@ -6,7 +6,7 @@ import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import { FlagIcon, useRoomFlags } from "@/lib/room-flags";
 import type { ReceptionItem, Room } from "@/lib/app-types";
-import { RoomChecklistRecords } from "@/components/rooms/room-checklists";
+import { RoomChecklistRecords, RoomCheckedItemSelectors } from "@/components/rooms/room-checklists";
 
 type Props = {
   receptionSheetRoom: number | null;
