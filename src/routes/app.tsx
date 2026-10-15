@@ -1,4 +1,5 @@
 import { Textarea } from "@/components/ui/textarea";
+import { hasRoomItemSelection } from "@/lib/room-checklist-rules";
 import { playDoorBell } from "@/lib/door-bell";
 import { createPortal } from "react-dom";
 import React, { useEffect, useMemo, useRef, useState } from "react";
@@ -1681,7 +1682,7 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
   const toggleReceptionDone = async (roomNumber: number) => {
     const current = receptionDoneSet.has(roomNumber);
     const next = !current;
-    if (next && rooms.find((r) => r.room_number === roomNumber)?.checked_items != null) {
+    if (next && hasRoomItemSelection(rooms.find((r) => r.room_number === roomNumber)?.checked_items)) {
       await completeSelectedRoomItems(roomNumber, "reception");
       return;
     }
@@ -1731,7 +1732,7 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
   const toggleHousekeepingDone = async (roomNumber: number) => {
     const room = rooms.find((r) => r.room_number === roomNumber);
     const next = !room?.done;
-    if (next && room?.checked_items != null) {
+    if (next && hasRoomItemSelection(room?.checked_items)) {
       await completeSelectedRoomItems(roomNumber, "housekeeping");
       return;
     }
