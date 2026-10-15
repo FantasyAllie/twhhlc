@@ -5,9 +5,9 @@ export function selectedChecklistItems(items: string[], checked: boolean[]): str
   return items.filter((_, i) => checked[i] === true);
 }
 
-/** The checklist only appears for a room that is both marked done and set to Clean or Arrival. */
-export function shouldOpenChecklist(done: boolean, isCleanOrArrival: boolean): boolean {
-  return done && isCleanOrArrival;
+/** An untouched list is optional; even an explicitly empty selection can be recorded. */
+export function hasRoomItemSelection(items: string[] | null | undefined): boolean {
+  return items != null;
 }
 
 export function normalizeChecklist(items: string[]): string[] {
