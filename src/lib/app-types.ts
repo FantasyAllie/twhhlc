@@ -68,6 +68,7 @@ export type Room = {
   default_status: string | null;
   reception_status_id: string | null;
   reception_bed_id: string | null;
+  checked_items?: string[] | null;
   housekeeping_note: string | null;
   needs_maintenance: boolean;
   guest_vacated: boolean;

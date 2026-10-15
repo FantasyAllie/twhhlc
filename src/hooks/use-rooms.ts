@@ -15,7 +15,7 @@ export const useRoomsQuery = () =>
     queryFn: async (): Promise<Room[]> => {
       const { data, error } = await supabase
         .from("rooms")
-        .select("id,room_number,sort_order,done,done_reception,category,default_status,reception_status_id,reception_bed_id,housekeeping_note,needs_maintenance,guest_vacated,dog_box,dog_box_at,stayover_out,stayover_out_at,early_check_in,late_checkout,late_checkout_at,not_required,guest_vacated_at,early_check_in_at,needs_maintenance_at,not_required_at")
+        .select("id,room_number,sort_order,done,done_reception,checked_items,category,default_status,reception_status_id,reception_bed_id,housekeeping_note,needs_maintenance,guest_vacated,dog_box,dog_box_at,stayover_out,stayover_out_at,early_check_in,late_checkout,late_checkout_at,not_required,guest_vacated_at,early_check_in_at,needs_maintenance_at,not_required_at")
         .order("sort_order", { ascending: true });
       if (error) throw error;
       return (data ?? []) as Room[];
