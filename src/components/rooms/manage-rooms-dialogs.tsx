@@ -47,7 +47,7 @@ export function ManageRoomsDialogs({
   <Dialog open={manageRoomsOpen} onOpenChange={setManageRoomsOpen}>
     <DialogContent className="max-w-md w-[calc(100vw-1.5rem)] sm:w-full p-4 sm:p-6">
       <DialogHeader>
-        <DialogTitle>Manage Rooms</DialogTitle>
+        <DialogTitle>Room Management</DialogTitle>
         <DialogDescription>
           Add or remove rooms. New rooms work like every other room — they
           appear in the grid, share the Linen List, and support Room Types.
