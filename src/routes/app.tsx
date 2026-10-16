@@ -2068,6 +2068,19 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
     setOpenRoom(roomNumber);
   };
 
+ // Marking a room done finishes the visit to it: drop the status view and the
+ // open room slot together so the user lands back on the room tile grid.
+ const closeRoomView = () => {
+    const closing = openRoom;
+    collapseRoomSlot(() => {
+      if (closing !== null) setShowAllLinen((prev) => ({ ...prev, [closing]: false }));
+      setOpenRoom(null);
+      setReceptionSheetRoom(null);
+      setNewMessageText("");
+    });
+  };
+
+
   // Housekeeping shows the status view inside the open room's slot; drop it
   // when the room closes or a different room opens.
   useEffect(() => {
@@ -4623,6 +4636,8 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
     setRoomNotRequired={setRoomNotRequired}
     deleteTodayStayoverPhotosForRoom={deleteTodayStayoverPhotosForRoom}
     setPendingDndRoom={setPendingDndRoom}
+    closeRoomView={closeRoomView}
+
   />
   </HomeInline>
 
