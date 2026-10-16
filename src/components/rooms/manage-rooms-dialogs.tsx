@@ -1,10 +1,10 @@
-import { Bed, List, ConciergeBell, Plus, Pencil, Trash2, ArrowUp, ArrowDown, Check } from "lucide-react";
+import { Bed, DoorOpen, List, ConciergeBell, Plus, Pencil, Trash2, ArrowUp, ArrowDown, Check } from "lucide-react";
 import { toast } from "sonner";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import type { Room } from "@/lib/app-types";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { ClipboardCheck } from "lucide-react";
 import { RoomChecklistEditor } from "@/components/rooms/room-checklists";
 
@@ -41,57 +41,87 @@ export function ManageRoomsDialogs({
   removeRoom,
   moveRoom,
 }: Props) {
-  const [checklistOpen, setChecklistOpen] = useState(false);
+  const [view, setView] = useState<"home" | "rooms" | "checklist">("home");
+  useEffect(() => {
+    if (manageRoomsOpen) setView("home");
+  }, [manageRoomsOpen]);
+  const btn = "min-w-0 justify-center gap-1.5 px-3 rounded-full";
+  const openAddRoom = () => {
+    const used = new Set(rooms.map((r) => r.room_number));
+    let suggested = 1;
+    while (used.has(suggested)) suggested++;
+    setNewRoomNumber(String(suggested));
+    setAddRoomConfirmOpen(true);
+  };
   return (
     <>
   <Dialog open={manageRoomsOpen} onOpenChange={setManageRoomsOpen}>
     <DialogContent className="max-w-md w-[calc(100vw-1.5rem)] sm:w-full p-4 sm:p-6">
-      <DialogHeader>
-        <DialogTitle>Room Management</DialogTitle>
-        <DialogDescription>
-          Add or remove rooms. New rooms work like every other room — they
-          appear in the grid, share the Linen List, and support Room Types.
-          Rejects always stays at the end.
-        </DialogDescription>
-        <div className="mt-4 grid w-full grid-cols-2 gap-3">
-          <Button variant="outline" size="sm" className="min-w-0 justify-center gap-1.5 px-3 rounded-full" onClick={() => setRoomTypesSheetOpen(true)}>
-            <Bed className="h-4 w-4 shrink-0" />
-            <span className="truncate">Room Type</span>
-          </Button>
-          <Button variant="outline" size="sm" className="min-w-0 justify-center gap-1.5 px-3 rounded-full" onClick={() => setRoomFeaturesSheetOpen(true)}>
-            <List className="h-4 w-4 shrink-0" />
-            <span className="truncate">Features</span>
-          </Button>
-          <Button variant="outline" size="sm" className="min-w-0 justify-center gap-1.5 px-3 rounded-full" onClick={() => setReceptionItemsSheetOpen(true)}>
-            <ConciergeBell className="h-4 w-4 shrink-0" />
-            <span className="truncate">Status &amp; bed</span>
-          </Button>
-          <Button
-            variant="outline"
-            size="sm"
-            className="min-w-0 justify-center gap-1.5 px-3 rounded-full"
-            onClick={() => {
-              const used = new Set(rooms.map((r) => r.room_number));
-              let suggested = 1;
-              while (used.has(suggested)) suggested++;
-              setNewRoomNumber(String(suggested));
-              setAddRoomConfirmOpen(true);
-            }}
-          >
-            <Plus className="h-4 w-4 shrink-0" />
-            <span className="truncate">Add Room</span>
-          </Button>
-          <Button variant="outline" size="sm" className="col-span-2 gap-2 rounded-full" aria-expanded={checklistOpen} onClick={() => setChecklistOpen(!checklistOpen)}>
-            <ClipboardCheck className="h-4 w-4" />Room completion checklist
+      {view !== "home" && (
+        <button
+          type="button"
+          data-touch-exempt
+          onClick={() => setView("home")}
+          className="absolute right-4 top-4 z-40 inline-flex h-8 min-h-0 min-w-0 shrink-0 items-center justify-center rounded-full border bg-background px-3 text-xs font-medium leading-none text-muted-foreground transition-colors hover:bg-accent hover:text-foreground"
+        >
+          Back
+        </button>
+      )}
+      {view === "home" && (
+        <DialogHeader>
+          <DialogTitle>Room Management</DialogTitle>
+          <DialogDescription>
+            Choose what to manage: rooms, room types, features, statuses and beds, or the room checklist.
+          </DialogDescription>
+          <div className="mt-4 grid w-full grid-cols-2 gap-3">
+            <Button variant="outline" size="sm" className={btn} onClick={() => setView("rooms")}>
+              <DoorOpen className="h-4 w-4 shrink-0" />
+              <span className="truncate">Rooms</span>
+            </Button>
+            <Button variant="outline" size="sm" className={btn} onClick={() => setRoomTypesSheetOpen(true)}>
+              <Bed className="h-4 w-4 shrink-0" />
+              <span className="truncate">Room Type</span>
+            </Button>
+            <Button variant="outline" size="sm" className={btn} onClick={() => setRoomFeaturesSheetOpen(true)}>
+              <List className="h-4 w-4 shrink-0" />
+              <span className="truncate">Features</span>
+            </Button>
+            <Button variant="outline" size="sm" className={btn} onClick={() => setReceptionItemsSheetOpen(true)}>
+              <ConciergeBell className="h-4 w-4 shrink-0" />
+              <span className="truncate">Status &amp; bed</span>
+            </Button>
+            <Button variant="outline" size="sm" className={`col-span-2 ${btn}`} onClick={() => setView("checklist")}>
+              <ClipboardCheck className="h-4 w-4 shrink-0" />
+              <span className="truncate">Room Checklist</span>
+            </Button>
+          </div>
+        </DialogHeader>
+      )}
+      {view === "checklist" && (
+        <div className="min-h-0 overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle>Room Checklist</DialogTitle>
+          </DialogHeader>
+          <div className="mt-3"><RoomChecklistEditor /></div>
+        </div>
+      )}
+      {view === "rooms" && (
+      <div className="flex min-h-0 flex-col space-y-3">
+        <DialogHeader>
+          <DialogTitle>Rooms</DialogTitle>
+          <DialogDescription>
+            Add or remove rooms. New rooms work like every other room. Rejects always stays at the end.
+          </DialogDescription>
+        </DialogHeader>
+        <div className="flex items-center justify-between gap-2">
+          <span className="text-xs text-muted-foreground">
+            {rooms.length} room{rooms.length === 1 ? "" : "s"} total
+          </span>
+          <Button variant="outline" size="sm" className="gap-1.5 rounded-full" onClick={openAddRoom}>
+            <Plus className="h-4 w-4" />Add Room
           </Button>
         </div>
-      </DialogHeader>
-      {checklistOpen && <RoomChecklistEditor />}
-      <div className="space-y-3">
-        <div className="text-xs text-muted-foreground">
-          {rooms.length} room{rooms.length === 1 ? "" : "s"} total
-        </div>
-        <ul className="divide-y rounded-xl border max-h-[50dvh] overflow-y-auto">
+        <ul className="divide-y rounded-xl border min-h-0 max-h-[60dvh] overflow-y-auto">
           {rooms
             .slice()
             .sort((a, b) => (a.sort_order ?? a.room_number) - (b.sort_order ?? b.room_number))
@@ -142,6 +172,7 @@ export function ManageRoomsDialogs({
             ))}
         </ul>
       </div>
+      )}
     </DialogContent>
   </Dialog>
 
