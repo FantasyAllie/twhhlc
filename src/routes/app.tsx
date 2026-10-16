@@ -5903,7 +5903,7 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
                     const rows = [
                       { label: "Done", value: progress, colour: "var(--color-room-complete-accent)" },
                       { label: "Clean / Arrival", value: cleanArrivalLeft, colour: "var(--color-room-progress-accent)" },
-                      { label: "Dirty / Departures", value: dirtyLeft, colour: "var(--color-room-dirty-accent, var(--color-room-todo-accent))" },
+                      { label: "Dirty / Departures", value: dirtyLeft, colour: "var(--color-room-dirty-accent)" },
                     ];
                     return (
                       <>
