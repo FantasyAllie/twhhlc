@@ -627,19 +627,26 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
     return () => ro.disconnect();
   }, [roomGridEl]);
   // Bring the tapped tile to the top of the screen once its room has expanded.
+  // The slot grows over its open animation, so lower rows can't scroll up far
+  // enough at first; scroll again as it grows. Offset by the sticky top bar.
   useEffect(() => {
     if (openRoom === null || !roomGridEl || !roomSlotEl) return;
-    const raf = requestAnimationFrame(() => {
+    const scrollToTile = () => {
       const tiles = Array.from(roomGridEl.children).filter(
         (el) => !(el as HTMLElement).hasAttribute("data-room-slot"),
       ) as HTMLElement[];
       const tile = tiles.find((el) => new RegExp(`^${openRoom}(\\D|$)`).test(el.textContent?.trim() ?? ""));
       const target = tile ?? roomSlotEl;
-      const top = target.getBoundingClientRect().top + window.scrollY - 12;
-      window.scrollTo({ top, behavior: "smooth" });
-    });
-    return () => cancelAnimationFrame(raf);
+      const bar = document.querySelector<HTMLElement>("[data-mobile-topbar]");
+      const offset = (bar?.getBoundingClientRect().height ?? 0) + 12;
+      const top = target.getBoundingClientRect().top + window.scrollY - offset;
+      window.scrollTo({ top: Math.max(0, top), behavior: "smooth" });
+    };
+    const raf = requestAnimationFrame(scrollToTile);
+    const timers = [250, 500, 800].map((ms) => window.setTimeout(scrollToTile, ms));
+    return () => { cancelAnimationFrame(raf); timers.forEach((t) => window.clearTimeout(t)); };
   }, [openRoom, roomGridEl, roomSlotEl]);
+  const [topBarSlot, setTopBarSlot] = useState<HTMLDivElement | null>(null);
   // Stayover / DND photo state
   const [stayoverPhotosOpen, setStayoverPhotosOpen] = useState(false);
   const [stayoverPhotosRoomFilter, setStayoverPhotosRoomFilter] = useState<number | undefined>(undefined);
@@ -4098,28 +4105,33 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
   }}
 >
  {isMobile ? (
-  (isReception || isHousekeeper || (isAdmin && !isFnb && !isMaintenance)) ? (
     <div
-      className="-mt-6 flex h-11 items-center justify-end border-b border-sidebar-border bg-sidebar text-sidebar-foreground"
+      data-mobile-topbar
+      className="-mt-6 sticky top-0 z-40 border-b border-sidebar-border bg-sidebar text-sidebar-foreground shadow-elevation-1"
       style={{
         marginLeft: "calc(-1 * max(1rem, env(safe-area-inset-left)))",
         marginRight: "calc(-1 * max(1rem, env(safe-area-inset-right)))",
-        paddingRight: "max(0.75rem, env(safe-area-inset-right))",
+        paddingLeft: "max(1rem, env(safe-area-inset-left))",
+        paddingRight: "max(0.5rem, env(safe-area-inset-right))",
         paddingTop: "env(safe-area-inset-top, 0px)",
-        boxSizing: "content-box",
       }}
     >
-      <Button
-        variant="ghost"
-        size="sm"
-        className={cn("gap-2 text-sidebar-foreground", quickReceptionOpen && "text-sidebar-primary")}
-        onClick={() => { if (quickReceptionOpen) setQuickReceptionOpen(false); else { closeHomePanels("quick"); setQuickReceptionOpen(true); } }}
-      >
-        <ConciergeBell className="h-4 w-4" />
-        Quick Setup
-      </Button>
+      <div className="flex h-11 items-center justify-between gap-2">
+        <h1 className="min-w-0 truncate text-base font-semibold tracking-tight">{hotelName}</h1>
+        {(isReception || isHousekeeper || (isAdmin && !isFnb && !isMaintenance)) && (
+          <Button
+            variant="ghost"
+            size="sm"
+            className={cn("shrink-0 gap-2 text-sidebar-foreground", quickReceptionOpen && "text-sidebar-primary")}
+            onClick={() => { if (quickReceptionOpen) setQuickReceptionOpen(false); else { closeHomePanels("quick"); setQuickReceptionOpen(true); } }}
+          >
+            <ConciergeBell className="h-4 w-4" />
+            Quick Setup
+          </Button>
+        )}
+      </div>
+      <div ref={setTopBarSlot} className="empty:hidden pb-2" />
     </div>
-  ) : null
  ) : (
  <header className="flex items-start justify-between gap-3 flex-wrap rounded-2xl border border-primary/20 bg-sidebar px-4 pt-4 pb-3 sm:px-5 sm:pt-5 sm:pb-4 shadow-elevation-2">
           <div className="min-w-0 flex-1">
@@ -5800,8 +5812,8 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
                  const progress = eligible.filter((r) => r.done || r.done_reception).length;
                 const pct = total > 0 ? Math.min(100, (progress / total) * 100) : 0;
                 const isComplete = total > 0 && progress >= total;
-                  return (
-                        <div className="mt-3 space-y-1.5 max-lg:space-y-1 rounded-2xl border border-sidebar-border bg-sidebar px-4 py-2 shadow-elevation-2 lg:px-5 max-lg:fixed max-lg:inset-x-0 max-lg:bottom-[calc(env(safe-area-inset-bottom,0px)+3.5rem)] max-lg:z-40 max-lg:mt-0 max-lg:rounded-none max-lg:border-x-0 max-lg:border-b-0 max-lg:border-t max-lg:pl-[calc(env(safe-area-inset-left,0px)+1.5rem)] max-lg:pr-[calc(env(safe-area-inset-right,0px)+1.5rem)] max-lg:pt-1.5 max-lg:pb-1.5">
+                  const progressBar = (
+                        <div className={`${isMobile ? "pr-2" : "mt-3"} space-y-1.5 max-lg:space-y-1 ${isMobile ? "" : "rounded-2xl border border-sidebar-border bg-sidebar px-4 py-2 shadow-elevation-2 lg:px-5"}`}>
                      <div className="flex items-center justify-between text-[10px] font-bold uppercase tracking-[0.18em] text-sidebar-foreground/60">
                        <span className="flex items-center gap-1.5">
                          {isComplete ? (
@@ -5818,7 +5830,7 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
                        data-touch-exempt
                        tabIndex={-1}
                        onClick={handleProgressTap}
-                       className="relative h-3 max-lg:h-5 w-full overflow-hidden rounded-full bg-sidebar-accent shadow-elevation-1 cursor-pointer select-none active:scale-[0.99] transition-transform"
+                       className="relative h-3 max-lg:h-4 w-full overflow-hidden rounded-full bg-sidebar-accent shadow-elevation-1 cursor-pointer select-none active:scale-[0.99] transition-transform"
                      >
                       <div
                         className={cn(
@@ -5844,14 +5856,12 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
                     </div>
                   </div>
                 );
+                  return isMobile && topBarSlot ? createPortal(progressBar, topBarSlot) : progressBar;
               })()
             )}
  </section>
  )}
  </div>
-  {!isReception && (
-    <div className="lg:hidden h-14" aria-hidden />
-  )}
  </div>
 
  <HomeInline active={openRoom !== null} target={roomSlotEl} noFit>
