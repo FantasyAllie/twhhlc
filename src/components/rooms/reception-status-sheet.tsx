@@ -98,6 +98,11 @@ export function ReceptionStatusSheet({
          return true;
        });
        const currentBed = room?.reception_bed_id ?? null;
+       // Nothing to choose when a room's only bed option is the fixed Double, so
+       // the bed area is skipped and the screen goes straight to Checked Items.
+       const hideBedSection =
+         filteredBeds.length <= 1 &&
+         (onlyDouble || currentBed === filteredBeds[0]?.id);
       const Row = ({
          label,
          selected,
@@ -308,6 +313,7 @@ export function ReceptionStatusSheet({
                    })()}
                 </div>
              </div>
+             {!hideBedSection && (
              <div className="space-y-2">
                <p className="text-center text-xs font-semibold uppercase tracking-wide text-muted-foreground">Bed</p>
                {filteredBeds.length === 0 && (
@@ -332,6 +338,7 @@ export function ReceptionStatusSheet({
                  })}
                </div>
               </div>
+             )}
                <RoomCheckedItemSelectors key={n} roomNumber={n} selectedItems={room?.checked_items ?? null} />
                <div className="border-y py-4">
                  <Row
