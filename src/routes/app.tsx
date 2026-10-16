@@ -4117,7 +4117,7 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
       }}
     >
       <div className="flex h-11 items-center justify-between gap-2">
-        <h1 className="min-w-0 truncate text-base font-semibold tracking-tight">{hotelName}</h1>
+        <h1 className="min-w-0 flex-1 truncate text-base font-semibold tracking-tight">{hotelName}</h1>
         {(isReception || isHousekeeper || (isAdmin && !isFnb && !isMaintenance)) && (
           <Button
             variant="ghost"
@@ -6112,6 +6112,7 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
   {/* Mobile bottom tab bar: same five tabs for every department. */}
   <nav
     aria-label="Main"
+    data-mobile-tabbar
     className="lg:hidden fixed inset-x-0 bottom-0 z-50 border-t border-sidebar-border bg-sidebar text-sidebar-foreground"
     style={{
       paddingBottom: "env(safe-area-inset-bottom, 0px)",
@@ -6170,7 +6171,7 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
                 t.active ? "text-sidebar-primary" : "text-sidebar-foreground/70",
               )}
             >
-              <span className="relative">
+              <span className="relative" data-tab-icon>
                 <Icon className="h-5 w-5" />
                 {t.dot && (
                   <span className="absolute -top-0.5 -right-1 h-2 w-2 rounded-full bg-amber-500 ring-2 ring-sidebar" />
