@@ -56,7 +56,7 @@ export function ManageRoomsDialogs({
   return (
     <>
   <Dialog open={manageRoomsOpen} onOpenChange={setManageRoomsOpen}>
-    <DialogContent className="max-w-md w-[calc(100vw-1.5rem)] sm:w-full p-4 sm:p-6">
+    <DialogContent shrinkToContent className="max-w-md w-[calc(100vw-1.5rem)] sm:w-full p-4 sm:p-6">
       {view !== "home" && (
         <button
           type="button"
@@ -121,7 +121,7 @@ export function ManageRoomsDialogs({
             <Plus className="h-4 w-4" />Add Room
           </Button>
         </div>
-        <ul className="divide-y rounded-xl border min-h-0 max-h-[60dvh] overflow-y-auto">
+        <ul className="divide-y rounded-xl border min-h-0 overflow-y-auto">
           {rooms
             .slice()
             .sort((a, b) => (a.sort_order ?? a.room_number) - (b.sort_order ?? b.room_number))

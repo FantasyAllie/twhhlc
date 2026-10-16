@@ -109,7 +109,8 @@ export function useTakeoverClaim(open: boolean | undefined, onOpenChange?: (o: b
 }
 
 /** Fits an in-place panel to the screen height left below its top edge. */
-export function useFitToScreen(ref: React.MutableRefObject<HTMLElement | null>, active: boolean) {
+export function useFitToScreen(ref: React.MutableRefObject<HTMLElement | null>, active: boolean, shrink = false) {
+  const prop = shrink ? "maxHeight" : "height";
   React.useLayoutEffect(() => {
     const node = ref.current;
     if (!active || !node) return;
@@ -117,7 +118,7 @@ export function useFitToScreen(ref: React.MutableRefObject<HTMLElement | null>, 
     const fit = () => {
       if (isPhone()) {
         // Phones: panel fills the whole screen; the header scrolls off above it.
-        node.style.height = `${window.innerHeight - 16}px`;
+        node.style[prop] = `${window.innerHeight - 16}px`;
         // Pull up the page's trailing space so scrolling can't reveal a gap.
         node.style.marginBottom = "0px";
         const r = node.getBoundingClientRect();
@@ -128,7 +129,7 @@ export function useFitToScreen(ref: React.MutableRefObject<HTMLElement | null>, 
       node.style.marginBottom = "";
       const top = node.getBoundingClientRect().top + window.scrollY;
       const h = Math.max(320, window.innerHeight - top - 16);
-      node.style.height = `${h}px`;
+      node.style[prop] = `${h}px`;
     };
     fit();
     if (isPhone()) {
@@ -144,7 +145,7 @@ export function useFitToScreen(ref: React.MutableRefObject<HTMLElement | null>, 
       window.removeEventListener("resize", fit);
       ro.disconnect();
     };
-  }, [ref, active]);
+  }, [ref, active, prop]);
 }
 
 /** Round "<" button that closes an in-place panel. */

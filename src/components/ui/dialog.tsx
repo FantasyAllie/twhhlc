@@ -84,8 +84,8 @@ DialogOverlay.displayName = DialogPrimitive.Overlay.displayName;
 
 const DialogContent = React.forwardRef<
   React.ElementRef<typeof DialogPrimitive.Content>,
-  React.ComponentPropsWithoutRef<typeof DialogPrimitive.Content>
->(({ className, children, ...props }, ref) => {
+  React.ComponentPropsWithoutRef<typeof DialogPrimitive.Content> & { shrinkToContent?: boolean }
+>(({ className, children, shrinkToContent, ...props }, ref) => {
   const innerRef = React.useRef<HTMLDivElement | null>(null);
   const closeRef = React.useRef<HTMLButtonElement | null>(null);
   const setRefs = React.useCallback(
@@ -98,7 +98,7 @@ const DialogContent = React.forwardRef<
   );
   const ctx = React.useMemo<DialogDragCtx>(() => ({ contentRef: innerRef, closeRef }), []);
   const inlineClose = React.useContext(DialogInlineContext);
-  useFitToScreen(innerRef, !!inlineClose);
+  useFitToScreen(innerRef, !!inlineClose, shrinkToContent);
   if (inlineClose) {
     return (
       <div
