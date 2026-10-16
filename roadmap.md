@@ -6,6 +6,8 @@
 
 ## Current work
 - [x] Remove the shortcut cards from the F&B and Maintenance home screens and verify their panels still open
+- [x] Give the Maintenance home header its own subtitle instead of the Housekeeping one
+
 
 - [x] Add an Edit linen list button to the F&B home screen header and verify it opens and closes the list
 
