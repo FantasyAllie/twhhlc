@@ -74,7 +74,7 @@ export function ManageRoomsDialogs({
             </Button>
             <Button variant="outline" size="sm" className={btn} onClick={() => setRoomFeaturesSheetOpen(true)}>
               <List className="h-4 w-4 shrink-0" />
-              <span className="truncate">Features</span>
+              <span className="truncate">Features &amp; Amenities</span>
             </Button>
             <Button variant="outline" size="sm" className={btn} onClick={() => setReceptionItemsSheetOpen(true)}>
               <ConciergeBell className="h-4 w-4 shrink-0" />

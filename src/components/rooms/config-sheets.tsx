@@ -224,9 +224,9 @@ export function RoomFeaturesSheet({
         <SheetHeader className="text-left">
           <SheetTitle className="flex items-center gap-2">
             <List className="h-4 w-4" />
-            Room features
+            Features &amp; Amenities
           </SheetTitle>
-          <SheetDescription>Manage the list of room features</SheetDescription>
+          <SheetDescription>Manage the list of features and amenities</SheetDescription>
         </SheetHeader>
         <div className="mt-4 space-y-1.5">
           <ManageList
