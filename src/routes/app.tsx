@@ -5909,7 +5909,7 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
                       <>
                         {createPortal(ring, topBarSlot)}
                         <Sheet open={progressSheetOpen} onOpenChange={setProgressSheetOpen}>
-                          <SheetContent side="bottom" className="rounded-t-2xl p-5 pb-[max(1.25rem,env(safe-area-inset-bottom))]">
+                          <SheetContent side="bottom" className="h-auto max-h-[70dvh] rounded-t-2xl p-5 pb-[max(1.25rem,env(safe-area-inset-bottom))]">
                             <SheetHeader className="text-left px-0">
                               <SheetTitle>Shift progress</SheetTitle>
                               <SheetDescription>{progress} of {total} rooms done{isComplete ? " — all complete" : ""}</SheetDescription>
