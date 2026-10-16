@@ -4118,11 +4118,12 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
       }}
     >
       <div className="flex h-11 items-center justify-between gap-2">
-        <h1 className="min-w-0 flex-1 truncate text-base font-semibold tracking-tight">{hotelName}</h1>
+        <h1 data-ios-title className="min-w-0 flex-1 truncate text-base font-semibold tracking-tight">{hotelName}</h1>
         {(isReception || isHousekeeper || (isAdmin && !isFnb && !isMaintenance)) && (
           <Button
             variant="ghost"
             size="sm"
+            data-ios-glass
             className={cn("shrink-0 gap-2 text-sidebar-foreground", quickReceptionOpen && "text-sidebar-primary")}
             onClick={() => { if (quickReceptionOpen) setQuickReceptionOpen(false); else { closeHomePanels("quick"); setQuickReceptionOpen(true); } }}
           >
@@ -5322,7 +5323,7 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
             setReceptionDoneOnlyFilter(false);
           };
        return (
-          <div className="absolute left-1/2 -translate-x-1/2 inline-flex items-center rounded-lg border border-input bg-background shadow-sm overflow-hidden">
+          <div data-ios-glass className="absolute left-1/2 -translate-x-1/2 inline-flex items-center rounded-lg border border-input bg-background shadow-sm overflow-hidden">
         <Popover open={filtersSheetOpen} onOpenChange={setFiltersSheetOpen}>
           <PopoverTrigger asChild>
             <Button
@@ -5510,7 +5511,7 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
           setHideCompletedRooms(false);
         };
         return (
-          <div className="absolute left-1/2 -translate-x-1/2 inline-flex items-center rounded-lg border border-input bg-background shadow-sm overflow-hidden">
+          <div data-ios-glass className="absolute left-1/2 -translate-x-1/2 inline-flex items-center rounded-lg border border-input bg-background shadow-sm overflow-hidden">
             {(() => {
               const triggerBtn = (
                 <Button
@@ -5608,6 +5609,7 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
     )}
     {!isReception && (
       <Button
+        data-ios-glass
         variant="outline"
         size="sm"
         className="h-8 gap-1.5 rounded-lg text-xs font-medium shadow-sm"
@@ -5631,6 +5633,7 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
       }
       return (
         <Button
+          data-ios-glass
           variant="outline"
           size="sm"
           className="h-8 gap-1.5 rounded-lg text-xs font-medium shadow-sm"
@@ -5872,6 +5875,7 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
                         type="button"
                         data-touch-exempt
                         onClick={() => { handleProgressTap(); setProgressSheetOpen(true); }}
+                        data-ios-glass
                         aria-label={`Rooms progress: ${progress} of ${total} done`}
                         className="relative flex h-9 w-9 items-center justify-center rounded-full active:scale-95 transition-transform"
                       >
