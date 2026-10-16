@@ -98,6 +98,11 @@ export function ReceptionStatusSheet({
          return true;
        });
        const currentBed = room?.reception_bed_id ?? null;
+       // Nothing to choose when a room's only bed option is the fixed Double, so
+       // the bed area is skipped and the screen goes straight to Checked Items.
+       const hideBedSection =
+         filteredBeds.length <= 1 &&
+         (onlyDouble || currentBed === filteredBeds[0]?.id);
       const Row = ({
          label,
          selected,
