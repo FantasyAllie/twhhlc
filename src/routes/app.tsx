@@ -5296,15 +5296,31 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
    />
  ) : isFnb ? (
    <section className="space-y-4">
-     <div className="flex items-baseline justify-between">
+     <div className="flex items-baseline justify-between gap-2">
        <h2 className="text-sm font-medium text-muted-foreground uppercase tracking-wide">
          F&amp;B Linen Counter
        </h2>
+       <button
+         type="button"
+         onClick={() => {
+           manageBackRef.current = false;
+           closeHomePanels();
+           armSheetTakeover();
+           setLinenListType("fnb");
+           setTemplateOpen(true);
+         }}
+         className="inline-flex h-8 shrink-0 items-center gap-1.5 rounded-full border bg-background px-3 text-xs font-medium leading-none text-muted-foreground transition-colors hover:bg-accent hover:text-foreground"
+       >
+         <Pencil className="h-3.5 w-3.5" />
+         Edit linen list
+       </button>
      </div>
+
       {templateFnbList.length === 0 ? (
        <p className="text-sm text-muted-foreground">
-          No F&amp;B linen items yet. Add some from the Linen List (F&amp;B tab).
+          No F&amp;B linen items yet. Use "Edit linen list" to add some.
        </p>
+
      ) : (
        <>
        <ul className="space-y-2">
