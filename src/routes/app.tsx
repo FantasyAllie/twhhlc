@@ -746,6 +746,8 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
   const [roomTypesSheetOpen, setRoomTypesSheetOpen] = useState(false);
   const [roomFeaturesSheetOpen, setRoomFeaturesSheetOpen] = useState(false);
   const [receptionItemsSheetOpen, setReceptionItemsSheetOpen] = useState(false);
+  // Set when a Room Management sub-panel opens, so its Back returns to Room Management.
+  const manageBackRef = useRef(false);
  
 
  const [exportOpen, setExportOpen] = useState(false);
@@ -5057,7 +5059,7 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
  {/* Room Types sheet (Admin) */}
   <RoomTypesSheet
     open={roomTypesSheetOpen}
-    onOpenChange={setRoomTypesSheetOpen}
+    onOpenChange={(o) => { setRoomTypesSheetOpen(o); if (!o && manageBackRef.current) { manageBackRef.current = false; armSheetTakeover(); setManageRoomsOpen(true); } }}
     roomTypes={roomTypes}
     onMove={moveRoomType}
     onRename={renameRoomType}
@@ -5068,7 +5070,7 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
   {/* Room Features sheet (Admin) */}
   <RoomFeaturesSheet
     open={roomFeaturesSheetOpen}
-    onOpenChange={setRoomFeaturesSheetOpen}
+    onOpenChange={(o) => { setRoomFeaturesSheetOpen(o); if (!o && manageBackRef.current) { manageBackRef.current = false; armSheetTakeover(); setManageRoomsOpen(true); } }}
     roomFeatures={roomFeatures}
     onMove={moveRoomFeature}
     onRename={renameRoomFeature}
@@ -5079,7 +5081,7 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
   {/* Reception items sheet (Admin) */}
   <ReceptionItemsSheet
     open={receptionItemsSheetOpen}
-    onOpenChange={setReceptionItemsSheetOpen}
+    onOpenChange={(o) => { setReceptionItemsSheetOpen(o); if (!o && manageBackRef.current) { manageBackRef.current = false; armSheetTakeover(); setManageRoomsOpen(true); } }}
     statuses={receptionStatuses}
     beds={receptionBeds}
     onMove={moveReceptionItem}
@@ -5159,9 +5161,9 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
     rooms={rooms}
     newRoomNumber={newRoomNumber}
     setNewRoomNumber={setNewRoomNumber}
-    setRoomTypesSheetOpen={setRoomTypesSheetOpen}
-    setRoomFeaturesSheetOpen={setRoomFeaturesSheetOpen}
-    setReceptionItemsSheetOpen={setReceptionItemsSheetOpen}
+    setRoomTypesSheetOpen={(v) => { manageBackRef.current = true; armSheetTakeover({ closeLabel: "Back" }); setRoomTypesSheetOpen(v); }}
+    setRoomFeaturesSheetOpen={(v) => { manageBackRef.current = true; armSheetTakeover({ closeLabel: "Back" }); setRoomFeaturesSheetOpen(v); }}
+    setReceptionItemsSheetOpen={(v) => { manageBackRef.current = true; armSheetTakeover({ closeLabel: "Back" }); setReceptionItemsSheetOpen(v); }}
     setEditRoomSheetNumber={setEditRoomSheetNumber}
     addRoom={addRoom}
     removeRoom={removeRoom}

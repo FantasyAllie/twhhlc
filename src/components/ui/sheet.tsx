@@ -30,17 +30,19 @@ const SheetInlineProvider = ({
 
 // Home-screen takeover: a menu tap "arms" the next opening Sheet, which then
 // renders in-flow inside the registered slot instead of as an overlay.
-type TakeoverOwner = { id: number; close: () => void };
+type TakeoverOwner = { id: number; close: () => void; label: string };
 const takeover = {
   armedUntil: 0,
+  nextLabel: "Close",
   slot: null as HTMLElement | null,
   owner: null as TakeoverOwner | null,
   listeners: new Set<() => void>(),
 };
 const emitTakeover = () => takeover.listeners.forEach((l) => l());
 let takeoverSeq = 0;
-export function armSheetTakeover() {
+export function armSheetTakeover(opts?: { closeLabel?: string }) {
   takeover.armedUntil = Date.now() + 600;
+  takeover.nextLabel = opts?.closeLabel ?? "Close";
 }
 export function setSheetTakeoverSlot(el: HTMLElement | null) {
   takeover.slot = el;
@@ -82,7 +84,8 @@ export function useTakeoverClaim(open: boolean | undefined, onOpenChange?: (o: b
     if (!claimed) return;
     takeover.armedUntil = 0;
     const prev = takeover.owner;
-    const me: TakeoverOwner = { id: idRef.current, close: () => closeRef.current() };
+    const me: TakeoverOwner = { id: idRef.current, close: () => closeRef.current(), label: takeover.nextLabel };
+    takeover.nextLabel = "Close";
     takeover.owner = me;
     emitTakeover();
     if (prev && prev.id !== me.id) prev.close();
@@ -138,15 +141,23 @@ export function useFitToScreen(ref: React.MutableRefObject<HTMLElement | null>, 
 
 /** Round "<" button that closes an in-place panel. */
 export function TakeoverCloseButton({ onClose }: { onClose: () => void }) {
+  const label = React.useSyncExternalStore(
+    (l) => {
+      takeover.listeners.add(l);
+      return () => takeover.listeners.delete(l);
+    },
+    () => takeover.owner?.label ?? "Close",
+    () => "Close",
+  );
   return (
     <button
       type="button"
-      aria-label="Close"
+      aria-label={label}
       data-touch-exempt
       onClick={onClose}
       className="absolute right-4 top-4 z-30 inline-flex h-8 min-h-0 min-w-0 shrink-0 items-center justify-center rounded-full border bg-background px-3 text-xs font-medium leading-none text-muted-foreground transition-colors hover:bg-accent hover:text-foreground"
     >
-      Close
+      {label}
     </button>
   );
 }
