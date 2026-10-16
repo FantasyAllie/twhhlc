@@ -3988,7 +3988,7 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
       linen.push({ key: "linen-list", icon: List, label: "Linen List", onClick: () => setTemplateOpen(true) });
     }
     if (menuIsAdmin && !isMaintenance) {
-      locations.push({ key: "manage-rooms", icon: Hash, label: "Rooms", onClick: () => setManageRoomsOpen(true) });
+      locations.push({ key: "manage-rooms", icon: Hash, label: "Room Management\n", onClick: () => setManageRoomsOpen(true) });
       locations.push({ key: "hotel-areas", icon: MapPin, label: "Hotel areas", onClick: () => setMaintenanceAreasOpen(true) });
       linen.push({
         key: "delivery",
