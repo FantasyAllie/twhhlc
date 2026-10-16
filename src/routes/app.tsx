@@ -129,7 +129,7 @@ import {
   SheetTrigger,
 } from "@/components/ui/sheet";
 import { useTheme } from "@/components/theme-provider";
-import { armSheetTakeover, setSheetTakeoverSlot, releaseSheetTakeover, useSheetTakeoverActive } from "@/components/ui/sheet";
+import { armSheetTakeover, isTakeoverReplacing, setSheetTakeoverSlot, releaseSheetTakeover, useSheetTakeoverActive } from "@/components/ui/sheet";
 import { Palette } from "lucide-react";
 import { ACCENTS, readAccent, applyAccent, type AccentId } from "@/lib/accent-colour";
 import { useCurrentHotel, DEFAULT_HOTEL_NAME } from "@/lib/hotels";
@@ -5059,7 +5059,7 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
  {/* Room Types sheet (Admin) */}
   <RoomTypesSheet
     open={roomTypesSheetOpen}
-    onOpenChange={(o) => { setRoomTypesSheetOpen(o); if (!o && manageBackRef.current) { manageBackRef.current = false; armSheetTakeover(); setManageRoomsOpen(true); } }}
+    onOpenChange={(o) => { setRoomTypesSheetOpen(o); if (!o && manageBackRef.current) { manageBackRef.current = false; if (isTakeoverReplacing()) return; armSheetTakeover(); setManageRoomsOpen(true); } }}
     roomTypes={roomTypes}
     onMove={moveRoomType}
     onRename={renameRoomType}
@@ -5070,7 +5070,7 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
   {/* Room Features sheet (Admin) */}
   <RoomFeaturesSheet
     open={roomFeaturesSheetOpen}
-    onOpenChange={(o) => { setRoomFeaturesSheetOpen(o); if (!o && manageBackRef.current) { manageBackRef.current = false; armSheetTakeover(); setManageRoomsOpen(true); } }}
+    onOpenChange={(o) => { setRoomFeaturesSheetOpen(o); if (!o && manageBackRef.current) { manageBackRef.current = false; if (isTakeoverReplacing()) return; armSheetTakeover(); setManageRoomsOpen(true); } }}
     roomFeatures={roomFeatures}
     onMove={moveRoomFeature}
     onRename={renameRoomFeature}
@@ -5081,7 +5081,7 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
   {/* Reception items sheet (Admin) */}
   <ReceptionItemsSheet
     open={receptionItemsSheetOpen}
-    onOpenChange={(o) => { setReceptionItemsSheetOpen(o); if (!o && manageBackRef.current) { manageBackRef.current = false; armSheetTakeover(); setManageRoomsOpen(true); } }}
+    onOpenChange={(o) => { setReceptionItemsSheetOpen(o); if (!o && manageBackRef.current) { manageBackRef.current = false; if (isTakeoverReplacing()) return; armSheetTakeover(); setManageRoomsOpen(true); } }}
     statuses={receptionStatuses}
     beds={receptionBeds}
     onMove={moveReceptionItem}

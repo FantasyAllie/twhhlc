@@ -40,6 +40,11 @@ const takeover = {
 };
 const emitTakeover = () => takeover.listeners.forEach((l) => l());
 let takeoverSeq = 0;
+let takeoverReplacing = false;
+/** True while a panel is being closed because another panel replaced it. */
+export function isTakeoverReplacing() {
+  return takeoverReplacing;
+}
 export function armSheetTakeover(opts?: { closeLabel?: string }) {
   takeover.armedUntil = Date.now() + 600;
   takeover.nextLabel = opts?.closeLabel ?? "Close";
@@ -88,7 +93,10 @@ export function useTakeoverClaim(open: boolean | undefined, onOpenChange?: (o: b
     takeover.nextLabel = "Close";
     takeover.owner = me;
     emitTakeover();
-    if (prev && prev.id !== me.id) prev.close();
+    if (prev && prev.id !== me.id) {
+      takeoverReplacing = true;
+      try { prev.close(); } finally { takeoverReplacing = false; }
+    }
     window.scrollTo({ top: 0, behavior: "smooth" });
     return () => {
       if (takeover.owner === me) {
