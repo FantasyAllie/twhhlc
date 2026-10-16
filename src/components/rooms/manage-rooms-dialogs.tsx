@@ -56,7 +56,7 @@ export function ManageRoomsDialogs({
   return (
     <>
   <Dialog open={manageRoomsOpen} onOpenChange={setManageRoomsOpen}>
-    <DialogContent className="max-w-md w-[calc(100vw-1.5rem)] sm:w-full p-4 sm:p-6">
+    <DialogContent shrinkToContent className="max-w-md w-[calc(100vw-1.5rem)] sm:w-full p-4 sm:p-6">
       {view !== "home" && (
         <button
           type="button"
