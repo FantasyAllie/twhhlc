@@ -3500,6 +3500,30 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
                       </div>
                     </>
                   )}
+                  {(() => {
+                    const checked = rooms.find((r) => r.room_number === n)?.checked_items ?? null;
+                    return (
+                      <>
+                        <div className="border-t border-border/60" />
+                        <div className="space-y-1.5">
+                          <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+                            Checked Items
+                          </p>
+                          {checked && checked.length > 0 ? (
+                            <ul className="flex flex-wrap gap-1.5">
+                              {checked.map((item) => (
+                                <li key={item} className="inline-flex items-center rounded-xl border border-primary bg-primary/10 px-2 py-1 text-xs font-medium text-primary">
+                                  {item}
+                                </li>
+                              ))}
+                            </ul>
+                          ) : (
+                            <p className="text-xs text-muted-foreground">No items checked yet</p>
+                          )}
+                        </div>
+                      </>
+                    );
+                  })()}
                 </div>
               );
             })()}
