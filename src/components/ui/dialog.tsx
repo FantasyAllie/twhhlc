@@ -84,8 +84,8 @@ DialogOverlay.displayName = DialogPrimitive.Overlay.displayName;
 
 const DialogContent = React.forwardRef<
   React.ElementRef<typeof DialogPrimitive.Content>,
-  React.ComponentPropsWithoutRef<typeof DialogPrimitive.Content> & { shrinkToContent?: boolean }
->(({ className, children, shrinkToContent, ...props }, ref) => {
+  React.ComponentPropsWithoutRef<typeof DialogPrimitive.Content> & { shrinkToContent?: boolean; onBack?: () => void }
+>(({ className, children, shrinkToContent, onBack, ...props }, ref) => {
   const innerRef = React.useRef<HTMLDivElement | null>(null);
   const closeRef = React.useRef<HTMLButtonElement | null>(null);
   const setRefs = React.useCallback(
@@ -108,7 +108,7 @@ const DialogContent = React.forwardRef<
           "relative flex max-h-none w-full max-w-none flex-col gap-0 overflow-hidden rounded-2xl border bg-background p-4 shadow-elevation-1 sm:p-6",
         )}
       >
-        <TakeoverCloseButton onClose={inlineClose} />
+        {onBack ? <TakeoverCloseButton onClose={onBack} label="Back" /> : <TakeoverCloseButton onClose={inlineClose} />}
         <div className="flex min-h-0 flex-1 flex-col overflow-y-auto overscroll-contain">{children}</div>
       </div>
     );

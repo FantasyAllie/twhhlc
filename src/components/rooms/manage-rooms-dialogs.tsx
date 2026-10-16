@@ -56,17 +56,7 @@ export function ManageRoomsDialogs({
   return (
     <>
   <Dialog open={manageRoomsOpen} onOpenChange={setManageRoomsOpen}>
-    <DialogContent shrinkToContent className="max-w-md w-[calc(100vw-1.5rem)] sm:w-full p-4 sm:p-6">
-      {view !== "home" && (
-        <button
-          type="button"
-          data-touch-exempt
-          onClick={() => setView("home")}
-          className="absolute right-4 top-4 z-40 inline-flex h-8 min-h-0 min-w-0 shrink-0 items-center justify-center rounded-full border bg-background px-3 text-xs font-medium leading-none text-muted-foreground transition-colors hover:bg-accent hover:text-foreground"
-        >
-          Back
-        </button>
-      )}
+    <DialogContent shrinkToContent onBack={view !== "home" ? () => setView("home") : undefined} className="max-w-md w-[calc(100vw-1.5rem)] sm:w-full p-4 sm:p-6">
       {view === "home" && (
         <DialogHeader>
           <DialogTitle>Room Management</DialogTitle>
