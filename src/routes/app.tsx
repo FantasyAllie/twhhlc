@@ -4117,7 +4117,7 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
       }}
     >
       <div className="flex h-11 items-center justify-between gap-2">
-        <h1 className="min-w-0 truncate text-base font-semibold tracking-tight">{hotelName}</h1>
+        <h1 className="min-w-0 flex-1 truncate text-base font-semibold tracking-tight">{hotelName}</h1>
         {(isReception || isHousekeeper || (isAdmin && !isFnb && !isMaintenance)) && (
           <Button
             variant="ghost"
@@ -4129,8 +4129,8 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
             Quick Setup
           </Button>
         )}
+        <div ref={setTopBarSlot} className="empty:hidden shrink-0 order-last" />
       </div>
-      <div ref={setTopBarSlot} className="empty:hidden pb-2" />
     </div>
  ) : (
  <header className="flex items-start justify-between gap-3 flex-wrap rounded-2xl border border-primary/20 bg-sidebar px-4 pt-4 pb-3 sm:px-5 sm:pt-5 sm:pb-4 shadow-elevation-2">
@@ -5856,7 +5856,46 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
                     </div>
                   </div>
                 );
-                  return isMobile && topBarSlot ? createPortal(progressBar, topBarSlot) : progressBar;
+                  if (isMobile && topBarSlot) {
+                    const r = 13;
+                    const c = 2 * Math.PI * r;
+                    const ringColour = isComplete
+                      ? "var(--color-room-complete-accent)"
+                      : pct < 30
+                        ? "var(--color-room-todo-accent)"
+                        : pct < 70
+                          ? "var(--color-room-progress-accent)"
+                          : "var(--brass)";
+                    const ring = (
+                      <button
+                        type="button"
+                        data-touch-exempt
+                        onClick={handleProgressTap}
+                        aria-label={`Rooms progress: ${progress} of ${total} done`}
+                        className="relative flex h-9 w-9 items-center justify-center rounded-full active:scale-95 transition-transform"
+                      >
+                        <svg viewBox="0 0 32 32" className="absolute inset-0 h-full w-full -rotate-90">
+                          <circle cx="16" cy="16" r={r} fill="none" strokeWidth="3" className="stroke-sidebar-accent" />
+                          <circle
+                            cx="16" cy="16" r={r} fill="none" strokeWidth="3" strokeLinecap="round"
+                            stroke={ringColour}
+                            strokeDasharray={c}
+                            strokeDashoffset={c - (c * pct) / 100}
+                            style={{ transition: "stroke-dashoffset 500ms ease-out, stroke 500ms" }}
+                          />
+                        </svg>
+                        {isComplete ? (
+                          <Check className="relative h-4 w-4 text-room-complete-accent" />
+                        ) : (
+                          <span className="relative text-[10px] font-bold tabular-nums text-sidebar-foreground">
+                            {total - progress}
+                          </span>
+                        )}
+                      </button>
+                    );
+                    return createPortal(ring, topBarSlot);
+                  }
+                  return progressBar;
               })()
             )}
  </section>
@@ -6073,6 +6112,7 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
   {/* Mobile bottom tab bar: same five tabs for every department. */}
   <nav
     aria-label="Main"
+    data-mobile-tabbar
     className="lg:hidden fixed inset-x-0 bottom-0 z-50 border-t border-sidebar-border bg-sidebar text-sidebar-foreground"
     style={{
       paddingBottom: "env(safe-area-inset-bottom, 0px)",
@@ -6131,7 +6171,7 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
                 t.active ? "text-sidebar-primary" : "text-sidebar-foreground/70",
               )}
             >
-              <span className="relative">
+              <span className="relative" data-tab-icon>
                 <Icon className="h-5 w-5" />
                 {t.dot && (
                   <span className="absolute -top-0.5 -right-1 h-2 w-2 rounded-full bg-amber-500 ring-2 ring-sidebar" />

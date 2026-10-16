@@ -562,3 +562,36 @@ html {
 :root[data-accent="sky"] { --accent-h: 225; }
 :root[data-accent="mint"] { --accent-h: 170; }
 :root[data-accent="lime"] { --accent-h: 120; }
+
+/* ---- Platform design languages (phones only) ---- */
+@media (max-width: 1023px) {
+  html[data-platform="ios"] body {
+    font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", var(--font-sans);
+  }
+  html[data-platform="ios"] [data-mobile-tabbar] {
+    background-color: color-mix(in oklab, var(--color-sidebar) 72%, transparent);
+    backdrop-filter: saturate(180%) blur(20px);
+    -webkit-backdrop-filter: saturate(180%) blur(20px);
+    border-top-width: 0.5px;
+  }
+  html[data-platform="ios"] [data-mobile-topbar] {
+    background-color: color-mix(in oklab, var(--color-sidebar) 78%, transparent);
+    backdrop-filter: saturate(180%) blur(20px);
+    -webkit-backdrop-filter: saturate(180%) blur(20px);
+  }
+  html[data-platform="ios"] [data-tab-icon] svg { stroke-width: 1.6; }
+
+  html[data-platform="android"] body {
+    font-family: Roboto, "Google Sans", var(--font-sans);
+  }
+  html[data-platform="android"] [data-mobile-tabbar] { border-top-width: 0; }
+  html[data-platform="android"] [data-tab-icon] {
+    display: flex; align-items: center; justify-content: center;
+    width: 3.5rem; height: 1.75rem; border-radius: 9999px;
+    transition: background-color 200ms;
+  }
+  html[data-platform="android"] [aria-current="page"] [data-tab-icon] {
+    background-color: color-mix(in oklab, var(--color-sidebar-primary) 22%, transparent);
+  }
+  html[data-platform="android"] [data-tab-icon] svg { stroke-width: 2.25; }
+}

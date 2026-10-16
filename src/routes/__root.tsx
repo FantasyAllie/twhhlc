@@ -151,6 +151,14 @@ function RootComponent() {
     bootstrapAuth();
   }, []);
 
+  // Platform design language: iPhone/iPad vs Android get their own look on phones.
+  useEffect(() => {
+    const ua = navigator.userAgent;
+    const ios = /iPhone|iPad|iPod/.test(ua) || (navigator.platform === "MacIntel" && navigator.maxTouchPoints > 1);
+    const android = /Android/i.test(ua);
+    document.documentElement.dataset.platform = ios ? "ios" : android ? "android" : "other";
+  }, []);
+
   // Material ripple feedback for every tappable control, app-wide.
   useGlobalRipple();
 
