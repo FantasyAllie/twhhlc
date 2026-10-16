@@ -5812,8 +5812,8 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
                  const progress = eligible.filter((r) => r.done || r.done_reception).length;
                 const pct = total > 0 ? Math.min(100, (progress / total) * 100) : 0;
                 const isComplete = total > 0 && progress >= total;
-                  return (
-                        <div className="mt-3 space-y-1.5 max-lg:space-y-1 rounded-2xl border border-sidebar-border bg-sidebar px-4 py-2 shadow-elevation-2 lg:px-5 max-lg:fixed max-lg:inset-x-0 max-lg:bottom-[calc(env(safe-area-inset-bottom,0px)+3.5rem)] max-lg:z-40 max-lg:mt-0 max-lg:rounded-none max-lg:border-x-0 max-lg:border-b-0 max-lg:border-t max-lg:pl-[calc(env(safe-area-inset-left,0px)+1.5rem)] max-lg:pr-[calc(env(safe-area-inset-right,0px)+1.5rem)] max-lg:pt-1.5 max-lg:pb-1.5">
+                  const progressBar = (
+                        <div className={`${isMobile ? "pr-2" : "mt-3"} space-y-1.5 max-lg:space-y-1 ${isMobile ? "" : "rounded-2xl border border-sidebar-border bg-sidebar px-4 py-2 shadow-elevation-2 lg:px-5"}`}>
                      <div className="flex items-center justify-between text-[10px] font-bold uppercase tracking-[0.18em] text-sidebar-foreground/60">
                        <span className="flex items-center gap-1.5">
                          {isComplete ? (
@@ -5830,7 +5830,7 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
                        data-touch-exempt
                        tabIndex={-1}
                        onClick={handleProgressTap}
-                       className="relative h-3 max-lg:h-5 w-full overflow-hidden rounded-full bg-sidebar-accent shadow-elevation-1 cursor-pointer select-none active:scale-[0.99] transition-transform"
+                       className="relative h-3 max-lg:h-4 w-full overflow-hidden rounded-full bg-sidebar-accent shadow-elevation-1 cursor-pointer select-none active:scale-[0.99] transition-transform"
                      >
                       <div
                         className={cn(
@@ -5856,14 +5856,12 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
                     </div>
                   </div>
                 );
+                  return isMobile && topBarSlot ? createPortal(progressBar, topBarSlot) : progressBar;
               })()
             )}
  </section>
  )}
  </div>
-  {!isReception && (
-    <div className="lg:hidden h-14" aria-hidden />
-  )}
  </div>
 
  <HomeInline active={openRoom !== null} target={roomSlotEl} noFit>
