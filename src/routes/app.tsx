@@ -6034,6 +6034,7 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
       </DialogFooter>
     </DialogContent>
   </Dialog>
+  <div className="lg:hidden h-14" aria-hidden />
   {/* Mobile bottom tab bar: same five tabs for every department. */}
   <nav
     aria-label="Main"
