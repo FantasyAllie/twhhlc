@@ -571,6 +571,7 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
   const progressTapCountRef = useRef(0);
   const progressTapTimerRef = useRef<number | null>(null);
   const [broomBurstActive, setBroomBurstActive] = useState(false);
+  const [progressSheetOpen, setProgressSheetOpen] = useState(false);
   const handleProgressTap = () => {
     if (progressTapTimerRef.current) {
       window.clearTimeout(progressTapTimerRef.current);
@@ -5870,7 +5871,7 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
                       <button
                         type="button"
                         data-touch-exempt
-                        onClick={handleProgressTap}
+                        onClick={() => { handleProgressTap(); setProgressSheetOpen(true); }}
                         aria-label={`Rooms progress: ${progress} of ${total} done`}
                         className="relative flex h-9 w-9 items-center justify-center rounded-full active:scale-95 transition-transform"
                       >
@@ -5893,7 +5894,44 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
                         )}
                       </button>
                     );
-                    return createPortal(ring, topBarSlot);
+                    const cleanId = receptionStatuses.find((s) => s.label.toLowerCase() === "clean")?.id ?? null;
+                    const arrivalId = receptionStatuses.find((s) => s.label.toLowerCase() === "arrival")?.id ?? null;
+                    const notDone = (r: (typeof rooms)[number]) => !(r.done || r.done_reception);
+                    const sidOf = (r: (typeof rooms)[number]) => r.reception_status_id ?? r.default_status;
+                    const cleanArrivalLeft = eligible.filter((r) => notDone(r) && (sidOf(r) === cleanId || sidOf(r) === arrivalId)).length;
+                    const dirtyLeft = rooms.filter((r) => notDone(r) && ((dirtyProgressId && sidOf(r) === dirtyProgressId) || r.guest_vacated)).length;
+                    const rows = [
+                      { label: "Done", value: progress, colour: "var(--color-room-complete-accent)" },
+                      { label: "Clean / Arrival", value: cleanArrivalLeft, colour: "var(--color-room-progress-accent)" },
+                      { label: "Dirty / Departures", value: dirtyLeft, colour: "var(--color-room-dirty-accent, var(--color-room-todo-accent))" },
+                    ];
+                    return (
+                      <>
+                        {createPortal(ring, topBarSlot)}
+                        <Sheet open={progressSheetOpen} onOpenChange={setProgressSheetOpen}>
+                          <SheetContent side="bottom" className="rounded-t-2xl p-5 pb-[max(1.25rem,env(safe-area-inset-bottom))]">
+                            <SheetHeader className="text-left px-0">
+                              <SheetTitle>Shift progress</SheetTitle>
+                              <SheetDescription>{progress} of {total} rooms done{isComplete ? " — all complete" : ""}</SheetDescription>
+                            </SheetHeader>
+                            <div className="mt-3 h-2 w-full overflow-hidden rounded-full bg-muted">
+                              <div className="h-full rounded-full transition-[width] duration-500" style={{ width: `${pct}%`, backgroundColor: ringColour }} />
+                            </div>
+                            <ul className="mt-4 divide-y divide-border rounded-xl border border-border">
+                              {rows.map((row) => (
+                                <li key={row.label} className="flex items-center justify-between px-4 py-3 text-sm">
+                                  <span className="flex items-center gap-2.5">
+                                    <span className="h-2.5 w-2.5 rounded-full" style={{ backgroundColor: row.colour }} />
+                                    {row.label}
+                                  </span>
+                                  <span className="font-semibold tabular-nums">{row.value} {row.value === 1 ? "room" : "rooms"}</span>
+                                </li>
+                              ))}
+                            </ul>
+                          </SheetContent>
+                        </Sheet>
+                      </>
+                    );
                   }
                   return progressBar;
               })()
