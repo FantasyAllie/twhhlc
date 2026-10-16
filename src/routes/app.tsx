@@ -6146,7 +6146,7 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
       </DialogFooter>
     </DialogContent>
   </Dialog>
-  <div className="lg:hidden" style={{ height: "calc(3.5rem + env(safe-area-inset-bottom, 0px))" }} aria-hidden />
+  <div data-tabbar-spacer className="lg:hidden" style={{ height: "calc(3.5rem + env(safe-area-inset-bottom, 0px))" }} aria-hidden />
   {/* Mobile bottom tab bar: same five tabs for every department. */}
   <nav
     aria-label="Main"

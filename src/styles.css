@@ -569,17 +569,31 @@ html {
     font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", var(--font-sans);
   }
   html[data-platform="ios"] [data-mobile-tabbar] {
-    background-color: color-mix(in oklab, var(--color-sidebar) 72%, transparent);
-    backdrop-filter: saturate(180%) blur(20px);
-    -webkit-backdrop-filter: saturate(180%) blur(20px);
-    border-top-width: 0.5px;
+    left: 12px; right: 12px;
+    bottom: max(10px, env(safe-area-inset-bottom));
+    padding: 4px !important;
+    border-radius: 9999px;
+    border: 1px solid color-mix(in oklab, var(--color-sidebar-foreground) 14%, transparent);
+    background-color: color-mix(in oklab, var(--color-sidebar) 58%, transparent);
+    backdrop-filter: blur(24px) saturate(180%);
+    box-shadow: inset 0 1px 0 color-mix(in oklab, white 22%, transparent), 0 10px 30px -8px rgb(0 0 0 / 0.45);
   }
+  html[data-platform="ios"] [data-mobile-tabbar] > div { height: 3.25rem; }
+  html[data-platform="ios"] [data-mobile-tabbar] button { border-radius: 9999px; transition: background-color 200ms, color 200ms; }
+  html[data-platform="ios"] [data-mobile-tabbar] button[aria-current="page"] {
+    background-color: color-mix(in oklab, var(--color-sidebar-foreground) 12%, transparent);
+    color: var(--color-sidebar-primary);
+    box-shadow: inset 0 1px 0 color-mix(in oklab, white 12%, transparent);
+  }
+  html[data-platform="ios"] [data-mobile-tabbar] button[aria-current="page"] [data-tab-icon] svg { fill: color-mix(in oklab, currentColor 25%, transparent); }
+  html[data-platform="ios"] [data-mobile-tabbar] button { font-size: 9.5px; letter-spacing: -0.01em; }
+  html[data-platform="ios"] [data-tabbar-spacer] { height: calc(4.5rem + env(safe-area-inset-bottom, 0px)) !important; }
+  html[data-platform="ios"] [data-mobile-topbar] { border-bottom: 0.5px solid color-mix(in oklab, var(--color-sidebar-foreground) 10%, transparent); }
   html[data-platform="ios"] [data-mobile-topbar] {
     background-color: color-mix(in oklab, var(--color-sidebar) 78%, transparent);
     backdrop-filter: saturate(180%) blur(20px);
-    -webkit-backdrop-filter: saturate(180%) blur(20px);
   }
-  html[data-platform="ios"] [data-tab-icon] svg { stroke-width: 1.6; }
+  html[data-platform="ios"] [data-tab-icon] svg { stroke-width: 2.2; }
 
   html[data-platform="android"] body {
     font-family: Roboto, "Google Sans", var(--font-sans);
