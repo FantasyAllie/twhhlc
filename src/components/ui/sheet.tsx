@@ -149,8 +149,8 @@ export function useFitToScreen(ref: React.MutableRefObject<HTMLElement | null>, 
 }
 
 /** Round "<" button that closes an in-place panel. */
-export function TakeoverCloseButton({ onClose }: { onClose: () => void }) {
-  const label = React.useSyncExternalStore(
+export function TakeoverCloseButton({ onClose, label: forced }: { onClose: () => void; label?: string }) {
+  const ownerLabel = React.useSyncExternalStore(
     (l) => {
       takeover.listeners.add(l);
       return () => takeover.listeners.delete(l);
@@ -158,6 +158,7 @@ export function TakeoverCloseButton({ onClose }: { onClose: () => void }) {
     () => takeover.owner?.label ?? "Close",
     () => "Close",
   );
+  const label = forced ?? ownerLabel;
   return (
     <button
       type="button"
