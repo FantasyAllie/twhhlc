@@ -313,6 +313,7 @@ export function ReceptionStatusSheet({
                    })()}
                 </div>
              </div>
+             {!hideBedSection && (
              <div className="space-y-2">
                <p className="text-center text-xs font-semibold uppercase tracking-wide text-muted-foreground">Bed</p>
                {filteredBeds.length === 0 && (
@@ -337,6 +338,7 @@ export function ReceptionStatusSheet({
                  })}
                </div>
               </div>
+             )}
                <RoomCheckedItemSelectors key={n} roomNumber={n} selectedItems={room?.checked_items ?? null} />
                <div className="border-y py-4">
                  <Row
