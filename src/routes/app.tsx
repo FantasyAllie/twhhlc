@@ -5179,7 +5179,7 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
    <section className="space-y-4">
      <div className="flex items-baseline justify-between gap-2">
        <h2 className="text-sm font-medium text-muted-foreground uppercase tracking-wide">
-         F&amp;B Linen Counter
+         LINEN COUNTER
        </h2>
        <button
          type="button"
