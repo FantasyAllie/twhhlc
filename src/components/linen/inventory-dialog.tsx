@@ -70,7 +70,7 @@ export function CountRow({
   };
   return (
     <li className="rounded-xl border p-2" style={rowStyle(item, theme)}>
-      <div className="flex items-center gap-1.5">
+      <div className="flex flex-wrap items-center gap-1.5">
         <span className="flex-1 min-w-0 break-words font-medium" style={textStyle(item, theme)}>
           {item.name}
           {preferred && <span className="ml-2 text-xs font-semibold opacity-70">(Preferred)</span>}
@@ -98,42 +98,44 @@ export function CountRow({
         >
           Add
         </Button>
-        <Button
-          variant="outline"
-          size="icon"
-          className="h-10 w-10 sm:h-9 sm:w-9 shrink-0"
-          onClick={() => setCount(Math.max(0, count - 1))}
-          disabled={count === 0}
-          aria-label={`Remove one ${item.name}`}
-        >
-          <Minus className="h-4 w-4" />
-        </Button>
-        <Input
-          type="number"
-          inputMode="numeric"
-          min={0}
-          value={total}
-          onFocus={(e) => {
-            setEditing(true);
-            e.currentTarget.select();
-          }}
-          onChange={(e) => setTotal(e.target.value)}
-          onBlur={commitTotal}
-          onKeyDown={(e) => {
-            if (e.key === "Enter") (e.currentTarget as HTMLInputElement).blur();
-          }}
-          className="h-10 sm:h-9 w-16 shrink-0 text-center tabular-nums font-semibold bg-background"
-          aria-label={`Total ${item.name}`}
-        />
-        <Button
-          variant="outline"
-          size="icon"
-          className="h-10 w-10 sm:h-9 sm:w-9 shrink-0"
-          onClick={() => setCount(count + 1)}
-          aria-label={`Add one ${item.name}`}
-        >
-          <Plus className="h-4 w-4" />
-        </Button>
+        <div className="flex w-full items-center gap-1.5 sm:w-auto">
+          <Button
+            variant="outline"
+            size="icon"
+            className="h-10 w-10 sm:h-9 sm:w-9 shrink-0"
+            onClick={() => setCount(Math.max(0, count - 1))}
+            disabled={count === 0}
+            aria-label={`Remove one ${item.name}`}
+          >
+            <Minus className="h-4 w-4" />
+          </Button>
+          <Input
+            type="number"
+            inputMode="numeric"
+            min={0}
+            value={total}
+            onFocus={(e) => {
+              setEditing(true);
+              e.currentTarget.select();
+            }}
+            onChange={(e) => setTotal(e.target.value)}
+            onBlur={commitTotal}
+            onKeyDown={(e) => {
+              if (e.key === "Enter") (e.currentTarget as HTMLInputElement).blur();
+            }}
+            className="h-10 sm:h-9 flex-1 sm:flex-none sm:w-16 shrink-0 text-center tabular-nums font-semibold bg-background"
+            aria-label={`Total ${item.name}`}
+          />
+          <Button
+            variant="outline"
+            size="icon"
+            className="h-10 w-10 sm:h-9 sm:w-9 shrink-0"
+            onClick={() => setCount(count + 1)}
+            aria-label={`Add one ${item.name}`}
+          >
+            <Plus className="h-4 w-4" />
+          </Button>
+        </div>
       </div>
     </li>
   );
