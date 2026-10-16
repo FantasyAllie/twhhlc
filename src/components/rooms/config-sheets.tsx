@@ -224,21 +224,21 @@ export function RoomFeaturesSheet({
         <SheetHeader className="text-left">
           <SheetTitle className="flex items-center gap-2">
             <List className="h-4 w-4" />
-            Room features
+            Features &amp; Amenities
           </SheetTitle>
-          <SheetDescription>Manage the list of room features</SheetDescription>
+          <SheetDescription>Manage the list of features and amenities</SheetDescription>
         </SheetHeader>
         <div className="mt-4 space-y-1.5">
           <ManageList
             items={roomFeatures}
-            emptyText="No features yet."
+            emptyText="No features or amenities yet."
             onMove={onMove}
             onRename={onRename}
             onDelete={onDelete}
           />
           <Button type="button" variant="outline" className="w-full mt-2" onClick={onAdd}>
             <Plus className="h-4 w-4 mr-2" />
-            Add feature
+            Add feature or amenity
           </Button>
         </div>
       </SheetContent>

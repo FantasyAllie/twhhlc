@@ -61,7 +61,7 @@ export function ManageRoomsDialogs({
         <DialogHeader>
           <DialogTitle>Room Management</DialogTitle>
           <DialogDescription>
-            Choose what to manage: rooms, room types, features, statuses and beds, or the room checklist.
+            Choose what to manage: rooms, room types, features and amenities, statuses and beds, or the room checklist.
           </DialogDescription>
           <div className="mt-4 grid w-full grid-cols-2 gap-3">
             <Button variant="outline" size="sm" className={btn} onClick={() => setView("rooms")}>
@@ -74,7 +74,7 @@ export function ManageRoomsDialogs({
             </Button>
             <Button variant="outline" size="sm" className={btn} onClick={() => setRoomFeaturesSheetOpen(true)}>
               <List className="h-4 w-4 shrink-0" />
-              <span className="truncate">Features</span>
+              <span className="truncate">Features &amp; Amenities</span>
             </Button>
             <Button variant="outline" size="sm" className={btn} onClick={() => setReceptionItemsSheetOpen(true)}>
               <ConciergeBell className="h-4 w-4 shrink-0" />
