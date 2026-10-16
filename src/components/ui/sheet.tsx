@@ -115,10 +115,12 @@ export function useFitToScreen(ref: React.MutableRefObject<HTMLElement | null>, 
     const node = ref.current;
     if (!active || !node) return;
     const isPhone = () => window.innerWidth < 768;
+    // Sticky phone top bar and floating tab bar: the panel sits between them.
+    const barH = (sel: string) => document.querySelector<HTMLElement>(sel)?.getBoundingClientRect().height ?? 0;
     const fit = () => {
       if (isPhone()) {
         // Phones: panel fills the whole screen; the header scrolls off above it.
-        node.style[prop] = `${window.innerHeight - 16}px`;
+        node.style[prop] = `${window.innerHeight - barH("[data-mobile-topbar]") - barH("[data-tabbar-spacer]") - 16}px`;
         // Pull up the page's trailing space so scrolling can't reveal a gap.
         node.style.marginBottom = "0px";
         const r = node.getBoundingClientRect();
@@ -134,7 +136,7 @@ export function useFitToScreen(ref: React.MutableRefObject<HTMLElement | null>, 
     fit();
     if (isPhone()) {
       requestAnimationFrame(() => {
-        const top = node.getBoundingClientRect().top + window.scrollY - 8;
+        const top = node.getBoundingClientRect().top + window.scrollY - barH("[data-mobile-topbar]") - 8;
         window.scrollTo({ top: Math.max(0, top), behavior: "smooth" });
       });
     }
