@@ -3987,7 +3987,12 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
     const linen: MenuAction[] = [];
     const locations: MenuAction[] = [];
     if ((menuHasHk || menuHasFnb) && !isMaintenance) {
-      linen.push({ key: "linen-list", icon: List, label: "Linen List", onClick: () => setTemplateOpen(true) });
+      if (menuHasFnb) {
+        linen.push({ key: "linen-list", icon: List, label: "F&B Linen List", onClick: () => { setLinenListType("fnb"); setTemplateOpen(true); } });
+      }
+      if (menuHasHk && !menuIsAdmin) {
+        linen.push({ key: "linen-list-hk", icon: List, label: "Linen List", onClick: () => { setLinenListType("housekeeping"); setTemplateOpen(true); } });
+      }
     }
     if (menuIsAdmin && !isMaintenance) {
       locations.push({ key: "manage-rooms", icon: Hash, label: "Room Management", onClick: () => setManageRoomsOpen(true) });
@@ -4039,7 +4044,7 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
     }];
     const opsOrder = ["messages", "maintenance-log", "lost-property", "stayover-photos"];
     utilities.sort((a, b) => opsOrder.indexOf(a.key) - opsOrder.indexOf(b.key));
-    const linenOrder = ["delivery", "linen-list", "linen-days"];
+    const linenOrder = ["delivery", "linen-list", "linen-list-hk", "linen-days"];
     linen.sort((a, b) => linenOrder.indexOf(a.key) - linenOrder.indexOf(b.key));
     return [
       { id: "utilities", title: "Daily Operations", items: utilities },
@@ -4558,7 +4563,7 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
   {/* Linen list dialog */}
   <LinenListDialog
     templateOpen={templateOpen}
-    setTemplateOpen={setTemplateOpen}
+    setTemplateOpen={(o) => { setTemplateOpen(o); if (!o && manageBackRef.current) { manageBackRef.current = false; if (isTakeoverReplacing()) return; armSheetTakeover(); setManageRoomsOpen(true); } }}
     realIsAdmin={realIsAdmin}
     realIsManager={realIsManager}
     hasHousekeeperRole={hasHousekeeperRole}
@@ -5165,6 +5170,7 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
     setRoomTypesSheetOpen={(v) => { manageBackRef.current = true; armSheetTakeover({ closeLabel: "Back" }); setRoomTypesSheetOpen(v); }}
     setRoomFeaturesSheetOpen={(v) => { manageBackRef.current = true; armSheetTakeover({ closeLabel: "Back" }); setRoomFeaturesSheetOpen(v); }}
     setReceptionItemsSheetOpen={(v) => { manageBackRef.current = true; armSheetTakeover({ closeLabel: "Back" }); setReceptionItemsSheetOpen(v); }}
+    openLinenList={() => { manageBackRef.current = true; armSheetTakeover({ closeLabel: "Back" }); setLinenListType("housekeeping"); setTemplateOpen(true); }}
     setEditRoomSheetNumber={setEditRoomSheetNumber}
     addRoom={addRoom}
     removeRoom={removeRoom}
