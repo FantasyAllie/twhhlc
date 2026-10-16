@@ -5,6 +5,7 @@
 - [x] Sad full-screen outcome + sad trombone sound when completion happens with Dirty rooms present
 
 ## Current work
+- [x] Skip the bed area on the room status screen when a room has only one bed option (Double)
 - [x] Move optional item selectors below Bed and above Mark as Done, remove the pop-up, and verify saving and completion
 - [x] Drop Reception's inner inset frame so the room panel has a single enclosure
 - [x] Rename the room checklist section to "Checked Items" with the checked-room sentence
