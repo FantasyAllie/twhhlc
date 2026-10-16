@@ -11,6 +11,7 @@
 - [x] Give the Maintenance home header its own subtitle instead of the Housekeeping one
 - [x] Put the counter controls below the centred item name on every linen count row
 - [x] Put linen item names to the left of the counting controls on wider screens, keeping phones stacked
+- [x] Remove the F&B Linen List entry from the settings menu
 
 
 
