@@ -69,13 +69,15 @@ export function CountRow({
     if (next !== count) setCount(next);
   };
   return (
-    <li className="rounded-xl border p-2" style={rowStyle(item, theme)}>
-      <div className="flex flex-col items-center gap-2">
-        <span className="w-full text-center break-words font-medium" style={textStyle(item, theme)}>
+    <li className="@container rounded-xl border p-2" style={rowStyle(item, theme)}>
+      {/* Phones keep the name centred above the controls; wider rows put the
+          name on the left and the counting controls on the right. */}
+      <div className="flex flex-col items-center gap-2 @lg:grid @lg:grid-cols-[minmax(0,1fr)_auto] @lg:items-center @lg:gap-4">
+        <span className="w-full text-center break-words font-medium @lg:text-left" style={textStyle(item, theme)}>
           {item.name}
           {preferred && <span className="ml-2 text-xs font-semibold opacity-70">(Preferred)</span>}
         </span>
-        <div className="flex w-full flex-wrap items-center justify-center gap-1.5">
+        <div className="flex w-full flex-wrap items-center justify-center gap-1.5 @lg:w-auto @lg:flex-nowrap @lg:justify-end">
 
         <Input
           type="number"
@@ -205,7 +207,7 @@ export function InventoryDialog({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-md w-[calc(100vw-1.5rem)] sm:w-full p-4 sm:p-6 h-[90dvh] sm:h-auto sm:max-h-[85dvh] flex flex-col gap-4">
+      <DialogContent className="max-w-md w-[calc(100vw-1.5rem)] sm:w-full lg:max-w-2xl p-4 sm:p-6 h-[90dvh] sm:h-auto sm:max-h-[85dvh] flex flex-col gap-4">
         <DialogHeader className="shrink-0">
           <DialogTitle>Inventory</DialogTitle>
           <DialogDescription>
