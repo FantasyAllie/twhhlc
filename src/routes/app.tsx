@@ -4105,28 +4105,33 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
   }}
 >
  {isMobile ? (
-  (isReception || isHousekeeper || (isAdmin && !isFnb && !isMaintenance)) ? (
     <div
-      className="-mt-6 flex h-11 items-center justify-end border-b border-sidebar-border bg-sidebar text-sidebar-foreground"
+      data-mobile-topbar
+      className="-mt-6 sticky top-0 z-40 border-b border-sidebar-border bg-sidebar text-sidebar-foreground shadow-elevation-1"
       style={{
         marginLeft: "calc(-1 * max(1rem, env(safe-area-inset-left)))",
         marginRight: "calc(-1 * max(1rem, env(safe-area-inset-right)))",
-        paddingRight: "max(0.75rem, env(safe-area-inset-right))",
+        paddingLeft: "max(1rem, env(safe-area-inset-left))",
+        paddingRight: "max(0.5rem, env(safe-area-inset-right))",
         paddingTop: "env(safe-area-inset-top, 0px)",
-        boxSizing: "content-box",
       }}
     >
-      <Button
-        variant="ghost"
-        size="sm"
-        className={cn("gap-2 text-sidebar-foreground", quickReceptionOpen && "text-sidebar-primary")}
-        onClick={() => { if (quickReceptionOpen) setQuickReceptionOpen(false); else { closeHomePanels("quick"); setQuickReceptionOpen(true); } }}
-      >
-        <ConciergeBell className="h-4 w-4" />
-        Quick Setup
-      </Button>
+      <div className="flex h-11 items-center justify-between gap-2">
+        <h1 className="min-w-0 truncate text-base font-semibold tracking-tight">{hotelName}</h1>
+        {(isReception || isHousekeeper || (isAdmin && !isFnb && !isMaintenance)) && (
+          <Button
+            variant="ghost"
+            size="sm"
+            className={cn("shrink-0 gap-2 text-sidebar-foreground", quickReceptionOpen && "text-sidebar-primary")}
+            onClick={() => { if (quickReceptionOpen) setQuickReceptionOpen(false); else { closeHomePanels("quick"); setQuickReceptionOpen(true); } }}
+          >
+            <ConciergeBell className="h-4 w-4" />
+            Quick Setup
+          </Button>
+        )}
+      </div>
+      <div ref={setTopBarSlot} className="empty:hidden pb-2" />
     </div>
-  ) : null
  ) : (
  <header className="flex items-start justify-between gap-3 flex-wrap rounded-2xl border border-primary/20 bg-sidebar px-4 pt-4 pb-3 sm:px-5 sm:pt-5 sm:pb-4 shadow-elevation-2">
           <div className="min-w-0 flex-1">
