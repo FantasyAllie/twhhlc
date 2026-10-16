@@ -3990,12 +3990,12 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
       linen.push({ key: "linen-list", icon: List, label: "Linen List", onClick: () => setTemplateOpen(true) });
     }
     if (menuIsAdmin && !isMaintenance) {
-      locations.push({ key: "manage-rooms", icon: Hash, label: "Room Management\n", onClick: () => setManageRoomsOpen(true) });
-      locations.push({ key: "hotel-areas", icon: MapPin, label: "Hotel areas", onClick: () => setMaintenanceAreasOpen(true) });
+      locations.push({ key: "manage-rooms", icon: Hash, label: "Room Management", onClick: () => setManageRoomsOpen(true) });
+      locations.push({ key: "hotel-areas", icon: MapPin, label: "Public & Hotel Areas", onClick: () => setMaintenanceAreasOpen(true) });
       linen.push({
         key: "delivery",
         icon: Truck,
-        label: "Inventory",
+        label: "Inventory & Stock",
         onClick: () => {
           qc.invalidateQueries({ queryKey: ["delivery_counts"] });
           qc.invalidateQueries({ queryKey: ["inventory_counts"] });
@@ -4005,10 +4005,10 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
       if (!isReception) {
         actions.push({ key: "history", icon: History, label: "History", onClick: () => setHistorySheetOpen(true) });
       }
-      locations.push({ key: "room-flags", icon: Flag, label: "Guest & room info", onClick: () => setRoomFlagsSheetOpen(true) });
+      locations.push({ key: "room-flags", icon: Flag, label: "Guest & Room Info", onClick: () => setRoomFlagsSheetOpen(true) });
     }
     if ((realIsAdmin || (realIsManager && hasHousekeeperRole)) && !isMaintenance) {
-      linen.push({ key: "linen-days", icon: CalendarDays, label: "Linen delivery days", onClick: () => setLinenDeliveryOpen(true) });
+      linen.push({ key: "linen-days", icon: CalendarDays, label: "Delivery Schedule", onClick: () => setLinenDeliveryOpen(true) });
     }
     const account: MenuAction[] = [];
     // Also exposed as pills on the home header where the screen is wide enough.
@@ -4037,11 +4037,15 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
       label: `Accent: ${ACCENTS.find((a) => a.id === accent)?.label ?? "Brass"}`,
       onClick: () => cycleAccent(),
     }];
+    const opsOrder = ["messages", "maintenance-log", "lost-property", "stayover-photos"];
+    utilities.sort((a, b) => opsOrder.indexOf(a.key) - opsOrder.indexOf(b.key));
+    const linenOrder = ["delivery", "linen-list", "linen-days"];
+    linen.sort((a, b) => linenOrder.indexOf(a.key) - linenOrder.indexOf(b.key));
     return [
+      { id: "utilities", title: "Daily Operations", items: utilities },
+      { id: "linen", title: "Linen Management", items: linen },
+      { id: "locations", title: "Property Setup", items: locations },
       { id: "actions", title: "Actions", items: actions },
-      { id: "utilities", title: "Utilities", items: utilities },
-      { id: "linen", title: "Linen", items: linen },
-      { id: "locations", title: "Locations", items: locations },
       { id: "account", title: "Account", items: account },
       { id: "appearance", title: "Appearance", items: appearance },
       { id: "developer", title: "Developer", items: developer },
@@ -4826,10 +4830,7 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
 <Sheet open={menuSheetOpen} onOpenChange={setMenuSheetOpen}>
   <SheetContent side="right" disableDragDismiss className="w-auto max-w-[90vw] min-w-[18rem] sm:max-w-md p-0 flex flex-col overflow-hidden [&_[data-sheet-close]]:max-lg:hidden">
     <SheetHeader className="relative text-left shrink-0 px-4 sm:px-6 pt-4 sm:pt-6 pb-3 bg-background border-b">
-      <SheetTitle className="flex items-center gap-2 pr-14">
-        <Menu className="h-4 w-4" />
-        <span className="flex-1">Settings</span>
-      </SheetTitle>
+      <SheetTitle className="sr-only">Menu</SheetTitle>
 
       {authUser && (
         <SheetDescription>Signed in as {authUser.username}</SheetDescription>
