@@ -6,6 +6,7 @@
 
 ## Current work
 - [x] Remove the shortcut cards from the F&B and Maintenance home screens and verify their panels still open
+- [x] Remove the shortcut cards entirely from every department's home screen; panels open from the settings menu only
 - [x] Give the Maintenance home header its own subtitle instead of the Housekeeping one
 
 

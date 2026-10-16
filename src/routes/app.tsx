@@ -611,20 +611,6 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
     if (keep !== "quick") setQuickReceptionOpen(false);
     if (keep === undefined || keep === "quick") setHomeView(null);
   };
-  const toggleHomeView = (view: HomeView, setOpen: (o: boolean) => void) => {
-    closeHomePanels(view);
-    if (homeView === view) {
-      setHomeView(null);
-      setOpen(false);
-      return;
-    }
-    if (homeView === "maintenance") setMaintenanceLogOpen(false);
-    if (homeView === "messages") setMessagesSheetOpen(false);
-    if (homeView === "lost") setLostPropertyOpen(false);
-    if (homeView === "stayover") setStayoverPhotosOpen(false);
-    setHomeView(view);
-    setOpen(true);
-  };
   // Housekeeping room grid: the open room expands inline below its row.
   const [roomGridEl, setRoomGridEl] = useState<HTMLDivElement | null>(null);
   const [roomSlotEl, setRoomSlotEl] = useState<HTMLDivElement | null>(null);
@@ -669,13 +655,6 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
   }, [homeView, maintenanceLogOpen, messagesSheetOpen, lostPropertyOpen, stayoverPhotosOpen]);
   const [pendingDndRoom, setPendingDndRoom] = useState<number | null>(null);
   const dndFileInputRef = useRef<HTMLInputElement | null>(null);
-  // Count for the stayover photos bento card.
-  const stayoverPhotoCountQ = useQuery({
-    queryKey: ["stayover_photos", "all"],
-    staleTime: 60_000,
-    queryFn: () => listStayoverPhotos(),
-  });
-  const stayoverPhotoCount = stayoverPhotoCountQ.data?.length ?? 0;
   // Menu section collapse state, synced to profiles.preferences.menu_collapsed
   const menuPrefsQ = useQuery({
     queryKey: ["profile_preferences", authUser?.id],
@@ -5181,102 +5160,6 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
   />
 
  {quickSetupInline && <div ref={setQuickSlotEl} className="mb-4" />}
- {!isFnb && !isMaintenance && (<div className={quickSetupInline ? "hidden" : undefined}>
- {/* Bento live cards: tap a card to open its panel. */}
- {(() => {
-   const showStayover = !isReception && !isMaintenance && !isFnb;
-
-   const deptKey = isReception ? "reception" : isFnb ? "fnb" : isMaintenance ? "maintenance" : "hk";
-   const activeMessageCount = roomMessages.filter(
-     (m) =>
-       String(m.thread ?? "").split("_").includes(deptKey) &&
-       !m.done_at && !m.deleted_at && !m.dismissed,
-   ).length;
-   const roomScoped = !isMaintenance && !isFnb;
-   const scopedMaintenanceCount = maintenanceRequests.filter(
-     (m) => !m.done && (isMaintenance || (roomScoped ? m.room_number != null : m.room_number == null)),
-   ).length;
-   const scopedLostCount = lostPropertyOpenItems.filter((l) =>
-     roomScoped ? l.room_number != null : l.room_number == null,
-   ).length;
-   const cards = [
-     {
-       key: "stayover-photos",
-       icon: Camera,
-       label: "Stayover photos",
-       value: `${stayoverPhotoCount} saved`,
-       tone: stayoverPhotoCount > 0 ? ("brass" as const) : ("calm" as const),
-       onClick: () => toggleHomeView("stayover", (o) => { setStayoverPhotosRoomFilter(undefined); setStayoverPhotosOpen(o); }),
-     },
-     {
-       key: "maintenance",
-       icon: Wrench,
-       label: "Maintenance",
-       value: `${scopedMaintenanceCount} open`,
-       tone: scopedMaintenanceCount > 0 ? ("alert" as const) : ("calm" as const),
-       onClick: () => toggleHomeView("maintenance", setMaintenanceLogOpen),
-     },
-     {
-       key: "messages",
-       icon: MessageSquare,
-       label: "Messages",
-       value: `${activeMessageCount} active`,
-       tone: activeMessageCount > 0 ? ("brass" as const) : ("calm" as const),
-       onClick: () => toggleHomeView("messages", (o) => { if (o) setMessagesInitial({}); setMessagesSheetOpen(o); }),
-     },
-     {
-       key: "lost",
-       icon: PackageSearch,
-       label: "Lost property",
-       value: `${scopedLostCount} open`,
-       tone: scopedLostCount > 0 ? ("brass" as const) : ("calm" as const),
-       onClick: () => toggleHomeView("lost", setLostPropertyOpen),
-     },
-   ].filter((c) => (showStayover || c.key !== "stayover-photos") && !(isMaintenance && (c.key === "lost" || c.key === "maintenance")))
-    .map((c) => {
-      const activeKey = homeView === "stayover" ? "stayover-photos" : homeView;
-      return c.key === activeKey
-        ? { ...c, icon: House, label: "Home", value: "Return home", tone: "calm" as const }
-        : c;
-    });
-   return (
-     <div className={cn("mb-4 grid grid-cols-2 gap-2 md:gap-3", (homeView || menuTakeoverActive || quickSetupInline) && "max-md:hidden", showStayover ? "lg:grid-cols-4" : isMaintenance ? "grid-cols-1" : "lg:grid-cols-3")}>
-       {cards.map((c) => {
-         const Icon = c.icon;
-         return (
-           <button
-             key={c.key}
-             type="button"
-             onClick={c.onClick}
-             className="relative flex items-center gap-3 overflow-hidden rounded-2xl border border-sidebar-border bg-sidebar px-3 py-2.5 text-left shadow-elevation-1 transition-[transform,box-shadow,background-color] duration-150 hover:bg-sidebar-accent active:scale-[0.985] active:shadow-none"
-           >
-             <span
-               className={cn(
-                 "flex h-9 w-9 shrink-0 items-center justify-center rounded-xl",
-                 c.tone === "alert"
-                   ? "bg-brass/15 text-brass"
-                   : c.tone === "brass"
-                     ? "bg-sidebar-primary/15 text-sidebar-primary"
-                     : "bg-sidebar-accent text-sidebar-foreground/70",
-               )}
-             >
-               <Icon className="h-4 w-4" />
-             </span>
-             <div className="min-w-0">
-               <p className="text-[10px] font-bold uppercase tracking-[0.18em] text-sidebar-foreground/60">
-                 {c.label}
-               </p>
-               <p className="truncate text-sm font-semibold tabular-nums text-sidebar-foreground">
-                 {c.value}
-               </p>
-             </div>
-           </button>
-         );
-       })}
-     </div>
-   );
- })()}
- </div>)}
 
  {/* Rooms */}
  {homeView && <div ref={setHomeSlotEl} className="mb-4" />}
