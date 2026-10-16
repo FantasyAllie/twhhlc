@@ -6192,7 +6192,7 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
           },
           {
             key: "more", label: "More", icon: Menu, active: menuSheetOpen,
-            onClick: () => setMenuSheetOpen(true),
+            onClick: () => { window.scrollTo({ top: 0, behavior: "instant" as ScrollBehavior }); setMenuSheetOpen(true); },
           },
         ];
         return tabs.map((t) => {
