@@ -6166,8 +6166,6 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
           closeHomePanels(key);
           armSheetTakeover();
           open();
-          // Start each tab screen at the top so the sticky top bar never hides its header.
-          requestAnimationFrame(() => window.scrollTo({ top: 0, behavior: "instant" as ScrollBehavior }));
         };
         const tabs = [
           {
