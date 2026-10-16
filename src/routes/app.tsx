@@ -2513,14 +2513,8 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
       toast.error("No F&B linen counted");
       return;
     }
-    const today = new Date().toDateString();
-    const todays = snapshots.filter(
-      (s) => s.kind === "fnb_totals" && new Date(s.created_at).toDateString() === today,
-    );
-    if (todays.length > 0) {
-      setConfirmOverwrite({ kind: "fnb_totals" });
-      return;
-    }
+    // F&B exports overwrite any earlier export saved for the day, without
+    // asking first (saveSnapshot replaces same-day snapshots of the kind).
     await proceedExport("fnb_totals");
   };
 
@@ -5243,7 +5237,7 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
              Reset
            </Button>
            <Button variant="outline" size="sm" onClick={() => void openFnbExport()}>
-             Export
+             Export & Print
            </Button>
          </div>
        </div>
