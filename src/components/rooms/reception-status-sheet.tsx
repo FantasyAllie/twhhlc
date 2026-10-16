@@ -41,6 +41,9 @@ type Props = {
   setRoomNotRequired: (n: number, v: boolean) => void | Promise<void>;
   deleteTodayStayoverPhotosForRoom: (n: number) => Promise<unknown>;
   setPendingDndRoom: (n: number | null) => void;
+  /** Closes the room view back to the tile grid once a room is marked done. */
+  closeRoomView?: () => void;
+
 };
 
 export function ReceptionStatusSheet({
@@ -74,6 +77,8 @@ export function ReceptionStatusSheet({
   setRoomNotRequired,
   deleteTodayStayoverPhotosForRoom,
   setPendingDndRoom,
+  closeRoomView,
+
 }: Props) {
   const roomFlags = useRoomFlags();
   return (
@@ -345,8 +350,12 @@ export function ReceptionStatusSheet({
                    label="Mark as Done"
                    selected={isReception ? receptionDoneSet.has(n) : housekeepingDoneSet.has(n)}
                    onClick={() => {
+                     const wasDone = isReception ? receptionDoneSet.has(n) : housekeepingDoneSet.has(n);
                      void (isReception ? toggleReceptionDone(n) : toggleHousekeepingDone(n));
+                     // Marking done finishes the room, so go straight back to the tiles.
+                     if (!wasDone) closeRoomView?.();
                    }}
+
                  />
                </div>
                 <details className="group space-y-2">
