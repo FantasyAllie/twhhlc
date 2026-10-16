@@ -4246,7 +4246,10 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
                 ? "An auto-updating room tracker for Housekeeping. Use the help button if you're stuck"
                 : isFnb
                 ? "Shared workspace for F&B staff"
+                : isMaintenance
+                ? "Shared workspace for Maintenance staff"
                 : "Shared workspace for Housekeeping staff"}
+
             </p>
             {canViewAs && !isMobile && (
               <div className="basis-full w-full flex rounded-full border p-1 bg-background items-center">
