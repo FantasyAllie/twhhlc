@@ -75,37 +75,13 @@ export function LinenListDialog({
    }}>
 <DialogContent className="max-w-2xl w-[calc(100vw-1.5rem)] sm:w-full p-4 sm:p-6">
  <DialogHeader>
- <DialogTitle>Linen List</DialogTitle>
+ <DialogTitle>{linenListType === "fnb" ? "F&B Linen List" : "Housekeeping Linen List"}</DialogTitle>
    <DialogDescription>
      Manage the shared list of linen items. Pick which items appear in each
      room from that room's <Pencil className="inline h-3.5 w-3.5 align-[-2px]" /> button.
    </DialogDescription>
  </DialogHeader>
    <div className="space-y-3">
-      {(realIsAdmin || realIsManager || (hasHousekeeperRole && hasFnbRole)) && (
-      <div className="inline-flex rounded-xl border p-0.5 bg-muted/40 self-start">
-       <button
-         type="button"
-         onClick={() => setLinenListType("housekeeping")}
-         className={cn(
-           "px-3 py-1.5 text-sm rounded-[0.3rem] transition-colors",
-           linenListType === "housekeeping" ? "bg-background shadow-sm font-medium" : "text-muted-foreground",
-         )}
-       >
-         Housekeeping
-       </button>
-       <button
-         type="button"
-         onClick={() => setLinenListType("fnb")}
-         className={cn(
-           "px-3 py-1.5 text-sm rounded-[0.3rem] transition-colors",
-           linenListType === "fnb" ? "bg-background shadow-sm font-medium" : "text-muted-foreground",
-         )}
-       >
-         F&amp;B
-       </button>
-      </div>
-      )}
     <form onSubmit={addTemplateItem} className="flex gap-2">
       <Input
          placeholder={`Add an item to ${linenListType === "fnb" ? "F&B" : "Housekeeping"}…`}

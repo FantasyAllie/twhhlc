@@ -5,7 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import type { Room } from "@/lib/app-types";
 import { useEffect, useState } from "react";
-import { ClipboardCheck } from "lucide-react";
+import { ClipboardCheck, Shirt } from "lucide-react";
 import { RoomChecklistEditor } from "@/components/rooms/room-checklists";
 
 type Props = {
@@ -19,6 +19,7 @@ type Props = {
   setRoomTypesSheetOpen: (v: boolean) => void;
   setRoomFeaturesSheetOpen: (v: boolean) => void;
   setReceptionItemsSheetOpen: (v: boolean) => void;
+  openLinenList: () => void;
   setEditRoomSheetNumber: (n: number) => void;
   addRoom: (n: number) => void;
   removeRoom: (n: number) => void;
@@ -36,6 +37,7 @@ export function ManageRoomsDialogs({
   setRoomTypesSheetOpen,
   setRoomFeaturesSheetOpen,
   setReceptionItemsSheetOpen,
+  openLinenList,
   setEditRoomSheetNumber,
   addRoom,
   removeRoom,
@@ -61,7 +63,7 @@ export function ManageRoomsDialogs({
         <DialogHeader>
           <DialogTitle>Room Management</DialogTitle>
           <DialogDescription>
-            Choose what to manage: rooms, room types, features and amenities, statuses and beds, or the room checklist.
+            Choose what to manage: rooms, room types, features and amenities, statuses and beds, the room checklist, or the linen list.
           </DialogDescription>
           <div className="mt-4 grid w-full grid-cols-2 gap-3">
             <Button variant="outline" size="sm" className={btn} onClick={() => setView("rooms")}>
@@ -80,9 +82,13 @@ export function ManageRoomsDialogs({
               <ConciergeBell className="h-4 w-4 shrink-0" />
               <span className="truncate">Status &amp; bed</span>
             </Button>
-            <Button variant="outline" size="sm" className={`col-span-2 ${btn}`} onClick={() => setView("checklist")}>
+            <Button variant="outline" size="sm" className={btn} onClick={() => setView("checklist")}>
               <ClipboardCheck className="h-4 w-4 shrink-0" />
               <span className="truncate">Room Checklist</span>
+            </Button>
+            <Button variant="outline" size="sm" className={btn} onClick={openLinenList}>
+              <Shirt className="h-4 w-4 shrink-0" />
+              <span className="truncate">Linen List</span>
             </Button>
           </div>
         </DialogHeader>
