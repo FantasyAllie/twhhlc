@@ -5,6 +5,8 @@
 - [x] Sad full-screen outcome + sad trombone sound when completion happens with Dirty rooms present
 
 ## Current work
+- [x] Remove the shortcut cards from the F&B and Maintenance home screens and verify their panels still open
+
 - [x] Add an Edit linen list button to the F&B home screen header and verify it opens and closes the list
 
 - [x] Close the room view back to the room tile grid when a room is marked done

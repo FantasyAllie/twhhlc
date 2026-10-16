@@ -5178,7 +5178,7 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
   />
 
  {quickSetupInline && <div ref={setQuickSlotEl} className="mb-4" />}
- <div className={quickSetupInline ? "hidden" : undefined}>
+ {!isFnb && !isMaintenance && (<div className={quickSetupInline ? "hidden" : undefined}>
  {/* Bento live cards: tap a card to open its panel. */}
  {(() => {
    const showStayover = !isReception && !isMaintenance && !isFnb;
@@ -5273,7 +5273,8 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
      </div>
    );
  })()}
- </div>
+ </div>)}
+
  {/* Rooms */}
  {homeView && <div ref={setHomeSlotEl} className="mb-4" />}
  <div ref={setSheetTakeoverSlot} className="[&:not(:empty)]:mb-4" />
