@@ -5825,7 +5825,7 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
  )}
  </div>
   {!isReception && (
-    <div className="lg:hidden h-[calc(env(safe-area-inset-bottom,0px)+2.25rem)]" aria-hidden />
+    <div className="lg:hidden h-[2.25rem]" aria-hidden />
   )}
  </div>
 
@@ -6034,6 +6034,81 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
       </DialogFooter>
     </DialogContent>
   </Dialog>
+  <div className="lg:hidden h-14" aria-hidden />
+  {/* Mobile bottom tab bar: same five tabs for every department. */}
+  <nav
+    aria-label="Main"
+    className="lg:hidden fixed inset-x-0 bottom-0 z-50 border-t border-sidebar-border bg-sidebar text-sidebar-foreground"
+    style={{
+      paddingBottom: "env(safe-area-inset-bottom, 0px)",
+      paddingLeft: "env(safe-area-inset-left, 0px)",
+      paddingRight: "env(safe-area-inset-right, 0px)",
+    }}
+  >
+    <div className="grid grid-cols-5 h-14">
+      {(() => {
+        const anyPanel = messagesSheetOpen || maintenanceLogOpen || lostPropertyOpen;
+        const openTab = (key: "messages" | "maintenance" | "lost", open: () => void, isOpen: boolean) => {
+          if (isOpen) { closeHomePanels(); return; }
+          closeHomePanels(key);
+          armSheetTakeover();
+          open();
+        };
+        const tabs = [
+          {
+            key: "home", label: "Home", icon: House, active: !anyPanel && !menuSheetOpen,
+            onClick: () => {
+              setMenuSheetOpen(false);
+              closeHomePanels();
+              if (openRoom !== null) closeRoomView();
+              window.scrollTo({ top: 0, behavior: "smooth" });
+            },
+          },
+          {
+            key: "messages", label: "Messages", icon: MessageSquare, active: messagesSheetOpen,
+            disabled: !canUseMessages,
+            onClick: () => { setMenuSheetOpen(false); openTab("messages", () => { setMessagesInitial({}); setMessagesSheetOpen(true); }, messagesSheetOpen); },
+          },
+          {
+            key: "maintenance", label: "Maintenance", icon: Wrench, active: maintenanceLogOpen, dot: hasOpenMaintenance,
+            onClick: () => { setMenuSheetOpen(false); openTab("maintenance", () => setMaintenanceLogOpen(true), maintenanceLogOpen); },
+          },
+          {
+            key: "lost", label: "Lost Property", icon: PackageSearch, active: lostPropertyOpen,
+            onClick: () => { setMenuSheetOpen(false); openTab("lost", () => setLostPropertyOpen(true), lostPropertyOpen); },
+          },
+          {
+            key: "more", label: "More", icon: Menu, active: menuSheetOpen,
+            onClick: () => setMenuSheetOpen(true),
+          },
+        ];
+        return tabs.map((t) => {
+          const Icon = t.icon;
+          return (
+            <button
+              key={t.key}
+              type="button"
+              disabled={t.disabled}
+              onClick={t.onClick}
+              aria-current={t.active ? "page" : undefined}
+              className={cn(
+                "relative flex flex-col items-center justify-center gap-0.5 text-[10px] font-medium transition-colors disabled:opacity-40",
+                t.active ? "text-sidebar-primary" : "text-sidebar-foreground/70",
+              )}
+            >
+              <span className="relative">
+                <Icon className="h-5 w-5" />
+                {t.dot && (
+                  <span className="absolute -top-0.5 -right-1 h-2 w-2 rounded-full bg-amber-500 ring-2 ring-sidebar" />
+                )}
+              </span>
+              <span className="leading-none truncate max-w-full px-1">{t.label}</span>
+            </button>
+          );
+        });
+      })()}
+    </div>
+  </nav>
  </main>
 </RoomFlagsContext.Provider>
  );
