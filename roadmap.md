@@ -5,6 +5,8 @@
 - [x] Sad full-screen outcome + sad trombone sound when completion happens with Dirty rooms present
 
 ## Current work
+- [x] Add an Edit linen list button to the F&B home screen header and verify it opens and closes the list
+
 - [x] Close the room view back to the room tile grid when a room is marked done
 - [x] Skip the bed area on the room status screen when a room has only one bed option (Double)
 
