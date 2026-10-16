@@ -70,11 +70,13 @@ export function CountRow({
   };
   return (
     <li className="rounded-xl border p-2" style={rowStyle(item, theme)}>
-      <div className="flex flex-wrap items-center gap-1.5">
-        <span className="flex-1 min-w-0 break-words font-medium" style={textStyle(item, theme)}>
+      <div className="flex flex-col items-center gap-2">
+        <span className="w-full text-center break-words font-medium" style={textStyle(item, theme)}>
           {item.name}
           {preferred && <span className="ml-2 text-xs font-semibold opacity-70">(Preferred)</span>}
         </span>
+        <div className="flex w-full flex-wrap items-center justify-center gap-1.5">
+
         <Input
           type="number"
           inputMode="numeric"
@@ -87,7 +89,7 @@ export function CountRow({
               applyAdd();
             }
           }}
-          className="h-10 sm:h-9 w-12 shrink-0 px-1 text-center tabular-nums bg-background"
+          className="h-10 sm:h-9 w-14 shrink-0 px-1 text-center tabular-nums bg-background"
           aria-label={`Amount to add to ${item.name}`}
         />
         <Button
@@ -98,7 +100,7 @@ export function CountRow({
         >
           Add
         </Button>
-        <div className="flex w-full items-center gap-1.5 sm:w-auto">
+        <div className="flex items-center gap-1.5">
           <Button
             variant="outline"
             size="icon"
@@ -123,7 +125,7 @@ export function CountRow({
             onKeyDown={(e) => {
               if (e.key === "Enter") (e.currentTarget as HTMLInputElement).blur();
             }}
-            className="h-10 sm:h-9 flex-1 sm:flex-none sm:w-16 shrink-0 text-center tabular-nums font-semibold bg-background"
+            className="h-10 sm:h-9 w-16 shrink-0 text-center tabular-nums font-semibold bg-background"
             aria-label={`Total ${item.name}`}
           />
           <Button
@@ -136,7 +138,9 @@ export function CountRow({
             <Plus className="h-4 w-4" />
           </Button>
         </div>
+        </div>
       </div>
+
     </li>
   );
 }
