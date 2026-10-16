@@ -3960,9 +3960,6 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
     const linen: MenuAction[] = [];
     const locations: MenuAction[] = [];
     if ((menuHasHk || menuHasFnb) && !isMaintenance) {
-      if (menuHasFnb) {
-        linen.push({ key: "linen-list", icon: List, label: "F&B Linen List", onClick: () => { setLinenListType("fnb"); setTemplateOpen(true); } });
-      }
       if (menuHasHk && !menuIsAdmin) {
         linen.push({ key: "linen-list-hk", icon: List, label: "Linen List", onClick: () => { setLinenListType("housekeeping"); setTemplateOpen(true); } });
       }
