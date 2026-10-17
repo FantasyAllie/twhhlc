@@ -1,3 +1,4 @@
+import { NamedAvatar } from "@/components/user-avatar";
 import { Textarea } from "@/components/ui/textarea";
 import { hasRoomItemSelection } from "@/lib/room-checklist-rules";
 import { playDoorBell } from "@/lib/door-bell";
