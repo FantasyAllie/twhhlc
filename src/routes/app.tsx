@@ -41,7 +41,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { InventoryDialog, CUPBOARDS, type InventorySection } from "@/components/linen/inventory-dialog";
-import { Minus, Plus, X, Menu, ArrowUp, ArrowDown, Pencil, Check, Trash2, Sun, SunDim, Moon, MoonStar, List, Bed, House, Ban, History, Users, User, LogOut, Hash, ConciergeBell, ClipboardList, Printer, Filter, Wrench, DoorOpen, Footprints, Bell, Eye, EyeOff, HelpCircle, AlertCircle, MessageSquare, PackageSearch, RotateCcw, ChevronDown, Camera, LayoutGrid, Truck, Clock, Dog, Undo2, Inbox, MapPin, Flag } from "lucide-react";
+import { Minus, Plus, X, Menu, ArrowUp, ArrowDown, Pencil, Check, Trash2, Sun, SunDim, Moon, MoonStar, List, Bed, House, Ban, History, Users, User, LogOut, Hash, ConciergeBell, ClipboardList, Printer, Filter, Wrench, DoorOpen, Footprints, Bell, Eye, EyeOff, HelpCircle, AlertCircle, MessageSquare, PackageSearch, RotateCcw, ChevronDown, ChevronRight, Camera, LayoutGrid, Truck, Clock, Dog, Undo2, Inbox, MapPin, Flag } from "lucide-react";
 import {
   AccountDialog,
   AddConfigDialogs,
@@ -1600,6 +1600,8 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
       if (hasMaintenanceRole) out.push("maintenance");
       return out;
     })();
+    const isMaintenanceOnlyUser =
+      !menuIsAdmin && hasMaintenanceRole && !hasHousekeeperRole && !hasReceptionRole && !hasFnbRole;
     const menuIsFnbOnly =
       position === "user" && hasFnbRole && !hasHousekeeperRole && !hasReceptionRole;
     const logLostProperty = async (
@@ -4772,6 +4774,7 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
   canAdd={menuCanUseLostProperty}
   requireRoom={hasHousekeeperRole && !hasReceptionRole}
   scope={logScope}
+  departments={menuIsAdmin || hasReceptionRole ? null : myMessageDepartments}
   areaLabels={maintenanceAreas.map((a) => a.label)}
   roomNumbers={rooms.map((r) => r.room_number).sort((a, b) => a - b)}
   onAdd={logLostProperty}
@@ -4867,13 +4870,15 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
         <button
           type="button"
           onClick={onClick}
+          data-ios-row
           className={cn(
             "w-full flex items-center gap-3 rounded-xl border bg-background px-4 min-h-12 text-sm font-medium shadow-elevation-1 transition-[transform,box-shadow,background-color] duration-150 hover:bg-accent active:scale-[0.985] active:shadow-none",
             destructive && "text-destructive hover:text-destructive",
           )}
         >
-          <Icon className={cn("h-4 w-4 shrink-0", notify && "text-amber-500")} />
+          <span data-ios-icon className="shrink-0"><Icon className={cn("h-4 w-4 shrink-0", notify && "text-amber-500")} /></span>
           <span className="text-left flex-1">{label}</span>
+          <ChevronRight data-ios-chevron className="hidden h-4 w-4 shrink-0 text-muted-foreground/60" aria-hidden />
         </button>
       );
       const close = () => setMenuSheetOpen(false);
@@ -4896,7 +4901,7 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
                 aria-hidden
               />
             </button>
-            {!collapsed && <div className="space-y-1.5">{children}</div>}
+            {!collapsed && <div data-ios-group className="space-y-1.5">{children}</div>}
           </div>
         );
       };
@@ -5022,6 +5027,7 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
   deleteMessage={deleteRoomMessage}
   maintenanceAreas={maintenanceAreas}
   scope={logScope}
+  composeOnly={isMaintenanceOnlyUser}
   hasOpenMaintenance={hasOpenMaintenance}
   openMaintenanceCount={openMaintenanceCount}
   isReception={isReception}
@@ -5879,8 +5885,10 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
                         onClick={() => { handleProgressTap(); setProgressSheetOpen(true); }}
                         data-ios-glass
                         aria-label={`Rooms progress: ${progress} of ${total} done`}
-                        className="relative flex h-9 w-9 items-center justify-center rounded-full active:scale-95 transition-transform"
+                        data-ios-ring-pill
+                        className="flex h-9 items-center gap-1.5 rounded-full pl-1 pr-3 active:scale-95 transition-transform"
                       >
+                        <span className="relative flex h-7 w-7 shrink-0 items-center justify-center">
                         <svg viewBox="0 0 32 32" className="absolute inset-0 h-full w-full -rotate-90">
                           <circle cx="16" cy="16" r={r} fill="none" strokeWidth="3.5" className="stroke-sidebar-accent" />
                           <circle
@@ -5891,25 +5899,25 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
                             style={{ transition: "stroke-dashoffset 500ms ease-out, stroke 500ms" }}
                           />
                         </svg>
-                        {isComplete ? (
-                          <Check className="relative h-4 w-4 text-room-complete-accent" />
-                        ) : (
-                          <span className="relative text-[11px] font-bold tabular-nums text-sidebar-foreground">
-                            {total - progress}
-                          </span>
-                        )}
+                        {isComplete && <Check className="relative h-3.5 w-3.5 text-room-complete-accent" />}
+                        </span>
+                        <span className="text-sm font-semibold tabular-nums text-sidebar-foreground">
+                          {progress}/{total}
+                        </span>
                       </button>
                     );
-                    const cleanId = receptionStatuses.find((s) => s.label.toLowerCase() === "clean")?.id ?? null;
-                    const arrivalId = receptionStatuses.find((s) => s.label.toLowerCase() === "arrival")?.id ?? null;
-                    const notDone = (r: (typeof rooms)[number]) => !(r.done || r.done_reception);
+                    const findId = (pred: (l: string) => boolean) =>
+                      receptionStatuses.find((st) => pred(st.label.toLowerCase()))?.id ?? null;
+                    const cleanId = findId((l) => l === "clean");
+                    const arrivalId = findId((l) => l === "arrival");
+                    const stayId = findId((l) => l.replace(/[^a-z]/g, "").startsWith("stay"));
                     const sidOf = (r: (typeof rooms)[number]) => r.reception_status_id ?? r.default_status;
-                    const cleanArrivalLeft = eligible.filter((r) => notDone(r) && (sidOf(r) === cleanId || sidOf(r) === arrivalId)).length;
-                    const dirtyLeft = rooms.filter((r) => notDone(r) && ((dirtyProgressId && sidOf(r) === dirtyProgressId) || r.guest_vacated)).length;
+                    const countOf = (id: string | null) => (id ? rooms.filter((r) => sidOf(r) === id).length : 0);
                     const rows = [
-                      { label: "Done", value: progress, colour: "var(--color-room-complete-accent)" },
-                      { label: "Clean / Arrival", value: cleanArrivalLeft, colour: "var(--color-room-progress-accent)" },
-                      { label: "Dirty / Departures", value: dirtyLeft, colour: "var(--color-room-dirty-accent)" },
+                      { label: "Clean", value: countOf(cleanId), colour: "var(--color-room-complete-accent)" },
+                      { label: "Arrival", value: countOf(arrivalId), colour: "var(--color-room-progress-accent)" },
+                      { label: "Stayover", value: countOf(stayId), colour: "var(--brass)" },
+                      { label: "Dirty", value: countOf(dirtyProgressId ?? null), colour: "var(--color-room-dirty-accent)" },
                     ];
                     return (
                       <>

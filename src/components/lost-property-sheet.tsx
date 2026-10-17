@@ -49,7 +49,10 @@ export function LostPropertySheet({
   openComposerOnOpen = false,
   scope = "rooms",
   areaLabels = [],
+  departments = null,
 }: {
+  // Only entries logged by these departments are shown; null shows everything (Reception/admins).
+  departments?: string[] | null;
   open: boolean;
   onOpenChange: (o: boolean) => void;
   canResolve: boolean;
@@ -245,9 +248,11 @@ export function LostPropertySheet({
   const rows = useMemo(
     () =>
       (q.data ?? []).filter((r) =>
-        scope === "areas" ? !!r.area_label : !r.area_label,
+        departments
+          ? !!r.created_by_role && departments.includes(r.created_by_role)
+          : scope === "areas" ? !!r.area_label : !r.area_label,
       ),
-    [q.data, scope],
+    [q.data, scope, departments],
   );
   const allOpen = rows.filter((r) => r.status === "open");
   const openRows = allOpen.filter((r) => !canDiscard(r.created_at));

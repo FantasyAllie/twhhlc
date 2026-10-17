@@ -597,6 +597,28 @@ html {
     box-shadow: none;
     padding: 0;
   }
+  /* iOS More screen: grouped inset list like iOS Settings. */
+  html[data-platform="ios"] .app-menu-screen { background: var(--color-muted); }
+  html[data-platform="ios"] .app-menu-screen > div { background: transparent; }
+  html[data-platform="ios"] .app-menu-screen [data-ios-group] {
+    display: flex; flex-direction: column; gap: 0;
+    overflow: hidden; border-radius: 1.5rem; background: var(--color-background);
+  }
+  html[data-platform="ios"] .app-menu-screen [data-ios-group] > * + * { margin-top: 0; }
+  html[data-platform="ios"] .app-menu-screen [data-ios-row] {
+    position: relative; border: 0; border-radius: 0; box-shadow: none;
+    min-height: 3.25rem; font-size: 1rem; font-weight: 450; background: transparent;
+  }
+  html[data-platform="ios"] .app-menu-screen [data-ios-row] + [data-ios-row]::before {
+    content: ""; position: absolute; top: 0; right: 0; left: 3.5rem;
+    border-top: 1px solid var(--color-border);
+  }
+  html[data-platform="ios"] .app-menu-screen [data-ios-icon] {
+    display: flex; height: 1.85rem; width: 1.85rem; align-items: center; justify-content: center;
+    border-radius: 0.5rem; background: var(--color-brass); color: var(--color-brass-foreground);
+  }
+  html[data-platform="ios"] .app-menu-screen [data-ios-icon] svg { color: inherit; }
+  html[data-platform="ios"] .app-menu-screen [data-ios-chevron] { display: block; }
   /* iOS top bar: no box — a soft fade from 60% theme colour down to nothing. */
   html[data-platform="ios"] [data-mobile-topbar] {
     background: linear-gradient(to bottom, color-mix(in oklab, var(--color-background) 60%, transparent) 0%, transparent 100%) !important;
@@ -622,7 +644,7 @@ html {
   html[data-platform="ios"] [data-mobile-topbar] [data-mobile-topbar-row] { height: 3.5rem; }
   /* Both top-bar controls are the same round glass size. */
   html[data-platform="ios"] [data-mobile-topbar] [data-ios-glass] { height: 2.75rem; }
-  html[data-platform="ios"] [data-mobile-topbar] button[data-ios-glass][aria-label^="Rooms progress"] { width: 2.75rem; }
+  html[data-platform="ios"] [data-mobile-topbar] button[data-ios-glass][aria-label^="Rooms progress"] { width: auto; }
   /* Quick Setup shows its icon only, in a circle matching the progress ring. */
   html[data-platform="ios"] [data-mobile-topbar] [data-quick-setup] { width: 2.75rem; padding-inline: 0; }
   html[data-platform="ios"] [data-mobile-topbar] [data-quick-setup] [data-qs-label] { display: none; }

@@ -72,7 +72,10 @@ export function MaintenanceLogSheet({
   deleteMaintenanceRequest,
   setMaintenancePhotoPaths,
   scope,
+  composeOnly = false,
 }: {
+  // Only show the new-issue form (Maintenance staff work the list from Home).
+  composeOnly?: boolean;
   // When set, only room or only hotel-area entries are shown and loggable.
   scope?: "rooms" | "areas";
   open: boolean;
@@ -399,8 +402,8 @@ export function MaintenanceLogSheet({
         <SheetHeader className="text-left">
           <SheetTitle className="flex items-center gap-2">
             <Wrench className="h-4 w-4" />
-            Maintenance Log
-            {hasOpenMaintenance && (
+            {composeOnly ? "Log a new issue" : "Maintenance Log"}
+            {!composeOnly && hasOpenMaintenance && (
               <span className="ml-1 inline-flex items-center gap-1 rounded-full bg-amber-500/15 text-amber-700 dark:text-amber-300 px-2 py-0.5 text-xs font-medium">
                 <span className="h-1.5 w-1.5 rounded-full bg-amber-500" aria-hidden />
                 {openMaintenanceCount} open
@@ -408,13 +411,15 @@ export function MaintenanceLogSheet({
             )}
           </SheetTitle>
           <SheetDescription>
-            {isReception || isMaintenance
+            {composeOnly
+              ? "Report a new maintenance issue. Open jobs are on your Home screen."
+              : isReception || isMaintenance
               ? "Reception and Maintenance can mark requests as complete."
               : "Log a maintenance issue for Reception or Maintenance to action."}
           </SheetDescription>
         </SheetHeader>
-        <div className="mt-4 border-b pb-4 space-y-2">
-          <div className={isAdmin ? "grid grid-cols-[minmax(0,1fr)_minmax(0,1fr)] gap-2" : undefined}>
+        <div className={"mt-4 space-y-2 " + (composeOnly ? "" : "border-b pb-4")}>
+          {!composeOnly && (<div className={isAdmin ? "grid grid-cols-[minmax(0,1fr)_minmax(0,1fr)] gap-2" : undefined}>
             <Button
               type="button"
               variant="outline"
@@ -460,15 +465,15 @@ export function MaintenanceLogSheet({
                 />
               </Button>
             )}
-          </div>
+          </div>)}
 
-          {maintenanceComposerOpen && (
+          {(composeOnly || maintenanceComposerOpen) && (
             <div className="flex flex-col gap-2 rounded-lg border bg-background p-3">
               <div className="flex items-center justify-between">
                 <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
                   Log a new issue
                 </p>
-                <Button
+                {!composeOnly && <Button
                   type="button"
                   size="icon"
                   variant="ghost"
@@ -482,7 +487,7 @@ export function MaintenanceLogSheet({
                   aria-label="Close"
                 >
                   <X className="h-4 w-4" />
-                </Button>
+                </Button>}
               </div>
               <div className="flex flex-col sm:flex-row gap-2">
                 <select
@@ -610,6 +615,7 @@ export function MaintenanceLogSheet({
           )}
         </div>
 
+        {!composeOnly && (<>
         {/* Section pills */}
         <div
           className="mt-4 inline-flex w-full justify-center rounded-full border p-1 bg-background items-center"
@@ -721,6 +727,7 @@ export function MaintenanceLogSheet({
             <div className="space-y-2">{pagedItems.map((m) => renderItem(m))}</div>
           )}
         </div>
+        </>)}
       </SheetContent>
     </Sheet>
   );
