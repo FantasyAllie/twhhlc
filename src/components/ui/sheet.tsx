@@ -300,12 +300,14 @@ interface SheetContentProps
     React.ComponentPropsWithoutRef<typeof SheetPrimitive.Content>,
     VariantProps<typeof sheetVariants> {
   disableDragDismiss?: boolean;
+  /** A room tab body inside the existing room frame, without a second enclosure. */
+  embedded?: boolean;
 }
 
 const SheetContent = React.forwardRef<
   React.ElementRef<typeof SheetPrimitive.Content>,
   SheetContentProps
->(({ side = "right", className, children, disableDragDismiss, ...props }, ref) => {
+>(({ side = "right", className, children, disableDragDismiss, embedded, ...props }, ref) => {
   const inlineCtx = React.useContext(SheetInlineContext);
   const innerRef = React.useRef<HTMLDivElement | null>(null);
   const closeRef = React.useRef<HTMLButtonElement | null>(null);
@@ -341,6 +343,7 @@ const SheetContent = React.forwardRef<
           // Phones: panels sit straight on the page — no enclosure box, full width.
           "max-lg:!rounded-none max-lg:!border-0 max-lg:!bg-transparent max-lg:!shadow-none max-lg:!px-0",
           inlineCtx.noFit ? undefined : "max-lg:!pt-3 max-lg:!pb-2",
+          embedded && "!rounded-none !border-0 !bg-transparent !p-0 !shadow-none",
         )}
       >
         {!inlineCtx.noFit && <TakeoverCloseButton onClose={inlineCtx.onClose} />}

@@ -21,6 +21,7 @@ import type {
 
 export function EditRoomDefaultsSheet({
   navigation,
+  inlineView,
   editDefaultsSheetRoom,
   setEditDefaultsSheetRoom,
   template,
@@ -30,6 +31,7 @@ export function EditRoomDefaultsSheet({
   togglePreferred,
 }: {
   navigation?: ReactNode;
+  inlineView?: boolean;
   editDefaultsSheetRoom: number | null;
   setEditDefaultsSheetRoom: (n: number | null) => void;
   template: TemplateItem[];
@@ -40,13 +42,13 @@ export function EditRoomDefaultsSheet({
 }) {
   return (
  <Sheet open={editDefaultsSheetRoom !== null} onOpenChange={(o) => { if (!o) setEditDefaultsSheetRoom(null); }}>
-   <SheetContent side="bottom" className="overflow-y-auto rounded-t-2xl p-4 sm:p-6">
+   <SheetContent embedded={inlineView} side="bottom" className="overflow-y-auto rounded-t-2xl p-4 sm:p-6">
      {navigation}
      {editDefaultsSheetRoom !== null && (() => {
        const n = editDefaultsSheetRoom;
        return (
          <>
-           <SheetHeader className="text-left">
+           <SheetHeader className={inlineView ? "sr-only" : "text-left"}>
              <SheetTitle className="flex items-center gap-2">
                <Pencil className="h-4 w-4" />
                Edit defaults — Room {n}
@@ -55,7 +57,7 @@ export function EditRoomDefaultsSheet({
                Choose which linen items appear by default, and star the room's preferred items
              </SheetDescription>
            </SheetHeader>
-           <div className="mt-4 space-y-1.5">
+           <div className={cn("space-y-1.5", !inlineView && "mt-4")}>
              {template.length === 0 ? (
                <p className="text-sm text-muted-foreground">No items yet.</p>
              ) : (
