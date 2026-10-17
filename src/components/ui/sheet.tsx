@@ -121,11 +121,17 @@ export function useFitToScreen(ref: React.MutableRefObject<HTMLElement | null>, 
     const barH = (sel: string) => document.querySelector<HTMLElement>(sel)?.getBoundingClientRect().height ?? 0;
     const fit = () => {
       if (window.innerWidth < 1024 && document.documentElement.dataset.platform === "ios") {
+        // iPhone: panel runs behind the floating tab bar; its innermost scroll
+        // areas get bottom padding so the last section can scroll clear of it.
         const tabBar = document.querySelector<HTMLElement>("[data-mobile-tabbar]");
-        const bottom = tabBar?.getBoundingClientRect().top ?? window.innerHeight;
+        const tabTop = tabBar?.getBoundingClientRect().top ?? window.innerHeight;
         const top = barH("[data-mobile-topbar]") + 8;
-        node.style[prop] = `${Math.max(0, bottom - top - 8)}px`;
+        node.style[prop] = `${Math.max(0, window.innerHeight - top)}px`;
         node.style.marginBottom = "0px";
+        const clear = `${Math.max(0, window.innerHeight - tabTop) + 12}px`;
+        node.querySelectorAll<HTMLElement>(".overflow-y-auto, .overflow-auto").forEach((el) => {
+          if (!el.querySelector(".overflow-y-auto, .overflow-auto")) el.style.paddingBottom = clear;
+        });
         return;
       }
       if (isPhone()) {
