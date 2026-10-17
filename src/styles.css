@@ -682,9 +682,7 @@ html {
 }
 
 /* ---- iOS (phones): Liquid Glass controls everywhere except the room tiles ---- */
-[data-ios-selection-tick] { display: none; }
 @media (max-width: 1023px) {
-  html[data-platform="ios"] [data-ios-selection-tick] { display: block; }
   html[data-platform="ios"] [data-ui-button] {
     border-radius: 9999px;
     transition: transform 180ms cubic-bezier(0.32, 1.4, 0.5, 1), background-color 200ms, box-shadow 200ms;
