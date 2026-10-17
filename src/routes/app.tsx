@@ -1,3 +1,4 @@
+import { NamedAvatar } from "@/components/user-avatar";
 import { Textarea } from "@/components/ui/textarea";
 import { hasRoomItemSelection } from "@/lib/room-checklist-rules";
 import { playDoorBell } from "@/lib/door-bell";
@@ -509,6 +510,7 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
   const [filtersSheetOpen, setFiltersSheetOpen] = useState(false);
   const [hideCompletedRooms, setHideCompletedRooms] = useState(false);
   const [hkFiltersOpen, setHkFiltersOpen] = useState(false);
+  const [hkFiltersAnchor, setHkFiltersAnchor] = useState<{ top: number; left: number } | null>(null);
   const [hkStatusFilter, setHkStatusFilter] = useState<string[]>([]);
   const [addRoomTypeOpen, setAddRoomTypeOpen] = useState(false);
   const [newRoomTypeLabel, setNewRoomTypeLabel] = useState("");
@@ -4854,7 +4856,10 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
       <SheetTitle className="sr-only">Menu</SheetTitle>
 
       {authUser && (
-        <SheetDescription>Signed in as {authUser.username}</SheetDescription>
+        <SheetDescription className="flex items-center gap-2.5">
+          <NamedAvatar name={authUser.username} className="h-9 w-9 text-base" />
+          <span>Signed in as {authUser.username}</span>
+        </SheetDescription>
       )}
     </SheetHeader>
     <div className="flex-1 min-h-0 overflow-y-auto px-4 max-lg:px-0 sm:px-6 py-4 sm:py-6">
@@ -5570,6 +5575,43 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
                   </div>
                 </div>
               );
+              const isIOSFilters = isMobile && typeof document !== "undefined" && document.documentElement.dataset.platform === "ios";
+              if (isIOSFilters) {
+                return (
+                  <>
+                    <span
+                      className="contents"
+                      onClick={(e) => {
+                        const r = (e.currentTarget.firstElementChild as HTMLElement | null)?.getBoundingClientRect();
+                        setHkFiltersAnchor(r ? { top: r.bottom + 8, left: r.left } : null);
+                        setHkFiltersOpen((o) => !o);
+                      }}
+                    >
+                      {triggerBtn}
+                    </span>
+                    {hkFiltersOpen && createPortal(
+                      <div className="fixed inset-0 z-[60]" onClick={() => setHkFiltersOpen(false)}>
+                        <div
+                          data-ios-progress-pop
+                          data-ios-filters-pop
+                          role="dialog"
+                          aria-label="Filter rooms"
+                          onClick={(e) => e.stopPropagation()}
+                          className="absolute w-[min(18rem,calc(100vw-1.5rem))] max-h-[65dvh] overflow-y-auto rounded-[22px] p-4 text-sidebar-foreground [&_.text-muted-foreground]:text-sidebar-foreground/70 [&_label:hover]:bg-sidebar-foreground/10"
+                          style={{ top: hkFiltersAnchor?.top ?? 120, left: Math.max(12, hkFiltersAnchor?.left ?? 12) }}
+                        >
+                          <div className="flex items-baseline justify-between pb-2">
+                            <span className="text-[15px] font-semibold">Filter rooms</span>
+                            <span className="text-xs opacity-70">{totalActive === 0 ? "Select multiple" : `${totalActive} active`}</span>
+                          </div>
+                          {body}
+                        </div>
+                      </div>,
+                      document.body,
+                    )}
+                  </>
+                );
+              }
               return isMobile ? (
                 <Sheet open={hkFiltersOpen} onOpenChange={setHkFiltersOpen}>
                   <SheetTrigger asChild>{triggerBtn}</SheetTrigger>

@@ -5,6 +5,7 @@ import { Sheet, SheetContent, SheetDescription, SheetHeader, SheetTitle } from "
 import { Button } from "@/components/ui/button";
 import { supabase } from "@/integrations/supabase/client";
 import { cn } from "@/lib/utils";
+import { UserAvatar, useAvatarUrls } from "@/components/user-avatar";
 
 type Category = { key: string; title: string; badge: string; emoji: string; unit: string };
 
@@ -161,6 +162,8 @@ function CategoryCard({ cat, rows }: { cat: Category; rows: [string, number][] }
   // Podium order: 2nd, 1st, 3rd
   const podium = [top[1], top[0], top[2]];
   const heights = ["h-12", "h-16", "h-9"];
+  const { data: avatars } = useAvatarUrls(rows.slice(0, 8).map((r) => r[0]));
+  const av = (n: string) => avatars?.[n.trim().toLowerCase()];
   return (
     <div className="rounded-2xl border bg-card p-3 shadow-elevation-1">
       <div className="flex items-center justify-between gap-2">
@@ -178,7 +181,10 @@ function CategoryCard({ cat, rows }: { cat: Category; rows: [string, number][] }
               <div key={i} className="flex min-w-0 flex-col items-center">
                 {p ? (
                   <>
-                    <span className="text-xl">{MEDALS[i === 1 ? 0 : i === 0 ? 1 : 2]}</span>
+                    <span className="relative">
+                      <UserAvatar key={av(p[0]) ?? "none"} name={p[0]} url={av(p[0])} className={i === 1 ? "h-12 w-12 text-lg" : "h-10 w-10 text-base"} />
+                      <span className="absolute -bottom-1 -right-2 text-base">{MEDALS[i === 1 ? 0 : i === 0 ? 1 : 2]}</span>
+                    </span>
                     <span className="w-full truncate text-center text-xs font-medium">{p[0]}</span>
                     <span className="text-[11px] tabular-nums text-muted-foreground">{p[1]} {cat.unit}</span>
                   </>
@@ -191,7 +197,7 @@ function CategoryCard({ cat, rows }: { cat: Category; rows: [string, number][] }
             <ol className="mt-2 space-y-0.5 text-sm" start={4}>
               {rest.map(([name, n], i) => (
                 <li key={name} className="flex justify-between text-muted-foreground">
-                  <span className="truncate">{i + 4}. {name}</span>
+                  <span className="flex min-w-0 items-center gap-2"><span className="tabular-nums">{i + 4}.</span><UserAvatar key={av(name) ?? "none"} name={name} url={av(name)} className="h-6 w-6 text-xs" /><span className="truncate">{name}</span></span>
                   <span className="tabular-nums">{n}</span>
                 </li>
               ))}
