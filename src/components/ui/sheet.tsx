@@ -93,7 +93,6 @@ export function useTakeoverClaim(open: boolean | undefined, onOpenChange?: (o: b
     const prev = takeover.owner;
     const me: TakeoverOwner = { id: idRef.current, close: () => closeRef.current(), label: takeover.nextLabel, hideClose: takeover.nextHideClose };
     takeover.nextLabel = "Close";
-    takeover.nextHideClose = false;
     takeover.owner = me;
     emitTakeover();
     if (prev && prev.id !== me.id) {
