@@ -3647,8 +3647,10 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
       <div className="flex flex-row gap-2">
         <button
           type="button"
+          data-ios-glass
+          data-ios-selected={receptionDoneSet.has(n) ? "true" : undefined}
           onClick={() => setReceptionSheetRoom(n)}
-            className={cn(
+          className={cn(
               "flex items-center justify-center gap-1.5 rounded-xl border bg-background px-3 sm:px-4 h-11 shadow-sm active:scale-[0.97] active:shadow-none flex-1 text-sm font-medium cursor-pointer transition-colors hover:bg-accent",
               receptionDoneSet.has(n)
                 ? "border-primary bg-primary/10 text-primary"
@@ -3659,6 +3661,8 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
         </button>
         <button
           type="button"
+          data-ios-glass
+          data-ios-selected={showAll ? "true" : undefined}
           onClick={() =>
             setShowAllLinen((prev) => ({ ...prev, [n]: !prev[n] }))
           }
@@ -3674,6 +3678,7 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
         {isAdmin && (
           <button
             type="button"
+            data-ios-glass
             onClick={() => setEditDefaultsSheetRoom(n)}
             className="inline-flex items-center justify-center h-11 w-11 shrink-0 rounded-xl border bg-background shadow-sm active:scale-[0.97] active:shadow-none text-sm font-medium cursor-pointer transition-colors hover:bg-accent disabled:opacity-50 disabled:cursor-not-allowed"
             aria-label="Edit defaults"
@@ -3699,6 +3704,7 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
           return (
             <button
               type="button"
+              data-ios-glass
               onClick={() => setNotesSheetRoom(n)}
               className="relative inline-flex items-center justify-center h-11 w-11 shrink-0 rounded-xl border bg-background shadow-sm active:scale-[0.97] active:shadow-none text-sm font-medium cursor-pointer transition-colors hover:bg-accent"
               aria-label="Room hub"
