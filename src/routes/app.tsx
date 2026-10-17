@@ -4117,18 +4117,20 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
         paddingTop: "env(safe-area-inset-top, 0px)",
       }}
     >
-      <div className="flex h-11 items-center justify-between gap-2">
+      <div data-mobile-topbar-row className="flex h-11 items-center justify-between gap-2">
         <h1 data-ios-title className="min-w-0 flex-1 truncate text-base font-semibold tracking-tight">{hotelName}</h1>
         {(isReception || isHousekeeper || (isAdmin && !isFnb && !isMaintenance)) && (
           <Button
             variant="ghost"
             size="sm"
             data-ios-glass
+            data-quick-setup
+            aria-label="Quick Room Setup"
             className={cn("shrink-0 gap-2 text-sidebar-foreground", quickReceptionOpen && "text-sidebar-primary")}
             onClick={() => { if (quickReceptionOpen) setQuickReceptionOpen(false); else { closeHomePanels("quick"); setQuickReceptionOpen(true); } }}
           >
             <ConciergeBell className="h-4 w-4" />
-            Quick Setup
+            <span data-qs-label>Quick Setup</span>
           </Button>
         )}
         <div ref={setTopBarSlot} className="empty:hidden shrink-0 order-last" />
@@ -5880,9 +5882,9 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
                         className="relative flex h-9 w-9 items-center justify-center rounded-full active:scale-95 transition-transform"
                       >
                         <svg viewBox="0 0 32 32" className="absolute inset-0 h-full w-full -rotate-90">
-                          <circle cx="16" cy="16" r={r} fill="none" strokeWidth="3" className="stroke-sidebar-accent" />
+                          <circle cx="16" cy="16" r={r} fill="none" strokeWidth="3.5" className="stroke-sidebar-accent" />
                           <circle
-                            cx="16" cy="16" r={r} fill="none" strokeWidth="3" strokeLinecap="round"
+                            cx="16" cy="16" r={r} fill="none" strokeWidth="3.5" strokeLinecap="round"
                             stroke={ringColour}
                             strokeDasharray={c}
                             strokeDashoffset={c - (c * pct) / 100}
@@ -5892,7 +5894,7 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
                         {isComplete ? (
                           <Check className="relative h-4 w-4 text-room-complete-accent" />
                         ) : (
-                          <span className="relative text-[10px] font-bold tabular-nums text-sidebar-foreground">
+                          <span className="relative text-[11px] font-bold tabular-nums text-sidebar-foreground">
                             {total - progress}
                           </span>
                         )}

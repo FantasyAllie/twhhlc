@@ -588,9 +588,9 @@ html {
   html[data-platform="ios"] [data-mobile-tabbar] button[aria-current="page"] [data-tab-icon] svg { fill: color-mix(in oklab, currentColor 25%, transparent); }
   html[data-platform="ios"] [data-mobile-tabbar] button { font-size: 9.5px; letter-spacing: -0.01em; }
   html[data-platform="ios"] [data-tabbar-spacer] { height: calc(4.5rem + env(safe-area-inset-bottom, 0px)) !important; }
-  /* iOS top bar: no box — content floats over the page with a soft fade. */
+  /* iOS top bar: no box — a soft fade from 30% theme colour down to nothing. */
   html[data-platform="ios"] [data-mobile-topbar] {
-    background: linear-gradient(to bottom, color-mix(in oklab, var(--color-background) 85%, transparent) 40%, transparent) !important;
+    background: linear-gradient(to bottom, color-mix(in oklab, var(--color-background) 30%, transparent) 0%, transparent 100%) !important;
     backdrop-filter: none;
     border: 0 !important;
     box-shadow: none !important;
@@ -609,12 +609,14 @@ html {
     box-shadow: inset 0 1px 0 color-mix(in oklab, white 35%, transparent), 0 4px 14px -6px rgb(0 0 0 / 0.35) !important;
     color: var(--color-foreground) !important;
   }
-  html[data-platform="ios"] [data-mobile-topbar] [data-ios-glass] { height: 2.25rem; }
-  html[data-platform="ios"] [data-mobile-topbar] button[data-ios-glass][aria-label^="Rooms progress"] { width: 2.25rem; }
-  html[data-platform="ios"] [data-mobile-topbar] {
-    background-color: color-mix(in oklab, var(--color-sidebar) 78%, transparent);
-    backdrop-filter: saturate(180%) blur(20px);
-  }
+  /* iOS top bar runs a touch taller so the controls don't fill its whole height. */
+  html[data-platform="ios"] [data-mobile-topbar] [data-mobile-topbar-row] { height: 3.5rem; }
+  /* Both top-bar controls are the same round glass size. */
+  html[data-platform="ios"] [data-mobile-topbar] [data-ios-glass] { height: 2.75rem; }
+  html[data-platform="ios"] [data-mobile-topbar] button[data-ios-glass][aria-label^="Rooms progress"] { width: 2.75rem; }
+  /* Quick Setup shows its icon only, in a circle matching the progress ring. */
+  html[data-platform="ios"] [data-mobile-topbar] [data-quick-setup] { width: 2.75rem; padding-inline: 0; }
+  html[data-platform="ios"] [data-mobile-topbar] [data-quick-setup] [data-qs-label] { display: none; }
   html[data-platform="ios"] [data-tab-icon] svg { stroke-width: 2.2; }
 
   html[data-platform="android"] body {
