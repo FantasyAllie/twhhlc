@@ -675,3 +675,6 @@ html {
   }
   html[data-platform="android"] [data-tab-icon] svg { stroke-width: 2.25; }
 }
+@media (max-width: 1023px) {
+  html[data-platform="ios"] .ios-menu-header { margin-top: -0.75rem; }
+}
