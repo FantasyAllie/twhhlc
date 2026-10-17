@@ -588,9 +588,9 @@ html {
   html[data-platform="ios"] [data-mobile-tabbar] button[aria-current="page"] [data-tab-icon] svg { fill: color-mix(in oklab, currentColor 25%, transparent); }
   html[data-platform="ios"] [data-mobile-tabbar] button { font-size: 9.5px; letter-spacing: -0.01em; }
   html[data-platform="ios"] [data-tabbar-spacer] { height: calc(4.5rem + env(safe-area-inset-bottom, 0px)) !important; }
-  /* iOS top bar: no box — a soft fade from 30% theme colour down to nothing. */
+  /* iOS top bar: no box — a soft fade from 60% theme colour down to nothing. */
   html[data-platform="ios"] [data-mobile-topbar] {
-    background: linear-gradient(to bottom, color-mix(in oklab, var(--color-background) 30%, transparent) 0%, transparent 100%) !important;
+    background: linear-gradient(to bottom, color-mix(in oklab, var(--color-background) 60%, transparent) 0%, transparent 100%) !important;
     backdrop-filter: none;
     border: 0 !important;
     box-shadow: none !important;
