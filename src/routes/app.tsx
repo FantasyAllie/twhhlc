@@ -6246,7 +6246,7 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
           {
             key: "more", label: "More", icon: Menu, active: menuSheetOpen,
             onClick: () => {
-              if (document.documentElement.dataset.platform === "ios") {
+              if (window.innerWidth < 1024) {
                 if (menuSheetOpen) return;
                 closeHomePanels();
                 armSheetTakeover({ hideClose: true });
