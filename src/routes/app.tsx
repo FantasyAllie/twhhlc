@@ -5905,18 +5905,28 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
                         </span>
                       </button>
                     );
-                    const findId = (pred: (l: string) => boolean) =>
-                      receptionStatuses.find((st) => pred(st.label.toLowerCase()))?.id ?? null;
-                    const cleanId = findId((l) => l === "clean");
-                    const arrivalId = findId((l) => l === "arrival");
-                    const stayId = findId((l) => l.replace(/[^a-z]/g, "").startsWith("stay"));
-                    const sidOf = (r: (typeof rooms)[number]) => r.reception_status_id ?? r.default_status;
-                    const countOf = (id: string | null) => (id ? rooms.filter((r) => sidOf(r) === id).length : 0);
+                    const lblById = new Map(receptionStatuses.map((s) => [s.id, s.label.toLowerCase()]));
+                    const bucketOf = (r: (typeof rooms)[number]): string => {
+                      if (nrOnRooms.has(r.room_number)) return "stayover";
+                      const sid = r.reception_status_id ?? r.default_status;
+                      const l = sid ? (lblById.get(sid) ?? "") : "";
+                      if (l === "staff" || l === "ros") return "rosstaff";
+                      if (l === "dnd" || l.replace(/[^a-z]/g, "").startsWith("stay")) return "stayover";
+                      if (["arrival", "dirty", "clean"].includes(l)) return l;
+                      if (l) return "progress";
+                      return counts.some((c) => c.room_number === r.room_number && (c.count ?? 0) > 0) ? "progress" : "not_started";
+                    };
+                    const tally = new Map<string, number>();
+                    rooms.forEach((r) => { const b = bucketOf(r); tally.set(b, (tally.get(b) ?? 0) + 1); });
+                    const countOf = (k: string) => tally.get(k) ?? 0;
                     const rows = [
-                      { label: "Clean", value: countOf(cleanId), colour: "var(--color-room-complete-accent)" },
-                      { label: "Arrival", value: countOf(arrivalId), colour: "var(--color-room-progress-accent)" },
-                      { label: "Stayover", value: countOf(stayId), colour: "var(--brass)" },
-                      { label: "Dirty", value: countOf(dirtyProgressId ?? null), colour: "var(--color-room-dirty-accent)" },
+                      { label: "Not started", value: countOf("not_started"), colour: "var(--color-room-todo-accent)" },
+                      { label: "In progress", value: countOf("progress"), colour: "var(--brass)" },
+                      { label: "Clean", value: countOf("clean"), colour: "var(--color-room-complete-accent)" },
+                      { label: "Arrival", value: countOf("arrival"), colour: "var(--color-room-progress-accent)" },
+                      { label: "Stayover", value: countOf("stayover"), colour: "var(--color-room-stayover-accent)" },
+                      { label: "Dirty", value: countOf("dirty"), colour: "var(--color-room-dirty-accent)" },
+                      { label: "ROS / Staff", value: countOf("rosstaff"), colour: "var(--color-room-staff-accent)" },
                     ];
                     const isIOSPlatform = typeof document !== "undefined" && document.documentElement.dataset.platform === "ios";
                     if (isIOSPlatform) {
