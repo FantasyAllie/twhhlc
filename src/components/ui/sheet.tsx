@@ -30,10 +30,11 @@ const SheetInlineProvider = ({
 
 // Home-screen takeover: a menu tap "arms" the next opening Sheet, which then
 // renders in-flow inside the registered slot instead of as an overlay.
-type TakeoverOwner = { id: number; close: () => void; label: string };
+type TakeoverOwner = { id: number; close: () => void; label: string; hideClose: boolean };
 const takeover = {
   armedUntil: 0,
   nextLabel: "Close",
+  nextHideClose: false,
   slot: null as HTMLElement | null,
   owner: null as TakeoverOwner | null,
   listeners: new Set<() => void>(),
@@ -45,9 +46,10 @@ let takeoverReplacing = false;
 export function isTakeoverReplacing() {
   return takeoverReplacing;
 }
-export function armSheetTakeover(opts?: { closeLabel?: string }) {
+export function armSheetTakeover(opts?: { closeLabel?: string; hideClose?: boolean }) {
   takeover.armedUntil = Date.now() + 600;
   takeover.nextLabel = opts?.closeLabel ?? "Close";
+  takeover.nextHideClose = opts?.hideClose ?? false;
 }
 export function setSheetTakeoverSlot(el: HTMLElement | null) {
   takeover.slot = el;
@@ -89,8 +91,9 @@ export function useTakeoverClaim(open: boolean | undefined, onOpenChange?: (o: b
     if (!claimed) return;
     takeover.armedUntil = 0;
     const prev = takeover.owner;
-    const me: TakeoverOwner = { id: idRef.current, close: () => closeRef.current(), label: takeover.nextLabel };
+    const me: TakeoverOwner = { id: idRef.current, close: () => closeRef.current(), label: takeover.nextLabel, hideClose: takeover.nextHideClose };
     takeover.nextLabel = "Close";
+    takeover.nextHideClose = false;
     takeover.owner = me;
     emitTakeover();
     if (prev && prev.id !== me.id) {
@@ -118,6 +121,14 @@ export function useFitToScreen(ref: React.MutableRefObject<HTMLElement | null>, 
     // Sticky phone top bar and floating tab bar: the panel sits between them.
     const barH = (sel: string) => document.querySelector<HTMLElement>(sel)?.getBoundingClientRect().height ?? 0;
     const fit = () => {
+      if (window.innerWidth < 1024 && document.documentElement.dataset.platform === "ios") {
+        const tabBar = document.querySelector<HTMLElement>("[data-mobile-tabbar]");
+        const bottom = tabBar?.getBoundingClientRect().top ?? window.innerHeight;
+        const top = barH("[data-mobile-topbar]") + 8;
+        node.style[prop] = `${Math.max(0, bottom - top - 8)}px`;
+        node.style.marginBottom = "0px";
+        return;
+      }
       if (isPhone()) {
         // Phones: panel fills the whole screen; the header scrolls off above it.
         node.style[prop] = `${window.innerHeight - barH("[data-mobile-topbar]") - barH("[data-tabbar-spacer]") - 16}px`;
@@ -160,7 +171,16 @@ export function TakeoverCloseButton({ onClose, label: forced }: { onClose: () =>
     () => takeover.owner?.label ?? "Close",
     () => "Close",
   );
+  const hideClose = React.useSyncExternalStore(
+    (l) => {
+      takeover.listeners.add(l);
+      return () => takeover.listeners.delete(l);
+    },
+    () => takeover.owner?.hideClose ?? false,
+    () => false,
+  );
   const label = forced ?? ownerLabel;
+  if (hideClose && !forced) return null;
   return (
     <button
       type="button"
