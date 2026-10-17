@@ -4847,7 +4847,7 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
   }}
 />
 <Sheet open={menuSheetOpen} onOpenChange={setMenuSheetOpen}>
-  <SheetContent side="right" disableDragDismiss className="w-auto max-w-[90vw] min-w-[18rem] sm:max-w-md p-0 flex flex-col overflow-hidden [&_[data-sheet-close]]:max-lg:hidden">
+  <SheetContent side="right" disableDragDismiss className="app-menu-screen w-auto max-w-[90vw] min-w-[18rem] sm:max-w-md p-0 flex flex-col overflow-hidden [&_[data-sheet-close]]:max-lg:hidden">
     <SheetHeader className="relative text-left shrink-0 px-4 sm:px-6 pt-4 sm:pt-6 pb-3 bg-background border-b">
       <SheetTitle className="sr-only">Menu</SheetTitle>
 
@@ -6170,7 +6170,7 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
         const openTab = (key: "messages" | "maintenance" | "lost", open: () => void, isOpen: boolean) => {
           if (isOpen) { closeHomePanels(); return; }
           closeHomePanels(key);
-          armSheetTakeover();
+          armSheetTakeover({ hideClose: document.documentElement.dataset.platform === "ios" });
           open();
         };
         const tabs = [
@@ -6198,7 +6198,15 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
           },
           {
             key: "more", label: "More", icon: Menu, active: menuSheetOpen,
-            onClick: () => { window.scrollTo({ top: 0, behavior: "instant" as ScrollBehavior }); setMenuSheetOpen(true); },
+            onClick: () => {
+              if (document.documentElement.dataset.platform === "ios") {
+                if (menuSheetOpen) return;
+                closeHomePanels();
+                armSheetTakeover({ hideClose: true });
+              }
+              window.scrollTo({ top: 0, behavior: "instant" as ScrollBehavior });
+              setMenuSheetOpen(true);
+            },
           },
         ];
         return tabs.map((t) => {
