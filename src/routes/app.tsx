@@ -6120,7 +6120,6 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
       </div>
    </SheetContent>
  </Sheet>
- </div>
  </HomeInline>
 
   <ExportPreviewDialogs
