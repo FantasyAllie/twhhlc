@@ -616,6 +616,7 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
   // Housekeeping room grid: the open room expands inline below its row.
   const [roomGridEl, setRoomGridEl] = useState<HTMLDivElement | null>(null);
   const [roomSlotEl, setRoomSlotEl] = useState<HTMLDivElement | null>(null);
+  const [roomViewBodyEl, setRoomViewBodyEl] = useState<HTMLDivElement | null>(null);
   const [roomGridCols, setRoomGridCols] = useState(4);
   useEffect(() => {
     if (!roomGridEl) return;
@@ -2082,8 +2083,8 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [openRoom]);
 
-  // Animate the inline room slot opening and swapping between room view and
-  // status view: whenever its content changes, grow/shrink from the old height.
+  // Animate only the room opening. Tab bodies swap inside a persistent frame
+  // without collapsing or moving the navigation.
   // Observes the stable grid and runs synchronously (MutationObserver fires
   // before paint), so the new content never flashes at full height first.
   useEffect(() => {
@@ -2100,6 +2101,7 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
       if (to === 0 || Math.abs(to - from) < 24 ||
           window.matchMedia("(prefers-reduced-motion: reduce)").matches) return;
       const opening = from === 0;
+      if (!opening) return;
       el.style.overflow = "hidden";
       const anim = el.animate(
         [
@@ -3764,7 +3766,6 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
     })()}
 
 
-    {!isReception && renderRoomNavigation(n)}
     {/* Compact message peek — shows the latest active room message directly
         under the action row. Tap to open the notifications panel to
         dismiss/confirm. */}
@@ -4646,9 +4647,9 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
   />
 
   {/* Notes sheet (User/Admin + Reception) */}
-  <HomeInline active={!isReception && openRoom !== null && notesSheetRoom === openRoom} target={roomSlotEl} noFit>
+  <HomeInline active={!isReception && openRoom !== null && notesSheetRoom === openRoom} target={roomViewBodyEl} noFit>
   <RoomNotesSheet
-    navigation={!isReception && openRoom !== null && notesSheetRoom === openRoom ? renderRoomNavigation(openRoom) : undefined}
+    inlineView={!isReception && openRoom !== null && notesSheetRoom === openRoom}
     notesSheetRoom={notesSheetRoom}
     setNotesSheetRoom={setNotesSheetRoom}
     rooms={rooms}
@@ -4699,9 +4700,8 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
 
 
  {/* Reception sheet (Admin/User): Done + Status + Bed */}
-  <HomeInline active={!isReception && openRoom !== null && receptionSheetRoom === openRoom} target={roomSlotEl} noFit>
+  <HomeInline active={!isReception && openRoom !== null && receptionSheetRoom === openRoom} target={roomViewBodyEl} noFit>
   <ReceptionStatusSheet
-    navigation={!isReception && openRoom !== null && receptionSheetRoom === openRoom ? renderRoomNavigation(openRoom) : undefined}
     inlineView={!isReception && openRoom !== null && receptionSheetRoom === openRoom}
     receptionSheetRoom={receptionSheetRoom}
     setReceptionSheetRoom={setReceptionSheetRoom}
@@ -5119,9 +5119,9 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
   clearAllSnapshots={clearAllSnapshots}
 />
 
-<HomeInline active={!isReception && openRoom !== null && editDefaultsSheetRoom === openRoom} target={roomSlotEl} noFit>
+<HomeInline active={!isReception && openRoom !== null && editDefaultsSheetRoom === openRoom} target={roomViewBodyEl} noFit>
 <EditRoomDefaultsSheet
-   navigation={!isReception && openRoom !== null && editDefaultsSheetRoom === openRoom ? renderRoomNavigation(openRoom) : undefined}
+   inlineView={!isReception && openRoom !== null && editDefaultsSheetRoom === openRoom}
    editDefaultsSheetRoom={editDefaultsSheetRoom}
    isPreferred={isPreferred}
    togglePreferred={togglePreferred}
@@ -6093,7 +6093,6 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
  </div>
 
  <HomeInline active={openRoom !== null} target={roomSlotEl} noFit>
- <div className={cn(!isReception && openRoom !== null && ["status", "edit", "hub"].includes(activeRoomTab(openRoom) ?? "") && "hidden")}>
  <Sheet open={openRoom !== null} onOpenChange={(o) => { if (!o) closeRoomView(); }}>
    <SheetContent side="bottom" className={cn("flex flex-col overflow-hidden rounded-t-2xl p-4 sm:p-6")}>
       <SheetHeader className="sr-only">
@@ -6113,12 +6112,14 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
         );
       })()}
      </SheetHeader>
-      <div className="flex flex-col flex-1 min-h-0">
-       {openRoom !== null && renderRoomPanel(openRoom)}
-     </div>
+      {!isReception && openRoom !== null && renderRoomNavigation(openRoom)}
+      <div ref={setRoomViewBodyEl} data-room-view-body className="flex flex-col flex-1 min-h-0">
+        <div hidden={!isReception && openRoom !== null && ["status", "edit", "hub"].includes(activeRoomTab(openRoom) ?? "")}>
+          {openRoom !== null && renderRoomPanel(openRoom)}
+        </div>
+      </div>
    </SheetContent>
  </Sheet>
- </div>
  </HomeInline>
 
   <ExportPreviewDialogs

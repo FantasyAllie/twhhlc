@@ -20,6 +20,7 @@ type MessagesInitial = {
 
 type Props = {
   navigation?: ReactNode;
+  inlineView?: boolean;
   notesSheetRoom: number | null;
   setNotesSheetRoom: (n: number | null) => void;
   rooms: Room[];
@@ -52,6 +53,7 @@ type Props = {
 
 export function RoomNotesSheet({
   navigation,
+  inlineView,
   notesSheetRoom,
   setNotesSheetRoom,
   rooms,
@@ -94,7 +96,7 @@ export function RoomNotesSheet({
      }
    }}
  >
-   <SheetContent side="bottom" className="overflow-y-auto rounded-t-2xl p-4 sm:p-6">
+   <SheetContent embedded={inlineView} side="bottom" className="overflow-y-auto rounded-t-2xl p-4 sm:p-6">
      {navigation}
      {notesSheetRoom !== null && (() => {
        const n = notesSheetRoom;
@@ -110,14 +112,14 @@ export function RoomNotesSheet({
        };
        return (
          <>
-           <SheetHeader className="text-left">
+           <SheetHeader className={inlineView ? "sr-only" : "text-left"}>
               <SheetTitle className="flex items-center gap-2">
                 <Inbox className="h-4 w-4" />
                  Room hub — Room {n}
              </SheetTitle>
              <SheetDescription>Messages, logs and room info</SheetDescription>
            </SheetHeader>
-            <div className="mt-4 space-y-3">
+            <div className={cn("space-y-3", !inlineView && "mt-4")}>
               <div className="grid grid-cols-2 gap-2">
                 <Button
                   type="button"

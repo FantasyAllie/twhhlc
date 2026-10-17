@@ -5,6 +5,8 @@
 - [x] Sad full-screen outcome + sad trombone sound when completion happens with Dirty rooms present
 
 ## Current work
+- [x] Keep room tabs fixed across views, eliminate first-open collapse, and hide inline Edit/Room hub headings and descriptions
+- [x] Verify seamless room switching and button positions without modifying room records
 - [x] Make Status, Extra linen, Edit and Room hub toggle inline views with persistent room navigation
 - [x] Verify long-press Status and room-tile return-home behaviour without changing room data
 - [x] Remove the shortcut cards from the F&B and Maintenance home screens and verify their panels still open
