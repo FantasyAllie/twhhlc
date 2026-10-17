@@ -625,9 +625,10 @@ html {
     content: ""; position: absolute; top: 0; right: 0; left: 3.5rem;
     border-top: 1px solid var(--color-border);
   }
+  /* iOS More screen: glyphs sit bare on the row, tinted with the chosen accent. */
   html[data-platform="ios"] .app-menu-screen [data-ios-icon] {
     display: flex; height: 1.85rem; width: 1.85rem; align-items: center; justify-content: center;
-    border-radius: 0.5rem; background: var(--color-brass); color: var(--color-brass-foreground);
+    border-radius: 0; background: transparent; color: var(--color-sidebar-primary);
   }
   html[data-platform="ios"] .app-menu-screen [data-ios-icon] svg { color: inherit; }
   html[data-platform="ios"] .app-menu-screen [data-ios-chevron] { display: block; }
