@@ -5,6 +5,8 @@
 - [x] Sad full-screen outcome + sad trombone sound when completion happens with Dirty rooms present
 
 ## Current work
+- [ ] Make Status, Extra linen, Edit and Room hub toggle inline views with persistent room navigation
+- [ ] Verify long-press Status and room-tile return-home behaviour without changing room data
 - [x] Remove the shortcut cards from the F&B and Maintenance home screens and verify their panels still open
 - [x] F&B: rename Export to Export & Print and overwrite the same-day export without asking
 - [x] Remove the shortcut cards entirely from every department's home screen; panels open from the settings menu only
