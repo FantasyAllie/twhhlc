@@ -34,4 +34,4 @@
 - [x] Urgent option on maintenance requests + Urgent pill between Open and Completed
 - [x] Open list keeps posting order — no urgent priority there
 
-- [x] iPhone: taller top bar with a 30%-to-0% fade, icon-only Quick Setup, progress ring sized to match
+- [x] iPhone: taller top bar with a 60%-to-0% fade, icon-only Quick Setup, progress ring sized to match
