@@ -622,7 +622,7 @@ html {
   html[data-platform="ios"] [data-mobile-topbar] [data-mobile-topbar-row] { height: 3.5rem; }
   /* Both top-bar controls are the same round glass size. */
   html[data-platform="ios"] [data-mobile-topbar] [data-ios-glass] { height: 2.75rem; }
-  html[data-platform="ios"] [data-mobile-topbar] button[data-ios-glass][aria-label^="Rooms progress"] { width: 2.75rem; }
+  html[data-platform="ios"] [data-mobile-topbar] button[data-ios-glass][aria-label^="Rooms progress"] { width: auto; }
   /* Quick Setup shows its icon only, in a circle matching the progress ring. */
   html[data-platform="ios"] [data-mobile-topbar] [data-quick-setup] { width: 2.75rem; padding-inline: 0; }
   html[data-platform="ios"] [data-mobile-topbar] [data-quick-setup] [data-qs-label] { display: none; }
