@@ -676,7 +676,9 @@ html {
   html[data-platform="android"] [data-tab-icon] svg { stroke-width: 2.25; }
 }
 @media (max-width: 1023px) {
-  html[data-platform="ios"] .ios-menu-header { margin-top: -0.75rem; }
+  html[data-platform="ios"] .ios-menu-header { margin-top: 0; }
+  /* Full-screen panels: only the panel's own list scrolls, never the page behind it. */
+  html:has([data-takeover]), html:has([data-takeover]) body { overflow: hidden; overscroll-behavior: none; height: 100%; }
 }
 
 /* ---- iOS (phones): Liquid Glass controls everywhere except the room tiles ---- */

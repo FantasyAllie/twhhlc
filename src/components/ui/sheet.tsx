@@ -334,6 +334,7 @@ const SheetContent = React.forwardRef<
       <div
         ref={setRefs}
         data-ios-panel
+        data-takeover={!inlineCtx.noFit ? "" : undefined}
         className={cn(
           className,
           "relative flex max-h-none flex-col overflow-hidden rounded-2xl border bg-background p-4 shadow-elevation-1 sm:p-6",
@@ -342,7 +343,7 @@ const SheetContent = React.forwardRef<
         )}
       >
         {!inlineCtx.noFit && <TakeoverCloseButton onClose={inlineCtx.onClose} />}
-        <div className="flex min-h-0 flex-1 flex-col overflow-y-auto md:overscroll-contain">
+        <div className="flex min-h-0 flex-1 flex-col overflow-y-auto overscroll-contain">
           <SheetInlineContext.Provider value={{ inline: false, onClose: inlineCtx.onClose }}>
             <SheetInlineBodyContext.Provider value={true}>{children}</SheetInlineBodyContext.Provider>
           </SheetInlineContext.Provider>
