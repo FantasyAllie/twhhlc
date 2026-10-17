@@ -330,6 +330,8 @@ const SheetContent = React.forwardRef<
         className={cn(
           className,
           "relative flex max-h-none flex-col overflow-hidden rounded-2xl border bg-background p-4 shadow-elevation-1 sm:p-6",
+          // Phones: full-screen takeovers sit straight on the page — no enclosure box.
+          !inlineCtx.noFit && "max-lg:!rounded-none max-lg:!border-0 max-lg:!bg-transparent max-lg:!shadow-none max-lg:!px-1 max-lg:!py-2",
         )}
       >
         {!inlineCtx.noFit && <TakeoverCloseButton onClose={inlineCtx.onClose} />}
