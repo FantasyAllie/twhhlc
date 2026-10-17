@@ -333,6 +333,7 @@ const SheetContent = React.forwardRef<
     return (
       <div
         ref={setRefs}
+        data-ios-panel
         className={cn(
           className,
           "relative flex max-h-none flex-col overflow-hidden rounded-2xl border bg-background p-4 shadow-elevation-1 sm:p-6",
