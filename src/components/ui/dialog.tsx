@@ -106,6 +106,8 @@ const DialogContent = React.forwardRef<
         className={cn(
           className,
           "relative flex max-h-none w-full max-w-none flex-col gap-0 overflow-hidden rounded-2xl border bg-background p-4 shadow-elevation-1 sm:p-6",
+          // Phones: full-screen takeovers sit straight on the page — no enclosure box.
+          "max-lg:!rounded-none max-lg:!border-0 max-lg:!bg-transparent max-lg:!shadow-none max-lg:!px-0 max-lg:!pt-3 max-lg:!pb-2",
         )}
       >
         {onBack ? <TakeoverCloseButton onClose={onBack} label="Back" /> : <TakeoverCloseButton onClose={inlineClose} />}
