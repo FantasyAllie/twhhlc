@@ -1600,6 +1600,8 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
       if (hasMaintenanceRole) out.push("maintenance");
       return out;
     })();
+    const isMaintenanceOnlyUser =
+      !menuIsAdmin && hasMaintenanceRole && !hasHousekeeperRole && !hasReceptionRole && !hasFnbRole;
     const menuIsFnbOnly =
       position === "user" && hasFnbRole && !hasHousekeeperRole && !hasReceptionRole;
     const logLostProperty = async (
@@ -4772,6 +4774,7 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
   canAdd={menuCanUseLostProperty}
   requireRoom={hasHousekeeperRole && !hasReceptionRole}
   scope={logScope}
+  departments={menuIsAdmin || hasReceptionRole ? null : myMessageDepartments}
   areaLabels={maintenanceAreas.map((a) => a.label)}
   roomNumbers={rooms.map((r) => r.room_number).sort((a, b) => a - b)}
   onAdd={logLostProperty}
@@ -5022,6 +5025,7 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
   deleteMessage={deleteRoomMessage}
   maintenanceAreas={maintenanceAreas}
   scope={logScope}
+  composeOnly={isMaintenanceOnlyUser}
   hasOpenMaintenance={hasOpenMaintenance}
   openMaintenanceCount={openMaintenanceCount}
   isReception={isReception}
@@ -5879,8 +5883,10 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
                         onClick={() => { handleProgressTap(); setProgressSheetOpen(true); }}
                         data-ios-glass
                         aria-label={`Rooms progress: ${progress} of ${total} done`}
-                        className="relative flex h-9 w-9 items-center justify-center rounded-full active:scale-95 transition-transform"
+                        data-ios-ring-pill
+                        className="flex h-9 items-center gap-1.5 rounded-full pl-1 pr-3 active:scale-95 transition-transform"
                       >
+                        <span className="relative flex h-7 w-7 shrink-0 items-center justify-center">
                         <svg viewBox="0 0 32 32" className="absolute inset-0 h-full w-full -rotate-90">
                           <circle cx="16" cy="16" r={r} fill="none" strokeWidth="3.5" className="stroke-sidebar-accent" />
                           <circle
@@ -5891,25 +5897,25 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
                             style={{ transition: "stroke-dashoffset 500ms ease-out, stroke 500ms" }}
                           />
                         </svg>
-                        {isComplete ? (
-                          <Check className="relative h-4 w-4 text-room-complete-accent" />
-                        ) : (
-                          <span className="relative text-[11px] font-bold tabular-nums text-sidebar-foreground">
-                            {total - progress}
-                          </span>
-                        )}
+                        {isComplete && <Check className="relative h-3.5 w-3.5 text-room-complete-accent" />}
+                        </span>
+                        <span className="text-sm font-semibold tabular-nums text-sidebar-foreground">
+                          {progress}/{total}
+                        </span>
                       </button>
                     );
-                    const cleanId = receptionStatuses.find((s) => s.label.toLowerCase() === "clean")?.id ?? null;
-                    const arrivalId = receptionStatuses.find((s) => s.label.toLowerCase() === "arrival")?.id ?? null;
-                    const notDone = (r: (typeof rooms)[number]) => !(r.done || r.done_reception);
+                    const findId = (pred: (l: string) => boolean) =>
+                      receptionStatuses.find((st) => pred(st.label.toLowerCase()))?.id ?? null;
+                    const cleanId = findId((l) => l === "clean");
+                    const arrivalId = findId((l) => l === "arrival");
+                    const stayId = findId((l) => l.replace(/[^a-z]/g, "").startsWith("stay"));
                     const sidOf = (r: (typeof rooms)[number]) => r.reception_status_id ?? r.default_status;
-                    const cleanArrivalLeft = eligible.filter((r) => notDone(r) && (sidOf(r) === cleanId || sidOf(r) === arrivalId)).length;
-                    const dirtyLeft = rooms.filter((r) => notDone(r) && ((dirtyProgressId && sidOf(r) === dirtyProgressId) || r.guest_vacated)).length;
+                    const countOf = (id: string | null) => (id ? rooms.filter((r) => sidOf(r) === id).length : 0);
                     const rows = [
-                      { label: "Done", value: progress, colour: "var(--color-room-complete-accent)" },
-                      { label: "Clean / Arrival", value: cleanArrivalLeft, colour: "var(--color-room-progress-accent)" },
-                      { label: "Dirty / Departures", value: dirtyLeft, colour: "var(--color-room-dirty-accent)" },
+                      { label: "Clean", value: countOf(cleanId), colour: "var(--color-room-complete-accent)" },
+                      { label: "Arrival", value: countOf(arrivalId), colour: "var(--color-room-progress-accent)" },
+                      { label: "Stayover", value: countOf(stayId), colour: "var(--brass)" },
+                      { label: "Dirty", value: countOf(dirtyProgressId ?? null), colour: "var(--color-room-dirty-accent)" },
                     ];
                     return (
                       <>
