@@ -9,6 +9,7 @@ import type { ReceptionItem, Room } from "@/lib/app-types";
 import { RoomChecklistRecords, RoomCheckedItemSelectors } from "@/components/rooms/room-checklists";
 
 type Props = {
+  navigation?: React.ReactNode;
   receptionSheetRoom: number | null;
   setReceptionSheetRoom: (n: number | null) => void;
   /** When set, the sheet is shown inline in the room view; renders a back button. */
@@ -47,6 +48,7 @@ type Props = {
 };
 
 export function ReceptionStatusSheet({
+  navigation,
   receptionSheetRoom,
   setReceptionSheetRoom,
   onBack,
@@ -84,6 +86,7 @@ export function ReceptionStatusSheet({
   return (
  <Sheet open={receptionSheetRoom !== null} onOpenChange={(o) => { if (!o) setReceptionSheetRoom(null); }}>
    <SheetContent side="bottom" className="overflow-y-auto rounded-t-2xl p-4 sm:p-6">
+     {navigation}
      {receptionSheetRoom !== null && (() => {
        const n = receptionSheetRoom;
        const room = rooms.find((r) => r.room_number === n);
