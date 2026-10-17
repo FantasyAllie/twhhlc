@@ -33,7 +33,7 @@ export function RoomCheckedItemSelectors({ roomNumber, selectedItems }: { roomNu
               } catch (error) { toast.error((error as { message?: string }).message ?? "Could not save room items."); }
               finally { setBusy(false); }
             }}>
-            {selected && <Check className="h-4 w-4 shrink-0" />}<span className="min-w-0 break-words">{item}</span>
+            <span className="min-w-0 break-words">{item}</span>
           </Button>;
         })}
       </div>}
