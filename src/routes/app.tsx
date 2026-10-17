@@ -5292,9 +5292,9 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
 
 
  <div className="relative flex items-center justify-between">
- <h2 className="text-sm font-medium text-muted-foreground uppercase tracking-wide">
+ {isReception && <h2 className="text-sm font-medium text-muted-foreground uppercase tracking-wide">
  Rooms
- </h2>
+ </h2>}
      {isReception && (() => {
           const totalSelected =
             receptionFeatureFilter.length +
@@ -5518,7 +5518,7 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
           setHideCompletedRooms(false);
         };
         return (
-          <div data-ios-glass className="absolute left-1/2 -translate-x-1/2 inline-flex items-center rounded-lg border border-input bg-background shadow-sm overflow-hidden">
+          <div data-ios-glass className="inline-flex items-center rounded-lg border border-input bg-background shadow-sm overflow-hidden">
             {(() => {
               const triggerBtn = (
                 <Button
