@@ -1,6 +1,7 @@
 // Admin per-room configuration sheets: linen defaults and room settings.
 // Extracted verbatim from src/routes/app.tsx.
 import { Check, Pencil, Star } from "lucide-react";
+import type { ReactNode } from "react";
 import { cn } from "@/lib/utils";
 import {
   Sheet,
@@ -19,6 +20,7 @@ import type {
 } from "@/lib/app-types";
 
 export function EditRoomDefaultsSheet({
+  navigation,
   editDefaultsSheetRoom,
   setEditDefaultsSheetRoom,
   template,
@@ -27,6 +29,7 @@ export function EditRoomDefaultsSheet({
   isPreferred,
   togglePreferred,
 }: {
+  navigation?: ReactNode;
   editDefaultsSheetRoom: number | null;
   setEditDefaultsSheetRoom: (n: number | null) => void;
   template: TemplateItem[];
@@ -38,6 +41,7 @@ export function EditRoomDefaultsSheet({
   return (
  <Sheet open={editDefaultsSheetRoom !== null} onOpenChange={(o) => { if (!o) setEditDefaultsSheetRoom(null); }}>
    <SheetContent side="bottom" className="overflow-y-auto rounded-t-2xl p-4 sm:p-6">
+     {navigation}
      {editDefaultsSheetRoom !== null && (() => {
        const n = editDefaultsSheetRoom;
        return (

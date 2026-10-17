@@ -1,4 +1,5 @@
 import { useState } from "react";
+import type { ReactNode } from "react";
 import { Clock, MessageSquare, DoorOpen, Footprints, Wrench, X, Dog, Inbox, Plus, PackageSearch, ChevronDown } from "lucide-react";
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetDescription } from "@/components/ui/sheet";
 import { Button } from "@/components/ui/button";
@@ -18,6 +19,7 @@ type MessagesInitial = {
 };
 
 type Props = {
+  navigation?: ReactNode;
   notesSheetRoom: number | null;
   setNotesSheetRoom: (n: number | null) => void;
   rooms: Room[];
@@ -49,6 +51,7 @@ type Props = {
 };
 
 export function RoomNotesSheet({
+  navigation,
   notesSheetRoom,
   setNotesSheetRoom,
   rooms,
@@ -92,6 +95,7 @@ export function RoomNotesSheet({
    }}
  >
    <SheetContent side="bottom" className="overflow-y-auto rounded-t-2xl p-4 sm:p-6">
+     {navigation}
      {notesSheetRoom !== null && (() => {
        const n = notesSheetRoom;
        const room = rooms.find((r) => r.room_number === n);
