@@ -186,7 +186,7 @@ export function TakeoverCloseButton({ onClose, label: forced }: { onClose: () =>
       aria-label={label}
       data-touch-exempt
       onClick={onClose}
-      className="absolute right-4 top-4 max-lg:top-3 z-30 inline-flex h-8 min-h-0 min-w-0 shrink-0 items-center justify-center rounded-full border bg-background px-3 text-xs font-medium leading-none text-muted-foreground transition-colors hover:bg-accent hover:text-foreground"
+      className="absolute right-4 top-4 max-lg:right-3 max-lg:top-3 z-30 inline-flex h-8 min-h-0 min-w-0 shrink-0 items-center justify-center rounded-full border bg-background px-3 text-xs font-medium leading-none text-muted-foreground transition-colors hover:bg-accent hover:text-foreground"
     >
       {label}
     </button>
@@ -331,7 +331,7 @@ const SheetContent = React.forwardRef<
           className,
           "relative flex max-h-none flex-col overflow-hidden rounded-2xl border bg-background p-4 shadow-elevation-1 sm:p-6",
           // Phones: full-screen takeovers sit straight on the page — no enclosure box.
-          !inlineCtx.noFit && "max-lg:!rounded-none max-lg:!border-0 max-lg:!bg-transparent max-lg:!shadow-none max-lg:!px-4 max-lg:!pt-3 max-lg:!pb-2",
+          !inlineCtx.noFit && "max-lg:!rounded-none max-lg:!border-0 max-lg:!bg-transparent max-lg:!shadow-none max-lg:!px-3 max-lg:!pt-3 max-lg:!pb-2",
         )}
       >
         {!inlineCtx.noFit && <TakeoverCloseButton onClose={inlineCtx.onClose} />}
