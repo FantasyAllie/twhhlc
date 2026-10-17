@@ -3440,7 +3440,8 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
               active === "status"
                 ? "border-primary bg-primary/10 text-primary"
                 : ""
-                >
+            )}
+        >
           Status
         </Button>
         <Button
@@ -3521,7 +3522,6 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
           );
         })()}
       </div>
-    )}
     );
  };
 
