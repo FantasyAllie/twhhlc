@@ -615,7 +615,7 @@ html {
   }
   html[data-platform="ios"] .app-menu-screen [data-ios-icon] {
     display: flex; height: 1.85rem; width: 1.85rem; align-items: center; justify-content: center;
-    border-radius: 0.5rem; background: var(--color-brass); color: var(--color-ink, white);
+    border-radius: 0.5rem; background: var(--color-brass); color: var(--color-brass-foreground);
   }
   html[data-platform="ios"] .app-menu-screen [data-ios-icon] svg { color: inherit; }
   html[data-platform="ios"] .app-menu-screen [data-ios-chevron] { display: block; }
