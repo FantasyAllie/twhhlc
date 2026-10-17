@@ -1,5 +1,5 @@
 import React from "react";
-import { ArrowLeft, ChevronDown, ConciergeBell, DoorOpen, Footprints, Camera, Clock, Dog } from "lucide-react";
+import { ArrowLeft, Check, ChevronDown, ConciergeBell, DoorOpen, Footprints, Camera, Clock, Dog } from "lucide-react";
 import type { QueryClient } from "@tanstack/react-query";
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetDescription } from "@/components/ui/sheet";
 import { Button } from "@/components/ui/button";
@@ -119,6 +119,7 @@ export function ReceptionStatusSheet({
             variant="outline"
            type="button"
            disabled={disabled}
+           aria-pressed={selected}
            onClick={onClick}
            data-no-click-sound={noClickSound ? "true" : undefined}
            className={cn(
@@ -126,7 +127,10 @@ export function ReceptionStatusSheet({
              selected && "border-primary bg-primary/10 text-primary",
            )}
          >
-          <span className="text-center">{label}</span>
+          <span className="inline-flex min-w-0 items-center justify-center gap-1.5 text-center">
+            <span className="min-w-0">{label}</span>
+            {selected && <Check data-ios-selection-tick className="h-3.5 w-3.5 shrink-0" strokeWidth={3} aria-hidden="true" />}
+          </span>
           </Button>
        );
        return (
