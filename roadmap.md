@@ -36,3 +36,4 @@
 
 - [x] iPhone: taller top bar with a 60%-to-0% fade, icon-only Quick Setup, progress ring sized to match
 - [x] iPhone: More opens as its own screen, tab screens have no Close button, and scrollable content ends above the floating tab bar
+- [x] Show the Quick Setup button as its bell icon only on phones, iPhone and Android alike
