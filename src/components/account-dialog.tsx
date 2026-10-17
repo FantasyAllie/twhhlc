@@ -5,6 +5,7 @@ import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { getStoredUser } from "@/lib/auth-client";
 import { Button } from "@/components/ui/button";
+import { AvatarEditor } from "@/components/user-avatar";
 import { Input } from "@/components/ui/input";
 import {
   Dialog,
@@ -173,6 +174,11 @@ export function AccountDialog({
           </DialogDescription>
         </DialogHeader>
         <form onSubmit={saveAll} className="space-y-6">
+          <div className="space-y-2">
+            <h3 className="text-sm font-semibold">Display photo</h3>
+            <AvatarEditor username={currentUsername} />
+          </div>
+          <div className="border-t" />
           <div className="space-y-2">
             <h3 className="text-sm font-semibold">New username</h3>
             <Input

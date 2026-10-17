@@ -4855,7 +4855,10 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
       <SheetTitle className="sr-only">Menu</SheetTitle>
 
       {authUser && (
-        <SheetDescription>Signed in as {authUser.username}</SheetDescription>
+        <SheetDescription className="flex items-center gap-2.5">
+          <NamedAvatar name={authUser.username} className="h-9 w-9 text-base" />
+          <span>Signed in as {authUser.username}</span>
+        </SheetDescription>
       )}
     </SheetHeader>
     <div className="flex-1 min-h-0 overflow-y-auto px-4 max-lg:px-0 sm:px-6 py-4 sm:py-6">
