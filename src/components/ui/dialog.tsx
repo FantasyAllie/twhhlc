@@ -103,6 +103,7 @@ const DialogContent = React.forwardRef<
     return (
       <div
         ref={setRefs}
+        data-ios-panel
         className={cn(
           className,
           "relative flex max-h-none w-full max-w-none flex-col gap-0 overflow-hidden rounded-2xl border bg-background p-4 shadow-elevation-1 sm:p-6",
