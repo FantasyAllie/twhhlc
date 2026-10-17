@@ -4850,14 +4850,14 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
 />
 <Sheet open={menuSheetOpen} onOpenChange={setMenuSheetOpen}>
   <SheetContent side="right" disableDragDismiss className="app-menu-screen w-auto max-w-[90vw] min-w-[18rem] sm:max-w-md p-0 flex flex-col overflow-hidden [&_[data-sheet-close]]:max-lg:hidden">
-    <SheetHeader className="relative text-left shrink-0 px-4 sm:px-6 pt-4 sm:pt-6 pb-3 bg-background border-b">
+    <SheetHeader className="relative text-left shrink-0 px-4 max-lg:px-0 max-lg:bg-transparent sm:px-6 pt-4 sm:pt-6 pb-3 bg-background border-b">
       <SheetTitle className="sr-only">Menu</SheetTitle>
 
       {authUser && (
         <SheetDescription>Signed in as {authUser.username}</SheetDescription>
       )}
     </SheetHeader>
-    <div className="flex-1 min-h-0 overflow-y-auto px-4 sm:px-6 py-4 sm:py-6">
+    <div className="flex-1 min-h-0 overflow-y-auto px-4 max-lg:px-0 sm:px-6 py-4 sm:py-6">
     {(() => {
       const Row = ({
         icon: Icon,
@@ -5292,9 +5292,9 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
 
 
  <div className="relative flex items-center justify-between">
- <h2 className="text-sm font-medium text-muted-foreground uppercase tracking-wide">
+ {isReception && <h2 className="text-sm font-medium text-muted-foreground uppercase tracking-wide">
  Rooms
- </h2>
+ </h2>}
      {isReception && (() => {
           const totalSelected =
             receptionFeatureFilter.length +
@@ -5518,7 +5518,7 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
           setHideCompletedRooms(false);
         };
         return (
-          <div data-ios-glass className="absolute left-1/2 -translate-x-1/2 inline-flex items-center rounded-lg border border-input bg-background shadow-sm overflow-hidden">
+          <div data-ios-glass className="inline-flex items-center rounded-lg border border-input bg-background shadow-sm overflow-hidden">
             {(() => {
               const triggerBtn = (
                 <Button
@@ -6227,7 +6227,7 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
         const openTab = (key: "messages" | "maintenance" | "lost", open: () => void, isOpen: boolean) => {
           if (isOpen) { closeHomePanels(); return; }
           closeHomePanels(key);
-          armSheetTakeover({ hideClose: document.documentElement.dataset.platform === "ios" });
+          armSheetTakeover({ hideClose: window.innerWidth < 1024 });
           open();
         };
         const tabs = [
