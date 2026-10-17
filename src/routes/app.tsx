@@ -4128,11 +4128,10 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
             data-ios-glass
             data-quick-setup
             aria-label="Quick Room Setup"
-            className={cn("shrink-0 gap-2 text-sidebar-foreground", quickReceptionOpen && "text-sidebar-primary")}
+            className={cn("shrink-0 size-9 p-0 text-sidebar-foreground", quickReceptionOpen && "text-sidebar-primary")}
             onClick={() => { if (quickReceptionOpen) setQuickReceptionOpen(false); else { closeHomePanels("quick"); setQuickReceptionOpen(true); } }}
           >
             <ConciergeBell className="h-4 w-4" />
-            <span data-qs-label>Quick Setup</span>
           </Button>
         )}
         <div ref={setTopBarSlot} className="empty:hidden shrink-0 order-last" />
