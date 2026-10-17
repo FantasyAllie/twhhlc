@@ -4870,13 +4870,15 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
         <button
           type="button"
           onClick={onClick}
+          data-ios-row
           className={cn(
             "w-full flex items-center gap-3 rounded-xl border bg-background px-4 min-h-12 text-sm font-medium shadow-elevation-1 transition-[transform,box-shadow,background-color] duration-150 hover:bg-accent active:scale-[0.985] active:shadow-none",
             destructive && "text-destructive hover:text-destructive",
           )}
         >
-          <Icon className={cn("h-4 w-4 shrink-0", notify && "text-amber-500")} />
+          <span data-ios-icon className="shrink-0"><Icon className={cn("h-4 w-4 shrink-0", notify && "text-amber-500")} /></span>
           <span className="text-left flex-1">{label}</span>
+          <ChevronRight data-ios-chevron className="hidden h-4 w-4 shrink-0 text-muted-foreground/60" aria-hidden />
         </button>
       );
       const close = () => setMenuSheetOpen(false);
@@ -4899,7 +4901,7 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
                 aria-hidden
               />
             </button>
-            {!collapsed && <div className="space-y-1.5">{children}</div>}
+            {!collapsed && <div data-ios-group className="space-y-1.5">{children}</div>}
           </div>
         );
       };
