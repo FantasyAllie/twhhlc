@@ -5918,6 +5918,46 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
                       { label: "Stayover", value: countOf(stayId), colour: "var(--brass)" },
                       { label: "Dirty", value: countOf(dirtyProgressId ?? null), colour: "var(--color-room-dirty-accent)" },
                     ];
+                    const isIOSPlatform = typeof document !== "undefined" && document.documentElement.dataset.platform === "ios";
+                    if (isIOSPlatform) {
+                      return (
+                        <>
+                          {createPortal(ring, topBarSlot)}
+                          {progressSheetOpen && createPortal(
+                            <div className="fixed inset-0 z-[60]" onClick={() => setProgressSheetOpen(false)}>
+                              <div
+                                data-ios-progress-pop
+                                role="dialog"
+                                aria-label="Shift progress"
+                                onClick={(e) => e.stopPropagation()}
+                                className="absolute right-3 w-[min(18rem,calc(100vw-1.5rem))] rounded-[22px] p-4 text-sidebar-foreground"
+                                style={{ top: "calc(env(safe-area-inset-top) + 3.75rem)" }}
+                              >
+                                <div className="flex items-baseline justify-between">
+                                  <span className="text-[15px] font-semibold">Shift progress</span>
+                                  <span className="text-xs opacity-70 tabular-nums">{progress}/{total}{isComplete ? " ✓" : ""}</span>
+                                </div>
+                                <div className="mt-2.5 h-1.5 w-full overflow-hidden rounded-full bg-sidebar-accent">
+                                  <div className="h-full rounded-full transition-[width] duration-500" style={{ width: `${pct}%`, backgroundColor: ringColour }} />
+                                </div>
+                                <ul className="mt-3 divide-y divide-sidebar-foreground/10">
+                                  {rows.map((row) => (
+                                    <li key={row.label} className="flex items-center justify-between py-2.5 text-sm">
+                                      <span className="flex items-center gap-2.5">
+                                        <span className="h-2.5 w-2.5 rounded-full" style={{ backgroundColor: row.colour }} />
+                                        {row.label}
+                                      </span>
+                                      <span className="font-semibold tabular-nums">{row.value}</span>
+                                    </li>
+                                  ))}
+                                </ul>
+                              </div>
+                            </div>,
+                            document.body,
+                          )}
+                        </>
+                      );
+                    }
                     return (
                       <>
                         {createPortal(ring, topBarSlot)}

@@ -579,6 +579,18 @@ html {
     box-shadow: inset 0 1px 0 color-mix(in oklab, white 22%, transparent), 0 10px 30px -8px rgb(0 0 0 / 0.45);
   }
   html[data-platform="ios"] [data-mobile-tabbar] > div { height: 3.25rem; }
+  [data-ios-progress-pop] {
+    border: 1px solid color-mix(in oklab, var(--color-sidebar-foreground) 14%, transparent);
+    background-color: color-mix(in oklab, var(--color-sidebar) 58%, transparent);
+    backdrop-filter: blur(24px) saturate(180%);
+    box-shadow: inset 0 1px 0 color-mix(in oklab, white 22%, transparent), 0 16px 40px -10px rgb(0 0 0 / 0.5);
+    transform-origin: top right;
+    animation: ios-pop-in 320ms cubic-bezier(0.32, 1.4, 0.5, 1) both;
+  }
+  @keyframes ios-pop-in {
+    from { opacity: 0; transform: scale(0.2); filter: blur(6px); }
+    to { opacity: 1; transform: scale(1); filter: blur(0); }
+  }
   html[data-platform="ios"] [data-mobile-tabbar] button { border-radius: 9999px; transition: background-color 200ms, color 200ms; }
   html[data-platform="ios"] [data-mobile-tabbar] button[aria-current="page"] {
     background-color: color-mix(in oklab, var(--color-sidebar-foreground) 12%, transparent);
