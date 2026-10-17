@@ -1,3 +1,4 @@
+import { toggleRoomTab, roomTileAction, type RoomTab } from "@/lib/room-navigation";
 import { NamedAvatar } from "@/components/user-avatar";
 import { Textarea } from "@/components/ui/textarea";
 import { hasRoomItemSelection } from "@/lib/room-checklist-rules";
@@ -541,8 +542,6 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
     }
   }, [roomInfoTab]);
   const [receptionSheetRoom, setReceptionSheetRoom] = useState<number | null>(null);
-  const [statusViaLongPress, setStatusViaLongPress] = useState(false);
-  useEffect(() => { if (receptionSheetRoom === null) setStatusViaLongPress(false); }, [receptionSheetRoom]);
   const [quickReceptionOpen, setQuickReceptionOpen] = useState(false);
   const [quickSlotEl, setQuickSlotEl] = useState<HTMLDivElement | null>(null);
   const [editDefaultsSheetRoom, setEditDefaultsSheetRoom] = useState<number | null>(null);
@@ -2054,10 +2053,11 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
   };
 
  const openOrToggle = (roomNumber: number) => {
-    if (openRoom === roomNumber) {
-      collapseRoomSlot(() => setOpenRoom(null));
+    if (roomTileAction(openRoom, roomNumber) === "close") {
+      closeRoomView();
       return;
     }
+    clearRoomTabs();
     setOpenRoom(roomNumber);
   };
 
@@ -2068,7 +2068,7 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
     collapseRoomSlot(() => {
       if (closing !== null) setShowAllLinen((prev) => ({ ...prev, [closing]: false }));
       setOpenRoom(null);
-      setReceptionSheetRoom(null);
+      clearRoomTabs();
       setNewMessageText("");
     });
   };
@@ -3404,6 +3404,127 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
     qc.invalidateQueries({ queryKey: ["reception_items"] });
   };
 
+ const activeRoomTab = (n: number): RoomTab | null =>
+    receptionSheetRoom === n ? "status" : editDefaultsSheetRoom === n ? "edit" : notesSheetRoom === n ? "hub" : showAllLinen[n] ? "linen" : null;
+
+ const clearRoomTabs = () => {
+    setReceptionSheetRoom(null);
+    setEditDefaultsSheetRoom(null);
+    setNotesSheetRoom(null);
+    setShowAllLinen({});
+ };
+
+ const selectRoomTab = (n: number, tab: RoomTab) => {
+    const next = toggleRoomTab(activeRoomTab(n), tab);
+    clearRoomTabs();
+    if (next === "status") setReceptionSheetRoom(n);
+    if (next === "linen") setShowAllLinen({ [n]: true });
+    if (next === "edit") setEditDefaultsSheetRoom(n);
+    if (next === "hub") setNotesSheetRoom(n);
+ };
+
+ const renderRoomNavigation = (n: number) => {
+    const active = activeRoomTab(n);
+    return (
+
+      <div role="group" aria-label="Room views" className="flex flex-row gap-2 shrink-0 mb-3">
+        <Button
+          type="button"
+          data-ios-glass
+          variant="outline"
+          aria-pressed={active === "status"}
+          data-ios-selected={active === "status" ? "true" : undefined}
+          onClick={() => selectRoomTab(n, "status")}
+          className={cn(
+              "flex items-center justify-center gap-1.5 rounded-xl border bg-background px-3 sm:px-4 h-11 shadow-sm active:scale-[0.97] active:shadow-none flex-1 text-sm font-medium cursor-pointer transition-colors hover:bg-accent",
+              active === "status"
+                ? "border-primary bg-primary/10 text-primary"
+                : ""
+                >
+          Status
+        </Button>
+        <Button
+          type="button"
+          data-ios-glass
+          variant="outline"
+          aria-pressed={active === "linen"}
+          data-ios-selected={active === "linen" ? "true" : undefined}
+          onClick={() => selectRoomTab(n, "linen")}
+          className={cn(
+            "flex items-center justify-center gap-1.5 rounded-xl border bg-background px-3 sm:px-4 h-11 shadow-sm active:scale-[0.97] active:shadow-none flex-1 text-sm font-medium cursor-pointer transition-colors hover:bg-accent",
+            active === "linen"
+              ? "border-primary bg-primary/10 text-primary"
+              : ""
+          )}
+        >
+          Extra linen
+        </Button>
+        {isAdmin && (
+          <Button
+            type="button"
+            data-ios-glass
+            variant="outline"
+            aria-pressed={active === "edit"}
+            data-ios-selected={active === "edit" ? "true" : undefined}
+            onClick={() => selectRoomTab(n, "edit")}
+            className={cn("inline-flex items-center justify-center h-11 w-11 shrink-0 rounded-xl border bg-background shadow-sm active:scale-[0.97] active:shadow-none text-sm font-medium cursor-pointer transition-colors hover:bg-accent", active === "edit" && "border-primary bg-primary/10 text-primary")}
+            aria-label="Edit defaults"
+          >
+            <Pencil className="h-4 w-4" />
+          </Button>
+        )}
+        {(!isHousekeeper || isAdmin) && (() => {
+          const msgs = activeMessagesByRoom(n);
+          const room = rooms.find((r) => r.room_number === n);
+          const note = room?.housekeeping_note ?? null;
+          const maintenance = !!room?.needs_maintenance;
+          const vacated = !!room?.guest_vacated;
+          // On reception, ignore messages reception themselves sent (they're
+          // outgoing to housekeeping). Housekeeping originals and any replies
+          // still trigger the dot.
+          const relevantMsgs = isReception
+            ? msgs.filter((m) => m.created_by_role !== "reception" || !!m.reply_to_id)
+            : msgs;
+          const hasMsg = relevantMsgs.length > 0;
+          const hasNote = !!note;
+          const hasIndicator = hasMsg || hasNote || maintenance || vacated;
+          return (
+            <Button
+              type="button"
+              data-ios-glass
+              variant="outline"
+              aria-pressed={active === "hub"}
+              data-ios-selected={active === "hub" ? "true" : undefined}
+              onClick={() => selectRoomTab(n, "hub")}
+              className={cn("relative inline-flex items-center justify-center h-11 w-11 shrink-0 rounded-xl border bg-background shadow-sm active:scale-[0.97] active:shadow-none text-sm font-medium cursor-pointer transition-colors hover:bg-accent", active === "hub" && "border-primary bg-primary/10 text-primary")}
+              aria-label="Room hub"
+            >
+              <Inbox className="h-4 w-4" />
+
+              {hasIndicator && (
+                <span className="absolute -top-0.5 -right-0.5 z-10 flex items-center gap-0.5">
+                  {hasMsg && (
+                    <span aria-label="Message" className="h-2 w-2 rounded-full bg-amber-500 ring-2 ring-background" />
+                  )}
+                  {hasNote && (
+                    <span aria-label="Note" className="h-2 w-2 rounded-full bg-primary ring-2 ring-background" />
+                  )}
+                  {maintenance && (
+                    <Wrench aria-label="Maintenance" className="h-3 w-3 text-amber-600 dark:text-amber-400" />
+                  )}
+                  {vacated && (
+                    <DoorOpen aria-label="Vacated" className="h-3 w-3 text-emerald-600 dark:text-emerald-400" />
+                  )}
+                </span>
+              )}
+            </Button>
+          );
+        })()}
+      </div>
+    )}
+    );
+ };
+
  const renderRoomPanel = (n: number) => {
  const roomExtras = extras.filter((e) => e.room_number === n);
    const showAll = !!showAllLinen[n];
@@ -3643,95 +3764,7 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
     })()}
 
 
-    {!isReception && (
-      <div className="flex flex-row gap-2">
-        <button
-          type="button"
-          data-ios-glass
-          data-ios-selected={receptionDoneSet.has(n) ? "true" : undefined}
-          onClick={() => setReceptionSheetRoom(n)}
-          className={cn(
-              "flex items-center justify-center gap-1.5 rounded-xl border bg-background px-3 sm:px-4 h-11 shadow-sm active:scale-[0.97] active:shadow-none flex-1 text-sm font-medium cursor-pointer transition-colors hover:bg-accent",
-              receptionDoneSet.has(n)
-                ? "border-primary bg-primary/10 text-primary"
-                : ""
-            )}
-        >
-          Status
-        </button>
-        <button
-          type="button"
-          data-ios-glass
-          data-ios-selected={showAll ? "true" : undefined}
-          onClick={() =>
-            setShowAllLinen((prev) => ({ ...prev, [n]: !prev[n] }))
-          }
-          className={cn(
-            "flex items-center justify-center gap-1.5 rounded-xl border bg-background px-3 sm:px-4 h-11 shadow-sm active:scale-[0.97] active:shadow-none flex-1 text-sm font-medium cursor-pointer transition-colors hover:bg-accent",
-            showAll
-              ? "border-primary bg-primary/10 text-primary"
-              : ""
-          )}
-        >
-          Extra linen
-        </button>
-        {isAdmin && (
-          <button
-            type="button"
-            data-ios-glass
-            onClick={() => setEditDefaultsSheetRoom(n)}
-            className="inline-flex items-center justify-center h-11 w-11 shrink-0 rounded-xl border bg-background shadow-sm active:scale-[0.97] active:shadow-none text-sm font-medium cursor-pointer transition-colors hover:bg-accent disabled:opacity-50 disabled:cursor-not-allowed"
-            aria-label="Edit defaults"
-          >
-            <Pencil className="h-4 w-4" />
-          </button>
-        )}
-        {(!isHousekeeper || isAdmin) && (() => {
-          const msgs = activeMessagesByRoom(n);
-          const room = rooms.find((r) => r.room_number === n);
-          const note = room?.housekeeping_note ?? null;
-          const maintenance = !!room?.needs_maintenance;
-          const vacated = !!room?.guest_vacated;
-          // On reception, ignore messages reception themselves sent (they're
-          // outgoing to housekeeping). Housekeeping originals and any replies
-          // still trigger the dot.
-          const relevantMsgs = isReception
-            ? msgs.filter((m) => m.created_by_role !== "reception" || !!m.reply_to_id)
-            : msgs;
-          const hasMsg = relevantMsgs.length > 0;
-          const hasNote = !!note;
-          const hasIndicator = hasMsg || hasNote || maintenance || vacated;
-          return (
-            <button
-              type="button"
-              data-ios-glass
-              onClick={() => setNotesSheetRoom(n)}
-              className="relative inline-flex items-center justify-center h-11 w-11 shrink-0 rounded-xl border bg-background shadow-sm active:scale-[0.97] active:shadow-none text-sm font-medium cursor-pointer transition-colors hover:bg-accent"
-              aria-label="Room hub"
-            >
-              <Inbox className="h-4 w-4" />
-
-              {hasIndicator && (
-                <span className="absolute -top-0.5 -right-0.5 z-10 flex items-center gap-0.5">
-                  {hasMsg && (
-                    <span aria-label="Message" className="h-2 w-2 rounded-full bg-amber-500 ring-2 ring-background" />
-                  )}
-                  {hasNote && (
-                    <span aria-label="Note" className="h-2 w-2 rounded-full bg-primary ring-2 ring-background" />
-                  )}
-                  {maintenance && (
-                    <Wrench aria-label="Maintenance" className="h-3 w-3 text-amber-600 dark:text-amber-400" />
-                  )}
-                  {vacated && (
-                    <DoorOpen aria-label="Vacated" className="h-3 w-3 text-emerald-600 dark:text-emerald-400" />
-                  )}
-                </span>
-              )}
-            </button>
-          );
-        })()}
-      </div>
-    )}
+    {!isReception && renderRoomNavigation(n)}
     {/* Compact message peek — shows the latest active room message directly
         under the action row. Tap to open the notifications panel to
         dismiss/confirm. */}
@@ -4613,7 +4646,9 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
   />
 
   {/* Notes sheet (User/Admin + Reception) */}
+  <HomeInline active={!isReception && openRoom !== null && notesSheetRoom === openRoom} target={roomSlotEl} noFit>
   <RoomNotesSheet
+    navigation={!isReception && openRoom !== null && notesSheetRoom === openRoom ? renderRoomNavigation(openRoom) : undefined}
     notesSheetRoom={notesSheetRoom}
     setNotesSheetRoom={setNotesSheetRoom}
     rooms={rooms}
@@ -4660,11 +4695,13 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
     )}
     openLostProperty={lostPropertyOpenItems.filter((lp) => lp.room_number === notesSheetRoom)}
   />
+  </HomeInline>
 
 
  {/* Reception sheet (Admin/User): Done + Status + Bed */}
   <HomeInline active={!isReception && openRoom !== null && receptionSheetRoom === openRoom} target={roomSlotEl} noFit>
   <ReceptionStatusSheet
+    navigation={!isReception && openRoom !== null && receptionSheetRoom === openRoom ? renderRoomNavigation(openRoom) : undefined}
     inlineView={!isReception && openRoom !== null && receptionSheetRoom === openRoom}
     receptionSheetRoom={receptionSheetRoom}
     setReceptionSheetRoom={setReceptionSheetRoom}
@@ -5082,7 +5119,9 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
   clearAllSnapshots={clearAllSnapshots}
 />
 
+<HomeInline active={!isReception && openRoom !== null && editDefaultsSheetRoom === openRoom} target={roomSlotEl} noFit>
 <EditRoomDefaultsSheet
+   navigation={!isReception && openRoom !== null && editDefaultsSheetRoom === openRoom ? renderRoomNavigation(openRoom) : undefined}
    editDefaultsSheetRoom={editDefaultsSheetRoom}
    isPreferred={isPreferred}
    togglePreferred={togglePreferred}
@@ -5091,6 +5130,7 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
    isAssigned={isAssigned}
    toggleAssignment={toggleAssignment}
  />
+ </HomeInline>
 
  {/* Room Types sheet (Admin) */}
   <RoomTypesSheet
@@ -5818,9 +5858,9 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
          hasLinenCount={hasLinenCount}
          isOpen={isOpen}
          hasMessage={hasActiveMessage(n)}
-         onClick={() => (isOpen && receptionSheetRoom === n && !statusViaLongPress ? setReceptionSheetRoom(null) : openOrToggle(n))}
-         openBack={isOpen && receptionSheetRoom === n && !statusViaLongPress}
-         onLongPress={() => { setStatusViaLongPress(true); setOpenRoom(n); setReceptionSheetRoom(n); }}
+         onClick={() => openOrToggle(n)}
+         openBack={false}
+         onLongPress={() => { clearRoomTabs(); setOpenRoom(n); setReceptionSheetRoom(n); }}
          done={done}
          openTypeLabel={isOpen ? categoryLabel(roomCategory(n), roomTypes) : null}
          openBedLabel={isOpen ? (() => {
@@ -6053,8 +6093,8 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
  </div>
 
  <HomeInline active={openRoom !== null} target={roomSlotEl} noFit>
- <div className={cn(!isReception && openRoom !== null && receptionSheetRoom === openRoom && "hidden")}>
- <Sheet open={openRoom !== null} onOpenChange={(o) => { if (!o) { const closing = openRoom; collapseRoomSlot(() => { if (closing !== null) setShowAllLinen(prev => ({ ...prev, [closing]: false })); setOpenRoom(null); setNewMessageText(""); }); } }}>
+ <div className={cn(!isReception && openRoom !== null && ["status", "edit", "hub"].includes(activeRoomTab(openRoom) ?? "") && "hidden")}>
+ <Sheet open={openRoom !== null} onOpenChange={(o) => { if (!o) closeRoomView(); }}>
    <SheetContent side="bottom" className={cn("flex flex-col overflow-hidden rounded-t-2xl p-4 sm:p-6")}>
       <SheetHeader className="sr-only">
        <SheetTitle>Room {openRoom} — {categoryLabel(roomCategory(openRoom ?? 0), roomTypes)}</SheetTitle>
