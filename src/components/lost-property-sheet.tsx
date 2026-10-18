@@ -697,6 +697,49 @@ export function LostPropertySheet({
                 return items;
               })();
 
+              const openPageBar = pageCount > 1 ? (
+                <div className="flex items-center justify-center gap-1 sm:gap-2 flex-wrap">
+                  <Button
+                    type="button"
+                    size="sm"
+                    variant="outline"
+                    className="h-8 text-xs"
+                    disabled={page === 0}
+                    onClick={() => setOpenPage(page - 1)}
+                  >
+                    Previous
+                  </Button>
+                  {pageItems.map((item, idx) =>
+                    item === "ellipsis" ? (
+                      <span key={`ellipsis-${idx}`} className="text-xs text-muted-foreground px-1">
+                        …
+                      </span>
+                    ) : (
+                      <Button
+                        key={item}
+                        type="button"
+                        size="sm"
+                        variant={page + 1 === item ? "default" : "outline"}
+                        className="h-8 w-8 p-0 text-xs"
+                        onClick={() => setOpenPage(item - 1)}
+                      >
+                        {item}
+                      </Button>
+                    )
+                  )}
+                  <Button
+                    type="button"
+                    size="sm"
+                    variant="outline"
+                    className="h-8 text-xs"
+                    disabled={page >= pageCount - 1}
+                    onClick={() => setOpenPage(page + 1)}
+                  >
+                    Next
+                  </Button>
+                </div>
+              ) : null;
+
               return (
                 <div className="space-y-3" {...pageSwipe(page, pageCount)}>
                   {openRows.length === 0 ? (
