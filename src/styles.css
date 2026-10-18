@@ -848,12 +848,12 @@ html {
     animation: ios-compose-out 180ms ease-in;
   }
   @keyframes ios-compose-in {
-    from { opacity: 0; transform: translateY(-50%) scale(0.6); filter: blur(6px); }
-    to { opacity: 1; transform: translateY(-50%) scale(1); filter: blur(0); }
+    from { opacity: 0; transform: scale(0.6); filter: blur(6px); }
+    to { opacity: 1; transform: scale(1); filter: blur(0); }
   }
   @keyframes ios-compose-out {
-    from { opacity: 1; transform: translateY(-50%) scale(1); }
-    to { opacity: 0; transform: translateY(-50%) scale(0.9); }
+    from { opacity: 1; transform: scale(1); }
+    to { opacity: 0; transform: scale(0.9); }
   }
   html[data-platform="ios"] .ios-compose-glass > .sticky {
     background: transparent;
