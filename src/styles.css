@@ -776,7 +776,16 @@ html {
 
 @media (max-width: 1023px) {
   [data-sheet-inline="room"]:has([aria-label="Room views"]) {
-    padding-block: 8px !important;
+    padding-block: 4px !important;
+  }
+  html[data-platform="ios"] .ios-compose-glass {
+    background: color-mix(in oklab, var(--color-card) 58%, transparent);
+    backdrop-filter: blur(24px) saturate(180%);
+    border-color: color-mix(in oklab, var(--color-foreground) 14%, transparent);
+    box-shadow: inset 0 1px 0 color-mix(in oklab, var(--color-background) 65%, transparent), 0 16px 40px -10px color-mix(in oklab, var(--color-foreground) 40%, transparent);
+  }
+  html[data-platform="ios"] .ios-compose-glass > .sticky {
+    background: transparent;
   }
   html[data-platform="ios"] [data-ui-button][data-ios-glass][aria-pressed="true"] {
     border-color: var(--color-primary) !important;

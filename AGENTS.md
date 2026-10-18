@@ -4,6 +4,7 @@
 - Marking a room done closes the room view by collapsing the open room slot and clearing the status view inside the collapse callback; why: marking done ends the visit to that room, and clearing the status view before the collapse would flash the room hub mid-animation.
 - Room action tabs live once in a stable room frame, with child views portalled into its body without nested framing; only opening/closing the room animates, so switching tabs cannot move navigation or briefly collapse the room.
 - Home room filter options share the FilterOption button component with aria-pressed selection; why: consistent platform styling and accessible multi-selection without checkbox squares.
+- Department-specific bottom tabs are filtered by the shared department-tabs helper against assigned departments; why: avoid duplicating a department already accessed through Home as navigation grows.
 - iOS shadow clearance belongs to shared Sheet/Dialog scroll surfaces: growing room bodies do not clip, while bounded lists reserve shadow gutters and tab-bar clearance; why: avoid cut-off glass shadows without changing tiles or unlocking background scrolling.
 - Home pull-to-refresh uses native non-passive touch listeners only on mobile Home at scroll-top and awaits active query invalidation; why: Safari/Chrome cancel pointer gestures when scrolling, and other screens must retain their own scroll behaviour.
 

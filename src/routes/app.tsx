@@ -1,4 +1,5 @@
 import { toggleRoomTab, roomTileAction, type RoomTab } from "@/lib/room-navigation";
+import { shouldShowDepartmentTab } from "@/lib/department-tabs";
 import { FilterOption } from "@/components/rooms/filter-option";
 import { NamedAvatar } from "@/components/user-avatar";
 import { Textarea } from "@/components/ui/textarea";
@@ -6214,7 +6215,7 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
  <HomeInline active={openRoom !== null} target={roomSlotEl} noFit>
  <Sheet open={openRoom !== null} onOpenChange={(o) => { if (!o) closeRoomView(); }}>
    <SheetContent side="bottom" className={cn("flex flex-col overflow-hidden rounded-t-2xl p-4 sm:p-6")}>
-      <SheetHeader className="sr-only">
+      <SheetHeader className="sr-only !absolute !p-0 !space-y-0">
        <SheetTitle>Room {openRoom} — {categoryLabel(roomCategory(openRoom ?? 0), roomTypes)}</SheetTitle>
       {(() => {
         if (openRoom === null) return null;
@@ -6429,7 +6430,7 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
       paddingRight: "env(safe-area-inset-right, 0px)",
     }}
   >
-    <div className="grid grid-cols-5 h-14">
+    <div className="grid auto-cols-fr grid-flow-col h-14">
       {(() => {
         const anyPanel = messagesSheetOpen || maintenanceLogOpen || lostPropertyOpen;
         const openTab = (key: "messages" | "maintenance" | "lost", open: () => void, isOpen: boolean) => {
@@ -6454,7 +6455,7 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
             onClick: () => { setMenuSheetOpen(false); openTab("messages", () => { setMessagesInitial({}); setMessagesSheetOpen(true); }, messagesSheetOpen); },
           },
           {
-            key: "maintenance", label: "Maintenance", icon: Wrench, active: maintenanceLogOpen, dot: hasOpenMaintenance,
+            key: "maintenance", department: "maintenance", label: "Maintenance", icon: Wrench, active: maintenanceLogOpen, dot: hasOpenMaintenance,
             onClick: () => { setMenuSheetOpen(false); openTab("maintenance", () => setMaintenanceLogOpen(true), maintenanceLogOpen); },
           },
           {
@@ -6474,7 +6475,7 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
             },
           },
         ];
-        return tabs.map((t) => {
+        return tabs.filter(t => shouldShowDepartmentTab("department" in t ? t.department : undefined, myMessageDepartments)).map((t) => {
           const Icon = t.icon;
           return (
             <button
@@ -6515,7 +6516,7 @@ const isIosMobileView = () =>
 
 // Centred card override for a bottom sheet on small screens (iOS popups).
 const IOS_CENTRED_POPUP =
-  "max-lg:left-4 max-lg:right-4 max-lg:top-1/2 max-lg:bottom-auto max-lg:w-auto max-lg:h-auto max-lg:max-h-[80dvh] max-lg:-translate-y-1/2 max-lg:rounded-3xl max-lg:border max-lg:data-[state=open]:animate-[sheet-pop-in_250ms_ease-out] max-lg:data-[state=closed]:animate-[sheet-pop-out_180ms_ease-in]";
+  "ios-compose-glass max-lg:left-4 max-lg:right-4 max-lg:top-1/2 max-lg:bottom-auto max-lg:w-auto max-lg:h-auto max-lg:max-h-[80dvh] max-lg:-translate-y-1/2 max-lg:rounded-3xl max-lg:border max-lg:data-[state=open]:animate-[sheet-pop-in_250ms_ease-out] max-lg:data-[state=closed]:animate-[sheet-pop-out_180ms_ease-in]";
 
 // Display name for each view role, shared by the header pills and the picker.
 const viewRoleLabel = (r: string): string =>
