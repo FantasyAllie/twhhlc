@@ -4390,7 +4390,7 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
                       ? "Maintenance"
                       : "Manager";
                   return (
-                    <button
+                    <Button variant="outline"
                       key={r}
                       type="button"
                       onClick={() => setViewAsRole(active ? null : r)}
@@ -4402,7 +4402,7 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
                       )}
                     >
                       {label}
-                    </button>
+                    </Button>
                   );
                 })}
               </div>
@@ -5056,22 +5056,22 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
           <div className="space-y-2">
           <div className="text-center text-xs font-semibold uppercase tracking-wide text-muted-foreground">Theme/Accent</div>
           <div className="grid grid-cols-2 gap-1 rounded-full border bg-muted p-1">
-            <button
+            <Button variant="outline"
               type="button"
               onClick={() => cycleTheme()}
               className="flex min-w-0 items-center justify-center gap-2 rounded-full bg-background px-3 py-2 text-sm font-medium shadow-sm active:scale-[0.98]"
             >
               <ThemeGlyph className="h-4 w-4 shrink-0" />
               <span className="truncate">{levelLabel}</span>
-            </button>
-            <button
+            </Button>
+            <Button variant="outline"
               type="button"
               onClick={() => cycleAccent()}
               className="flex min-w-0 items-center justify-center gap-2 rounded-full bg-background px-3 py-2 text-sm font-medium shadow-sm active:scale-[0.98]"
             >
               <span className="h-3.5 w-3.5 shrink-0 rounded-full bg-brass" aria-hidden />
               <span className="truncate">{ACCENTS.find((a) => a.id === accent)?.label ?? "Brass"}</span>
-            </button>
+            </Button>
           </div>
           </div>
           {menuGroups.filter((g) => g.id !== "appearance").map((group) => ({ ...group, items: group.items.filter((i) => i.key !== "theme" && i.key !== "accent") })).filter((g) => g.items.length > 0).map((group) => (
@@ -5411,7 +5411,7 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
        <h2 className="text-sm font-medium text-muted-foreground uppercase tracking-wide">
          LINEN COUNTER
        </h2>
-       <button
+       <Button variant="outline"
          type="button"
          onClick={() => {
            manageBackRef.current = false;
@@ -5424,7 +5424,7 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
        >
          <Pencil className="h-3.5 w-3.5" />
          Edit linen list
-       </button>
+       </Button>
      </div>
 
       {templateFnbList.length === 0 ? (

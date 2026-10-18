@@ -540,9 +540,10 @@ export function LostPropertySheet({
             ] as { key: "open" | "expired" | "resolved"; label: string }[]).map((tab) => {
               const active = activeTab === tab.key;
               return (
-                <button
+                <Button variant="ghost"
                   key={tab.key}
                   type="button"
+                  aria-pressed={active}
                   onClick={() => setActiveTab(tab.key)}
                   className={
                     "flex-1 px-2 sm:px-4 h-8 text-xs sm:text-sm rounded-full transition-colors whitespace-nowrap " +
@@ -552,7 +553,7 @@ export function LostPropertySheet({
                   }
                 >
                   {tab.label}
-                </button>
+                </Button>
               );
             })}
           </div>

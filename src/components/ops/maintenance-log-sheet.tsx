@@ -676,9 +676,10 @@ export function MaintenanceLogSheet({
             const active = activeTab === tab.key;
             const urgentPill = tab.key === "urgent";
             return (
-              <button
+              <Button variant="ghost"
                 key={tab.key}
                 type="button"
+                  aria-pressed={active}
                 onClick={() => {
                   setActiveTab(tab.key);
                   setPage(0);
@@ -695,7 +696,7 @@ export function MaintenanceLogSheet({
                 }
               >
                 {tab.label}
-              </button>
+              </Button>
             );
           })}
 
