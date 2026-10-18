@@ -598,7 +598,7 @@ html {
     box-shadow: inset 0 1px 0 color-mix(in oklab, white 12%, transparent);
   }
   html[data-platform="ios"] [data-mobile-tabbar] button[aria-current="page"] [data-tab-icon] svg { fill: color-mix(in oklab, currentColor 25%, transparent); }
-  html[data-platform="ios"] [data-mobile-tabbar] button { font-size: 9.5px; letter-spacing: -0.01em; }
+  html[data-platform="ios"] [data-mobile-tabbar] button { font-size: 9.5px; letter-spacing: 0; }
   html[data-platform="ios"] [data-tabbar-spacer] { height: calc(4.5rem + env(safe-area-inset-bottom, 0px)) !important; }
   html[data-platform="ios"] .app-menu-screen {
     width: 100%;
@@ -721,6 +721,11 @@ html {
     backdrop-filter: blur(20px) saturate(180%);
     box-shadow: inset 0 1px 0 color-mix(in oklab, white 35%, transparent), 0 4px 14px -6px rgb(0 0 0 / 0.3);
   }
+  html[data-platform="ios"] [data-ui-button="ghost"]:not([data-ios-row]) {
+    background-color: color-mix(in oklab, var(--color-card) 45%, transparent);
+    backdrop-filter: blur(20px) saturate(180%);
+    box-shadow: inset 0 1px 0 color-mix(in oklab, var(--color-background) 65%, transparent);
+  }
   html[data-platform="ios"] [data-ui-button="default"],
   html[data-platform="ios"] [data-ui-button="destructive"] {
     box-shadow: inset 0 1px 0 color-mix(in oklab, white 30%, transparent), 0 6px 16px -8px rgb(0 0 0 / 0.45);
@@ -753,6 +758,8 @@ html {
   html[data-platform="ios"] [role="tablist"] [role="tab"] { border-radius: 9999px; }
 
   /* Floating menus, pickers and pop-ups use the frosted glass */
+  html[data-platform="ios"] [data-os-menu],
+  html[data-platform="ios"] [data-ios-panel][role="dialog"],
   html[data-platform="ios"] [data-radix-popper-content-wrapper] > [role="menu"],
   html[data-platform="ios"] [data-radix-popper-content-wrapper] > [role="listbox"],
   html[data-platform="ios"] [data-radix-popper-content-wrapper] > [role="dialog"] {
@@ -761,7 +768,29 @@ html {
     background-color: color-mix(in oklab, var(--color-popover) 70%, transparent);
     backdrop-filter: blur(24px) saturate(180%);
     box-shadow: inset 0 1px 0 color-mix(in oklab, white 22%, transparent), 0 16px 40px -10px rgb(0 0 0 / 0.4);
-    animation: ios-pop-in 280ms cubic-bezier(0.32, 1.4, 0.5, 1) both;
+  }
+  html[data-platform="ios"] [data-ios-panel][role="dialog"] > .sticky {
+    background: transparent;
+  }
+  html[data-platform="ios"] [data-os-menu] :is([role="menuitem"], [role="option"]),
+  html[data-platform="android"] [data-os-menu] :is([role="menuitem"], [role="option"]) {
+    min-height: 40px;
+  }
+  html[data-platform="android"] [data-os-menu] {
+    background: var(--color-popover);
+    box-shadow: var(--shadow-elevation-2);
+  }
+  html[data-platform="android"] [data-ui-button] {
+    transition-timing-function: cubic-bezier(0.2, 0, 0, 1);
+  }
+  html[data-platform="android"] [data-ui-button]:active:not(:disabled) {
+    box-shadow: none;
+    transform: scale(0.97);
+  }
+  @media (prefers-reduced-motion: reduce) {
+    html[data-platform="ios"] [data-ui-button], html[data-platform="android"] [data-ui-button] {
+      transition: none;
+    }
   }
 }
 @media (max-width: 1023px) {
