@@ -8,6 +8,7 @@ import { Slot } from "@radix-ui/react-slot";
 import { createPortal } from "react-dom";
 
 import { cn } from "@/lib/utils";
+import { Button } from "@/components/ui/button";
 
 // Inline mode: when a Sheet is rendered inside <SheetInlineProvider inline>,
 // it renders in-flow (e.g. replacing the Home screen) instead of as an overlay.
@@ -189,7 +190,8 @@ export function TakeoverCloseButton({ onClose, label: forced }: { onClose: () =>
   const label = forced ?? ownerLabel;
   if (hideClose && !forced) return null;
   return (
-    <button
+    <Button
+      variant="outline"
       type="button"
       aria-label={label}
       data-touch-exempt
@@ -197,7 +199,7 @@ export function TakeoverCloseButton({ onClose, label: forced }: { onClose: () =>
       className="absolute right-4 top-4 max-lg:right-0 max-lg:top-3 z-30 inline-flex h-8 min-h-0 min-w-0 shrink-0 items-center justify-center rounded-full border bg-background px-3 text-xs font-medium leading-none text-muted-foreground transition-colors hover:bg-accent hover:text-foreground"
     >
       {label}
-    </button>
+    </Button>
   );
 }
 

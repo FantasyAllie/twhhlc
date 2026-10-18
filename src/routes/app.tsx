@@ -1,4 +1,5 @@
 import { toggleRoomTab, roomTileAction, type RoomTab } from "@/lib/room-navigation";
+import { shouldShowDepartmentTab } from "@/lib/department-tabs";
 import { FilterOption } from "@/components/rooms/filter-option";
 import { NamedAvatar } from "@/components/user-avatar";
 import { Textarea } from "@/components/ui/textarea";
@@ -4389,7 +4390,7 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
                       ? "Maintenance"
                       : "Manager";
                   return (
-                    <button
+                    <Button variant="outline"
                       key={r}
                       type="button"
                       onClick={() => setViewAsRole(active ? null : r)}
@@ -4401,7 +4402,7 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
                       )}
                     >
                       {label}
-                    </button>
+                    </Button>
                   );
                 })}
               </div>
@@ -5055,22 +5056,22 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
           <div className="space-y-2">
           <div className="text-center text-xs font-semibold uppercase tracking-wide text-muted-foreground">Theme/Accent</div>
           <div className="grid grid-cols-2 gap-1 rounded-full border bg-muted p-1">
-            <button
+            <Button variant="outline"
               type="button"
               onClick={() => cycleTheme()}
               className="flex min-w-0 items-center justify-center gap-2 rounded-full bg-background px-3 py-2 text-sm font-medium shadow-sm active:scale-[0.98]"
             >
               <ThemeGlyph className="h-4 w-4 shrink-0" />
               <span className="truncate">{levelLabel}</span>
-            </button>
-            <button
+            </Button>
+            <Button variant="outline"
               type="button"
               onClick={() => cycleAccent()}
               className="flex min-w-0 items-center justify-center gap-2 rounded-full bg-background px-3 py-2 text-sm font-medium shadow-sm active:scale-[0.98]"
             >
               <span className="h-3.5 w-3.5 shrink-0 rounded-full bg-brass" aria-hidden />
               <span className="truncate">{ACCENTS.find((a) => a.id === accent)?.label ?? "Brass"}</span>
-            </button>
+            </Button>
           </div>
           </div>
           {menuGroups.filter((g) => g.id !== "appearance").map((group) => ({ ...group, items: group.items.filter((i) => i.key !== "theme" && i.key !== "accent") })).filter((g) => g.items.length > 0).map((group) => (
@@ -5410,7 +5411,7 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
        <h2 className="text-sm font-medium text-muted-foreground uppercase tracking-wide">
          LINEN COUNTER
        </h2>
-       <button
+       <Button variant="outline"
          type="button"
          onClick={() => {
            manageBackRef.current = false;
@@ -5423,7 +5424,7 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
        >
          <Pencil className="h-3.5 w-3.5" />
          Edit linen list
-       </button>
+       </Button>
      </div>
 
       {templateFnbList.length === 0 ? (
@@ -6214,7 +6215,7 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
  <HomeInline active={openRoom !== null} target={roomSlotEl} noFit>
  <Sheet open={openRoom !== null} onOpenChange={(o) => { if (!o) closeRoomView(); }}>
    <SheetContent side="bottom" className={cn("flex flex-col overflow-hidden rounded-t-2xl p-4 sm:p-6")}>
-      <SheetHeader className="sr-only">
+      <SheetHeader className="sr-only !absolute !p-0 !space-y-0">
        <SheetTitle>Room {openRoom} — {categoryLabel(roomCategory(openRoom ?? 0), roomTypes)}</SheetTitle>
       {(() => {
         if (openRoom === null) return null;
@@ -6429,7 +6430,7 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
       paddingRight: "env(safe-area-inset-right, 0px)",
     }}
   >
-    <div className="grid grid-cols-5 h-14">
+    <div className="grid auto-cols-fr grid-flow-col h-14">
       {(() => {
         const anyPanel = messagesSheetOpen || maintenanceLogOpen || lostPropertyOpen;
         const openTab = (key: "messages" | "maintenance" | "lost", open: () => void, isOpen: boolean) => {
@@ -6454,7 +6455,7 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
             onClick: () => { setMenuSheetOpen(false); openTab("messages", () => { setMessagesInitial({}); setMessagesSheetOpen(true); }, messagesSheetOpen); },
           },
           {
-            key: "maintenance", label: "Maintenance", icon: Wrench, active: maintenanceLogOpen, dot: hasOpenMaintenance,
+            key: "maintenance", department: "maintenance", label: "Maintenance", icon: Wrench, active: maintenanceLogOpen, dot: hasOpenMaintenance,
             onClick: () => { setMenuSheetOpen(false); openTab("maintenance", () => setMaintenanceLogOpen(true), maintenanceLogOpen); },
           },
           {
@@ -6474,7 +6475,7 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
             },
           },
         ];
-        return tabs.map((t) => {
+        return tabs.filter(t => shouldShowDepartmentTab("department" in t ? t.department : undefined, myMessageDepartments)).map((t) => {
           const Icon = t.icon;
           return (
             <button
@@ -6515,7 +6516,7 @@ const isIosMobileView = () =>
 
 // Centred card override for a bottom sheet on small screens (iOS popups).
 const IOS_CENTRED_POPUP =
-  "max-lg:left-4 max-lg:right-4 max-lg:top-1/2 max-lg:bottom-auto max-lg:w-auto max-lg:h-auto max-lg:max-h-[80dvh] max-lg:-translate-y-1/2 max-lg:rounded-3xl max-lg:border max-lg:data-[state=open]:animate-[sheet-pop-in_250ms_ease-out] max-lg:data-[state=closed]:animate-[sheet-pop-out_180ms_ease-in]";
+  "ios-compose-glass max-lg:left-4 max-lg:right-4 max-lg:top-1/2 max-lg:bottom-auto max-lg:w-auto max-lg:h-auto max-lg:max-h-[80dvh] max-lg:-translate-y-1/2 max-lg:rounded-3xl max-lg:border max-lg:data-[state=open]:animate-[sheet-pop-in_250ms_ease-out] max-lg:data-[state=closed]:animate-[sheet-pop-out_180ms_ease-in]";
 
 // Display name for each view role, shared by the header pills and the picker.
 const viewRoleLabel = (r: string): string =>

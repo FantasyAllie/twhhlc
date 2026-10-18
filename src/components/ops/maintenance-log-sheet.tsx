@@ -515,7 +515,7 @@ export function MaintenanceLogSheet({
           </div>)}
 
           {(composeOnly || maintenanceComposerOpen) && (
-            <div className="flex flex-col gap-2 rounded-lg border bg-background p-3">
+            <div data-compose-form={composeOnly ? "" : undefined} className="flex flex-col gap-2 rounded-lg border bg-background p-3">
               <div className="flex items-center justify-between">
                 <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
                   Log a new issue
@@ -676,9 +676,10 @@ export function MaintenanceLogSheet({
             const active = activeTab === tab.key;
             const urgentPill = tab.key === "urgent";
             return (
-              <button
+              <Button variant="ghost"
                 key={tab.key}
                 type="button"
+                  aria-pressed={active}
                 onClick={() => {
                   setActiveTab(tab.key);
                   setPage(0);
@@ -695,7 +696,7 @@ export function MaintenanceLogSheet({
                 }
               >
                 {tab.label}
-              </button>
+              </Button>
             );
           })}
 

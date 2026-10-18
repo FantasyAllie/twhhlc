@@ -424,8 +424,8 @@ export function MessagesSheet({
     <Sheet open={open} onOpenChange={onOpenChange}>
       <SheetContent side="bottom" className="overflow-hidden rounded-t-2xl p-4 sm:p-6 flex flex-col">
         <SheetHeader className="text-left">
-          <div className="flex items-center justify-between gap-2 max-lg:pr-24">
-            <SheetTitle className="flex items-center gap-2">
+          <div className="grid grid-cols-[minmax(0,1fr)_auto] items-center gap-2">
+            <SheetTitle className="flex min-w-0 items-center gap-2 max-lg:pr-0">
               <MessageSquare className="h-4 w-4" />
               Messages
             </SheetTitle>
@@ -450,11 +450,12 @@ export function MessagesSheet({
         </SheetHeader>
 
         {((useSendToPicker && sendToTargets.length > 1) || (!useSendToPicker && availableThreads.length > 1)) && (
-          <button
+          <Button
             type="button"
+            variant="outline"
             onClick={() => setPickerOpen((v) => !v)}
             aria-expanded={pickerOpen}
-            className="mt-3 flex w-full items-center gap-2 rounded-lg border bg-background px-3 py-2 text-left text-sm"
+            className="mt-3 flex h-auto min-h-11 w-full items-center gap-2 rounded-lg px-3 py-2 text-left text-sm"
           >
             <span className="text-xs text-muted-foreground shrink-0">{useSendToPicker ? "Send to" : "Thread"}</span>
             <span className="min-w-0 flex-1 truncate font-medium">
@@ -463,7 +464,7 @@ export function MessagesSheet({
                 : THREAD_LABELS[thread]}
             </span>
             <ChevronDown className={cn("h-4 w-4 shrink-0 text-muted-foreground transition-transform", pickerOpen && "rotate-180")} />
-          </button>
+          </Button>
         )}
         {pickerOpen && useSendToPicker && sendToTargets.length > 1 && (
           <div className="mt-2 flex flex-wrap items-center gap-2">
