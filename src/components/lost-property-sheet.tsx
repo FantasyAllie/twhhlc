@@ -329,7 +329,7 @@ export function LostPropertySheet({
             <PackageSearch className="h-4 w-4" />
             {composeOnly ? "Log a new item" : "Lost Property"}
           </SheetTitle>
-          <SheetDescription>
+          <SheetDescription className={composeOnly ? undefined : "max-lg:sr-only"}>
             {composeOnly
               ? "Report a lost item. Open items are in the Lost Property screen."
               : canResolve
@@ -339,7 +339,7 @@ export function LostPropertySheet({
         </SheetHeader>
 
         <div
-          className="flex-1 min-h-0 overflow-y-auto mt-4 space-y-3 overscroll-contain"
+          className="flex-1 min-h-0 overflow-y-auto mt-4 max-lg:mt-2 space-y-3 overscroll-contain"
           {...refresh.handlers}
         >
           {(refresh.pull > 0 || refresh.refreshing) && (
@@ -673,18 +673,6 @@ export function LostPropertySheet({
                 ) : (
                   <span className="text-xs text-muted-foreground shrink-0 pt-1">Awaiting reception</span>
                 )}
-                {isAdmin && (
-                  <Button
-                    type="button"
-                    size="icon"
-                    variant="ghost"
-                    className="touch-danger shrink-0 text-muted-foreground hover:text-destructive"
-                    onClick={() => void softDelete(r.id)}
-                    aria-label="Delete entry"
-                  >
-                    <Trash2 className="h-4 w-4" />
-                  </Button>
-                )}
               </div>
               </SwipeRow>
             );
@@ -709,55 +697,58 @@ export function LostPropertySheet({
                 return items;
               })();
 
+              const openPageBar = pageCount > 1 ? (
+                <div className="flex items-center justify-center gap-1 sm:gap-2 flex-wrap">
+                  <Button
+                    type="button"
+                    size="sm"
+                    variant="outline"
+                    className="h-8 text-xs"
+                    disabled={page === 0}
+                    onClick={() => setOpenPage(page - 1)}
+                  >
+                    Previous
+                  </Button>
+                  {pageItems.map((item, idx) =>
+                    item === "ellipsis" ? (
+                      <span key={`ellipsis-${idx}`} className="text-xs text-muted-foreground px-1">
+                        …
+                      </span>
+                    ) : (
+                      <Button
+                        key={item}
+                        type="button"
+                        size="sm"
+                        variant={page + 1 === item ? "default" : "outline"}
+                        className="h-8 w-8 p-0 text-xs"
+                        onClick={() => setOpenPage(item - 1)}
+                      >
+                        {item}
+                      </Button>
+                    )
+                  )}
+                  <Button
+                    type="button"
+                    size="sm"
+                    variant="outline"
+                    className="h-8 text-xs"
+                    disabled={page >= pageCount - 1}
+                    onClick={() => setOpenPage(page + 1)}
+                  >
+                    Next
+                  </Button>
+                </div>
+              ) : null;
+
               return (
                 <div className="space-y-3" {...pageSwipe(page, pageCount)}>
                   {openRows.length === 0 ? (
                     <p className="text-sm text-muted-foreground">No open lost property.</p>
                   ) : (
                     <>
-                      {pageCount > 1 && (
-                        <div className="flex items-center justify-center gap-1 sm:gap-2 flex-wrap">
-                          <Button
-                            type="button"
-                            size="sm"
-                            variant="outline"
-                            className="h-8 text-xs"
-                            disabled={page === 0}
-                            onClick={() => setOpenPage(page - 1)}
-                          >
-                            Previous
-                          </Button>
-                          {pageItems.map((item, idx) =>
-                            item === "ellipsis" ? (
-                              <span key={`ellipsis-${idx}`} className="text-xs text-muted-foreground px-1">
-                                …
-                              </span>
-                            ) : (
-                              <Button
-                                key={item}
-                                type="button"
-                                size="sm"
-                                variant={page + 1 === item ? "default" : "outline"}
-                                className="h-8 w-8 p-0 text-xs"
-                                onClick={() => setOpenPage(item - 1)}
-                              >
-                                {item}
-                              </Button>
-                            )
-                          )}
-                          <Button
-                            type="button"
-                            size="sm"
-                            variant="outline"
-                            className="h-8 text-xs"
-                            disabled={page >= pageCount - 1}
-                            onClick={() => setOpenPage(page + 1)}
-                          >
-                            Next
-                          </Button>
-                        </div>
-                      )}
+                      <div className="max-lg:hidden">{openPageBar}</div>
                       {pagedOpen.map((r) => renderOpenItem(r))}
+                      <div className="lg:hidden pb-2">{openPageBar}</div>
                     </>
                   )}
                 </div>
@@ -825,18 +816,6 @@ export function LostPropertySheet({
                           onChange={(next) => setRowPhotoPaths(r.id, next)}
                         />
                       </div>
-                      {canResolve && (
-                        <Button
-                          type="button"
-                          size="icon"
-                          variant="ghost"
-                          className="touch-danger text-muted-foreground hover:text-destructive"
-                          onClick={() => void softDelete(r.id)}
-                          aria-label="Delete entry"
-                        >
-                          <Trash2 className="h-4 w-4" />
-                        </Button>
-                      )}
                     </div>
                     </SwipeRow>
                   ))
