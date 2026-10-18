@@ -701,49 +701,8 @@ export function MaintenanceLogSheet({
 
         </div>
 
-        {/* Pagination */}
-        {pageCount > 1 && (
-          <div className="mt-3 max-lg:mt-2 max-lg:order-10 flex items-center justify-center gap-1 sm:gap-2 flex-wrap">
-            <Button
-              type="button"
-              size="sm"
-              variant="outline"
-              className="h-8 text-xs"
-              disabled={safePage === 0}
-              onClick={() => setPage(safePage - 1)}
-            >
-              Previous
-            </Button>
-            {pageItems.map((item, idx) =>
-              item === "ellipsis" ? (
-                <span key={`ellipsis-${idx}`} className="text-xs text-muted-foreground px-1">
-                  …
-                </span>
-              ) : (
-                <Button
-                  key={item}
-                  type="button"
-                  size="sm"
-                  variant={safePage + 1 === item ? "default" : "outline"}
-                  className="h-8 w-8 p-0 text-xs"
-                  onClick={() => setPage(item - 1)}
-                >
-                  {item}
-                </Button>
-              )
-            )}
-            <Button
-              type="button"
-              size="sm"
-              variant="outline"
-              className="h-8 text-xs"
-              disabled={safePage >= pageCount - 1}
-              onClick={() => setPage(safePage + 1)}
-            >
-              Next
-            </Button>
-          </div>
-        )}
+        {/* Pagination: above the list on desktop; phones get it at the end of the list */}
+        <div className="max-lg:hidden">{pageBar}</div>
 
         <div
           className="flex-1 min-h-0 overflow-y-auto mt-4 max-lg:mt-2 max-lg:order-5 space-y-4 overscroll-contain"
