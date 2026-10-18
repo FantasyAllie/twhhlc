@@ -632,12 +632,24 @@ html {
   }
   html[data-platform="ios"] .app-menu-screen [data-ios-icon] svg { color: inherit; }
   html[data-platform="ios"] .app-menu-screen [data-ios-chevron] { display: block; }
-  /* iOS top bar: no box — a soft fade from 60% theme colour down to nothing. */
+  /* A masked glass layer fades into clear content without a hard blur edge. */
   html[data-platform="ios"] [data-mobile-topbar] {
-    background: linear-gradient(to bottom, color-mix(in oklab, var(--color-background) 60%, transparent) 0%, transparent 100%) !important;
+    background: transparent !important;
     backdrop-filter: none;
     border: 0 !important;
     box-shadow: none !important;
+  }
+  html[data-platform="ios"] [data-mobile-topbar]::before {
+    content: "";
+    position: absolute;
+    inset: 0 0 -24px;
+    pointer-events: none;
+    background: linear-gradient(to bottom, color-mix(in oklab, var(--color-background) 60%, transparent), transparent);
+    backdrop-filter: blur(16px) saturate(140%);
+    mask-image: linear-gradient(to bottom, black 0%, black 20%, transparent 100%);
+  }
+  html[data-platform="ios"] [data-mobile-topbar-row] {
+    position: relative;
   }
   html[data-platform="ios"] [data-ios-title] {
     color: var(--color-foreground);
