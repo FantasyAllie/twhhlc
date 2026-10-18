@@ -5,6 +5,7 @@
 - [x] Sad full-screen outcome + sad trombone sound when completion happens with Dirty rooms present
 
 ## Current work
+- [x] Tighten mobile room action spacing and replace Home filter squares with platform-styled highlighted options
 - [x] Remove the Messages screen description on phones and put Show done opposite the title
 - [x] Enable and verify Home pull-to-refresh sync on iOS and Android
 - [x] Prevent clipped iOS shadows across shared panels and verify room tabs, linen and full-screen scrolling
