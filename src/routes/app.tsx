@@ -205,6 +205,15 @@ function AppPage() {
   const ThemeGlyph =
     level === "white" ? Sun : level === "cream" ? SunDim : level === "navy" ? Moon : MoonStar;
   const isMobile = useIsMobile();
+  // Tablet: gets the mobile layout (tab bar, top bar) but is 768–1023px wide.
+  const [isTablet, setIsTablet] = useState(false);
+  useEffect(() => {
+    const mql = window.matchMedia("(min-width: 768px) and (max-width: 1023px)");
+    const update = () => setIsTablet(mql.matches);
+    update();
+    mql.addEventListener("change", update);
+    return () => mql.removeEventListener("change", update);
+  }, []);
   const [authUser, setAuthUser] = useState(() => getStoredUser());
   const currentHotelQ = useCurrentHotel();
   const hotelName = currentHotelQ.data?.name ?? DEFAULT_HOTEL_NAME;
