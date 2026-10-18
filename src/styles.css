@@ -890,10 +890,10 @@ html {
   [data-sheet-inline="screen"] .sticky.top-0.pb-3 {
     padding-bottom: 4px;
   }
-  [data-sheet-inline="screen"] .sticky.top-0 + .overflow-y-auto {
+  [data-sheet-inline="screen"] .sticky.top-0 ~ .overflow-y-auto {
     margin-top: 0 !important;
   }
-  html[data-platform="ios"] [data-ios-panel][data-sheet-inline="screen"] .sticky.top-0 + .overflow-y-auto {
+  html[data-platform="ios"] [data-ios-panel][data-sheet-inline="screen"] .sticky.top-0 ~ .overflow-y-auto {
     padding-top: 8px;
   }
   /* Room tabs retain their exact positions; no gutters on growing bodies. */
