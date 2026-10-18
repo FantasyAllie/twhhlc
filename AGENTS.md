@@ -6,3 +6,7 @@
 - iOS shadow clearance belongs to shared Sheet/Dialog scroll surfaces: growing room bodies do not clip, while bounded lists reserve shadow gutters and tab-bar clearance; why: avoid cut-off glass shadows without changing tiles or unlocking background scrolling.
 - Home pull-to-refresh uses native non-passive touch listeners only on mobile Home at scroll-top and awaits active query invalidation; why: Safari/Chrome cancel pointer gestures when scrolling, and other screens must retain their own scroll behaviour.
 
+- Mobile breakpoint is 1024px (use-mobile.tsx MOBILE_BREAKPOINT, sheet.tsx isPhone); tablets get the mobile layout: bottom tab bar, mobile top bar, no menu button. Aligns with the lg: utilities used for the tab bar.
+- Room tab bodies: the room summary stays visible until the tab's inline sheet has mounted (roomSummaryHidden + MutationObserver in app.tsx); why: a slow first render must not leave an empty gap that pulls the tiles up.
+- Takeover arm window is 5s (armSheetTakeover in ui/sheet.tsx); why: a real iPhone's first render of a heavy panel can exceed a short window, and a missed arm falls back to a slide-up sheet.
+- iOS room-hub logging (maintenance, lost property) opens centred compose-only popups (IOS_CENTRED_POPUP class + composeOnly/contentClassName props on the sheets); why: logging from a room should not replace the screen with the full log windows.
