@@ -528,6 +528,7 @@ export function LostPropertySheet({
             </div>
           )}
           {/* Section pills */}
+          {!composeOnly && (
           <div
             className="inline-flex w-full justify-center rounded-full border p-1 bg-background items-center"
             {...tabSwipe}
