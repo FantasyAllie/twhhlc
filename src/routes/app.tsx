@@ -10,7 +10,7 @@ import { Loader2, CalendarDays, Trophy } from "lucide-react";
 import { LeaderboardSheet } from "@/components/leaderboard-sheet";
 import { RoomFlagsContext, FlagIcon, mergeFlagDefs, useFlagSettingsQuery, useCustomFlagsQuery, type FlagDef } from "@/lib/room-flags";
 import { RoomFlagsSheet } from "@/components/rooms/room-flags-sheet";
-import { usePullToRefresh } from "@/hooks/use-touch-gestures";
+import { useHomeRefresh } from "@/hooks/use-home-refresh";
 import { createFileRoute, useNavigate, Link } from "@tanstack/react-router";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import {
@@ -4080,11 +4080,16 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
   })();
 
   // Pull the home screen down from the top to refetch everything on screen.
-  const homeRefresh = usePullToRefresh(
+  const homeRefresh = useHomeRefresh(
     async () => {
-      await qc.invalidateQueries();
+      try {
+        await qc.invalidateQueries({ refetchType: "active" }, { throwOnError: true });
+        toast.success("Data synced");
+      } catch {
+        toast.error("Could not sync. Check your connection and pull again.");
+      }
     },
-    { atTop: () => (typeof window === "undefined" ? false : window.scrollY <= 0) },
+    isMobile && !homeView && !menuTakeoverActive && !menuSheetOpen && !quickReceptionOpen && openRoom === null,
   );
 
   const allFlagDefs = mergeFlagDefs(flagSettingsQ.data ?? []);
@@ -4127,12 +4132,15 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
 <RoomFlagsContext.Provider value={roomFlagsCtx}>
 <RoomFlagsSheet open={roomFlagsSheetOpen} onOpenChange={setRoomFlagsSheetOpen} />
 <main
+  ref={homeRefresh.ref}
+  data-home-refresh
   className="min-h-[100dvh] bg-background"
   style={{ paddingBottom: isMobile ? 0 : "max(1.5rem, env(safe-area-inset-bottom))" }}
-  {...homeRefresh.handlers}
 >
 {(homeRefresh.pull > 0 || homeRefresh.refreshing) && (
   <div
+    role="status"
+    aria-label={homeRefresh.refreshing ? "Syncing latest data" : "Pull to refresh"}
     className="flex items-center justify-center text-muted-foreground"
     style={{ height: homeRefresh.refreshing ? 28 : homeRefresh.pull }}
   >
