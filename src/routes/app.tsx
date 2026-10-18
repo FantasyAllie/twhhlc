@@ -560,6 +560,9 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
   const [newMaintenanceText, setNewMaintenanceText] = useState<string>("");
   const [newMaintenanceUrgent, setNewMaintenanceUrgent] = useState(false);
   const [maintenanceComposerOpen, setMaintenanceComposerOpen] = useState(false);
+  // iOS room-hub logging: centred compose-only popups instead of the full log windows.
+  const [maintenanceComposeRoom, setMaintenanceComposeRoom] = useState<number | null>(null);
+  const [lostComposeRoom, setLostComposeRoom] = useState<number | null>(null);
 
   const [lostPropertyOpen, setLostPropertyOpen] = useState(false);
   // Room number pre-selected in the lost property composer when it's opened
@@ -4701,10 +4704,18 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
     dismissRoomMessage={dismissRoomMessage}
     onLogMaintenance={(n) => {
       setNewMaintenanceRoom(String(n));
+      if (isIosMobileView()) {
+        setMaintenanceComposeRoom(n);
+        return;
+      }
       setMaintenanceComposerOpen(true);
       setMaintenanceLogOpen(true);
     }}
     onLogLostProperty={(n) => {
+      if (isIosMobileView()) {
+        setLostComposeRoom(n);
+        return;
+      }
       setLostPropertyInitialRoom(n);
       setLostPropertyOpen(true);
     }}
