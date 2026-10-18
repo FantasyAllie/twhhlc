@@ -424,7 +424,7 @@ export function MessagesSheet({
     <Sheet open={open} onOpenChange={onOpenChange}>
       <SheetContent side="bottom" className="overflow-hidden rounded-t-2xl p-4 sm:p-6 flex flex-col">
         <SheetHeader className="text-left">
-          <div className="flex items-center justify-between gap-2">
+          <div className="flex items-center justify-between gap-2 max-lg:pr-24">
             <SheetTitle className="flex items-center gap-2">
               <MessageSquare className="h-4 w-4" />
               Messages
