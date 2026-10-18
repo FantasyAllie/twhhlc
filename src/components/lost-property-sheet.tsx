@@ -419,6 +419,10 @@ export function LostPropertySheet({
                       variant="ghost"
                       className="h-6 w-6"
                       onClick={() => {
+                        if (composeOnly) {
+                          onOpenChange(false);
+                          return;
+                        }
                         setAddOpen(false);
                         resetAddForm();
                       }}
@@ -483,7 +487,7 @@ export function LostPropertySheet({
                   </div>
                 </div>
               )}
-              {settingsOpen && (
+              {!composeOnly && settingsOpen && (
                 <div className="space-y-2 rounded-lg border bg-background p-3">
                   <div className="flex items-center justify-between">
                     <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
