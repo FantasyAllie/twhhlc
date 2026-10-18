@@ -376,8 +376,8 @@ export function LostPropertySheet({
           )}
 
           {canAdd && onAdd && (
-            <div className="border-b pb-4 space-y-2">
-              <div className={isAdmin ? "grid grid-cols-2 gap-2" : undefined}>
+            <div className={composeOnly ? "space-y-2" : "border-b pb-4 space-y-2"}>
+              {!composeOnly && (<div className={isAdmin ? "grid grid-cols-2 gap-2" : undefined}>
                 <Button
                   type="button"
                   variant="outline"
@@ -403,11 +403,11 @@ export function LostPropertySheet({
                       <Settings className="h-4 w-4" />
                       Settings
                     </span>
-                    <ChevronDown className={"h-4 w-4 opacity-60 transition-transform " + (settingsOpen ? "rotate-180" : "")} />
-                  </Button>
+                  <ChevronDown className={"h-4 w-4 opacity-60 transition-transform " + (settingsOpen ? "rotate-180" : "")} />
+                </Button>
                 )}
-              </div>
-              {addOpen && (
+              </div>)}
+              {(composeOnly || addOpen) && (
                 <div className="space-y-2 rounded-lg border bg-background p-3">
                   <div className="flex items-center justify-between">
                     <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
