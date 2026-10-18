@@ -796,7 +796,7 @@ html {
     padding-top: 12px;
   }
   /* Full-screen panels: the panel's own top padding is enough — don't double it. */
-  html[data-platform="ios"] [data-sheet-inline="screen"] > .overflow-y-auto {
+  html[data-platform="ios"] [data-ios-panel][data-sheet-inline="screen"] > .overflow-y-auto {
     padding-top: 0;
   }
   /* Room tabs retain their exact positions; no gutters on growing bodies. */
