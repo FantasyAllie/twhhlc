@@ -871,7 +871,8 @@ html {
     padding: 4px 0 0;
   }
   html[data-platform="ios"] .ios-compose-glass > .overflow-y-auto {
-    margin-top: 12px;
+    margin-top: 4px;
+    padding-top: 0 !important;
     padding-bottom: 0 !important;
   }
   html[data-platform="ios"] .ios-compose-glass [data-compose-form] {
