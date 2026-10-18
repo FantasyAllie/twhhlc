@@ -6213,7 +6213,7 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
 
  <HomeInline active={openRoom !== null} target={roomSlotEl} noFit>
  <Sheet open={openRoom !== null} onOpenChange={(o) => { if (!o) closeRoomView(); }}>
-   <SheetContent side="bottom" data-room-frame className={cn("flex flex-col overflow-hidden rounded-t-2xl p-4 sm:p-6")}>
+   <SheetContent side="bottom" className={cn("flex flex-col overflow-hidden rounded-t-2xl p-4 sm:p-6")}>
       <SheetHeader className="sr-only">
        <SheetTitle>Room {openRoom} — {categoryLabel(roomCategory(openRoom ?? 0), roomTypes)}</SheetTitle>
       {(() => {

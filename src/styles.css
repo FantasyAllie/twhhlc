@@ -775,7 +775,7 @@ html {
 [data-ios-filters-pop] { transform-origin: top left; }
 
 @media (max-width: 1023px) {
-  [data-room-frame][data-sheet-inline="room"] {
+  [data-sheet-inline="room"]:has([aria-label="Room views"]) {
     padding-block: 8px !important;
   }
   html[data-platform="ios"] [data-ui-button][data-ios-glass][aria-pressed="true"] {
