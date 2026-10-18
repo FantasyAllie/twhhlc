@@ -705,7 +705,7 @@ export function MaintenanceLogSheet({
         <div className="max-lg:hidden">{pageBar}</div>
 
         <div
-          className="flex-1 min-h-0 overflow-y-auto mt-4 max-lg:mt-2 max-lg:order-5 space-y-4 overscroll-contain"
+          className="flex-1 min-h-0 overflow-y-auto mt-4 max-lg:mt-2 space-y-4 overscroll-contain"
           {...refresh.handlers}
           {...listSwipe}
         >
