@@ -1,4 +1,5 @@
 import { toggleRoomTab, roomTileAction, type RoomTab } from "@/lib/room-navigation";
+import { FilterOption } from "@/components/rooms/filter-option";
 import { NamedAvatar } from "@/components/user-avatar";
 import { Textarea } from "@/components/ui/textarea";
 import { hasRoomItemSelection } from "@/lib/room-checklist-rules";
@@ -119,7 +120,6 @@ import {
   DialogFooter,
 } from "@/components/ui/dialog";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
-import { Checkbox } from "@/components/ui/checkbox";
 import { Switch } from "@/components/ui/switch";
 import {
   Sheet,
@@ -3461,7 +3461,7 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
     const active = activeRoomTab(n);
     return (
 
-      <div role="group" aria-label="Room views" className="flex flex-row gap-2 shrink-0 mb-3">
+      <div role="group" aria-label="Room views" className="flex flex-row gap-2 shrink-0 mb-3 max-lg:mb-1">
         <Button
           type="button"
           data-ios-glass
@@ -3832,7 +3832,7 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
     </div>
 
     {isReception ? null : (
-    <div className="flex-1 min-h-0 overflow-y-auto mt-3 space-y-4">
+    <div className="flex-1 min-h-0 overflow-y-auto mt-3 max-lg:mt-1 space-y-4">
     {visibleTemplate.length === 0 && roomExtras.length === 0 ? (
     <p className="text-sm text-muted-foreground">
     No items yet. Add linen list items from the menu, or add an extra below.
@@ -5538,14 +5538,12 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
             <div className="space-y-4">
               <div className="space-y-2">
                 <p className="text-xs font-medium text-muted-foreground uppercase tracking-wide">Housekeeping</p>
-                <label className="flex items-center gap-2 py-1.5 px-2 rounded-lg hover:bg-muted cursor-pointer">
-                  <Checkbox
+                <FilterOption 
                     checked={receptionDoneOnlyFilter}
-                    onCheckedChange={(c) => setReceptionDoneOnlyFilter(!!c)}
-                  />
+                    onCheckedChange={(c) => setReceptionDoneOnlyFilter(!!c)}>
                   <span className="text-sm flex-1">Only show rooms marked done</span>
                    <span className="text-xs text-muted-foreground tabular-nums">{doneOnlyCount}</span>
-                </label>
+                </FilterOption>
               </div>
               {statusFilterOptions.length > 0 && (
                 <div className="space-y-2">
@@ -5555,21 +5553,18 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
                       const checked = receptionStatusFilter.includes(s.id);
                        const count = statusCountFor(s.id);
                       return (
-                        <label
+                        <FilterOption
                           key={s.id}
-                          className="flex items-center gap-2 py-1.5 px-2 rounded-lg hover:bg-muted cursor-pointer"
-                        >
-                          <Checkbox
+                          
                             checked={checked}
                             onCheckedChange={(c) => {
                               setReceptionStatusFilter((prev) =>
                                 c ? [...prev, s.id] : prev.filter((id) => id !== s.id),
                               );
-                            }}
-                          />
+                            }}>
                           <span className="text-sm flex-1">{s.label}</span>
                            <span className="text-xs text-muted-foreground tabular-nums">{count}</span>
-                        </label>
+                        </FilterOption>
                       );
                     })}
                   </div>
@@ -5583,21 +5578,18 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
                         const checked = receptionRoomTypeFilter.includes(rt.value);
                          const count = roomTypeCountFor(rt.value);
                         return (
-                          <label
+                          <FilterOption
                             key={rt.id}
-                            className="flex items-center gap-2 py-1.5 px-2 rounded-lg hover:bg-muted cursor-pointer"
-                          >
-                            <Checkbox
+                            
                               checked={checked}
                               onCheckedChange={(c) => {
                                 setReceptionRoomTypeFilter((prev) =>
                                   c ? [...prev, rt.value] : prev.filter((v) => v !== rt.value),
                                 );
-                              }}
-                            />
+                              }}>
                             <span className="text-sm flex-1">{rt.label}</span>
                              <span className="text-xs text-muted-foreground tabular-nums">{count}</span>
-                          </label>
+                          </FilterOption>
                         );
                       })}
                     </div>
@@ -5613,21 +5605,18 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
                         const checked = receptionFeatureFilter.includes(f.id);
                          const count = featureCountFor(f.id);
                         return (
-                          <label
+                          <FilterOption
                             key={f.id}
-                            className="flex items-center gap-2 py-1.5 px-2 rounded-lg hover:bg-muted cursor-pointer"
-                          >
-                            <Checkbox
+                            
                               checked={checked}
                               onCheckedChange={(c) => {
                                 setReceptionFeatureFilter((prev) =>
                                   c ? [...prev, f.id] : prev.filter((id) => id !== f.id),
                                 );
-                              }}
-                            />
+                              }}>
                             <span className="text-sm flex-1">{f.label}</span>
                              <span className="text-xs text-muted-foreground tabular-nums">{count}</span>
-                          </label>
+                          </FilterOption>
                         );
                       })}
                   </div>
@@ -5720,13 +5709,11 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
                 <div className="space-y-4">
                   <div className="space-y-2">
                     <p className="text-xs font-medium text-muted-foreground uppercase tracking-wide">Visibility</p>
-                    <label className="flex items-center gap-2 py-1.5 px-2 rounded-lg hover:bg-muted cursor-pointer">
-                      <Checkbox
+                    <FilterOption 
                         checked={hideCompletedRooms}
-                        onCheckedChange={(c) => setHideCompletedRooms(!!c)}
-                      />
+                        onCheckedChange={(c) => setHideCompletedRooms(!!c)}>
                       <span className="text-sm flex-1">Hide completed rooms</span>
-                    </label>
+                    </FilterOption>
                   </div>
                   <div className="space-y-2">
                     <p className="text-xs font-medium text-muted-foreground uppercase tracking-wide">Status</p>
@@ -5735,21 +5722,18 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
                         const checked = hkStatusFilter.includes(s.key);
                         const count = countFor(s.key);
                         return (
-                          <label
+                          <FilterOption
                             key={s.key}
-                            className="flex items-center gap-2 py-1.5 px-2 rounded-lg hover:bg-muted cursor-pointer"
-                          >
-                            <Checkbox
+                            
                               checked={checked}
                               onCheckedChange={(c) => {
                                 setHkStatusFilter((prev) =>
                                   c ? [...prev, s.key] : prev.filter((k) => k !== s.key),
                                 );
-                              }}
-                            />
+                              }}>
                             <span className="text-sm flex-1">{s.label}</span>
                             <span className="text-xs tabular-nums text-muted-foreground">{count}</span>
-                          </label>
+                          </FilterOption>
                         );
                       })}
                     </div>
@@ -6229,7 +6213,7 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
 
  <HomeInline active={openRoom !== null} target={roomSlotEl} noFit>
  <Sheet open={openRoom !== null} onOpenChange={(o) => { if (!o) closeRoomView(); }}>
-   <SheetContent side="bottom" className={cn("flex flex-col overflow-hidden rounded-t-2xl p-4 sm:p-6")}>
+   <SheetContent side="bottom" data-room-frame className={cn("flex flex-col overflow-hidden rounded-t-2xl p-4 sm:p-6")}>
       <SheetHeader className="sr-only">
        <SheetTitle>Room {openRoom} — {categoryLabel(roomCategory(openRoom ?? 0), roomTypes)}</SheetTitle>
       {(() => {
