@@ -3416,14 +3416,34 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
     setShowAllLinen({});
  };
 
- const selectRoomTab = (n: number, tab: RoomTab) => {
+  const selectRoomTab = (n: number, tab: RoomTab) => {
     const next = toggleRoomTab(activeRoomTab(n), tab);
     clearRoomTabs();
     if (next === "status") setReceptionSheetRoom(n);
     if (next === "linen") setShowAllLinen({ [n]: true });
     if (next === "edit") setEditDefaultsSheetRoom(n);
     if (next === "hub") setNotesSheetRoom(n);
- };
+  };
+
+  // Keep the room summary visible until the tab body has actually mounted, so
+  // a slow first render can't leave an empty gap that pulls the tiles up.
+  const [roomSummaryHidden, setRoomSummaryHidden] = useState(false);
+  const roomTabActive =
+    !isReception && openRoom !== null &&
+    ["status", "edit", "hub"].includes(activeRoomTab(openRoom) ?? "");
+  useEffect(() => {
+    if (!roomTabActive) {
+      setRoomSummaryHidden(false);
+      return;
+    }
+    const body = roomViewBodyEl;
+    if (!body) return;
+    const check = () => setRoomSummaryHidden(!!body.querySelector('[data-sheet-inline="room"]'));
+    check();
+    const mo = new MutationObserver(check);
+    mo.observe(body, { childList: true });
+    return () => mo.disconnect();
+  }, [roomTabActive, roomViewBodyEl]);
 
  const renderRoomNavigation = (n: number) => {
     const active = activeRoomTab(n);
@@ -6122,7 +6142,7 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
      </SheetHeader>
       {!isReception && openRoom !== null && renderRoomNavigation(openRoom)}
       <div ref={setRoomViewBodyEl} data-room-view-body className="flex flex-col flex-1 min-h-0">
-        <div hidden={!isReception && openRoom !== null && ["status", "edit", "hub"].includes(activeRoomTab(openRoom) ?? "")}>
+        <div hidden={roomSummaryHidden}>
           {openRoom !== null && renderRoomPanel(openRoom)}
         </div>
       </div>
