@@ -104,6 +104,8 @@ const DialogContent = React.forwardRef<
       <div
         ref={setRefs}
         data-ios-panel
+        data-sheet-inline="screen"
+        data-takeover=""
         className={cn(
           className,
           "relative flex max-h-none w-full max-w-none flex-col gap-0 overflow-hidden rounded-2xl border bg-background p-4 shadow-elevation-1 sm:p-6",
@@ -122,6 +124,7 @@ const DialogContent = React.forwardRef<
     <DialogDragContext.Provider value={ctx}>
     <DialogPrimitive.Content
       ref={setRefs}
+      data-ios-panel
       className={cn(
         // Slide-up bottom sheet (mobile) / centered modal (desktop), matching
         // the Sheet component so all popups feel consistent.

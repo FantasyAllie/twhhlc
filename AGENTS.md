@@ -3,4 +3,5 @@
 - Room item selectors use hotel-scoped editable settings and current selections on rooms, saved through an authenticated per-item database function; completion snapshots are saved atomically with done through a database function; why: optional persistent selections without pop-ups while preserving immutable exported records.
 - Marking a room done closes the room view by collapsing the open room slot and clearing the status view inside the collapse callback; why: marking done ends the visit to that room, and clearing the status view before the collapse would flash the room hub mid-animation.
 - Room action tabs live once in a stable room frame, with child views portalled into its body without nested framing; only opening/closing the room animates, so switching tabs cannot move navigation or briefly collapse the room.
+- iOS shadow clearance belongs to shared Sheet/Dialog scroll surfaces: growing room bodies do not clip, while bounded lists reserve shadow gutters and tab-bar clearance; why: avoid cut-off glass shadows without changing tiles or unlocking background scrolling.
 

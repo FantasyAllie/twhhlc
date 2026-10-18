@@ -3543,7 +3543,7 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
     return { backgroundColor: theme === "dark" ? c.darkBg : c.bg };
   };
   return (
-  <div className="flex flex-col min-h-0 flex-1 overflow-hidden">
+  <div data-room-panel-body className="flex flex-col min-h-0 flex-1 overflow-hidden">
     <div className={cn("space-y-4", isReception ? "flex-1 min-h-0 overflow-y-auto" : "shrink-0")}>
 
     {/* Reception messages */}

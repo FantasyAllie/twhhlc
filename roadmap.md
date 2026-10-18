@@ -5,6 +5,7 @@
 - [x] Sad full-screen outcome + sad trombone sound when completion happens with Dirty rooms present
 
 ## Current work
+- [x] Prevent clipped iOS shadows across shared panels and verify room tabs, linen and full-screen scrolling
 - [x] Keep room tabs fixed across views, eliminate first-open collapse, and hide inline Edit/Room hub headings and descriptions
 - [x] Verify seamless room switching and button positions without modifying room records
 - [x] Make Status, Extra linen, Edit and Room hub toggle inline views with persistent room navigation

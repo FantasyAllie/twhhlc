@@ -130,7 +130,7 @@ export function useFitToScreen(ref: React.MutableRefObject<HTMLElement | null>, 
         node.style.marginBottom = "0px";
         const clear = `${Math.max(0, window.innerHeight - tabTop) + 12}px`;
         node.querySelectorAll<HTMLElement>(".overflow-y-auto, .overflow-auto").forEach((el) => {
-          if (!el.querySelector(".overflow-y-auto, .overflow-auto")) el.style.paddingBottom = clear;
+          if (!el.querySelector(".overflow-y-auto, .overflow-auto")) el.style.setProperty("--ios-scroll-clear", clear);
         });
         return;
       }
@@ -336,6 +336,7 @@ const SheetContent = React.forwardRef<
       <div
         ref={setRefs}
         data-ios-panel
+        data-sheet-inline={inlineCtx.noFit ? "room" : "screen"}
         data-takeover={!inlineCtx.noFit ? "" : undefined}
         className={cn(
           className,
@@ -362,6 +363,7 @@ const SheetContent = React.forwardRef<
       <SheetDragContext.Provider value={ctxValue}>
       <SheetPrimitive.Content
         ref={setRefs}
+        data-ios-panel
         className={cn(
           sheetVariants({ side }),
           className,
