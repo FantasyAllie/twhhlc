@@ -732,6 +732,7 @@ export function MaintenanceLogSheet({
           ) : (
             <div className="space-y-2">{pagedItems.map((m) => renderItem(m))}</div>
           )}
+          {pageBar && <div className="lg:hidden pb-2">{pageBar}</div>}
         </div>
         </>)}
       </SheetContent>
