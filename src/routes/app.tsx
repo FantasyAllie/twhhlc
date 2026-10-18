@@ -4876,6 +4876,25 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
   }}
 />
 </HomeInline>
+{/* iOS: centred compose-only popup when logging from the room hub */}
+<LostPropertySheet
+  open={lostComposeRoom !== null}
+  onOpenChange={(o) => { if (!o) setLostComposeRoom(null); }}
+  composeOnly
+  contentClassName={IOS_CENTRED_POPUP}
+  initialAddRoom={lostComposeRoom}
+  openComposerOnOpen
+  canResolve={canResolveLostProperty}
+  isAdmin={menuIsAdmin}
+  currentUsername={authUser?.username ?? null}
+  canAdd={menuCanUseLostProperty}
+  requireRoom={hasHousekeeperRole && !hasReceptionRole}
+  scope={logScope}
+  departments={menuIsAdmin || hasReceptionRole ? null : myMessageDepartments}
+  areaLabels={maintenanceAreas.map((a) => a.label)}
+  roomNumbers={rooms.map((r) => r.room_number).sort((a, b) => a - b)}
+  onAdd={logLostProperty}
+/>
 <BroomBurst
   active={broomBurstActive}
   onDone={() => setBroomBurstActive(false)}
@@ -5138,6 +5157,43 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
   setMaintenancePhotoPaths={setMaintenancePhotoPaths}
 />
 </HomeInline>
+
+{/* iOS: centred compose-only popup when logging from the room hub */}
+<MaintenanceLogSheet
+  open={maintenanceComposeRoom !== null}
+  onOpenChange={(o) => { if (!o) setMaintenanceComposeRoom(null); }}
+  rooms={rooms}
+  maintenanceRequests={maintenanceRequests}
+  maintenanceAreas={maintenanceAreas}
+  scope={logScope}
+  composeOnly
+  contentClassName={IOS_CENTRED_POPUP}
+  hasOpenMaintenance={hasOpenMaintenance}
+  openMaintenanceCount={openMaintenanceCount}
+  isReception={isReception}
+  isMaintenance={isMaintenance}
+  isAdmin={isAdmin}
+  authUsername={authUser?.username}
+  maintenanceComposerOpen={true}
+  setMaintenanceComposerOpen={() => {}}
+  newMaintenanceRoom={newMaintenanceRoom}
+  setNewMaintenanceRoom={setNewMaintenanceRoom}
+  newMaintenanceText={newMaintenanceText}
+  setNewMaintenanceText={setNewMaintenanceText}
+  newMaintenanceUrgent={newMaintenanceUrgent}
+  setNewMaintenanceUrgent={setNewMaintenanceUrgent}
+  newMaintenancePhotos={newMaintenancePhotos}
+  setNewMaintenancePhotos={setNewMaintenancePhotos}
+  submitMaintenanceRequest={async () => {
+    const okLocation = newMaintenanceRoom.startsWith("area:") || Number(newMaintenanceRoom) > 0;
+    const hasText = !!newMaintenanceText.trim();
+    await submitMaintenanceRequest();
+    if (okLocation && hasText) setMaintenanceComposeRoom(null);
+  }}
+  markMaintenanceDone={markMaintenanceDone}
+  deleteMaintenanceRequest={deleteMaintenanceRequest}
+  setMaintenancePhotoPaths={setMaintenancePhotoPaths}
+/>
 
 <MaintenanceAreasSheet
   open={maintenanceAreasOpen}
