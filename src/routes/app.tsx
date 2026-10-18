@@ -4183,7 +4183,7 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
   </div>
 )}
 <div
-  className="max-w-2xl md:max-w-5xl lg:max-w-6xl xl:max-w-7xl mx-auto pt-6 pb-2 sm:py-10 space-y-6 sm:space-y-10"
+  className="max-w-2xl md:max-w-5xl lg:max-w-6xl xl:max-w-7xl mx-auto pt-6 pb-2 sm:py-10 space-y-6 max-lg:space-y-4 sm:space-y-10"
   style={{
     paddingLeft: "max(1rem, env(safe-area-inset-left))",
     paddingRight: "max(1rem, env(safe-area-inset-right))",
