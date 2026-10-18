@@ -205,6 +205,15 @@ function AppPage() {
   const ThemeGlyph =
     level === "white" ? Sun : level === "cream" ? SunDim : level === "navy" ? Moon : MoonStar;
   const isMobile = useIsMobile();
+  // Tablet: gets the mobile layout (tab bar, top bar) but is 768–1023px wide.
+  const [isTablet, setIsTablet] = useState(false);
+  useEffect(() => {
+    const mql = window.matchMedia("(min-width: 768px) and (max-width: 1023px)");
+    const update = () => setIsTablet(mql.matches);
+    update();
+    mql.addEventListener("change", update);
+    return () => mql.removeEventListener("change", update);
+  }, []);
   const [authUser, setAuthUser] = useState(() => getStoredUser());
   const currentHotelQ = useCurrentHotel();
   const hotelName = currentHotelQ.data?.name ?? DEFAULT_HOTEL_NAME;
@@ -4194,6 +4203,20 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
     >
       <div data-mobile-topbar-row className="flex h-11 items-center justify-between gap-2">
         <h1 data-ios-title className="min-w-0 flex-1 truncate text-base font-semibold tracking-tight">{hotelName}</h1>
+        {isTablet && (((realIsAdmin || (realIsManager && hasHousekeeperRole)) && !isReception && !menuIsFnbOnly) || isMaintenance) && (
+          <Button
+            variant="ghost"
+            size="sm"
+            data-ios-glass
+            data-reports
+            aria-label="Reports"
+            title="Back up today's data and print reports"
+            className={cn("shrink-0 size-9 p-0 text-sidebar-foreground")}
+            onClick={() => void openReports()}
+          >
+            <ClipboardList className="h-4 w-4" />
+          </Button>
+        )}
         {(isReception || isHousekeeper || (isAdmin && !isFnb && !isMaintenance)) && (
           <Button
             variant="ghost"
