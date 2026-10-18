@@ -4217,6 +4217,20 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
             <ClipboardList className="h-4 w-4" />
           </Button>
         )}
+        {isTablet && canViewAs && (
+          <Button
+            variant="ghost"
+            size="sm"
+            data-ios-glass
+            aria-label="Departments"
+            title="Switch between your assigned departments"
+            className="shrink-0 max-w-[11rem] gap-1.5 px-3 text-sidebar-foreground"
+            onClick={() => setRolePickerSheetOpen(true)}
+          >
+            <LayoutGrid className="h-4 w-4 shrink-0" />
+            <span className="truncate text-xs font-medium">{viewRoleLabel(effectiveRole ?? "user")}</span>
+          </Button>
+        )}
         {(isReception || isHousekeeper || (isAdmin && !isFnb && !isMaintenance)) && (
           <Button
             variant="ghost"
