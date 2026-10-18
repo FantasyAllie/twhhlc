@@ -774,6 +774,17 @@ html {
 }
 [data-ios-filters-pop] { transform-origin: top left; }
 
+@media (max-width: 1023px) {
+  [data-room-frame][data-sheet-inline="room"] {
+    padding-block: 8px !important;
+  }
+  html[data-platform="ios"] [data-ui-button][data-ios-glass][aria-pressed="true"] {
+    border-color: var(--color-primary) !important;
+    background-color: color-mix(in oklab, var(--color-primary) 18%, var(--color-card)) !important;
+    color: var(--color-foreground) !important;
+  }
+}
+
 /* Keep glass shadows inside real scroll viewports without moving their content.
    Unframed room bodies grow with the page, so they need no nested clipping. */
 @media (max-width: 1023px) {
