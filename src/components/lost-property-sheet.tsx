@@ -329,7 +329,7 @@ export function LostPropertySheet({
             <PackageSearch className="h-4 w-4" />
             {composeOnly ? "Log a new item" : "Lost Property"}
           </SheetTitle>
-          <SheetDescription>
+          <SheetDescription className={composeOnly ? undefined : "max-lg:sr-only"}>
             {composeOnly
               ? "Report a lost item. Open items are in the Lost Property screen."
               : canResolve
@@ -339,7 +339,7 @@ export function LostPropertySheet({
         </SheetHeader>
 
         <div
-          className="flex-1 min-h-0 overflow-y-auto mt-4 space-y-3 overscroll-contain"
+          className="flex-1 min-h-0 overflow-y-auto mt-4 max-lg:mt-2 space-y-3 overscroll-contain"
           {...refresh.handlers}
         >
           {(refresh.pull > 0 || refresh.refreshing) && (
@@ -673,18 +673,6 @@ export function LostPropertySheet({
                 ) : (
                   <span className="text-xs text-muted-foreground shrink-0 pt-1">Awaiting reception</span>
                 )}
-                {isAdmin && (
-                  <Button
-                    type="button"
-                    size="icon"
-                    variant="ghost"
-                    className="touch-danger shrink-0 text-muted-foreground hover:text-destructive"
-                    onClick={() => void softDelete(r.id)}
-                    aria-label="Delete entry"
-                  >
-                    <Trash2 className="h-4 w-4" />
-                  </Button>
-                )}
               </div>
               </SwipeRow>
             );
@@ -825,18 +813,6 @@ export function LostPropertySheet({
                           onChange={(next) => setRowPhotoPaths(r.id, next)}
                         />
                       </div>
-                      {canResolve && (
-                        <Button
-                          type="button"
-                          size="icon"
-                          variant="ghost"
-                          className="touch-danger text-muted-foreground hover:text-destructive"
-                          onClick={() => void softDelete(r.id)}
-                          aria-label="Delete entry"
-                        >
-                          <Trash2 className="h-4 w-4" />
-                        </Button>
-                      )}
                     </div>
                     </SwipeRow>
                   ))

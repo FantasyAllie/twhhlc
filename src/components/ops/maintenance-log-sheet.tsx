@@ -413,7 +413,7 @@ export function MaintenanceLogSheet({
               </span>
             )}
           </SheetTitle>
-          <SheetDescription>
+          <SheetDescription className={composeOnly ? undefined : "max-lg:sr-only"}>
             {composeOnly
               ? "Report a new maintenance issue. Open jobs are on your Home screen."
               : isReception || isMaintenance
@@ -421,7 +421,7 @@ export function MaintenanceLogSheet({
               : "Log a maintenance issue for Reception or Maintenance to action."}
           </SheetDescription>
         </SheetHeader>
-        <div className={"mt-4 space-y-2 " + (composeOnly ? "" : "border-b pb-4")}>
+        <div className={"mt-4 max-lg:mt-2 space-y-2 " + (composeOnly ? "" : "border-b pb-4")}>
           {!composeOnly && (<div className={isAdmin ? "grid grid-cols-[minmax(0,1fr)_minmax(0,1fr)] gap-2" : undefined}>
             <Button
               type="button"
@@ -621,7 +621,7 @@ export function MaintenanceLogSheet({
         {!composeOnly && (<>
         {/* Section pills */}
         <div
-          className="mt-4 inline-flex w-full justify-center rounded-full border p-1 bg-background items-center"
+          className="mt-4 max-lg:mt-2 inline-flex w-full justify-center rounded-full border p-1 bg-background items-center"
           {...tabSwipe}
         >
           {([
@@ -659,7 +659,7 @@ export function MaintenanceLogSheet({
 
         {/* Pagination */}
         {pageCount > 1 && (
-          <div className="mt-3 flex items-center justify-center gap-1 sm:gap-2 flex-wrap">
+          <div className="mt-3 max-lg:mt-2 max-lg:order-10 flex items-center justify-center gap-1 sm:gap-2 flex-wrap">
             <Button
               type="button"
               size="sm"
@@ -702,7 +702,7 @@ export function MaintenanceLogSheet({
         )}
 
         <div
-          className="flex-1 min-h-0 overflow-y-auto mt-4 space-y-4 overscroll-contain"
+          className="flex-1 min-h-0 overflow-y-auto mt-4 max-lg:mt-2 max-lg:order-5 space-y-4 overscroll-contain"
           {...refresh.handlers}
           {...listSwipe}
         >
