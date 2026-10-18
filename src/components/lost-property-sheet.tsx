@@ -47,6 +47,8 @@ export function LostPropertySheet({
   onReply,
   initialAddRoom = null,
   openComposerOnOpen = false,
+  composeOnly = false,
+  contentClassName,
   scope = "rooms",
   areaLabels = [],
   departments = null,
@@ -77,6 +79,10 @@ export function LostPropertySheet({
   // room hub, so the room doesn't have to be picked again.
   initialAddRoom?: number | null;
   openComposerOnOpen?: boolean;
+  // Only the new-item form (the centred iOS room-hub popup).
+  composeOnly?: boolean;
+  // Extra classes for the panel itself.
+  contentClassName?: string;
   // Rooms for Housekeeping/Reception; hotel areas for everyone else.
   scope?: "rooms" | "areas";
   areaLabels?: string[];
