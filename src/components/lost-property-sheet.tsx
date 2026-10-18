@@ -556,8 +556,9 @@ export function LostPropertySheet({
               );
             })}
           </div>
+          )}
 
-          {(() => {
+          {!composeOnly && (() => {
             const renderOpenItem = (r: LostPropertyRow) => (
               <SwipeRow
                 key={r.id}
