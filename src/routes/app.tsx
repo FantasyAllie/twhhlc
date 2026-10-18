@@ -6516,6 +6516,15 @@ const isIosMobileView = () =>
 const IOS_CENTRED_POPUP =
   "max-lg:left-4 max-lg:right-4 max-lg:top-1/2 max-lg:bottom-auto max-lg:w-auto max-lg:h-auto max-lg:max-h-[80dvh] max-lg:-translate-y-1/2 max-lg:rounded-3xl max-lg:border max-lg:data-[state=open]:animate-[sheet-pop-in_250ms_ease-out] max-lg:data-[state=closed]:animate-[sheet-pop-out_180ms_ease-in]";
 
+// Display name for each view role, shared by the header pills and the picker.
+const viewRoleLabel = (r: string): string =>
+  r === "user" ? "Housekeeping"
+  : r === "fnb" ? "F&B"
+  : r === "reception" ? "Reception"
+  : r === "admin" ? "Admin"
+  : r === "maintenance" ? "Maintenance"
+  : "Manager";
+
 function HomeInline({
   active,
   target,
