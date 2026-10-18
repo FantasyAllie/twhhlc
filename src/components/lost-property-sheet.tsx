@@ -597,7 +597,7 @@ export function LostPropertySheet({
                   />
                 </div>
                 {canResolve ? (
-                  <div className="flex flex-col gap-1 shrink-0">
+                  <div className="flex flex-col items-center gap-1.5 shrink-0">
                     <Button
                       type="button"
                       size="sm"
@@ -608,46 +608,56 @@ export function LostPropertySheet({
                       <Check className="h-3.5 w-3.5 mr-1" />
                       Collected
                     </Button>
-                    {onReply && (
+                    {/* Reply and Throw away sit as two round icon buttons side by side. */}
+                    <div className="flex items-center justify-center gap-1.5">
+                      {onReply && (
+                        <Button
+                          type="button"
+                          size="icon"
+                          variant="outline"
+                          data-ios-glass
+                          className="h-9 w-9 rounded-full"
+                          title="Reply"
+                          aria-label="Reply"
+                          onClick={() =>
+                            onReply({
+                              id: r.id,
+                              roomNumber: r.room_number,
+                              message: r.message,
+                              sender: r.created_by_username,
+                            })
+                          }
+                        >
+                          <MessageSquare className="h-4 w-4" />
+                        </Button>
+                      )}
                       <Button
                         type="button"
-                        size="sm"
+                        size="icon"
                         variant="outline"
-                        className="h-8 text-xs"
-                        onClick={() =>
-                          onReply({
-                            id: r.id,
-                            roomNumber: r.room_number,
-                            message: r.message,
-                            sender: r.created_by_username,
-                          })
+                        data-ios-glass
+                        className="h-9 w-9 rounded-full"
+                        title={
+                          canDiscard(r.created_at)
+                            ? "Throw away"
+                            : `Disposable ${new Date(
+                                new Date(r.created_at).getTime() +
+                                  retentionMonths * 30.44 * 24 * 60 * 60 * 1000,
+                              ).toLocaleString()}`
                         }
-                      >
-                        <MessageSquare className="h-3.5 w-3.5 mr-1" />
-                        Reply
-                      </Button>
-                    )}
-                    {canDiscard(r.created_at) ? (
-                      <Button
-                        type="button"
-                        size="sm"
-                        variant="outline"
-                        className="h-8 text-xs"
+                        aria-label="Throw away"
+                        disabled={!canDiscard(r.created_at)}
                         onClick={() => void setStatus(r.id, "discarded")}
                       >
-                        <Trash2 className="h-3.5 w-3.5 mr-1" />
-                        Throw away
+                        <Trash2 className="h-4 w-4" />
                       </Button>
-                    ) : (
+                    </div>
+                    {!canDiscard(r.created_at) &&
                       (() => {
                         const ms = msUntilDiscardable(r.created_at);
                         const urgent = ms > 0 && ms <= 24 * 60 * 60 * 1000;
                         return (
                           <span
-                            title={`Disposable ${new Date(
-                              new Date(r.created_at).getTime() +
-                                retentionMonths * 30.44 * 24 * 60 * 60 * 1000,
-                            ).toLocaleString()}`}
                             className={
                               "text-[10px] text-center leading-tight " +
                               (urgent
@@ -658,8 +668,7 @@ export function LostPropertySheet({
                             {formatCountdown(ms)}
                           </span>
                         );
-                      })()
-                    )}
+                      })()}
                   </div>
                 ) : (
                   <span className="text-xs text-muted-foreground shrink-0 pt-1">Awaiting reception</span>
