@@ -9,6 +9,7 @@ import { Switch } from "@/components/ui/switch";
 import { cn } from "@/lib/utils";
 import { toast } from "sonner";
 import { notifyDepartmentMessage } from "@/lib/push.functions";
+import { useIsMobile } from "@/hooks/use-mobile";
 
 export type MessagesThread =
   | "hk_reception"
@@ -99,6 +100,7 @@ export function MessagesSheet({
   ) => Promise<{ ok: boolean; error?: string }>;
 }) {
   const qc = useQueryClient();
+  const isMobile = useIsMobile();
   const [thread, setThread] = useState<MessagesThread>(
     initialThread && availableThreads.includes(initialThread)
       ? initialThread
@@ -422,11 +424,29 @@ export function MessagesSheet({
     <Sheet open={open} onOpenChange={onOpenChange}>
       <SheetContent side="bottom" className="overflow-hidden rounded-t-2xl p-4 sm:p-6 flex flex-col">
         <SheetHeader className="text-left">
-          <SheetTitle className="flex items-center gap-2">
-            <MessageSquare className="h-4 w-4" />
-            Messages
-          </SheetTitle>
-          <SheetDescription>Shared thread — everyone in these roles sees it.</SheetDescription>
+          <div className="flex items-center justify-between gap-2">
+            <SheetTitle className="flex items-center gap-2">
+              <MessageSquare className="h-4 w-4" />
+              Messages
+            </SheetTitle>
+            {isMobile && doneCount > 0 && (
+              <Button
+                type="button"
+                size="sm"
+                variant={showDone ? "default" : "outline"}
+                className="rounded-full shrink-0"
+                onClick={() => setShowDone((v) => !v)}
+              >
+                <Check className="h-3.5 w-3.5 mr-1" />
+                {showDone ? "Hide done" : `Show done (${doneCount})`}
+              </Button>
+            )}
+          </div>
+          {!isMobile && (
+            <SheetDescription>
+              Shared thread — everyone in these roles sees it.
+            </SheetDescription>
+          )}
         </SheetHeader>
 
         {((useSendToPicker && sendToTargets.length > 1) || (!useSendToPicker && availableThreads.length > 1)) && (
@@ -484,7 +504,7 @@ export function MessagesSheet({
         )}
 
 
-        {doneCount > 0 && (
+        {!isMobile && doneCount > 0 && (
           <div className="mt-3 flex justify-end">
             <Button
               type="button"
