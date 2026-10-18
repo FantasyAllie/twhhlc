@@ -136,6 +136,7 @@ export function LostPropertySheet({
     }).catch(() => {});
     resetAddForm();
     setAddOpen(false);
+    if (composeOnly) onOpenChange(false);
   };
 
   const RETENTION_KEY = "lost_property_retention_months";
@@ -322,14 +323,16 @@ export function LostPropertySheet({
 
   return (
     <Sheet open={open} onOpenChange={onOpenChange}>
-      <SheetContent side="bottom" className="overflow-hidden rounded-t-2xl p-4 sm:p-6 flex flex-col">
+      <SheetContent side="bottom" className={"overflow-hidden rounded-t-2xl p-4 sm:p-6 flex flex-col" + (contentClassName ? " " + contentClassName : "")}>
         <SheetHeader className="text-left">
           <SheetTitle className="flex items-center gap-2">
             <PackageSearch className="h-4 w-4" />
-            Lost Property
+            {composeOnly ? "Log a new item" : "Lost Property"}
           </SheetTitle>
           <SheetDescription>
-            {canResolve
+            {composeOnly
+              ? "Report a lost item. Open items are in the Lost Property screen."
+              : canResolve
               ? "Mark items as collected by the guest, or thrown away when unclaimed."
               : "Items reported to Reception. Reception marks them collected or discarded."}
           </SheetDescription>
