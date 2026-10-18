@@ -73,9 +73,12 @@ export function MaintenanceLogSheet({
   setMaintenancePhotoPaths,
   scope,
   composeOnly = false,
+  contentClassName,
 }: {
   // Only show the new-issue form (Maintenance staff work the list from Home).
   composeOnly?: boolean;
+  // Extra classes for the panel itself (e.g. the centred iOS compose popup).
+  contentClassName?: string;
   // When set, only room or only hotel-area entries are shown and loggable.
   scope?: "rooms" | "areas";
   open: boolean;
@@ -398,7 +401,7 @@ export function MaintenanceLogSheet({
 
   return (
     <Sheet open={open} onOpenChange={onOpenChange}>
-      <SheetContent side="bottom" className="overflow-hidden rounded-t-2xl p-4 sm:p-6 flex flex-col">
+      <SheetContent side="bottom" className={"overflow-hidden rounded-t-2xl p-4 sm:p-6 flex flex-col" + (contentClassName ? " " + contentClassName : "")}>
         <SheetHeader className="text-left">
           <SheetTitle className="flex items-center gap-2">
             <Wrench className="h-4 w-4" />

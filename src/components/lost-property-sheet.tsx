@@ -47,6 +47,8 @@ export function LostPropertySheet({
   onReply,
   initialAddRoom = null,
   openComposerOnOpen = false,
+  composeOnly = false,
+  contentClassName,
   scope = "rooms",
   areaLabels = [],
   departments = null,
@@ -77,6 +79,10 @@ export function LostPropertySheet({
   // room hub, so the room doesn't have to be picked again.
   initialAddRoom?: number | null;
   openComposerOnOpen?: boolean;
+  // Only the new-item form (the centred iOS room-hub popup).
+  composeOnly?: boolean;
+  // Extra classes for the panel itself.
+  contentClassName?: string;
   // Rooms for Housekeeping/Reception; hotel areas for everyone else.
   scope?: "rooms" | "areas";
   areaLabels?: string[];
@@ -130,6 +136,7 @@ export function LostPropertySheet({
     }).catch(() => {});
     resetAddForm();
     setAddOpen(false);
+    if (composeOnly) onOpenChange(false);
   };
 
   const RETENTION_KEY = "lost_property_retention_months";
@@ -316,14 +323,16 @@ export function LostPropertySheet({
 
   return (
     <Sheet open={open} onOpenChange={onOpenChange}>
-      <SheetContent side="bottom" className="overflow-hidden rounded-t-2xl p-4 sm:p-6 flex flex-col">
+      <SheetContent side="bottom" className={"overflow-hidden rounded-t-2xl p-4 sm:p-6 flex flex-col" + (contentClassName ? " " + contentClassName : "")}>
         <SheetHeader className="text-left">
           <SheetTitle className="flex items-center gap-2">
             <PackageSearch className="h-4 w-4" />
-            Lost Property
+            {composeOnly ? "Log a new item" : "Lost Property"}
           </SheetTitle>
           <SheetDescription>
-            {canResolve
+            {composeOnly
+              ? "Report a lost item. Open items are in the Lost Property screen."
+              : canResolve
               ? "Mark items as collected by the guest, or thrown away when unclaimed."
               : "Items reported to Reception. Reception marks them collected or discarded."}
           </SheetDescription>
@@ -367,8 +376,8 @@ export function LostPropertySheet({
           )}
 
           {canAdd && onAdd && (
-            <div className="border-b pb-4 space-y-2">
-              <div className={isAdmin ? "grid grid-cols-2 gap-2" : undefined}>
+            <div className={composeOnly ? "space-y-2" : "border-b pb-4 space-y-2"}>
+              {!composeOnly && (<div className={isAdmin ? "grid grid-cols-2 gap-2" : undefined}>
                 <Button
                   type="button"
                   variant="outline"
@@ -394,11 +403,11 @@ export function LostPropertySheet({
                       <Settings className="h-4 w-4" />
                       Settings
                     </span>
-                    <ChevronDown className={"h-4 w-4 opacity-60 transition-transform " + (settingsOpen ? "rotate-180" : "")} />
-                  </Button>
+                  <ChevronDown className={"h-4 w-4 opacity-60 transition-transform " + (settingsOpen ? "rotate-180" : "")} />
+                </Button>
                 )}
-              </div>
-              {addOpen && (
+              </div>)}
+              {(composeOnly || addOpen) && (
                 <div className="space-y-2 rounded-lg border bg-background p-3">
                   <div className="flex items-center justify-between">
                     <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
@@ -410,6 +419,10 @@ export function LostPropertySheet({
                       variant="ghost"
                       className="h-6 w-6"
                       onClick={() => {
+                        if (composeOnly) {
+                          onOpenChange(false);
+                          return;
+                        }
                         setAddOpen(false);
                         resetAddForm();
                       }}
@@ -474,7 +487,7 @@ export function LostPropertySheet({
                   </div>
                 </div>
               )}
-              {settingsOpen && (
+              {!composeOnly && settingsOpen && (
                 <div className="space-y-2 rounded-lg border bg-background p-3">
                   <div className="flex items-center justify-between">
                     <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
@@ -515,6 +528,7 @@ export function LostPropertySheet({
             </div>
           )}
           {/* Section pills */}
+          {!composeOnly && (
           <div
             className="inline-flex w-full justify-center rounded-full border p-1 bg-background items-center"
             {...tabSwipe}
@@ -542,8 +556,9 @@ export function LostPropertySheet({
               );
             })}
           </div>
+          )}
 
-          {(() => {
+          {!composeOnly && (() => {
             const renderOpenItem = (r: LostPropertyRow) => (
               <SwipeRow
                 key={r.id}

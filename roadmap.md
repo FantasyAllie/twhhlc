@@ -43,3 +43,10 @@
 - [x] iPhone: taller top bar with a 60%-to-0% fade, icon-only Quick Setup, progress ring sized to match
 - [x] iPhone: More opens as its own screen, tab screens have no Close button, and scrollable content ends above the floating tab bar
 - [x] Show the Quick Setup button as its bell icon only on phones, iPhone and Android alike
+
+## Current request (Allie, 18 Oct)
+- [x] iOS top bar blur: shrink so the blur bottom sits even with the Quick Setup / progress ring buttons
+- [x] Fix first-open of Status/Extra linen/Edit/Room hub: tiles below jump up as the panel mounts
+- [x] Fix iOS screens occasionally opening as slide-up panels instead of full-screen on first open
+- [x] Room hub maintenance/lost-property logging on iOS: centred popup (like shift progress card), not the full log windows
+- [x] Tablet iOS = mobile iOS: bottom tab bar, no More/menu button in top bar, iOS-styled menu box + department pill

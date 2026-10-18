@@ -560,6 +560,9 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
   const [newMaintenanceText, setNewMaintenanceText] = useState<string>("");
   const [newMaintenanceUrgent, setNewMaintenanceUrgent] = useState(false);
   const [maintenanceComposerOpen, setMaintenanceComposerOpen] = useState(false);
+  // iOS room-hub logging: centred compose-only popups instead of the full log windows.
+  const [maintenanceComposeRoom, setMaintenanceComposeRoom] = useState<number | null>(null);
+  const [lostComposeRoom, setLostComposeRoom] = useState<number | null>(null);
 
   const [lostPropertyOpen, setLostPropertyOpen] = useState(false);
   // Room number pre-selected in the lost property composer when it's opened
@@ -3416,14 +3419,34 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
     setShowAllLinen({});
  };
 
- const selectRoomTab = (n: number, tab: RoomTab) => {
+  const selectRoomTab = (n: number, tab: RoomTab) => {
     const next = toggleRoomTab(activeRoomTab(n), tab);
     clearRoomTabs();
     if (next === "status") setReceptionSheetRoom(n);
     if (next === "linen") setShowAllLinen({ [n]: true });
     if (next === "edit") setEditDefaultsSheetRoom(n);
     if (next === "hub") setNotesSheetRoom(n);
- };
+  };
+
+  // Keep the room summary visible until the tab body has actually mounted, so
+  // a slow first render can't leave an empty gap that pulls the tiles up.
+  const [roomSummaryHidden, setRoomSummaryHidden] = useState(false);
+  const roomTabActive =
+    !isReception && openRoom !== null &&
+    ["status", "edit", "hub"].includes(activeRoomTab(openRoom) ?? "");
+  useEffect(() => {
+    if (!roomTabActive) {
+      setRoomSummaryHidden(false);
+      return;
+    }
+    const body = roomViewBodyEl;
+    if (!body) return;
+    const check = () => setRoomSummaryHidden(!!body.querySelector('[data-sheet-inline="room"]'));
+    check();
+    const mo = new MutationObserver(check);
+    mo.observe(body, { childList: true });
+    return () => mo.disconnect();
+  }, [roomTabActive, roomViewBodyEl]);
 
  const renderRoomNavigation = (n: number) => {
     const active = activeRoomTab(n);
@@ -4681,10 +4704,18 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
     dismissRoomMessage={dismissRoomMessage}
     onLogMaintenance={(n) => {
       setNewMaintenanceRoom(String(n));
+      if (isIosMobileView()) {
+        setMaintenanceComposeRoom(n);
+        return;
+      }
       setMaintenanceComposerOpen(true);
       setMaintenanceLogOpen(true);
     }}
     onLogLostProperty={(n) => {
+      if (isIosMobileView()) {
+        setLostComposeRoom(n);
+        return;
+      }
       setLostPropertyInitialRoom(n);
       setLostPropertyOpen(true);
     }}
@@ -4845,6 +4876,25 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
   }}
 />
 </HomeInline>
+{/* iOS: centred compose-only popup when logging from the room hub */}
+<LostPropertySheet
+  open={lostComposeRoom !== null}
+  onOpenChange={(o) => { if (!o) setLostComposeRoom(null); }}
+  composeOnly
+  contentClassName={IOS_CENTRED_POPUP}
+  initialAddRoom={lostComposeRoom}
+  openComposerOnOpen
+  canResolve={canResolveLostProperty}
+  isAdmin={menuIsAdmin}
+  currentUsername={authUser?.username ?? null}
+  canAdd={menuCanUseLostProperty}
+  requireRoom={hasHousekeeperRole && !hasReceptionRole}
+  scope={logScope}
+  departments={menuIsAdmin || hasReceptionRole ? null : myMessageDepartments}
+  areaLabels={maintenanceAreas.map((a) => a.label)}
+  roomNumbers={rooms.map((r) => r.room_number).sort((a, b) => a - b)}
+  onAdd={logLostProperty}
+/>
 <BroomBurst
   active={broomBurstActive}
   onDone={() => setBroomBurstActive(false)}
@@ -5107,6 +5157,43 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
   setMaintenancePhotoPaths={setMaintenancePhotoPaths}
 />
 </HomeInline>
+
+{/* iOS: centred compose-only popup when logging from the room hub */}
+<MaintenanceLogSheet
+  open={maintenanceComposeRoom !== null}
+  onOpenChange={(o) => { if (!o) setMaintenanceComposeRoom(null); }}
+  rooms={rooms}
+  maintenanceRequests={maintenanceRequests}
+  maintenanceAreas={maintenanceAreas}
+  scope={logScope}
+  composeOnly
+  contentClassName={IOS_CENTRED_POPUP}
+  hasOpenMaintenance={hasOpenMaintenance}
+  openMaintenanceCount={openMaintenanceCount}
+  isReception={isReception}
+  isMaintenance={isMaintenance}
+  isAdmin={isAdmin}
+  authUsername={authUser?.username}
+  maintenanceComposerOpen={true}
+  setMaintenanceComposerOpen={() => {}}
+  newMaintenanceRoom={newMaintenanceRoom}
+  setNewMaintenanceRoom={setNewMaintenanceRoom}
+  newMaintenanceText={newMaintenanceText}
+  setNewMaintenanceText={setNewMaintenanceText}
+  newMaintenanceUrgent={newMaintenanceUrgent}
+  setNewMaintenanceUrgent={setNewMaintenanceUrgent}
+  newMaintenancePhotos={newMaintenancePhotos}
+  setNewMaintenancePhotos={setNewMaintenancePhotos}
+  submitMaintenanceRequest={async () => {
+    const okLocation = newMaintenanceRoom.startsWith("area:") || Number(newMaintenanceRoom) > 0;
+    const hasText = !!newMaintenanceText.trim();
+    await submitMaintenanceRequest();
+    if (okLocation && hasText) setMaintenanceComposeRoom(null);
+  }}
+  markMaintenanceDone={markMaintenanceDone}
+  deleteMaintenanceRequest={deleteMaintenanceRequest}
+  setMaintenancePhotoPaths={setMaintenancePhotoPaths}
+/>
 
 <MaintenanceAreasSheet
   open={maintenanceAreasOpen}
@@ -6122,7 +6209,7 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
      </SheetHeader>
       {!isReception && openRoom !== null && renderRoomNavigation(openRoom)}
       <div ref={setRoomViewBodyEl} data-room-view-body className="flex flex-col flex-1 min-h-0">
-        <div hidden={!isReception && openRoom !== null && ["status", "edit", "hub"].includes(activeRoomTab(openRoom) ?? "")}>
+        <div hidden={roomSummaryHidden}>
           {openRoom !== null && renderRoomPanel(openRoom)}
         </div>
       </div>
@@ -6396,6 +6483,16 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
 }
 
 // Renders a panel in place of the Home screen (via portal) when active.
+// iPhone/iPad only: room-hub logging opens a centred compose popup.
+const isIosMobileView = () =>
+  typeof document !== "undefined" &&
+  document.documentElement.dataset.platform === "ios" &&
+  window.innerWidth < 1024;
+
+// Centred card override for a bottom sheet on small screens (iOS popups).
+const IOS_CENTRED_POPUP =
+  "max-lg:left-4 max-lg:right-4 max-lg:top-1/2 max-lg:bottom-auto max-lg:w-auto max-lg:h-auto max-lg:max-h-[80dvh] max-lg:-translate-y-1/2 max-lg:rounded-3xl max-lg:border max-lg:data-[state=open]:animate-[sheet-pop-in_250ms_ease-out] max-lg:data-[state=closed]:animate-[sheet-pop-out_180ms_ease-in]";
+
 function HomeInline({
   active,
   target,
