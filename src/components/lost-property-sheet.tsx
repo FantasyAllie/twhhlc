@@ -408,7 +408,7 @@ export function LostPropertySheet({
                 )}
               </div>)}
               {(composeOnly || addOpen) && (
-                <div className="space-y-2 rounded-lg border bg-background p-3">
+                <div data-compose-form={composeOnly ? "" : undefined} className="space-y-2 rounded-lg border bg-background p-3">
                   <div className="flex items-center justify-between">
                     <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
                       Log a new item
