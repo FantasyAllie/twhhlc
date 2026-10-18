@@ -6427,6 +6427,16 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
 }
 
 // Renders a panel in place of the Home screen (via portal) when active.
+// iPhone/iPad only: room-hub logging opens a centred compose popup.
+const isIosMobileView = () =>
+  typeof document !== "undefined" &&
+  document.documentElement.dataset.platform === "ios" &&
+  window.innerWidth < 1024;
+
+// Centred card override for a bottom sheet on small screens (iOS popups).
+const IOS_CENTRED_POPUP =
+  "max-lg:left-4 max-lg:right-4 max-lg:top-1/2 max-lg:bottom-auto max-lg:w-auto max-lg:h-auto max-lg:max-h-[80dvh] max-lg:-translate-y-1/2 max-lg:rounded-3xl max-lg:border max-lg:data-[state=open]:animate-[sheet-pop-in_250ms_ease-out] max-lg:data-[state=closed]:animate-[sheet-pop-out_180ms_ease-in]";
+
 function HomeInline({
   active,
   target,
