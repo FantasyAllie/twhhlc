@@ -4409,10 +4409,17 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
  </header>
  )}
 
- {/* Mobile role-picker sheet (triggered from the burger menu). */}
- {isMobile && canViewAs && (
+ {/* Mobile role-picker sheet (triggered from the burger menu or the tablet top bar).
+      iOS: frosted centred card with glass buttons; Android: bottom sheet, Material buttons. */}
+ {isMobile && canViewAs && (() => {
+   const isIosDevice =
+     typeof document !== "undefined" && document.documentElement.dataset.platform === "ios";
+   return (
    <Sheet open={rolePickerSheetOpen} onOpenChange={setRolePickerSheetOpen}>
-     <SheetContent side="bottom" className="overflow-y-auto rounded-t-2xl p-4 sm:p-6">
+     <SheetContent
+       side="bottom"
+       className={cn("overflow-y-auto p-4 sm:p-6", isIosDevice ? IOS_CENTRED_POPUP : "rounded-t-2xl")}
+     >
        <SheetHeader className="text-left">
          <SheetTitle>Department</SheetTitle>
          <SheetDescription>Switch between your assigned departments.</SheetDescription>
@@ -4420,22 +4427,17 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
        <div className="mt-4 grid gap-2">
          {availableViews.map((r) => {
            const active = effectiveRole === r;
-           const label =
-             r === "user" ? "Housekeeping"
-             : r === "fnb" ? "F&B"
-             : r === "reception" ? "Reception"
-             : r === "admin" ? "Admin"
-              : r === "maintenance" ? "Maintenance"
-             : "Manager";
            return (
              <Button
                key={r}
-               variant={active ? "default" : "outline"}
+               variant={isIosDevice ? "outline" : active ? "default" : "outline"}
+               data-ios-glass={isIosDevice ? "" : undefined}
+               data-ios-selected={isIosDevice && active ? "" : undefined}
                size="lg"
                className="justify-start h-12"
                onClick={() => { setViewAsRole(active ? null : r); setRolePickerSheetOpen(false); }}
              >
-               <span className="flex-1 text-left">{label}</span>
+               <span className="flex-1 text-left">{viewRoleLabel(r)}</span>
                {active && <Check className="h-4 w-4 ml-2" />}
              </Button>
            );
@@ -4443,7 +4445,8 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
        </div>
      </SheetContent>
    </Sheet>
- )}
+   );
+ })()}
  {/* Mobile export sheet (triggered from the burger menu). */}
   <Dialog open={endShiftPrintOpen} onOpenChange={setEndShiftPrintOpen}>
     <DialogContent className="max-w-sm">
