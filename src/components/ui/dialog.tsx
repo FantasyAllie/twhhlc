@@ -105,6 +105,7 @@ const DialogContent = React.forwardRef<
         ref={setRefs}
         data-ios-panel
         data-sheet-inline="screen"
+        data-takeover=""
         className={cn(
           className,
           "relative flex max-h-none w-full max-w-none flex-col gap-0 overflow-hidden rounded-2xl border bg-background p-4 shadow-elevation-1 sm:p-6",
