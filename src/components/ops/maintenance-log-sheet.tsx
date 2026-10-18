@@ -399,6 +399,50 @@ export function MaintenanceLogSheet({
     );
   };
 
+  // Shared pagination bar: above the list on desktop, at the end of the list on phones.
+  const pageBar = pageCount > 1 ? (
+    <div className="mt-3 flex items-center justify-center gap-1 sm:gap-2 flex-wrap">
+      <Button
+        type="button"
+        size="sm"
+        variant="outline"
+        className="h-8 text-xs"
+        disabled={safePage === 0}
+        onClick={() => setPage(safePage - 1)}
+      >
+        Previous
+      </Button>
+      {pageItems.map((item, idx) =>
+        item === "ellipsis" ? (
+          <span key={`ellipsis-${idx}`} className="text-xs text-muted-foreground px-1">
+            …
+          </span>
+        ) : (
+          <Button
+            key={item}
+            type="button"
+            size="sm"
+            variant={safePage + 1 === item ? "default" : "outline"}
+            className="h-8 w-8 p-0 text-xs"
+            onClick={() => setPage(item - 1)}
+          >
+            {item}
+          </Button>
+        )
+      )}
+      <Button
+        type="button"
+        size="sm"
+        variant="outline"
+        className="h-8 text-xs"
+        disabled={safePage >= pageCount - 1}
+        onClick={() => setPage(safePage + 1)}
+      >
+        Next
+      </Button>
+    </div>
+  ) : null;
+
   return (
     <Sheet open={open} onOpenChange={onOpenChange}>
       <SheetContent side="bottom" className={"overflow-hidden rounded-t-2xl p-4 sm:p-6 flex flex-col" + (contentClassName ? " " + contentClassName : "")}>
