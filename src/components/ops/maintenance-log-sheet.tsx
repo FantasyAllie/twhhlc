@@ -457,7 +457,7 @@ export function MaintenanceLogSheet({
               </span>
             )}
           </SheetTitle>
-          <SheetDescription className={composeOnly ? undefined : "max-lg:sr-only"}>
+          <SheetDescription className="max-lg:sr-only">
             {composeOnly
               ? "Report a new maintenance issue. Open jobs are on your Home screen."
               : isReception || isMaintenance
@@ -516,7 +516,7 @@ export function MaintenanceLogSheet({
 
           {(composeOnly || maintenanceComposerOpen) && (
             <div data-compose-form={composeOnly ? "" : undefined} className="flex flex-col gap-2 rounded-lg border bg-background p-3">
-              <div className="flex items-center justify-between">
+              <div className={composeOnly ? "hidden" : "flex items-center justify-between"}>
                 <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
                   Log a new issue
                 </p>

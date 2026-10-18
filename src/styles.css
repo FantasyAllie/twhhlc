@@ -831,6 +831,22 @@ html {
   html[data-platform="ios"] .ios-compose-glass > .sticky {
     background: transparent;
   }
+  html[data-platform="ios"] .ios-compose-glass {
+    padding: 20px !important;
+  }
+  html[data-platform="ios"] .ios-compose-glass > .absolute.rounded-full[aria-hidden] {
+    display: none;
+  }
+  html[data-platform="ios"] .ios-compose-glass .touch-action-bar {
+    position: static;
+    background: transparent;
+    border-top: 0;
+    padding: 4px 0 0;
+  }
+  html[data-platform="ios"] .ios-compose-glass > .overflow-y-auto {
+    margin-top: 12px;
+    padding-bottom: 0 !important;
+  }
   html[data-platform="ios"] .ios-compose-glass [data-compose-form] {
     background: transparent;
     border: 0 !important;
