@@ -758,3 +758,32 @@ html {
   }
 }
 [data-ios-filters-pop] { transform-origin: top left; }
+
+/* Keep glass shadows inside real scroll viewports without moving their content.
+   Unframed room bodies grow with the page, so they need no nested clipping. */
+@media (max-width: 1023px) {
+  html[data-platform="ios"] [data-sheet-inline] {
+    overflow: visible;
+  }
+  html[data-platform="ios"] [data-sheet-inline="room"],
+  html[data-platform="ios"] [data-sheet-inline="room"] :is(.overflow-y-auto, .overflow-auto),
+  html[data-platform="ios"] [data-room-panel-body] {
+    overflow: visible;
+  }
+  html[data-platform="ios"] [data-ios-panel] :is(.overflow-y-auto, .overflow-auto) {
+    padding-bottom: max(12px, var(--ios-scroll-clear, 0px));
+  }
+  /* Existing padded lists already have a gutter. Give unpadded lists the same
+     breathing room on each side, with equal negative margins for alignment. */
+  html[data-platform="ios"] [data-ios-panel] :is(.overflow-y-auto, .overflow-auto):not(.p-3, .p-4, .p-6, .px-3, .px-4, .px-6) {
+    margin-inline: -12px;
+    padding-inline: 12px;
+    padding-top: 12px;
+  }
+  /* Room tabs retain their exact positions; no gutters on growing bodies. */
+  html[data-platform="ios"] [data-sheet-inline="room"] :is(.overflow-y-auto, .overflow-auto) {
+    margin-inline: 0;
+    padding-inline: 0;
+    padding-top: 0;
+  }
+}
