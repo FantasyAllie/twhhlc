@@ -1,6 +1,8 @@
 import * as React from "react";
 
-const MOBILE_BREAKPOINT = 768;
+// Tablets match the mobile layout: bottom tab bar, mobile top bar, no menu
+// button. Aligns with the lg: (1024px) utilities used for the tab bar.
+const MOBILE_BREAKPOINT = 1024;
 
 export function useIsMobile() {
   const [isMobile, setIsMobile] = React.useState<boolean | undefined>(undefined);

@@ -47,7 +47,9 @@ export function isTakeoverReplacing() {
   return takeoverReplacing;
 }
 export function armSheetTakeover(opts?: { closeLabel?: string; hideClose?: boolean }) {
-  takeover.armedUntil = Date.now() + 600;
+  // Generous window: a real iPhone's first render of a heavy panel can take
+  // well over half a second, and a missed arm falls back to a slide-up sheet.
+  takeover.armedUntil = Date.now() + 5000;
   takeover.nextLabel = opts?.closeLabel ?? "Close";
   takeover.nextHideClose = opts?.hideClose ?? false;
 }
@@ -116,7 +118,7 @@ export function useFitToScreen(ref: React.MutableRefObject<HTMLElement | null>, 
   React.useLayoutEffect(() => {
     const node = ref.current;
     if (!active || !node) return;
-    const isPhone = () => window.innerWidth < 768;
+    const isPhone = () => window.innerWidth < 1024;
     // Sticky phone top bar and floating tab bar: the panel sits between them.
     const barH = (sel: string) => document.querySelector<HTMLElement>(sel)?.getBoundingClientRect().height ?? 0;
     const fit = () => {

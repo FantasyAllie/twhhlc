@@ -639,16 +639,17 @@ html {
     border: 0 !important;
     box-shadow: none !important;
   }
-  /* The band is twice the bar height plus a 3rem tail, so the fade reaches
-     twice as far down the page and scales with the safe-area inset. */
+  /* The band ends just below the bar by the same inset the controls have
+     above them (3.5rem row − 2.75rem control) / 2, so the fade bottom sits
+     even with the Quick Setup and progress ring buttons. */
   html[data-platform="ios"] [data-mobile-topbar]::before {
     content: "";
     position: absolute;
-    inset: 0 0 calc(-100% - 3rem);
+    inset: 0 0 -0.375rem;
     pointer-events: none;
     background: linear-gradient(to bottom, color-mix(in oklab, var(--color-background) 60%, transparent), transparent);
     backdrop-filter: blur(16px) saturate(140%);
-    mask-image: linear-gradient(to bottom, black 0%, black 20%, transparent 100%);
+    mask-image: linear-gradient(to bottom, black 0%, black 55%, transparent 100%);
   }
   html[data-platform="ios"] [data-mobile-topbar-row] {
     position: relative;
