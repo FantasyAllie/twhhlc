@@ -4204,20 +4204,6 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
     >
       <div data-mobile-topbar-row className="flex h-11 items-center justify-between gap-2">
         <h1 data-ios-title className="min-w-0 flex-1 truncate text-base font-semibold tracking-tight">{hotelName}</h1>
-        {isTablet && (((realIsAdmin || (realIsManager && hasHousekeeperRole)) && !isReception && !menuIsFnbOnly) || isMaintenance) && (
-          <Button
-            variant="ghost"
-            size="sm"
-            data-ios-glass
-            data-reports
-            aria-label="Reports"
-            title="Back up today's data and print reports"
-            className={cn("shrink-0 size-9 p-0 text-sidebar-foreground")}
-            onClick={() => void openReports()}
-          >
-            <ClipboardList className="h-4 w-4" />
-          </Button>
-        )}
         {isTablet && canViewAs && (
           <Button
             variant="ghost"
@@ -4230,6 +4216,20 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
           >
             <LayoutGrid className="h-4 w-4 shrink-0" />
             <span className="truncate text-xs font-medium">{viewRoleLabel(effectiveRole ?? "user")}</span>
+          </Button>
+        )}
+        {isTablet && (((realIsAdmin || (realIsManager && hasHousekeeperRole)) && !isReception && !menuIsFnbOnly) || isMaintenance) && (
+          <Button
+            variant="ghost"
+            size="sm"
+            data-ios-glass
+            data-reports
+            aria-label="Reports"
+            title="Back up today's data and print reports"
+            className={cn("shrink-0 size-9 p-0 text-sidebar-foreground")}
+            onClick={() => void openReports()}
+          >
+            <ClipboardList className="h-4 w-4" />
           </Button>
         )}
         {(isReception || isHousekeeper || (isAdmin && !isFnb && !isMaintenance)) && (
