@@ -385,6 +385,7 @@ const SheetContent = React.forwardRef<
         className={cn(
           sheetVariants({ side }),
           className,
+          popupClassName,
           side === "bottom" &&
             "pb-[max(1.25rem,calc(env(safe-area-inset-bottom)+0.75rem))] lg:pb-6",
           side === "top" &&
