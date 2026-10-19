@@ -359,9 +359,9 @@ const SheetContent = React.forwardRef<
         )}
       >
         {!inlineCtx.noFit && <TakeoverCloseButton onClose={inlineCtx.onClose} />}
-        // No overscroll-contain here: on Android browsers a panel whose content
-        // exactly fits can swallow the scroll gesture instead of chaining it to
-        // the page, leaving the room view unscrollable.
+        {/* No overscroll-contain here: on Android browsers a panel whose content
+            exactly fits can swallow the scroll gesture instead of chaining it to
+            the page, leaving the room view unscrollable. */}
         <div className="flex min-h-0 flex-1 flex-col overflow-y-auto">
           <SheetInlineContext.Provider value={{ inline: false, onClose: inlineCtx.onClose }}>
             <SheetInlineBodyContext.Provider value={true}>{children}</SheetInlineBodyContext.Provider>
