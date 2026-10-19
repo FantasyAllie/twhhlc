@@ -129,6 +129,13 @@ export function useFitToScreen(ref: React.MutableRefObject<HTMLElement | null>, 
         const tabBar = document.querySelector<HTMLElement>("[data-mobile-tabbar]");
         const tabTop = tabBar?.getBoundingClientRect().top ?? window.innerHeight;
         const top = barH("[data-mobile-topbar]") + 8;
+        // Chat-style panels (a composer pinned at the bottom) must stay clear
+        // of the floating tab bar instead of scrolling behind it.
+        if (node.classList.contains("ios-fit-above-tabbar")) {
+          node.style[prop] = `${Math.max(0, tabTop - top - 12)}px`;
+          node.style.marginBottom = "0px";
+          return;
+        }
         node.style[prop] = `${Math.max(0, window.innerHeight - top)}px`;
         node.style.marginBottom = "0px";
         const clear = `${Math.max(0, window.innerHeight - tabTop) + 12}px`;

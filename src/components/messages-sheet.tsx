@@ -422,7 +422,7 @@ export function MessagesSheet({
 
   return (
     <Sheet open={open} onOpenChange={onOpenChange}>
-      <SheetContent side="bottom" className="overflow-hidden rounded-t-2xl p-4 sm:p-6 flex flex-col">
+      <SheetContent side="bottom" className="ios-fit-above-tabbar overflow-hidden rounded-t-2xl p-4 sm:p-6 flex flex-col">
         <SheetHeader className="text-left">
           <div className="grid grid-cols-[minmax(0,1fr)_auto] items-center gap-2">
             <SheetTitle className="flex min-w-0 items-center gap-2 max-lg:pr-0">
