@@ -7,6 +7,10 @@ import type { Room } from "@/lib/app-types";
 import { useEffect, useState } from "react";
 import { ClipboardCheck, Shirt } from "lucide-react";
 import { RoomChecklistEditor } from "@/components/rooms/room-checklists";
+import { RotateCw } from "lucide-react";
+import { useQueryClient } from "@tanstack/react-query";
+import { Switch } from "@/components/ui/switch";
+import { DEFAULT_MATTRESS_INTERVAL_MONTHS, formatFlipDate, isMattressDue, mattressNextDue, updateRoomMattress } from "@/lib/mattress";
 
 type Props = {
   manageRoomsOpen: boolean;
@@ -43,7 +47,7 @@ export function ManageRoomsDialogs({
   removeRoom,
   moveRoom,
 }: Props) {
-  const [view, setView] = useState<"home" | "rooms" | "checklist">("home");
+  const [view, setView] = useState<"home" | "rooms" | "checklist" | "mattress">("home");
   useEffect(() => {
     if (manageRoomsOpen) setView("home");
   }, [manageRoomsOpen]);
@@ -90,6 +94,10 @@ export function ManageRoomsDialogs({
               <Shirt className="h-4 w-4 shrink-0" />
               <span className="truncate">Linen List</span>
             </Button>
+            <Button variant="outline" size="sm" className={btn} onClick={() => setView("mattress")}>
+              <RotateCw className="h-4 w-4 shrink-0" />
+              <span className="truncate">Mattress Flips</span>
+            </Button>
           </div>
         </DialogHeader>
       )}
@@ -101,6 +109,7 @@ export function ManageRoomsDialogs({
           <div className="mt-3"><RoomChecklistEditor /></div>
         </div>
       )}
+      {view === "mattress" && <MattressSchedule rooms={rooms} />}
       {view === "rooms" && (
       <div className="flex min-h-0 flex-col space-y-3">
         <DialogHeader>
@@ -223,5 +232,78 @@ export function ManageRoomsDialogs({
     </DialogContent>
   </Dialog>
     </>
+  );
+}
+
+function MattressSchedule({ rooms }: { rooms: Room[] }) {
+  const qc = useQueryClient();
+  const sorted = rooms.slice().sort((a, b) => (a.sort_order ?? a.room_number) - (b.sort_order ?? b.room_number));
+  const dueCount = sorted.filter((r) => isMattressDue(r)).length;
+  return (
+    <div className="flex min-h-0 flex-col space-y-3">
+      <DialogHeader>
+        <DialogTitle>Mattress Flips</DialogTitle>
+        <DialogDescription>
+          Turn on the rooms you want reminders for. A room shows a Flip badge when its mattress is due.
+        </DialogDescription>
+      </DialogHeader>
+      <span className="text-xs text-muted-foreground">{dueCount} due now</span>
+      <ul className="divide-y rounded-xl border min-h-0 overflow-y-auto">
+        {sorted.map((r) => {
+          const on = !!r.mattress_tracking;
+          const due = isMattressDue(r);
+          const next = mattressNextDue(r);
+          return (
+            <li key={r.id} className="space-y-2 px-3 py-2">
+              <div className="flex items-center gap-3">
+                <span className="flex-1 text-sm font-medium tabular-nums">Room {r.room_number}</span>
+                {on && (
+                  <span className={due ? "text-xs font-semibold text-amber-700 dark:text-amber-300" : "text-xs text-muted-foreground"}>
+                    {due ? "Due now" : `Next ${next ? formatFlipDate(next.toISOString()) : ""}`}
+                  </span>
+                )}
+                <Switch
+                  checked={on}
+                  aria-label={`Track mattress flips for Room ${r.room_number}`}
+                  onCheckedChange={(v) => void updateRoomMattress(qc, r.room_number, { mattress_tracking: v })}
+                />
+              </div>
+              {on && (
+                <div className="flex flex-wrap items-center gap-2 text-xs">
+                  <label className="flex items-center gap-1.5">
+                    Every
+                    <Input
+                      type="number"
+                      min={1}
+                      max={60}
+                      className="h-8 w-16"
+                      defaultValue={r.mattress_interval_months ?? DEFAULT_MATTRESS_INTERVAL_MONTHS}
+                      onBlur={(e) => {
+                        const v = Math.max(1, Math.min(60, Math.round(Number(e.target.value) || DEFAULT_MATTRESS_INTERVAL_MONTHS)));
+                        e.target.value = String(v);
+                        if (v !== r.mattress_interval_months) void updateRoomMattress(qc, r.room_number, { mattress_interval_months: v });
+                      }}
+                    />
+                    months
+                  </label>
+                  <label className="flex items-center gap-1.5">
+                    Last flipped
+                    <Input
+                      type="date"
+                      className="h-8 w-36"
+                      defaultValue={r.mattress_flipped_at ? r.mattress_flipped_at.slice(0, 10) : ""}
+                      onChange={(e) => {
+                        const v = e.target.value;
+                        void updateRoomMattress(qc, r.room_number, { mattress_flipped_at: v ? new Date(v + "T12:00:00").toISOString() : null });
+                      }}
+                    />
+                  </label>
+                </div>
+              )}
+            </li>
+          );
+        })}
+      </ul>
+    </div>
   );
 }

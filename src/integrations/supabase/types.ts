@@ -1152,6 +1152,10 @@ export type Database = {
           id: string
           late_checkout: boolean
           late_checkout_at: string | null
+          mattress_flipped_at: string | null
+          mattress_flipped_by: string | null
+          mattress_interval_months: number
+          mattress_tracking: boolean
           needs_maintenance: boolean
           needs_maintenance_at: string | null
           not_required: boolean
@@ -1183,6 +1187,10 @@ export type Database = {
           id?: string
           late_checkout?: boolean
           late_checkout_at?: string | null
+          mattress_flipped_at?: string | null
+          mattress_flipped_by?: string | null
+          mattress_interval_months?: number
+          mattress_tracking?: boolean
           needs_maintenance?: boolean
           needs_maintenance_at?: string | null
           not_required?: boolean
@@ -1214,6 +1222,10 @@ export type Database = {
           id?: string
           late_checkout?: boolean
           late_checkout_at?: string | null
+          mattress_flipped_at?: string | null
+          mattress_flipped_by?: string | null
+          mattress_interval_months?: number
+          mattress_tracking?: boolean
           needs_maintenance?: boolean
           needs_maintenance_at?: string | null
           not_required?: boolean

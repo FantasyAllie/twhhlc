@@ -7,6 +7,9 @@ import { cn } from "@/lib/utils";
 import { FlagIcon, useRoomFlags } from "@/lib/room-flags";
 import type { ReceptionItem, Room } from "@/lib/app-types";
 import { RoomChecklistRecords, RoomCheckedItemSelectors } from "@/components/rooms/room-checklists";
+import { RotateCw } from "lucide-react";
+import { toast } from "sonner";
+import { formatFlipDate, isMattressDue, mattressNextDue, updateRoomMattress } from "@/lib/mattress";
 
 type Props = {
   navigation?: React.ReactNode;
@@ -351,7 +354,7 @@ export function ReceptionStatusSheet({
               </div>
              )}
                <RoomCheckedItemSelectors key={n} roomNumber={n} selectedItems={room?.checked_items ?? null} />
-               <div className="border-y py-4">
+               <div className={cn("border-y py-4", room?.mattress_tracking && "grid grid-cols-2 gap-1.5")}>
                  <Row
                    label="Mark as Done"
                    selected={isReception ? receptionDoneSet.has(n) : housekeepingDoneSet.has(n)}
@@ -363,6 +366,34 @@ export function ReceptionStatusSheet({
                    }}
 
                  />
+                 {room?.mattress_tracking && (() => {
+                   const due = isMattressDue(room);
+                   const next = mattressNextDue(room);
+                   return (
+                     <Row
+                       label={
+                         due ? (
+                           <span className="inline-flex items-center gap-1.5 font-semibold text-amber-700 dark:text-amber-300">
+                             <RotateCw className="h-4 w-4 shrink-0" />Mark Flipped
+                           </span>
+                         ) : (
+                           <span className="flex flex-col leading-tight">
+                             <span className="inline-flex items-center justify-center gap-1.5"><RotateCw className="h-4 w-4 shrink-0" />Flipped</span>
+                             <span className="text-[11px] font-normal text-muted-foreground">Next {next ? formatFlipDate(next.toISOString()) : ""}</span>
+                           </span>
+                         )
+                       }
+                       selected={!due}
+                       onClick={() => {
+                         if (!due) {
+                           toast("Mattress already flipped", { description: `Last flipped ${formatFlipDate(room.mattress_flipped_at)}. Change dates in Room Management → Mattress Flips.` });
+                           return;
+                         }
+                         void updateRoomMattress(qc, n, { mattress_flipped_at: new Date().toISOString() }).then((ok) => ok && toast.success(`Room ${n} mattress marked flipped`));
+                       }}
+                     />
+                   );
+                 })()}
                </div>
                 <details className="group space-y-2">
                   <summary className="flex cursor-pointer list-none items-center justify-center gap-1.5 py-1 text-xs font-semibold uppercase tracking-wide text-muted-foreground [&::-webkit-details-marker]:hidden">
