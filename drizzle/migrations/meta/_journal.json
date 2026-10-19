@@ -85,6 +85,13 @@
       "when": 1792096158832,
       "tag": "0011_inline_room_checked_items",
       "breakpoints": true
+    },
+    {
+      "idx": 12,
+      "version": "7",
+      "when": 1792379935221,
+      "tag": "0012_avatar_policies",
+      "breakpoints": true
     }
   ]
 }
