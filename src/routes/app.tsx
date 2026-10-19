@@ -3693,6 +3693,78 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
                 </span>
               </div>
             )}
+            <div className="rounded-xl border bg-background p-3">
+              <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground mb-1">
+                From Housekeeping
+              </p>
+              {note ? (
+                <>
+                  <p className="text-sm whitespace-pre-wrap break-words">{note}</p>
+                  <div className="mt-2 flex justify-end gap-2">
+                    <Button
+                      type="button"
+                      variant="default"
+                      size="sm"
+                      className="h-7 text-xs"
+                      onClick={() => confirmHousekeepingNote(n, note)}
+                    >
+                      Confirm
+                    </Button>
+                    <Button
+                      type="button"
+                      variant="outline"
+                      size="sm"
+                      className="h-7 text-xs"
+                      onClick={() => setRoomHousekeepingNote(n, "")}
+                    >
+                      Dismiss
+                    </Button>
+                  </div>
+                </>
+              ) : (
+                <p className="text-sm text-muted-foreground">No notes from Housekeeping.</p>
+              )}
+            </div>
+            <div className="space-y-2 rounded-xl border border-emerald-400/60 bg-emerald-50 dark:bg-emerald-950/40 p-3">
+              <p className="text-xs font-semibold uppercase tracking-wide text-emerald-700 dark:text-emerald-300">
+                Leave a message for housekeeping
+              </p>
+              {hasMsg && (
+                <ul className="space-y-1">
+                  {msgs.map((m) => (
+                    <li key={m.id} className="flex items-start gap-2 text-sm bg-background/70 rounded p-2">
+                      <span className="flex-1 break-words whitespace-pre-wrap">{m.message}</span>
+                      <Button
+                        type="button"
+                        variant="ghost"
+                        size="sm"
+                        className="h-7 px-2 text-xs"
+                        onClick={() => deleteRoomMessage(m.id)}
+                        aria-label="Delete message"
+                      >
+                        <X className="h-3 w-3" />
+                      </Button>
+                    </li>
+                  ))}
+                </ul>
+              )}
+              <div className="flex gap-2">
+                <Input
+                  value={newMessageText}
+                  onChange={(e) => setNewMessageText(e.target.value)}
+                  placeholder="Type a message…"
+                  onKeyDown={(e) => {
+                    if (e.key === "Enter" && !e.shiftKey) {
+                      e.preventDefault();
+                      submitRoomMessage(n);
+                    }
+                  }}
+                />
+                <Button type="button" onClick={() => submitRoomMessage(n)} disabled={!newMessageText.trim()}>
+                  Send
+                </Button>
+              </div>
+            </div>
           </div>
         );
       }
