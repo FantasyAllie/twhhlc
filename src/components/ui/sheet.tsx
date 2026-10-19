@@ -313,6 +313,10 @@ interface SheetContentProps
   disableDragDismiss?: boolean;
   /** A room tab body inside the existing room frame, without a second enclosure. */
   embedded?: boolean;
+  /** Classes for the popup/overlay presentation only. Ignored when the sheet
+   *  renders in-place in the takeover slot, where centring/glass classes
+   *  would displace the panel out of view. */
+  popupClassName?: string;
 }
 
 const SheetContent = React.forwardRef<
