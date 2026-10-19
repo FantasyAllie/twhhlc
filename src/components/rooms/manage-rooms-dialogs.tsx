@@ -10,8 +10,8 @@ import { RoomChecklistEditor } from "@/components/rooms/room-checklists";
 import { RotateCw } from "lucide-react";
 import { useQueryClient } from "@tanstack/react-query";
 import { Switch } from "@/components/ui/switch";
-import { formatFlipDate, isMattressDue, mattressNextDue, updateMattressInterval, updateRoomMattress, useMattressInterval }
-import { useCurrentHotel } from "@/lib/hotels"; from "@/lib/mattress";
+import { formatFlipDate, isMattressDue, mattressNextDue, updateMattressInterval, updateRoomMattress, useMattressInterval } from "@/lib/mattress";
+import { useCurrentHotel } from "@/lib/hotels";
 
 type Props = {
   manageRoomsOpen: boolean;
