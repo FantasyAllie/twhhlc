@@ -313,12 +313,16 @@ interface SheetContentProps
   disableDragDismiss?: boolean;
   /** A room tab body inside the existing room frame, without a second enclosure. */
   embedded?: boolean;
+  /** Classes for the popup/overlay presentation only. Ignored when the sheet
+   *  renders in-place in the takeover slot, where centring/glass classes
+   *  would displace the panel out of view. */
+  popupClassName?: string;
 }
 
 const SheetContent = React.forwardRef<
   React.ElementRef<typeof SheetPrimitive.Content>,
   SheetContentProps
->(({ side = "right", className, children, disableDragDismiss, embedded, ...props }, ref) => {
+>(({ side = "right", className, popupClassName, children, disableDragDismiss, embedded, ...props }, ref) => {
   const inlineCtx = React.useContext(SheetInlineContext);
   const innerRef = React.useRef<HTMLDivElement | null>(null);
   const closeRef = React.useRef<HTMLButtonElement | null>(null);
@@ -381,6 +385,7 @@ const SheetContent = React.forwardRef<
         className={cn(
           sheetVariants({ side }),
           className,
+          popupClassName,
           side === "bottom" &&
             "pb-[max(1.25rem,calc(env(safe-area-inset-bottom)+0.75rem))] lg:pb-6",
           side === "top" &&
