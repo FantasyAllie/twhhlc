@@ -9,7 +9,7 @@ import type { ReceptionItem, Room } from "@/lib/app-types";
 import { RoomChecklistRecords, RoomCheckedItemSelectors } from "@/components/rooms/room-checklists";
 import { RotateCw } from "lucide-react";
 import { toast } from "sonner";
-import { formatFlipDate, isMattressDue, mattressNextDue, updateRoomMattress } from "@/lib/mattress";
+import { formatFlipDate, isMattressDue, mattressNextDue, updateRoomMattress, useMattressInterval } from "@/lib/mattress";
 
 type Props = {
   navigation?: React.ReactNode;
@@ -86,6 +86,7 @@ export function ReceptionStatusSheet({
 
 }: Props) {
   const roomFlags = useRoomFlags();
+  const mattressInterval = useMattressInterval();
   return (
  <Sheet open={receptionSheetRoom !== null} onOpenChange={(o) => { if (!o) setReceptionSheetRoom(null); }}>
    <SheetContent embedded={inlineView} side="bottom" className="overflow-y-auto rounded-t-2xl p-4 sm:p-6">
@@ -367,8 +368,8 @@ export function ReceptionStatusSheet({
 
                  />
                  {room?.mattress_tracking && (() => {
-                   const due = isMattressDue(room);
-                   const next = mattressNextDue(room);
+                   const due = isMattressDue(room, mattressInterval);
+                   const next = mattressNextDue(room, mattressInterval);
                    return (
                      <Row
                        label={
