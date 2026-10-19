@@ -4417,9 +4417,12 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
      typeof document !== "undefined" && document.documentElement.dataset.platform === "ios";
    return (
    <Sheet open={rolePickerSheetOpen} onOpenChange={setRolePickerSheetOpen}>
-     <SheetContent
+      <SheetContent
        side="bottom"
-       className={cn("overflow-y-auto p-4 sm:p-6", isIosDevice ? IOS_CENTRED_POPUP : "rounded-t-2xl")}
+       className={cn("overflow-y-auto p-4 sm:p-6", !isIosDevice && "rounded-t-2xl")}
+       // Centred-popup styling only when shown as a popup — as a takeover
+       // panel those classes shift the picker out of view (iPhone).
+       popupClassName={isIosDevice ? IOS_CENTRED_POPUP : undefined}
      >
        <SheetHeader className="text-left">
          <SheetTitle>Department</SheetTitle>
