@@ -322,7 +322,7 @@ interface SheetContentProps
 const SheetContent = React.forwardRef<
   React.ElementRef<typeof SheetPrimitive.Content>,
   SheetContentProps
->(({ side = "right", className, children, disableDragDismiss, embedded, ...props }, ref) => {
+>(({ side = "right", className, popupClassName, children, disableDragDismiss, embedded, ...props }, ref) => {
   const inlineCtx = React.useContext(SheetInlineContext);
   const innerRef = React.useRef<HTMLDivElement | null>(null);
   const closeRef = React.useRef<HTMLButtonElement | null>(null);
