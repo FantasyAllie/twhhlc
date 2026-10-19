@@ -99,6 +99,13 @@
       "when": 1792432341452,
       "tag": "0013_mattress_flips",
       "breakpoints": true
+    },
+    {
+      "idx": 14,
+      "version": "7",
+      "when": 1792432601760,
+      "tag": "0014_hotel_mattress_interval",
+      "breakpoints": true
     }
   ]
 }
