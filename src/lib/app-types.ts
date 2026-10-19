@@ -88,6 +88,11 @@ export type Room = {
   late_checkout_at?: string | null;
   needs_maintenance_at?: string | null;
   not_required_at?: string | null;
+  // Optional mattress flip schedule (kept through Reset all).
+  mattress_tracking?: boolean;
+  mattress_interval_months?: number;
+  mattress_flipped_at?: string | null;
+  mattress_flipped_by?: string | null;
 };
 
 export type TemplateItemRoom = { id: string; template_item_id: string; room_number: number };
