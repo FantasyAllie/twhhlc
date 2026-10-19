@@ -6,7 +6,17 @@ import { cn } from "@/lib/utils";
 import { playClick } from "@/lib/click-sound";
 import type { Room } from "@/lib/app-types";
 import { FlagIcon, FLAG_COLORS, useRoomFlags } from "@/lib/room-flags";
-import { isMattressDue } from "@/lib/mattress";
+import { isMattressDue, useMattressInterval } from "@/lib/mattress";
+function MattressBadge({ room }: { room: Room | undefined }) {
+  const interval = useMattressInterval();
+  if (!isMattressDue(room, interval)) return null;
+  return (
+    <span aria-label="Mattress flip due" title="Mattress flip due" className={BADGE_CLASS + " bg-amber-500 text-white dark:bg-amber-400 dark:text-amber-950"}>
+      <RotateCw aria-hidden className="h-2.5 w-2.5 shrink-0" />
+      <span className="hidden @[120px]:inline">Flip</span>
+    </span>
+  );
+}
 import { RotateCw } from "lucide-react";
 
 // Badges for admin-defined custom guest & room info toggles.
@@ -253,12 +263,7 @@ function ReceptionRoomTileBase({
               <span className="hidden @[120px]:inline">Dog</span>
             </span>
           )}
-          {isMattressDue(room) && (
-          <span aria-label="Mattress flip due" title="Mattress flip due" className={BADGE_CLASS + " bg-amber-500 text-white dark:bg-amber-400 dark:text-amber-950"}>
-            <RotateCw aria-hidden className="h-2.5 w-2.5 shrink-0" />
-            <span className="hidden @[120px]:inline">Flip</span>
-          </span>
-        )}
+          <MattressBadge room={room} />
         <CustomFlagBadges n={n} />
         </span>
       )}
@@ -401,12 +406,7 @@ function HousekeepingRoomTileBase({
             <span className="hidden @[120px]:inline">Dog</span>
           </span>
         )}
-        {isMattressDue(room) && (
-          <span aria-label="Mattress flip due" title="Mattress flip due" className={BADGE_CLASS + " bg-amber-500 text-white dark:bg-amber-400 dark:text-amber-950"}>
-            <RotateCw aria-hidden className="h-2.5 w-2.5 shrink-0" />
-            <span className="hidden @[120px]:inline">Flip</span>
-          </span>
-        )}
+        <MattressBadge room={room} />
         <CustomFlagBadges n={n} />
       </span>
       {room?.needs_maintenance && (

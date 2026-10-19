@@ -10,7 +10,8 @@ import { RoomChecklistEditor } from "@/components/rooms/room-checklists";
 import { RotateCw } from "lucide-react";
 import { useQueryClient } from "@tanstack/react-query";
 import { Switch } from "@/components/ui/switch";
-import { DEFAULT_MATTRESS_INTERVAL_MONTHS, formatFlipDate, isMattressDue, mattressNextDue, updateRoomMattress } from "@/lib/mattress";
+import { formatFlipDate, isMattressDue, mattressNextDue, updateMattressInterval, updateRoomMattress, useMattressInterval } from "@/lib/mattress";
+import { useCurrentHotel } from "@/lib/hotels";
 
 type Props = {
   manageRoomsOpen: boolean;
@@ -238,7 +239,9 @@ export function ManageRoomsDialogs({
 function MattressSchedule({ rooms }: { rooms: Room[] }) {
   const qc = useQueryClient();
   const sorted = rooms.slice().sort((a, b) => (a.sort_order ?? a.room_number) - (b.sort_order ?? b.room_number));
-  const dueCount = sorted.filter((r) => isMattressDue(r)).length;
+  const hotel = useCurrentHotel().data;
+  const interval = useMattressInterval();
+  const dueCount = sorted.filter((r) => isMattressDue(r, interval)).length;
   return (
     <div className="flex min-h-0 flex-col space-y-3">
       <DialogHeader>
@@ -247,12 +250,29 @@ function MattressSchedule({ rooms }: { rooms: Room[] }) {
           Turn on the rooms you want reminders for. A room shows a Flip badge when its mattress is due.
         </DialogDescription>
       </DialogHeader>
+      <label className="flex items-center gap-2 rounded-xl border px-3 py-2 text-sm">
+        <span className="flex-1 font-medium">Flip every (all rooms)</span>
+        <Input
+          key={interval}
+          type="number"
+          min={1}
+          max={60}
+          className="h-8 w-16"
+          defaultValue={interval}
+          onBlur={(e) => {
+            const v = Math.max(1, Math.min(60, Math.round(Number(e.target.value) || interval)));
+            e.target.value = String(v);
+            if (hotel && v !== interval) void updateMattressInterval(qc, hotel.id, v);
+          }}
+        />
+        months
+      </label>
       <span className="text-xs text-muted-foreground">{dueCount} due now</span>
       <ul className="divide-y rounded-xl border min-h-0 overflow-y-auto">
         {sorted.map((r) => {
           const on = !!r.mattress_tracking;
-          const due = isMattressDue(r);
-          const next = mattressNextDue(r);
+          const due = isMattressDue(r, interval);
+          const next = mattressNextDue(r, interval);
           return (
             <li key={r.id} className="space-y-2 px-3 py-2">
               <div className="flex items-center gap-3">
@@ -270,22 +290,6 @@ function MattressSchedule({ rooms }: { rooms: Room[] }) {
               </div>
               {on && (
                 <div className="flex flex-wrap items-center gap-2 text-xs">
-                  <label className="flex items-center gap-1.5">
-                    Every
-                    <Input
-                      type="number"
-                      min={1}
-                      max={60}
-                      className="h-8 w-16"
-                      defaultValue={r.mattress_interval_months ?? DEFAULT_MATTRESS_INTERVAL_MONTHS}
-                      onBlur={(e) => {
-                        const v = Math.max(1, Math.min(60, Math.round(Number(e.target.value) || DEFAULT_MATTRESS_INTERVAL_MONTHS)));
-                        e.target.value = String(v);
-                        if (v !== r.mattress_interval_months) void updateRoomMattress(qc, r.room_number, { mattress_interval_months: v });
-                      }}
-                    />
-                    months
-                  </label>
                   <label className="flex items-center gap-1.5">
                     Last flipped
                     <Input

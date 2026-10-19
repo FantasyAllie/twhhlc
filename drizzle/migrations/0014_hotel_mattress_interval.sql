@@ -1,0 +1,2 @@
+ALTER TABLE public.hotels ADD COLUMN mattress_interval_months integer NOT NULL DEFAULT 3;
+COMMENT ON COLUMN public.rooms.mattress_interval_months IS 'DEPRECATED: replaced by hotels.mattress_interval_months';

@@ -203,6 +203,7 @@ export type Database = {
           id: string
           last_hk_reset_at: string | null
           linen_delivery_days: number[]
+          mattress_interval_months: number
           name: string
           slug: string
           timezone: string
@@ -213,6 +214,7 @@ export type Database = {
           id?: string
           last_hk_reset_at?: string | null
           linen_delivery_days?: number[]
+          mattress_interval_months?: number
           name: string
           slug: string
           timezone?: string
@@ -223,6 +225,7 @@ export type Database = {
           id?: string
           last_hk_reset_at?: string | null
           linen_delivery_days?: number[]
+          mattress_interval_months?: number
           name?: string
           slug?: string
           timezone?: string

@@ -5,23 +5,37 @@ import type { QueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import type { Room } from "./app-types";
+import { useCurrentHotel } from "./hotels";
+
+/** Hotel-wide flip interval in months (applies to every tracked room). */
+export const useMattressInterval = () => useCurrentHotel().data?.mattress_interval_months ?? DEFAULT_MATTRESS_INTERVAL_MONTHS;
+
+export async function updateMattressInterval(qc: QueryClient, hotelId: string, months: number) {
+  const { error } = await supabase.from("hotels").update({ mattress_interval_months: months } as never).eq("id", hotelId);
+  if (error) {
+    toast.error("Couldn't save the flip interval");
+    return false;
+  }
+  await qc.invalidateQueries({ queryKey: ["current-hotel"] });
+  return true;
+}
 
 export const DEFAULT_MATTRESS_INTERVAL_MONTHS = 3;
 
-export const mattressNextDue = (room: Partial<Room> | undefined): Date | null => {
+export const mattressNextDue = (room: Partial<Room> | undefined, intervalMonths: number = DEFAULT_MATTRESS_INTERVAL_MONTHS): Date | null => {
   if (!room?.mattress_tracking) return null;
   if (!room.mattress_flipped_at) return new Date(0);
   const d = new Date(room.mattress_flipped_at);
-  d.setMonth(d.getMonth() + (room.mattress_interval_months || DEFAULT_MATTRESS_INTERVAL_MONTHS));
+  d.setMonth(d.getMonth() + (intervalMonths || DEFAULT_MATTRESS_INTERVAL_MONTHS));
   return d;
 };
 
-export const isMattressDue = (room: Partial<Room> | undefined, now: Date = new Date()): boolean => {
-  const due = mattressNextDue(room);
+export const isMattressDue = (room: Partial<Room> | undefined, intervalMonths: number = DEFAULT_MATTRESS_INTERVAL_MONTHS, now: Date = new Date()): boolean => {
+  const due = mattressNextDue(room, intervalMonths);
   return !!due && due.getTime() <= now.getTime();
 };
 
-type MattressPatch = Partial<Pick<Room, "mattress_tracking" | "mattress_interval_months" | "mattress_flipped_at" | "mattress_flipped_by">>;
+type MattressPatch = Partial<Pick<Room, "mattress_tracking" | "mattress_flipped_at" | "mattress_flipped_by">>;
 
 export async function updateRoomMattress(qc: QueryClient, roomNumber: number, patch: MattressPatch) {
   const prev = qc.getQueryData<Room[]>(["rooms"]);
