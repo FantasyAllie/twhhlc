@@ -14,8 +14,6 @@ const CATEGORIES: Category[] = [
   { key: "room_clean", title: "Most rooms marked clean", badge: "Sparkle Champion", emoji: "✨", unit: "rooms" },
   { key: "room_dirty", title: "Most rooms marked dirty", badge: "Turnover Titan", emoji: "🛏️", unit: "rooms" },
   { key: "stayover_photo", title: "Most DND photos", badge: "Door Detective", emoji: "📸", unit: "photos" },
-  { key: "maintenance_logged", title: "Most maintenance logged", badge: "Eagle Eye", emoji: "🔧", unit: "reports" },
-  { key: "maintenance_fixed", title: "Most maintenance fixed", badge: "Fix-it Hero", emoji: "🛠️", unit: "fixes" },
   { key: "lost_logged", title: "Most lost property logged", badge: "Treasure Hunter", emoji: "🔎", unit: "items" },
   { key: "messages_sent", title: "Most messages sent", badge: "Chatterbox", emoji: "💬", unit: "messages" },
 ];
@@ -77,16 +75,12 @@ export function LeaderboardSheet({
         if (!name || n <= 0) return;
         (t[k] ??= new Map()).set(name, (t[k].get(name) ?? 0) + n);
       };
-      const [acts, maint, fixed, lost, msgs] = await Promise.all([
+      const [acts, lost, msgs] = await Promise.all([
         fetchAll<{ kind: string; username: string | null; amount: number }>("activity_events", "kind,username,amount", hotelId!, s, e),
-        fetchAll<{ created_by_username: string | null }>("maintenance_requests", "created_by_username", hotelId!, s, e),
-        fetchAll<{ done_by_username: string | null }>("maintenance_requests", "done_by_username", hotelId!, s, e, "done_at"),
         fetchAll<{ created_by_username: string | null }>("lost_property", "created_by_username", hotelId!, s, e),
         fetchAll<{ created_by_username: string | null }>("room_messages", "created_by_username", hotelId!, s, e),
       ]);
       for (const a of acts) add(a.kind, a.username, a.amount);
-      for (const m of maint) add("maintenance_logged", m.created_by_username);
-      for (const m of fixed) add("maintenance_fixed", m.done_by_username);
       for (const l of lost) add("lost_logged", l.created_by_username);
       for (const m of msgs) add("messages_sent", m.created_by_username);
       return t;
