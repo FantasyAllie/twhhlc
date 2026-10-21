@@ -1,20 +1,23 @@
 export const ACCENTS = [
-  { id: "brass", label: "Brass" },
-  { id: "teal", label: "Teal" },
-  { id: "blue", label: "Blue" },
-  { id: "violet", label: "Violet" },
-  { id: "rose", label: "Rose" },
-  { id: "green", label: "Green" },
-  { id: "orange", label: "Orange" },
-  { id: "red", label: "Red" },
-  { id: "pink", label: "Pink" },
-  { id: "purple", label: "Purple" },
-  { id: "indigo", label: "Indigo" },
-  { id: "sky", label: "Sky" },
-  { id: "mint", label: "Mint" },
-  { id: "lime", label: "Lime" },
+  { id: "brass", label: "Brass", hue: 88 },
+  { id: "teal", label: "Teal", hue: 190 },
+  { id: "blue", label: "Blue", hue: 250 },
+  { id: "violet", label: "Violet", hue: 300 },
+  { id: "rose", label: "Rose", hue: 10 },
+  { id: "green", label: "Green", hue: 145 },
+  { id: "orange", label: "Orange", hue: 55 },
+  { id: "red", label: "Red", hue: 27 },
+  { id: "pink", label: "Pink", hue: 350 },
+  { id: "purple", label: "Purple", hue: 320 },
+  { id: "indigo", label: "Indigo", hue: 275 },
+  { id: "sky", label: "Sky", hue: 225 },
+  { id: "mint", label: "Mint", hue: 170 },
+  { id: "lime", label: "Lime", hue: 120 },
 ] as const;
 export type AccentId = (typeof ACCENTS)[number]["id"];
+
+/** Swatch colour for an accent, matching the --brass token's lightness/chroma. */
+export const accentSwatch = (hue: number) => `oklch(0.719 0.129 ${hue})`;
 
 export function readAccent(): AccentId {
   try {
