@@ -296,6 +296,18 @@ export function AccountDialog({
             <Button type="submit" size="sm" disabled={busy}>Save changes</Button>
           </div>
         </form>
+        <div className="border-t pt-4">
+          <Button
+            type="button"
+            variant="destructive"
+            size="sm"
+            className="w-full"
+            onClick={() => { onOpenChange(false); onSignOut(); }}
+          >
+            <LogOut className="h-4 w-4" />
+            Log out
+          </Button>
+        </div>
       </DialogContent>
     </Dialog>
   );
