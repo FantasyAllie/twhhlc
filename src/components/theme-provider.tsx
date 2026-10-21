@@ -10,7 +10,7 @@ import { createContext, useContext, useEffect, useState } from "react";
 export type ThemeLevel = "white" | "cream" | "navy" | "oled";
 type Theme = "light" | "dark";
 
-export const THEME_LEVELS: ThemeLevel[] = ["white", "cream", "navy", "oled"];
+export const THEME_LEVELS: ThemeLevel[] = ["cream", "navy"];
 
 export const THEME_LEVEL_LABELS: Record<ThemeLevel, string> = {
   white: "White",
@@ -45,10 +45,10 @@ export function ThemeProvider({ children }: { children: React.ReactNode }) {
   useEffect(() => {
     let stored: ThemeLevel | null = null;
     try {
+      // Only Cream (light) and Navy (dark) remain; older choices map onto them.
       const raw = localStorage.getItem("theme");
-      if (raw === "light") stored = "cream";
-      else if (raw === "dark") stored = "navy";
-      else if (raw && (THEME_LEVELS as string[]).includes(raw)) stored = raw as ThemeLevel;
+      if (raw === "light" || raw === "white" || raw === "cream") stored = "cream";
+      else if (raw === "dark" || raw === "oled" || raw === "navy") stored = "navy";
     } catch {
       /* ignore */
     }
