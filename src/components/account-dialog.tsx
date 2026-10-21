@@ -2,6 +2,7 @@
 // Extracted verbatim from src/routes/app.tsx (stage 5).
 import { useEffect, useState } from "react";
 import { toast } from "sonner";
+import { LogOut } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { getStoredUser } from "@/lib/auth-client";
 import { Button } from "@/components/ui/button";
@@ -20,11 +21,13 @@ export function AccountDialog({
   onOpenChange,
   currentUsername,
   onUsernameChanged,
+  onSignOut,
 }: {
   open: boolean;
   onOpenChange: (o: boolean) => void;
   currentUsername: string;
   onUsernameChanged: (u: string) => void;
+  onSignOut: () => void;
 }) {
   const [username, setUsername] = useState(currentUsername);
   const [newEmail, setNewEmail] = useState("");
@@ -293,6 +296,18 @@ export function AccountDialog({
             <Button type="submit" size="sm" disabled={busy}>Save changes</Button>
           </div>
         </form>
+        <div className="border-t pt-4">
+          <Button
+            type="button"
+            variant="destructive"
+            size="sm"
+            className="w-full"
+            onClick={() => { onOpenChange(false); onSignOut(); }}
+          >
+            <LogOut className="h-4 w-4" />
+            Log out
+          </Button>
+        </div>
       </DialogContent>
     </Dialog>
   );

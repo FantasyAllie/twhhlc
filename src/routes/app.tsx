@@ -46,7 +46,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { InventoryDialog, CUPBOARDS, type InventorySection } from "@/components/linen/inventory-dialog";
-import { Minus, Plus, X, Menu, ArrowUp, ArrowDown, Pencil, Check, Trash2, Sun, SunDim, Moon, MoonStar, List, Bed, House, Ban, History, Users, User, LogOut, Hash, ConciergeBell, ClipboardList, Printer, Filter, Wrench, DoorOpen, Footprints, Bell, Eye, EyeOff, HelpCircle, AlertCircle, MessageSquare, PackageSearch, RotateCcw, ChevronDown, ChevronRight, Camera, LayoutGrid, Truck, Clock, Dog, Undo2, Inbox, MapPin, Flag } from "lucide-react";
+import { Minus, Plus, X, Menu, ArrowUp, ArrowDown, Pencil, Check, Trash2, Sun, SunDim, Moon, MoonStar, List, Bed, House, Ban, History, Users, User, Hash, ConciergeBell, ClipboardList, Printer, Filter, Wrench, DoorOpen, Footprints, Bell, Eye, EyeOff, HelpCircle, AlertCircle, MessageSquare, PackageSearch, RotateCcw, ChevronDown, ChevronRight, Camera, LayoutGrid, Truck, Clock, Dog, Undo2, Inbox, MapPin, Flag } from "lucide-react";
 import {
   AccountDialog,
   AddConfigDialogs,
@@ -4167,7 +4167,6 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
       account.push({ key: "notifications", icon: Bell, label: "Notifications", onClick: () => setNotificationsSheetOpen(true) });
     }
     account.push({ key: "account", icon: User, label: "Account", onClick: () => setAccountOpen(true) });
-    account.push({ key: "signout", icon: LogOut, label: "Sign out", destructive: true, onClick: () => void signOut() });
     const appearance: MenuAction[] = [{ key: "theme", icon: ThemeGlyph, label: "Theme", onClick: () => cycleTheme() }];
     const opsOrder = ["messages", "maintenance-log", "lost-property", "stayover-photos", "leaderboard"];
     utilities.sort((a, b) => opsOrder.indexOf(a.key) - opsOrder.indexOf(b.key));
@@ -6335,6 +6334,7 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
     onOpenChange={setAccountOpen}
     currentUsername={authUser?.username ?? ""}
     onUsernameChanged={(u) => setAuthUser((prev) => prev ? { ...prev, username: u } : prev)}
+    onSignOut={signOut}
   />
   <UsersDialog open={usersOpen} onOpenChange={setUsersOpen} />
   <Sheet open={linenDeliveryOpen} onOpenChange={setLinenDeliveryOpen}>
