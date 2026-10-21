@@ -134,7 +134,7 @@ import {
 import { useTheme } from "@/components/theme-provider";
 import { armSheetTakeover, isTakeoverReplacing, setSheetTakeoverSlot, releaseSheetTakeover, useSheetTakeoverActive } from "@/components/ui/sheet";
 import { Palette } from "lucide-react";
-import { ACCENTS, readAccent, applyAccent, type AccentId } from "@/lib/accent-colour";
+import { ACCENTS, accentSwatch, readAccent, applyAccent, type AccentId } from "@/lib/accent-colour";
 import { useCurrentHotel, DEFAULT_HOTEL_NAME } from "@/lib/hotels";
 import { listHotels, setActiveHotel, createHotel, type HotelOption } from "@/lib/auth.functions";
 import { parseCats, categoryLabel, valueFromLabel, maintenanceLocation, COLOR_SWATCHES } from "@/lib/app-format";
@@ -4168,17 +4168,7 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
     }
     account.push({ key: "account", icon: User, label: "Account", onClick: () => setAccountOpen(true) });
     account.push({ key: "signout", icon: LogOut, label: "Sign out", destructive: true, onClick: () => void signOut() });
-    const appearance: MenuAction[] = [{
-      key: "theme",
-      icon: ThemeGlyph,
-      label: `Theme: ${levelLabel}`,
-      onClick: () => cycleTheme(),
-    }, {
-      key: "accent",
-      icon: Palette,
-      label: `Accent: ${ACCENTS.find((a) => a.id === accent)?.label ?? "Brass"}`,
-      onClick: () => cycleAccent(),
-    }];
+    const appearance: MenuAction[] = [{ key: "theme", icon: ThemeGlyph, label: "Theme", onClick: () => cycleTheme() }];
     const opsOrder = ["messages", "maintenance-log", "lost-property", "stayover-photos"];
     utilities.sort((a, b) => opsOrder.indexOf(a.key) - opsOrder.indexOf(b.key));
     const linenOrder = ["delivery", "linen-list", "linen-list-hk", "linen-days"];
