@@ -200,11 +200,13 @@ function AppearancePicker({
   onToggleTheme,
   accent,
   onPickAccent,
+  leading,
 }: {
   theme: "light" | "dark";
   onToggleTheme: () => void;
   accent: AccentId;
   onPickAccent: (id: AccentId) => void;
+  leading?: React.ReactNode;
 }) {
   const [open, setOpen] = useState(false);
   const current = ACCENTS.find((a) => a.id === accent) ?? ACCENTS[0];
@@ -212,13 +214,14 @@ function AppearancePicker({
   return (
     <div data-ios-group className="space-y-2">
       <div className="flex items-center gap-2">
+        {leading ?? <span className="flex-1 text-xs font-semibold uppercase tracking-wide text-muted-foreground">Appearance</span>}
         <Button
           variant="outline"
           type="button"
           onClick={onToggleTheme}
           aria-label={dark ? "Switch to light mode" : "Switch to dark mode"}
           title={dark ? "Dark mode" : "Light mode"}
-          className="h-11 w-11 shrink-0 rounded-full p-0 lg:h-9 lg:w-9"
+          className="h-10 w-10 min-h-0 min-w-0 shrink-0 rounded-full p-0 lg:h-9 lg:w-9"
         >
           {dark ? <Moon className="h-5 w-5 lg:h-4 lg:w-4" /> : <Sun className="h-5 w-5 lg:h-4 lg:w-4" />}
         </Button>
@@ -228,17 +231,14 @@ function AppearancePicker({
           onClick={() => setOpen((o) => !o)}
           aria-expanded={open}
           aria-label={`Accent colour: ${current.label}`}
-          className="h-11 flex-1 justify-between rounded-full px-4 lg:h-9"
+          title="Accent colour"
+          className="h-10 w-10 min-h-0 min-w-0 shrink-0 rounded-full p-0 lg:h-9 lg:w-9"
         >
-          <span className="flex items-center gap-2 min-w-0">
-            <span
-              className="h-4 w-4 shrink-0 rounded-full ring-1 ring-border"
-              style={{ background: accentSwatch(current.hue) }}
-              aria-hidden
-            />
-            <span className="truncate text-sm font-medium">Accent</span>
-          </span>
-          <ChevronDown className={cn("h-4 w-4 shrink-0 transition-transform", open && "rotate-180")} aria-hidden />
+          <span
+            className="h-5 w-5 rounded-full ring-1 ring-border lg:h-4 lg:w-4"
+            style={{ background: accentSwatch(current.hue) }}
+            aria-hidden
+          />
         </Button>
       </div>
       <div
@@ -249,7 +249,7 @@ function AppearancePicker({
         aria-hidden={!open}
       >
         <div className="overflow-hidden">
-          <div role="radiogroup" aria-label="Accent colour" className="grid grid-cols-7 gap-2 rounded-2xl border bg-muted/50 p-2.5">
+          <div role="radiogroup" aria-label="Accent colour" className="flex flex-wrap justify-center gap-3 pt-1 pb-1">
             {ACCENTS.map((a) => {
               const selected = a.id === accent;
               return (
@@ -263,7 +263,7 @@ function AppearancePicker({
                   tabIndex={open ? 0 : -1}
                   onClick={() => onPickAccent(a.id)}
                   className={cn(
-                    "mx-auto flex h-9 w-9 items-center justify-center rounded-full ring-offset-2 ring-offset-background transition-transform active:scale-90 lg:h-7 lg:w-7",
+                    "flex h-8 w-8 min-h-0 min-w-0 shrink-0 items-center justify-center rounded-full p-0 ring-offset-2 ring-offset-background transition-transform active:scale-90 lg:h-7 lg:w-7",
                     selected ? "ring-2 ring-foreground" : "ring-1 ring-border",
                   )}
                   style={{ background: accentSwatch(a.hue) }}
@@ -5075,12 +5075,18 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
     <SheetHeader className="relative text-left shrink-0 px-4 max-lg:px-0 max-lg:pt-0 max-lg:bg-transparent ios-menu-header sm:px-6 pt-4 sm:pt-6 pb-3 bg-background border-b">
       <SheetTitle className="sr-only">Menu</SheetTitle>
 
-      {authUser && (
-        <SheetDescription className="flex items-center gap-2.5">
-          <NamedAvatar name={authUser.username} className="h-9 w-9 text-base" />
-          <span>Signed in as {authUser.username}</span>
-        </SheetDescription>
-      )}
+      <AppearancePicker
+        theme={theme}
+        onToggleTheme={cycleTheme}
+        accent={accent}
+        onPickAccent={pickAccent}
+        leading={
+          <SheetDescription className="flex min-w-0 flex-1 items-center gap-2.5">
+            {authUser && <NamedAvatar name={authUser.username} className="h-9 w-9 shrink-0 text-base" />}
+            <span className="truncate">{authUser ? `Signed in as ${authUser.username}` : "Appearance"}</span>
+          </SheetDescription>
+        }
+      />
     </SheetHeader>
     <div className="flex-1 min-h-0 overflow-y-auto px-4 max-lg:px-0 sm:px-6 py-4 sm:py-6">
     {(() => {
@@ -5131,7 +5137,6 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
       };
       return (
         <div className="space-y-4">
-          <AppearancePicker theme={theme} onToggleTheme={cycleTheme} accent={accent} onPickAccent={pickAccent} />
 
           {menuGroups.filter((g) => g.id !== "appearance").map((group) => ({ ...group, items: group.items.filter((i) => i.key !== "theme" && i.key !== "accent") })).filter((g) => g.items.length > 0).map((group) => (
             <Section key={group.id} id={group.id} title={group.title}>
