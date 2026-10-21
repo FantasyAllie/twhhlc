@@ -193,18 +193,100 @@ export const Route = createFileRoute("/app")({
   component: AppPage,
 });
 
+/** Theme toggle (sun/moon) plus an expandable accent swatch menu, shared by
+ *  the desktop dropdown and the phone/tablet More screen. */
+function AppearancePicker({
+  theme,
+  onToggleTheme,
+  accent,
+  onPickAccent,
+}: {
+  theme: "light" | "dark";
+  onToggleTheme: () => void;
+  accent: AccentId;
+  onPickAccent: (id: AccentId) => void;
+}) {
+  const [open, setOpen] = useState(false);
+  const current = ACCENTS.find((a) => a.id === accent) ?? ACCENTS[0];
+  const dark = theme === "dark";
+  return (
+    <div data-ios-group className="space-y-2">
+      <div className="flex items-center gap-2">
+        <Button
+          variant="outline"
+          type="button"
+          onClick={onToggleTheme}
+          aria-label={dark ? "Switch to light mode" : "Switch to dark mode"}
+          title={dark ? "Dark mode" : "Light mode"}
+          className="h-11 w-11 shrink-0 rounded-full p-0 lg:h-9 lg:w-9"
+        >
+          {dark ? <Moon className="h-5 w-5 lg:h-4 lg:w-4" /> : <Sun className="h-5 w-5 lg:h-4 lg:w-4" />}
+        </Button>
+        <Button
+          variant="outline"
+          type="button"
+          onClick={() => setOpen((o) => !o)}
+          aria-expanded={open}
+          aria-label={`Accent colour: ${current.label}`}
+          className="h-11 flex-1 justify-between rounded-full px-4 lg:h-9"
+        >
+          <span className="flex items-center gap-2 min-w-0">
+            <span
+              className="h-4 w-4 shrink-0 rounded-full ring-1 ring-border"
+              style={{ background: accentSwatch(current.hue) }}
+              aria-hidden
+            />
+            <span className="truncate text-sm font-medium">Accent</span>
+          </span>
+          <ChevronDown className={cn("h-4 w-4 shrink-0 transition-transform", open && "rotate-180")} aria-hidden />
+        </Button>
+      </div>
+      <div
+        className={cn(
+          "grid transition-[grid-template-rows,opacity] duration-200 ease-out",
+          open ? "grid-rows-[1fr] opacity-100" : "grid-rows-[0fr] opacity-0",
+        )}
+        aria-hidden={!open}
+      >
+        <div className="overflow-hidden">
+          <div role="radiogroup" aria-label="Accent colour" className="grid grid-cols-7 gap-2 rounded-2xl border bg-muted/50 p-2.5">
+            {ACCENTS.map((a) => {
+              const selected = a.id === accent;
+              return (
+                <button
+                  key={a.id}
+                  type="button"
+                  role="radio"
+                  aria-checked={selected}
+                  aria-label={a.label}
+                  title={a.label}
+                  tabIndex={open ? 0 : -1}
+                  onClick={() => onPickAccent(a.id)}
+                  className={cn(
+                    "mx-auto flex h-9 w-9 items-center justify-center rounded-full ring-offset-2 ring-offset-background transition-transform active:scale-90 lg:h-7 lg:w-7",
+                    selected ? "ring-2 ring-foreground" : "ring-1 ring-border",
+                  )}
+                  style={{ background: accentSwatch(a.hue) }}
+                >
+                  {selected && <Check className="h-4 w-4 text-background" strokeWidth={3} aria-hidden />}
+                </button>
+              );
+            })}
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
 function AppPage() {
  const qc = useQueryClient();
   const navigate = useNavigate();
-  const { theme, level, levelLabel, cycleTheme } = useTheme();
+  const { theme, level, cycleTheme } = useTheme();
   const [accent, setAccent] = useState<AccentId>("brass");
   useEffect(() => { const a = readAccent(); setAccent(a); applyAccent(a); }, []);
-  const cycleAccent = () => {
-    const next = ACCENTS[(ACCENTS.findIndex((a) => a.id === accent) + 1) % ACCENTS.length].id;
-    setAccent(next); applyAccent(next);
-  };
-  const ThemeGlyph =
-    level === "white" ? Sun : level === "cream" ? SunDim : level === "navy" ? Moon : MoonStar;
+  const pickAccent = (next: AccentId) => { setAccent(next); applyAccent(next); };
+  const ThemeGlyph = level === "navy" || level === "oled" ? Moon : Sun;
   const isMobile = useIsMobile();
   // Tablet: gets the mobile layout (tab bar, top bar) but is 768–1023px wide.
   const [isTablet, setIsTablet] = useState(false);
@@ -4327,10 +4409,13 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
         </Button>
       </DropdownMenuTrigger>
       <DropdownMenuContent align="end" className="w-64">
-        {[
-          ...menuGroups.filter((g) => g.id === "appearance"),
-          ...menuGroups.filter((g) => g.id !== "appearance"),
-        ].map((group, gi) => (
+        <div className="p-1.5" onKeyDown={(e) => e.stopPropagation()}>
+          <AppearancePicker theme={theme} onToggleTheme={cycleTheme} accent={accent} onPickAccent={pickAccent} />
+        </div>
+        <DropdownMenuSeparator />
+        {menuGroups
+          .filter((g) => g.id !== "appearance")
+          .map((group, gi) => (
           <React.Fragment key={group.id}>
             {gi > 0 && <DropdownMenuSeparator />}
             <DropdownMenuLabel className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
@@ -5056,27 +5141,8 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
       };
       return (
         <div className="space-y-4">
-          <div className="space-y-2">
-          <div className="text-center text-xs font-semibold uppercase tracking-wide text-muted-foreground">Theme/Accent</div>
-          <div className="grid grid-cols-2 gap-1 rounded-full border bg-muted p-1">
-            <Button variant="outline"
-              type="button"
-              onClick={() => cycleTheme()}
-              className="flex min-w-0 items-center justify-center gap-2 rounded-full bg-background px-3 py-2 text-sm font-medium shadow-sm active:scale-[0.98]"
-            >
-              <ThemeGlyph className="h-4 w-4 shrink-0" />
-              <span className="truncate">{levelLabel}</span>
-            </Button>
-            <Button variant="outline"
-              type="button"
-              onClick={() => cycleAccent()}
-              className="flex min-w-0 items-center justify-center gap-2 rounded-full bg-background px-3 py-2 text-sm font-medium shadow-sm active:scale-[0.98]"
-            >
-              <span className="h-3.5 w-3.5 shrink-0 rounded-full bg-brass" aria-hidden />
-              <span className="truncate">{ACCENTS.find((a) => a.id === accent)?.label ?? "Brass"}</span>
-            </Button>
-          </div>
-          </div>
+          <AppearancePicker theme={theme} onToggleTheme={cycleTheme} accent={accent} onPickAccent={pickAccent} />
+
           {menuGroups.filter((g) => g.id !== "appearance").map((group) => ({ ...group, items: group.items.filter((i) => i.key !== "theme" && i.key !== "accent") })).filter((g) => g.items.length > 0).map((group) => (
             <Section key={group.id} id={group.id} title={group.title}>
               {group.items.map((item) => (
