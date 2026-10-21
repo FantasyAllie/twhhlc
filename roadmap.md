@@ -5,6 +5,7 @@
 - [x] Sad full-screen outcome + sad trombone sound when completion happens with Dirty rooms present
 
 ## Current work
+- [x] Move Leaderboard into Daily Operations and allow all Housekeeping-assigned users
 - [x] Reduce room controls top gap; move Messages Show done far right
 - [x] Frost iOS centred logging popups and audit OS controls
 - [x] Omit assigned-department tabs and test maintenance-only navigation

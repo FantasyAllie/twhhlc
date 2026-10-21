@@ -1,5 +1,6 @@
 import { toggleRoomTab, roomTileAction, type RoomTab } from "@/lib/room-navigation";
 import { shouldShowDepartmentTab } from "@/lib/department-tabs";
+import { canAccessLeaderboard } from "@/lib/leaderboard-access";
 import { FilterOption } from "@/components/rooms/filter-option";
 import { NamedAvatar } from "@/components/user-avatar";
 import { Textarea } from "@/components/ui/textarea";
@@ -4120,9 +4121,8 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
         onClick: () => { setMessagesInitial({}); setMessagesSheetOpen(true); },
       });
     }
-    const developer: MenuAction[] = [];
-    if (realIsDeveloper) {
-      developer.push({ key: "leaderboard", icon: Trophy, label: "Leaderboard", onClick: () => setLeaderboardOpen(true) });
+    if (canAccessLeaderboard(position, subRoles)) {
+      utilities.push({ key: "leaderboard", icon: Trophy, label: "Leaderboard", onClick: () => setLeaderboardOpen(true) });
     }
     const linen: MenuAction[] = [];
     const locations: MenuAction[] = [];
@@ -4169,7 +4169,7 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
     account.push({ key: "account", icon: User, label: "Account", onClick: () => setAccountOpen(true) });
     account.push({ key: "signout", icon: LogOut, label: "Sign out", destructive: true, onClick: () => void signOut() });
     const appearance: MenuAction[] = [{ key: "theme", icon: ThemeGlyph, label: "Theme", onClick: () => cycleTheme() }];
-    const opsOrder = ["messages", "maintenance-log", "lost-property", "stayover-photos"];
+    const opsOrder = ["messages", "maintenance-log", "lost-property", "stayover-photos", "leaderboard"];
     utilities.sort((a, b) => opsOrder.indexOf(a.key) - opsOrder.indexOf(b.key));
     const linenOrder = ["delivery", "linen-list", "linen-list-hk", "linen-days"];
     linen.sort((a, b) => linenOrder.indexOf(a.key) - linenOrder.indexOf(b.key));
@@ -4180,7 +4180,6 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
       { id: "actions", title: "Actions", items: actions },
       { id: "account", title: "Account", items: account },
       { id: "appearance", title: "Appearance", items: appearance },
-      { id: "developer", title: "Developer", items: developer },
     ].filter((g) => g.items.length > 0);
   })();
 
