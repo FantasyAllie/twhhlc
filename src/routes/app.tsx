@@ -1,4 +1,4 @@
-import { availableMessageGroups } from "@/lib/message-groups";
+import { availableMessageGroups, MESSAGE_GROUP_LABELS, type MessageGroup } from "@/lib/message-groups";
 import { toggleRoomTab, roomTileAction, type RoomTab } from "@/lib/room-navigation";
 import { shouldShowDepartmentTab } from "@/lib/department-tabs";
 import { canAccessLeaderboard } from "@/lib/leaderboard-access";
@@ -461,10 +461,12 @@ function AppPage() {
             message?: string;
             created_by_username?: string;
             dismissed?: boolean;
+            group_key?: MessageGroup;
           };
           if (!row || row.dismissed) return;
-          const title = `Reception – Room ${row.room_number ?? "?"}`;
-          const body = `${row.created_by_username ?? "Reception"}: ${row.message ?? ""}`;
+          const groupLabel = row.group_key ? MESSAGE_GROUP_LABELS[row.group_key] : "Reception";
+          const title = `${groupLabel}${row.room_number != null ? ` – Room ${row.room_number}` : ""}`;
+          const body = `${row.created_by_username ?? "Staff"}: ${row.message ?? ""}`;
           toast(title, {
             description: row.message ?? "",
             duration: Infinity,
