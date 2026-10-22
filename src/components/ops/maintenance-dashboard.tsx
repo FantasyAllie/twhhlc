@@ -50,9 +50,13 @@ export function MaintenanceDashboard({
 
   const openReqs = maintenanceRequests.filter((m) => !m.done);
   const doneReqs = maintenanceRequests.filter((m) => m.done);
+  // Open messages for Maintenance: anything in the Maintenance group chat,
+  // plus messages from the older paired maintenance threads.
+  const isLegacyMaintenanceThread = (m: { thread?: string | null }) =>
+    m.thread === "hk_maintenance" || m.thread === "reception_maintenance";
   const openMsgs = roomMessages.filter(
     (m) =>
-      (m.thread === "hk_maintenance" || m.thread === "reception_maintenance") &&
+      (m.group_key === "maintenance" || isLegacyMaintenanceThread(m)) &&
       !m.done_at &&
       !m.deleted_at,
   );
@@ -95,7 +99,10 @@ export function MaintenanceDashboard({
           message: m.message,
           sender: m.created_by_username,
           createdAt: m.created_at,
-          origin: m.thread === "reception_maintenance" ? "reception" : "housekeeping",
+          // Group chat messages don't record the sender's department.
+          origin: isLegacyMaintenanceThread(m)
+            ? m.thread === "reception_maintenance" ? "reception" : "housekeeping"
+            : null,
           urgent: false,
         })),
       ].sort((a, b) => (a.createdAt < b.createdAt ? 1 : -1)),
