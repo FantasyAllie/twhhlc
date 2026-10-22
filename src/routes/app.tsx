@@ -1,4 +1,4 @@
-import { availableMessageGroups, MESSAGE_GROUP_LABELS, type MessageGroup } from "@/lib/message-groups";
+import { availableMessageGroups, MESSAGE_GROUP_LABELS, HOUSEKEEPING_ROOM_MESSAGE_GROUP, isHousekeepingRoomMessage, type MessageGroup } from "@/lib/message-groups";
 import { toggleRoomTab, roomTileAction, type RoomTab } from "@/lib/room-navigation";
 import { shouldShowDepartmentTab } from "@/lib/department-tabs";
 import { canAccessLeaderboard } from "@/lib/leaderboard-access";
@@ -1013,7 +1013,7 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
     roomMessages.filter(
       (m) =>
         m.room_number === n &&
-        m.group_key === "reception" &&
+        isHousekeepingRoomMessage(m) &&
         !m.done_at &&
         !m.deleted_at &&
         !m.dismissed,
@@ -1132,7 +1132,7 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
       message: text,
       created_by_username: authUser?.username ?? null,
       created_by_role: isReception ? "reception" : (isHousekeeper ? "housekeeping" : (authUser?.role ?? null)),
-      group_key: "reception",
+      group_key: HOUSEKEEPING_ROOM_MESSAGE_GROUP,
     } as never);
     if (error) {
       toast.error(error.message);
@@ -1206,7 +1206,7 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
       message: ack,
       created_by_username: who,
       created_by_role: "reception",
-      group_key: "reception",
+      group_key: HOUSEKEEPING_ROOM_MESSAGE_GROUP,
     } as never);
     if (error) {
       toast.error(error.message);

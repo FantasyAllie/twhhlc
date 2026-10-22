@@ -1,8 +1,17 @@
 import { describe, it } from "node:test";
 import assert from "node:assert/strict";
-import { availableMessageGroups, legacyMessageGroup } from "./message-groups";
+import { availableMessageGroups, legacyMessageGroup, HOUSEKEEPING_ROOM_MESSAGE_GROUP, isHousekeepingRoomMessage } from "./message-groups";
 
 describe("department group access", () => {
+  it("routes reception room comments to Housekeeping", () => {
+    assert.equal(HOUSEKEEPING_ROOM_MESSAGE_GROUP, "housekeeping");
+    assert.equal(isHousekeepingRoomMessage({ group_key: HOUSEKEEPING_ROOM_MESSAGE_GROUP }), true);
+    assert.equal(isHousekeepingRoomMessage({ group_key: "maintenance" }), false);
+  });
+  it("keeps previously sent reception room comments visible without including housekeeping acknowledgements", () => {
+    assert.equal(isHousekeepingRoomMessage({ group_key: "reception", created_by_role: "reception" }), true);
+    assert.equal(isHousekeepingRoomMessage({ group_key: "reception", created_by_role: "housekeeping" }), false);
+  });
   it("everyone can access Reception", () => {
     assert.deepEqual(availableMessageGroups([]), ["reception"]);
   });

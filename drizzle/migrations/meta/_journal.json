@@ -134,6 +134,13 @@
       "when": 1792689103874,
       "tag": "0018_department_message_groups",
       "breakpoints": true
+    },
+    {
+      "idx": 19,
+      "version": "7",
+      "when": 1792689649139,
+      "tag": "0019_reception_housekeeping_room_comments",
+      "breakpoints": true
     }
   ]
 }

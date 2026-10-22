@@ -5,6 +5,7 @@
 - [x] Sad full-screen outcome + sad trombone sound when completion happens with Dirty rooms present
 
 ## Current work
+- [ ] Route Reception room comments to Housekeeping and verify sending and readback
 - [x] Replace paired messages with department groups, enforce access and verify sending with sender names
 - [x] Add and verify a daily 11pm UK-time export for missing daily reports
 - [x] Move Leaderboard into Daily Operations and allow all Housekeeping-assigned users
