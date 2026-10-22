@@ -5,7 +5,7 @@
 - [x] Sad full-screen outcome + sad trombone sound when completion happens with Dirty rooms present
 
 ## Current work
-- [ ] Add and verify a daily 11pm UK-time export for missing daily reports
+- [x] Add and verify a daily 11pm UK-time export for missing daily reports
 - [x] Move Leaderboard into Daily Operations and allow all Housekeeping-assigned users
 - [x] Reduce room controls top gap; move Messages Show done far right
 - [x] Frost iOS centred logging popups and audit OS controls
