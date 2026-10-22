@@ -1,3 +1,4 @@
+import { availableMessageGroups, MESSAGE_GROUP_LABELS, type MessageGroup } from "@/lib/message-groups";
 import { createServerFn } from "@tanstack/react-start";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 
@@ -35,7 +36,7 @@ async function getActor(ctx: { supabase: import("@supabase/supabase-js").Supabas
   const db = await getDb();
   const [{ data: profile }, { data: roleRows }, { data: activeHotel }] = await Promise.all([
     db.from("profiles").select("display_name, email").eq("id", ctx.userId).maybeSingle(),
-    db.from("user_roles").select("role").eq("user_id", ctx.userId),
+    ctx.supabase.from("user_roles").select("role").eq("user_id", ctx.userId),
     db.from("user_active_hotel").select("hotel_id").eq("user_id", ctx.userId).maybeSingle(),
   ]);
   const roles = ((roleRows ?? []) as { role: string }[]).map((r) => r.role);
@@ -393,23 +394,6 @@ export const notifyRoomEvent = createServerFn({ method: "POST" })
   });
 
 export type MessagesDepartment = "housekeeping" | "reception" | "fnb" | "maintenance";
-type MessagesThread =
-  | "hk_reception"
-  | "hk_fnb"
-  | "reception_fnb"
-  | "hk_maintenance"
-  | "reception_maintenance"
-  | "fnb_maintenance";
-
-const THREAD_PAIR: Record<MessagesThread, [MessagesDepartment, MessagesDepartment]> = {
-  hk_reception: ["housekeeping", "reception"],
-  hk_fnb: ["housekeeping", "fnb"],
-  reception_fnb: ["reception", "fnb"],
-  hk_maintenance: ["housekeeping", "maintenance"],
-  reception_maintenance: ["reception", "maintenance"],
-  fnb_maintenance: ["fnb", "maintenance"],
-};
-
 const PREF_COL_FROM: Record<MessagesDepartment, keyof NotificationPrefs> = {
   reception: "notify_from_reception",
   housekeeping: "notify_from_housekeeping",
@@ -428,7 +412,7 @@ export const notifyDepartmentMessage = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .inputValidator(
     (d: {
-      thread: MessagesThread;
+      thread: MessageGroup;
       senderDepartment: MessagesDepartment | null;
       message: string;
       roomNumber?: number | null;
@@ -437,40 +421,40 @@ export const notifyDepartmentMessage = createServerFn({ method: "POST" })
   .handler(async ({ data, context }) => {
     const sender = await getActor(context);
     if (!sender.active) return { ok: true, recipients: 0 };
-    const pair = THREAD_PAIR[data.thread];
-    if (!pair) throw new Error("Unknown thread");
-
-    // Determine which side is the sender; the other side receives.
-    // If the client couldn't say (admin/manager on both sides), notify both
-    // halves and filter each by whether they opted in to the opposite half.
-    const pairs: Array<{ from: MessagesDepartment; to: MessagesDepartment }> = [];
-    const claimed = data.senderDepartment && pair.includes(data.senderDepartment)
-      ? data.senderDepartment
-      : // Fall back to the sender's own department memberships when the client
-        // couldn't decide which half of the thread they sent from.
-        pair.find((d) => sender.depts.includes(d as Dept)) ?? null;
-    if (claimed) {
-      const to = pair[0] === claimed ? pair[1] : pair[0];
-      pairs.push({ from: claimed, to });
-    } else {
-      pairs.push({ from: pair[0], to: pair[1] });
-      pairs.push({ from: pair[1], to: pair[0] });
+    if (!availableMessageGroups(sender.depts, sender.elevated).includes(data.thread)) {
+      throw new Error("Forbidden");
     }
-
+    if (!sender.hotelId) return { ok: true, recipients: 0 };
+    const db = await getDb();
+    const { data: members, error: membersError } = await db.from("hotel_members")
+      .select("user_id").eq("hotel_id", sender.hotelId);
+    if (membersError) throw new Error("Could not load group members");
+    const memberIds = (members ?? []).map(member => member.user_id).filter(id => id !== sender.id);
+    if (!memberIds.length) return { ok: true, recipients: 0 };
+    const { data: roles, error: rolesError } = await db.from("user_roles")
+      .select("user_id,role").in("user_id", memberIds);
+    if (rolesError) throw new Error("Could not load group members");
+    const rolesByUser = new Map<string, string[]>();
+    for (const row of roles ?? []) {
+      rolesByUser.set(row.user_id, [...(rolesByUser.get(row.user_id) ?? []), row.role]);
+    }
+    const ids = memberIds.filter(id => {
+      const userRoles = rolesByUser.get(id) ?? [];
+      const { depts, elevated } = deptsFromRoles(userRoles);
+      return userRoles.some(role => role !== "pending") && availableMessageGroups(depts, elevated).includes(data.thread);
+    });
+    const from = sender.depts.includes(data.senderDepartment as Dept)
+      ? data.senderDepartment : sender.depts[0];
+    const enabled = await filterByPref(ids, "messages_enabled");
+    const optedIn = from ? await filterByPref(enabled, PREF_COL_FROM[from]) : enabled;
+    const subs = await subsForUsers(optedIn);
     const roomTag = typeof data.roomNumber === "number" ? ` — Room ${data.roomNumber}` : "";
-    const body = data.message?.slice(0, 240) || "New message";
-
-    let totalSubs = 0;
-    for (const { from, to } of pairs) {
-      totalSubs += await fanOut([to as Dept], PREF_COL_FROM[from], sender, {
-        title: `${DEPT_LABEL[from]} — ${sender.username}${roomTag}`,
-        body,
-        url: `/app`,
-        tag: `dept-${data.thread}-${from}`,
-      });
-    }
-
-    return { ok: true, recipients: totalSubs };
+    await sendToSubs(subs, {
+      title: `${MESSAGE_GROUP_LABELS[data.thread]} — ${sender.username}${roomTag}`,
+      body: data.message?.slice(0, 240) || "New message",
+      url: "/app", tag: `group-${data.thread}`,
+    });
+    return { ok: true, recipients: subs.length };
   });
 
 export const notifyMaintenanceRequest = createServerFn({ method: "POST" })
