@@ -1437,6 +1437,18 @@ export type Database = {
         Args: { p_department: string; p_room_number: number }
         Returns: string
       }
+      daily_export_candidates: {
+        Args: { p_day: string; p_hotel: string }
+        Returns: {
+          grand_total: number
+          kind: string
+          totals: Json
+        }[]
+      }
+      save_missing_nightly_exports: {
+        Args: { p_now?: string }
+        Returns: number
+      }
       set_room_checked_item: {
         Args: { p_item: string; p_room_number: number; p_selected: boolean }
         Returns: Json

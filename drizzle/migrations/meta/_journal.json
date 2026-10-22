@@ -113,6 +113,20 @@
       "when": 1792621599591,
       "tag": "0015_housekeeping_leaderboard_access",
       "breakpoints": true
+    },
+    {
+      "idx": 16,
+      "version": "7",
+      "when": 1792687200923,
+      "tag": "0016_nightly_missing_exports",
+      "breakpoints": true
+    },
+    {
+      "idx": 17,
+      "version": "7",
+      "when": 1792687286683,
+      "tag": "0017_nightly_export_verification_access",
+      "breakpoints": true
     }
   ]
 }
