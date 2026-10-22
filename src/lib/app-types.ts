@@ -144,7 +144,8 @@ export type RoomMessage = {
   created_by_role: string | null;
   reply_to_id: string | null;
   dismissed: boolean;
-  thread: "hk_reception" | "hk_fnb" | "reception_fnb" | "hk_maintenance" | "reception_maintenance";
+  group_key: import("./message-groups").MessageGroup;
+  thread: "hk_reception" | "hk_fnb" | "reception_fnb" | "hk_maintenance" | "reception_maintenance" | "fnb_maintenance";
   done_at: string | null;
   deleted_at: string | null;
   created_at: string;

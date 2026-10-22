@@ -1,3 +1,4 @@
+import { availableMessageGroups } from "@/lib/message-groups";
 import { toggleRoomTab, roomTileAction, type RoomTab } from "@/lib/room-navigation";
 import { shouldShowDepartmentTab } from "@/lib/department-tabs";
 import { canAccessLeaderboard } from "@/lib/leaderboard-access";
@@ -1010,7 +1011,7 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
     roomMessages.filter(
       (m) =>
         m.room_number === n &&
-        m.thread === "hk_reception" &&
+        m.group_key === "reception" &&
         !m.done_at &&
         !m.deleted_at &&
         !m.dismissed,
@@ -1129,7 +1130,7 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
       message: text,
       created_by_username: authUser?.username ?? null,
       created_by_role: isReception ? "reception" : (isHousekeeper ? "housekeeping" : (authUser?.role ?? null)),
-      thread: "hk_reception",
+      group_key: "reception",
     } as never);
     if (error) {
       toast.error(error.message);
@@ -1162,7 +1163,7 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
       created_by_username: who,
       created_by_role: "housekeeping",
       reply_to_id: m.id,
-      thread: "hk_reception",
+      group_key: "reception",
     } as never);
     if (error) {
       toast.error(error.message);
@@ -1203,7 +1204,7 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
       message: ack,
       created_by_username: who,
       created_by_role: "reception",
-      thread: "hk_reception",
+      group_key: "reception",
     } as never);
     if (error) {
       toast.error(error.message);
@@ -1654,34 +1655,12 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
     const logScope: "rooms" | "areas" = isFnb || isMaintenance ? "areas" : "rooms";
     // Reception can resolve entries; Housekeeping views them read-only.
     const canResolveLostProperty = menuIsAdmin || hasReceptionRole;
-    const availableThreads: MessagesThread[] = (() => {
-      const out: MessagesThread[] = [];
-      // Messaging rules:
-      // 1. Reception and Maintenance are hubs: anyone can message them, and
-      //    Reception and Maintenance users see every thread.
-      // 2. People in several departments also get the threads between their
-      //    own departments (e.g. Housekeeping + F&B gets Housekeeping ↔ F&B).
-      // 3. Nobody else sees a thread between two departments they aren't in.
-      // Admins/managers keep access to all threads for oversight.
-      const own = new Set<MessagesDepartment>();
-      if (hasHousekeeperRole) own.add("housekeeping");
-      if (hasReceptionRole) own.add("reception");
-      if (hasFnbRole) own.add("fnb");
-      if (hasMaintenanceRole) own.add("maintenance");
-      const seesAll = menuIsAdmin || hasReceptionRole || hasMaintenanceRole;
-      const isHub = (d: MessagesDepartment) => d === "reception" || d === "maintenance";
-      const bothReachable = (a: MessagesDepartment, b: MessagesDepartment) =>
-        seesAll ||
-        (own.has(a) && (own.has(b) || isHub(b))) ||
-        (own.has(b) && isHub(a));
-      if (bothReachable("housekeeping", "reception")) out.push("hk_reception");
-      if (bothReachable("housekeeping", "fnb")) out.push("hk_fnb");
-      if (bothReachable("reception", "fnb")) out.push("reception_fnb");
-      if (bothReachable("housekeeping", "maintenance")) out.push("hk_maintenance");
-      if (bothReachable("reception", "maintenance")) out.push("reception_maintenance");
-      if (bothReachable("fnb", "maintenance")) out.push("fnb_maintenance");
-      return out;
-    })();
+    const availableThreads = availableMessageGroups([
+      ...(hasHousekeeperRole ? ["housekeeping"] : []),
+      ...(hasReceptionRole ? ["reception"] : []),
+      ...(hasFnbRole ? ["fnb"] : []),
+      ...(hasMaintenanceRole ? ["maintenance"] : []),
+    ], menuIsAdmin);
     const canUseMessages = availableThreads.length > 0;
     const myMessageDepartments: MessagesDepartment[] = (() => {
       const out: MessagesDepartment[] = [];
@@ -4830,7 +4809,7 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
       setLostPropertyOpen(true);
     }}
     onMessageReception={(n) => {
-      setMessagesInitial({ thread: "hk_reception", room: n });
+      setMessagesInitial({ thread: "reception", room: n });
       setMessagesSheetOpen(true);
     }}
     hasDnd={(() => {
@@ -4974,7 +4953,7 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
   onReply={(item) => {
     setLostPropertyOpen(false);
     setMessagesInitial({
-      thread: "hk_reception",
+      thread: "reception",
       room: item.roomNumber,
       replyTo: {
         id: item.id,

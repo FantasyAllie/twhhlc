@@ -276,7 +276,7 @@ export function RoomNotesSheet({
                           className="h-7 text-xs"
                           onClick={() => {
                             closeHub();
-                            setMessagesInitial({ thread: "hk_reception", room: n });
+                            setMessagesInitial({ thread: "reception", room: n });
                             setMessagesSheetOpen(true);
                           }}
                         >
@@ -376,7 +376,7 @@ export function RoomNotesSheet({
                               const first = msgs[0];
                               closeHub();
                               setMessagesInitial({
-                                thread: "hk_reception",
+                                thread: "reception",
                                 room: n,
                                 replyTo: first
                                   ? {

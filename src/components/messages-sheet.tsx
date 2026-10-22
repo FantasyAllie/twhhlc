@@ -4,32 +4,22 @@ import { supabase } from "@/integrations/supabase/client";
 import { Sheet, SheetContent, SheetDescription, SheetHeader, SheetTitle } from "@/components/ui/sheet";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { MessageSquare, Check, X, RotateCcw, Wrench, PackageSearch, ChevronDown } from "lucide-react";
-import { Switch } from "@/components/ui/switch";
+import { MessageSquare, Check, X, RotateCcw, ChevronDown } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { toast } from "sonner";
 import { notifyDepartmentMessage } from "@/lib/push.functions";
+import { useServerFn } from "@tanstack/react-start";
 import { useIsMobile } from "@/hooks/use-mobile";
 
-export type MessagesThread =
-  | "hk_reception"
-  | "hk_fnb"
-  | "reception_fnb"
-  | "hk_maintenance"
-  | "reception_maintenance"
-  | "fnb_maintenance";
-export type Department = "housekeeping" | "reception" | "fnb" | "maintenance";
-
-const DEPT_LABELS: Record<Department, string> = {
-  housekeeping: "Housekeeping",
-  reception: "Reception",
-  fnb: "F&B",
-  maintenance: "Maintenance",
-};
+import { MESSAGE_GROUP_LABELS, type MessageGroup } from "@/lib/message-groups";
+export type MessagesThread = MessageGroup;
+export type Department = MessageGroup;
+const THREAD_LABELS = MESSAGE_GROUP_LABELS;
+const supportsRoomTag = (t: MessagesThread) => t !== "fnb";
 
 type Msg = {
   id: string;
-  thread: MessagesThread;
+  group_key: MessagesThread;
   room_number: number | null;
   message: string;
   created_by_username: string | null;
@@ -40,32 +30,6 @@ type Msg = {
   reply_to_sender: string | null;
   reply_to_snippet: string | null;
 };
-
-const THREAD_LABELS: Record<MessagesThread, string> = {
-  hk_reception: "Housekeeping ↔ Reception",
-  hk_fnb: "Housekeeping ↔ F&B",
-  reception_fnb: "Reception ↔ F&B",
-  hk_maintenance: "Housekeeping ↔ Maintenance",
-  reception_maintenance: "Reception ↔ Maintenance",
-  fnb_maintenance: "F&B ↔ Maintenance",
-};
-
-// Room tags matter for HK↔Reception and any maintenance thread — F&B is not room-scoped.
-const supportsRoomTag = (t: MessagesThread) =>
-  t === "hk_reception" || t === "hk_maintenance" || t === "reception_maintenance";
-
-// Threads are ordered pairs; sender/target order doesn't matter for the shared feed,
-// but we need to derive the thread from (sender, target).
-function threadFor(a: Department, b: Department): MessagesThread | null {
-  const s = new Set([a, b]);
-  if (s.has("housekeeping") && s.has("reception")) return "hk_reception";
-  if (s.has("housekeeping") && s.has("fnb")) return "hk_fnb";
-  if (s.has("reception") && s.has("fnb")) return "reception_fnb";
-  if (s.has("housekeeping") && s.has("maintenance")) return "hk_maintenance";
-  if (s.has("reception") && s.has("maintenance")) return "reception_maintenance";
-  if (s.has("fnb") && s.has("maintenance")) return "fnb_maintenance";
-  return null;
-}
 
 export function MessagesSheet({
   open,
@@ -78,9 +42,6 @@ export function MessagesSheet({
   currentUsername,
   roomNumbers,
   myDepartments,
-  isAdminOrManager,
-  onLogMaintenance,
-  onLogLostProperty,
 }: {
   open: boolean;
   onOpenChange: (o: boolean) => void;
@@ -100,99 +61,40 @@ export function MessagesSheet({
   ) => Promise<{ ok: boolean; error?: string }>;
 }) {
   const qc = useQueryClient();
+  const notifyMessage = useServerFn(notifyDepartmentMessage);
   const isMobile = useIsMobile();
   const [thread, setThread] = useState<MessagesThread>(
     initialThread && availableThreads.includes(initialThread)
       ? initialThread
-      : availableThreads[0] ?? "hk_reception",
+      : availableThreads[0] ?? "reception",
   );
   const [text, setText] = useState(initialText ?? "");
   const [room, setRoom] = useState<number | "">(initialRoom ?? "");
   const [replyTo, setReplyTo] = useState<{ id: string; sender: string; snippet: string } | null>(initialReplyTo ?? null);
-  const [alsoMaintenance, setAlsoMaintenance] = useState(false);
-  const [alsoLostProperty, setAlsoLostProperty] = useState(false);
   const [pickerOpen, setPickerOpen] = useState(false);
   const [showDone, setShowDone] = useState(false);
   const feedRef = useRef<HTMLDivElement | null>(null);
 
-  // "Send to" picker options for non-admin users with a single department.
-  // Admin/manager (and mixed-department users) keep the thread-pair pill picker.
-  const useSendToPicker = !isAdminOrManager && myDepartments.length >= 1;
-  const sendToTargets: Department[] = useMemo(() => {
-    if (!useSendToPicker) return [];
-    // Union of "other" departments across all of my departments.
-    const set = new Set<Department>();
-    for (const mine of myDepartments) {
-      for (const other of ["housekeeping", "reception", "fnb"] as Department[]) {
-        if (other !== mine) set.add(other);
-      }
-    }
-    return ["housekeeping", "reception", "fnb"].filter((d) => set.has(d as Department)) as Department[];
-  }, [useSendToPicker, myDepartments]);
-
-  // For a "Send to <dept>" pick, choose the thread using my primary matching
-  // department. Prefer HK, then Reception, then F&B, then Maintenance.
-  function threadForTarget(target: Department): MessagesThread | null {
-    const priority: Department[] = ["housekeeping", "reception", "fnb", "maintenance"];
-    for (const mine of priority) {
-      if (mine === target) continue;
-      if (myDepartments.includes(mine)) {
-        const t = threadFor(mine, target);
-        if (t && availableThreads.includes(t)) return t;
-      }
-    }
-    return null;
-  }
-
-  const activeTarget: Department | null = useMemo(() => {
-    if (!useSendToPicker) return null;
-    // Derive the "target" from the current thread + my departments.
-    const [a, b] =
-      thread === "hk_reception"
-        ? (["housekeeping", "reception"] as const)
-        : thread === "hk_fnb"
-        ? (["housekeeping", "fnb"] as const)
-        : thread === "reception_fnb"
-        ? (["reception", "fnb"] as const)
-        : thread === "hk_maintenance"
-        ? (["housekeeping", "maintenance"] as const)
-        : thread === "reception_maintenance"
-        ? (["reception", "maintenance"] as const)
-        : (["fnb", "maintenance"] as const);
-    return (myDepartments.includes(a) ? b : a) as Department;
-  }, [useSendToPicker, thread, myDepartments]);
-
-  // Maintenance toggle only makes sense on the Housekeeping↔Reception thread.
-  const canLogMaintenance = false;
-  // Lost Property mirrors Maintenance — only relevant on HK↔Reception (Reception
-  // owns the log; Housekeeping is the usual reporter).
-  const canLogLostProperty = false;
-  useEffect(() => {
-    if (!canLogMaintenance) setAlsoMaintenance(false);
-  }, [canLogMaintenance]);
-  useEffect(() => {
-    if (!canLogLostProperty) setAlsoLostProperty(false);
-  }, [canLogLostProperty]);
-
   useEffect(() => {
     if (!open) return;
     if (initialThread && availableThreads.includes(initialThread)) setThread(initialThread);
+    else if (!availableThreads.includes(thread)) setThread(availableThreads[0] ?? "reception");
     if (typeof initialRoom === "number") setRoom(initialRoom);
     if (typeof initialText === "string" && initialText.length > 0) setText(initialText);
     setReplyTo(initialReplyTo ?? null);
-  }, [open, initialThread, initialRoom, initialText, initialReplyTo, availableThreads]);
+  }, [open, initialThread, initialRoom, initialText, initialReplyTo, availableThreads, thread]);
 
   const q = useQuery({
     queryKey: ["messages_feed", thread],
-    enabled: open,
+    enabled: open && availableThreads.includes(thread),
     queryFn: async (): Promise<Msg[]> => {
       // Messages stay in the feed for 3 months regardless of being marked done
       // or cleared by a reset; only manual deletion removes them sooner.
       const cutoff = new Date(Date.now() - 90 * 24 * 60 * 60 * 1000).toISOString();
       const { data, error } = await supabase
         .from("room_messages" as never)
-          .select("id,thread,room_number,message,created_by_username,done_at,deleted_at,created_at,reply_to_id,reply_to_sender,reply_to_snippet")
-        .eq("thread", thread)
+          .select("id,group_key,room_number,message,created_by_username,done_at,deleted_at,created_at,reply_to_id,reply_to_sender,reply_to_snippet")
+        .eq("group_key", thread)
         .is("deleted_at", null)
         .gte("created_at", cutoff)
         .order("created_at", { ascending: true })
@@ -246,67 +148,8 @@ export function MessagesSheet({
 
   const send = async () => {
     const body = text.trim();
-    if (!body) return;
+    if (!body || !availableThreads.includes(thread)) return;
     const roomNumber = supportsRoomTag(thread) && typeof room === "number" ? room : null;
-    // If a "log-only" toggle is on, skip the chat insert entirely and route the
-    // message to the correct destination (maintenance log or lost property).
-    if (alsoMaintenance) {
-      if (!canLogMaintenance) {
-        toast.error("Maintenance can only be logged from the Housekeeping ↔ Reception thread");
-        return;
-      }
-      if (roomNumber === null) {
-        toast.error("Pick a room to log as maintenance");
-        return;
-      }
-      const res = await onLogMaintenance!(roomNumber, body);
-      if (!res.ok) {
-        toast.error(res.error ?? "Could not log maintenance request");
-        return;
-      }
-      toast.success("Maintenance request has been sent to the Maintenance Log");
-      setText("");
-      setReplyTo(null);
-      setAlsoMaintenance(false);
-      return;
-    }
-    if (alsoLostProperty) {
-      if (!canLogLostProperty) {
-        toast.error("Lost Property can only be logged from the Housekeeping ↔ Reception thread");
-        return;
-      }
-      const senderIsHkOnly =
-        myDepartments.includes("housekeeping") && !myDepartments.includes("reception");
-      if (senderIsHkOnly && roomNumber === null) {
-        toast.error("Pick a room to log as lost property");
-        return;
-      }
-      const res = await onLogLostProperty!(roomNumber, body);
-      if (!res.ok) {
-        toast.error(res.error ?? "Could not log lost property");
-        return;
-      }
-      toast.success("Item has been logged to Lost Property");
-      setText("");
-      setReplyTo(null);
-      setAlsoLostProperty(false);
-      return;
-    }
-    // Legacy dead-code check kept as no-op after early returns above.
-    if (alsoMaintenance && (!canLogMaintenance || roomNumber === null)) {
-      toast.error("Pick a room to also log as maintenance");
-      return;
-    }
-    // Housekeeping must tag a room for lost property. Reception may leave it
-    // untagged (they may not know the room yet). We can't distinguish sender
-    // exactly here, so require a room tag whenever HK is my department AND I'm
-    // not also Reception.
-    const senderIsHkOnly =
-      myDepartments.includes("housekeeping") && !myDepartments.includes("reception");
-    if (alsoLostProperty && senderIsHkOnly && roomNumber === null) {
-      toast.error("Pick a room to also log as lost property");
-      return;
-    }
     // Guard against stale/invalid reply targets that would violate the FK.
     // We only send reply_to_id when it looks like a real UUID; if the insert
     // still fails due to the FK (message deleted or from another hotel), we
@@ -314,7 +157,7 @@ export function MessagesSheet({
     const uuidRe = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
     const safeReplyId = replyTo?.id && uuidRe.test(replyTo.id) ? replyTo.id : null;
     const basePayload = {
-      thread,
+      group_key: thread,
       room_number: roomNumber,
       message: body,
       created_by_username: currentUsername ?? null,
@@ -346,32 +189,12 @@ export function MessagesSheet({
       toast.error(error.message);
       return;
     }
-    // (Toggle-driven maintenance/lost-property logging is handled up-front and
-    // returns early — chat inserts are skipped in those cases.)
-    // Fire push notifications to the receiving department(s).
-    // Sender department: the thread half the user belongs to, when unambiguous.
-    const pair: [Department, Department] =
-      thread === "hk_reception"
-        ? ["housekeeping", "reception"]
-        : thread === "hk_fnb"
-        ? ["housekeeping", "fnb"]
-        : thread === "reception_fnb"
-        ? ["reception", "fnb"]
-        : thread === "hk_maintenance"
-        ? ["housekeeping", "maintenance"]
-        : thread === "reception_maintenance"
-        ? ["reception", "maintenance"]
-        : ["fnb", "maintenance"];
-    const mineInThread = pair.filter((d) => myDepartments.includes(d));
-    const senderDepartment: Department | null =
-      mineInThread.length === 1 ? mineInThread[0] : null;
-    void notifyDepartmentMessage({
+    const senderDepartment = myDepartments[0] ?? null;
+    void notifyMessage({
       data: { thread, senderDepartment, message: body, roomNumber },
     }).catch(() => {});
     setText("");
     setReplyTo(null);
-    setAlsoMaintenance(false);
-    setAlsoLostProperty(false);
     qc.invalidateQueries({ queryKey: ["messages_feed", thread] });
     qc.invalidateQueries({ queryKey: ["room_messages"] });
   };
@@ -444,66 +267,30 @@ export function MessagesSheet({
           </div>
           {!isMobile && (
             <SheetDescription>
-              Shared thread — everyone in these roles sees it.
+              {THREAD_LABELS[thread]} group chat
             </SheetDescription>
           )}
         </SheetHeader>
 
-        {((useSendToPicker && sendToTargets.length > 1) || (!useSendToPicker && availableThreads.length > 1)) && (
-          <Button
-            type="button"
-            variant="outline"
-            onClick={() => setPickerOpen((v) => !v)}
-            aria-expanded={pickerOpen}
-            className="mt-3 flex h-auto min-h-11 w-full items-center gap-2 rounded-lg px-3 py-2 text-left text-sm"
-          >
-            <span className="text-xs text-muted-foreground shrink-0">{useSendToPicker ? "Send to" : "Thread"}</span>
-            <span className="min-w-0 flex-1 truncate font-medium">
-              {useSendToPicker
-                ? (activeTarget ? DEPT_LABELS[activeTarget] : "Choose")
-                : THREAD_LABELS[thread]}
-            </span>
-            <ChevronDown className={cn("h-4 w-4 shrink-0 text-muted-foreground transition-transform", pickerOpen && "rotate-180")} />
-          </Button>
-        )}
-        {pickerOpen && useSendToPicker && sendToTargets.length > 1 && (
-          <div className="mt-2 flex flex-wrap items-center gap-2">
-            {sendToTargets.map((target) => {
-              const t = threadForTarget(target);
-              const active = activeTarget === target;
-              return (
-                <Button
-                  key={target}
-                  type="button"
-                  size="sm"
-                  variant={active ? "default" : "outline"}
-                  className="rounded-full"
-                  disabled={!t}
-                  onClick={() => { if (t) { setThread(t); setPickerOpen(false); } }}
-                >
-                  {DEPT_LABELS[target]}
-                </Button>
-              );
-            })}
-          </div>
-        )}
-        {pickerOpen && !useSendToPicker && availableThreads.length > 1 && (
-          <div className="mt-2 flex flex-wrap gap-2">
-            {availableThreads.map((t) => (
-              <Button
-                key={t}
-                type="button"
-                size="sm"
-                variant={t === thread ? "default" : "outline"}
-                className="rounded-full"
-                onClick={() => { setThread(t); setPickerOpen(false); }}
-              >
+        <Button
+          type="button" variant="outline"
+          onClick={() => setPickerOpen(v => !v)} aria-expanded={pickerOpen}
+          className="mt-3 min-h-11 w-full justify-between gap-2 rounded-lg"
+        >
+          <span className="min-w-0 truncate font-medium">{THREAD_LABELS[thread]}</span>
+          <ChevronDown className={cn("h-4 w-4 shrink-0 transition-transform", pickerOpen && "rotate-180")} />
+        </Button>
+        {pickerOpen && (
+          <div className="mt-2 grid grid-cols-2 gap-2">
+            {availableThreads.map(t => (
+              <Button key={t} type="button" variant={t === thread ? "default" : "outline"}
+                aria-pressed={t === thread} className="min-h-11 rounded-lg"
+                onClick={() => { setThread(t); setPickerOpen(false); setReplyTo(null); }}>
                 {THREAD_LABELS[t]}
               </Button>
             ))}
           </div>
         )}
-
 
         {!isMobile && doneCount > 0 && (
           <div className="mt-3 flex justify-end">
@@ -548,7 +335,7 @@ export function MessagesSheet({
                           done && "opacity-60",
                         )}
                       >
-                        <div className="flex items-center gap-2 text-[10px] text-muted-foreground mb-1">
+                        <div className="flex items-center gap-2 text-xs text-muted-foreground mb-1">
                           <span className="font-medium">{m.created_by_username ?? "Someone"}</span>
                           {typeof m.room_number === "number" && (
                             <span className="inline-flex items-center rounded-full bg-amber-500/15 text-amber-700 dark:text-amber-300 px-1.5 py-0.5 font-medium">
@@ -627,40 +414,6 @@ export function MessagesSheet({
                   <option key={n} value={n}>Room {n}</option>
                 ))}
               </select>
-              {canLogMaintenance && (
-                <label className="ml-auto flex items-center gap-2 text-xs font-medium">
-                  <Wrench className={cn("h-3.5 w-3.5", alsoMaintenance ? "text-amber-600 dark:text-amber-400" : "text-muted-foreground")} />
-                  <span>Maintenance</span>
-                  <Switch
-                    checked={alsoMaintenance}
-                    onCheckedChange={(v) => {
-                      setAlsoMaintenance(v);
-                      if (v) setAlsoLostProperty(false);
-                    }}
-                    disabled={typeof room !== "number"}
-                  />
-                </label>
-              )}
-            </div>
-          )}
-          {(canLogMaintenance || canLogLostProperty) && supportsRoomTag(thread) && canLogLostProperty && (
-            <div className="flex items-center gap-2">
-              <label className="ml-auto flex items-center gap-2 text-xs font-medium">
-                <PackageSearch className={cn("h-3.5 w-3.5", alsoLostProperty ? "text-sky-600 dark:text-sky-400" : "text-muted-foreground")} />
-                <span>Lost Property</span>
-                <Switch
-                  checked={alsoLostProperty}
-                  onCheckedChange={(v) => {
-                    setAlsoLostProperty(v);
-                    if (v) setAlsoMaintenance(false);
-                  }}
-                  disabled={
-                    myDepartments.includes("housekeeping") && !myDepartments.includes("reception")
-                      ? typeof room !== "number"
-                      : false
-                  }
-                />
-              </label>
             </div>
           )}
           {replyTo && (
