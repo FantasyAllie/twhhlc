@@ -6,7 +6,6 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Switch } from "@/components/ui/switch";
 import { cn } from "@/lib/utils";
-import { availableMessageGroups } from "@/lib/message-groups";
 import { FlagIcon, FLAG_COLORS, useRoomFlags } from "@/lib/room-flags";
 import { RoomInfoTiles, type RoomInfoTab } from "@/components/rooms/room-info-tiles";
 import type { LostPropertyLite, MaintenanceRequest, Room, RoomMessage } from "@/lib/app-types";
@@ -27,6 +26,7 @@ type Props = {
   rooms: Room[];
   activeMessagesByRoom: (n: number) => RoomMessage[];
   canUseMessages: boolean;
+  canOpenHousekeepingChat?: boolean;
   isReception: boolean;
   setMessagesInitial: (v: MessagesInitial) => void;
   setMessagesSheetOpen: (v: boolean) => void;
@@ -60,6 +60,7 @@ export function RoomNotesSheet({
   rooms,
   activeMessagesByRoom,
   canUseMessages,
+  canOpenHousekeepingChat = false,
   isReception,
   setMessagesInitial,
   setMessagesSheetOpen,
@@ -268,7 +269,7 @@ export function RoomNotesSheet({
                        ))}
                      </ul>
                    )}
-                     {canUseMessages && availableMessageGroups(isReception ? ["reception"] : ["housekeeping"]).includes("housekeeping") && (
+                     {canUseMessages && canOpenHousekeepingChat && (
                       <div className="flex justify-end">
                         <Button
                           type="button"
