@@ -4777,6 +4777,7 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
     rooms={rooms}
     activeMessagesByRoom={activeMessagesByRoom}
     canUseMessages={canUseMessages}
+    canOpenHousekeepingChat={availableThreads.includes("housekeeping")}
     isReception={isReception}
     setMessagesInitial={setMessagesInitial}
     setMessagesSheetOpen={setMessagesSheetOpen}
