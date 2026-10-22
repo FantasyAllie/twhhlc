@@ -74,6 +74,7 @@ export function MessagesSheet({
   const [pickerOpen, setPickerOpen] = useState(false);
   const [showDone, setShowDone] = useState(false);
   const feedRef = useRef<HTMLDivElement | null>(null);
+  const availableGroupKey = availableThreads.join(",");
 
   useEffect(() => {
     if (!open) return;
@@ -82,7 +83,7 @@ export function MessagesSheet({
     if (typeof initialRoom === "number") setRoom(initialRoom);
     if (typeof initialText === "string" && initialText.length > 0) setText(initialText);
     setReplyTo(initialReplyTo ?? null);
-  }, [open, initialThread, initialRoom, initialText, initialReplyTo, availableThreads, thread]);
+  }, [open, initialThread, initialRoom, initialText, initialReplyTo, availableGroupKey]);
 
   const q = useQuery({
     queryKey: ["messages_feed", thread],

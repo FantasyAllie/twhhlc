@@ -168,8 +168,7 @@ export function MaintenanceDashboard({
     qc.invalidateQueries({ queryKey: ["room_messages"] });
   };
   const replyToItem = (item: Item) => {
-    const thread: MessagesThread =
-      item.origin === "reception" ? "reception_maintenance" : "hk_maintenance";
+    const thread: MessagesThread = item.origin === "reception" ? "reception" : "maintenance";
     setMessagesInitial({
       thread,
       room: item.roomNumber,
