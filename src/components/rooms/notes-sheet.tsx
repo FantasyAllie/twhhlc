@@ -6,6 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Switch } from "@/components/ui/switch";
 import { cn } from "@/lib/utils";
+import { availableMessageGroups } from "@/lib/message-groups";
 import { FlagIcon, FLAG_COLORS, useRoomFlags } from "@/lib/room-flags";
 import { RoomInfoTiles, type RoomInfoTab } from "@/components/rooms/room-info-tiles";
 import type { LostPropertyLite, MaintenanceRequest, Room, RoomMessage } from "@/lib/app-types";
@@ -267,7 +268,7 @@ export function RoomNotesSheet({
                        ))}
                      </ul>
                    )}
-                    {canUseMessages && (
+                     {canUseMessages && availableMessageGroups(isReception ? ["reception"] : ["housekeeping"]).includes("housekeeping") && (
                       <div className="flex justify-end">
                         <Button
                           type="button"
@@ -276,7 +277,7 @@ export function RoomNotesSheet({
                           className="h-7 text-xs"
                           onClick={() => {
                             closeHub();
-                            setMessagesInitial({ thread: "reception", room: n });
+                            setMessagesInitial({ thread: "housekeeping", room: n });
                             setMessagesSheetOpen(true);
                           }}
                         >
@@ -376,7 +377,7 @@ export function RoomNotesSheet({
                               const first = msgs[0];
                               closeHub();
                               setMessagesInitial({
-                                thread: "reception",
+                                thread: "housekeeping",
                                 room: n,
                                 replyTo: first
                                   ? {
