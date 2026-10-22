@@ -55,6 +55,8 @@ type BaseProps = {
   hasLinenCount: boolean;
   isOpen: boolean;
   hasMessage: boolean;
+  /** The room has a maintenance job that isn't done yet. */
+  hasOpenMaintenance?: boolean;
   onClick: () => void;
   /** Hold the tile for one second to jump straight to the status panel. */
   onLongPress?: () => void;
@@ -156,6 +158,7 @@ function ReceptionRoomTileBase({
   hasLinenCount,
   isOpen,
   hasMessage,
+  hasOpenMaintenance = false,
   onClick,
   onLongPress,
   bedLabel,
@@ -267,7 +270,9 @@ function ReceptionRoomTileBase({
         <CustomFlagBadges n={n} />
         </span>
       )}
-      {room?.needs_maintenance && !isStaffRoom && (
+      {/* Spanner: the room's maintenance flag, or an open job (Reset all can
+          clear the flag while a job is still open). */}
+      {(room?.needs_maintenance || hasOpenMaintenance) && !isStaffRoom && (
         <Wrench
           aria-label="Maintenance"
           className="absolute bottom-1.5 right-1.5 h-3 w-3 text-amber-600 dark:text-amber-400"
@@ -286,6 +291,7 @@ function HousekeepingRoomTileBase({
   hasLinenCount,
   isOpen,
   hasMessage,
+  hasOpenMaintenance = false,
   onClick,
   onLongPress,
   done,
@@ -409,7 +415,7 @@ function HousekeepingRoomTileBase({
         <MattressBadge room={room} />
         <CustomFlagBadges n={n} />
       </span>
-      {room?.needs_maintenance && (
+      {(room?.needs_maintenance || hasOpenMaintenance) && (
         <Wrench
           aria-label="Maintenance"
           className="absolute bottom-1.5 right-1.5 h-3 w-3 text-amber-600 dark:text-amber-400"

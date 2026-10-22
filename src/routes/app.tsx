@@ -1042,6 +1042,13 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
   };
   const openMaintenanceCount = maintenanceRequests.filter((m) => !m.done).length;
   const hasOpenMaintenance = openMaintenanceCount > 0;
+  // Rooms with a maintenance job still open, so their tiles show the spanner
+  // even after Reset all has cleared the room's maintenance flag.
+  const roomsWithOpenMaintenance = new Set<number>(
+    maintenanceRequests
+      .filter((m) => !m.done && m.room_number != null)
+      .map((m) => m.room_number as number),
+  );
 
   // Whether the housekeeping shift is complete — all serviceable rooms are done.
   // Used to reveal the "Mark shift as finished" shortcut and to hide the now
@@ -5999,6 +6006,7 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
          hasLinenCount={hasLinenCount}
          isOpen={isOpen}
          hasMessage={hasActiveMessage(n)}
+         hasOpenMaintenance={roomsWithOpenMaintenance.has(n)}
          bedLabel={room?.reception_bed_id ? bedLabelById.get(room.reception_bed_id) ?? null : null}
          onClick={() => openOrToggle(n)}
         />,
@@ -6015,6 +6023,7 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
          hasLinenCount={hasLinenCount}
          isOpen={isOpen}
          hasMessage={hasActiveMessage(n)}
+         hasOpenMaintenance={roomsWithOpenMaintenance.has(n)}
          onClick={() => openOrToggle(n)}
          openBack={false}
          onLongPress={() => { clearRoomTabs(); setOpenRoom(n); setReceptionSheetRoom(n); }}
