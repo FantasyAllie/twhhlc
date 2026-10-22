@@ -127,6 +127,13 @@
       "when": 1792687286683,
       "tag": "0017_nightly_export_verification_access",
       "breakpoints": true
+    },
+    {
+      "idx": 18,
+      "version": "7",
+      "when": 1792689103874,
+      "tag": "0018_department_message_groups",
+      "breakpoints": true
     }
   ]
 }

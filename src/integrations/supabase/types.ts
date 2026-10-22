@@ -990,6 +990,7 @@ export type Database = {
           deleted_at: string | null
           dismissed: boolean
           done_at: string | null
+          group_key: string | null
           hotel_id: string
           id: string
           message: string
@@ -1009,6 +1010,7 @@ export type Database = {
           deleted_at?: string | null
           dismissed?: boolean
           done_at?: string | null
+          group_key?: string | null
           hotel_id?: string
           id?: string
           message: string
@@ -1028,6 +1030,7 @@ export type Database = {
           deleted_at?: string | null
           dismissed?: boolean
           done_at?: string | null
+          group_key?: string | null
           hotel_id?: string
           id?: string
           message?: string
