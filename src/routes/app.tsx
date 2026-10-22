@@ -1657,30 +1657,23 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
     const availableThreads: MessagesThread[] = (() => {
       const out: MessagesThread[] = [];
       // Messaging rules:
-      // 1. Users can only message departments they are assigned to.
-      // 2. Every department can also message Reception (universal hub),
-      //    and Reception can message every department.
-      // 3. Maintenance can message Housekeeping and Reception. F&B cannot
-      //    Maintenance can also message F&B directly.
+      // 1. Reception and Maintenance are hubs: anyone can message them, and
+      //    Reception and Maintenance users see every thread.
+      // 2. People in several departments also get the threads between their
+      //    own departments (e.g. Housekeeping + F&B gets Housekeeping ↔ F&B).
+      // 3. Nobody else sees a thread between two departments they aren't in.
       // Admins/managers keep access to all threads for oversight.
-      const isReceptionUser = hasReceptionRole;
-      const reachable = new Set<MessagesDepartment>();
-      if (hasHousekeeperRole) reachable.add("housekeeping");
-      if (hasReceptionRole) reachable.add("reception");
-      if (hasFnbRole) reachable.add("fnb");
-      if (hasMaintenanceRole) reachable.add("maintenance");
-      // Rule 2: reception is always reachable for anyone with any department.
-      if (reachable.size > 0) reachable.add("reception");
-      // Rule 3: HK and Reception can always reach Maintenance for oversight.
-      if (hasHousekeeperRole || hasReceptionRole || hasMaintenanceRole) reachable.add("maintenance");
-      // Maintenance can reach every department directly, including F&B.
-      if (hasMaintenanceRole) {
-        reachable.add("housekeeping");
-        reachable.add("fnb");
-      }
-      if (hasFnbRole) reachable.add("maintenance");
+      const own = new Set<MessagesDepartment>();
+      if (hasHousekeeperRole) own.add("housekeeping");
+      if (hasReceptionRole) own.add("reception");
+      if (hasFnbRole) own.add("fnb");
+      if (hasMaintenanceRole) own.add("maintenance");
+      const seesAll = menuIsAdmin || hasReceptionRole || hasMaintenanceRole;
+      const isHub = (d: MessagesDepartment) => d === "reception" || d === "maintenance";
       const bothReachable = (a: MessagesDepartment, b: MessagesDepartment) =>
-        menuIsAdmin || isReceptionUser || (reachable.has(a) && reachable.has(b));
+        seesAll ||
+        (own.has(a) && (own.has(b) || isHub(b))) ||
+        (own.has(b) && isHub(a));
       if (bothReachable("housekeeping", "reception")) out.push("hk_reception");
       if (bothReachable("housekeeping", "fnb")) out.push("hk_fnb");
       if (bothReachable("reception", "fnb")) out.push("reception_fnb");
