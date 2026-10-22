@@ -1,6 +1,8 @@
 import { createFileRoute } from "@tanstack/react-router";
 import {
+  createHotel,
   createUser,
+  deleteHotel,
   deleteUser,
   listHotels,
   listUsers,
@@ -9,7 +11,7 @@ import {
   updateUserPassword,
 } from "@/lib/auth.functions";
 
-// User management for the iPhone app: POST { action, data } with the signed-in
+// User and hotel workspace management for the iPhone app: POST { action, data } with the signed-in
 // person's Supabase token as "Authorization: Bearer …". Each action calls the
 // same server function the website's Users dialog uses, so the sign-in check,
 // admin/manager rules and hotel scoping are identical, and the admin key never
@@ -22,6 +24,8 @@ const ACTIONS = {
   password: (data: unknown) => updateUserPassword({ data: data as never }),
   disable: (data: unknown) => setUserDisabled({ data: data as never }),
   delete: (data: unknown) => deleteUser({ data: data as never }),
+  createHotel: (data: unknown) => createHotel({ data: data as never }),
+  deleteHotel: (data: unknown) => deleteHotel({ data: data as never }),
 } as const;
 
 export const Route = createFileRoute("/api/users")({
