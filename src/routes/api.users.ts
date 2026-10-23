@@ -4,8 +4,10 @@ import {
   createUser,
   deleteHotel,
   deleteUser,
+  getHotelWallpaper,
   listHotels,
   listUsers,
+  setHotelWallpaper,
   setUserDisabled,
   updateUserAssignment,
   updateUserPassword,
@@ -26,6 +28,8 @@ const ACTIONS = {
   delete: (data: unknown) => deleteUser({ data: data as never }),
   createHotel: (data: unknown) => createHotel({ data: data as never }),
   deleteHotel: (data: unknown) => deleteHotel({ data: data as never }),
+  setHotelWallpaper: (data: unknown) => setHotelWallpaper({ data: data as never }),
+  hotelWallpaper: (data: unknown) => getHotelWallpaper({ data: data as never }),
 } as const;
 
 export const Route = createFileRoute("/api/users")({

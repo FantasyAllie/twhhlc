@@ -528,7 +528,75 @@ export const deleteHotel = createServerFn({ method: "POST" })
       .delete()
       .eq("id", data.hotelId);
     if (error) throw new Error(error.message);
+    await supabaseAdmin.storage.from("entry-photos").remove([`hotels/${data.hotelId}/wallpaper.jpg`]);
     return { ok: true };
+  });
+
+/** Where a hotel's wallpaper photo lives. Only the server reads or writes it. */
+const WALLPAPER_BUCKET = "entry-photos";
+const wallpaperPath = (hotelId: string) => `hotels/${hotelId}/wallpaper.jpg`;
+
+/**
+ * Sets or removes a hotel's wallpaper photo (the iPhone app shows it, blurred,
+ * behind every screen). Admins and regional managers only, like creating or
+ * deleting a hotel. `image` is a base64 JPEG, or null to remove the photo.
+ */
+export const setHotelWallpaper = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((d: { hotelId: string; image: string | null }) => d)
+  .handler(async ({ data, context }) => {
+    const { supabaseAdmin, isCrossHotel } = await getAdminAccess(context);
+    if (!isCrossHotel) throw new Error("Only admins or regional managers can change a hotel's wallpaper");
+    const { data: hotel } = await supabaseAdmin
+      .from("hotels")
+      .select("id")
+      .eq("id", data.hotelId)
+      .maybeSingle();
+    if (!hotel) throw new Error("Hotel not found");
+    const path = wallpaperPath(data.hotelId);
+    if (data.image == null) {
+      await supabaseAdmin.storage.from(WALLPAPER_BUCKET).remove([path]);
+      return { ok: true };
+    }
+    if (typeof data.image !== "string" || data.image.length > 8_000_000) {
+      throw new Error("That photo is too large");
+    }
+    const binary = atob(data.image);
+    const bytes = Uint8Array.from(binary, (c) => c.charCodeAt(0));
+    const { error } = await supabaseAdmin.storage
+      .from(WALLPAPER_BUCKET)
+      .upload(path, bytes, { contentType: "image/jpeg", upsert: true });
+    if (error) throw new Error(error.message);
+    return { ok: true };
+  });
+
+/**
+ * A short-lived link to a hotel's wallpaper photo, or null when it has none.
+ * Anyone in that hotel may see it (regional admins can see any hotel's).
+ */
+export const getHotelWallpaper = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((d: { hotelId: string }) => d)
+  .handler(async ({ data, context }): Promise<{ url: string | null }> => {
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    const { data: roleRows } = await supabaseAdmin
+      .from("user_roles")
+      .select("role")
+      .eq("user_id", context.userId);
+    const roles = ((roleRows ?? []) as { role: string }[]).map((r) => r.role);
+    if (!roles.some((r) => ["regional_admin", "admin", "developer"].includes(r))) {
+      const { data: membership } = await supabaseAdmin
+        .from("hotel_members")
+        .select("hotel_id")
+        .eq("user_id", context.userId)
+        .eq("hotel_id", data.hotelId)
+        .maybeSingle();
+      if (!membership) throw new Error("You are not a member of that hotel");
+    }
+    const { data: signed } = await supabaseAdmin.storage
+      .from(WALLPAPER_BUCKET)
+      .createSignedUrl(wallpaperPath(data.hotelId), 3600);
+    return { url: signed?.signedUrl ?? null };
   });
 
 export const updateUserPassword = createServerFn({ method: "POST" })
