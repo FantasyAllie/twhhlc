@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from "react";
-import { Camera, ImagePlus, Loader2, Trash2, X } from "lucide-react";
+import { Camera, ImagePlus, Loader2, Play, Trash2, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { PhotoViewerDialog } from "@/components/photo-viewer-dialog";
 import { toast } from "sonner";
@@ -13,6 +13,9 @@ import {
 import { cn } from "@/lib/utils";
 
 type Pending = { id: string; file: File; previewUrl: string };
+
+/** Short videos (added in the iPhone app) are kept alongside the photos. */
+const isVideoPath = (path: string) => /\.(mp4|mov)$/i.test(path);
 
 export function PhotoComposer({
   value,
@@ -147,6 +150,7 @@ export function PhotoAttachments({
   const [loading, setLoading] = useState(false);
   const [uploading, setUploading] = useState(false);
   const [lightboxUrl, setLightboxUrl] = useState<string | null>(null);
+  const [lightboxVideo, setLightboxVideo] = useState(false);
 
   useEffect(() => {
     if (paths.length === 0) {
@@ -217,15 +221,29 @@ export function PhotoAttachments({
       <div className="flex flex-wrap gap-1.5">
         {paths.map((p) => {
           const url = urls[p];
+          const video = isVideoPath(p);
           return (
             <div key={p} className="relative h-14 w-14 overflow-hidden rounded-xl border bg-muted">
               {url ? (
                 <button
                   type="button"
                   className="block h-full w-full"
-                  onClick={() => setLightboxUrl(url)}
+                  onClick={() => {
+                    setLightboxVideo(video);
+                    setLightboxUrl(url);
+                  }}
+                  aria-label={video ? "Play video" : "View photo"}
                 >
-                  <img src={url} alt="" className="h-full w-full object-cover" />
+                  {video ? (
+                    <>
+                      <video src={url} muted playsInline preload="metadata" className="pointer-events-none h-full w-full object-cover" />
+                      <span className="absolute inset-0 flex items-center justify-center">
+                        <Play className="h-5 w-5 fill-white text-white drop-shadow" />
+                      </span>
+                    </>
+                  ) : (
+                    <img src={url} alt="" className="h-full w-full object-cover" />
+                  )}
                 </button>
               ) : (
                 <div className="flex h-full w-full items-center justify-center">
@@ -290,6 +308,7 @@ export function PhotoAttachments({
         onOpenChange={(open) => !open && setLightboxUrl(null)}
         src={lightboxUrl}
         alt="Attached photo"
+        video={lightboxVideo}
       />
     </div>
   );

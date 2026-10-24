@@ -5,11 +5,14 @@ export function PhotoViewerDialog({
   onOpenChange,
   src,
   alt = "Photo",
+  video = false,
 }: {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   src: string | null;
   alt?: string;
+  /** Plays `src` as a video (short maintenance clips from the iPhone app). */
+  video?: boolean;
 }) {
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
@@ -19,7 +22,11 @@ export function PhotoViewerDialog({
         </DialogHeader>
         {src && (
           <div className="flex min-h-0 items-center justify-center overflow-hidden rounded-lg bg-muted">
-            <img src={src} alt={alt} className="max-h-[78dvh] w-full object-contain" />
+            {video ? (
+              <video src={src} controls autoPlay playsInline className="max-h-[78dvh] w-full object-contain" />
+            ) : (
+              <img src={src} alt={alt} className="max-h-[78dvh] w-full object-contain" />
+            )}
           </div>
         )}
       </DialogContent>
