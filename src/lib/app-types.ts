@@ -93,6 +93,11 @@ export type Room = {
   mattress_interval_months?: number;
   mattress_flipped_at?: string | null;
   mattress_flipped_by?: string | null;
+  // Set by the applied morning sheet; cleared by Reset all.
+  sheet_kind?: string | null;
+  sheet_guests?: number | null;
+  sheet_bed?: string | null;
+  sheet_room_type?: string | null;
 };
 
 export type TemplateItemRoom = { id: string; template_item_id: string; room_number: number };

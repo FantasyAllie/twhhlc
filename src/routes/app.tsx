@@ -180,6 +180,7 @@ import { usePendingCounts } from "@/lib/pending-counts";
 import { buildOpsState, captureOpsSnapshot, undoLastOpsSnapshot } from "@/lib/ops-snapshots";
 import { HousekeepingRoomTile, ReceptionRoomTile } from "@/components/rooms/room-tile";
 import { MorningSheetBanner, MORNING_SHEET_INPUT_ID } from "@/components/morning-sheet-banner";
+import { canUploadMorningSheet, setAsBed } from "@/lib/morning-sheet";
 
 export const Route = createFileRoute("/app")({
   ssr: false,
@@ -2262,7 +2263,7 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
           late_checkout_at: keep?.late_checkout_at ?? null,
           needs_maintenance_at: keep?.needs_maintenance_at ?? null,
           not_required: false,
-          not_required_at: null,
+          not_required_at: null, sheet_kind: null, sheet_guests: null, sheet_bed: null, sheet_room_type: null,
         };
       }) ?? [],
     );
@@ -2289,7 +2290,7 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
       reception_status_id: null,
       reception_bed_id: null,
       not_required: false,
-      not_required_at: null,
+      not_required_at: null, sheet_kind: null, sheet_guests: null, sheet_bed: null, sheet_room_type: null,
     } as never).neq("room_number", -1);
     if (preservedNumbers.length > 0) q1 = q1.not("room_number", "in", `(${preservedNumbers.join(",")})`);
     const r1 = await q1;
@@ -2317,7 +2318,7 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
         needs_maintenance: keep.needs_maintenance,
         needs_maintenance_at: keep.needs_maintenance_at,
         not_required: false,
-        not_required_at: null,
+        not_required_at: null, sheet_kind: null, sheet_guests: null, sheet_bed: null, sheet_room_type: null,
       } as never).eq("room_number", rn);
       if (r.error) toast.error(r.error.message);
     }
@@ -4103,7 +4104,7 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
         onClick: () => { setMessagesInitial({}); setMessagesSheetOpen(true); },
       });
     }
-    if (menuIsAdmin || hasHousekeeperRole || hasReceptionRole) {
+    if (canUploadMorningSheet(position, subRoles)) {
       utilities.push({ key: "morning-sheet", icon: FileUp, label: "Upload Morning Sheet", onClick: () => document.getElementById(MORNING_SHEET_INPUT_ID)?.click() });
     }
     if (canAccessLeaderboard(position, subRoles)) {
@@ -5878,6 +5879,18 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
         );
       })()
     )}
+    {canUploadMorningSheet(position, subRoles) && (
+      <Button
+        data-ios-glass
+        variant="outline"
+        size="sm"
+        className="h-8 gap-1.5 rounded-lg text-xs font-medium shadow-sm"
+        onClick={() => document.getElementById(MORNING_SHEET_INPUT_ID)?.click()}
+      >
+        <FileUp className="h-3.5 w-3.5" />
+        Morning sheet
+      </Button>
+    )}
     {!isReception && (
       <Button
         data-ios-glass
@@ -6045,9 +6058,10 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
            const norm = (s: string) => s.toLowerCase().replace(/[^a-z0-9]/g, "");
            const cats = parseCats(room?.category).map(norm);
            const onlyDouble = cats.includes("double") && !cats.includes("superking");
-           if (onlyDouble) return null;
-           return receptionBeds.find((b) => b.id === room?.reception_bed_id)?.label ?? null;
+           const roomBed = receptionBeds.find((b) => b.id === room?.reception_bed_id)?.label ?? (onlyDouble ? "Double" : null);
+           return setAsBed({ sheetBed: room?.sheet_bed, sheetRoomType: room?.sheet_room_type, roomBed });
          })() : null}
+         openGuests={isOpen && room?.sheet_kind && room.sheet_kind !== "vacant" && room.sheet_kind !== "ros" ? room.sheet_guests ?? null : null}
        />,
      );
    }

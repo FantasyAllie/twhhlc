@@ -1232,6 +1232,10 @@ export type Database = {
           reception_status_id: string | null
           reception_status_secondary_id: string | null
           room_number: number
+          sheet_bed: string | null
+          sheet_guests: number | null
+          sheet_kind: string | null
+          sheet_room_type: string | null
           sort_order: number
           stayover_out: boolean
           stayover_out_at: string | null
@@ -1267,6 +1271,10 @@ export type Database = {
           reception_status_id?: string | null
           reception_status_secondary_id?: string | null
           room_number: number
+          sheet_bed?: string | null
+          sheet_guests?: number | null
+          sheet_kind?: string | null
+          sheet_room_type?: string | null
           sort_order?: number
           stayover_out?: boolean
           stayover_out_at?: string | null
@@ -1302,6 +1310,10 @@ export type Database = {
           reception_status_id?: string | null
           reception_status_secondary_id?: string | null
           room_number?: number
+          sheet_bed?: string | null
+          sheet_guests?: number | null
+          sheet_kind?: string | null
+          sheet_room_type?: string | null
           sort_order?: number
           stayover_out?: boolean
           stayover_out_at?: string | null

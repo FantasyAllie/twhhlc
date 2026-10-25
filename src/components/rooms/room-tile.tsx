@@ -1,12 +1,13 @@
 // Room tiles for the home grid. JSX moved verbatim from src/routes/app.tsx
 // (stage 5 of the staged refactor); colour/label rules live in @/lib/rooms.
 import { memo, useRef } from "react";
-import { AlertCircle, ArrowLeft, Check, Dog, DoorOpen, Footprints, Wrench } from "lucide-react";
+import { AlertCircle, ArrowLeft, Check, Dog, DoorOpen, Footprints, User, Wrench } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { playClick } from "@/lib/click-sound";
 import type { Room } from "@/lib/app-types";
 import { FlagIcon, FLAG_COLORS, useRoomFlags } from "@/lib/room-flags";
 import { isMattressDue, useMattressInterval } from "@/lib/mattress";
+import { departureLabel } from "@/lib/morning-sheet";
 function MattressBadge({ room }: { room: Room | undefined }) {
   const interval = useMattressInterval();
   if (!isMattressDue(room, interval)) return null;
@@ -181,6 +182,7 @@ function ReceptionRoomTileBase({
     lateCheckout: !!room?.late_checkout,
     stayoverOut: !!room?.stayover_out,
     role: "reception",
+    sheetKind: room?.sheet_kind,
   });
 
   return (
@@ -298,7 +300,8 @@ function HousekeepingRoomTileBase({
   openTypeLabel,
   openBedLabel,
   openBack,
-}: BaseProps & { done: boolean; openTypeLabel?: string | null; openBedLabel?: string | null; openBack?: boolean }) {
+  openGuests,
+}: BaseProps & { done: boolean; openTypeLabel?: string | null; openBedLabel?: string | null; openBack?: boolean; openGuests?: number | null }) {
   const longPress = useLongPress(onLongPress);
   const flags = resolveRoomStatusFlags(room, statusIds);
   const isStaff = flags.isStaff;
@@ -311,6 +314,7 @@ function HousekeepingRoomTileBase({
     lateCheckout: !!room?.late_checkout,
     stayoverOut: !!room?.stayover_out,
     role: "housekeeping",
+    sheetKind: room?.sheet_kind,
   });
   const isDone = state === "done" || state === "complete";
 
@@ -336,22 +340,31 @@ function HousekeepingRoomTileBase({
     >
       {isOpen ? (
         <>
-          <span className="text-sm sm:text-base font-bold leading-none">{n}</span>
+          <span className="flex w-full min-w-0 items-baseline gap-1.5">
+            <span className="text-sm sm:text-base font-bold leading-none">{n}</span>
+            {!openBack && openTypeLabel && (
+              <span className="min-w-0 truncate text-[9px] sm:text-[10px] md:text-xs font-bold uppercase leading-tight tracking-tight animate-in fade-in duration-200">{openTypeLabel}</span>
+            )}
+          </span>
           {openBack ? (
             <ArrowLeft aria-label="Back to room" className="h-5 w-5 animate-in fade-in duration-200" />
           ) : (
           <span className="flex w-full min-w-0 flex-col items-start gap-0.5 text-left animate-in fade-in duration-200">
-            {openTypeLabel && (
-              <span className="w-full line-clamp-2 break-words text-[9px] sm:text-[10px] md:text-xs font-bold uppercase leading-tight tracking-tight">{openTypeLabel}</span>
-            )}
-            {openBedLabel && (
-              <span className="block w-full truncate text-[9px] sm:text-[10px] md:text-xs font-medium leading-tight opacity-80">{openBedLabel}</span>
+            {(openBedLabel || openGuests != null) && (
+              <span className="inline-flex w-full min-w-0 items-center gap-1 text-[9px] sm:text-[10px] md:text-xs font-medium leading-tight opacity-80">
+                <span className="truncate">Set as: {openBedLabel ?? "Unknown"}</span>
+                {openGuests != null && (
+                  <span className="inline-flex shrink-0 items-center gap-0.5" aria-label={`${openGuests} guests`}>
+                    (<User aria-hidden className="h-2.5 w-2.5" />{openGuests})
+                  </span>
+                )}
+              </span>
             )}
           </span>
           )}
         </>
       ) : (<>
-      {flags.isDirty && !isStaff && (
+      {flags.isDirty && !isStaff && !departureLabel(room?.sheet_kind) && (
         <span
           aria-hidden="true"
           className="pointer-events-none absolute inset-0 flex items-center justify-center text-6xl md:text-7xl opacity-15 leading-none"

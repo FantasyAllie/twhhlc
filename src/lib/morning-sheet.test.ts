@@ -33,3 +33,24 @@ describe("morning sheet rules", () => {
     assert.equal(summary.guests, 2);
   });
 });
+
+import { canUploadMorningSheet, setAsBed, departureLabel } from "./morning-sheet";
+describe("morning sheet room details", () => {
+  it("notes bed wins", () => assert.equal(setAsBed({ sheetBed: "twin", sheetRoomType: "SUP_TW_KING", roomBed: "King" }), "Twin"));
+  it("flexible room types with no notes bed are Unknown", () => {
+    for (const t of ["TWIN_KING", "SUP_TW_KING", "Family"]) assert.equal(setAsBed({ sheetBed: null, sheetRoomType: t, roomBed: "King" }), "Unknown");
+  });
+  it("other rooms use their set bed", () => assert.equal(setAsBed({ sheetBed: null, sheetRoomType: "STD_DBL", roomBed: "Double" }), "Double"));
+  it("departures say Depart, turnovers Depart / Arrival", () => {
+    assert.equal(departureLabel("departure"), "Depart");
+    assert.equal(departureLabel("turnover"), "Depart / Arrival");
+    assert.equal(departureLabel("stayover"), null);
+  });
+  it("only Reception, Housekeeping managers and admins can upload", () => {
+    assert.equal(canUploadMorningSheet("user", ["reception"]), true);
+    assert.equal(canUploadMorningSheet("manager", ["housekeeper"]), true);
+    assert.equal(canUploadMorningSheet("user", ["housekeeper"]), false);
+    assert.equal(canUploadMorningSheet("manager", ["fnb"]), false);
+    assert.equal(canUploadMorningSheet("admin", []), true);
+  });
+});
