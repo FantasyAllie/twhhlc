@@ -283,6 +283,98 @@ function AppearancePicker({
   );
 }
 
+/** Menu rows shared by the phone's More sheet and the tablet's permanently
+ *  docked right-hand menu. */
+function AppMenuRows({
+  menuGroups,
+  close,
+  closeHomePanels,
+  armSheetTakeover,
+  isMenuCollapsed,
+  toggleMenuSection,
+}: {
+  menuGroups: {
+    id: string;
+    title: string;
+    items: {
+      key: string;
+      icon: React.ComponentType<{ className?: string }>;
+      label: React.ReactNode;
+      onClick: () => void;
+      destructive?: boolean;
+      notify?: boolean;
+    }[];
+  }[];
+  close: () => void;
+  closeHomePanels: () => void;
+  armSheetTakeover: (opts?: { closeLabel?: string; hideClose?: boolean }) => void;
+  isMenuCollapsed: (key: string) => boolean;
+  toggleMenuSection: (key: string) => void;
+}) {
+  const Row = ({
+    icon: Icon,
+    label,
+    onClick,
+    destructive,
+    notify,
+  }: { icon: React.ComponentType<{ className?: string }>; label: React.ReactNode; onClick: () => void; destructive?: boolean; notify?: boolean }) => (
+    <button
+      type="button"
+      onClick={onClick}
+      data-ios-row
+      className={cn(
+        "w-full flex items-center gap-3 rounded-xl border bg-background px-4 min-h-12 text-sm font-medium shadow-elevation-1 transition-[transform,box-shadow,background-color] duration-150 hover:bg-accent active:scale-[0.985] active:shadow-none",
+        destructive && "text-destructive hover:text-destructive",
+      )}
+    >
+      <span data-ios-icon className="shrink-0"><Icon className={cn("h-4 w-4 shrink-0", notify && "text-amber-500")} /></span>
+      <span className="text-left flex-1">{label}</span>
+      <ChevronRight data-ios-chevron className="hidden h-4 w-4 shrink-0 text-muted-foreground/60" aria-hidden />
+    </button>
+  );
+  const Section = ({
+    id,
+    title,
+    children,
+  }: { id: string; title: string; children: React.ReactNode }) => {
+    const collapsed = isMenuCollapsed(id);
+    return (
+      <div className="space-y-2">
+        <button
+          type="button"
+          onClick={() => void toggleMenuSection(id)}
+          className="w-full flex items-center justify-between text-xs font-semibold uppercase tracking-wide text-muted-foreground hover:text-foreground transition-colors"
+        >
+          <span>{title}</span>
+          <ChevronDown
+            className={cn("h-3.5 w-3.5 transition-transform", collapsed && "-rotate-90")}
+            aria-hidden
+          />
+        </button>
+        {!collapsed && <div data-ios-group className="space-y-1.5">{children}</div>}
+      </div>
+    );
+  };
+  return (
+    <div className="space-y-4">
+      {menuGroups.filter((g) => g.id !== "appearance").map((group) => ({ ...group, items: group.items.filter((i) => i.key !== "theme" && i.key !== "accent") })).filter((g) => g.items.length > 0).map((group) => (
+        <Section key={group.id} id={group.id} title={group.title}>
+          {group.items.map((item) => (
+            <Row
+              key={item.key}
+              icon={item.icon}
+              label={item.label}
+              destructive={item.destructive}
+              notify={item.notify}
+              onClick={() => { close(); if (item.key !== "signout" && item.key !== "theme" && item.key !== "accent") { closeHomePanels(); armSheetTakeover(); } item.onClick(); }}
+            />
+          ))}
+        </Section>
+      ))}
+    </div>
+  );
+}
+
 function AppPage() {
  const qc = useQueryClient();
   const navigate = useNavigate();
