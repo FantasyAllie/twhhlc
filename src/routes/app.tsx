@@ -5628,10 +5628,7 @@ const toggleRoomCategory = async (roomNumber: number, value: Category) => {
   <section className="space-y-4">
 
 
- <div className="relative flex items-center justify-between">
- {isReception && <h2 className="text-sm font-medium text-muted-foreground uppercase tracking-wide">
- Rooms
- </h2>}
+ <div className="relative flex items-center justify-between gap-2">
      {isReception && (() => {
           const totalSelected =
             receptionFeatureFilter.length +
@@ -5667,7 +5664,7 @@ const toggleRoomCategory = async (roomNumber: number, value: Category) => {
             setReceptionDoneOnlyFilter(false);
           };
        return (
-          <div data-ios-glass className="absolute left-1/2 -translate-x-1/2 inline-flex items-center rounded-lg border border-input bg-background shadow-sm overflow-hidden">
+          <div data-ios-glass className="absolute left-0 inline-flex items-center rounded-lg border border-input bg-background shadow-sm overflow-hidden">
         <Popover open={filtersSheetOpen} onOpenChange={setFiltersSheetOpen}>
           <PopoverTrigger asChild>
             <Button
@@ -5972,6 +5969,7 @@ const toggleRoomCategory = async (roomNumber: number, value: Category) => {
         );
       })()
     )}
+    <div className="ml-auto flex items-center gap-2">
     {canUploadMorningSheet(position, subRoles) && (
       <Button
         data-ios-glass
@@ -6021,6 +6019,7 @@ const toggleRoomCategory = async (roomNumber: number, value: Category) => {
         </Button>
       );
     })()}
+      </div>
  </div>
 
  {/* On-screen interactive accordion */}
@@ -6199,7 +6198,7 @@ const toggleRoomCategory = async (roomNumber: number, value: Category) => {
    setSelectedFloor(floor);
  };
  return <>
-   <div className="mb-3 flex max-sm:w-fit max-sm:max-w-full items-center overflow-x-auto rounded-full border border-border bg-background p-1 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden" aria-label="Floor selection">
+   <div className="mb-3 mx-auto flex max-sm:w-fit max-sm:max-w-full items-center overflow-x-auto rounded-full border border-border bg-background p-1 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden" aria-label="Floor selection">
      {canShowAllFloors && <Button data-touch-exempt type="button" variant="outline" aria-pressed={activeFloor === null} onClick={() => chooseFloor(null)}
        className={cn("h-8 min-w-0 max-sm:shrink-0 rounded-full px-3 text-xs whitespace-nowrap transition-colors sm:flex-1 sm:text-sm", activeFloor === null ? "bg-primary text-primary-foreground shadow-sm font-medium" : "text-muted-foreground hover:text-foreground")}>
        All rooms
