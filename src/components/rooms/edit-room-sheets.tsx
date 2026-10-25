@@ -1,8 +1,10 @@
 // Admin per-room configuration sheets: linen defaults and room settings.
 // Extracted verbatim from src/routes/app.tsx.
 import { Check, Pencil, Star } from "lucide-react";
+import { useEffect, useState } from "react";
 import type { ReactNode } from "react";
 import { cn } from "@/lib/utils";
+import { Input } from "@/components/ui/input";
 import {
   Sheet,
   SheetContent,
@@ -120,6 +122,7 @@ export function EditRoomSheet({
   toggleRoomCategory,
   setRoomDefaultStatus,
   toggleRoomFeature,
+  setRoomFloor,
 }: {
   editRoomSheetNumber: number | null;
   setEditRoomSheetNumber: (n: number | null) => void;
@@ -132,7 +135,10 @@ export function EditRoomSheet({
   toggleRoomCategory: (room: number, value: string) => void;
   setRoomDefaultStatus: (room: number, statusId: string | null) => void;
   toggleRoomFeature: (room: number, featureId: string) => void;
+  setRoomFloor: (room: number, floor: string | null) => void;
 }) {
+  const [floorDraft, setFloorDraft] = useState<string | null>(null);
+  useEffect(() => setFloorDraft(null), [editRoomSheetNumber]);
   return (
   <Sheet open={editRoomSheetNumber !== null} onOpenChange={(o) => { if (!o) setEditRoomSheetNumber(null); }}>
     <SheetContent side="bottom" className="overflow-y-auto p-4 sm:p-6">
@@ -151,6 +157,28 @@ export function EditRoomSheet({
               <SheetDescription>Set room type, default status and features</SheetDescription>
             </SheetHeader>
             <div className="mt-4 space-y-5">
+              <div className="space-y-2">
+                <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">Floor</p>
+                <Input
+                  value={floorDraft ?? r.floor ?? ""}
+                  placeholder={`e.g. ${floorForRoom(n)}`}
+                  list={`floor-options-${n}`}
+                  onChange={(e) => setFloorDraft(e.target.value)}
+                  onBlur={() => {
+                    const next = (floorDraft ?? r.floor ?? "").trim();
+                    if (next !== (r.floor ?? "")) setRoomFloor(n, next || null);
+                    setFloorDraft(null);
+                  }}
+                  onKeyDown={(e) => {
+                    if (e.key === "Enter") e.currentTarget.blur();
+                  }}
+                />
+                <datalist id={`floor-options-${n}`}>
+                  {[...new Set(rooms.map((x) => x.floor?.trim()).filter(Boolean))].map((f) => (
+                    <option key={f as string} value={f as string} />
+                  ))}
+                </datalist>
+              </div>
               <div className="space-y-2">
                 <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">Room type</p>
                 <div className="space-y-1.5">
