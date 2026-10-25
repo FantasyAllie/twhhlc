@@ -949,10 +949,14 @@ html[data-platform="android"] [data-morning-banner] { border-radius: 0.875rem; }
    content keeps clear of the 18rem sidebar and the sticky top bar stretches
    under it so its background reaches the screen edge. */
 @media (min-width: 768px) and (max-width: 1023px) {
+  :root { --tablet-topbar-height: calc(2.75rem + 1px); }
+  html[data-platform="ios"] { --tablet-topbar-height: 3.5rem; }
   .app-menu-dock-shift {
     padding-right: calc(18rem + 1rem + env(safe-area-inset-right, 0px)) !important;
   }
   [data-mobile-topbar] {
+    /* Match the wrapper's sm:py-10 rather than the phone's pt-6. */
+    margin-top: -2.5rem;
     margin-right: calc(-18rem - 1rem - env(safe-area-inset-right, 0px)) !important;
   }
 }

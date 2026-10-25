@@ -6643,12 +6643,12 @@ const toggleRoomCategory = async (roomNumber: number, value: Category) => {
       aria-label="Menu"
       className="fixed z-30 flex w-72 flex-col overflow-hidden border-l border-sidebar-border bg-sidebar text-sidebar-foreground shadow-elevation-2"
       style={{
-        top: "calc(2.75rem + 1px + env(safe-area-inset-top, 0px))",
-        bottom: "calc(3.5rem + env(safe-area-inset-bottom, 0px))",
+        top: "calc(var(--tablet-topbar-height) + env(safe-area-inset-top, 0px))",
+        bottom: "0px",
         right: "max(0px, env(safe-area-inset-right, 0px))",
       }}
     >
-      <div className="shrink-0 border-b border-sidebar-border bg-background px-4 pt-4 pb-3">
+      <div className="shrink-0 border-b border-sidebar-border bg-background px-4 pt-6 pb-4">
         <AppearancePicker
           theme={theme}
           onToggleTheme={cycleTheme}
@@ -6662,7 +6662,20 @@ const toggleRoomCategory = async (roomNumber: number, value: Category) => {
           }
         />
       </div>
-      <div className="flex-1 min-h-0 overflow-y-auto px-3 py-4">
+      <div className="flex-1 min-h-0 overflow-y-auto px-3 py-4 space-y-4" style={{ paddingBottom: "max(1rem, env(safe-area-inset-bottom, 0px))" }}>
+        <Button
+          variant="outline"
+          className="w-full min-h-12 justify-start gap-3 rounded-xl px-4 shadow-elevation-1"
+          onClick={() => {
+            setMenuSheetOpen(false);
+            closeHomePanels();
+            if (openRoom !== null) closeRoomView();
+            window.scrollTo({ top: 0, behavior: "smooth" });
+          }}
+        >
+          <House className="h-4 w-4 shrink-0" />
+          Home
+        </Button>
         <AppMenuRows
           menuGroups={menuGroups}
           close={() => {}}
@@ -6674,6 +6687,7 @@ const toggleRoomCategory = async (roomNumber: number, value: Category) => {
       </div>
     </aside>
   )}
+  {!isTablet && <>
   <div data-tabbar-spacer className="lg:hidden" style={{ height: "calc(3.5rem + env(safe-area-inset-bottom, 0px))" }} aria-hidden />
   {/* Mobile bottom tab bar: same five tabs for every department. */}
   <nav
@@ -6758,6 +6772,7 @@ const toggleRoomCategory = async (roomNumber: number, value: Category) => {
       })()}
     </div>
   </nav>
+  </>}
  </main>
 </RoomFlagsContext.Provider>
  );
