@@ -47,6 +47,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { InventoryDialog, type InventorySection } from "@/components/linen/inventory-dialog";
+import { ManageRoomsDialogs } from "@/components/rooms/manage-rooms-dialogs";
 import { Minus, Plus, X, Menu, ArrowUp, ArrowDown, Pencil, Check, Trash2, Sun, SunDim, Moon, MoonStar, List, Bed, House, Ban, History, Users, User, Hash, ConciergeBell, ClipboardList, Printer, Filter, Wrench, DoorOpen, Footprints, Bell, Eye, EyeOff, HelpCircle, AlertCircle, MessageSquare, PackageSearch, RotateCcw, ChevronDown, ChevronRight, Camera, LayoutGrid, Truck, Clock, Dog, Undo2, Inbox, MapPin, Flag } from "lucide-react";
 import {
   AccountDialog,
@@ -62,7 +63,6 @@ import {
   MaintenanceDashboard,
   MaintenanceLogSheet,
   MaintenancePrintDialog,
-  ManageRoomsDialogs,
   MessagesSheet,
   NotificationsSheet,
   QuickReceptionSheet,

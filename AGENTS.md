@@ -22,5 +22,6 @@
 - Developer-only test hotels (hotels.developer_only) are hidden by the hotels read policy, can_access_hotel, membership/active-hotel triggers and the hotel list server functions; why: testing must never surface to, notify, or mix stats with real staff.
 - On tablets (768-1023px) the app menu is permanently docked as a fixed right sidebar (data-app-menu-dock in app.tsx, sharing AppMenuRows with the phone's More sheet); content and the top bar shift via .app-menu-dock-shift rules in styles.css, and the More tab is hidden; why: the menu is always reachable on tablet without opening a sheet, while phones keep the More sheet and desktop keeps the dropdown.
 - Home floor sections collapse independently, use responsive auto-fill grids and calculate the open-room slot per group; why: preserve room expansion and small tablet tiles with the docked menu.
-- Central hotel floors have immutable cupboard keys; room assignments save atomically, renames sync room labels, and inventory/manual/nightly exports use floor names; why: one location list without losing counts.
+- Central hotel floors have immutable cupboard keys; assignments save atomically and renames sync rooms and exports; why: one list without losing counts.
+- Room Management loads with the app, not lazily; why: More must hand off immediately without a Home gap on slow first opens.
 

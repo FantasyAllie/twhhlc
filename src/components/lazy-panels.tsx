@@ -125,13 +125,6 @@ export const AddConfigDialogs = makeLazyPanel<
   (p) => Boolean(p.addRoomTypeOpen || p.addRoomFeatureOpen || p.addReceptionItemKind || p.receptionHelpOpen),
 );
 
-export const ManageRoomsDialogs = makeLazyPanel<
-  React.ComponentProps<typeof import("@/components/rooms/manage-rooms-dialogs")["ManageRoomsDialogs"]>
->(
-  () => import("@/components/rooms/manage-rooms-dialogs").then((m) => m.ManageRoomsDialogs),
-  (p) => Boolean(p.manageRoomsOpen || p.addRoomConfirmOpen),
-);
-
 /* ---- ops / misc ---- */
 
 export const MaintenanceLogSheet = makeLazyPanel<
