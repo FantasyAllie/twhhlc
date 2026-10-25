@@ -847,12 +847,17 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
   // The slot grows over its open animation, so lower rows can't scroll up far
   // enough at first; scroll again as it grows. Offset by the sticky top bar.
   useEffect(() => {
-    if (openRoom === null || !roomGridEl || !roomSlotEl) return;
+    if (openRoom === null || !roomSlotEl) return;
     const scrollToTile = () => {
-      const tiles = Array.from(roomGridEl.children).filter(
-        (el) => !(el as HTMLElement).hasAttribute("data-room-slot"),
-      ) as HTMLElement[];
-      const tile = tiles.find((el) => new RegExp(`^${openRoom}(\\D|$)`).test(el.textContent?.trim() ?? ""));
+      let tile: HTMLElement | undefined;
+      for (const grid of roomGridElsRef.current) {
+        if (!grid.isConnected) continue;
+        const tiles = Array.from(grid.children).filter(
+          (el) => !(el as HTMLElement).hasAttribute("data-room-slot"),
+        ) as HTMLElement[];
+        tile = tiles.find((el) => new RegExp(`^${openRoom}(\\D|$)`).test(el.textContent?.trim() ?? ""));
+        if (tile) break;
+      }
       const target = tile ?? roomSlotEl;
       const bar = document.querySelector<HTMLElement>("[data-mobile-topbar]");
       const offset = (bar?.getBoundingClientRect().height ?? 0) + 12;
@@ -862,7 +867,7 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
     const raf = requestAnimationFrame(scrollToTile);
     const timers = [250, 500, 800].map((ms) => window.setTimeout(scrollToTile, ms));
     return () => { cancelAnimationFrame(raf); timers.forEach((t) => window.clearTimeout(t)); };
-  }, [openRoom, roomGridEl, roomSlotEl]);
+  }, [openRoom, roomGridTick, roomSlotEl]);
   const [topBarSlot, setTopBarSlot] = useState<HTMLDivElement | null>(null);
   // Stayover / DND photo state
   const [stayoverPhotosOpen, setStayoverPhotosOpen] = useState(false);
