@@ -6,7 +6,7 @@ import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import { FlagIcon, useRoomFlags } from "@/lib/room-flags";
 import type { ReceptionItem, Room } from "@/lib/app-types";
-import { RoomChecklistRecords, RoomCheckedItemSelectors } from "@/components/rooms/room-checklists";
+import { RoomCheckedItemSelectors } from "@/components/rooms/room-checklists";
 import { RotateCw } from "lucide-react";
 import { toast } from "sonner";
 import { formatFlipDate, isMattressDue, mattressNextDue, updateRoomMattress, useMattressInterval } from "@/lib/mattress";
