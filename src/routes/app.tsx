@@ -2326,7 +2326,7 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
     });
     mo.observe(grid, { childList: true, subtree: true, attributes: true, attributeFilter: ["class", "hidden"] });
     return () => mo.disconnect();
-  }, [roomGridEl, isReception]);
+  }, [roomGridWrapEl, isReception]);
 
   const resetRoomCounts = async (roomNumber: number) => {
     pendingCounts.clearAll();
