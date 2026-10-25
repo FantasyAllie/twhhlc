@@ -6113,7 +6113,16 @@ const toggleRoomCategory = async (roomNumber: number, value: Category) => {
       }
       floorGroups[gi].rooms.push(n);
     }
-    floorGroups.sort((a, b) => Math.min(...a.rooms) - Math.min(...b.rooms));
+    // Floors follow the order chosen in Floors & Cupboards; unknown floors sit
+    // before "Other rooms", which always stays last.
+    const floorOrder = new Map((floorsQ.data ?? []).map((floor, i) => [floor.name, i]));
+    const floorRank = (key: string) =>
+      key === "Other rooms" ? Number.MAX_SAFE_INTEGER : floorOrder.get(key) ?? Number.MAX_SAFE_INTEGER - 1;
+    floorGroups.sort((a, b) => {
+      const ra = floorRank(a.key);
+      const rb = floorRank(b.key);
+      return ra !== rb ? ra - rb : Math.min(...a.rooms) - Math.min(...b.rooms);
+    });
     const otherIdx = floorGroups.findIndex((g) => g.key === "Other rooms");
     if (otherIdx >= 0 && otherIdx !== floorGroups.length - 1) {
       const [other] = floorGroups.splice(otherIdx, 1);
