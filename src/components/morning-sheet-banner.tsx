@@ -25,12 +25,12 @@ type PendingSheet = {
 
 // Pastel room-status tokens already used by the tiles.
 const KIND_CHIP: Record<SheetKind, string> = {
-  turnover: "bg-status-dirty text-status-dirty-foreground",
-  departure: "bg-status-dirty text-status-dirty-foreground",
-  stayover: "bg-status-stayover text-status-stayover-foreground",
-  arrival: "bg-status-arrival text-status-arrival-foreground",
+  turnover: "bg-room-dirty text-room-dirty-fg",
+  departure: "bg-room-dirty text-room-dirty-fg",
+  stayover: "bg-room-stayover text-room-stayover-fg",
+  arrival: "bg-room-early text-room-early-fg",
   ros: "bg-muted text-muted-foreground",
-  vacant: "bg-status-clean text-status-clean-foreground",
+  vacant: "bg-room-done text-room-done-fg",
 };
 
 const db = supabase as unknown as { from: (t: string) => any; rpc: (f: string, a: Record<string, unknown>) => any };
@@ -136,7 +136,7 @@ export function MorningSheetBanner({ hotelId, userName, canConfirm }: { hotelId:
             <FileText className="h-4 w-4" />
           </span>
           <div className="min-w-0 flex-1">
-            <p className="font-heading text-sm font-semibold leading-tight">
+            <p className="font-display text-sm font-semibold leading-tight">
               Morning sheet ready <span className="text-sidebar-primary">· {sheet.room_count} rooms</span>
             </p>
             <p className="truncate text-xs text-sidebar-foreground/65">
@@ -193,7 +193,7 @@ function MorningSheetPreview({ open, onOpenChange, sheet, canConfirm, busy, onAp
     <Sheet open={open} onOpenChange={onOpenChange}>
       <SheetContent side="bottom" className="flex max-h-[92dvh] flex-col gap-0 p-0 sm:mx-auto sm:max-w-2xl sm:rounded-t-2xl">
         <SheetHeader className="border-b px-4 pb-3 pt-4 text-left">
-          <SheetTitle className="font-heading">Morning sheet · {dateLabel}</SheetTitle>
+          <SheetTitle className="font-display">Morning sheet · {dateLabel}</SheetTitle>
           <SheetDescription className="truncate">{sheet.room_count} rooms from {sheet.file_name}</SheetDescription>
           <div className="-mx-4 flex gap-2 overflow-x-auto px-4 pt-2 [scrollbar-width:none]">
             {chips.filter(([, n]) => n > 0).map(([label, n]) => (
@@ -217,7 +217,7 @@ function MorningSheetPreview({ open, onOpenChange, sheet, canConfirm, busy, onAp
         <ul className="flex-1 divide-y overflow-y-auto px-4">
           {rooms.map((r) => (
             <li key={r.room_number} className="flex items-start gap-3 py-2.5">
-              <span className="w-8 shrink-0 pt-0.5 text-right font-heading text-base font-semibold tabular-nums">{r.room_number}</span>
+              <span className="w-8 shrink-0 pt-0.5 text-right font-display text-base font-semibold tabular-nums">{r.room_number}</span>
               <div className="min-w-0 flex-1 space-y-1">
                 <div className="flex flex-wrap items-center gap-1.5">
                   <span className={cn("rounded-full px-2 py-0.5 text-xs font-semibold", KIND_CHIP[r.kind])}>{KIND_LABEL[r.kind]}</span>
