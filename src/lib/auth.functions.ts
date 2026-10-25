@@ -507,7 +507,7 @@ export const setActiveHotel = createServerFn({ method: "POST" })
         .select("id, developer_only")
         .eq("id", data.hotelId)
         .maybeSingle();
-      if (!hotel || ((hotel as { developer_only?: boolean }).developer_only && !roles.includes("developer"))) throw new Error("Hotel not found");
+      if (!hotel || ((hotel as unknown as { developer_only?: boolean }).developer_only && !roles.includes("developer"))) throw new Error("Hotel not found");
     }
     const { error } = await supabaseAdmin
       .from("user_active_hotel")
