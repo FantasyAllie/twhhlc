@@ -708,31 +708,9 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
   const [editItemSheetId, setEditItemSheetId] = useState<string | null>(null);
   const [filtersSheetOpen, setFiltersSheetOpen] = useState(false);
   const [hideCompletedRooms, setHideCompletedRooms] = useState(false);
-  // Collapsed floor sections on the home screen, remembered per hotel.
-  const [collapsedFloors, setCollapsedFloors] = useState<Record<string, boolean>>({});
+  const [selectedFloor, setSelectedFloor] = useState<string | null>(null);
   useEffect(() => {
-    const hotelId = currentHotelQ.data?.id;
-    if (!hotelId) return;
-    try {
-      const raw = localStorage.getItem(`hh_floors_collapsed_${hotelId}`);
-      setCollapsedFloors(raw ? (JSON.parse(raw) as Record<string, boolean>) : {});
-    } catch {
-      setCollapsedFloors({});
-    }
-  }, [currentHotelQ.data?.id]);
-  const toggleFloorCollapsed = useCallback((key: string) => {
-    setCollapsedFloors((prev) => {
-      const next = { ...prev, [key]: !prev[key] };
-      const hotelId = currentHotelQ.data?.id;
-      if (hotelId) {
-        try {
-          localStorage.setItem(`hh_floors_collapsed_${hotelId}`, JSON.stringify(next));
-        } catch {
-          /* storage unavailable */
-        }
-      }
-      return next;
-    });
+    setSelectedFloor(null);
   }, [currentHotelQ.data?.id]);
   const [hkFiltersOpen, setHkFiltersOpen] = useState(false);
   const [hkFiltersAnchor, setHkFiltersAnchor] = useState<{ top: number; left: number } | null>(null);
@@ -6202,27 +6180,24 @@ const toggleRoomCategory = async (roomNumber: number, value: Category) => {
      );
    }
    }
- return floorGroups.map((group, gi) => {
-   const collapsed = !!collapsedFloors[group.key];
-   const slotAfter = slotAfterFor(group.rooms);
-   return (
-     <section key={group.key} className={gi === 0 ? "" : "mt-5"}>
-       <Button
-         type="button"
-         variant="outline"
-         onClick={() => toggleFloorCollapsed(group.key)}
-         className="mb-3 grid h-auto min-h-14! w-full grid-cols-[minmax(0,1fr)_auto] items-center gap-3 rounded-xl border-border px-4 py-3 text-left shadow-elevation-1"
-         aria-expanded={!collapsed}
-       >
-         <span className="min-w-0 truncate text-sm font-semibold uppercase text-foreground">{group.label}</span>
-         <span className="flex shrink-0 items-center gap-3 text-muted-foreground">
-           <span className="text-xs font-medium tabular-nums">{group.rooms.length} rooms</span>
-           <ChevronDown className={cn("h-5 w-5 shrink-0 transition-transform duration-200 motion-reduce:transition-none", !collapsed && "rotate-180")} />
-         </span>
-       </Button>
-       {!collapsed && (
+ const canShowAllFloors = !isMobile || isTablet;
+ const activeFloor = selectedFloor && floorGroups.some((group) => group.key === selectedFloor)
+   ? selectedFloor : canShowAllFloors ? null : floorGroups[0]?.key ?? null;
+ const displayedRooms = activeFloor ? floorGroups.find((group) => group.key === activeFloor)?.rooms ?? [] : visibleRooms;
+ const slotAfter = slotAfterFor(displayedRooms);
+ const chooseFloor = (floor: string | null) => {
+   if (openRoom !== null) closeRoomView();
+   setSelectedFloor(floor);
+ };
+ return <>
+   <div className="mb-4 grid grid-cols-2 gap-2 sm:grid-cols-3 lg:flex lg:flex-wrap" aria-label="Floor selection">
+     {canShowAllFloors && <Button variant={activeFloor === null ? "default" : "outline"} className="min-h-11! min-w-0 rounded-full px-3 lg:flex-1" aria-pressed={activeFloor === null} onClick={() => chooseFloor(null)}>All rooms</Button>}
+     {floorGroups.map((group) => <Button key={group.key} variant={activeFloor === group.key ? "default" : "outline"} className="min-h-11! min-w-0 rounded-full px-3 lg:flex-1" aria-pressed={activeFloor === group.key} onClick={() => chooseFloor(group.key)}>
+       <span className="truncate uppercase">{group.label}</span><span className="shrink-0 text-xs opacity-70 tabular-nums">{group.rooms.length}</span>
+     </Button>)}
+   </div>
          <div ref={setRoomGridEl} className="grid grid-cols-4 sm:grid-cols-6 md:grid-cols-[repeat(auto-fill,minmax(5.75rem,1fr))] lg:grid-cols-[repeat(auto-fill,minmax(7.5rem,1fr))] gap-2 md:gap-3">
-           {group.rooms.map((n, i) => (
+           {displayedRooms.map((n, i) => (
              <React.Fragment key={`r-${n}`}>
                {tileByRoom.get(n)}
                {i === slotAfter && (
@@ -6231,10 +6206,7 @@ const toggleRoomCategory = async (roomNumber: number, value: Category) => {
              </React.Fragment>
            ))}
          </div>
-       )}
-     </section>
-   );
- });
+ </>;
  })()}
  </div>
 
