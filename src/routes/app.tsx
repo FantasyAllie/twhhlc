@@ -5772,6 +5772,17 @@ const toggleRoomCategory = async (roomNumber: number, value: Category) => {
                   </div>
                 </div>
               )}
+              {totalSelected > 0 && (
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  className="h-9 w-full justify-center gap-1.5 text-xs text-muted-foreground hover:text-foreground"
+                  onClick={clearAllFilters}
+                >
+                  <X className="h-3.5 w-3.5" />
+                  Clear filters
+                </Button>
+              )}
             </div>
           </PopoverContent>
         </Popover>
@@ -5779,12 +5790,12 @@ const toggleRoomCategory = async (roomNumber: number, value: Category) => {
             <Button
               variant="ghost"
               size="sm"
-              className="h-7 gap-1 text-xs rounded-none border-0 px-3 text-muted-foreground hover:text-foreground"
+              className={`h-7 gap-1 text-xs rounded-none border-0 px-3 text-muted-foreground hover:text-foreground ${isMobile && !isTablet ? "hidden" : ""}`}
               onClick={clearAllFilters}
               aria-label="Clear filters"
             >
               <X className="h-3.5 w-3.5" />
-              <span className={isMobile && !isTablet ? "sr-only" : ""}>Clear</span>
+              Clear
             </Button>
           )}
           </div>
@@ -5888,6 +5899,17 @@ const toggleRoomCategory = async (roomNumber: number, value: Category) => {
                       })}
                     </div>
                   </div>
+                  {totalActive > 0 && (
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      className="h-9 w-full justify-center gap-1.5 text-xs text-muted-foreground hover:text-foreground"
+                      onClick={clearHkFilters}
+                    >
+                      <X className="h-3.5 w-3.5" />
+                      Clear filters
+                    </Button>
+                  )}
                 </div>
               );
               const isIOSFilters = isMobile && typeof document !== "undefined" && document.documentElement.dataset.platform === "ios";
@@ -5959,12 +5981,12 @@ const toggleRoomCategory = async (roomNumber: number, value: Category) => {
               <Button
                 variant="ghost"
                 size="sm"
-                className="h-7 gap-1 text-xs rounded-none border-0 px-3 text-muted-foreground hover:text-foreground"
+                className={`h-7 gap-1 text-xs rounded-none border-0 px-3 text-muted-foreground hover:text-foreground ${isMobile && !isTablet ? "hidden" : ""}`}
                 onClick={clearHkFilters}
                 aria-label="Clear filters"
               >
                 <X className="h-3.5 w-3.5" />
-                <span className={isMobile && !isTablet ? "sr-only" : ""}>Clear</span>
+                Clear
               </Button>
             )}
           </div>
