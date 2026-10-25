@@ -5666,7 +5666,7 @@ const toggleRoomCategory = async (roomNumber: number, value: Category) => {
             setReceptionDoneOnlyFilter(false);
           };
        return (
-          <div data-ios-glass className="absolute left-0 inline-flex items-center rounded-lg border border-input bg-background shadow-sm overflow-hidden">
+          <div data-ios-glass data-ios-filter-row className="absolute left-0 inline-flex items-center rounded-lg border border-input bg-background shadow-sm overflow-hidden">
         <Popover open={filtersSheetOpen} onOpenChange={setFiltersSheetOpen}>
           <PopoverTrigger asChild>
             <Button
@@ -5784,7 +5784,7 @@ const toggleRoomCategory = async (roomNumber: number, value: Category) => {
               aria-label="Clear filters"
             >
               <X className="h-3.5 w-3.5" />
-              Clear
+              <span className={isMobile && !isTablet ? "sr-only" : ""}>Clear</span>
             </Button>
           )}
           </div>
@@ -5843,7 +5843,7 @@ const toggleRoomCategory = async (roomNumber: number, value: Category) => {
           setHideCompletedRooms(false);
         };
         return (
-          <div data-ios-glass className="inline-flex items-center rounded-lg border border-input bg-background shadow-sm overflow-hidden">
+          <div data-ios-glass data-ios-filter-row className="inline-flex items-center rounded-lg border border-input bg-background shadow-sm overflow-hidden">
             {(() => {
               const triggerBtn = (
                 <Button
@@ -5964,7 +5964,7 @@ const toggleRoomCategory = async (roomNumber: number, value: Category) => {
                 aria-label="Clear filters"
               >
                 <X className="h-3.5 w-3.5" />
-                Clear
+                <span className={isMobile && !isTablet ? "sr-only" : ""}>Clear</span>
               </Button>
             )}
           </div>
@@ -5977,8 +5977,8 @@ const toggleRoomCategory = async (roomNumber: number, value: Category) => {
         data-ios-glass
         variant="outline"
         size="sm"
-        className="h-8 gap-1.5 rounded-lg text-xs font-medium shadow-sm"
-        onClick={() => window.dispatchEvent(new Event(OPEN_PAPERWORK_EVENT))}
+            className={`h-8 gap-1.5 rounded-lg text-xs font-medium shadow-sm ${isMobile && !isTablet ? "absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2" : ""}`}
+            onClick={() => window.dispatchEvent(new Event(OPEN_PAPERWORK_EVENT))}
       >
         <FileUp className="h-3.5 w-3.5" />
         Paperwork
