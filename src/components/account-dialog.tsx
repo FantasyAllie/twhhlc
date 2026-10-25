@@ -42,6 +42,22 @@ export function AccountDialog({
   const [hasPassword, setHasPassword] = useState(true);
   const [identities, setIdentities] = useState<Array<{ identity_id: string; provider: string }>>([]);
   const [linkingProvider, setLinkingProvider] = useState<string | null>(null);
+  const [platformChoice, setPlatformChoice] = useState<PlatformChoice>("auto");
+
+  function applyPlatformChoice(choice: PlatformChoice) {
+    setPlatformChoice(choice);
+    if (choice === "auto") {
+      localStorage.removeItem("debug-platform-override");
+      const ua = navigator.userAgent;
+      const ios = /iPhone|iPad|iPod/.test(ua) || (navigator.platform === "MacIntel" && navigator.maxTouchPoints > 1);
+      const android = /Android/i.test(ua);
+      document.documentElement.dataset.platform = ios ? "ios" : android ? "android" : "other";
+    } else {
+      localStorage.setItem("debug-platform-override", choice);
+      document.documentElement.dataset.platform = choice;
+    }
+    toast.success(choice === "auto" ? "Platform look back to automatic" : `Showing the ${choice === "ios" ? "iOS" : "Android"} look`);
+  }
 
   async function refreshIdentities() {
     const { data } = await supabase.auth.getUserIdentities();
