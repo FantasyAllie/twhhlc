@@ -2534,12 +2534,12 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
     const nextSort = (rooms.reduce((m, r) => Math.max(m, r.sort_order ?? r.room_number), 0)) + 1;
     qc.setQueryData<Room[]>(["rooms"], (old) => {
       const list = old ? [...old] : [];
-      list.push({ id: `temp-${n}`, room_number: n, sort_order: nextSort, done: false, done_reception: false, category: null, default_status: null, reception_status_id: null, reception_bed_id: null, housekeeping_note: null, needs_maintenance: false, guest_vacated: false, early_check_in: false });
+      list.push({ id: `temp-${n}`, room_number: n, sort_order: nextSort, done: false, done_reception: false, category: null, default_status: null, reception_status_id: null, reception_bed_id: null, housekeeping_note: null, needs_maintenance: false, guest_vacated: false, early_check_in: false, floor: floorForRoom(n) });
       list.sort((a, b) => (a.sort_order ?? a.room_number) - (b.sort_order ?? b.room_number));
       return list;
     });
     const { error } = await supabase.from("rooms").upsert(
-      { room_number: n, sort_order: nextSort, done: false, done_reception: false, updated_at: new Date().toISOString() },
+      { room_number: n, sort_order: nextSort, done: false, done_reception: false, floor: floorForRoom(n), updated_at: new Date().toISOString() },
       { onConflict: "user_id,hotel_id,room_number" },
     );
     if (error) {
