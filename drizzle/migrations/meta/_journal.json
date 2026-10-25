@@ -155,6 +155,13 @@
       "when": 1792955288786,
       "tag": "0021_developer_test_hotel",
       "breakpoints": true
+    },
+    {
+      "idx": 22,
+      "version": "7",
+      "when": 1792958832790,
+      "tag": "0022_morning_sheet_departure_details",
+      "breakpoints": true
     }
   ]
 }
