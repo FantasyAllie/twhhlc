@@ -709,6 +709,7 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
   const [filtersSheetOpen, setFiltersSheetOpen] = useState(false);
   const [hideCompletedRooms, setHideCompletedRooms] = useState(false);
   const [selectedFloor, setSelectedFloor] = useState<string | null>(null);
+  const [floorChosen, setFloorChosen] = useState(false);
   useEffect(() => {
     setSelectedFloor(null);
   }, [currentHotelQ.data?.id]);
@@ -6188,13 +6189,14 @@ const toggleRoomCategory = async (roomNumber: number, value: Category) => {
      );
    }
    }
- // Phones open on the first floor; "All rooms" is available everywhere.
+ // Phones open on the first floor until the user picks a view; "All rooms" is available everywhere.
  const activeFloor = selectedFloor && floorGroups.some((group) => group.key === selectedFloor)
-   ? selectedFloor : isMobile && !isTablet ? floorGroups[0]?.key ?? null : null;
+   ? selectedFloor : !floorChosen && isMobile && !isTablet ? floorGroups[0]?.key ?? null : null;
  const displayedRooms = activeFloor ? floorGroups.find((group) => group.key === activeFloor)?.rooms ?? [] : visibleRooms;
  const slotAfter = slotAfterFor(displayedRooms);
  const chooseFloor = (floor: string | null) => {
    if (openRoom !== null) closeRoomView();
+   setFloorChosen(true);
    setSelectedFloor(floor);
  };
  return <>
