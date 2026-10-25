@@ -21,7 +21,7 @@
 - Morning sheet imports are read by the AI gateway in a server function, stored as one pending row per hotel, and applied only through the resolve_morning_sheet database function; why: Housekeeping must confirm before a document overwrites live room statuses, and the update must be atomic.
 - Developer-only test hotels (hotels.developer_only) are hidden by the hotels read policy, can_access_hotel, membership/active-hotel triggers and the hotel list server functions; why: testing must never surface to, notify, or mix stats with real staff.
 - On tablets (768-1023px) the menu is a fixed right sidebar with Home above AppMenuRows and no tab bar or spacer; the header cancels the tablet wrapper's top padding, and dock height uses the platform-specific topbar token; why: navigation stays available without header overlap or unused bottom space.
-- Home floor pills select one floor (All rooms on tablet/desktop); phones keep them in one sideways-scrolling row; rooms share one auto-fill grid and row-slot calculation.
+- Home floor pills use the department picker's segmented-control treatment at every size (rounded track, compact pills, selected filled solid); All rooms on tablet/desktop, phones keep one sideways-scrolling track that hugs its pills; rooms share one auto-fill grid and row-slot calculation.
 - Central hotel floors have immutable cupboard keys; assignments save atomically and renames sync rooms and exports; why: one list without losing counts.
 - Room Management loads with the app, not lazily; why: More must hand off immediately without a Home gap on slow first opens.
 
