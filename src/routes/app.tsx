@@ -6211,7 +6211,7 @@ const toggleRoomCategory = async (roomNumber: number, value: Category) => {
          type="button"
          variant="outline"
          onClick={() => toggleFloorCollapsed(group.key)}
-         className="mb-3 grid h-auto min-h-14 w-full grid-cols-[minmax(0,1fr)_auto] items-center gap-3 rounded-xl border-border px-4 py-3 text-left shadow-elevation-1"
+         className="mb-3 grid h-auto min-h-14! w-full grid-cols-[minmax(0,1fr)_auto] items-center gap-3 rounded-xl border-border px-4 py-3 text-left shadow-elevation-1"
          aria-expanded={!collapsed}
        >
          <span className="min-w-0 truncate text-sm font-semibold uppercase text-foreground">{group.label}</span>
