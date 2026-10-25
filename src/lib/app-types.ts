@@ -98,6 +98,8 @@ export type Room = {
   sheet_guests?: number | null;
   sheet_bed?: string | null;
   sheet_room_type?: string | null;
+  // Floor label used to group rooms on the home screen; editable per room.
+  floor?: string | null;
 };
 
 export type TemplateItemRoom = { id: string; template_item_id: string; room_number: number };
