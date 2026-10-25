@@ -169,6 +169,13 @@
       "when": 1792960108577,
       "tag": "0023_morning_sheet_eci_lco",
       "breakpoints": true
+    },
+    {
+      "idx": 24,
+      "version": "7",
+      "when": 1792960311452,
+      "tag": "0024_morning_sheet_keep_checkout",
+      "breakpoints": true
     }
   ]
 }
