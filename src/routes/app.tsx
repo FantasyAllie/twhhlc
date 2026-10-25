@@ -46,7 +46,7 @@ import {
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { InventoryDialog, CUPBOARDS, type InventorySection } from "@/components/linen/inventory-dialog";
+import { InventoryDialog, type InventorySection } from "@/components/linen/inventory-dialog";
 import { Minus, Plus, X, Menu, ArrowUp, ArrowDown, Pencil, Check, Trash2, Sun, SunDim, Moon, MoonStar, List, Bed, House, Ban, History, Users, User, Hash, ConciergeBell, ClipboardList, Printer, Filter, Wrench, DoorOpen, Footprints, Bell, Eye, EyeOff, HelpCircle, AlertCircle, MessageSquare, PackageSearch, RotateCcw, ChevronDown, ChevronRight, Camera, LayoutGrid, Truck, Clock, Dog, Undo2, Inbox, MapPin, Flag } from "lucide-react";
 import {
   AccountDialog,
@@ -138,7 +138,8 @@ import { armSheetTakeover, isTakeoverReplacing, setSheetTakeoverSlot, releaseShe
 import { Palette } from "lucide-react";
 import { ACCENTS, accentSwatch, readAccent, applyAccent, type AccentId } from "@/lib/accent-colour";
 import { useCurrentHotel, DEFAULT_HOTEL_NAME } from "@/lib/hotels";
-import { floorForRoom } from "@/lib/room-floors";
+import { useFloors } from "@/hooks/use-floors";
+import { cupboardLocations } from "@/lib/floor-rules";
 import { listHotels, setActiveHotel, createHotel, type HotelOption } from "@/lib/auth.functions";
 import { parseCats, categoryLabel, valueFromLabel, maintenanceLocation, COLOR_SWATCHES } from "@/lib/app-format";
 import type {
@@ -396,6 +397,8 @@ function AppPage() {
   }, []);
   const [authUser, setAuthUser] = useState(() => getStoredUser());
   const currentHotelQ = useCurrentHotel();
+  const floorsQ = useFloors();
+  const cupboards = cupboardLocations(floorsQ.data ?? []);
   const hotelName = currentHotelQ.data?.name ?? DEFAULT_HOTEL_NAME;
   const linenDeliveryDays: number[] = currentHotelQ.data?.linen_delivery_days ?? [];
   const todayIsMonday = new Date().getDay() === 1;
@@ -512,6 +515,10 @@ function AppPage() {
     let retryTimer: number | null = null;
     const channel = supabase
       .channel("rooms-realtime")
+      .on("postgres_changes", { event: "*", schema: "public", table: "hotel_floors" }, () => {
+        qc.invalidateQueries({ queryKey: ["hotel-floors"] });
+        qc.invalidateQueries({ queryKey: ["rooms"] });
+      })
       .on(
         "postgres_changes",
         { event: "*", schema: "public", table: "rooms" },
@@ -1678,10 +1685,10 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
   const computeInventoryTotals = (section: "room" | "cupboard") => {
     const nameOf = new Map(template.map((t) => [t.id, t.name]));
     const locLabel = (loc: string) =>
-      section === "room" ? `Room ${loc}` : (CUPBOARDS.find((c) => c.key === loc)?.label ?? loc);
+      section === "room" ? `Room ${loc}` : (cupboards.find((c) => c.key === loc)?.label ?? loc);
     const order = section === "room"
       ? (loc: string) => Number(loc)
-      : (loc: string) => CUPBOARDS.findIndex((c) => c.key === loc);
+      : (loc: string) => cupboards.findIndex((c) => c.key === loc);
     const rows = inventoryCounts
       .filter((r) => r.section === section && r.count > 0 && nameOf.has(r.template_item_id))
       .sort((a, b) => order(a.location) - order(b.location) || (nameOf.get(a.template_item_id) ?? "").localeCompare(nameOf.get(b.template_item_id) ?? ""))
@@ -1706,7 +1713,7 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
     if (rej.length) sections.push({ title: "Rejects", groups: [{ rows: rej }] });
     const beds = sumBy(inventoryCounts.filter((r) => r.section === "room"));
     if (beds.length) sections.push({ title: "Bedrooms", groups: [{ rows: beds }] });
-    const cupGroups = CUPBOARDS.map((c) => ({
+    const cupGroups = cupboards.map((c) => ({
       heading: c.label,
       rows: sumBy(inventoryCounts.filter((r) => r.section === "cupboard" && r.location === c.key)),
     })).filter((g) => g.rows.length);
@@ -2535,12 +2542,12 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
     const nextSort = (rooms.reduce((m, r) => Math.max(m, r.sort_order ?? r.room_number), 0)) + 1;
     qc.setQueryData<Room[]>(["rooms"], (old) => {
       const list = old ? [...old] : [];
-      list.push({ id: `temp-${n}`, room_number: n, sort_order: nextSort, done: false, done_reception: false, category: null, default_status: null, reception_status_id: null, reception_bed_id: null, housekeeping_note: null, needs_maintenance: false, guest_vacated: false, early_check_in: false, floor: floorForRoom(n) });
+      list.push({ id: `temp-${n}`, room_number: n, sort_order: nextSort, done: false, done_reception: false, category: null, default_status: null, reception_status_id: null, reception_bed_id: null, housekeeping_note: null, needs_maintenance: false, guest_vacated: false, early_check_in: false, floor: null });
       list.sort((a, b) => (a.sort_order ?? a.room_number) - (b.sort_order ?? b.room_number));
       return list;
     });
     const { error } = await supabase.from("rooms").upsert(
-      { room_number: n, sort_order: nextSort, done: false, done_reception: false, floor: floorForRoom(n), updated_at: new Date().toISOString() },
+      { room_number: n, sort_order: nextSort, done: false, done_reception: false, floor: null, updated_at: new Date().toISOString() },
       { onConflict: "user_id,hotel_id,room_number" },
     );
     if (error) {
@@ -2948,11 +2955,11 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
 
 
  // --- Room category ---
- // Floor helpers: rooms are grouped on the home screen by an editable
- // per-room label; new rooms get a sensible suggestion from their number.
+ // Room editor assignments use the central hotel floor list.
 
  const setRoomFloor = async (roomNumber: number, floor: string | null) => {
    const value = floor && floor.trim() ? floor.trim() : null;
+   if (value && !floorsQ.data?.some((entry) => entry.name === value)) return;
    qc.setQueryData<Room[]>(["rooms"], (old) => {
      const list = old ? [...old] : [];
      const idx = list.findIndex((r) => r.room_number === roomNumber);
@@ -5520,6 +5527,7 @@ const toggleRoomCategory = async (roomNumber: number, value: Category) => {
     template={template}
     theme={theme}
     roomNumbers={[...rooms].map((r) => r.room_number).sort((x, y) => x - y)}
+    cupboards={cupboards}
     getCount={getInventoryCount}
     setCount={(sec, loc, id, v) => void setInventoryCount(sec, loc, id, v)}
     onResetSection={(sec, loc) => void resetInventorySection(sec, loc)}

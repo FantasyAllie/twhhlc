@@ -17,14 +17,6 @@ import type { TemplateItem } from "@/lib/app-types";
 
 export type InventorySection = "delivery" | "rejects" | "room" | "cupboard";
 
-export const CUPBOARDS: { key: string; label: string }[] = [
-  { key: "ground", label: "Ground Floor" },
-  { key: "20s", label: "20's" },
-  { key: "30s", label: "30's" },
-  { key: "40s", label: "40's" },
-  { key: "laundry", label: "Laundry" },
-];
-
 const rowStyle = (item: TemplateItem, theme: string | undefined): React.CSSProperties | undefined => {
   const c = item.color ? COLOR_SWATCHES[item.color] : null;
   return c ? { backgroundColor: theme === "dark" ? c.darkBg : c.bg } : undefined;
@@ -159,12 +151,14 @@ export function InventoryDialog({
   onExport,
   isRoomDefault,
   isPreferred,
+  cupboards,
 }: {
   open: boolean;
   onOpenChange: (o: boolean) => void;
   template: TemplateItem[];
   theme: string | undefined;
   roomNumbers: number[];
+  cupboards: { key: string; label: string }[];
   getCount: (section: InventorySection, location: string, itemId: string) => number;
   setCount: (section: InventorySection, location: string, itemId: string, value: number) => void;
   onResetSection: (section: InventorySection, location: string) => void;
@@ -175,7 +169,8 @@ export function InventoryDialog({
   const [section, setSection] = React.useState<InventorySection>("delivery");
   const [room, setRoom] = React.useState<string>("");
   const [showAllLinen, setShowAllLinen] = React.useState(false);
-  const [cupboard, setCupboard] = React.useState<string>(CUPBOARDS[0].key);
+  const [selectedCupboard, setCupboard] = React.useState<string>("");
+  const cupboard = cupboards.some((c) => c.key === selectedCupboard) ? selectedCupboard : (cupboards[0]?.key ?? "");
 
   const location = section === "delivery" || section === "rejects" ? "" : section === "room" ? room : cupboard;
   const locationLabel =
@@ -185,7 +180,7 @@ export function InventoryDialog({
         ? "rejects"
         : section === "room"
         ? `Room ${room}`
-        : (CUPBOARDS.find((c) => c.key === cupboard)?.label ?? "");
+        : (cupboards.find((c) => c.key === cupboard)?.label ?? "");
 
   const sumAt = (sec: InventorySection, loc: string) =>
     template.reduce((acc, t) => acc + getCount(sec, loc, t.id), 0);
@@ -194,7 +189,7 @@ export function InventoryDialog({
       ? sumAt(section, "")
       : section === "room"
         ? roomNumbers.reduce((acc, n) => acc + sumAt("room", String(n)), 0)
-        : CUPBOARDS.reduce((acc, c) => acc + sumAt("cupboard", c.key), 0);
+        : cupboards.reduce((acc, c) => acc + sumAt("cupboard", c.key), 0);
   const resetLocation = section === "room" && !room ? "*" : location;
   const resetLabel = resetLocation === "*" ? "every bedroom" : locationLabel;
 
@@ -238,25 +233,27 @@ export function InventoryDialog({
 
         {section === "cupboard" && (
           <div className="inline-flex w-full rounded-full border p-1 bg-background items-center shrink-0 overflow-x-auto mt-1">
-            {CUPBOARDS.map((c) => (
-              <button
+            {cupboards.map((c) => (
+              <Button
+                variant="ghost"
                 key={c.key}
                 type="button"
                 onClick={() => setCupboard(c.key)}
+                aria-pressed={cupboard === c.key}
                 className={
-                  "flex-1 px-2 sm:px-3 h-8 text-xs sm:text-sm rounded-full transition-colors whitespace-nowrap " +
+                  "shrink-0 px-3 h-8 text-xs sm:text-sm rounded-full transition-colors whitespace-nowrap " +
                   (cupboard === c.key
                     ? "bg-primary text-primary-foreground shadow-sm font-medium"
                     : "text-muted-foreground hover:text-foreground")
                 }
               >
                 {c.label}
-              </button>
+              </Button>
             ))}
           </div>
         )}
 
-        {template.length === 0 ? (
+        {section === "cupboard" && !cupboard ? <p className="py-4 text-sm text-muted-foreground">No cupboards yet.</p> : template.length === 0 ? (
           <p className="text-sm text-muted-foreground py-4">
             No linen items yet. Add some from the Linen List.
           </p>
@@ -368,6 +365,7 @@ export function InventoryDialog({
               variant="ghost"
               size="sm"
               className="text-destructive hover:text-destructive"
+              disabled={section === "cupboard" && !cupboard}
               onClick={() => {
                 if (confirm(`Reset all counts for ${resetLabel}?`)) onResetSection(section, resetLocation);
               }}
