@@ -2285,7 +2285,7 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
   // Observes the stable grid and runs synchronously (MutationObserver fires
   // before paint), so the new content never flashes at full height first.
   useEffect(() => {
-    const grid = roomGridEl;
+    const grid = roomGridWrapEl;
     if (isReception || !grid) return;
     const heights = new WeakMap<HTMLElement, number>();
     const mo = new MutationObserver(() => {
