@@ -6620,7 +6620,7 @@ const toggleRoomCategory = async (roomNumber: number, value: Category) => {
         rows={4}
         autoFocus
       />
-      <PhotoComposer value={donePhotos} onChange={setDonePhotos} />
+      <PhotoComposer value={donePhotos} onChange={setDonePhotos} allowVideo />
       <DialogFooter className="gap-2">
         <Button
           variant="outline"
