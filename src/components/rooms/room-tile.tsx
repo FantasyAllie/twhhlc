@@ -124,7 +124,7 @@ const TILE_CLASS =
 // Corner badges: icon-only on narrow tiles, icon + word once the tile itself is
 // wide enough (container query, so it follows tile size rather than screen size).
 const BADGE_CLASS =
-  "inline-flex max-w-full items-center gap-0.5 rounded-full px-1 @[120px]:px-1.5 py-0.5 text-[8px] font-bold leading-none tracking-wide shadow-sm";
+  "inline-flex max-w-full items-center gap-0.5 rounded-full px-1 @[120px]:px-1.5 py-0.5 text-[8px] font-bold uppercase leading-none tracking-wide shadow-sm";
 
 // Tiles re-render only when their own data changes. onClick is an inline
 // closure over the room number, so it's excluded from the comparison, and
@@ -236,7 +236,7 @@ function ReceptionRoomTileBase({
       {isStaffRoom && (
         <>
           <span className="text-sm sm:text-base font-bold leading-none">{n}</span>
-          <span className="text-[9px] sm:text-[10px] md:text-xs font-medium leading-none opacity-90">Staff</span>
+          <span className="text-[9px] sm:text-[10px] md:text-xs font-medium uppercase leading-none opacity-90">Staff</span>
         </>
       )}
       {!isStaffRoom && (
@@ -350,14 +350,18 @@ function HousekeepingRoomTileBase({
             <ArrowLeft aria-label="Back to room" className="h-5 w-5 animate-in fade-in duration-200" />
           ) : (
           <span className="flex w-full min-w-0 flex-col items-start gap-0.5 text-left animate-in fade-in duration-200">
+            {openGuests != null && (
+              <span
+                className="inline-flex shrink-0 items-center gap-1 text-[9px] sm:text-[10px] md:text-xs font-medium uppercase leading-tight opacity-80"
+                aria-label={`${openGuests} guests`}
+              >
+                <User aria-hidden className="h-2.5 w-2.5" />
+                {openGuests}
+              </span>
+            )}
             {(openBedLabel || openGuests != null) && (
-              <span className="inline-flex w-full min-w-0 items-center gap-1 text-[9px] sm:text-[10px] md:text-xs font-medium leading-tight opacity-80">
+              <span className="inline-flex w-full min-w-0 items-center gap-1 text-[9px] sm:text-[10px] md:text-xs font-medium uppercase leading-tight opacity-80">
                 <span className="truncate">Set as: {openBedLabel ?? "Unknown"}</span>
-                {openGuests != null && (
-                  <span className="inline-flex shrink-0 items-center gap-0.5" aria-label={`${openGuests} guests`}>
-                    (<User aria-hidden className="h-2.5 w-2.5" />{openGuests})
-                  </span>
-                )}
               </span>
             )}
           </span>
