@@ -6202,7 +6202,7 @@ const toggleRoomCategory = async (roomNumber: number, value: Category) => {
      <Button data-touch-exempt type="button" variant="outline" aria-pressed={activeFloor === null} onClick={() => chooseFloor(null)}
        className={cn("h-8 min-w-0 max-sm:shrink-0 rounded-full px-3 text-xs whitespace-nowrap transition-colors sm:flex-1 sm:text-sm", activeFloor === null ? "bg-primary text-primary-foreground shadow-sm font-medium" : "text-muted-foreground hover:text-foreground")}>
        All rooms
-     </Button>}
+     </Button>
      {floorGroups.map((group) => {
        const active = activeFloor === group.key;
        return (
