@@ -5685,6 +5685,17 @@ const toggleRoomCategory = async (roomNumber: number, value: Category) => {
                 {totalSelected === 0 ? "Filter rooms by housekeeping and features." : `${totalSelected} active`}
               </p>
             </div>
+            {totalSelected > 0 && (
+              <Button
+                variant="ghost"
+                size="sm"
+                className="h-9 w-full justify-center gap-1.5 text-xs text-muted-foreground hover:text-foreground"
+                onClick={clearAllFilters}
+              >
+                <X className="h-3.5 w-3.5" />
+                Clear filters
+              </Button>
+            )}
             <div className="space-y-4">
               <div className="space-y-2">
                 <p className="text-xs font-medium text-muted-foreground uppercase tracking-wide">Housekeeping</p>
@@ -5772,17 +5783,6 @@ const toggleRoomCategory = async (roomNumber: number, value: Category) => {
                   </div>
                 </div>
               )}
-              {totalSelected > 0 && (
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  className="h-9 w-full justify-center gap-1.5 text-xs text-muted-foreground hover:text-foreground"
-                  onClick={clearAllFilters}
-                >
-                  <X className="h-3.5 w-3.5" />
-                  Clear filters
-                </Button>
-              )}
             </div>
           </PopoverContent>
         </Popover>
@@ -5868,6 +5868,17 @@ const toggleRoomCategory = async (roomNumber: number, value: Category) => {
               );
               const body = (
                 <div className="space-y-4">
+                  {totalActive > 0 && (
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      className="h-9 w-full justify-center gap-1.5 text-xs text-muted-foreground hover:text-foreground"
+                      onClick={clearHkFilters}
+                    >
+                      <X className="h-3.5 w-3.5" />
+                      Clear filters
+                    </Button>
+                  )}
                   <div className="space-y-2">
                     <p className="text-xs font-medium text-muted-foreground uppercase tracking-wide">Visibility</p>
                     <FilterOption 
@@ -5899,17 +5910,6 @@ const toggleRoomCategory = async (roomNumber: number, value: Category) => {
                       })}
                     </div>
                   </div>
-                  {totalActive > 0 && (
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      className="h-9 w-full justify-center gap-1.5 text-xs text-muted-foreground hover:text-foreground"
-                      onClick={clearHkFilters}
-                    >
-                      <X className="h-3.5 w-3.5" />
-                      Clear filters
-                    </Button>
-                  )}
                 </div>
               );
               const isIOSFilters = isMobile && typeof document !== "undefined" && document.documentElement.dataset.platform === "ios";
