@@ -13,6 +13,8 @@ export type ParsedSheetRoom = {
   bed: "twin" | "double" | "king" | null;
   dog: boolean;
   notes: string | null;
+  /** Paperwork room type code, e.g. SUP_TW_KING. Older uploads lack it. */
+  room_type?: string | null;
 };
 
 export type SheetKind = "turnover" | "departure" | "stayover" | "arrival" | "ros" | "vacant";
@@ -66,4 +68,29 @@ export function buildSheet(rows: ParsedSheetRoom[]): { rooms: SheetRoom[]; summa
     if (r.kind !== "ros" && r.kind !== "vacant") summary.guests += r.adults + r.children + r.infants;
   }
   return { rooms, summary };
+}
+
+// --- Room view / tile rules for rooms set up from the sheet -------------------
+
+/** Paperwork room types whose bed can be made up either way. */
+const FLEX_ROOM_TYPES = ["twin_king", "sup_tw_king", "family"];
+export const isFlexRoomType = (t: string | null | undefined) =>
+  !!t && FLEX_ROOM_TYPES.some((f) => t.toLowerCase().replace(/[^a-z_]/g, "").includes(f));
+
+/** Bed for the "Set as:" line: notes bed, then Unknown for flexible rooms, then the room's set bed. */
+export function setAsBed(a: { sheetBed: string | null | undefined; sheetRoomType: string | null | undefined; roomBed: string | null | undefined }): string | null {
+  if (a.sheetBed) return a.sheetBed.charAt(0).toUpperCase() + a.sheetBed.slice(1);
+  if (isFlexRoomType(a.sheetRoomType)) return "Unknown";
+  return a.roomBed ?? null;
+}
+
+/** Tile wording for sheet departures (hidden "Departure" status shown instead of Dirty). */
+export const departureLabel = (kind: string | null | undefined): string | null =>
+  kind === "turnover" ? "Depart / Arrival" : kind === "departure" ? "Depart" : null;
+
+/** Reception (any), Housekeeping managers and admins/developers may upload. Database policy mirrors this. */
+export function canUploadMorningSheet(position: string | undefined, departments: readonly string[]): boolean {
+  if (position === "admin" || position === "developer" || position === "regional_admin") return true;
+  if (departments.includes("reception")) return true;
+  return position === "manager" && departments.includes("housekeeper");
 }
