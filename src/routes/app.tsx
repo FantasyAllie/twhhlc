@@ -6199,13 +6199,22 @@ const toggleRoomCategory = async (roomNumber: number, value: Category) => {
    setSelectedFloor(floor);
  };
  return <>
-   <div className="mb-4 flex gap-2 overflow-x-auto pb-1 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden sm:grid sm:grid-cols-3 sm:overflow-visible lg:flex lg:flex-wrap" aria-label="Floor selection">
-     {canShowAllFloors && <Button variant={activeFloor === null ? "default" : "outline"} className="min-h-11! min-w-0 max-sm:shrink-0 rounded-full px-3 lg:flex-1" aria-pressed={activeFloor === null} onClick={() => chooseFloor(null)}>All rooms</Button>}
-     {floorGroups.map((group) => <Button key={group.key} variant={activeFloor === group.key ? "default" : "outline"} className="min-h-11! min-w-0 max-sm:shrink-0 rounded-full px-3 lg:flex-1" aria-pressed={activeFloor === group.key} onClick={() => chooseFloor(group.key)}>
-
-       <span className="truncate uppercase">{group.label}</span><span className="shrink-0 text-xs opacity-70 tabular-nums">{group.rooms.length}</span>
-     </Button>)}
+   <div className="mb-3 flex max-sm:w-fit max-sm:max-w-full items-center overflow-x-auto rounded-full border border-border bg-background p-1 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden" aria-label="Floor selection">
+     {canShowAllFloors && <Button data-touch-exempt type="button" variant="outline" aria-pressed={activeFloor === null} onClick={() => chooseFloor(null)}
+       className={cn("h-8 min-w-0 max-sm:shrink-0 rounded-full px-3 text-xs whitespace-nowrap transition-colors sm:flex-1 sm:text-sm", activeFloor === null ? "bg-primary text-primary-foreground shadow-sm font-medium" : "text-muted-foreground hover:text-foreground")}>
+       All rooms
+     </Button>}
+     {floorGroups.map((group) => {
+       const active = activeFloor === group.key;
+       return (
+         <Button key={group.key} data-touch-exempt type="button" variant="outline" aria-pressed={active} onClick={() => chooseFloor(group.key)}
+           className={cn("h-8 min-w-0 gap-1 rounded-full px-3 text-xs whitespace-nowrap transition-colors max-sm:shrink-0 sm:flex-1 sm:text-sm", active ? "bg-primary text-primary-foreground shadow-sm font-medium" : "text-muted-foreground hover:text-foreground")}>
+           <span className="truncate uppercase">{group.label}</span><span className="shrink-0 text-[0.65rem] opacity-70 tabular-nums">{group.rooms.length}</span>
+         </Button>
+       );
+     })}
    </div>
+
          <div ref={setRoomGridEl} className="grid grid-cols-4 sm:grid-cols-6 md:grid-cols-[repeat(auto-fill,minmax(5.75rem,1fr))] lg:grid-cols-[repeat(auto-fill,minmax(7.5rem,1fr))] gap-2 md:gap-3">
            {displayedRooms.map((n, i) => (
              <React.Fragment key={`r-${n}`}>
