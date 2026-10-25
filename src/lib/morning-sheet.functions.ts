@@ -7,6 +7,7 @@ const PROMPT = `This PDF is a hotel's daily House Room Status report. Return one
 - occupancy: "out_of_service" if the room is marked Room Out Of Service; "departure" if the guest departs today or the row says Departure/Dirty; "occupied" for a guest mid-stay; otherwise "vacant".
 - arriving_today: true when a guest arrives today (night starts with 0/ or arrival date is the report date).
 - departing_today: true when the current guest leaves today (night like 4/4, or departure date equals report date).
+- A row explicitly marked CLEAN / ARRIVAL is an arrival into an already clean room: occupancy "vacant", arriving_today true, departing_today false. Do not infer a departure just because an arrival is scheduled. Only a real same-day departing guest makes it a turnover.
 - adults/children/infants: from the Ad Ch Inf columns, 0 if blank.
 - bed: from housekeeping notes: TWIN -> twin, KING -> king, DOUBLE -> double, else null.
 - dog: true if notes mention DOG.
