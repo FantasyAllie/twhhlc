@@ -46,7 +46,7 @@ function toBase64(file: File): Promise<string> {
 
 const timeOf = (iso: string) => new Date(iso).toLocaleTimeString("en-GB", { hour: "2-digit", minute: "2-digit" });
 
-export function MorningSheetBanner({ hotelId, userName, canConfirm }: { hotelId: string | undefined; userName: string; canConfirm: boolean }) {
+export function MorningSheetBanner({ hotelId, userName, canConfirm, hideBanner = false }: { hotelId: string | undefined; userName: string; canConfirm: boolean; hideBanner?: boolean }) {
   const qc = useQueryClient();
   const parse = useServerFn(parseMorningSheet);
   const inputRef = useRef<HTMLInputElement>(null);
@@ -116,7 +116,7 @@ export function MorningSheetBanner({ hotelId, userName, canConfirm }: { hotelId:
     }
   }
 
-  const sheet = pendingQ.data;
+  const sheet = hideBanner ? null : pendingQ.data;
   return (
     <>
       <input ref={inputRef} id={MORNING_SHEET_INPUT_ID} type="file" accept="application/pdf" className="hidden" onChange={(e) => void onFile(e.target.files?.[0])} />
