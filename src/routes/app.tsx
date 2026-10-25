@@ -8,7 +8,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { hasRoomItemSelection } from "@/lib/room-checklist-rules";
 import { playDoorBell } from "@/lib/door-bell";
 import { createPortal } from "react-dom";
-import React, { useEffect, useMemo, useRef, useState } from "react";
+import React, { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { CountRow } from "@/components/linen/inventory-dialog";
 import { Loader2, CalendarDays, Trophy, FileUp } from "lucide-react";
 import { LeaderboardSheet } from "@/components/leaderboard-sheet";
@@ -807,21 +807,42 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
     if (keep === undefined || keep === "quick") setHomeView(null);
   };
   // Housekeeping room grid: the open room expands inline below its row.
-  const [roomGridEl, setRoomGridEl] = useState<HTMLDivElement | null>(null);
+  // Floors split the tiles into several grids that share the same column
+  // classes, so one measured column count works for every floor grid.
+  const [roomGridWrapEl, setRoomGridWrapEl] = useState<HTMLDivElement | null>(null);
+  const roomGridElsRef = useRef<Set<HTMLDivElement>>(new Set());
+  const [roomGridTick, setRoomGridTick] = useState(0);
   const [roomSlotEl, setRoomSlotEl] = useState<HTMLDivElement | null>(null);
   const [roomViewBodyEl, setRoomViewBodyEl] = useState<HTMLDivElement | null>(null);
   const [roomGridCols, setRoomGridCols] = useState(4);
+  const measureRoomGrids = useCallback(() => {
+    for (const el of roomGridElsRef.current) {
+      if (!el.isConnected) continue;
+      const cols = getComputedStyle(el).gridTemplateColumns.split(" ").filter(Boolean).length;
+      if (cols) {
+        setRoomGridCols(Math.max(1, cols));
+        return;
+      }
+    }
+  }, []);
+  const setRoomGridEl = useCallback((el: HTMLDivElement | null) => {
+    if (!el) return;
+    // Drop grids whose sections are no longer rendered.
+    for (const g of roomGridElsRef.current) {
+      if (!g.isConnected) roomGridElsRef.current.delete(g);
+    }
+    roomGridElsRef.current.add(el);
+    measureRoomGrids();
+    setRoomGridTick((t) => t + 1);
+  }, [measureRoomGrids]);
   useEffect(() => {
-    if (!roomGridEl) return;
-    const measure = () => {
-      const cols = getComputedStyle(roomGridEl).gridTemplateColumns.split(" ").filter(Boolean).length;
-      setRoomGridCols(Math.max(1, cols));
-    };
-    measure();
-    const ro = new ResizeObserver(measure);
-    ro.observe(roomGridEl);
+    const ro = new ResizeObserver(measureRoomGrids);
+    for (const el of roomGridElsRef.current) {
+      if (el.isConnected) ro.observe(el);
+    }
+    measureRoomGrids();
     return () => ro.disconnect();
-  }, [roomGridEl]);
+  }, [roomGridTick, measureRoomGrids]);
   // Bring the tapped tile to the top of the screen once its room has expanded.
   // The slot grows over its open animation, so lower rows can't scroll up far
   // enough at first; scroll again as it grows. Offset by the sticky top bar.
