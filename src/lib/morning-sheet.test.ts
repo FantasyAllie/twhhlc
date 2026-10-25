@@ -14,7 +14,7 @@ const arrivalFlags: RoomStatusFlags = {
 };
 
 describe("paperwork clean arrival setup", () => {
-  it("rooms 14, 23, 44 and 49 use Not Started state until worked on", () => {
+  it("rooms 14, 23, 44 and 49 use the yellow palette until worked on", () => {
     const { rooms } = buildSheet([14, 23, 44, 49].map(room_number => ({
       ...base, room_number, arriving_today: true, departing_today: false,
     })));
@@ -24,9 +24,9 @@ describe("paperwork clean arrival setup", () => {
       for (const role of ["housekeeping", "reception"] as const) {
         const meta = computeTileMeta({ flags: arrivalFlags, state: "todo", isNR: false,
           hasLinenCount: false, earlyCheckIn: true, lateCheckout: true, role, sheetKind: room.kind });
-        assert.equal(meta.bg, "var(--room-todo)");
-        assert.equal(meta.fg, "var(--room-todo-fg)");
-        assert.equal(meta.accent, "var(--room-todo-accent)");
+        assert.equal(meta.bg, "var(--room-early)");
+        assert.equal(meta.fg, "var(--room-early-fg)");
+        assert.equal(meta.accent, "var(--room-early-accent)");
       }
     }
   });
