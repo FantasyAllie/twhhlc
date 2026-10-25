@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { useQueryClient } from "@tanstack/react-query";
-import { ArrowLeft, Check, ChevronRight, Plus, Save, Trash2 } from "lucide-react";
+import { ArrowDown, ArrowLeft, ArrowUp, Check, ChevronRight, Plus, Save, Trash2 } from "lucide-react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -31,6 +31,19 @@ export function FloorsCupboards({ rooms }: { rooms: Room[] }) {
   };
   const open = (floor: FloorLocation) => {
     setSelected(floor); setName(floor.name); setAssigned(roomsForFloor(rooms, floor.name));
+  };
+  const moveFloor = (index: number, direction: -1 | 1) => {
+    const target = index + direction;
+    if (target < 0 || target >= floors.length) return;
+    const next = [...floors];
+    const [moved] = next.splice(index, 1);
+    next.splice(target, 0, moved);
+    void run(async () => {
+      const results = await Promise.all(next.map((floor, i) =>
+        supabase.from("hotel_floors").update({ sort_order: i }).eq("id", floor.id)));
+      const failure = results.find((result) => result.error)?.error;
+      if (failure) throw failure;
+    });
   };
   return <div className="flex min-h-0 flex-col gap-4">
     <DialogHeader><DialogTitle>{selected ? selected.name : "Floors & Cupboards"}</DialogTitle></DialogHeader>
@@ -78,9 +91,15 @@ export function FloorsCupboards({ rooms }: { rooms: Room[] }) {
         });
       }}><Input aria-label="New floor name" placeholder="Floor name" value={newName} maxLength={80} onChange={(event) => setNewName(event.target.value)} /><Button type="submit" disabled={busy || !newName.trim() || !hotel} className="gap-1.5"><Plus className="h-4 w-4" />Add floor</Button></form>
       <div className="min-h-0 overflow-y-auto divide-y divide-border">
-        {floors.map((floor) => <Button key={floor.id} variant="ghost" className="h-auto w-full justify-between rounded-none px-1 py-3 text-left" onClick={() => open(floor)}>
-          <span className="min-w-0"><span className="block truncate font-medium">{floor.name}</span><span className="text-xs text-muted-foreground">{roomsForFloor(rooms, floor.name).length} rooms · Cupboard</span></span><ChevronRight className="h-4 w-4 shrink-0" />
-        </Button>)}
+        {floors.map((floor, index) => <div key={floor.id} className="flex items-center gap-1">
+          <Button variant="ghost" className="h-auto min-w-0 flex-1 justify-between rounded-none px-1 py-3 text-left" onClick={() => open(floor)}>
+            <span className="min-w-0"><span className="block truncate font-medium">{floor.name}</span><span className="text-xs text-muted-foreground">{roomsForFloor(rooms, floor.name).length} rooms · Cupboard</span></span><ChevronRight className="h-4 w-4 shrink-0" />
+          </Button>
+          <div className="flex shrink-0 gap-0.5">
+            <Button variant="ghost" size="icon" className="h-9 w-9" aria-label={`Move ${floor.name} up`} disabled={busy || index === 0} onClick={() => moveFloor(index, -1)}><ArrowUp className="h-4 w-4" /></Button>
+            <Button variant="ghost" size="icon" className="h-9 w-9" aria-label={`Move ${floor.name} down`} disabled={busy || index === floors.length - 1} onClick={() => moveFloor(index, 1)}><ArrowDown className="h-4 w-4" /></Button>
+          </div>
+        </div>)}
         {!floors.length && !floorsQ.isPending && <p className="py-4 text-sm text-muted-foreground">No floors yet.</p>}
       </div>
     </>}
