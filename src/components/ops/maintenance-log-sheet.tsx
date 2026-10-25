@@ -605,7 +605,7 @@ export function MaintenanceLogSheet({
                   {newMaintenanceUrgent ? "Urgent action" : "Needs urgent action"}
                 </Button>
               )}
-              <PhotoComposer value={newMaintenancePhotos} onChange={setNewMaintenancePhotos} />
+              <PhotoComposer value={newMaintenancePhotos} onChange={setNewMaintenancePhotos} allowVideo />
 
               {canManageAreas && onManageAreas && (
                 <Button

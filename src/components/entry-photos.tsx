@@ -4,6 +4,8 @@ import { Button } from "@/components/ui/button";
 import { PhotoViewerDialog } from "@/components/photo-viewer-dialog";
 import { toast } from "sonner";
 import {
+  checkClip,
+  isVideoFile,
   deleteEntryPhoto,
   getSignedUrls,
   MAX_PHOTOS_PER_ENTRY,
@@ -17,14 +19,31 @@ type Pending = { id: string; file: File; previewUrl: string };
 /** Short videos (added in the iPhone app) are kept alongside the photos. */
 const isVideoPath = (path: string) => /\.(mp4|mov)$/i.test(path);
 
+/** Drops clips longer than the limit, telling the user why. */
+async function filterClips(files: File[]): Promise<File[]> {
+  const out: File[] = [];
+  for (const f of files) {
+    if (!isVideoFile(f)) {
+      out.push(f);
+      continue;
+    }
+    const err = await checkClip(f);
+    if (err) toast.error(err);
+    else out.push(f);
+  }
+  return out;
+}
+
 export function PhotoComposer({
   value,
   onChange,
   max = MAX_PHOTOS_PER_ENTRY,
+  allowVideo = false,
 }: {
   value: File[];
   onChange: (files: File[]) => void;
   max?: number;
+  allowVideo?: boolean;
 }) {
   const inputRef = useRef<HTMLInputElement | null>(null);
   const cameraInputRef = useRef<HTMLInputElement | null>(null);
@@ -45,9 +64,10 @@ export function PhotoComposer({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  const onPick = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const files = Array.from(e.target.files ?? []);
+  const onPick = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const raw = Array.from(e.target.files ?? []);
     e.target.value = "";
+    const files = allowVideo ? await filterClips(raw) : raw.filter((f) => !isVideoFile(f));
     if (files.length === 0) return;
     const room = max - value.length;
     if (room <= 0) {
@@ -76,23 +96,32 @@ export function PhotoComposer({
       <input
         ref={inputRef}
         type="file"
-        accept="image/*"
+        accept={allowVideo ? "image/*,video/*" : "image/*"}
         multiple
         className="hidden"
-        onChange={onPick}
+        onChange={(e) => void onPick(e)}
       />
       <input
         ref={cameraInputRef}
         type="file"
-        accept="image/*"
+        accept={allowVideo ? "image/*,video/*" : "image/*"}
         capture="environment"
         className="hidden"
-        onChange={onPick}
+        onChange={(e) => void onPick(e)}
       />
       <div className="flex flex-wrap gap-2">
         {pending.map((p, idx) => (
           <div key={p.id} className="relative h-16 w-16 overflow-hidden rounded-xl border bg-muted">
-            <img src={p.previewUrl} alt="" className="h-full w-full object-cover" />
+            {isVideoFile(p.file) ? (
+              <>
+                <video src={p.previewUrl} muted playsInline preload="metadata" className="pointer-events-none h-full w-full object-cover" />
+                <span className="pointer-events-none absolute inset-0 flex items-center justify-center">
+                  <Play className="h-5 w-5 fill-white text-white drop-shadow" />
+                </span>
+              </>
+            ) : (
+              <img src={p.previewUrl} alt="" className="h-full w-full object-cover" />
+            )}
             <button
               type="button"
               data-touch-exempt
@@ -171,9 +200,11 @@ export function PhotoAttachments({
     };
   }, [paths]);
 
+  const allowVideo = kind === "maintenance";
   const handlePick = async (e: React.ChangeEvent<HTMLInputElement>) => {
-    const files = Array.from(e.target.files ?? []);
+    const raw = Array.from(e.target.files ?? []);
     e.target.value = "";
+    const files = allowVideo ? await filterClips(raw) : raw.filter((f) => !isVideoFile(f));
     if (files.length === 0) return;
     const room = max - paths.length;
     if (room <= 0) {
@@ -205,7 +236,7 @@ export function PhotoAttachments({
       <input
         ref={inputRef}
         type="file"
-        accept="image/*"
+        accept={allowVideo ? "image/*,video/*" : "image/*"}
         multiple
         className="hidden"
         onChange={(e) => void handlePick(e)}
@@ -213,7 +244,7 @@ export function PhotoAttachments({
       <input
         ref={cameraInputRef}
         type="file"
-        accept="image/*"
+        accept={allowVideo ? "image/*,video/*" : "image/*"}
         capture="environment"
         className="hidden"
         onChange={(e) => void handlePick(e)}
