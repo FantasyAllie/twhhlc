@@ -712,6 +712,7 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
   const [floorChosen, setFloorChosen] = useState(false);
   useEffect(() => {
     setSelectedFloor(null);
+    setFloorChosen(false);
   }, [currentHotelQ.data?.id]);
   const [hkFiltersOpen, setHkFiltersOpen] = useState(false);
   const [hkFiltersAnchor, setHkFiltersAnchor] = useState<{ top: number; left: number } | null>(null);
