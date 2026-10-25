@@ -2,7 +2,7 @@
 // Extracted verbatim from src/routes/app.tsx (stage 5).
 import { useEffect, useState } from "react";
 import { toast } from "sonner";
-import { LogOut } from "lucide-react";
+import { LogOut, Bug } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { getStoredUser } from "@/lib/auth-client";
 import { Button } from "@/components/ui/button";
@@ -16,18 +16,22 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 
+type PlatformChoice = "auto" | "ios" | "android";
+
 export function AccountDialog({
   open,
   onOpenChange,
   currentUsername,
   onUsernameChanged,
   onSignOut,
+  isDeveloper = false,
 }: {
   open: boolean;
   onOpenChange: (o: boolean) => void;
   currentUsername: string;
   onUsernameChanged: (u: string) => void;
   onSignOut: () => void;
+  isDeveloper?: boolean;
 }) {
   const [username, setUsername] = useState(currentUsername);
   const [newEmail, setNewEmail] = useState("");
@@ -38,6 +42,22 @@ export function AccountDialog({
   const [hasPassword, setHasPassword] = useState(true);
   const [identities, setIdentities] = useState<Array<{ identity_id: string; provider: string }>>([]);
   const [linkingProvider, setLinkingProvider] = useState<string | null>(null);
+  const [platformChoice, setPlatformChoice] = useState<PlatformChoice>("auto");
+
+  function applyPlatformChoice(choice: PlatformChoice) {
+    setPlatformChoice(choice);
+    if (choice === "auto") {
+      localStorage.removeItem("debug-platform-override");
+      const ua = navigator.userAgent;
+      const ios = /iPhone|iPad|iPod/.test(ua) || (navigator.platform === "MacIntel" && navigator.maxTouchPoints > 1);
+      const android = /Android/i.test(ua);
+      document.documentElement.dataset.platform = ios ? "ios" : android ? "android" : "other";
+    } else {
+      localStorage.setItem("debug-platform-override", choice);
+      document.documentElement.dataset.platform = choice;
+    }
+    toast.success(choice === "auto" ? "Platform look back to automatic" : `Showing the ${choice === "ios" ? "iOS" : "Android"} look`);
+  }
 
   async function refreshIdentities() {
     const { data } = await supabase.auth.getUserIdentities();
@@ -53,6 +73,8 @@ export function AccountDialog({
       setNewPw("");
       setConfirmPw("");
       setCurrentPw("");
+      const saved = localStorage.getItem("debug-platform-override");
+      setPlatformChoice(saved === "ios" || saved === "android" ? saved : "auto");
       void refreshIdentities();
     }
   }, [open, currentUsername]);
@@ -296,6 +318,36 @@ export function AccountDialog({
             <Button type="submit" size="sm" disabled={busy}>Save changes</Button>
           </div>
         </form>
+        {isDeveloper && (
+          <div className="border-t pt-4 space-y-2">
+            <div className="flex items-center gap-2">
+              <Bug className="h-4 w-4 text-muted-foreground" />
+              <h3 className="text-sm font-semibold">Debug</h3>
+            </div>
+            <p className="text-xs text-muted-foreground">
+              Preview the iOS or Android look on this device. Only affects this browser.
+            </p>
+            <div className="flex items-center gap-1 rounded-full border border-border bg-background p-1">
+              {(["auto", "ios", "android"] as const).map((choice) => (
+                <Button
+                  key={choice}
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  data-touch-exempt
+                  onClick={() => applyPlatformChoice(choice)}
+                  className={`h-8 flex-1 rounded-full text-xs transition-colors ${
+                    platformChoice === choice
+                      ? "bg-primary text-primary-foreground shadow-sm font-medium hover:bg-primary"
+                      : "border-transparent text-muted-foreground hover:text-foreground"
+                  }`}
+                >
+                  {choice === "auto" ? "Auto" : choice === "ios" ? "iOS" : "Android"}
+                </Button>
+              ))}
+            </div>
+          </div>
+        )}
         <div className="border-t pt-4">
           <Button
             type="button"

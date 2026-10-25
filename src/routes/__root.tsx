@@ -152,7 +152,13 @@ function RootComponent() {
   }, []);
 
   // Platform design language: iPhone/iPad vs Android get their own look on phones.
+  // A developer debug override (Account → Debug) wins over device detection.
   useEffect(() => {
+    const override = localStorage.getItem("debug-platform-override");
+    if (override === "ios" || override === "android") {
+      document.documentElement.dataset.platform = override;
+      return;
+    }
     const ua = navigator.userAgent;
     const ios = /iPhone|iPad|iPod/.test(ua) || (navigator.platform === "MacIntel" && navigator.maxTouchPoints > 1);
     const android = /Android/i.test(ua);

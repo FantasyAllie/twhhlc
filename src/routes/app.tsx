@@ -6501,6 +6501,7 @@ const toggleRoomCategory = async (roomNumber: number, value: Category) => {
     currentUsername={authUser?.username ?? ""}
     onUsernameChanged={(u) => setAuthUser((prev) => prev ? { ...prev, username: u } : prev)}
     onSignOut={signOut}
+    isDeveloper={realIsDeveloper}
   />
   <UsersDialog open={usersOpen} onOpenChange={setUsersOpen} />
   <Sheet open={linenDeliveryOpen} onOpenChange={setLinenDeliveryOpen}>
