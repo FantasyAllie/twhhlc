@@ -181,7 +181,7 @@ import type { RoomTileState } from "@/lib/rooms";
 import { usePendingCounts } from "@/lib/pending-counts";
 import { buildOpsState, captureOpsSnapshot, undoLastOpsSnapshot } from "@/lib/ops-snapshots";
 import { HousekeepingRoomTile, ReceptionRoomTile } from "@/components/rooms/room-tile";
-import { MorningSheetBanner, MORNING_SHEET_INPUT_ID } from "@/components/morning-sheet-banner";
+import { MorningSheetBanner, OPEN_PAPERWORK_EVENT } from "@/components/morning-sheet-banner";
 import { canUploadMorningSheet, setAsBed } from "@/lib/morning-sheet";
 
 export const Route = createFileRoute("/app")({
@@ -4254,7 +4254,7 @@ const toggleRoomCategory = async (roomNumber: number, value: Category) => {
       });
     }
     if (canUploadMorningSheet(position, subRoles)) {
-      utilities.push({ key: "morning-sheet", icon: FileUp, label: "Upload Morning Sheet", onClick: () => document.getElementById(MORNING_SHEET_INPUT_ID)?.click() });
+      utilities.push({ key: "paperwork", icon: FileUp, label: "Paperwork", onClick: () => window.dispatchEvent(new Event(OPEN_PAPERWORK_EVENT)) });
     }
     if (canAccessLeaderboard(position, subRoles)) {
       utilities.push({ key: "leaderboard", icon: Trophy, label: "Leaderboard", onClick: () => setLeaderboardOpen(true) });
@@ -5978,10 +5978,10 @@ const toggleRoomCategory = async (roomNumber: number, value: Category) => {
         variant="outline"
         size="sm"
         className="h-8 gap-1.5 rounded-lg text-xs font-medium shadow-sm"
-        onClick={() => document.getElementById(MORNING_SHEET_INPUT_ID)?.click()}
+        onClick={() => window.dispatchEvent(new Event(OPEN_PAPERWORK_EVENT))}
       >
         <FileUp className="h-3.5 w-3.5" />
-        Morning sheet
+        Paperwork
       </Button>
     )}
     {!isReception && (

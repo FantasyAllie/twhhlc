@@ -1,16 +1,19 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
-import { FileText, Loader2, Dog, Users } from "lucide-react";
+import { FileText, FileUp, Loader2, Dog, Users } from "lucide-react";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetDescription } from "@/components/ui/sheet";
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { cn } from "@/lib/utils";
 import { parseMorningSheet } from "@/lib/morning-sheet.functions";
 import { buildSheet, KIND_LABEL, type SheetKind, type SheetRoom, type SheetSummary } from "@/lib/morning-sheet";
 
 export const MORNING_SHEET_INPUT_ID = "morning-sheet-input";
+/** Opens the Paperwork popup from anywhere (home button, More menu). */
+export const OPEN_PAPERWORK_EVENT = "open-paperwork";
 
 type PendingSheet = {
   id: string;
@@ -80,17 +83,24 @@ export function MorningSheetBanner({ hotelId, userName, canConfirm, hideBanner =
     if (!file || !hotelId) return;
     if (file.type && file.type !== "application/pdf") { toast.error("Please choose the PDF room status report."); return; }
     setUploading(true);
-    const t = toast.loading("Reading morning sheet…");
+    const t = toast.loading("Reading paperwork…");
     try {
       const parsed = await parse({ data: { fileBase64: await toBase64(file) } });
       const { rooms, summary } = buildSheet(parsed.rooms);
+      // Keep the original PDF so "View original" can reopen it later.
+      let filePath: string | null = null;
+      try {
+        const path = `${hotelId}/${Date.now()}-${file.name}`;
+        const { error: uploadError } = await supabase.storage.from("paperwork").upload(path, file, { contentType: "application/pdf" });
+        if (uploadError) console.error("paperwork upload failed", uploadError); else filePath = path;
+      } catch (uploadError) { console.error("paperwork upload failed", uploadError); }
       const { error } = await db.from("morning_sheet_imports").insert({
         hotel_id: hotelId, uploaded_by_name: userName, file_name: file.name,
-        sheet_date: parsed.sheet_date, room_count: rooms.length, summary, payload: rooms,
+        sheet_date: parsed.sheet_date, room_count: rooms.length, summary, payload: rooms, file_path: filePath,
       });
       if (error) throw error;
       await qc.invalidateQueries({ queryKey: key });
-      toast.success(`Morning sheet ready · ${rooms.length} rooms`, { id: t, description: "Housekeeping can now preview and apply it." });
+      toast.success(`Paperwork ready · ${rooms.length} rooms`, { id: t, description: "Housekeeping can now preview and apply it." });
     } catch (e) {
       toast.error(e instanceof Error ? e.message : "Couldn't read that PDF", { id: t });
     } finally {
@@ -108,7 +118,7 @@ export function MorningSheetBanner({ hotelId, userName, canConfirm, hideBanner =
       if (error) throw error;
       setPreviewOpen(false);
       await Promise.all([qc.invalidateQueries({ queryKey: key }), qc.invalidateQueries({ queryKey: ["rooms"] })]);
-      toast.success(apply ? `Applied to ${data ?? 0} rooms` : "Morning sheet discarded");
+      toast.success(apply ? `Applied to ${data ?? 0} rooms` : "Paperwork discarded");
     } catch (e) {
       toast.error(e instanceof Error ? e.message : "Something went wrong");
     } finally {
@@ -123,7 +133,7 @@ export function MorningSheetBanner({ hotelId, userName, canConfirm, hideBanner =
       {uploading && !sheet && (
         <div data-morning-banner className="flex items-center gap-3 rounded-2xl border border-sidebar-border bg-sidebar px-4 py-3 text-sidebar-foreground shadow-elevation-2">
           <Loader2 className="h-4 w-4 animate-spin text-sidebar-primary" />
-          <span className="text-sm">Reading morning sheet…</span>
+          <span className="text-sm">Reading paperwork…</span>
         </div>
       )}
       {sheet && (
@@ -137,7 +147,7 @@ export function MorningSheetBanner({ hotelId, userName, canConfirm, hideBanner =
           </span>
           <div className="min-w-0 flex-1">
             <p className="font-display text-sm font-semibold leading-tight">
-              Morning sheet ready <span className="text-sidebar-primary">· {sheet.room_count} rooms</span>
+              Paperwork ready <span className="text-sidebar-primary">· {sheet.room_count} rooms</span>
             </p>
             <p className="truncate text-xs text-sidebar-foreground/65">
               {sheet.uploaded_by_name ?? "Someone"} · {timeOf(sheet.created_at)}
@@ -168,6 +178,7 @@ export function MorningSheetBanner({ hotelId, userName, canConfirm, hideBanner =
           canConfirm={canConfirm} busy={busy} onApply={() => void resolve(true)} onDiscard={() => void resolve(false)}
         />
       )}
+      <PaperworkMenu hotelId={hotelId} />
     </>
   );
 }
@@ -193,7 +204,7 @@ function MorningSheetPreview({ open, onOpenChange, sheet, canConfirm, busy, onAp
     <Sheet open={open} onOpenChange={onOpenChange}>
       <SheetContent side="bottom" className="flex max-h-[92dvh] flex-col gap-0 p-0 sm:mx-auto sm:max-w-2xl sm:rounded-t-2xl">
         <SheetHeader className="border-b px-4 pb-3 pt-4 text-left">
-          <SheetTitle className="font-display">Morning sheet · {dateLabel}</SheetTitle>
+          <SheetTitle className="font-display">Paperwork · {dateLabel}</SheetTitle>
           <SheetDescription className="truncate">{sheet.room_count} rooms from {sheet.file_name}</SheetDescription>
           <div className="-mx-4 flex gap-2 overflow-x-auto px-4 pt-2 [scrollbar-width:none]">
             {chips.filter(([, n]) => n > 0).map(([label, n]) => (
@@ -254,5 +265,74 @@ function MorningSheetPreview({ open, onOpenChange, sheet, canConfirm, busy, onAp
         </div>
       </SheetContent>
     </Sheet>
+  );
+}
+
+/** Small popup behind the "Paperwork" buttons: upload a new file or open the last upload. */
+function PaperworkMenu({ hotelId }: { hotelId: string | undefined }) {
+  const [open, setOpen] = useState(false);
+  const [busy, setBusy] = useState(false);
+  const [last, setLast] = useState<{ file_name: string; file_path: string; created_at: string } | null>(null);
+
+  useEffect(() => {
+    const show = () => setOpen(true);
+    window.addEventListener(OPEN_PAPERWORK_EVENT, show);
+    return () => window.removeEventListener(OPEN_PAPERWORK_EVENT, show);
+  }, []);
+
+  useEffect(() => {
+    if (!open || !hotelId) return;
+    let cancelled = false;
+    setBusy(true);
+    db.from("morning_sheet_imports")
+      .select("file_name,file_path,created_at")
+      .eq("hotel_id", hotelId)
+      .not("file_path", "is", null)
+      .order("created_at", { ascending: false })
+      .limit(1)
+      .maybeSingle()
+      .then(({ data, error }: { data: { file_name: string; file_path: string; created_at: string } | null; error: unknown }) => {
+        if (cancelled) return;
+        if (error) console.error("paperwork lookup failed", error);
+        setLast(error ? null : data);
+        setBusy(false);
+      });
+    return () => { cancelled = true; };
+  }, [open, hotelId]);
+
+  const viewOriginal = async () => {
+    if (!last) return;
+    setBusy(true);
+    try {
+      const { data, error } = await supabase.storage.from("paperwork").createSignedUrl(last.file_path, 600);
+      if (error || !data?.signedUrl) throw error ?? new Error("No link");
+      window.open(data.signedUrl, "_blank", "noopener");
+      setOpen(false);
+    } catch {
+      toast.error("Couldn't open the original paperwork");
+    } finally {
+      setBusy(false);
+    }
+  };
+
+  return (
+    <Dialog open={open} onOpenChange={setOpen}>
+      <DialogContent className="max-w-xs">
+        <DialogHeader>
+          <DialogTitle className="font-display">Paperwork</DialogTitle>
+          <DialogDescription>Today's uploaded room status report.</DialogDescription>
+        </DialogHeader>
+        <div className="flex flex-col gap-2">
+          <Button variant="outline" className="justify-start gap-2" onClick={() => { setOpen(false); document.getElementById(MORNING_SHEET_INPUT_ID)?.click(); }}>
+            <FileUp className="h-4 w-4" />Upload a file
+          </Button>
+          <Button variant="outline" className="justify-start gap-2" disabled={!last || busy} onClick={() => void viewOriginal()}>
+            <FileText className="h-4 w-4" />{busy ? "Opening…" : "View original"}
+          </Button>
+          {!last && !busy && <p className="text-xs text-muted-foreground">No paperwork uploaded yet.</p>}
+          {last && <p className="truncate text-xs text-muted-foreground">Last upload: {last.file_name}</p>}
+        </div>
+      </DialogContent>
+    </Dialog>
   );
 }
