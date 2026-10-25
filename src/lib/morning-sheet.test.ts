@@ -1,4 +1,5 @@
-import { describe, expect, it } from "vitest";
+import { describe, it } from "node:test";
+import assert from "node:assert/strict";
 import { buildSheet, classifyRoom, type ParsedSheetRoom } from "./morning-sheet";
 
 const base: ParsedSheetRoom = {
@@ -9,17 +10,17 @@ const base: ParsedSheetRoom = {
 describe("morning sheet rules", () => {
   it("same-day departure and arrival is a turnover that starts Dirty", () => {
     const { rooms } = buildSheet([{ ...base, occupancy: "departure", arriving_today: true }]);
-    expect(rooms[0].kind).toBe("turnover");
-    expect(rooms[0].status_label).toBe("Dirty");
+    assert.equal(rooms[0].kind, "turnover");
+    assert.equal(rooms[0].status_label, "Dirty");
   });
   it("arrival into an empty room shows Arrival (yellow)", () => {
-    expect(classifyRoom({ ...base, arriving_today: true, night: "0/1" })).toBe("arrival");
+    assert.equal(classifyRoom({ ...base, arriving_today: true, night: "0/1" }), "arrival");
   });
   it("guest mid-stay is a Stayover (pink)", () => {
-    expect(classifyRoom({ ...base, occupancy: "occupied", night: "1/2" })).toBe("stayover");
+    assert.equal(classifyRoom({ ...base, occupancy: "occupied", night: "1/2" }), "stayover");
   });
   it("out of service wins over anything else", () => {
-    expect(classifyRoom({ ...base, occupancy: "out_of_service", arriving_today: true })).toBe("ros");
+    assert.equal(classifyRoom({ ...base, occupancy: "out_of_service", arriving_today: true }), "ros");
   });
   it("summary counts dogs and guests only for occupied rooms", () => {
     const { summary } = buildSheet([
@@ -27,8 +28,8 @@ describe("morning sheet rules", () => {
       { ...base, room_number: 2, occupancy: "out_of_service", adults: 3 },
       { ...base, room_number: 1, arriving_today: true, adults: 9 },
     ]);
-    expect(summary.arrival).toBe(1);
-    expect(summary.dogs).toBe(1);
-    expect(summary.guests).toBe(2);
+    assert.equal(summary.arrival, 1);
+    assert.equal(summary.dogs, 1);
+    assert.equal(summary.guests, 2);
   });
 });
