@@ -4103,7 +4103,7 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
         onClick: () => { setMessagesInitial({}); setMessagesSheetOpen(true); },
       });
     }
-    if ((menuIsAdmin || hasHousekeeperRole || hasReceptionRole) && !isMaintenance) {
+    if (menuIsAdmin || hasHousekeeperRole || hasReceptionRole) {
       utilities.push({ key: "morning-sheet", icon: FileUp, label: "Upload Morning Sheet", onClick: () => document.getElementById(MORNING_SHEET_INPUT_ID)?.click() });
     }
     if (canAccessLeaderboard(position, subRoles)) {
@@ -4467,11 +4467,12 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
             )}
  </header>
  )}
- {(realIsAdmin || realIsManager || hasHousekeeperRole || hasReceptionRole) && !isMaintenance && !isFnb && (
+ {(realIsAdmin || realIsManager || hasHousekeeperRole || hasReceptionRole) && (
    <MorningSheetBanner
      hotelId={currentHotelQ.data?.id}
      userName={authUser?.username ?? "Staff"}
      canConfirm={realIsAdmin || realIsManager || hasHousekeeperRole}
+     hideBanner={isMaintenance || isFnb}
    />
  )}
 
