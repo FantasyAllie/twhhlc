@@ -2,7 +2,7 @@
 // Extracted verbatim from src/routes/app.tsx (stage 5).
 import { useEffect, useState } from "react";
 import { toast } from "sonner";
-import { LogOut } from "lucide-react";
+import { LogOut, Bug } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { getStoredUser } from "@/lib/auth-client";
 import { Button } from "@/components/ui/button";
