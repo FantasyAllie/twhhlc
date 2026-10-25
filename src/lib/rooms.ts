@@ -1,6 +1,7 @@
 // Room status rules: tile state derivation and the "Reset all" decision logic.
 // Extracted verbatim from src/routes/app.tsx (stage 3 of the staged refactor).
 import type { ReceptionItem, Room } from "./app-types";
+import { departureLabel } from "./morning-sheet";
 
 export type RoomTileState = "todo" | "progress" | "done" | "complete";
 
@@ -130,9 +131,14 @@ export const computeTileMeta = (args: {
   lateCheckout?: boolean;
   stayoverOut?: boolean;
   role: "reception" | "housekeeping";
+  /** Job type from the applied morning sheet, if any. */
+  sheetKind?: string | null;
 }): TileMeta => {
-  const { flags, state, isNR, hasLinenCount, earlyCheckIn, lateCheckout, stayoverOut, role } = args;
+  const { flags, state, isNR, hasLinenCount, earlyCheckIn, lateCheckout, stayoverOut, role, sheetKind } = args;
   const isDone = state === "done" || state === "complete";
+  const working = hasLinenCount || (role === "housekeeping" && state === "progress");
+  const fromSheet = !!sheetKind && sheetKind !== "vacant" && sheetKind !== "ros";
+  const dirtyTone = { bg: "var(--room-dirty)", fg: "var(--room-dirty-fg)", accent: "var(--room-dirty-accent)" };
   if (flags.isStaff)
     return { bg: "var(--room-staff)", fg: "var(--room-staff-fg)", accent: "var(--room-staff-accent)", label: "Staff" };
   if (flags.isRos)
@@ -141,12 +147,17 @@ export const computeTileMeta = (args: {
     return { bg: "var(--room-stayover)", fg: "var(--room-stayover-fg)", accent: "var(--room-stayover-accent)", label: "STAYOVER" };
   if (stayoverOut && !isDone)
     return { bg: "var(--room-stayover-out)", fg: "var(--room-stayover-out-fg)", accent: "var(--room-stayover-out-accent)", label: "Not started" };
+  // Sheet stayovers stay in the dirty tone until DND, Not required or done.
+  if (sheetKind === "stayover" && flags.isStayover && !flags.isDnd && !isDone)
+    return { ...dirtyTone, label: working ? "Stayover\nIn progress" : "Stayover\nNot started" };
   if (flags.isStayover || flags.isDnd)
     return { bg: "var(--room-stayover)", fg: "var(--room-stayover-fg)", accent: "var(--room-stayover-accent)", label: "Stayover" };
   if (isDone)
     return flags.isClean
       ? { bg: "var(--room-cleandone)", fg: "var(--room-cleandone-fg)", accent: "var(--room-cleandone-accent)", label: "Clean" }
       : { bg: "var(--room-complete)", fg: "var(--room-complete-fg)", accent: "var(--room-complete-accent)", label: "Arrival" };
+  const dep = departureLabel(sheetKind);
+  if (flags.isDirty && dep) return { ...dirtyTone, label: `${dep}\n${working ? "In progress" : "Not started"}` };
   if (flags.isDirty)
     return {
       bg: "var(--room-dirty)",
@@ -160,9 +171,10 @@ export const computeTileMeta = (args: {
     return { bg: "var(--room-late)", fg: "var(--room-late-fg)", accent: "var(--room-late-accent)", label: "Late Checkout" };
   if (earlyCheckIn)
     return { bg: "var(--room-early)", fg: "var(--room-early-fg)", accent: "var(--room-early-accent)", label: "Early check-in" };
+  const base = flags.isArrival ? "Arrival" : flags.isDirty ? "Dirty" : flags.isClean ? "Clean" : "Not started";
   return {
     ...roomStateMeta.todo,
-    label: flags.isArrival ? "Arrival" : flags.isDirty ? "Dirty" : flags.isClean ? "Clean" : "Not started",
+    label: fromSheet && base !== "Not started" ? `${base}\nNot started` : base,
   };
 };
 
