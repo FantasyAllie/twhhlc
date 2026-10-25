@@ -1,11 +1,48 @@
 import { describe, it } from "node:test";
 import assert from "node:assert/strict";
 import { buildSheet, classifyRoom, type ParsedSheetRoom } from "./morning-sheet";
+import { computeTileMeta, type RoomStatusFlags } from "./rooms";
 
 const base: ParsedSheetRoom = {
   room_number: 1, night: null, occupancy: "vacant", arriving_today: false, departing_today: false,
   adults: 0, children: 0, infants: 0, lead_name: null, bed: null, dog: false, notes: null,
 };
+
+const arrivalFlags: RoomStatusFlags = {
+  isStaff: false, isDnd: false, isStayover: false, isDirty: false,
+  isClean: false, isArrival: true, isRos: false, hasStatus: true,
+};
+
+describe("paperwork clean arrival setup", () => {
+  it("rooms 14, 23, 44 and 49 use Not Started state until worked on", () => {
+    const { rooms } = buildSheet([14, 23, 44, 49].map(room_number => ({
+      ...base, room_number, arriving_today: true, departing_today: false,
+    })));
+    assert.equal(rooms.length, 4);
+    for (const room of rooms) {
+      assert.equal(room.kind, "arrival");
+      for (const role of ["housekeeping", "reception"] as const) {
+        const meta = computeTileMeta({ flags: arrivalFlags, state: "todo", isNR: false,
+          hasLinenCount: false, earlyCheckIn: true, lateCheckout: true, role, sheetKind: room.kind });
+        assert.equal(meta.bg, "var(--room-todo)");
+        assert.equal(meta.fg, "var(--room-todo-fg)");
+        assert.equal(meta.accent, "var(--room-todo-accent)");
+      }
+    }
+  });
+  it("clean arrivals move to progress and completed states normally", () => {
+    const args = { flags: arrivalFlags, isNR: false, earlyCheckIn: false,
+      role: "housekeeping" as const, sheetKind: "arrival" };
+    assert.equal(computeTileMeta({ ...args, state: "progress", hasLinenCount: true }).bg, "var(--room-progress)");
+    assert.equal(computeTileMeta({ ...args, state: "done", hasLinenCount: false }).bg, "var(--room-complete)");
+  });
+  it("actual same-day departures and arrivals keep the departure colour", () => {
+    const meta = computeTileMeta({ flags: { ...arrivalFlags, isArrival: false, isDirty: true },
+      state: "todo", isNR: false, hasLinenCount: false, earlyCheckIn: false,
+      role: "housekeeping", sheetKind: "turnover" });
+    assert.equal(meta.bg, "var(--room-dirty)");
+  });
+});
 
 describe("morning sheet rules", () => {
   it("same-day departure and arrival is a turnover that starts Dirty", () => {

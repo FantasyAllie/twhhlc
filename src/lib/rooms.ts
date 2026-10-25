@@ -158,6 +158,13 @@ export const computeTileMeta = (args: {
       : { bg: "var(--room-complete)", fg: "var(--room-complete-fg)", accent: "var(--room-complete-accent)", label: "Arrival" };
   const dep = departureLabel(sheetKind);
   if (flags.isDirty && dep) return { ...dirtyTone, label: `${dep}\n${working ? "In progress" : "Not started"}` };
+  // An arrival without a departure is already clean on the paperwork,
+  // but still needs its arrival setup checked before it is marked done.
+  if (sheetKind === "arrival" && (flags.isArrival || flags.isClean))
+    return {
+      ...(working ? roomStateMeta.progress : roomStateMeta.todo),
+      label: `Clean / Arrival\n${working ? "In progress" : "Not started"}`,
+    };
   if (flags.isDirty)
     return {
       bg: "var(--room-dirty)",
