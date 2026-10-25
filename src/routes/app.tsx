@@ -6204,7 +6204,7 @@ const toggleRoomCategory = async (roomNumber: number, value: Category) => {
    <div className="mb-3 mx-auto flex max-sm:w-fit max-sm:max-w-full items-center overflow-x-auto rounded-full border border-border bg-background p-1 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden" aria-label="Floor selection">
      <Button data-touch-exempt type="button" variant="outline" aria-pressed={activeFloor === null} onClick={() => chooseFloor(null)}
        className={cn("h-8 min-w-0 max-sm:shrink-0 rounded-full px-3 text-xs whitespace-nowrap transition-colors sm:flex-1 sm:text-sm", activeFloor === null ? "bg-primary text-primary-foreground shadow-sm font-medium" : "text-muted-foreground hover:text-foreground")}>
-       All rooms
+       {isMobile && !isTablet ? "All" : "All rooms"}
      </Button>
      {floorGroups.map((group) => {
        const active = activeFloor === group.key;
