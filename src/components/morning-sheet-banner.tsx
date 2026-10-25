@@ -100,7 +100,7 @@ export function MorningSheetBanner({ hotelId, userName, canConfirm, hideBanner =
       });
       if (error) throw error;
       await qc.invalidateQueries({ queryKey: key });
-      toast.success(`Morning sheet ready · ${rooms.length} rooms`, { id: t, description: "Housekeeping can now preview and apply it." });
+      toast.success(`Paperwork ready · ${rooms.length} rooms`, { id: t, description: "Housekeeping can now preview and apply it." });
     } catch (e) {
       toast.error(e instanceof Error ? e.message : "Couldn't read that PDF", { id: t });
     } finally {
@@ -133,7 +133,7 @@ export function MorningSheetBanner({ hotelId, userName, canConfirm, hideBanner =
       {uploading && !sheet && (
         <div data-morning-banner className="flex items-center gap-3 rounded-2xl border border-sidebar-border bg-sidebar px-4 py-3 text-sidebar-foreground shadow-elevation-2">
           <Loader2 className="h-4 w-4 animate-spin text-sidebar-primary" />
-          <span className="text-sm">Reading morning sheet…</span>
+          <span className="text-sm">Reading paperwork…</span>
         </div>
       )}
       {sheet && (
