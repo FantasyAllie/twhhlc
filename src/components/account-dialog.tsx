@@ -318,6 +318,36 @@ export function AccountDialog({
             <Button type="submit" size="sm" disabled={busy}>Save changes</Button>
           </div>
         </form>
+        {isDeveloper && (
+          <div className="border-t pt-4 space-y-2">
+            <div className="flex items-center gap-2">
+              <Bug className="h-4 w-4 text-muted-foreground" />
+              <h3 className="text-sm font-semibold">Debug</h3>
+            </div>
+            <p className="text-xs text-muted-foreground">
+              Preview the iOS or Android look on this device. Only affects this browser.
+            </p>
+            <div className="flex items-center gap-1 rounded-full border border-border bg-background p-1">
+              {(["auto", "ios", "android"] as const).map((choice) => (
+                <Button
+                  key={choice}
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  data-touch-exempt
+                  onClick={() => applyPlatformChoice(choice)}
+                  className={`h-8 flex-1 rounded-full text-xs transition-colors ${
+                    platformChoice === choice
+                      ? "bg-primary text-primary-foreground shadow-sm font-medium hover:bg-primary"
+                      : "border-transparent text-muted-foreground hover:text-foreground"
+                  }`}
+                >
+                  {choice === "auto" ? "Auto" : choice === "ios" ? "iOS" : "Android"}
+                </Button>
+              ))}
+            </div>
+          </div>
+        )}
         <div className="border-t pt-4">
           <Button
             type="button"
