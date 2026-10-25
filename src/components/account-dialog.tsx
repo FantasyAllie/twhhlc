@@ -73,6 +73,8 @@ export function AccountDialog({
       setNewPw("");
       setConfirmPw("");
       setCurrentPw("");
+      const saved = localStorage.getItem("debug-platform-override");
+      setPlatformChoice(saved === "ios" || saved === "android" ? saved : "auto");
       void refreshIdentities();
     }
   }, [open, currentUsername]);
