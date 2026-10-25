@@ -5,7 +5,9 @@
 - [x] Sad full-screen outcome + sad trombone sound when completion happens with Dirty rooms present
 
 ## Current work
+- [x] Make floor pills a compact segmented control matching the department picker on desktop, tablet and phone
 - [x] Fix tablet top bar position and appearance spacing; replace tablet tabs with menu Home and verify navigation
+
 - [x] Centralise floors, room assignments and inventory cupboard names in Floors & Cupboards
 - [x] Verify saved floor assignments and matching inventory cupboard names
 - [x] Show paperwork CLEAN / ARRIVAL with the Not Started tile colour and verify the mapping
