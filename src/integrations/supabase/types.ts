@@ -485,6 +485,7 @@ export type Database = {
         Row: {
           created_at: string
           file_name: string
+          file_path: string | null
           hotel_id: string
           id: string
           payload: Json
@@ -501,6 +502,7 @@ export type Database = {
         Insert: {
           created_at?: string
           file_name: string
+          file_path?: string | null
           hotel_id: string
           id?: string
           payload?: Json
@@ -517,6 +519,7 @@ export type Database = {
         Update: {
           created_at?: string
           file_name?: string
+          file_path?: string | null
           hotel_id?: string
           id?: string
           payload?: Json
