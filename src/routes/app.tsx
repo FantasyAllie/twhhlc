@@ -6211,7 +6211,7 @@ const toggleRoomCategory = async (roomNumber: number, value: Category) => {
        return (
          <Button key={group.key} data-touch-exempt type="button" variant="outline" aria-pressed={active} onClick={() => chooseFloor(group.key)}
            className={cn("h-8 min-w-0 gap-1 rounded-full px-3 text-xs whitespace-nowrap transition-colors max-sm:shrink-0 sm:flex-1 sm:text-sm", active ? "bg-primary text-primary-foreground shadow-sm font-medium" : "text-muted-foreground hover:text-foreground")}>
-           <span className="truncate uppercase">{group.label}</span><span className="shrink-0 text-[0.65rem] opacity-70 tabular-nums">{group.rooms.length}</span>
+           <span className="truncate">{group.label}</span><span className="shrink-0 text-[0.65rem] opacity-70 tabular-nums">{group.rooms.length}</span>
          </Button>
        );
      })}
