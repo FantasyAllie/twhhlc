@@ -2950,13 +2950,6 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
  // --- Room category ---
  // Floor helpers: rooms are grouped on the home screen by an editable
  // per-room label; new rooms get a sensible suggestion from their number.
- const floorForRoom = (n: number): string => {
-   if (n < 20) return "Ground Floor";
-   if (n < 30) return "20's";
-   if (n < 40) return "30's";
-   if (n < 50) return "40's";
-   return `Floor ${Math.floor(n / 10)}`;
- };
 
  const setRoomFloor = async (roomNumber: number, floor: string | null) => {
    const value = floor && floor.trim() ? floor.trim() : null;
