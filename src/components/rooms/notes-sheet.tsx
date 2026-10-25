@@ -8,6 +8,7 @@ import { Switch } from "@/components/ui/switch";
 import { cn } from "@/lib/utils";
 import { FlagIcon, FLAG_COLORS, useRoomFlags } from "@/lib/room-flags";
 import { RoomInfoTiles, type RoomInfoTab } from "@/components/rooms/room-info-tiles";
+import { RoomChecklistRecords } from "@/components/rooms/room-checklists";
 import type { LostPropertyLite, MaintenanceRequest, Room, RoomMessage } from "@/lib/app-types";
 import type { MessagesThread } from "@/components/messages-sheet";
 
@@ -399,6 +400,41 @@ export function RoomNotesSheet({
                  )}
                </>
              )}
+             {!isReception && (
+               <details className="group rounded-xl border bg-background p-3">
+                 <summary className="flex cursor-pointer list-none items-center justify-between gap-1.5 text-xs font-semibold uppercase tracking-wide text-muted-foreground [&::-webkit-details-marker]:hidden">
+                   Guest &amp; room info
+                   <ChevronDown className="h-3.5 w-3.5 transition-transform group-open:rotate-180" />
+                 </summary>
+                 <div className="mt-3 grid grid-cols-2 gap-1.5">
+                   {roomFlags.flags.map((d) => {
+                     const on = roomFlags.isOn(room, n, d);
+                     return (
+                       <Button
+                         key={d.key}
+                         type="button"
+                         variant={on ? "default" : "outline"}
+                         aria-pressed={on}
+                         className="h-auto min-h-10 justify-start gap-2 whitespace-normal text-left"
+                         onClick={() => roomFlags.toggle(n, d, !on)}
+                       >
+                         <FlagIcon def={d} className="h-4 w-4 shrink-0" />
+                         {d.label}
+                       </Button>
+                     );
+                   })}
+                 </div>
+               </details>
+             )}
+             <details className="group rounded-xl border bg-background p-3">
+               <summary className="flex cursor-pointer list-none items-center justify-between gap-1.5 text-xs font-semibold uppercase tracking-wide text-muted-foreground [&::-webkit-details-marker]:hidden">
+                 Completed checklists
+                 <ChevronDown className="h-3.5 w-3.5 transition-transform group-open:rotate-180" />
+               </summary>
+               <div className="mt-3">
+                 <RoomChecklistRecords roomNumber={n} />
+               </div>
+             </details>
              <RoomInfoTiles
                roomNumber={n}
                hasDnd={hasDnd}
