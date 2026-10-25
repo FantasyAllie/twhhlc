@@ -133,8 +133,13 @@ export function ManageRoomsDialogs({
             .sort((a, b) => (a.sort_order ?? a.room_number) - (b.sort_order ?? b.room_number))
             .map((r, idx, arr) => (
               <li key={r.id} className="flex items-center gap-3 px-3 py-2">
-                <span className="flex-1 text-sm font-medium tabular-nums">
-                  Room {r.room_number}
+                <span className="flex-1 min-w-0">
+                  <span className="block text-sm font-medium tabular-nums">
+                    Room {r.room_number}
+                  </span>
+                  <span className="block text-xs text-muted-foreground truncate">
+                    {r.floor?.trim() || "No floor"}
+                  </span>
                 </span>
                 <Button
                   variant="outline"

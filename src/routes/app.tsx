@@ -8,7 +8,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { hasRoomItemSelection } from "@/lib/room-checklist-rules";
 import { playDoorBell } from "@/lib/door-bell";
 import { createPortal } from "react-dom";
-import React, { useEffect, useMemo, useRef, useState } from "react";
+import React, { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { CountRow } from "@/components/linen/inventory-dialog";
 import { Loader2, CalendarDays, Trophy, FileUp } from "lucide-react";
 import { LeaderboardSheet } from "@/components/leaderboard-sheet";
@@ -138,6 +138,7 @@ import { armSheetTakeover, isTakeoverReplacing, setSheetTakeoverSlot, releaseShe
 import { Palette } from "lucide-react";
 import { ACCENTS, accentSwatch, readAccent, applyAccent, type AccentId } from "@/lib/accent-colour";
 import { useCurrentHotel, DEFAULT_HOTEL_NAME } from "@/lib/hotels";
+import { floorForRoom } from "@/lib/room-floors";
 import { listHotels, setActiveHotel, createHotel, type HotelOption } from "@/lib/auth.functions";
 import { parseCats, categoryLabel, valueFromLabel, maintenanceLocation, COLOR_SWATCHES } from "@/lib/app-format";
 import type {
@@ -700,6 +701,32 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
   const [editItemSheetId, setEditItemSheetId] = useState<string | null>(null);
   const [filtersSheetOpen, setFiltersSheetOpen] = useState(false);
   const [hideCompletedRooms, setHideCompletedRooms] = useState(false);
+  // Collapsed floor sections on the home screen, remembered per hotel.
+  const [collapsedFloors, setCollapsedFloors] = useState<Record<string, boolean>>({});
+  useEffect(() => {
+    const hotelId = currentHotelQ.data?.id;
+    if (!hotelId) return;
+    try {
+      const raw = localStorage.getItem(`hh_floors_collapsed_${hotelId}`);
+      setCollapsedFloors(raw ? (JSON.parse(raw) as Record<string, boolean>) : {});
+    } catch {
+      setCollapsedFloors({});
+    }
+  }, [currentHotelQ.data?.id]);
+  const toggleFloorCollapsed = useCallback((key: string) => {
+    setCollapsedFloors((prev) => {
+      const next = { ...prev, [key]: !prev[key] };
+      const hotelId = currentHotelQ.data?.id;
+      if (hotelId) {
+        try {
+          localStorage.setItem(`hh_floors_collapsed_${hotelId}`, JSON.stringify(next));
+        } catch {
+          /* storage unavailable */
+        }
+      }
+      return next;
+    });
+  }, [currentHotelQ.data?.id]);
   const [hkFiltersOpen, setHkFiltersOpen] = useState(false);
   const [hkFiltersAnchor, setHkFiltersAnchor] = useState<{ top: number; left: number } | null>(null);
   const [hkStatusFilter, setHkStatusFilter] = useState<string[]>([]);
@@ -807,31 +834,57 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
     if (keep === undefined || keep === "quick") setHomeView(null);
   };
   // Housekeeping room grid: the open room expands inline below its row.
-  const [roomGridEl, setRoomGridEl] = useState<HTMLDivElement | null>(null);
+  // Floors split the tiles into several grids that share the same column
+  // classes, so one measured column count works for every floor grid.
+  const [roomGridWrapEl, setRoomGridWrapEl] = useState<HTMLDivElement | null>(null);
+  const roomGridElsRef = useRef<Set<HTMLDivElement>>(new Set());
+  const [roomGridTick, setRoomGridTick] = useState(0);
   const [roomSlotEl, setRoomSlotEl] = useState<HTMLDivElement | null>(null);
   const [roomViewBodyEl, setRoomViewBodyEl] = useState<HTMLDivElement | null>(null);
   const [roomGridCols, setRoomGridCols] = useState(4);
+  const measureRoomGrids = useCallback(() => {
+    for (const el of roomGridElsRef.current) {
+      if (!el.isConnected) continue;
+      const cols = getComputedStyle(el).gridTemplateColumns.split(" ").filter(Boolean).length;
+      if (cols) {
+        setRoomGridCols(Math.max(1, cols));
+        return;
+      }
+    }
+  }, []);
+  const setRoomGridEl = useCallback((el: HTMLDivElement | null) => {
+    if (!el) return;
+    // Drop grids whose sections are no longer rendered.
+    for (const g of roomGridElsRef.current) {
+      if (!g.isConnected) roomGridElsRef.current.delete(g);
+    }
+    roomGridElsRef.current.add(el);
+    measureRoomGrids();
+    setRoomGridTick((t) => t + 1);
+  }, [measureRoomGrids]);
   useEffect(() => {
-    if (!roomGridEl) return;
-    const measure = () => {
-      const cols = getComputedStyle(roomGridEl).gridTemplateColumns.split(" ").filter(Boolean).length;
-      setRoomGridCols(Math.max(1, cols));
-    };
-    measure();
-    const ro = new ResizeObserver(measure);
-    ro.observe(roomGridEl);
+    const ro = new ResizeObserver(measureRoomGrids);
+    for (const el of roomGridElsRef.current) {
+      if (el.isConnected) ro.observe(el);
+    }
+    measureRoomGrids();
     return () => ro.disconnect();
-  }, [roomGridEl]);
+  }, [roomGridTick, measureRoomGrids]);
   // Bring the tapped tile to the top of the screen once its room has expanded.
   // The slot grows over its open animation, so lower rows can't scroll up far
   // enough at first; scroll again as it grows. Offset by the sticky top bar.
   useEffect(() => {
-    if (openRoom === null || !roomGridEl || !roomSlotEl) return;
+    if (openRoom === null || !roomSlotEl) return;
     const scrollToTile = () => {
-      const tiles = Array.from(roomGridEl.children).filter(
-        (el) => !(el as HTMLElement).hasAttribute("data-room-slot"),
-      ) as HTMLElement[];
-      const tile = tiles.find((el) => new RegExp(`^${openRoom}(\\D|$)`).test(el.textContent?.trim() ?? ""));
+      let tile: HTMLElement | undefined;
+      for (const grid of roomGridElsRef.current) {
+        if (!grid.isConnected) continue;
+        const tiles = Array.from(grid.children).filter(
+          (el) => !(el as HTMLElement).hasAttribute("data-room-slot"),
+        ) as HTMLElement[];
+        tile = tiles.find((el) => new RegExp(`^${openRoom}(\\D|$)`).test(el.textContent?.trim() ?? ""));
+        if (tile) break;
+      }
       const target = tile ?? roomSlotEl;
       const bar = document.querySelector<HTMLElement>("[data-mobile-topbar]");
       const offset = (bar?.getBoundingClientRect().height ?? 0) + 12;
@@ -841,7 +894,7 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
     const raf = requestAnimationFrame(scrollToTile);
     const timers = [250, 500, 800].map((ms) => window.setTimeout(scrollToTile, ms));
     return () => { cancelAnimationFrame(raf); timers.forEach((t) => window.clearTimeout(t)); };
-  }, [openRoom, roomGridEl, roomSlotEl]);
+  }, [openRoom, roomGridTick, roomSlotEl]);
   const [topBarSlot, setTopBarSlot] = useState<HTMLDivElement | null>(null);
   // Stayover / DND photo state
   const [stayoverPhotosOpen, setStayoverPhotosOpen] = useState(false);
@@ -2259,7 +2312,7 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
   // Observes the stable grid and runs synchronously (MutationObserver fires
   // before paint), so the new content never flashes at full height first.
   useEffect(() => {
-    const grid = roomGridEl;
+    const grid = roomGridWrapEl;
     if (isReception || !grid) return;
     const heights = new WeakMap<HTMLElement, number>();
     const mo = new MutationObserver(() => {
@@ -2300,7 +2353,7 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
     });
     mo.observe(grid, { childList: true, subtree: true, attributes: true, attributeFilter: ["class", "hidden"] });
     return () => mo.disconnect();
-  }, [roomGridEl, isReception]);
+  }, [roomGridWrapEl, isReception]);
 
   const resetRoomCounts = async (roomNumber: number) => {
     pendingCounts.clearAll();
@@ -2482,12 +2535,12 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
     const nextSort = (rooms.reduce((m, r) => Math.max(m, r.sort_order ?? r.room_number), 0)) + 1;
     qc.setQueryData<Room[]>(["rooms"], (old) => {
       const list = old ? [...old] : [];
-      list.push({ id: `temp-${n}`, room_number: n, sort_order: nextSort, done: false, done_reception: false, category: null, default_status: null, reception_status_id: null, reception_bed_id: null, housekeeping_note: null, needs_maintenance: false, guest_vacated: false, early_check_in: false });
+      list.push({ id: `temp-${n}`, room_number: n, sort_order: nextSort, done: false, done_reception: false, category: null, default_status: null, reception_status_id: null, reception_bed_id: null, housekeeping_note: null, needs_maintenance: false, guest_vacated: false, early_check_in: false, floor: floorForRoom(n) });
       list.sort((a, b) => (a.sort_order ?? a.room_number) - (b.sort_order ?? b.room_number));
       return list;
     });
     const { error } = await supabase.from("rooms").upsert(
-      { room_number: n, sort_order: nextSort, done: false, done_reception: false, updated_at: new Date().toISOString() },
+      { room_number: n, sort_order: nextSort, done: false, done_reception: false, floor: floorForRoom(n), updated_at: new Date().toISOString() },
       { onConflict: "user_id,hotel_id,room_number" },
     );
     if (error) {
@@ -2895,7 +2948,26 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
 
 
  // --- Room category ---
- const toggleRoomCategory = async (roomNumber: number, value: Category) => {
+ // Floor helpers: rooms are grouped on the home screen by an editable
+ // per-room label; new rooms get a sensible suggestion from their number.
+
+ const setRoomFloor = async (roomNumber: number, floor: string | null) => {
+   const value = floor && floor.trim() ? floor.trim() : null;
+   qc.setQueryData<Room[]>(["rooms"], (old) => {
+     const list = old ? [...old] : [];
+     const idx = list.findIndex((r) => r.room_number === roomNumber);
+     if (idx >= 0) list[idx] = { ...list[idx], floor: value };
+     return list;
+   });
+   const { error } = await supabase.from("rooms").upsert(
+     { room_number: roomNumber, floor: value, updated_at: new Date().toISOString() } as never,
+     { onConflict: "user_id,hotel_id,room_number" },
+   );
+   if (error) toast.error(error.message);
+   qc.invalidateQueries({ queryKey: ["rooms"] });
+ };
+
+const toggleRoomCategory = async (roomNumber: number, value: Category) => {
  const current = parseCats(rooms.find((r) => r.room_number === roomNumber)?.category);
  const next = current.includes(value)
    ? current.filter((v) => v !== value)
@@ -5407,6 +5479,7 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
     toggleRoomCategory={toggleRoomCategory}
     setRoomDefaultStatus={setRoomDefaultStatus}
     toggleRoomFeature={toggleRoomFeature}
+    setRoomFloor={setRoomFloor}
   />
 
   {/* Add / config dialogs (room types, features, reception items, icon guide) */}
@@ -5965,7 +6038,7 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
  </div>
 
  {/* On-screen interactive accordion */}
- <div ref={setRoomGridEl} className="grid grid-cols-4 sm:grid-cols-6 md:grid-cols-[repeat(auto-fill,minmax(5.75rem,1fr))] lg:grid-cols-[repeat(auto-fill,minmax(7.5rem,1fr))] gap-2 md:gap-3">
+ <div ref={setRoomGridWrapEl}>
  {(() => {
   const allRooms = rooms.map((r) => r.room_number);
     let visibleRooms = (isReception && (receptionFeatureFilter.length > 0 || receptionStatusFilter.length > 0 || receptionRoomTypeFilter.length > 0 || receptionDoneOnlyFilter))
@@ -6032,7 +6105,6 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
         });
       });
     }
-  const nodes: React.ReactNode[] = [];
     const statusIds = resolveRoomStatusIds(receptionStatuses);
     // Index rooms/counts once instead of scanning the arrays per tile.
     const roomByNumber = new Map<number, Room>();
@@ -6041,11 +6113,33 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
     const bedLabelById = new Map<string, string>();
     for (const b of receptionBeds) bedLabelById.set(b.id, b.label);
     for (const c of counts) if ((c.count ?? 0) > 0) countedRooms.add(c.room_number);
-   const openIdx = openRoom !== null ? visibleRooms.indexOf(openRoom) : -1;
-   const slotAfter =
-     openIdx >= 0
-       ? Math.min(visibleRooms.length - 1, (Math.floor(openIdx / roomGridCols) + 1) * roomGridCols - 1)
-       : -1;
+    // Group the filtered rooms by floor, keeping room order; rooms without a
+    // floor collect in "Other rooms" at the end.
+    const floorGroups: { key: string; label: string; rooms: number[] }[] = [];
+    const floorGroupIdx = new Map<string, number>();
+    for (const n of visibleRooms) {
+      const label = roomByNumber.get(n)?.floor?.trim() || "Other rooms";
+      let gi = floorGroupIdx.get(label);
+      if (gi === undefined) {
+        gi = floorGroups.length;
+        floorGroupIdx.set(label, gi);
+        floorGroups.push({ key: label, label, rooms: [] });
+      }
+      floorGroups[gi].rooms.push(n);
+    }
+    floorGroups.sort((a, b) => Math.min(...a.rooms) - Math.min(...b.rooms));
+    const otherIdx = floorGroups.findIndex((g) => g.key === "Other rooms");
+    if (otherIdx >= 0 && otherIdx !== floorGroups.length - 1) {
+      const [other] = floorGroups.splice(otherIdx, 1);
+      floorGroups.push(other);
+    }
+    const slotAfterFor = (groupRooms: number[]) => {
+      const openIdx = openRoom !== null ? groupRooms.indexOf(openRoom) : -1;
+      return openIdx >= 0
+        ? Math.min(groupRooms.length - 1, (Math.floor(openIdx / roomGridCols) + 1) * roomGridCols - 1)
+        : -1;
+    };
+   const tileByRoom = new Map<number, React.ReactNode>();
    for (let i = 0; i < visibleRooms.length; i++) {
    const n = visibleRooms[i];
  const done = doneSet.has(n);
@@ -6054,7 +6148,7 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
    const hasLinenCount = countedRooms.has(n);
    const isNR = nrOnRooms.has(n);
    if (isReception) {
-     nodes.push(
+     tileByRoom.set(n,
        <ReceptionRoomTile
          key={`r-${n}`}
          n={n}
@@ -6071,7 +6165,7 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
         />,
       );
     } else {
-     nodes.push(
+     tileByRoom.set(n,
        <HousekeepingRoomTile
          key={`r-${n}`}
          n={n}
@@ -6099,13 +6193,41 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
        />,
      );
    }
-   if (i === slotAfter) {
-     nodes.push(
-       <div key="room-inline-slot" data-room-slot ref={setRoomSlotEl} className="col-span-full" />,
-     );
    }
-   }
- return nodes;
+ return floorGroups.map((group, gi) => {
+   const collapsed = !!collapsedFloors[group.key];
+   const slotAfter = slotAfterFor(group.rooms);
+   return (
+     <section key={group.key} className={gi === 0 ? "" : "mt-5"}>
+       <button
+         type="button"
+         onClick={() => toggleFloorCollapsed(group.key)}
+         className="mb-2 flex w-full items-center gap-1.5 text-left"
+         aria-expanded={!collapsed}
+       >
+         {collapsed ? (
+           <ChevronRight className="h-3.5 w-3.5 text-muted-foreground" />
+         ) : (
+           <ChevronDown className="h-3.5 w-3.5 text-muted-foreground" />
+         )}
+         <span className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">{group.label}</span>
+         <span className="text-xs text-muted-foreground/60">{group.rooms.length}</span>
+       </button>
+       {!collapsed && (
+         <div ref={setRoomGridEl} className="grid grid-cols-4 sm:grid-cols-6 md:grid-cols-[repeat(auto-fill,minmax(5.75rem,1fr))] lg:grid-cols-[repeat(auto-fill,minmax(7.5rem,1fr))] gap-2 md:gap-3">
+           {group.rooms.map((n, i) => (
+             <React.Fragment key={`r-${n}`}>
+               {tileByRoom.get(n)}
+               {i === slotAfter && (
+                 <div data-room-slot ref={setRoomSlotEl} className="col-span-full" />
+               )}
+             </React.Fragment>
+           ))}
+         </div>
+       )}
+     </section>
+   );
+ });
  })()}
  </div>
 

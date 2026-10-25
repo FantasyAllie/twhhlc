@@ -1213,6 +1213,7 @@ export type Database = {
           done_reception: boolean
           early_check_in: boolean
           early_check_in_at: string | null
+          floor: string | null
           guest_vacated: boolean
           guest_vacated_at: string | null
           hotel_id: string
@@ -1252,6 +1253,7 @@ export type Database = {
           done_reception?: boolean
           early_check_in?: boolean
           early_check_in_at?: string | null
+          floor?: string | null
           guest_vacated?: boolean
           guest_vacated_at?: string | null
           hotel_id?: string
@@ -1291,6 +1293,7 @@ export type Database = {
           done_reception?: boolean
           early_check_in?: boolean
           early_check_in_at?: string | null
+          floor?: string | null
           guest_vacated?: boolean
           guest_vacated_at?: string | null
           hotel_id?: string
