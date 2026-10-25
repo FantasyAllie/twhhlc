@@ -6043,7 +6043,7 @@ const toggleRoomCategory = async (roomNumber: number, value: Category) => {
  </div>
 
  {/* On-screen interactive accordion */}
- <div ref={setRoomGridEl} className="grid grid-cols-4 sm:grid-cols-6 md:grid-cols-[repeat(auto-fill,minmax(5.75rem,1fr))] lg:grid-cols-[repeat(auto-fill,minmax(7.5rem,1fr))] gap-2 md:gap-3">
+ <div ref={setRoomGridWrapEl}>
  {(() => {
   const allRooms = rooms.map((r) => r.room_number);
     let visibleRooms = (isReception && (receptionFeatureFilter.length > 0 || receptionStatusFilter.length > 0 || receptionRoomTypeFilter.length > 0 || receptionDoneOnlyFilter))
@@ -6110,7 +6110,6 @@ const toggleRoomCategory = async (roomNumber: number, value: Category) => {
         });
       });
     }
-  const nodes: React.ReactNode[] = [];
     const statusIds = resolveRoomStatusIds(receptionStatuses);
     // Index rooms/counts once instead of scanning the arrays per tile.
     const roomByNumber = new Map<number, Room>();
@@ -6119,11 +6118,33 @@ const toggleRoomCategory = async (roomNumber: number, value: Category) => {
     const bedLabelById = new Map<string, string>();
     for (const b of receptionBeds) bedLabelById.set(b.id, b.label);
     for (const c of counts) if ((c.count ?? 0) > 0) countedRooms.add(c.room_number);
-   const openIdx = openRoom !== null ? visibleRooms.indexOf(openRoom) : -1;
-   const slotAfter =
-     openIdx >= 0
-       ? Math.min(visibleRooms.length - 1, (Math.floor(openIdx / roomGridCols) + 1) * roomGridCols - 1)
-       : -1;
+    // Group the filtered rooms by floor, keeping room order; rooms without a
+    // floor collect in "Other rooms" at the end.
+    const floorGroups: { key: string; label: string; rooms: number[] }[] = [];
+    const floorGroupIdx = new Map<string, number>();
+    for (const n of visibleRooms) {
+      const label = roomByNumber.get(n)?.floor?.trim() || "Other rooms";
+      let gi = floorGroupIdx.get(label);
+      if (gi === undefined) {
+        gi = floorGroups.length;
+        floorGroupIdx.set(label, gi);
+        floorGroups.push({ key: label, label, rooms: [] });
+      }
+      floorGroups[gi].rooms.push(n);
+    }
+    floorGroups.sort((a, b) => Math.min(...a.rooms) - Math.min(...b.rooms));
+    const otherIdx = floorGroups.findIndex((g) => g.key === "Other rooms");
+    if (otherIdx >= 0 && otherIdx !== floorGroups.length - 1) {
+      const [other] = floorGroups.splice(otherIdx, 1);
+      floorGroups.push(other);
+    }
+    const slotAfterFor = (groupRooms: number[]) => {
+      const openIdx = openRoom !== null ? groupRooms.indexOf(openRoom) : -1;
+      return openIdx >= 0
+        ? Math.min(groupRooms.length - 1, (Math.floor(openIdx / roomGridCols) + 1) * roomGridCols - 1)
+        : -1;
+    };
+   const tileByRoom = new Map<number, React.ReactNode>();
    for (let i = 0; i < visibleRooms.length; i++) {
    const n = visibleRooms[i];
  const done = doneSet.has(n);
@@ -6132,7 +6153,7 @@ const toggleRoomCategory = async (roomNumber: number, value: Category) => {
    const hasLinenCount = countedRooms.has(n);
    const isNR = nrOnRooms.has(n);
    if (isReception) {
-     nodes.push(
+     tileByRoom.set(n,
        <ReceptionRoomTile
          key={`r-${n}`}
          n={n}
@@ -6149,7 +6170,7 @@ const toggleRoomCategory = async (roomNumber: number, value: Category) => {
         />,
       );
     } else {
-     nodes.push(
+     tileByRoom.set(n,
        <HousekeepingRoomTile
          key={`r-${n}`}
          n={n}
@@ -6177,13 +6198,41 @@ const toggleRoomCategory = async (roomNumber: number, value: Category) => {
        />,
      );
    }
-   if (i === slotAfter) {
-     nodes.push(
-       <div key="room-inline-slot" data-room-slot ref={setRoomSlotEl} className="col-span-full" />,
-     );
    }
-   }
- return nodes;
+ return floorGroups.map((group, gi) => {
+   const collapsed = !!collapsedFloors[group.key];
+   const slotAfter = slotAfterFor(group.rooms);
+   return (
+     <section key={group.key} className={gi === 0 ? "" : "mt-5"}>
+       <button
+         type="button"
+         onClick={() => toggleFloorCollapsed(group.key)}
+         className="mb-2 flex w-full items-center gap-1.5 text-left"
+         aria-expanded={!collapsed}
+       >
+         {collapsed ? (
+           <ChevronRight className="h-3.5 w-3.5 text-muted-foreground" />
+         ) : (
+           <ChevronDown className="h-3.5 w-3.5 text-muted-foreground" />
+         )}
+         <span className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">{group.label}</span>
+         <span className="text-xs text-muted-foreground/60">{group.rooms.length}</span>
+       </button>
+       {!collapsed && (
+         <div ref={setRoomGridEl} className="grid grid-cols-4 sm:grid-cols-6 md:grid-cols-[repeat(auto-fill,minmax(5.75rem,1fr))] lg:grid-cols-[repeat(auto-fill,minmax(7.5rem,1fr))] gap-2 md:gap-3">
+           {group.rooms.map((n, i) => (
+             <React.Fragment key={`r-${n}`}>
+               {tileByRoom.get(n)}
+               {i === slotAfter && (
+                 <div data-room-slot ref={setRoomSlotEl} className="col-span-full" />
+               )}
+             </React.Fragment>
+           ))}
+         </div>
+       )}
+     </section>
+   );
+ });
  })()}
  </div>
 
