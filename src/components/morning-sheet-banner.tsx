@@ -267,3 +267,72 @@ function MorningSheetPreview({ open, onOpenChange, sheet, canConfirm, busy, onAp
     </Sheet>
   );
 }
+
+/** Small popup behind the "Paperwork" buttons: upload a new file or open the last upload. */
+function PaperworkMenu({ hotelId }: { hotelId: string | undefined }) {
+  const [open, setOpen] = useState(false);
+  const [busy, setBusy] = useState(false);
+  const [last, setLast] = useState<{ file_name: string; file_path: string; created_at: string } | null>(null);
+
+  useEffect(() => {
+    const show = () => setOpen(true);
+    window.addEventListener(OPEN_PAPERWORK_EVENT, show);
+    return () => window.removeEventListener(OPEN_PAPERWORK_EVENT, show);
+  }, []);
+
+  useEffect(() => {
+    if (!open || !hotelId) return;
+    let cancelled = false;
+    setBusy(true);
+    db.from("morning_sheet_imports")
+      .select("file_name,file_path,created_at")
+      .eq("hotel_id", hotelId)
+      .not("file_path", "is", null)
+      .order("created_at", { ascending: false })
+      .limit(1)
+      .maybeSingle()
+      .then(({ data, error }: { data: { file_name: string; file_path: string; created_at: string } | null; error: unknown }) => {
+        if (cancelled) return;
+        if (error) console.error("paperwork lookup failed", error);
+        setLast(error ? null : data);
+        setBusy(false);
+      });
+    return () => { cancelled = true; };
+  }, [open, hotelId]);
+
+  const viewOriginal = async () => {
+    if (!last) return;
+    setBusy(true);
+    try {
+      const { data, error } = await supabase.storage.from("paperwork").createSignedUrl(last.file_path, 600);
+      if (error || !data?.signedUrl) throw error ?? new Error("No link");
+      window.open(data.signedUrl, "_blank", "noopener");
+      setOpen(false);
+    } catch {
+      toast.error("Couldn't open the original paperwork");
+    } finally {
+      setBusy(false);
+    }
+  };
+
+  return (
+    <Dialog open={open} onOpenChange={setOpen}>
+      <DialogContent className="max-w-xs">
+        <DialogHeader>
+          <DialogTitle className="font-display">Paperwork</DialogTitle>
+          <DialogDescription>Today's uploaded room status report.</DialogDescription>
+        </DialogHeader>
+        <div className="flex flex-col gap-2">
+          <Button variant="outline" className="justify-start gap-2" onClick={() => { setOpen(false); document.getElementById(MORNING_SHEET_INPUT_ID)?.click(); }}>
+            <FileUp className="h-4 w-4" />Upload a file
+          </Button>
+          <Button variant="outline" className="justify-start gap-2" disabled={!last || busy} onClick={() => void viewOriginal()}>
+            <FileText className="h-4 w-4" />{busy ? "Opening…" : "View original"}
+          </Button>
+          {!last && !busy && <p className="text-xs text-muted-foreground">No paperwork uploaded yet.</p>}
+          {last && <p className="truncate text-xs text-muted-foreground">Last upload: {last.file_name}</p>}
+        </div>
+      </DialogContent>
+    </Dialog>
+  );
+}
