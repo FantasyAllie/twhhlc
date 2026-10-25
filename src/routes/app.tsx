@@ -179,6 +179,7 @@ import type { RoomTileState } from "@/lib/rooms";
 import { usePendingCounts } from "@/lib/pending-counts";
 import { buildOpsState, captureOpsSnapshot, undoLastOpsSnapshot } from "@/lib/ops-snapshots";
 import { HousekeepingRoomTile, ReceptionRoomTile } from "@/components/rooms/room-tile";
+import { MorningSheetBanner, MORNING_SHEET_INPUT_ID } from "@/components/morning-sheet-banner";
 
 export const Route = createFileRoute("/app")({
   ssr: false,
@@ -4102,6 +4103,9 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
         onClick: () => { setMessagesInitial({}); setMessagesSheetOpen(true); },
       });
     }
+    if ((menuIsAdmin || hasHousekeeperRole || hasReceptionRole) && !isMaintenance) {
+      utilities.push({ key: "morning-sheet", icon: FileUp, label: "Upload Morning Sheet", onClick: () => document.getElementById(MORNING_SHEET_INPUT_ID)?.click() });
+    }
     if (canAccessLeaderboard(position, subRoles)) {
       utilities.push({ key: "leaderboard", icon: Trophy, label: "Leaderboard", onClick: () => setLeaderboardOpen(true) });
     }
@@ -4149,7 +4153,7 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
     }
     account.push({ key: "account", icon: User, label: "Account", onClick: () => setAccountOpen(true) });
     const appearance: MenuAction[] = [{ key: "theme", icon: ThemeGlyph, label: "Theme", onClick: () => cycleTheme() }];
-    const opsOrder = ["messages", "maintenance-log", "lost-property", "stayover-photos", "leaderboard"];
+    const opsOrder = ["morning-sheet", "messages", "maintenance-log", "lost-property", "stayover-photos", "leaderboard"];
     utilities.sort((a, b) => opsOrder.indexOf(a.key) - opsOrder.indexOf(b.key));
     const linenOrder = ["delivery", "linen-list", "linen-list-hk", "linen-days"];
     linen.sort((a, b) => linenOrder.indexOf(a.key) - linenOrder.indexOf(b.key));
@@ -4462,6 +4466,13 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
               </div>
             )}
  </header>
+ )}
+ {(realIsAdmin || realIsManager || hasHousekeeperRole || hasReceptionRole) && !isMaintenance && !isFnb && (
+   <MorningSheetBanner
+     hotelId={currentHotelQ.data?.id}
+     userName={authUser?.username ?? "Staff"}
+     canConfirm={realIsAdmin || realIsManager || hasHousekeeperRole}
+   />
  )}
 
  {/* Mobile role-picker sheet (triggered from the burger menu or the tablet top bar).
