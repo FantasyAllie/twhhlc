@@ -5,7 +5,7 @@
 - [x] Sad full-screen outcome + sad trombone sound when completion happens with Dirty rooms present
 
 ## Current work
-- [ ] Show paperwork CLEAN / ARRIVAL with the Not Started tile colour and verify the mapping
+- [x] Show paperwork CLEAN / ARRIVAL with the Not Started tile colour and verify the mapping
 - [x] Route Reception room comments to Housekeeping and verify sending and readback
 - [x] Replace paired messages with department groups, enforce access and verify sending with sender names
 - [x] Add and verify a daily 11pm UK-time export for missing daily reports
