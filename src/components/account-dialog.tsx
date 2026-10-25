@@ -16,18 +16,22 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 
+type PlatformChoice = "auto" | "ios" | "android";
+
 export function AccountDialog({
   open,
   onOpenChange,
   currentUsername,
   onUsernameChanged,
   onSignOut,
+  isDeveloper = false,
 }: {
   open: boolean;
   onOpenChange: (o: boolean) => void;
   currentUsername: string;
   onUsernameChanged: (u: string) => void;
   onSignOut: () => void;
+  isDeveloper?: boolean;
 }) {
   const [username, setUsername] = useState(currentUsername);
   const [newEmail, setNewEmail] = useState("");
