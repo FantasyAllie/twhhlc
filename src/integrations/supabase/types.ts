@@ -171,6 +171,38 @@ export type Database = {
           },
         ]
       }
+      hotel_floors: {
+        Row: {
+          cupboard_key: string
+          hotel_id: string
+          id: string
+          name: string
+          sort_order: number
+        }
+        Insert: {
+          cupboard_key?: string
+          hotel_id?: string
+          id?: string
+          name: string
+          sort_order?: number
+        }
+        Update: {
+          cupboard_key?: string
+          hotel_id?: string
+          id?: string
+          name?: string
+          sort_order?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "hotel_floors_hotel_id_fkey"
+            columns: ["hotel_id"]
+            isOneToOne: false
+            referencedRelation: "hotels"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       hotel_members: {
         Row: {
           created_at: string
@@ -1509,6 +1541,10 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      assign_floor_rooms: {
+        Args: { p_floor: string; p_rooms: number[] }
+        Returns: undefined
+      }
       complete_room_checklist: {
         Args: { p_department: string; p_items: Json; p_room_number: number }
         Returns: string

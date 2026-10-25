@@ -183,6 +183,13 @@
       "when": 1792963769614,
       "tag": "0025_add_room_floor",
       "breakpoints": true
+    },
+    {
+      "idx": 26,
+      "version": "7",
+      "when": 1792964467281,
+      "tag": "0026_central_floors_and_cupboards",
+      "breakpoints": true
     }
   ]
 }
