@@ -6207,20 +6207,19 @@ const toggleRoomCategory = async (roomNumber: number, value: Category) => {
    const slotAfter = slotAfterFor(group.rooms);
    return (
      <section key={group.key} className={gi === 0 ? "" : "mt-5"}>
-       <button
+       <Button
          type="button"
+         variant="outline"
          onClick={() => toggleFloorCollapsed(group.key)}
-         className="mb-2 flex w-full items-center gap-1.5 text-left"
+         className="mb-3 grid h-auto min-h-14! w-full grid-cols-[minmax(0,1fr)_auto] items-center gap-3 rounded-xl border-border px-4 py-3 text-left shadow-elevation-1"
          aria-expanded={!collapsed}
        >
-         {collapsed ? (
-           <ChevronRight className="h-3.5 w-3.5 text-muted-foreground" />
-         ) : (
-           <ChevronDown className="h-3.5 w-3.5 text-muted-foreground" />
-         )}
-         <span className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">{group.label}</span>
-         <span className="text-xs text-muted-foreground/60">{group.rooms.length}</span>
-       </button>
+         <span className="min-w-0 truncate text-sm font-semibold uppercase text-foreground">{group.label}</span>
+         <span className="flex shrink-0 items-center gap-3 text-muted-foreground">
+           <span className="text-xs font-medium tabular-nums">{group.rooms.length} rooms</span>
+           <ChevronDown className={cn("h-5 w-5 shrink-0 transition-transform duration-200 motion-reduce:transition-none", !collapsed && "rotate-180")} />
+         </span>
+       </Button>
        {!collapsed && (
          <div ref={setRoomGridEl} className="grid grid-cols-4 sm:grid-cols-6 md:grid-cols-[repeat(auto-fill,minmax(5.75rem,1fr))] lg:grid-cols-[repeat(auto-fill,minmax(7.5rem,1fr))] gap-2 md:gap-3">
            {group.rooms.map((n, i) => (
