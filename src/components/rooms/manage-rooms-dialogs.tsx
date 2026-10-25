@@ -12,6 +12,8 @@ import { useQueryClient } from "@tanstack/react-query";
 import { Switch } from "@/components/ui/switch";
 import { formatFlipDate, isMattressDue, mattressNextDue, updateMattressInterval, updateRoomMattress, useMattressInterval } from "@/lib/mattress";
 import { useCurrentHotel } from "@/lib/hotels";
+import { FloorsCupboards } from "@/components/rooms/floors-cupboards";
+import { Layers } from "lucide-react";
 
 type Props = {
   manageRoomsOpen: boolean;
@@ -48,7 +50,7 @@ export function ManageRoomsDialogs({
   removeRoom,
   moveRoom,
 }: Props) {
-  const [view, setView] = useState<"home" | "rooms" | "checklist" | "mattress">("home");
+  const [view, setView] = useState<"home" | "rooms" | "checklist" | "mattress" | "floors">("home");
   useEffect(() => {
     if (manageRoomsOpen) setView("home");
   }, [manageRoomsOpen]);
@@ -74,6 +76,10 @@ export function ManageRoomsDialogs({
             <Button variant="outline" size="sm" className={btn} onClick={() => setView("rooms")}>
               <DoorOpen className="h-4 w-4 shrink-0" />
               <span className="truncate">Rooms</span>
+            </Button>
+            <Button variant="outline" size="sm" className={btn} onClick={() => setView("floors")}>
+              <Layers className="h-4 w-4 shrink-0" />
+              <span className="truncate">Floors &amp; Cupboards</span>
             </Button>
             <Button variant="outline" size="sm" className={btn} onClick={() => setRoomTypesSheetOpen(true)}>
               <Bed className="h-4 w-4 shrink-0" />
@@ -111,6 +117,7 @@ export function ManageRoomsDialogs({
         </div>
       )}
       {view === "mattress" && <MattressSchedule rooms={rooms} />}
+      {view === "floors" && <FloorsCupboards rooms={rooms} />}
       {view === "rooms" && (
       <div className="flex min-h-0 flex-col space-y-3">
         <DialogHeader>
