@@ -5,8 +5,8 @@
 - [x] Sad full-screen outcome + sad trombone sound when completion happens with Dirty rooms present
 
 ## Current work
-- [ ] Centralise floors, room assignments and inventory cupboard names in Floors & Cupboards
-- [ ] Verify saved floor assignments and matching inventory cupboard names
+- [x] Centralise floors, room assignments and inventory cupboard names in Floors & Cupboards
+- [x] Verify saved floor assignments and matching inventory cupboard names
 - [x] Show paperwork CLEAN / ARRIVAL with the Not Started tile colour and verify the mapping
 - [x] Route Reception room comments to Housekeeping and verify sending and readback
 - [x] Replace paired messages with department groups, enforce access and verify sending with sender names

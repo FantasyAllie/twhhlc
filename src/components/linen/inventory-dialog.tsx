@@ -241,7 +241,7 @@ export function InventoryDialog({
                 onClick={() => setCupboard(c.key)}
                 aria-pressed={cupboard === c.key}
                 className={
-                  "flex-1 px-2 sm:px-3 h-8 text-xs sm:text-sm rounded-full transition-colors whitespace-nowrap " +
+                  "shrink-0 px-3 h-8 text-xs sm:text-sm rounded-full transition-colors whitespace-nowrap " +
                   (cupboard === c.key
                     ? "bg-primary text-primary-foreground shadow-sm font-medium"
                     : "text-muted-foreground hover:text-foreground")
