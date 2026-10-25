@@ -396,11 +396,13 @@ export const createUser = createServerFn({ method: "POST" })
 export const listHotels = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .handler(async ({ context }): Promise<HotelOption[]> => {
-    const { supabaseAdmin, isRegionalAdmin, activeHotelId } = await getAdminAccess(context);
-    const query = supabaseAdmin
+    const { supabaseAdmin, isRegionalAdmin, isDeveloper, activeHotelId } = await getAdminAccess(context);
+    const base = supabaseAdmin
       .from("hotels")
       .select("id, name, slug")
       .order("name", { ascending: true });
+    // Developer-only test hotels never appear to anyone else.
+    const query = isDeveloper ? base : (base as any).eq("developer_only", false) as typeof base;
     const { data, error } = isRegionalAdmin
       ? await query
       : activeHotelId
@@ -426,10 +428,11 @@ export const listMyHotels = createServerFn({ method: "POST" })
     const roles = ((roleRows ?? []) as { role: string }[]).map((r) => r.role);
     const isRegionalAdmin = roles.includes("regional_admin");
     if (isRegionalAdmin) {
-      const { data, error } = await supabaseAdmin
+      const base = supabaseAdmin
         .from("hotels")
         .select("id, name, slug")
         .order("name", { ascending: true });
+      const { data, error } = roles.includes("developer") ? await base : await (base as any).eq("developer_only", false);
       if (error) throw new Error(error.message);
       return ((data ?? []) as HotelOption[]).map((h) => ({ id: h.id, name: h.name, slug: h.slug }));
     }
@@ -501,10 +504,10 @@ export const setActiveHotel = createServerFn({ method: "POST" })
     } else {
       const { data: hotel } = await supabaseAdmin
         .from("hotels")
-        .select("id")
+        .select("id, developer_only")
         .eq("id", data.hotelId)
         .maybeSingle();
-      if (!hotel) throw new Error("Hotel not found");
+      if (!hotel || ((hotel as { developer_only?: boolean }).developer_only && !roles.includes("developer"))) throw new Error("Hotel not found");
     }
     const { error } = await supabaseAdmin
       .from("user_active_hotel")
