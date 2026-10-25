@@ -6191,8 +6191,9 @@ const toggleRoomCategory = async (roomNumber: number, value: Category) => {
  };
  return <>
    <div className="mb-4 flex gap-2 overflow-x-auto pb-1 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden sm:grid sm:grid-cols-3 sm:overflow-visible lg:flex lg:flex-wrap" aria-label="Floor selection">
-     {canShowAllFloors && <Button variant={activeFloor === null ? "default" : "outline"} className="min-h-11! min-w-0 rounded-full px-3 lg:flex-1" aria-pressed={activeFloor === null} onClick={() => chooseFloor(null)}>All rooms</Button>}
-     {floorGroups.map((group) => <Button key={group.key} variant={activeFloor === group.key ? "default" : "outline"} className="min-h-11! min-w-0 rounded-full px-3 lg:flex-1" aria-pressed={activeFloor === group.key} onClick={() => chooseFloor(group.key)}>
+     {canShowAllFloors && <Button variant={activeFloor === null ? "default" : "outline"} className="min-h-11! min-w-0 max-sm:shrink-0 rounded-full px-3 lg:flex-1" aria-pressed={activeFloor === null} onClick={() => chooseFloor(null)}>All rooms</Button>}
+     {floorGroups.map((group) => <Button key={group.key} variant={activeFloor === group.key ? "default" : "outline"} className="min-h-11! min-w-0 max-sm:shrink-0 rounded-full px-3 lg:flex-1" aria-pressed={activeFloor === group.key} onClick={() => chooseFloor(group.key)}>
+
        <span className="truncate uppercase">{group.label}</span><span className="shrink-0 text-xs opacity-70 tabular-nums">{group.rooms.length}</span>
      </Button>)}
    </div>
