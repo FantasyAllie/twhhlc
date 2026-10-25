@@ -162,7 +162,9 @@ export const computeTileMeta = (args: {
   // but still needs its arrival setup checked before it is marked done.
   if (sheetKind === "arrival" && (flags.isArrival || flags.isClean))
     return {
-      ...(working ? roomStateMeta.progress : roomStateMeta.todo),
+      ...(working ? roomStateMeta.progress : {
+        bg: "var(--room-early)", fg: "var(--room-early-fg)", accent: "var(--room-early-accent)",
+      }),
       label: `Clean / Arrival\n${working ? "In progress" : "Not started"}`,
     };
   if (flags.isDirty)
