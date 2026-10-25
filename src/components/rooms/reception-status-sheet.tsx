@@ -396,31 +396,6 @@ export function ReceptionStatusSheet({
                    );
                  })()}
                </div>
-                <details className="group space-y-2">
-                  <summary className="flex cursor-pointer list-none items-center justify-center gap-1.5 py-1 text-xs font-semibold uppercase tracking-wide text-muted-foreground [&::-webkit-details-marker]:hidden">
-                    Guest &amp; room info
-                    <ChevronDown className="h-3.5 w-3.5 transition-transform group-open:rotate-180" />
-                  </summary>
-                  <div className="mt-2 grid grid-cols-2 gap-1.5">
-                    {roomFlags.flags.map((d) => {
-                      const on = roomFlags.isOn(room, n, d);
-                      return (
-                        <Row
-                          key={d.key}
-                          label={
-                            <span className="inline-flex items-center gap-2">
-                              <FlagIcon def={d} className="h-4 w-4 shrink-0" />
-                              {d.label}
-                            </span>
-                          }
-                          selected={on}
-                          onClick={() => roomFlags.toggle(n, d, !on)}
-                        />
-                      );
-                    })}
-                  </div>
-                   <RoomChecklistRecords roomNumber={n} />
-                </details>
             </div>
          </>
        );
