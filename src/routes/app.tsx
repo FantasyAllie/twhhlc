@@ -700,6 +700,32 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
   const [editItemSheetId, setEditItemSheetId] = useState<string | null>(null);
   const [filtersSheetOpen, setFiltersSheetOpen] = useState(false);
   const [hideCompletedRooms, setHideCompletedRooms] = useState(false);
+  // Collapsed floor sections on the home screen, remembered per hotel.
+  const [collapsedFloors, setCollapsedFloors] = useState<Record<string, boolean>>({});
+  useEffect(() => {
+    const hotelId = currentHotelQ.data?.id;
+    if (!hotelId) return;
+    try {
+      const raw = localStorage.getItem(`hh_floors_collapsed_${hotelId}`);
+      setCollapsedFloors(raw ? (JSON.parse(raw) as Record<string, boolean>) : {});
+    } catch {
+      setCollapsedFloors({});
+    }
+  }, [currentHotelQ.data?.id]);
+  const toggleFloorCollapsed = useCallback((key: string) => {
+    setCollapsedFloors((prev) => {
+      const next = { ...prev, [key]: !prev[key] };
+      const hotelId = currentHotelQ.data?.id;
+      if (hotelId) {
+        try {
+          localStorage.setItem(`hh_floors_collapsed_${hotelId}`, JSON.stringify(next));
+        } catch {
+          /* storage unavailable */
+        }
+      }
+      return next;
+    });
+  }, [currentHotelQ.data?.id]);
   const [hkFiltersOpen, setHkFiltersOpen] = useState(false);
   const [hkFiltersAnchor, setHkFiltersAnchor] = useState<{ top: number; left: number } | null>(null);
   const [hkStatusFilter, setHkStatusFilter] = useState<string[]>([]);
