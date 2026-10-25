@@ -11,21 +11,23 @@ const PROMPT = `This PDF is a hotel's daily House Room Status report. Return one
 - adults/children/infants: from the Ad Ch Inf columns, 0 if blank.
 - bed: from housekeeping notes: TWIN -> twin, KING -> king, DOUBLE -> double, else null.
 - dog: true if notes mention DOG.
-- notes: the housekeeping notes with the TWIN/KING/DOUBLE/DOG keywords removed and trimmed, or null if nothing remains.
+- eci: true if notes mention ECI (early check-in).
+- lco: true if notes mention LCO (late check-out).
+- notes: the housekeeping notes with the TWIN/KING/DOUBLE/DOG/ECI/LCO keywords removed and trimmed, or null if nothing remains.
 - room_type: the Room Type column exactly (e.g. "SUP_TW_KING", "FAMILY"), or null.
 - For a room where one guest departs and another arrives today, adults/children/infants are the ARRIVING guests.
 - sheet_date: the report date as YYYY-MM-DD, or null.`;
 
 const room = {
   type: "object", additionalProperties: false,
-  required: ["room_number", "night", "occupancy", "arriving_today", "departing_today", "adults", "children", "infants", "lead_name", "bed", "dog", "notes", "room_type"],
+  required: ["room_number", "night", "occupancy", "arriving_today", "departing_today", "adults", "children", "infants", "lead_name", "bed", "dog", "eci", "lco", "notes", "room_type"],
   properties: {
     room_number: { type: "integer" }, night: { type: ["string", "null"] },
     occupancy: { type: "string", enum: ["vacant", "occupied", "departure", "out_of_service"] },
     arriving_today: { type: "boolean" }, departing_today: { type: "boolean" },
     adults: { type: "integer" }, children: { type: "integer" }, infants: { type: "integer" },
     lead_name: { type: ["string", "null"] }, bed: { type: ["string", "null"], enum: ["twin", "double", "king", null] },
-    dog: { type: "boolean" }, notes: { type: ["string", "null"] }, room_type: { type: ["string", "null"] },
+    dog: { type: "boolean" }, eci: { type: "boolean" }, lco: { type: "boolean" }, notes: { type: ["string", "null"] }, room_type: { type: ["string", "null"] },
   },
 };
 const schema = {

@@ -12,6 +12,9 @@ export type ParsedSheetRoom = {
   lead_name: string | null;
   bed: "twin" | "double" | "king" | null;
   dog: boolean;
+  /** Housekeeping notes said ECI / LCO. Older uploads lack them. */
+  eci?: boolean;
+  lco?: boolean;
   notes: string | null;
   /** Paperwork room type code, e.g. SUP_TW_KING. Older uploads lack it. */
   room_type?: string | null;
