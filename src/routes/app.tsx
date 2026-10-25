@@ -2947,7 +2947,33 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
 
 
  // --- Room category ---
- const toggleRoomCategory = async (roomNumber: number, value: Category) => {
+ // Floor helpers: rooms are grouped on the home screen by an editable
+ // per-room label; new rooms get a sensible suggestion from their number.
+ const floorForRoom = (n: number): string => {
+   if (n < 20) return "Ground Floor";
+   if (n < 30) return "20's";
+   if (n < 40) return "30's";
+   if (n < 50) return "40's";
+   return `Floor ${Math.floor(n / 10)}`;
+ };
+
+ const setRoomFloor = async (roomNumber: number, floor: string | null) => {
+   const value = floor && floor.trim() ? floor.trim() : null;
+   qc.setQueryData<Room[]>(["rooms"], (old) => {
+     const list = old ? [...old] : [];
+     const idx = list.findIndex((r) => r.room_number === roomNumber);
+     if (idx >= 0) list[idx] = { ...list[idx], floor: value };
+     return list;
+   });
+   const { error } = await supabase.from("rooms").upsert(
+     { room_number: roomNumber, floor: value, updated_at: new Date().toISOString() } as never,
+     { onConflict: "user_id,hotel_id,room_number" },
+   );
+   if (error) toast.error(error.message);
+   qc.invalidateQueries({ queryKey: ["rooms"] });
+ };
+
+const toggleRoomCategory = async (roomNumber: number, value: Category) => {
  const current = parseCats(rooms.find((r) => r.room_number === roomNumber)?.category);
  const next = current.includes(value)
    ? current.filter((v) => v !== value)
