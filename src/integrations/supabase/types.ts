@@ -200,6 +200,7 @@ export type Database = {
       hotels: {
         Row: {
           created_at: string
+          developer_only: boolean
           id: string
           last_hk_reset_at: string | null
           linen_delivery_days: number[]
@@ -211,6 +212,7 @@ export type Database = {
         }
         Insert: {
           created_at?: string
+          developer_only?: boolean
           id?: string
           last_hk_reset_at?: string | null
           linen_delivery_days?: number[]
@@ -222,6 +224,7 @@ export type Database = {
         }
         Update: {
           created_at?: string
+          developer_only?: boolean
           id?: string
           last_hk_reset_at?: string | null
           linen_delivery_days?: number[]
@@ -439,6 +442,65 @@ export type Database = {
         Relationships: [
           {
             foreignKeyName: "maintenance_requests_hotel_id_fkey"
+            columns: ["hotel_id"]
+            isOneToOne: false
+            referencedRelation: "hotels"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      morning_sheet_imports: {
+        Row: {
+          created_at: string
+          file_name: string
+          hotel_id: string
+          id: string
+          payload: Json
+          resolved_at: string | null
+          resolved_by: string | null
+          resolved_by_name: string | null
+          room_count: number
+          sheet_date: string | null
+          status: string
+          summary: Json
+          uploaded_by: string
+          uploaded_by_name: string | null
+        }
+        Insert: {
+          created_at?: string
+          file_name: string
+          hotel_id: string
+          id?: string
+          payload?: Json
+          resolved_at?: string | null
+          resolved_by?: string | null
+          resolved_by_name?: string | null
+          room_count?: number
+          sheet_date?: string | null
+          status?: string
+          summary?: Json
+          uploaded_by?: string
+          uploaded_by_name?: string | null
+        }
+        Update: {
+          created_at?: string
+          file_name?: string
+          hotel_id?: string
+          id?: string
+          payload?: Json
+          resolved_at?: string | null
+          resolved_by?: string | null
+          resolved_by_name?: string | null
+          room_count?: number
+          sheet_date?: string | null
+          status?: string
+          summary?: Json
+          uploaded_by?: string
+          uploaded_by_name?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "morning_sheet_imports_hotel_id_fkey"
             columns: ["hotel_id"]
             isOneToOne: false
             referencedRelation: "hotels"
@@ -1447,6 +1509,10 @@ export type Database = {
           kind: string
           totals: Json
         }[]
+      }
+      resolve_morning_sheet: {
+        Args: { p_apply: boolean; p_import: string; p_name: string }
+        Returns: number
       }
       save_missing_nightly_exports: {
         Args: { p_now?: string }
