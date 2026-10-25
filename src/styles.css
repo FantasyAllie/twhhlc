@@ -944,3 +944,15 @@ html {
   }
 }
 html[data-platform="android"] [data-morning-banner] { border-radius: 0.875rem; }
+
+/* Tablet (768-1023px): the menu is permanently docked on the right, so the
+   content keeps clear of the 18rem sidebar and the sticky top bar stretches
+   under it so its background reaches the screen edge. */
+@media (min-width: 768px) and (max-width: 1023px) {
+  .app-menu-dock-shift {
+    padding-right: calc(18rem + 1rem + env(safe-area-inset-right, 0px)) !important;
+  }
+  [data-mobile-topbar] {
+    margin-right: calc(-18rem - 1rem - env(safe-area-inset-right, 0px)) !important;
+  }
+}

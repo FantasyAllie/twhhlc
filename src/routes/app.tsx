@@ -283,6 +283,98 @@ function AppearancePicker({
   );
 }
 
+/** Menu rows shared by the phone's More sheet and the tablet's permanently
+ *  docked right-hand menu. */
+function AppMenuRows({
+  menuGroups,
+  close,
+  closeHomePanels,
+  armSheetTakeover,
+  isMenuCollapsed,
+  toggleMenuSection,
+}: {
+  menuGroups: {
+    id: string;
+    title: string;
+    items: {
+      key: string;
+      icon: React.ComponentType<{ className?: string }>;
+      label: React.ReactNode;
+      onClick: () => void;
+      destructive?: boolean;
+      notify?: boolean;
+    }[];
+  }[];
+  close: () => void;
+  closeHomePanels: () => void;
+  armSheetTakeover: (opts?: { closeLabel?: string; hideClose?: boolean }) => void;
+  isMenuCollapsed: (key: string) => boolean;
+  toggleMenuSection: (key: string) => void;
+}) {
+  const Row = ({
+    icon: Icon,
+    label,
+    onClick,
+    destructive,
+    notify,
+  }: { icon: React.ComponentType<{ className?: string }>; label: React.ReactNode; onClick: () => void; destructive?: boolean; notify?: boolean }) => (
+    <button
+      type="button"
+      onClick={onClick}
+      data-ios-row
+      className={cn(
+        "w-full flex items-center gap-3 rounded-xl border bg-background px-4 min-h-12 text-sm font-medium shadow-elevation-1 transition-[transform,box-shadow,background-color] duration-150 hover:bg-accent active:scale-[0.985] active:shadow-none",
+        destructive && "text-destructive hover:text-destructive",
+      )}
+    >
+      <span data-ios-icon className="shrink-0"><Icon className={cn("h-4 w-4 shrink-0", notify && "text-amber-500")} /></span>
+      <span className="text-left flex-1">{label}</span>
+      <ChevronRight data-ios-chevron className="hidden h-4 w-4 shrink-0 text-muted-foreground/60" aria-hidden />
+    </button>
+  );
+  const Section = ({
+    id,
+    title,
+    children,
+  }: { id: string; title: string; children: React.ReactNode }) => {
+    const collapsed = isMenuCollapsed(id);
+    return (
+      <div className="space-y-2">
+        <button
+          type="button"
+          onClick={() => void toggleMenuSection(id)}
+          className="w-full flex items-center justify-between text-xs font-semibold uppercase tracking-wide text-muted-foreground hover:text-foreground transition-colors"
+        >
+          <span>{title}</span>
+          <ChevronDown
+            className={cn("h-3.5 w-3.5 transition-transform", collapsed && "-rotate-90")}
+            aria-hidden
+          />
+        </button>
+        {!collapsed && <div data-ios-group className="space-y-1.5">{children}</div>}
+      </div>
+    );
+  };
+  return (
+    <div className="space-y-4">
+      {menuGroups.filter((g) => g.id !== "appearance").map((group) => ({ ...group, items: group.items.filter((i) => i.key !== "theme" && i.key !== "accent") })).filter((g) => g.items.length > 0).map((group) => (
+        <Section key={group.id} id={group.id} title={group.title}>
+          {group.items.map((item) => (
+            <Row
+              key={item.key}
+              icon={item.icon}
+              label={item.label}
+              destructive={item.destructive}
+              notify={item.notify}
+              onClick={() => { close(); if (item.key !== "signout" && item.key !== "theme" && item.key !== "accent") { closeHomePanels(); armSheetTakeover(); } item.onClick(); }}
+            />
+          ))}
+        </Section>
+      ))}
+    </div>
+  );
+}
+
 function AppPage() {
  const qc = useQueryClient();
   const navigate = useNavigate();
@@ -4240,7 +4332,7 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
   </div>
 )}
 <div
-  className="max-w-2xl md:max-w-5xl lg:max-w-6xl xl:max-w-7xl mx-auto pt-6 pb-2 sm:py-10 space-y-6 max-lg:space-y-4 sm:space-y-10"
+  className="app-menu-dock-shift max-w-2xl md:max-w-5xl lg:max-w-6xl xl:max-w-7xl mx-auto pt-6 pb-2 sm:py-10 space-y-6 max-lg:space-y-4 sm:space-y-10"
   style={{
     paddingLeft: "max(1rem, env(safe-area-inset-left))",
     paddingRight: "max(1rem, env(safe-area-inset-right))",
@@ -5082,72 +5174,14 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
       />
     </SheetHeader>
     <div className="flex-1 min-h-0 overflow-y-auto px-4 max-lg:px-0 sm:px-6 py-4 sm:py-6">
-    {(() => {
-      const Row = ({
-        icon: Icon,
-        label,
-        onClick,
-        destructive,
-        notify,
-      }: { icon: React.ComponentType<{ className?: string }>; label: React.ReactNode; onClick: () => void; destructive?: boolean; notify?: boolean }) => (
-        <button
-          type="button"
-          onClick={onClick}
-          data-ios-row
-          className={cn(
-            "w-full flex items-center gap-3 rounded-xl border bg-background px-4 min-h-12 text-sm font-medium shadow-elevation-1 transition-[transform,box-shadow,background-color] duration-150 hover:bg-accent active:scale-[0.985] active:shadow-none",
-            destructive && "text-destructive hover:text-destructive",
-          )}
-        >
-          <span data-ios-icon className="shrink-0"><Icon className={cn("h-4 w-4 shrink-0", notify && "text-amber-500")} /></span>
-          <span className="text-left flex-1">{label}</span>
-          <ChevronRight data-ios-chevron className="hidden h-4 w-4 shrink-0 text-muted-foreground/60" aria-hidden />
-        </button>
-      );
-      const close = () => setMenuSheetOpen(false);
-      const Section = ({
-        id,
-        title,
-        children,
-      }: { id: string; title: string; children: React.ReactNode }) => {
-        const collapsed = isMenuCollapsed(id);
-        return (
-          <div className="space-y-2">
-            <button
-              type="button"
-              onClick={() => void toggleMenuSection(id)}
-              className="w-full flex items-center justify-between text-xs font-semibold uppercase tracking-wide text-muted-foreground hover:text-foreground transition-colors"
-            >
-              <span>{title}</span>
-              <ChevronDown
-                className={cn("h-3.5 w-3.5 transition-transform", collapsed && "-rotate-90")}
-                aria-hidden
-              />
-            </button>
-            {!collapsed && <div data-ios-group className="space-y-1.5">{children}</div>}
-          </div>
-        );
-      };
-      return (
-        <div className="space-y-4">
-
-          {menuGroups.filter((g) => g.id !== "appearance").map((group) => ({ ...group, items: group.items.filter((i) => i.key !== "theme" && i.key !== "accent") })).filter((g) => g.items.length > 0).map((group) => (
-            <Section key={group.id} id={group.id} title={group.title}>
-              {group.items.map((item) => (
-                <Row
-                  key={item.key}
-                  icon={item.icon}
-                  label={item.label}
-                  destructive={item.destructive}
-                  notify={item.notify}
-                  onClick={() => { close(); if (item.key !== "signout" && item.key !== "theme" && item.key !== "accent") { closeHomePanels(); armSheetTakeover(); } item.onClick(); }}
-                />
-              ))}
-            </Section>
-          ))}
-        </div>
-      );
-    })()}
+    <AppMenuRows
+      menuGroups={menuGroups}
+      close={() => setMenuSheetOpen(false)}
+      closeHomePanels={closeHomePanels}
+      armSheetTakeover={armSheetTakeover}
+      isMenuCollapsed={isMenuCollapsed}
+      toggleMenuSection={toggleMenuSection}
+    />
     </div>
   </SheetContent>
 </Sheet>
@@ -6491,6 +6525,44 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
       </DialogFooter>
     </DialogContent>
   </Dialog>
+  {/* Tablet: the menu stays permanently docked on the right of the screen. */}
+  {isTablet && (
+    <aside
+      data-app-menu-dock
+      aria-label="Menu"
+      className="fixed z-30 flex w-72 flex-col overflow-hidden border-l border-sidebar-border bg-sidebar text-sidebar-foreground shadow-elevation-2"
+      style={{
+        top: "calc(2.75rem + 1px + env(safe-area-inset-top, 0px))",
+        bottom: "calc(3.5rem + env(safe-area-inset-bottom, 0px))",
+        right: "max(0px, env(safe-area-inset-right, 0px))",
+      }}
+    >
+      <div className="shrink-0 border-b border-sidebar-border bg-background px-4 pt-4 pb-3">
+        <AppearancePicker
+          theme={theme}
+          onToggleTheme={cycleTheme}
+          accent={accent}
+          onPickAccent={pickAccent}
+          leading={
+            <span className="flex min-w-0 flex-1 items-center gap-2.5">
+              {authUser && <NamedAvatar name={authUser.username} className="h-8 w-8 shrink-0 text-sm" />}
+              <span className="truncate">{authUser ? `Signed in as ${authUser.username}` : "Appearance"}</span>
+            </span>
+          }
+        />
+      </div>
+      <div className="flex-1 min-h-0 overflow-y-auto px-3 py-4">
+        <AppMenuRows
+          menuGroups={menuGroups}
+          close={() => {}}
+          closeHomePanels={closeHomePanels}
+          armSheetTakeover={armSheetTakeover}
+          isMenuCollapsed={isMenuCollapsed}
+          toggleMenuSection={toggleMenuSection}
+        />
+      </div>
+    </aside>
+  )}
   <div data-tabbar-spacer className="lg:hidden" style={{ height: "calc(3.5rem + env(safe-area-inset-bottom, 0px))" }} aria-hidden />
   {/* Mobile bottom tab bar: same five tabs for every department. */}
   <nav
@@ -6548,7 +6620,7 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
             },
           },
         ];
-        return tabs.filter(t => shouldShowDepartmentTab("department" in t ? t.department : undefined, myMessageDepartments)).map((t) => {
+        return tabs.filter(t => !(t.key === "more" && isTablet)).filter(t => shouldShowDepartmentTab("department" in t ? t.department : undefined, myMessageDepartments)).map((t) => {
           const Icon = t.icon;
           return (
             <button
