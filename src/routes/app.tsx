@@ -138,6 +138,7 @@ import { armSheetTakeover, isTakeoverReplacing, setSheetTakeoverSlot, releaseShe
 import { Palette } from "lucide-react";
 import { ACCENTS, accentSwatch, readAccent, applyAccent, type AccentId } from "@/lib/accent-colour";
 import { useCurrentHotel, DEFAULT_HOTEL_NAME } from "@/lib/hotels";
+import { floorForRoom } from "@/lib/room-floors";
 import { listHotels, setActiveHotel, createHotel, type HotelOption } from "@/lib/auth.functions";
 import { parseCats, categoryLabel, valueFromLabel, maintenanceLocation, COLOR_SWATCHES } from "@/lib/app-format";
 import type {

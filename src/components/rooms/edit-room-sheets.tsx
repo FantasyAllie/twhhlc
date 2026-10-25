@@ -4,6 +4,7 @@ import { Check, Pencil, Star } from "lucide-react";
 import { useEffect, useState } from "react";
 import type { ReactNode } from "react";
 import { cn } from "@/lib/utils";
+import { floorForRoom } from "@/lib/room-floors";
 import { Input } from "@/components/ui/input";
 import {
   Sheet,
