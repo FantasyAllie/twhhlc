@@ -10,7 +10,7 @@ import { playDoorBell } from "@/lib/door-bell";
 import { createPortal } from "react-dom";
 import React, { useEffect, useMemo, useRef, useState } from "react";
 import { CountRow } from "@/components/linen/inventory-dialog";
-import { Loader2, CalendarDays, Trophy } from "lucide-react";
+import { Loader2, CalendarDays, Trophy, FileUp } from "lucide-react";
 import { LeaderboardSheet } from "@/components/leaderboard-sheet";
 import { RoomFlagsContext, FlagIcon, mergeFlagDefs, useFlagSettingsQuery, useCustomFlagsQuery, type FlagDef } from "@/lib/room-flags";
 import { RoomFlagsSheet } from "@/components/rooms/room-flags-sheet";
