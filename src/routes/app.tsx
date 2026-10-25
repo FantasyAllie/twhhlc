@@ -5485,6 +5485,7 @@ const toggleRoomCategory = async (roomNumber: number, value: Category) => {
     toggleRoomCategory={toggleRoomCategory}
     setRoomDefaultStatus={setRoomDefaultStatus}
     toggleRoomFeature={toggleRoomFeature}
+    setRoomFloor={setRoomFloor}
   />
 
   {/* Add / config dialogs (room types, features, reception items, icon guide) */}
