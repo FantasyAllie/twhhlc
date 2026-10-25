@@ -200,6 +200,7 @@ export type Database = {
       hotels: {
         Row: {
           created_at: string
+          developer_only: boolean
           id: string
           last_hk_reset_at: string | null
           linen_delivery_days: number[]
@@ -211,6 +212,7 @@ export type Database = {
         }
         Insert: {
           created_at?: string
+          developer_only?: boolean
           id?: string
           last_hk_reset_at?: string | null
           linen_delivery_days?: number[]
@@ -222,6 +224,7 @@ export type Database = {
         }
         Update: {
           created_at?: string
+          developer_only?: boolean
           id?: string
           last_hk_reset_at?: string | null
           linen_delivery_days?: number[]
