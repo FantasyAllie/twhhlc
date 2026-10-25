@@ -5227,7 +5227,7 @@ const toggleRoomCategory = async (roomNumber: number, value: Category) => {
         leading={
           <SheetDescription className="flex min-w-0 flex-1 items-center gap-2.5">
             {authUser && <NamedAvatar name={authUser.username} className="h-9 w-9 shrink-0 text-base" />}
-            <span className="truncate">{authUser ? `Signed in as ${authUser.username}` : "Appearance"}</span>
+            <span className="min-w-0 break-words line-clamp-2">{authUser ? `Signed in as ${authUser.username}` : "Appearance"}</span>
           </SheetDescription>
         }
       />
@@ -6668,7 +6668,7 @@ const toggleRoomCategory = async (roomNumber: number, value: Category) => {
           leading={
             <span className="flex min-w-0 flex-1 items-center gap-2.5">
               {authUser && <NamedAvatar name={authUser.username} className="h-8 w-8 shrink-0 text-sm" />}
-              <span className="truncate">{authUser ? `Signed in as ${authUser.username}` : "Appearance"}</span>
+              <span className="min-w-0 break-words line-clamp-2">{authUser ? `Signed in as ${authUser.username}` : "Appearance"}</span>
             </span>
           }
         />
