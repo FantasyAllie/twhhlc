@@ -12,6 +12,7 @@ import {
   updateUserAssignment,
   updateUserPassword,
 } from "@/lib/auth.functions";
+import { parseMorningSheet } from "@/lib/morning-sheet.functions";
 
 // User and hotel workspace management for the iPhone app: POST { action, data } with the signed-in
 // person's Supabase token as "Authorization: Bearer …". Each action calls the
@@ -30,6 +31,9 @@ const ACTIONS = {
   deleteHotel: (data: unknown) => deleteHotel({ data: data as never }),
   setHotelWallpaper: (data: unknown) => setHotelWallpaper({ data: data as never }),
   hotelWallpaper: (data: unknown) => getHotelWallpaper({ data: data as never }),
+  // Paperwork: reads an uploaded PDF room status report, like the website's
+  // Paperwork upload. Nothing is saved here; the app saves the sheet itself.
+  parsePaperwork: (data: unknown) => parseMorningSheet({ data: data as never }),
 } as const;
 
 export const Route = createFileRoute("/api/users")({
