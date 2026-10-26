@@ -1,6 +1,7 @@
 
 ## Dirty-room completion outcome
-- [ ] Replace AI PDF reading with a fixed-format reader and verify existing reports without applying live room changes
+- [x] Replace AI PDF reading with a fixed-format reader; verify all 48 rooms and notes from the real export and run 20 passing tests
+- [ ] Verify signed-in Paperwork upload and preview; blocked because no preview session could be minted for the requesting account
 - [x] Exclude Dirty rooms from the visible rooms progress counter/total
 - [x] Treat Dirty rooms as satisfying 100% so completion still fires
 - [x] Sad full-screen outcome + sad trombone sound when completion happens with Dirty rooms present
