@@ -52,7 +52,7 @@ export function parseReportPages(pages: ReportTextItem[][]): { sheet_date: strin
       const next = starts[index + 1];
       const lower = next ? (start.y + next.y) / 2 : bottom + 2;
       const row = body.filter(i => i.y <= top && i.y > lower);
-      const noteLines = lines(row).filter(l => l.some(i => /Housekeeping Notes\s*:/i.test(i.text)));
+      const noteLines = lines(row).filter(l => /Housekeeping Notes\s*:/i.test(l.map(i => i.text).join(" ")));
       const noteItems = new Set(noteLines.flat());
       const cells = columns.map((x, c) => lines(row.filter(i => !noteItems.has(i) && i.x >= x - 2 && (c === columns.length - 1 || i.x < columns[c + 1] - 2)))
         .map(l => l.map(i => i.text.trim()).join(" ")).join(" ").trim());

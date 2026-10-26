@@ -7,7 +7,7 @@ export async function readMorningSheetPdf(fileBase64: string) {
   catch { throw new Error("Couldn't open that PDF. Please export the report again."); }
   if (bytes.byteLength > 10 * 1024 * 1024) throw new Error("PDF is too large (10 MB max)");
   if (new TextDecoder().decode(bytes.slice(0, 5)) !== "%PDF-") throw new Error("Please choose a PDF room status report.");
-  const pdf = await getDocumentProxy(bytes, { isEvalSupported: false, useSystemFonts: false, maxImageSize: 1_000_000 });
+  const pdf = await getDocumentProxy(bytes, { useSystemFonts: false, maxImageSize: 1_000_000 });
   try {
     if (pdf.numPages > 50) throw new Error("The report is too long (50 pages max).");
     const pages: ReportTextItem[][] = [];
