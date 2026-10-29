@@ -101,4 +101,19 @@ describe("fixed report reading without AI", () => {
     assert.equal(parsed.rooms.find(r => r.room_number === 29)!.bed, null);
     assert.equal(parsed.rooms.find(r => r.room_number === 31)!.bed, null);
   });
+  it("keeps notes that flow to the top of the next page with their room", () => {
+    const first = page([row("29"), row("30")]);
+    const next = page([row("31"), row("32")]);
+    next.push({ text: "Housekeeping Notes", x: 110, y: 680 }, { text: ":", x: 140, y: 680 }, { text: "DOG ECI", x: 160, y: 680 });
+    const parsed = parseReportPages([first, next]);
+    assert.deepEqual(parsed.rooms.map(r => r.room_number), [29, 30, 31, 32]);
+    const room30 = parsed.rooms.find(r => r.room_number === 30)!;
+    assert.equal(room30.dog, true);
+    assert.equal(room30.eci, true);
+    for (const other of [29, 31, 32]) {
+      const room = parsed.rooms.find(r => r.room_number === other)!;
+      assert.equal(room.dog, false);
+      assert.equal(room.eci, false);
+    }
+  });
 });
