@@ -50,13 +50,17 @@ export function parseReportPages(pages: ReportTextItem[][]): { sheet_date: strin
     // Wrapped notes can extend below that midpoint and have no repeated label.
     const notesByStart = new Map<ReportTextItem, string[]>();
     const noteItems = new Set<ReportTextItem>();
+    // A note line sitting above every room on the page has no room of its own here:
+    // it is the tail of the previous page's last booking, which must not be lost.
+    const spillKey: ReportTextItem = { text: "", x: -1, y: -1 };
+    const previousPageBooking = bookings.at(-1) && bookings.at(-1)!.page < pageIndex ? bookings.at(-1) : undefined;
     let noteOwner: ReportTextItem | undefined;
     let noteTextX: number | undefined;
     for (const line of lines(body)) {
       if (line.some(i => starts.includes(i))) { noteOwner = undefined; noteTextX = undefined; }
       const label = line.find(i => /Housekeeping Notes/i.test(i.text));
       if (label) {
-        noteOwner = [...starts].reverse().find(s => s.y >= label.y - 2);
+        noteOwner = [...starts].reverse().find(s => s.y >= label.y - 2) ?? spillKey;
         noteTextX = line.find(i => i.x > label.x && i.text.trim() && i.text.trim() !== ":")?.x;
       } else if (!noteOwner || noteTextX === undefined || Math.abs(line[0].x - noteTextX) >= 3) {
         noteOwner = undefined;
