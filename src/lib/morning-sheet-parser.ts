@@ -56,7 +56,7 @@ export function parseReportPages(pages: ReportTextItem[][]): { sheet_date: strin
       if (line.some(i => starts.includes(i))) { noteOwner = undefined; noteTextX = undefined; }
       const label = line.find(i => /Housekeeping Notes/i.test(i.text));
       if (label) {
-        noteOwner = starts.findLast(s => s.y >= label.y - 2);
+        noteOwner = [...starts].reverse().find(s => s.y >= label.y - 2);
         noteTextX = line.find(i => i.x > label.x && i.text.trim() && i.text.trim() !== ":")?.x;
       } else if (!noteOwner || noteTextX === undefined || Math.abs(line[0].x - noteTextX) >= 3) {
         noteOwner = undefined;
