@@ -82,4 +82,23 @@ describe("fixed report reading without AI", () => {
     const changed = row("48"); changed[8] = "3";
     assert.throws(() => parseReportPages([page([row("48")]), page([changed])]), /appears twice/);
   });
+  it("applies the same note and page-flow rules to any room, not only 4 and 48", () => {
+    const withNotes = page([row("21"), row("22"), row("23")]);
+    withNotes.push(
+      { text: "Housekeeping Notes", x: 110, y: 612 }, { text: ":", x: 140, y: 612 }, { text: "dog box -", x: 160, y: 612 },
+      { text: "Housekeeping Notes", x: 110, y: 600 }, { text: ":", x: 140, y: 600 }, { text: "KING bed", x: 160, y: 600 },
+    );
+    const flowed = page([row("29"), row("30")]);
+    const boundary = page([row("30"), row("31")]);
+    boundary.push({ text: "Housekeeping Notes", x: 110, y: 645 }, { text: ":", x: 140, y: 645 }, { text: "TWIN", x: 160, y: 645 });
+    const parsed = parseReportPages([withNotes, flowed, boundary]);
+    assert.deepEqual(parsed.rooms.map(r => r.room_number), [21, 22, 23, 29, 30, 31]);
+    const room22 = parsed.rooms.find(r => r.room_number === 22)!;
+    assert.equal(room22.dog, true);
+    assert.equal(room22.bed, "king");
+    const room30 = parsed.rooms.find(r => r.room_number === 30)!;
+    assert.equal(room30.bed, "twin");
+    assert.equal(parsed.rooms.find(r => r.room_number === 29)!.bed, null);
+    assert.equal(parsed.rooms.find(r => r.room_number === 31)!.bed, null);
+  });
 });
