@@ -49,4 +49,33 @@ describe("fixed report reading without AI", () => {
   it("rejects conflicting duplicate bookings", () => {
     assert.throws(() => parseReportPages([page([row(), row()])]), /appears twice/);
   });
+  it("reads room 48 once when identical booking details repeat across a page break", () => {
+    const first = page([row("48")]);
+    const second = page([row("48"), row("49")], "KING");
+    const parsed = parseReportPages([first, second]);
+    assert.deepEqual(parsed.rooms.map(r => r.room_number), [48, 49]);
+    assert.equal(parsed.rooms[0].bed, "king");
+  });
+  it("reads room 4 Dog box and king bed notes even below the row midpoint", () => {
+    const p = page([row("4"), row("5")], "dog box -");
+    p.push({ text: "KING bed", x: 160, y: 635 });
+    const parsed = parseReportPages([p]).rooms;
+    assert.equal(parsed[0].dog, true);
+    assert.equal(parsed[0].bed, "king");
+    assert.equal(parsed[0].notes, "box - bed");
+    assert.equal(parsed[1].bed, null);
+    assert.equal(parsed[1].notes, null);
+  });
+  it("reads multiple labelled housekeeping notes for one room", () => {
+    const p = page([row("4"), row("5")], "dog box -");
+    p.push({ text: "Housekeeping Notes", x: 110, y: 635 }, { text: ":", x: 140, y: 635 }, { text: "KING bed", x: 160, y: 635 });
+    const parsed = parseReportPages([p]).rooms[0];
+    assert.equal(parsed.dog, true);
+    assert.equal(parsed.bed, "king");
+    assert.equal(parsed.notes, "box - bed");
+  });
+  it("rejects changed booking details even at a page boundary", () => {
+    const changed = row("48"); changed[8] = "3";
+    assert.throws(() => parseReportPages([page([row("48")]), page([changed])]), /appears twice/);
+  });
 });
