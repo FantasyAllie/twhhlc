@@ -57,14 +57,18 @@ describe("fixed report reading without AI", () => {
     assert.equal(parsed.rooms[0].bed, "king");
   });
   it("reads room 4 Dog box and king bed notes even below the row midpoint", () => {
-    const p = page([row("4"), row("5")], "dog box -");
-    p.push({ text: "KING bed", x: 160, y: 635 });
+    const p = page([row("3"), row("4"), row("5")]);
+    p.push({ text: "Housekeeping Notes", x: 110, y: 610 }, { text: ":", x: 140, y: 610 }, { text: "dog box -", x: 160, y: 610 }, { text: "KING bed", x: 160, y: 595 });
     const parsed = parseReportPages([p]).rooms;
-    assert.equal(parsed[0].dog, true);
-    assert.equal(parsed[0].bed, "king");
-    assert.equal(parsed[0].notes, "box - bed");
-    assert.equal(parsed[1].bed, null);
-    assert.equal(parsed[1].notes, null);
+    assert.equal(parsed[1].room_number, 4);
+    assert.equal(parsed[1].dog, true);
+    assert.equal(parsed[1].bed, "king");
+    assert.equal(parsed[1].notes, "box - bed");
+    for (const neighbour of [parsed[0], parsed[2]]) {
+      assert.equal(neighbour.dog, false);
+      assert.equal(neighbour.bed, null);
+      assert.equal(neighbour.notes, null);
+    }
   });
   it("reads multiple labelled housekeeping notes for one room", () => {
     const p = page([row("4"), row("5")], "dog box -");
