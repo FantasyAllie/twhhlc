@@ -35,7 +35,8 @@ export function parseReportPages(pages: ReportTextItem[][]): { sheet_date: strin
   if (dates.size !== 1) throw new Error("Couldn't find one report date. Please export the Room Status Report again.");
   const sheet_date = [...dates][0];
   const rooms = new Map<number, ParsedSheetRoom>();
-  for (const page of pages) {
+  const bookings: { cells: string[]; notes: string[]; page: number }[] = [];
+  for (const [pageIndex, page] of pages.entries()) {
     const pageLines = lines(page);
     const header = pageLines.find(l => HEADINGS.every(h => l.some(i => i.text.trim() === h)));
     if (!header) throw new Error(FORMAT_ERROR);
@@ -45,6 +46,27 @@ export function parseReportPages(pages: ReportTextItem[][]): { sheet_date: strin
     const body = page.filter(i => i.text.trim() && i.y < header[0].y - 2 && i.y > bottom + 2);
     const starts = body.filter(i => Math.abs(i.x - columns[0]) < 3 && /^\d+$/.test(i.text.trim())).sort((a, b) => b.y - a.y);
     if (!starts.length) throw new Error(FORMAT_ERROR);
+    // Notes belong to the preceding room baseline, not the midpoint between rooms.
+    // Wrapped notes can extend below that midpoint and have no repeated label.
+    const notesByStart = new Map<ReportTextItem, string[]>();
+    const noteItems = new Set<ReportTextItem>();
+    let noteOwner: ReportTextItem | undefined;
+    let noteTextX: number | undefined;
+    for (const line of lines(body)) {
+      if (line.some(i => starts.includes(i))) { noteOwner = undefined; noteTextX = undefined; }
+      const label = line.find(i => /Housekeeping Notes/i.test(i.text));
+      if (label) {
+        noteOwner = [...starts].reverse().find(s => s.y >= label.y - 2);
+        noteTextX = line.find(i => i.x > label.x && i.text.trim() && i.text.trim() !== ":")?.x;
+      } else if (!noteOwner || noteTextX === undefined || Math.abs(line[0].x - noteTextX) >= 3) {
+        noteOwner = undefined;
+        continue;
+      }
+      if (!noteOwner) continue;
+      line.forEach(i => noteItems.add(i));
+      const text = line.map(i => i.text).join(" ").replace(/Housekeeping Notes\s*:\s*/ig, "").trim();
+      notesByStart.set(noteOwner, [...(notesByStart.get(noteOwner) ?? []), text]);
+    }
     for (let index = 0; index < starts.length; index++) {
       const start = starts[index];
       // Multi-line status can extend above the numeric room baseline; the midpoint preserves it.
@@ -52,26 +74,38 @@ export function parseReportPages(pages: ReportTextItem[][]): { sheet_date: strin
       const next = starts[index + 1];
       const lower = next ? (start.y + next.y) / 2 : bottom + 2;
       const row = body.filter(i => i.y <= top && i.y > lower);
-      const noteLines = lines(row).filter(l => /Housekeeping Notes\s*:/i.test(l.map(i => i.text).join(" ")));
-      const noteItems = new Set(noteLines.flat());
       const cells = columns.map((x, c) => lines(row.filter(i => !noteItems.has(i) && i.x >= x - 2 && (c === columns.length - 1 || i.x < columns[c + 1] - 2)))
         .map(l => l.map(i => i.text.trim()).join(" ")).join(" ").trim());
+      const notes = notesByStart.get(start) ?? [];
+      const previousBooking = bookings.at(-1);
+      // This program repeats the entire last booking when its notes spill onto
+      // the next page. Only an identical adjacent boundary row is a continuation;
+      // genuine duplicate/conflicting bookings still go through validation below.
+      if (index === 0 && previousBooking && previousBooking.page === pageIndex - 1 &&
+          cells.every((cell, c) => cell === previousBooking.cells[c])) {
+        previousBooking.notes.push(...notes);
+        previousBooking.page = pageIndex;
+      } else bookings.push({ cells, notes, page: pageIndex });
+    }
+  }
+  for (const { cells, notes } of bookings) {
+      const roomNumber = Number(cells[0]);
       const status = cells[3];
-      if (!/^(Vacant|Occupied|Room Out Of Service)$/i.test(status) || !cells[1]) throw new Error(`Couldn't read room ${start.text}. Please export the report again.`);
+      if (!/^(Vacant|Occupied|Room Out Of Service)$/i.test(status) || !cells[1]) throw new Error(`Couldn't read room ${roomNumber}. Please export the report again.`);
       const count = (c: number) => {
-        if (!/^\d+$/.test(cells[c])) throw new Error(`Couldn't read guest counts for room ${start.text}.`);
+        if (!/^\d+$/.test(cells[c])) throw new Error(`Couldn't read guest counts for room ${roomNumber}.`);
         return Number(cells[c]);
       };
       const night = cells[11] || null;
-      if (night && !/^\d+\s*\/\s*\d+$/.test(night)) throw new Error(`Couldn't read the Night column for room ${start.text}.`);
+      if (night && !/^\d+\s*\/\s*\d+$/.test(night)) throw new Error(`Couldn't read the Night column for room ${roomNumber}.`);
       const [elapsed, total] = night?.split("/").map(Number) ?? [];
       const cleanArrival = /CLEAN\s*\/\s*ARRIVAL/i.test(cells[4]);
       const arriving = cleanArrival || elapsed === 0 || dateValue(cells[5]) === sheet_date;
       const departing = !cleanArrival && (/Departure|Dirty/i.test(cells[4]) || (total > 0 && elapsed === total) || dateValue(cells[6]) === sheet_date);
-      const rawNotes = noteLines.map(l => l.map(i => i.text).join(" ")).join(" ").replace(/Housekeeping Notes\s*:\s*/ig, "").trim();
+      const rawNotes = [...new Set(notes)].join(" ").trim();
       const bedMatch = rawNotes.match(/\b(TWIN|KING|DOUBLE)\b/i);
       const parsed: ParsedSheetRoom = {
-        room_number: Number(start.text), room_type: cells[1], night,
+        room_number: roomNumber, room_type: cells[1], night,
         occupancy: /Out Of Service/i.test(status) ? "out_of_service" : departing ? "departure" : /^Occupied$/i.test(status) ? "occupied" : "vacant",
         arriving_today: arriving, departing_today: departing,
         adults: count(8), children: count(9), infants: count(10), lead_name: cells[7] || null,
@@ -87,7 +121,6 @@ export function parseReportPages(pages: ReportTextItem[][]): { sheet_date: strin
         rooms.set(parsed.room_number, { ...arrivingRoom, departing_today: previous.departing_today || parsed.departing_today,
           occupancy: previous.occupancy === "out_of_service" || parsed.occupancy === "out_of_service" ? "out_of_service" : previous.departing_today || parsed.departing_today ? "departure" : arrivingRoom.occupancy });
       }
-    }
   }
   return { sheet_date, rooms: [...rooms.values()] };
 }
