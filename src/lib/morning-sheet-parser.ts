@@ -91,6 +91,11 @@ export function parseReportPages(pages: ReportTextItem[][]): { sheet_date: strin
         previousBooking.page = pageIndex;
       } else bookings.push({ cells, notes, page: pageIndex });
     }
+    const spill = notesByStart.get(spillKey) ?? [];
+    if (spill.length) {
+      if (!previousPageBooking) throw new Error("Couldn't read the notes at the top of a report page. Please export the report again.");
+      previousPageBooking.notes.push(...spill);
+    }
   }
   for (const { cells, notes } of bookings) {
       const roomNumber = Number(cells[0]);
