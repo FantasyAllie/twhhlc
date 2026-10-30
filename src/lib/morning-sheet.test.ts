@@ -1,7 +1,7 @@
 import { describe, it } from "node:test";
 import assert from "node:assert/strict";
 import { buildSheet, classifyRoom, type ParsedSheetRoom } from "./morning-sheet";
-import { computeTileMeta, type RoomStatusFlags } from "./rooms";
+import { computeTileMeta, showsDirtyEmoji, type RoomStatusFlags } from "./rooms";
 
 const base: ParsedSheetRoom = {
   room_number: 1, night: null, occupancy: "vacant", arriving_today: false, departing_today: false,
@@ -45,6 +45,32 @@ describe("paperwork clean arrival setup", () => {
 });
 
 describe("morning sheet rules", () => {
+  it("paperwork dirty rooms and Depart / Arrival use Dirty brown without the dirty emoji", () => {
+    for (const sheetKind of ["stayover", "departure", "turnover"]) {
+      for (const role of ["housekeeping", "reception"] as const) {
+        const flags = { ...arrivalFlags, isArrival: false, isDirty: true };
+        const meta = computeTileMeta({ flags, state: "todo", isNR: false, hasLinenCount: false, earlyCheckIn: false, role, sheetKind });
+        assert.equal(meta.bg, "var(--room-dirty)");
+        assert.equal(meta.fg, "var(--room-dirty-fg)");
+        assert.equal(meta.accent, "var(--room-dirty-accent)");
+      }
+      assert.equal(showsDirtyEmoji(true, sheetKind), false);
+    }
+    assert.equal(showsDirtyEmoji(true, null), true);
+  });
+  it("counting linen makes paperwork jobs In Progress yellow in both department views", () => {
+    for (const sheetKind of ["stayover", "departure", "turnover", "arrival"]) {
+      for (const role of ["housekeeping", "reception"] as const) {
+        for (const stayoverOut of [false, true]) {
+          const flags = { ...arrivalFlags, isArrival: sheetKind === "arrival", isDirty: sheetKind !== "arrival" };
+          const meta = computeTileMeta({ flags, state: "progress", isNR: false, hasLinenCount: true, earlyCheckIn: false, role, sheetKind, stayoverOut });
+          assert.equal(meta.bg, "var(--room-progress)");
+          assert.equal(meta.fg, "var(--room-progress-fg)");
+          assert.equal(meta.accent, "var(--room-progress-accent)");
+        }
+      }
+    }
+  });
   it("same-day departure and arrival is a turnover that starts Dirty", () => {
     const { rooms } = buildSheet([{ ...base, occupancy: "departure", arriving_today: true }]);
     assert.equal(rooms[0].kind, "turnover");

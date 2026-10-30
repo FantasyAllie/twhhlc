@@ -1087,6 +1087,17 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
       );
       if (error) throw new Error(error.message);
     },
+    onSaved: async (room, kind, itemId, value) => {
+      await qc.cancelQueries({ queryKey: ["room_counts"] });
+      qc.setQueryData<RoomCount[]>(["room_counts"], (old) => {
+        const list = [...(old ?? [])];
+        const idx = list.findIndex((c) => c.room_number === room && c.item_kind === kind && c.item_id === itemId);
+        if (idx >= 0) list[idx] = { ...list[idx], count: value };
+        else list.push({ id: `saved-${room}-${kind}-${itemId}`, room_number: room, item_kind: kind, item_id: itemId, count: value });
+        return list;
+      });
+      await qc.invalidateQueries({ queryKey: ["room_counts"] });
+    },
     onError: (message) => {
       toast.error(message);
       qc.invalidateQueries({ queryKey: ["room_counts"] });
@@ -2222,7 +2233,7 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
     itemId: string,
     delta: number,
   ) => {
-    const current = getCount(roomNumber, kind, itemId);
+    const current = pendingCounts.getPending(roomNumber, kind, itemId) ?? getCount(roomNumber, kind, itemId);
     const next = Math.max(0, current + delta);
     if (next === current) return;
     pendingCounts.setTarget(roomNumber, kind, itemId, next);
