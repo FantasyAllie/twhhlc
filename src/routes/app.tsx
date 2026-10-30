@@ -179,6 +179,7 @@ import {
 } from "@/lib/rooms";
 import type { RoomTileState } from "@/lib/rooms";
 import { usePendingCounts } from "@/lib/pending-counts";
+import { cacheSavedRoomCount } from "@/lib/linen-count-cache";
 import { buildOpsState, captureOpsSnapshot, undoLastOpsSnapshot } from "@/lib/ops-snapshots";
 import { HousekeepingRoomTile, ReceptionRoomTile } from "@/components/rooms/room-tile";
 import { MorningSheetBanner, OPEN_PAPERWORK_EVENT } from "@/components/morning-sheet-banner";
@@ -1089,13 +1090,7 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
     },
     onSaved: async (room, kind, itemId, value) => {
       await qc.cancelQueries({ queryKey: ["room_counts"] });
-      qc.setQueryData<RoomCount[]>(["room_counts"], (old) => {
-        const list = [...(old ?? [])];
-        const idx = list.findIndex((c) => c.room_number === room && c.item_kind === kind && c.item_id === itemId);
-        if (idx >= 0) list[idx] = { ...list[idx], count: value };
-        else list.push({ id: `saved-${room}-${kind}-${itemId}`, room_number: room, item_kind: kind, item_id: itemId, count: value });
-        return list;
-      });
+      qc.setQueryData<RoomCount[]>(["room_counts"], (old) => cacheSavedRoomCount(old, room, kind, itemId, value));
       await qc.invalidateQueries({ queryKey: ["room_counts"] });
     },
     onError: (message) => {
