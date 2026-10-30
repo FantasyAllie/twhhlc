@@ -7,8 +7,9 @@
 - [x] Sad full-screen outcome + sad trombone sound when completion happens with Dirty rooms present
 
 ## Current work
-- [ ] Fix linen counts briefly reverting to zero and verify saved counts remain visible
-- [ ] Match Paperwork dirty/Depart Arrival tiles to Dirty without the emoji, and use In Progress yellow once linen is counted
+- [x] Fix room linen counts reverting to zero; reproduced and verified count remains 3 after overlay expiry in an isolated browser check
+- [x] Match Paperwork dirty/Depart Arrival tiles to Dirty without the emoji, and use In Progress yellow once linen is counted; regression tests pass
+- [ ] Verify signed-in room counting and Paperwork tile changes; blocked because the requesting account's preview session could not be minted
 - [x] Fix page-break continuations and multiple housekeeping notes without AI; verify the 29 October report and regression tests
 - [x] Make floor pills a compact segmented control matching the department picker on desktop, tablet and phone
 - [x] Fix tablet top bar position and appearance spacing; replace tablet tabs with menu Home and verify navigation
