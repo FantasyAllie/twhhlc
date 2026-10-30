@@ -7,7 +7,6 @@ import { playClick } from "@/lib/click-sound";
 import type { Room } from "@/lib/app-types";
 import { FlagIcon, FLAG_COLORS, useRoomFlags } from "@/lib/room-flags";
 import { isMattressDue, useMattressInterval } from "@/lib/mattress";
-import { departureLabel } from "@/lib/morning-sheet";
 function MattressBadge({ room }: { room: Room | undefined }) {
   const interval = useMattressInterval();
   if (!isMattressDue(room, interval)) return null;
@@ -42,6 +41,7 @@ function CustomFlagBadges({ n }: { n: number }) {
 }
 import {
   computeTileMeta,
+  showsDirtyEmoji,
   resolveRoomStatusFlags,
   type RoomStatusIds,
   type RoomTileState,
@@ -368,7 +368,7 @@ function HousekeepingRoomTileBase({
           )}
         </>
       ) : (<>
-      {flags.isDirty && !isStaff && !departureLabel(room?.sheet_kind) && (
+      {showsDirtyEmoji(flags.isDirty, room?.sheet_kind) && !isStaff && (
         <span
           aria-hidden="true"
           className="pointer-events-none absolute inset-0 flex items-center justify-center text-6xl md:text-7xl opacity-15 leading-none"

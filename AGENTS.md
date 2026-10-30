@@ -1,4 +1,4 @@
-- Menu-opened Sheets/Dialogs render in place of the home screen via the takeover slot in ui/sheet.tsx (armSheetTakeover before opening); why: one consistent in-page panel pattern instead of popups.
+- Menu panels replace Home via ui/sheet.tsx's takeover slot (armSheetTakeover first); why: consistent in-page panels, not popups.
 - Leaderboard menu visibility uses the shared leaderboard-access helper against assigned departments, not the active department view; why: Housekeeping assignment grants access consistently across menu layouts while database policies enforce data access.
 - Nightly fallback exports run in PostgreSQL via restricted functions and one DST-aware pg_cron job; why: exports must work without an open device, preserve each hotel/day/kind report, and match end-of-shift formats and unchanged-counter exclusions.
 - On iPhone, More and primary tab screens use the takeover slot with hideClose; screen height is measured against the floating tab bar's top edge so navigation stays available without covering content.
@@ -24,5 +24,6 @@
 - Home floor pills use the department picker's segmented-control treatment at every size; All rooms on tablet/desktop, phones one sideways-scrolling track; rooms share one auto-fill grid and row-slot calculation.
 - Central hotel floors have immutable cupboard keys; assignments save atomically and renames sync rooms and exports; why: one list without losing counts.
 - Room Management loads with the app, not lazily; why: More must hand off immediately without a Home gap on slow first opens.
-- Account Debug (developers only) sets localStorage debug-platform-override, read by __root.tsx detection; why: preview iOS/Android looks.
+- Developer Account Debug stores debug-platform-override for root detection; why: live OS previews.
+- Room linen caches acknowledged writes and awaits refresh before dropping overlays; why: no stale-zero flash.
 

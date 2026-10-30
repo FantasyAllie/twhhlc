@@ -179,6 +179,7 @@ import {
 } from "@/lib/rooms";
 import type { RoomTileState } from "@/lib/rooms";
 import { usePendingCounts } from "@/lib/pending-counts";
+import { cacheSavedRoomCount } from "@/lib/linen-count-cache";
 import { buildOpsState, captureOpsSnapshot, undoLastOpsSnapshot } from "@/lib/ops-snapshots";
 import { HousekeepingRoomTile, ReceptionRoomTile } from "@/components/rooms/room-tile";
 import { MorningSheetBanner, OPEN_PAPERWORK_EVENT } from "@/components/morning-sheet-banner";
@@ -1086,6 +1087,11 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
         { onConflict: "user_id,hotel_id,room_number,item_kind,item_id" },
       );
       if (error) throw new Error(error.message);
+    },
+    onSaved: async (room, kind, itemId, value) => {
+      await qc.cancelQueries({ queryKey: ["room_counts"] });
+      qc.setQueryData<RoomCount[]>(["room_counts"], (old) => cacheSavedRoomCount(old, room, kind, itemId, value));
+      await qc.invalidateQueries({ queryKey: ["room_counts"] });
     },
     onError: (message) => {
       toast.error(message);
@@ -2222,7 +2228,7 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
     itemId: string,
     delta: number,
   ) => {
-    const current = getCount(roomNumber, kind, itemId);
+    const current = pendingCounts.getPending(roomNumber, kind, itemId) ?? getCount(roomNumber, kind, itemId);
     const next = Math.max(0, current + delta);
     if (next === current) return;
     pendingCounts.setTarget(roomNumber, kind, itemId, next);

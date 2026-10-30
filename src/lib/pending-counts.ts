@@ -29,11 +29,14 @@ const GRACE_MS = 4000;
 
 export function usePendingCounts(options: {
   write: (room: number, kind: CountKind, itemId: string, value: number) => Promise<void>;
+  onSaved: (room: number, kind: CountKind, itemId: string, value: number) => Promise<void>;
   onError?: (message: string) => void;
 }) {
-  const { write, onError } = options;
+  const { write, onSaved, onError } = options;
   const writeRef = useRef(write);
   writeRef.current = write;
+  const savedRef = useRef(onSaved);
+  savedRef.current = onSaved;
   const errRef = useRef(onError);
   errRef.current = onError;
 
@@ -82,6 +85,9 @@ export function usePendingCounts(options: {
           const value: number = entry.value;
           try {
             await writeRef.current(entry.room, entry.kind, entry.itemId, value);
+            // Publish the acknowledged value and finish refreshing before the
+            // overlay can expire. Otherwise an old cache paints zero again.
+            await savedRef.current(entry.room, entry.kind, entry.itemId, value);
             lastSent = value;
           } catch (e) {
             errRef.current?.(e instanceof Error ? e.message : "Could not save count");
@@ -129,8 +135,8 @@ export function usePendingCounts(options: {
 
   const getPending = useCallback(
     (room: number, kind: CountKind, itemId: string): number | undefined =>
-      pending[countKey(room, kind, itemId)]?.value,
-    [pending],
+      pendingRef.current[countKey(room, kind, itemId)]?.value,
+    [],
   );
 
   return { pending, getPending, setTarget, clearAll };

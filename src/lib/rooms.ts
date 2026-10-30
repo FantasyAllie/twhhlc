@@ -105,6 +105,9 @@ export const resolveRoomStatusFlags = (
 
 export type TileMeta = { bg: string; fg: string; accent: string; label: string };
 
+export const showsDirtyEmoji = (isDirty: boolean, sheetKind?: string | null): boolean =>
+  isDirty && !sheetKind;
+
 // Bed short code used on room tiles (e.g. "ARRIVAL - D"), not the full label.
 export const bedCode = (label: string | null | undefined): string | null => {
   if (!label) return null;
@@ -145,11 +148,11 @@ export const computeTileMeta = (args: {
     return { bg: "var(--room-staff)", fg: "var(--room-staff-fg)", accent: "var(--room-staff-accent)", label: "ROS" };
   if (isNR)
     return { bg: "var(--room-stayover)", fg: "var(--room-stayover-fg)", accent: "var(--room-stayover-accent)", label: "STAYOVER" };
-  if (stayoverOut && !isDone)
+  if (stayoverOut && !isDone && !working)
     return { bg: "var(--room-stayover-out)", fg: "var(--room-stayover-out-fg)", accent: "var(--room-stayover-out-accent)", label: "Not started" };
-  // Sheet stayovers stay in the dirty tone until DND, Not required or done.
-  if (sheetKind === "stayover" && flags.isStayover && !flags.isDnd && !isDone)
-    return { ...dirtyTone, label: working ? "Stayover\nIn progress" : "Stayover\nNot started" };
+  // Paperwork jobs use Dirty until started, then the normal progress tone.
+  if (sheetKind === "stayover" && (flags.isStayover || flags.isDirty) && !flags.isDnd && !isDone)
+    return { ...(working ? roomStateMeta.progress : dirtyTone), label: working ? "Stayover\nIn progress" : "Stayover\nNot started" };
   if (flags.isStayover || flags.isDnd)
     return { bg: "var(--room-stayover)", fg: "var(--room-stayover-fg)", accent: "var(--room-stayover-accent)", label: "Stayover" };
   if (isDone)
@@ -157,7 +160,7 @@ export const computeTileMeta = (args: {
       ? { bg: "var(--room-cleandone)", fg: "var(--room-cleandone-fg)", accent: "var(--room-cleandone-accent)", label: "Clean" }
       : { bg: "var(--room-complete)", fg: "var(--room-complete-fg)", accent: "var(--room-complete-accent)", label: "Arrival" };
   const dep = departureLabel(sheetKind);
-  if (flags.isDirty && dep) return { ...dirtyTone, label: `${dep}\n${working ? "In progress" : "Not started"}` };
+  if (flags.isDirty && dep) return { ...(working ? roomStateMeta.progress : dirtyTone), label: `${dep}\n${working ? "In progress" : "Not started"}` };
   // An arrival without a departure is already clean on the paperwork,
   // but still needs its arrival setup checked before it is marked done.
   // It uses the same warm tone as a departure/arrival room.
@@ -168,9 +171,7 @@ export const computeTileMeta = (args: {
     };
   if (flags.isDirty)
     return {
-      bg: "var(--room-dirty)",
-      fg: "var(--room-dirty-fg)",
-      accent: "var(--room-dirty-accent)",
+      ...(fromSheet && working ? roomStateMeta.progress : dirtyTone),
       label: role === "reception" ? "ROS - Dirty" : "Dirty",
     };
   const inProgress = hasLinenCount || (role === "housekeeping" && state === "progress");
