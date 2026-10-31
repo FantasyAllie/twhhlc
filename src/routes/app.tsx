@@ -710,10 +710,8 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
   const [filtersSheetOpen, setFiltersSheetOpen] = useState(false);
   const [hideCompletedRooms, setHideCompletedRooms] = useState(false);
   const [selectedFloor, setSelectedFloor] = useState<string | null>(null);
-  const [floorChosen, setFloorChosen] = useState(false);
   useEffect(() => {
     setSelectedFloor(null);
-    setFloorChosen(false);
   }, [currentHotelQ.data?.id]);
   const [hkFiltersOpen, setHkFiltersOpen] = useState(false);
   const [hkFiltersAnchor, setHkFiltersAnchor] = useState<{ top: number; left: number } | null>(null);
@@ -6219,15 +6217,14 @@ const toggleRoomCategory = async (roomNumber: number, value: Category) => {
    }
    }
  // Phones open on the first floor until the user picks a view; "All rooms" is available everywhere.
- const activeFloor = selectedFloor && floorGroups.some((group) => group.key === selectedFloor)
-   ? selectedFloor : !floorChosen && isMobile && !isTablet ? floorGroups[0]?.key ?? null : null;
+const activeFloor = selectedFloor && floorGroups.some((group) => group.key === selectedFloor)
+  ? selectedFloor : null;
  const displayedRooms = activeFloor ? floorGroups.find((group) => group.key === activeFloor)?.rooms ?? [] : visibleRooms;
  const slotAfter = slotAfterFor(displayedRooms);
  const chooseFloor = (floor: string | null) => {
    if (openRoom !== null) closeRoomView();
-   setFloorChosen(true);
    setSelectedFloor(floor);
- };
+  };
  return <>
    <div className="mb-3 mx-auto flex max-sm:w-fit max-sm:max-w-full items-center overflow-x-auto rounded-full border border-border bg-background p-1 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden" aria-label="Floor selection">
      <Button data-touch-exempt type="button" variant="outline" aria-pressed={activeFloor === null} onClick={() => chooseFloor(null)}
