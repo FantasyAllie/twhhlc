@@ -6219,8 +6219,8 @@ const toggleRoomCategory = async (roomNumber: number, value: Category) => {
    }
    }
  // Phones open on the first floor until the user picks a view; "All rooms" is available everywhere.
- const activeFloor = selectedFloor && floorGroups.some((group) => group.key === selectedFloor)
-   ? selectedFloor : !floorChosen && isMobile && !isTablet ? floorGroups[0]?.key ?? null : null;
+const activeFloor = selectedFloor && floorGroups.some((group) => group.key === selectedFloor)
+  ? selectedFloor : null;
  const displayedRooms = activeFloor ? floorGroups.find((group) => group.key === activeFloor)?.rooms ?? [] : visibleRooms;
  const slotAfter = slotAfterFor(displayedRooms);
  const chooseFloor = (floor: string | null) => {
