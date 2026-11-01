@@ -105,6 +105,10 @@ export const resolveRoomStatusFlags = (
 
 export type TileMeta = { bg: string; fg: string; accent: string; label: string };
 
+/** Paperwork departures/turnovers are scheduled cleans, not leftover Dirty rooms. */
+export const isScheduledSheetClean = (sheetKind?: string | null): boolean =>
+  sheetKind === "departure" || sheetKind === "turnover";
+
 export const showsDirtyEmoji = (isDirty: boolean, sheetKind?: string | null): boolean =>
   isDirty && !sheetKind;
 
@@ -156,7 +160,7 @@ export const computeTileMeta = (args: {
   if (flags.isStayover || flags.isDnd)
     return { bg: "var(--room-stayover)", fg: "var(--room-stayover-fg)", accent: "var(--room-stayover-accent)", label: "Stayover" };
   if (isDone)
-    return flags.isClean
+    return flags.isClean || (sheetKind === "departure" && flags.isDirty)
       ? { bg: "var(--room-cleandone)", fg: "var(--room-cleandone-fg)", accent: "var(--room-cleandone-accent)", label: "Clean" }
       : { bg: "var(--room-complete)", fg: "var(--room-complete-fg)", accent: "var(--room-complete-accent)", label: "Arrival" };
   const dep = departureLabel(sheetKind);
