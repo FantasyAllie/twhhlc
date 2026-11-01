@@ -173,6 +173,7 @@ import * as Exp from "@/lib/exports";
 import type { SnapshotKind } from "@/lib/exports";
 import {
   computeResetPreserveMap,
+  isScheduledSheetClean,
   getRoomTileState as computeRoomTileState,
   resolveRoomStatusIds,
   roomStateMeta,
@@ -1211,7 +1212,7 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
       if (excluded.has(lbl)) continue;
       if (dndId && sid === dndId) continue;
       const isDone = r.done || r.done_reception;
-      if (dirtyId && sid === dirtyId) {
+      if (dirtyId && sid === dirtyId && !isScheduledSheetClean(r.sheet_kind)) {
         if (!isDone) dirtyLeft += 1;
         continue;
       }
@@ -6276,7 +6277,7 @@ const activeFloor = selectedFloor && floorGroups.some((group) => group.key === s
                     const statusLabel = sid ? (statusLabelById.get(sid) ?? sid).toLowerCase() : "";
                      if (excludedProgressStatuses.has(statusLabel)) return false;
                      if (dndId && sid === dndId) return false;
-                     if (dirtyProgressId && sid === dirtyProgressId && !(r.done || r.done_reception))
+                     if (dirtyProgressId && sid === dirtyProgressId && !isScheduledSheetClean(r.sheet_kind) && !(r.done || r.done_reception))
                        return false;
                      return true;
                   });
