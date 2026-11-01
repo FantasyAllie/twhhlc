@@ -57,6 +57,15 @@ describe("morning sheet rules", () => {
       assert.equal(showsDirtyEmoji(true, sheetKind), false);
     }
     assert.equal(showsDirtyEmoji(true, null), true);
+    assert.equal(showsDirtyEmoji(true, "vacant"), true);
+  });
+  it("paperwork clean rooms stay Not started red until checked", () => {
+    const flags = { ...arrivalFlags, isArrival: false, isClean: true };
+    const args = { flags, isNR: false, hasLinenCount: false, earlyCheckIn: false, role: "housekeeping" as const, sheetKind: "vacant" };
+    const meta = computeTileMeta({ ...args, state: "todo" });
+    assert.equal(meta.bg, "var(--room-todo)");
+    assert.equal(meta.label, "Clean\nNot checked");
+    assert.equal(computeTileMeta({ ...args, state: "done" }).label, "Clean");
   });
   it("counting linen makes paperwork jobs In Progress yellow in both department views", () => {
     for (const sheetKind of ["stayover", "departure", "turnover", "arrival"]) {
