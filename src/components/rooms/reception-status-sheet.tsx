@@ -269,10 +269,22 @@ export function ReceptionStatusSheet({
                         );
                       };
                      const nodes: React.ReactNode[] = [];
-                     topLabels.forEach((lbl) => {
-                       const s = findStatus(lbl);
-                       if (s) nodes.push(renderRow(s));
-                     });
+                     {
+                       // Arrival and Clean sit side by side to save vertical space.
+                       const topNodes = topLabels
+                         .map((lbl) => findStatus(lbl))
+                         .filter((s): s is ReceptionItem => !!s);
+                       if (topNodes.length > 1) {
+                         nodes.push(
+                           <div key="pair-top-status" className="grid grid-cols-2 gap-1.5">
+                             {topNodes.map((s) => renderRow(s))}
+                           </div>,
+                         );
+                       } else if (topNodes.length === 1) {
+                         topNodes.forEach((s) => nodes.push(renderRow(s)));
+                       }
+                     }
+
                       {
                         const sDnd = findStatus("DND");
                         const sStay = findStatus("Stayover");
