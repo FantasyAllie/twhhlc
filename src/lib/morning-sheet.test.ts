@@ -117,3 +117,13 @@ describe("morning sheet room details", () => {
     assert.equal(canUploadMorningSheet("admin", []), true);
   });
 });
+
+import { isScheduledSheetClean as _sched } from "./rooms";
+describe("paperwork departures are scheduled cleans", () => {
+  it("counts departures and turnovers as scheduled, not leftover dirty", () => {
+    expect(_sched("departure")).toBe(true);
+    expect(_sched("turnover")).toBe(true);
+    expect(_sched(null)).toBe(false);
+    expect(_sched("stayover")).toBe(false);
+  });
+});

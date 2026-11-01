@@ -173,6 +173,7 @@ import * as Exp from "@/lib/exports";
 import type { SnapshotKind } from "@/lib/exports";
 import {
   computeResetPreserveMap,
+  isScheduledSheetClean,
   getRoomTileState as computeRoomTileState,
   resolveRoomStatusIds,
   roomStateMeta,
