@@ -204,6 +204,13 @@
       "when": 1792965955428,
       "tag": "0028_paperwork_delete_policy",
       "breakpoints": true
+    },
+    {
+      "idx": 29,
+      "version": "7",
+      "when": 1793555700872,
+      "tag": "0029_resolve_paperwork_status_on_done",
+      "breakpoints": true
     }
   ]
 }
