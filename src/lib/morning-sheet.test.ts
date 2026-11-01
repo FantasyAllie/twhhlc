@@ -121,9 +121,9 @@ describe("morning sheet room details", () => {
 import { isScheduledSheetClean as _sched } from "./rooms";
 describe("paperwork departures are scheduled cleans", () => {
   it("counts departures and turnovers as scheduled, not leftover dirty", () => {
-    expect(_sched("departure")).toBe(true);
-    expect(_sched("turnover")).toBe(true);
-    expect(_sched(null)).toBe(false);
-    expect(_sched("stayover")).toBe(false);
+    assert.equal(_sched("departure"), true);
+    assert.equal(_sched("turnover"), true);
+    assert.equal(_sched(null), false);
+    assert.equal(_sched("stayover"), false);
   });
 });
