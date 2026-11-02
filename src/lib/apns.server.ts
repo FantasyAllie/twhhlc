@@ -12,13 +12,17 @@ const b64url = (bytes: Uint8Array): string =>
 
 const b64urlText = (text: string): string => b64url(new TextEncoder().encode(text));
 
-function pemToBytes(pem: string): Uint8Array {
+function pemToBytes(pem: string): Uint8Array<ArrayBuffer> {
   // Secrets are often pasted with literal "\n" instead of line breaks.
   const base64 = pem
     .replace(/\\n/g, "\n")
     .replace(/-----[^-]+-----/g, "")
     .replace(/\s/g, "");
-  return Uint8Array.from(atob(base64), (c) => c.charCodeAt(0));
+  const raw = atob(base64);
+  // crypto.subtle only accepts a view over a plain ArrayBuffer, not ArrayBufferLike.
+  const bytes = new Uint8Array(new ArrayBuffer(raw.length));
+  for (let i = 0; i < raw.length; i += 1) bytes[i] = raw.charCodeAt(i);
+  return bytes;
 }
 
 // Apple wants one token reused for 20-60 minutes, and throttles new ones.
