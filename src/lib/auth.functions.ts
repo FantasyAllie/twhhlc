@@ -287,16 +287,22 @@ export const updateUserAssignment = createServerFn({ method: "POST" })
       if (nextHotelIds.length === 0) throw new Error("Assign at least one hotel");
       const { data: hotels, error: hErr } = await supabaseAdmin
         .from("hotels")
-        .select("id")
+        .select("id, developer_only")
         .in("id", nextHotelIds);
       if (hErr) throw new Error(hErr.message);
-      const validIds = new Set(((hotels ?? []) as { id: string }[]).map((h) => h.id));
+      const hotelRows = (hotels ?? []) as { id: string; developer_only: boolean }[];
+      const validIds = new Set(hotelRows.map((h) => h.id));
       if (validIds.size !== nextHotelIds.length) throw new Error("Hotel not found");
+      const willBeDeveloper = position === "developer" || (subRoles as string[]).includes("developer");
+      if (!willBeDeveloper && hotelRows.some((h) => h.developer_only)) {
+        throw new Error("Test hotels can only be assigned to developer accounts");
+      }
 
       await supabaseAdmin.from("hotel_members").delete().eq("user_id", data.id);
-      await supabaseAdmin
+      const { error: insErr } = await supabaseAdmin
         .from("hotel_members")
         .insert(nextHotelIds.map((h) => ({ user_id: data.id, hotel_id: h })));
+      if (insErr) throw new Error(insErr.message);
 
       // Ensure the user's active hotel is still one they can access. If not,
       // clear it so they must pick again next sign-in.
@@ -378,9 +384,10 @@ export const createUser = createServerFn({ method: "POST" })
       ...subRoles.map((r) => ({ user_id: created.user.id, role: r })),
     ]);
     await supabaseAdmin.from("hotel_members").delete().eq("user_id", created.user.id);
-    await supabaseAdmin
+    const { error: memberErr } = await supabaseAdmin
       .from("hotel_members")
       .insert(hotelIds.map((h) => ({ user_id: created.user.id, hotel_id: h })));
+    if (memberErr) throw new Error(memberErr.message);
     // If the user has exactly one hotel, seed their active hotel so they land
     // straight in the workspace without needing to pick.
     if (hotelIds.length === 1) {
