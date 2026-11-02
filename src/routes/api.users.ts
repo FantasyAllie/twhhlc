@@ -13,6 +13,18 @@ import {
   updateUserPassword,
 } from "@/lib/auth.functions";
 import { parseMorningSheet } from "@/lib/morning-sheet.functions";
+import {
+  getNotificationPrefs,
+  notifyDepartmentMessage,
+  notifyLostProperty,
+  notifyMaintenanceCompleted,
+  notifyMaintenanceRequest,
+  notifyRoomEvent,
+  registerPushDevice,
+  sendTestNotification,
+  setNotificationPrefs,
+  unregisterPushDevice,
+} from "@/lib/push.functions";
 
 // User and hotel workspace management for the iPhone app: POST { action, data } with the signed-in
 // person's Supabase token as "Authorization: Bearer …". Each action calls the
@@ -34,6 +46,17 @@ const ACTIONS = {
   // Paperwork: reads an uploaded PDF room status report, like the website's
   // Paperwork upload. Nothing is saved here; the app saves the sheet itself.
   parsePaperwork: (data: unknown) => parseMorningSheet({ data: data as never }),
+  // Notifications: the same preferences and alerts as the website's, plus this phone's token.
+  notificationPrefs: () => getNotificationPrefs(),
+  setNotificationPrefs: (data: unknown) => setNotificationPrefs({ data: data as never }),
+  registerPushDevice: (data: unknown) => registerPushDevice({ data: data as never }),
+  unregisterPushDevice: (data: unknown) => unregisterPushDevice({ data: data as never }),
+  testNotification: () => sendTestNotification(),
+  notifyRoomEvent: (data: unknown) => notifyRoomEvent({ data: data as never }),
+  notifyMessage: (data: unknown) => notifyDepartmentMessage({ data: data as never }),
+  notifyMaintenanceRequest: (data: unknown) => notifyMaintenanceRequest({ data: data as never }),
+  notifyMaintenanceCompleted: (data: unknown) => notifyMaintenanceCompleted({ data: data as never }),
+  notifyLostProperty: (data: unknown) => notifyLostProperty({ data: data as never }),
 } as const;
 
 export const Route = createFileRoute("/api/users")({
