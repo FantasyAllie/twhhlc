@@ -313,6 +313,33 @@ export type Database = {
           },
         ]
       }
+      ios_push_devices: {
+        Row: {
+          bundle_id: string
+          created_at: string
+          environment: string
+          last_used_at: string
+          token: string
+          user_id: string
+        }
+        Insert: {
+          bundle_id: string
+          created_at?: string
+          environment: string
+          last_used_at?: string
+          token: string
+          user_id: string
+        }
+        Update: {
+          bundle_id?: string
+          created_at?: string
+          environment?: string
+          last_used_at?: string
+          token?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       lost_property: {
         Row: {
           area_label: string | null
