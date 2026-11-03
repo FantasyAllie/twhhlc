@@ -14,6 +14,12 @@ import {
 } from "@/lib/entry-photos";
 import { cn } from "@/lib/utils";
 
+// Android Chrome ignores capture and opens the gallery when accept mixes
+// image and video, so the camera input asks for photos only there.
+function isAndroidDevice(): boolean {
+  return typeof navigator !== "undefined" && /Android/i.test(navigator.userAgent);
+}
+
 type Pending = { id: string; file: File; previewUrl: string };
 
 /** Short videos (added in the iPhone app) are kept alongside the photos. */
@@ -104,7 +110,7 @@ export function PhotoComposer({
       <input
         ref={cameraInputRef}
         type="file"
-        accept={allowVideo ? "image/*,video/*" : "image/*"}
+        accept={allowVideo && !isAndroidDevice() ? "image/*,video/*" : "image/*"}
         capture="environment"
         className="hidden"
         onChange={(e) => void onPick(e)}
@@ -244,7 +250,7 @@ export function PhotoAttachments({
       <input
         ref={cameraInputRef}
         type="file"
-        accept={allowVideo ? "image/*,video/*" : "image/*"}
+        accept={allowVideo && !isAndroidDevice() ? "image/*,video/*" : "image/*"}
         capture="environment"
         className="hidden"
         onChange={(e) => void handlePick(e)}
