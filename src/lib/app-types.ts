@@ -100,6 +100,9 @@ export type Room = {
   sheet_room_type?: string | null;
   // Floor label used to group rooms on the home screen; editable per room.
   floor?: string | null;
+  // Guest extras already left in the room, and a hand-set guest count.
+  guest_extras_done?: string[] | null;
+  guest_extras_guests?: number | null;
 };
 
 export type TemplateItemRoom = { id: string; template_item_id: string; room_number: number };

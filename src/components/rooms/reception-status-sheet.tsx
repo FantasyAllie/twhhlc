@@ -7,6 +7,7 @@ import { cn } from "@/lib/utils";
 import { FlagIcon, useRoomFlags } from "@/lib/room-flags";
 import type { ReceptionItem, Room } from "@/lib/app-types";
 import { RoomCheckedItemSelectors } from "@/components/rooms/room-checklists";
+import { RoomGuestExtras } from "@/components/rooms/guest-extras";
 import { RotateCw } from "lucide-react";
 import { toast } from "sonner";
 import { formatFlipDate, isMattressDue, mattressNextDue, updateRoomMattress, useMattressInterval } from "@/lib/mattress";
@@ -366,6 +367,7 @@ export function ReceptionStatusSheet({
                </div>
               </div>
              )}
+               {!isReception && room && <RoomGuestExtras room={room} roomTypes={parseCats(room.category)} />}
                <RoomCheckedItemSelectors key={n} roomNumber={n} selectedItems={room?.checked_items ?? null} />
                <div className={cn("border-y py-4", room?.mattress_tracking && "grid grid-cols-2 gap-1.5")}>
                  <Row

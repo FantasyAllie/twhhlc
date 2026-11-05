@@ -13,7 +13,8 @@ import { Switch } from "@/components/ui/switch";
 import { formatFlipDate, isMattressDue, mattressNextDue, updateMattressInterval, updateRoomMattress, useMattressInterval } from "@/lib/mattress";
 import { useCurrentHotel } from "@/lib/hotels";
 import { FloorsCupboards } from "@/components/rooms/floors-cupboards";
-import { Layers } from "lucide-react";
+import { Layers, Gift } from "lucide-react";
+import { GuestExtrasEditor } from "@/components/rooms/guest-extras";
 
 type Props = {
   manageRoomsOpen: boolean;
@@ -50,7 +51,7 @@ export function ManageRoomsDialogs({
   removeRoom,
   moveRoom,
 }: Props) {
-  const [view, setView] = useState<"home" | "rooms" | "checklist" | "mattress" | "floors">("home");
+  const [view, setView] = useState<"home" | "rooms" | "checklist" | "mattress" | "floors" | "extras">("home");
   useEffect(() => {
     if (manageRoomsOpen) setView("home");
   }, [manageRoomsOpen]);
@@ -97,6 +98,10 @@ export function ManageRoomsDialogs({
               <ClipboardCheck className="h-4 w-4 shrink-0" />
               <span className="truncate">Room Checklist</span>
             </Button>
+            <Button variant="outline" size="sm" className={btn} onClick={() => setView("extras")}>
+              <Gift className="h-4 w-4 shrink-0" />
+              <span className="truncate">Guest Extras</span>
+            </Button>
             <Button variant="outline" size="sm" className={btn} onClick={openLinenList}>
               <Shirt className="h-4 w-4 shrink-0" />
               <span className="truncate">Linen List</span>
@@ -114,6 +119,14 @@ export function ManageRoomsDialogs({
             <DialogTitle>Room Checklist</DialogTitle>
           </DialogHeader>
           <div className="mt-3"><RoomChecklistEditor /></div>
+        </div>
+      )}
+      {view === "extras" && (
+        <div className="min-h-0 overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle>Guest Extras</DialogTitle>
+          </DialogHeader>
+          <GuestExtrasEditor />
         </div>
       )}
       {view === "mattress" && <MattressSchedule rooms={rooms} />}
