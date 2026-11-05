@@ -1,0 +1,4 @@
+-- No schema change here. This migration exists only to run the migrator so the
+-- already-journaled 0035_guest_extras.sql applies to the database exactly as written.
+-- Its SQL is intentionally NOT duplicated here: it has no IF NOT EXISTS guards, so a
+-- second copy would fail with "table public.guest_extras already exists".

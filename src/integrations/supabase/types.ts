@@ -171,6 +171,92 @@ export type Database = {
           },
         ]
       }
+      guest_extra_rules: {
+        Row: {
+          applies_to: string
+          created_at: string
+          extra_id: string
+          extra_per_guest: number
+          hotel_id: string
+          id: string
+          quantities: number[]
+          room_types: string[]
+          sort_order: number
+        }
+        Insert: {
+          applies_to?: string
+          created_at?: string
+          extra_id: string
+          extra_per_guest?: number
+          hotel_id?: string
+          id?: string
+          quantities?: number[]
+          room_types?: string[]
+          sort_order?: number
+        }
+        Update: {
+          applies_to?: string
+          created_at?: string
+          extra_id?: string
+          extra_per_guest?: number
+          hotel_id?: string
+          id?: string
+          quantities?: number[]
+          room_types?: string[]
+          sort_order?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "guest_extra_rules_extra_id_fkey"
+            columns: ["extra_id"]
+            isOneToOne: false
+            referencedRelation: "guest_extras"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "guest_extra_rules_hotel_id_fkey"
+            columns: ["hotel_id"]
+            isOneToOne: false
+            referencedRelation: "hotels"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      guest_extras: {
+        Row: {
+          created_at: string
+          hotel_id: string
+          icon: string | null
+          id: string
+          name: string
+          sort_order: number
+        }
+        Insert: {
+          created_at?: string
+          hotel_id?: string
+          icon?: string | null
+          id?: string
+          name: string
+          sort_order?: number
+        }
+        Update: {
+          created_at?: string
+          hotel_id?: string
+          icon?: string | null
+          id?: string
+          name?: string
+          sort_order?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "guest_extras_hotel_id_fkey"
+            columns: ["hotel_id"]
+            isOneToOne: false
+            referencedRelation: "hotels"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       hotel_floors: {
         Row: {
           cupboard_key: string
@@ -1276,6 +1362,8 @@ export type Database = {
           early_check_in: boolean
           early_check_in_at: string | null
           floor: string | null
+          guest_extras_done: Json | null
+          guest_extras_guests: number | null
           guest_vacated: boolean
           guest_vacated_at: string | null
           hotel_id: string
@@ -1316,6 +1404,8 @@ export type Database = {
           early_check_in?: boolean
           early_check_in_at?: string | null
           floor?: string | null
+          guest_extras_done?: Json | null
+          guest_extras_guests?: number | null
           guest_vacated?: boolean
           guest_vacated_at?: string | null
           hotel_id?: string
@@ -1356,6 +1446,8 @@ export type Database = {
           early_check_in?: boolean
           early_check_in_at?: string | null
           floor?: string | null
+          guest_extras_done?: Json | null
+          guest_extras_guests?: number | null
           guest_vacated?: boolean
           guest_vacated_at?: string | null
           hotel_id?: string
@@ -1598,6 +1690,14 @@ export type Database = {
       save_missing_nightly_exports: {
         Args: { p_now?: string }
         Returns: number
+      }
+      set_guest_extra_done: {
+        Args: { p_done: boolean; p_extra: string; p_room_number: number }
+        Returns: Json
+      }
+      set_guest_extras_guests: {
+        Args: { p_guests: number; p_room_number: number }
+        Returns: undefined
       }
       set_room_checked_item: {
         Args: { p_item: string; p_room_number: number; p_selected: boolean }

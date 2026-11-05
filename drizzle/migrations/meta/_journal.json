@@ -253,6 +253,13 @@
       "when": 1793907993664,
       "tag": "0035_guest_extras",
       "breakpoints": true
+    },
+    {
+      "idx": 36,
+      "version": "7",
+      "when": 1793909331124,
+      "tag": "0036_run_pending_0035_guest_extras",
+      "breakpoints": true
     }
   ]
 }
