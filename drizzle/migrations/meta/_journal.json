@@ -246,6 +246,13 @@
       "when": 1793642455272,
       "tag": "0034_enable_realtime_lists",
       "breakpoints": true
+    },
+    {
+      "idx": 35,
+      "version": "7",
+      "when": 1793907993664,
+      "tag": "0035_guest_extras",
+      "breakpoints": true
     }
   ]
 }
