@@ -183,6 +183,7 @@ import { usePendingCounts } from "@/lib/pending-counts";
 import { cacheSavedRoomCount } from "@/lib/linen-count-cache";
 import { buildOpsState, captureOpsSnapshot, undoLastOpsSnapshot } from "@/lib/ops-snapshots";
 import { HousekeepingRoomTile, ReceptionRoomTile } from "@/components/rooms/room-tile";
+import { ExtrasStillToLeave } from "@/components/rooms/guest-extras";
 import { MorningSheetBanner, OPEN_PAPERWORK_EVENT } from "@/components/morning-sheet-banner";
 import { canUploadMorningSheet, setAsBed } from "@/lib/morning-sheet";
 
@@ -6423,6 +6424,7 @@ const activeFloor = selectedFloor && floorGroups.some((group) => group.key === s
                                     </li>
                                   ))}
                                 </ul>
+                                <ExtrasStillToLeave rooms={rooms} className="mt-3 border-t border-sidebar-foreground/10 pt-3" />
                               </div>
                             </div>,
                             document.body,
@@ -6453,6 +6455,7 @@ const activeFloor = selectedFloor && floorGroups.some((group) => group.key === s
                                 </li>
                               ))}
                             </ul>
+                            <ExtrasStillToLeave rooms={rooms} className="mt-4 rounded-xl border border-border px-4 py-3" />
                           </SheetContent>
                         </Sheet>
                       </>

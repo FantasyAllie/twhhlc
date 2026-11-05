@@ -175,33 +175,45 @@ export type Database = {
         Row: {
           applies_to: string
           created_at: string
+          except_features: string[]
           extra_id: string
           extra_per_guest: number
+          flags: string[]
           hotel_id: string
           id: string
+          note_words: string[]
           quantities: number[]
+          room_features: string[]
           room_types: string[]
           sort_order: number
         }
         Insert: {
           applies_to?: string
           created_at?: string
+          except_features?: string[]
           extra_id: string
           extra_per_guest?: number
+          flags?: string[]
           hotel_id?: string
           id?: string
+          note_words?: string[]
           quantities?: number[]
+          room_features?: string[]
           room_types?: string[]
           sort_order?: number
         }
         Update: {
           applies_to?: string
           created_at?: string
+          except_features?: string[]
           extra_id?: string
           extra_per_guest?: number
+          flags?: string[]
           hotel_id?: string
           id?: string
+          note_words?: string[]
           quantities?: number[]
+          room_features?: string[]
           room_types?: string[]
           sort_order?: number
         }
@@ -228,6 +240,7 @@ export type Database = {
           hotel_id: string
           icon: string | null
           id: string
+          kind: string
           name: string
           sort_order: number
         }
@@ -236,6 +249,7 @@ export type Database = {
           hotel_id?: string
           icon?: string | null
           id?: string
+          kind?: string
           name: string
           sort_order?: number
         }
@@ -244,6 +258,7 @@ export type Database = {
           hotel_id?: string
           icon?: string | null
           id?: string
+          kind?: string
           name?: string
           sort_order?: number
         }

@@ -18,6 +18,7 @@ function MattressBadge({ room }: { room: Room | undefined }) {
   );
 }
 import { RotateCw } from "lucide-react";
+import { GuestExtrasBadge } from "@/components/rooms/guest-extras";
 
 // Badges for admin-defined custom guest & room info toggles.
 function CustomFlagBadges({ n }: { n: number }) {
@@ -270,6 +271,7 @@ function ReceptionRoomTileBase({
           )}
           <MattressBadge room={room} />
         <CustomFlagBadges n={n} />
+        <GuestExtrasBadge room={room} className={BADGE_CLASS} />
         </span>
       )}
       {/* Spanner: the room's maintenance flag, or an open job (Reset all can
@@ -431,6 +433,7 @@ function HousekeepingRoomTileBase({
         )}
         <MattressBadge room={room} />
         <CustomFlagBadges n={n} />
+        <GuestExtrasBadge room={room} className={BADGE_CLASS} />
       </span>
       {(room?.needs_maintenance || hasOpenMaintenance) && (
         <Wrench
