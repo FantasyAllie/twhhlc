@@ -71,37 +71,39 @@ export function useGuestExtras() {
   });
 }
 
-const guestsFor = (room: Room) =>
-  room.guest_extras_guests ??
-  (["arrival", "turnover", "stayover"].includes(room.sheet_kind ?? "") ? room.sheet_guests ?? null : null);
+const sheetGuestsFor = (room: Room) =>
+  ["arrival", "turnover", "stayover"].includes(room.sheet_kind ?? "") ? room.sheet_guests ?? null : null;
+const guestsFor = (room: Room) => room.guest_extras_guests ?? sheetGuestsFor(room);
 
 const statusLabelOf = (room: Room, statuses: ReceptionItem[] | undefined) => {
   const sid = room.reception_status_id ?? room.default_status;
   return (sid && statuses?.find((s) => s.id === sid)?.label) || "";
 };
 
-/** Works out each room's checks and extras for today. Returns null while loading. */
-export function useRoomNeeds() {
+/** Works out each room's checks and extras for today. Returns null while loading.
+ *  fromPaperwork: the morning paperwork's job and guests only (Today's brief), ignoring status changes. */
+export function useRoomNeeds(fromPaperwork = false) {
   const data = useGuestExtras().data;
   const statuses = useReceptionItemsQuery().data;
   const flagSettings = useFlagSettingsQuery().data;
   const customFlags = useCustomFlagsQuery().data;
   return useCallback((room: Room): RoomNeed[] | null => {
     if (!data) return null;
-    const label = statusLabelOf(room, statuses);
+    const job = roomJob(room.sheet_kind, fromPaperwork ? "" : statusLabelOf(room, statuses));
+    if (fromPaperwork && !job) return [];
     const flagKeysOn = mergeFlagDefs(flagSettings ?? []).filter((d) => d.custom
       ? (customFlags ?? []).some((c) => c.room_number === room.room_number && c.flag_key === d.key)
       : !!(room as unknown as Record<string, unknown>)[d.key]).map((d) => d.key);
     return extrasForRoom(data.extras, data.rules, {
-      job: roomJob(room.sheet_kind, label),
+      job,
       roomTypes: parseCats(room.category),
       featureIds: data.featureRooms.filter((f) => f.room_number === room.room_number).map((f) => f.feature_id),
       flagKeysOn,
       note: room.housekeeping_note,
-      guests: guestsFor(room),
+      guests: fromPaperwork ? sheetGuestsFor(room) : guestsFor(room),
       done: room.guest_extras_done ?? [],
     });
-  }, [data, statuses, flagSettings, customFlags]);
+  }, [data, statuses, flagSettings, customFlags, fromPaperwork]);
 }
 
 /** Room tile: a pink gift while extras still need leaving. */
@@ -142,17 +144,15 @@ export function ExtrasStillToLeave({ rooms, className }: { rooms: Room[]; classN
   </div>;
 }
 
-export function shiftBriefCounts(rooms: Room[], statuses: ReceptionItem[] | undefined, flagDefs: FlagDef[], customFlags: CustomFlagRow[]) {
+/** Today's brief is the day's plan: the morning paperwork only, so it doesn't change as rooms are done. */
+export function shiftBriefCounts(rooms: Room[], flagDefs: FlagDef[], customFlags: CustomFlagRow[]) {
   const jobs = { departure: 0, turnover: 0, arrival: 0, stayover: 0 };
   let guests = 0;
+  const hasPaperwork = rooms.some((room) => !!room.sheet_kind);
   for (const room of rooms) {
-    const job = roomJob(room.sheet_kind, statusLabelOf(room, statuses));
-    if (room.sheet_kind === "departure") jobs.departure++;
-    else if (room.sheet_kind === "turnover") jobs.turnover++;
-    else if (room.sheet_kind === "arrival") jobs.arrival++;
-    else if (room.sheet_kind === "stayover") jobs.stayover++;
-    else if (!room.sheet_kind && job) jobs[job]++;
-    if (job) guests += guestsFor(room) ?? 0;
+    const kind = room.sheet_kind;
+    if (kind === "departure" || kind === "turnover" || kind === "arrival" || kind === "stayover") jobs[kind]++;
+    guests += sheetGuestsFor(room) ?? 0;
   }
   const flags = flagDefs.filter((d) => !d.hidden && d.key !== "guest_vacated" && d.key !== "stayover_out").map((def) => ({
     def,
@@ -160,20 +160,19 @@ export function shiftBriefCounts(rooms: Room[], statuses: ReceptionItem[] | unde
       ? customFlags.some((c) => c.room_number === room.room_number && c.flag_key === def.key)
       : (room as unknown as Record<string, unknown>)[def.key] === true).length,
   })).filter((f) => f.count > 0);
-  return { jobs, guests, flags };
+  return { hasPaperwork, jobs, guests, flags };
 }
 
-/** Housekeeping Home: today's scheduled work, visible room flags and guest extras. */
+/** Housekeeping Home: the paperwork's scheduled work, visible room flags and guest extras. Hidden without paperwork. */
 export function ShiftBrief({ rooms }: { rooms: Room[] }) {
-  const needsFor = useRoomNeeds();
-  const statuses = useReceptionItemsQuery().data;
+  const needsFor = useRoomNeeds(true);
   const flagSettings = useFlagSettingsQuery().data;
   const customFlags = useCustomFlagsQuery().data;
   const [open, setOpen] = useState(true);
   useEffect(() => {
     try { setOpen(localStorage.getItem("shift_brief_open") !== "false"); } catch { /* Storage may be unavailable. */ }
   }, []);
-  const { jobs, guests, flags } = shiftBriefCounts(rooms, statuses, mergeFlagDefs(flagSettings ?? []), customFlags ?? []);
+  const { hasPaperwork, jobs, guests, flags } = shiftBriefCounts(rooms, mergeFlagDefs(flagSettings ?? []), customFlags ?? []);
   const extras = extrasTotals(rooms, needsFor);
   const jobTiles = [
     { count: jobs.departure, singular: "Departure", plural: "Departures", icon: DoorOpen, color: "bg-room-dirty text-room-dirty-fg" },
@@ -181,17 +180,16 @@ export function ShiftBrief({ rooms }: { rooms: Room[] }) {
     { count: jobs.arrival, singular: "Arrival", plural: "Arrivals", icon: Luggage, color: "bg-room-early text-room-early-fg" },
     { count: jobs.stayover, singular: "Stayover", plural: "Stayovers", icon: BedDouble, color: "bg-room-stayover text-room-stayover-fg" },
   ].filter((j) => j.count > 0);
-  if (!jobTiles.length && !guests && !flags.length && !extras.length) return null;
+  if (!hasPaperwork || (!jobTiles.length && !guests && !flags.length && !extras.length)) return null;
   const summary = jobTiles.length
     ? jobTiles.map((j) => `${j.count} ${(j.count === 1 ? j.singular : j.plural).toLowerCase()}`).join(" · ")
     : [...flags.map((f) => `${f.count} ${f.def.label}`), ...extras.map((e) => `${e.total} ${e.extra.name}`)].join(" · ");
-  const tile = (key: string, icon: React.ReactNode, count: number, label: string, color: string, left?: number) => (
+  const tile = (key: string, icon: React.ReactNode, count: number, label: string, color: string) => (
     <div key={key} className="flex min-w-0 items-start gap-2.5 rounded-lg bg-sidebar-accent/40 p-3">
       <span className={`grid size-8 shrink-0 place-items-center rounded-lg ${color}`}>{icon}</span>
       <div className="min-w-0">
         <p className="text-lg font-bold leading-tight tabular-nums">{count}</p>
         <p className="break-words text-xs text-sidebar-foreground/65">{label}</p>
-        {left !== undefined && <p className="mt-0.5 text-xs text-sidebar-foreground/65">{left} left</p>}
       </div>
     </div>
   );
@@ -221,7 +219,7 @@ export function ShiftBrief({ rooms }: { rooms: Room[] }) {
       </div>}
       {extras.length > 0 && <div className="space-y-2">
         <p className="text-xs font-semibold uppercase text-sidebar-foreground/65">Extras needed</p>
-        <div className="grid grid-cols-2 gap-2">{extras.map((e) => tile(e.extra.id, <ExtraIcon name={e.extra.icon} className="h-4 w-4" />, e.total, e.extra.name, FLAG_COLORS.pink.badge, e.left < e.total ? e.left : undefined))}</div>
+        <div className="grid grid-cols-2 gap-2">{extras.map((e) => tile(e.extra.id, <ExtraIcon name={e.extra.icon} className="h-4 w-4" />, e.total, e.extra.name, FLAG_COLORS.pink.badge))}</div>
       </div>}
     </div>}
   </section>;
