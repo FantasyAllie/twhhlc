@@ -48,7 +48,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { InventoryDialog, type InventorySection } from "@/components/linen/inventory-dialog";
 import { ManageRoomsDialogs } from "@/components/rooms/manage-rooms-dialogs";
-import { Minus, Plus, X, Menu, ArrowUp, ArrowDown, Pencil, Check, Trash2, Sun, SunDim, Moon, MoonStar, List, Bed, House, Ban, History, Users, User, Hash, ConciergeBell, ClipboardList, Printer, Filter, Wrench, DoorOpen, Footprints, Bell, Eye, EyeOff, HelpCircle, AlertCircle, MessageSquare, PackageSearch, RotateCcw, ChevronDown, ChevronRight, Camera, LayoutGrid, Truck, Clock, Dog, Undo2, Inbox, MapPin, Flag } from "lucide-react";
+import { Minus, Plus, X, Menu, ArrowUp, ArrowDown, Pencil, Check, Trash2, Sun, SunDim, Moon, MoonStar, List, Bed, House, Ban, History, Users, User, Hash, ConciergeBell, ClipboardList, Printer, Filter, Wrench, DoorOpen, Footprints, Bell, Eye, EyeOff, HelpCircle, AlertCircle, MessageSquare, PackageSearch, RotateCcw, ChevronDown, ChevronRight, Camera, LayoutGrid, Truck, Clock, Dog, Undo2, Inbox, MapPin, Flag, Pin } from "lucide-react";
 import {
   AccountDialog,
   AddConfigDialogs,
@@ -184,6 +184,7 @@ import { cacheSavedRoomCount } from "@/lib/linen-count-cache";
 import { buildOpsState, captureOpsSnapshot, undoLastOpsSnapshot } from "@/lib/ops-snapshots";
 import { HousekeepingRoomTile, ReceptionRoomTile } from "@/components/rooms/room-tile";
 import { ExtrasStillToLeave, ShiftBrief } from "@/components/rooms/guest-extras";
+import { PinRepliesStrip, RoomPinSettingsSheet, RoomPins, pinDotFor, pinsNeedingYou, useRoomPins, type PinViewer } from "@/components/rooms/room-pins";
 import { MorningSheetBanner, OPEN_PAPERWORK_EVENT } from "@/components/morning-sheet-banner";
 import { canUploadMorningSheet, setAsBed } from "@/lib/morning-sheet";
 
@@ -501,6 +502,7 @@ function AppPage() {
   const flagSettingsQ = useFlagSettingsQuery();
   const customFlagsQ = useCustomFlagsQuery();
   const [roomFlagsSheetOpen, setRoomFlagsSheetOpen] = useState(false);
+  const [quickRepliesOpen, setQuickRepliesOpen] = useState(false);
   // Realtime: push room status changes to all signed-in clients (esp. reception)
   const [realtimeEpoch, setRealtimeEpoch] = useState(0);
   useEffect(() => {
@@ -538,6 +540,28 @@ function AppPage() {
             if (cached && !cached.guest_vacated) playDoorBell();
           }
           qc.invalidateQueries({ queryKey: ["rooms"] });
+        },
+      )
+      .on(
+        "postgres_changes",
+        { event: "*", schema: "public", table: "room_pins" },
+        () => {
+          qc.invalidateQueries({ queryKey: ["room_pins"] });
+          qc.invalidateQueries({ queryKey: ["room_pin_replies"] });
+        },
+      )
+      .on(
+        "postgres_changes",
+        { event: "*", schema: "public", table: "quick_replies" },
+        () => {
+          qc.invalidateQueries({ queryKey: ["quick_replies"] });
+        },
+      )
+      .on(
+        "postgres_changes",
+        { event: "*", schema: "public", table: "room_pin_settings" },
+        () => {
+          qc.invalidateQueries({ queryKey: ["room_pin_settings"] });
         },
       )
       .on(
@@ -1041,6 +1065,7 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
   const deliveryQ = useDeliveryCountsQuery();
   const inventoryQ = useInventoryCountsQuery();
   const messagesQ = useRoomMessagesQuery();
+  const pinsQ = useRoomPins(authUser?.id ?? null);
   const maintenanceRequestsQ = useMaintenanceRequestsQuery();
   const maintenanceAreasQ = useMaintenanceAreasQuery();
   const lostPropertyQ = useLostPropertyOpenQuery();
@@ -1819,6 +1844,13 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
       if (hasMaintenanceRole) out.push("maintenance");
       return out;
     })();
+    // Room pins: who's looking, for what they can close and which dots they see.
+    const pinViewer: PinViewer = {
+      id: authUser?.id ?? null,
+      department: isReception ? "reception" : isFnb ? "fnb" : isMaintenance ? "maintenance" : "housekeeping",
+      departments: myMessageDepartments,
+      elevated: menuIsAdmin,
+    };
     const isMaintenanceOnlyUser =
       !menuIsAdmin && hasMaintenanceRole && !hasHousekeeperRole && !hasReceptionRole && !hasFnbRole;
     const menuIsFnbOnly =
@@ -3741,10 +3773,8 @@ const toggleRoomCategory = async (roomNumber: number, value: Category) => {
           // On reception, ignore messages reception themselves sent (they're
           // outgoing to housekeeping). Housekeeping originals and any replies
           // still trigger the dot.
-          const relevantMsgs = isReception
-            ? msgs.filter((m) => m.created_by_role !== "reception" || !!m.reply_to_id)
-            : msgs;
-          const hasMsg = relevantMsgs.length > 0;
+          // A pin in the hub wants you: an open one for your department, or a reply to yours.
+          const hasMsg = pinsNeedingYou(pinsQ.data ?? [], n, pinViewer).length > 0;
           const hasNote = !!note;
           const hasIndicator = hasMsg || hasNote || maintenance || vacated;
           return (
@@ -3755,7 +3785,7 @@ const toggleRoomCategory = async (roomNumber: number, value: Category) => {
               aria-pressed={active === "hub"}
               data-ios-selected={active === "hub" ? "true" : undefined}
               onClick={() => selectRoomTab(n, "hub")}
-              className={cn("relative inline-flex items-center justify-center h-11 w-11 shrink-0 rounded-xl border bg-background shadow-sm active:scale-[0.97] active:shadow-none text-sm font-medium cursor-pointer transition-colors hover:bg-accent", active === "hub" && "border-primary bg-primary/10 text-primary")}
+              className={cn("relative overflow-visible inline-flex items-center justify-center h-11 w-11 shrink-0 rounded-xl border bg-background shadow-sm active:scale-[0.97] active:shadow-none text-sm font-medium cursor-pointer transition-colors hover:bg-accent", active === "hub" && "border-primary bg-primary/10 text-primary")}
               aria-label="Room hub"
             >
               <Inbox className="h-4 w-4" />
@@ -3763,7 +3793,7 @@ const toggleRoomCategory = async (roomNumber: number, value: Category) => {
               {hasIndicator && (
                 <span className="absolute -top-0.5 -right-0.5 z-10 flex items-center gap-0.5">
                   {hasMsg && (
-                    <span aria-label="Message" className="h-2 w-2 rounded-full bg-amber-500 ring-2 ring-background" />
+                    <span aria-label="Pins waiting" className="h-2 w-2 rounded-full bg-orange-500 ring-2 ring-background" />
                   )}
                   {hasNote && (
                     <span aria-label="Note" className="h-2 w-2 rounded-full bg-primary ring-2 ring-background" />
@@ -3948,46 +3978,7 @@ const toggleRoomCategory = async (roomNumber: number, value: Category) => {
                 <p className="text-sm text-muted-foreground">No notes from Housekeeping.</p>
               )}
             </div>
-            <div className="space-y-2 rounded-xl border border-emerald-400/60 bg-emerald-50 dark:bg-emerald-950/40 p-3">
-              <p className="text-xs font-semibold uppercase tracking-wide text-emerald-700 dark:text-emerald-300">
-                Leave a message for housekeeping
-              </p>
-              {hasMsg && (
-                <ul className="space-y-1">
-                  {msgs.map((m) => (
-                    <li key={m.id} className="flex items-start gap-2 text-sm bg-background/70 rounded p-2">
-                      <span className="flex-1 break-words whitespace-pre-wrap">{m.message}</span>
-                      <Button
-                        type="button"
-                        variant="ghost"
-                        size="sm"
-                        className="h-7 px-2 text-xs"
-                        onClick={() => deleteRoomMessage(m.id)}
-                        aria-label="Delete message"
-                      >
-                        <X className="h-3 w-3" />
-                      </Button>
-                    </li>
-                  ))}
-                </ul>
-              )}
-              <div className="flex gap-2">
-                <Input
-                  value={newMessageText}
-                  onChange={(e) => setNewMessageText(e.target.value)}
-                  placeholder="Type a message…"
-                  onKeyDown={(e) => {
-                    if (e.key === "Enter" && !e.shiftKey) {
-                      e.preventDefault();
-                      submitRoomMessage(n);
-                    }
-                  }}
-                />
-                <Button type="button" onClick={() => submitRoomMessage(n)} disabled={!newMessageText.trim()}>
-                  Send
-                </Button>
-              </div>
-            </div>
+            <RoomPins room={n} viewer={pinViewer} />
           </div>
         );
       }
@@ -4027,15 +4018,11 @@ const toggleRoomCategory = async (roomNumber: number, value: Category) => {
         dismiss/confirm. */}
     {!isReception && (() => {
       const room = rooms.find((r) => r.room_number === n);
-      const msgs = activeMessagesByRoom(n);
-      if (msgs.length === 0 && !room?.housekeeping_note) return null;
-      const latest = msgs[msgs.length - 1];
+      const waiting = pinsNeedingYou(pinsQ.data ?? [], n, pinViewer);
+      if (waiting.length === 0 && !room?.housekeeping_note) return null;
+      const latest = waiting[waiting.length - 1];
       const preview = latest?.message ?? room?.housekeeping_note ?? "";
-      const sender = latest?.created_by_username
-        ? latest.created_by_username
-        : latest
-          ? "Reception"
-          : "Note";
+      const sender = latest ? latest.created_by_name : "Note";
       return (
         <button
           type="button"
@@ -4291,6 +4278,7 @@ const toggleRoomCategory = async (roomNumber: number, value: Category) => {
         actions.push({ key: "history", icon: History, label: "History", onClick: () => setHistorySheetOpen(true) });
       }
       locations.push({ key: "room-flags", icon: Flag, label: "Guest & Room Info", onClick: () => setRoomFlagsSheetOpen(true) });
+      locations.push({ key: "room-pins", icon: Pin, label: "Room Pins", onClick: () => setQuickRepliesOpen(true) });
     }
     if ((realIsAdmin || (realIsManager && hasHousekeeperRole)) && !isMaintenance) {
       linen.push({ key: "linen-days", icon: CalendarDays, label: "Delivery Schedule", onClick: () => setLinenDeliveryOpen(true) });
@@ -4377,6 +4365,7 @@ const toggleRoomCategory = async (roomNumber: number, value: Category) => {
   return (
 <RoomFlagsContext.Provider value={roomFlagsCtx}>
 <RoomFlagsSheet open={roomFlagsSheetOpen} onOpenChange={setRoomFlagsSheetOpen} />
+<RoomPinSettingsSheet open={quickRepliesOpen} onOpenChange={setQuickRepliesOpen} />
 <main
   ref={homeRefresh.ref}
   data-home-refresh
@@ -4635,6 +4624,7 @@ const toggleRoomCategory = async (roomNumber: number, value: Category) => {
  )}
 
  {!isReception && !isMaintenance && !isFnb && <ShiftBrief rooms={rooms} />}
+ <PinRepliesStrip viewer={pinViewer} />
 
  {/* Mobile role-picker sheet (triggered from the burger menu or the tablet top bar).
       iOS: frosted centred card with glass buttons; Android: bottom sheet, Material buttons. */}
@@ -4954,7 +4944,7 @@ const toggleRoomCategory = async (roomNumber: number, value: Category) => {
     notesSheetRoom={notesSheetRoom}
     setNotesSheetRoom={setNotesSheetRoom}
     rooms={rooms}
-    activeMessagesByRoom={activeMessagesByRoom}
+    pinViewer={pinViewer}
     canUseMessages={canUseMessages}
     canOpenHousekeepingChat={availableThreads.includes("housekeeping")}
     isReception={isReception}
@@ -6184,7 +6174,7 @@ const toggleRoomCategory = async (roomNumber: number, value: Category) => {
          isNR={isNR}
          hasLinenCount={hasLinenCount}
          isOpen={isOpen}
-         hasMessage={hasActiveMessage(n)}
+         pinDot={pinDotFor(pinsQ.data ?? [], n, pinViewer)}
          hasOpenMaintenance={roomsWithOpenMaintenance.has(n)}
          bedLabel={room?.reception_bed_id ? bedLabelById.get(room.reception_bed_id) ?? null : null}
          onClick={() => openOrToggle(n)}
@@ -6201,7 +6191,7 @@ const toggleRoomCategory = async (roomNumber: number, value: Category) => {
          isNR={isNR}
          hasLinenCount={hasLinenCount}
          isOpen={isOpen}
-         hasMessage={hasActiveMessage(n)}
+         pinDot={pinDotFor(pinsQ.data ?? [], n, pinViewer)}
          hasOpenMaintenance={roomsWithOpenMaintenance.has(n)}
          onClick={() => openOrToggle(n)}
          openBack={false}

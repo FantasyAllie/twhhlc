@@ -56,7 +56,8 @@ type BaseProps = {
   isNR: boolean;
   hasLinenCount: boolean;
   isOpen: boolean;
-  hasMessage: boolean;
+  /** An open request for your department, or a reply to your pin. */
+  pinDot: "reply" | "request" | null;
   /** The room has a maintenance job that isn't done yet. */
   hasOpenMaintenance?: boolean;
   onClick: () => void;
@@ -159,7 +160,7 @@ function ReceptionRoomTileBase({
   isNR,
   hasLinenCount,
   isOpen,
-  hasMessage,
+  pinDot,
   hasOpenMaintenance = false,
   onClick,
   onLongPress,
@@ -242,10 +243,10 @@ function ReceptionRoomTileBase({
       )}
       {!isStaffRoom && (
         <span className="absolute top-1.5 right-1.5 flex max-w-[42%] flex-col items-end gap-1">
-          {(hasMessage || !!room?.housekeeping_note) && (
+          {(pinDot || !!room?.housekeeping_note) && (
             <span
-              aria-label="Housekeeping note"
-              className="h-2 w-2 rounded-full bg-amber-500 ring-2 ring-background"
+              aria-label={pinDot === "reply" ? "New reply to your pin" : pinDot ? "Open request" : "Housekeeping note"}
+              className={"h-2 w-2 rounded-full ring-2 ring-background " + (pinDot === "reply" ? "bg-yellow-400" : "bg-orange-500")}
             />
           )}
           {room?.guest_vacated && (
@@ -294,7 +295,7 @@ function HousekeepingRoomTileBase({
   isNR,
   hasLinenCount,
   isOpen,
-  hasMessage,
+  pinDot,
   hasOpenMaintenance = false,
   onClick,
   onLongPress,
@@ -401,8 +402,9 @@ function HousekeepingRoomTileBase({
         {isStaff ? "Staff" : meta.label}
       </span>
       <span className="absolute top-1.5 right-1.5 flex max-w-[42%] flex-col items-end gap-1">
-        {hasMessage && (
-          <span aria-label="Message" className="h-2 w-2 rounded-full bg-amber-500 ring-2 ring-background" />
+        {pinDot && (
+          <span aria-label={pinDot === "reply" ? "New reply to your pin" : "Open request"}
+            className={"h-2 w-2 rounded-full ring-2 ring-background " + (pinDot === "reply" ? "bg-yellow-400" : "bg-orange-500")} />
         )}
         {room?.guest_vacated && (
           <span

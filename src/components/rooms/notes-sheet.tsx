@@ -9,6 +9,7 @@ import { cn } from "@/lib/utils";
 import { FlagIcon, FLAG_COLORS, useRoomFlags } from "@/lib/room-flags";
 import { RoomInfoTiles, type RoomInfoTab } from "@/components/rooms/room-info-tiles";
 import { RoomChecklistRecords } from "@/components/rooms/room-checklists";
+import { RoomPins, type PinViewer } from "@/components/rooms/room-pins";
 import type { LostPropertyLite, MaintenanceRequest, Room, RoomMessage } from "@/lib/app-types";
 import type { MessagesThread } from "@/components/messages-sheet";
 
@@ -25,7 +26,8 @@ type Props = {
   notesSheetRoom: number | null;
   setNotesSheetRoom: (n: number | null) => void;
   rooms: Room[];
-  activeMessagesByRoom: (n: number) => RoomMessage[];
+  /** Who's looking, for the room's pins. */
+  pinViewer: PinViewer;
   canUseMessages: boolean;
   canOpenHousekeepingChat?: boolean;
   isReception: boolean;
@@ -59,7 +61,7 @@ export function RoomNotesSheet({
   notesSheetRoom,
   setNotesSheetRoom,
   rooms,
-  activeMessagesByRoom,
+  pinViewer,
   canUseMessages,
   canOpenHousekeepingChat = false,
   isReception,
@@ -107,7 +109,6 @@ export function RoomNotesSheet({
        const note = room?.housekeeping_note ?? null;
        const maintenance = !!room?.needs_maintenance;
        const vacated = !!room?.guest_vacated;
-       const msgs = activeMessagesByRoom(n);
        const closeHub = () => {
          setNewLogOpen(false);
          setInfoTab(null);
@@ -247,63 +248,7 @@ export function RoomNotesSheet({
                      <p className="text-sm text-muted-foreground">No notes from Housekeeping.</p>
                    )}
                  </div>
-                   <div className="space-y-2 rounded-xl border border-emerald-400/60 bg-emerald-50 dark:bg-emerald-950/40 p-3">
-                    <p className="text-xs font-semibold uppercase tracking-wide text-emerald-700 dark:text-emerald-300">
-                      Leave a message for housekeeping
-                    </p>
-                   {msgs.length > 0 && (
-                     <ul className="space-y-1">
-                       {msgs.map((m) => (
-                         <li key={m.id} className="flex items-start gap-2 text-sm bg-background/70 rounded p-2">
-                           <span className="flex-1 break-words whitespace-pre-wrap">{m.message}</span>
-                           <Button
-                             type="button"
-                             variant="ghost"
-                             size="sm"
-                             className="h-7 px-2 text-xs"
-                             onClick={() => deleteRoomMessage(m.id)}
-                             aria-label="Delete message"
-                           >
-                             <X className="h-3 w-3" />
-                           </Button>
-                         </li>
-                       ))}
-                     </ul>
-                   )}
-                     {canUseMessages && canOpenHousekeepingChat && (
-                      <div className="flex justify-end">
-                        <Button
-                          type="button"
-                          variant="outline"
-                          size="sm"
-                          className="h-7 text-xs"
-                          onClick={() => {
-                            closeHub();
-                            setMessagesInitial({ thread: "housekeeping", room: n });
-                            setMessagesSheetOpen(true);
-                          }}
-                        >
-                          <MessageSquare className="h-3 w-3 mr-1" /> Open in Messages
-                        </Button>
-                      </div>
-                    )}
-                   <div className="flex gap-2">
-                     <Input
-                       value={newMessageText}
-                       onChange={(e) => setNewMessageText(e.target.value)}
-                       placeholder="Type a message…"
-                       onKeyDown={(e) => {
-                         if (e.key === "Enter" && !e.shiftKey) {
-                           e.preventDefault();
-                           submitRoomMessage(n);
-                         }
-                       }}
-                     />
-                     <Button type="button" onClick={() => submitRoomMessage(n)} disabled={!newMessageText.trim()}>
-                       Send
-                     </Button>
-                   </div>
-                 </div>
+                 <RoomPins room={n} viewer={pinViewer} />
                </>
              ) : (
                <>
@@ -324,80 +269,7 @@ export function RoomNotesSheet({
                      </span>
                    </div>
                  )}
-                 {msgs.length > 0 && (
-                   <div className="space-y-2 rounded-xl border border-amber-400/60 bg-amber-50 dark:bg-amber-950/40 p-3">
-                     <p className="text-xs font-semibold uppercase tracking-wide text-amber-700 dark:text-amber-300">
-                       Reception message{msgs.length > 1 ? "s" : ""}
-                     </p>
-                     <ul className="space-y-1">
-                       {msgs.map((m) => (
-                         <li key={m.id} className="flex items-start gap-2 text-sm bg-background/70 rounded p-2">
-                           <div className="flex-1 min-w-0">
-                             <p className="break-words whitespace-pre-wrap">{m.message}</p>
-                              <p className="text-[10px] text-muted-foreground mt-0.5">
-                                {m.created_by_username ? <>from {m.created_by_username} · </> : null}
-                                {new Date(m.created_at).toLocaleString(undefined, {
-                                  weekday: "short",
-                                  day: "numeric",
-                                  month: "short",
-                                  hour: "2-digit",
-                                  minute: "2-digit",
-                                })}
-                              </p>
-                           </div>
-                           <div className="flex flex-col gap-1 shrink-0">
-                             <Button
-                               type="button"
-                               variant="default"
-                               size="sm"
-                               className="h-7 text-xs"
-                               onClick={() => confirmRoomMessage(m)}
-                             >
-                               Confirm
-                             </Button>
-                             <Button
-                               type="button"
-                               variant="outline"
-                               size="sm"
-                               className="h-7 text-xs"
-                               onClick={() => dismissRoomMessage(m.id)}
-                             >
-                               Dismiss
-                             </Button>
-                           </div>
-                         </li>
-                       ))}
-                     </ul>
-                      {canUseMessages && (
-                        <div className="flex justify-end">
-                          <Button
-                            type="button"
-                            variant="outline"
-                            size="sm"
-                            className="h-7 text-xs"
-                            onClick={() => {
-                              const first = msgs[0];
-                              closeHub();
-                              setMessagesInitial({
-                                thread: "housekeeping",
-                                room: n,
-                                replyTo: first
-                                  ? {
-                                      id: first.id,
-                                      sender: first.created_by_username ?? "Reception",
-                                      snippet: first.message.slice(0, 280),
-                                    }
-                                  : undefined,
-                              });
-                              setMessagesSheetOpen(true);
-                            }}
-                          >
-                            <MessageSquare className="h-3 w-3 mr-1" /> Reply in Messages
-                          </Button>
-                        </div>
-                      )}
-                   </div>
-                 )}
+                 <RoomPins room={n} viewer={pinViewer} />
                </>
              )}
              {!isReception && (

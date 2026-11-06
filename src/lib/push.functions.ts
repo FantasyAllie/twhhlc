@@ -471,6 +471,45 @@ export const notifyRoomEvent = createServerFn({ method: "POST" })
     return { ok: true, recipients };
   });
 
+/**
+ * Room pins: a new pin (or the sender's own reply) alerts the pin's department;
+ * a reply or Done/Seen from anyone else alerts the sender.
+ */
+export const notifyRoomPin = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((d: { pinId: string; text?: string | null }) => d)
+  .handler(async ({ data, context }) => {
+    const sender = await getActor(context);
+    if (!sender.active || !sender.hotelId || typeof data.pinId !== "string") return { ok: true, recipients: 0 };
+    const db = await getDb();
+    const { data: row } = await db
+      .from("room_pins" as never)
+      .select("id,hotel_id,room_number,to_department,kind,message,created_by")
+      .eq("id", data.pinId)
+      .maybeSingle();
+    const pin = row as {
+      id: string; hotel_id: string; room_number: number; to_department: Dept;
+      kind: "request" | "note"; message: string; created_by: string;
+    } | null;
+    if (!pin || pin.hotel_id !== sender.hotelId) throw new Error("Forbidden");
+    const text = (data.text ?? pin.message).slice(0, 240) || "New pin";
+    const tag = `pin-${pin.id}`;
+    if (sender.id === pin.created_by) {
+      const what = pin.kind === "request" ? "Request" : "Note";
+      const recipients = await fanOut([pin.to_department], "messages_enabled", sender, {
+        title: `Room ${pin.room_number} — ${what} from ${sender.username}`,
+        body: text, url: "/app", tag,
+      });
+      return { ok: true, recipients };
+    }
+    const optedIn = await filterByPref([pin.created_by], "messages_enabled");
+    const message = { title: `Room ${pin.room_number} — ${sender.username} replied`, body: text, url: "/app", tag };
+    const subs = await subsForUsers(optedIn);
+    await sendToSubs(subs, message);
+    const iosSent = await sendToIosDevices(optedIn, message);
+    return { ok: true, recipients: subs.length + iosSent };
+  });
+
 export type MessagesDepartment = "housekeeping" | "reception" | "fnb" | "maintenance";
 const PREF_COL_FROM: Record<MessagesDepartment, keyof NotificationPrefs> = {
   reception: "notify_from_reception",
