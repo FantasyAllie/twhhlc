@@ -61,7 +61,7 @@ export function MessagesSheet({
   isAdminOrManager: boolean;
   /** Who's looking, for the Pins list. */
   pinViewer: PinViewer;
-  /** Pins or the hotel chat; opening with a room, text or quote shows the chat. */
+  /** The hotel chat (the default) or the pins. */
   initialPane?: "pins" | "chat";
   onLogMaintenance?: (roomNumber: number, message: string) => Promise<{ ok: boolean; error?: string }>;
   onLogLostProperty?: (
@@ -81,7 +81,7 @@ export function MessagesSheet({
   const [room, setRoom] = useState<number | "">(initialRoom ?? "");
   const [replyTo, setReplyTo] = useState<{ id: string; sender: string; snippet: string } | null>(initialReplyTo ?? null);
   const [pickerOpen, setPickerOpen] = useState(false);
-  const [pane, setPane] = useState<"pins" | "chat">(initialPane ?? "pins");
+  const [pane, setPane] = useState<"pins" | "chat">(initialPane ?? "chat");
   const [showDone, setShowDone] = useState(false);
   const feedRef = useRef<HTMLDivElement | null>(null);
   const availableGroupKey = availableThreads.join(",");
@@ -93,7 +93,7 @@ export function MessagesSheet({
     if (typeof initialRoom === "number") setRoom(initialRoom);
     if (typeof initialText === "string" && initialText.length > 0) setText(initialText);
     setReplyTo(initialReplyTo ?? null);
-    setPane(initialPane ?? (typeof initialRoom === "number" || initialText || initialReplyTo ? "chat" : "pins"));
+    setPane(initialPane ?? "chat");
   }, [open, initialThread, initialRoom, initialText, initialReplyTo, availableGroupKey, initialPane]);
 
   const q = useQuery({
@@ -285,7 +285,7 @@ export function MessagesSheet({
         </SheetHeader>
 
         <div className="mt-3 grid grid-cols-2 gap-1 rounded-lg bg-muted p-1" role="tablist" aria-label="Messages">
-          {(["pins", "chat"] as const).map((p) => (
+          {(["chat", "pins"] as const).map((p) => (
             <Button key={p} type="button" role="tab" aria-selected={pane === p} variant={pane === p ? "default" : "ghost"}
               className="h-9 rounded-md" onClick={() => setPane(p)}>
               {p === "pins" ? "Pins" : "Hotel chat"}
