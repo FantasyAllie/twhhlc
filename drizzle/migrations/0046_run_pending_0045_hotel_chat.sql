@@ -1,0 +1,2 @@
+-- Marker only: applies the already-journaled 0045_hotel_chat migration exactly as written.
+-- No schema or data changes in this file.
