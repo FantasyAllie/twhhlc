@@ -184,12 +184,12 @@ export function MaintenanceLogSheet({
           urgent: false,
         })),
     [maintenanceMessages],
-  ).filter(() => scope !== "areas");
+  );
 
   const reqEntries = useMemo<Entry[]>(
     () =>
       maintenanceRequests
-        .filter((m) => !scope || (scope === "areas" ? !!m.area_label : !m.area_label))
+        // Every department sees room and hotel-area jobs, since anyone can log either.
         .map((m) => ({
         id: `req-${m.id}`,
         rawId: m.id,
@@ -543,27 +543,31 @@ export function MaintenanceLogSheet({
                   className="h-9 rounded-xl border bg-background px-2 text-sm sm:w-44"
                 >
                   <option value="">Select a location</option>
-                  {scope !== "areas" && (
-                  <optgroup label="Rooms">
-                    {rooms
-                      .map((r) => r.room_number)
-                      .sort((a, b) => a - b)
-                      .map((n) => (
-                        <option key={n} value={String(n)}>
-                          Room {n}
-                        </option>
-                      ))}
-                  </optgroup>
-                  )}
-                  {scope !== "rooms" && maintenanceAreas.length > 0 && (
-                    <optgroup label="Other areas">
-                      {maintenanceAreas.map((a) => (
-                        <option key={a.id} value={`area:${a.label}`}>
-                          {a.label}
-                        </option>
-                      ))}
-                    </optgroup>
-                  )}
+                  {(() => {
+                    const roomGroup = (
+                      <optgroup key="rooms" label="Rooms">
+                        {rooms
+                          .map((r) => r.room_number)
+                          .sort((a, b) => a - b)
+                          .map((n) => (
+                            <option key={n} value={String(n)}>
+                              Room {n}
+                            </option>
+                          ))}
+                      </optgroup>
+                    );
+                    const areaGroup = maintenanceAreas.length > 0 && (
+                      <optgroup key="areas" label="Public & hotel areas">
+                        {maintenanceAreas.map((a) => (
+                          <option key={a.id} value={`area:${a.label}`}>
+                            {a.label}
+                          </option>
+                        ))}
+                      </optgroup>
+                    );
+                    // F&B and Maintenance see the areas first; everyone else the rooms.
+                    return scope === "areas" ? [areaGroup, roomGroup] : [roomGroup, areaGroup];
+                  })()}
                 </select>
                 <Input
                   placeholder="Describe the issue…"

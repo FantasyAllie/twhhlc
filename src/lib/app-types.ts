@@ -203,4 +203,6 @@ export type MaintenanceArea = {
   label: string;
   sort_order: number | null;
   created_at: string;
+  /** Departments that can pick this area; empty means every department. */
+  departments?: string[];
 };

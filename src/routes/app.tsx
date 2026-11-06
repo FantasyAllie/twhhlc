@@ -1197,6 +1197,14 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
     qc.invalidateQueries({ queryKey: ["maintenance_areas"] });
     toast.success("Area added");
   };
+  const setMaintenanceAreaDepartments = async (id: string, departments: string[]) => {
+    const { error } = await supabase.from("maintenance_areas" as never).update({ departments } as never).eq("id", id);
+    if (error) {
+      toast.error(error.message);
+      return;
+    }
+    qc.invalidateQueries({ queryKey: ["maintenance_areas"] });
+  };
   const deleteMaintenanceArea = async (id: string) => {
     const { error } = await supabase.from("maintenance_areas" as never).delete().eq("id", id);
     if (error) {
@@ -1824,9 +1832,12 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
     const menuHasMaintenance = menuIsAdmin || hasMaintenanceRole;
     // Lost Property log is only meaningful to Reception + Housekeeping.
     const menuCanUseLostProperty = true;
-    // Housekeeping & Reception log against rooms; every other department
-    // logs against hotel areas.
+    // Everyone can log against a room or a public & hotel area; F&B and
+    // Maintenance see the areas first in the location lists.
     const logScope: "rooms" | "areas" = isFnb || isMaintenance ? "areas" : "rooms";
+    // Areas limited to departments show only for those departments (and managers and admins).
+    const pickableAreas = maintenanceAreas.filter((a) =>
+      menuIsAdmin || !a.departments?.length || a.departments.some((d) => (myMessageDepartments as string[]).includes(d)));
     // Reception can resolve entries; Housekeeping views them read-only.
     const canResolveLostProperty = menuIsAdmin || hasReceptionRole;
     const availableThreads = availableMessageGroups([
@@ -5119,7 +5130,7 @@ const toggleRoomCategory = async (roomNumber: number, value: Category) => {
   requireRoom={hasHousekeeperRole && !hasReceptionRole}
   scope={logScope}
   departments={menuIsAdmin || hasReceptionRole ? null : myMessageDepartments}
-  areaLabels={maintenanceAreas.map((a) => a.label)}
+  areaLabels={pickableAreas.map((a) => a.label)}
   roomNumbers={rooms.map((r) => r.room_number).sort((a, b) => a - b)}
   onAdd={logLostProperty}
   onReply={(item) => {
@@ -5152,7 +5163,7 @@ const toggleRoomCategory = async (roomNumber: number, value: Category) => {
   requireRoom={hasHousekeeperRole && !hasReceptionRole}
   scope={logScope}
   departments={menuIsAdmin || hasReceptionRole ? null : myMessageDepartments}
-  areaLabels={maintenanceAreas.map((a) => a.label)}
+  areaLabels={pickableAreas.map((a) => a.label)}
   roomNumbers={rooms.map((r) => r.room_number).sort((a, b) => a - b)}
   onAdd={logLostProperty}
 />
@@ -5319,7 +5330,7 @@ const toggleRoomCategory = async (roomNumber: number, value: Category) => {
   maintenanceMessages={roomMessages}
   markMessageDone={markMaintenanceMessageDone}
   deleteMessage={deleteRoomMessage}
-  maintenanceAreas={maintenanceAreas}
+  maintenanceAreas={pickableAreas}
   scope={logScope}
   composeOnly={isMaintenanceOnlyUser}
   hasOpenMaintenance={hasOpenMaintenance}
@@ -5353,7 +5364,7 @@ const toggleRoomCategory = async (roomNumber: number, value: Category) => {
   onOpenChange={(o) => { if (!o) setMaintenanceComposeRoom(null); }}
   rooms={rooms}
   maintenanceRequests={maintenanceRequests}
-  maintenanceAreas={maintenanceAreas}
+  maintenanceAreas={pickableAreas}
   scope={logScope}
   composeOnly
   contentClassName={IOS_CENTRED_POPUP}
@@ -5390,6 +5401,7 @@ const toggleRoomCategory = async (roomNumber: number, value: Category) => {
   areas={maintenanceAreas}
   addArea={addMaintenanceArea}
   deleteArea={deleteMaintenanceArea}
+  setAreaDepartments={setMaintenanceAreaDepartments}
 />
 
 <HistorySheet

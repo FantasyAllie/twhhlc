@@ -73,7 +73,7 @@ export const useMaintenanceAreasQuery = () =>
     queryFn: async (): Promise<MaintenanceArea[]> => {
       const { data, error } = await supabase
         .from("maintenance_areas" as never)
-        .select("id,label,sort_order,created_at")
+        .select("id,label,sort_order,created_at,departments")
         .order("sort_order", { ascending: true, nullsFirst: false })
         .order("label", { ascending: true });
       if (error) throw error;

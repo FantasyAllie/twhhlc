@@ -111,20 +111,13 @@ export function LostPropertySheet({
       toast.error("Enter a description");
       return;
     }
-    let roomNumber: number | null = null;
-    if (scope === "areas") {
-      if (!addArea) {
-        toast.error("Select an area");
-        return;
-      }
-    } else if (typeof addRoom === "number") {
-      roomNumber = addRoom;
-    } else if (requireRoom) {
-      toast.error("Room number required");
+    const roomNumber: number | null = typeof addRoom === "number" ? addRoom : null;
+    if (roomNumber === null && !addArea && requireRoom) {
+      toast.error("Select where it was found");
       return;
     }
     setSubmitting(true);
-    const res = await onAdd(roomNumber, body, addPhotos, scope === "areas" ? addArea : null);
+    const res = await onAdd(roomNumber, body, addPhotos, roomNumber === null && addArea ? addArea : null);
     setSubmitting(false);
     if (!res.ok) {
       toast.error(res.error ?? "Could not log item");
@@ -257,9 +250,9 @@ export function LostPropertySheet({
       (q.data ?? []).filter((r) =>
         departments
           ? !!r.created_by_role && departments.includes(r.created_by_role)
-          : scope === "areas" ? !!r.area_label : !r.area_label,
+          : true,
       ),
-    [q.data, scope, departments],
+    [q.data, departments],
   );
   const allOpen = rows.filter((r) => r.status === "open");
   const openRows = allOpen.filter((r) => !canDiscard(r.created_at));
@@ -433,37 +426,40 @@ export function LostPropertySheet({
                   </div>
                   <div className="flex items-center gap-2">
                     <label htmlFor="lp-add-room" className="text-sm shrink-0">
-                      {scope === "areas" ? "Area" : "Room"}
+                      Location
                     </label>
-                    {scope === "areas" ? (
-                      <select
-                        id="lp-add-room"
-                        value={addArea}
-                        onChange={(e) => setAddArea(e.target.value)}
-                        className="h-8 rounded-xl border bg-background px-2 text-sm"
-                      >
-                        <option value="">Select an area</option>
-                        {areaLabels.map((a) => (
-                          <option key={a} value={a}>{a}</option>
-                        ))}
-                      </select>
-                    ) : (
                     <select
                       id="lp-add-room"
-                      value={addRoom === "" ? "" : String(addRoom)}
-                      onChange={(e) =>
-                        setAddRoom(e.target.value === "" ? "" : Number(e.target.value))
-                      }
-                      className="h-8 rounded-xl border bg-background px-2 text-sm"
+                      value={typeof addRoom === "number" ? `room:${addRoom}` : addArea ? `area:${addArea}` : ""}
+                      onChange={(e) => {
+                        const v = e.target.value;
+                        setAddRoom(v.startsWith("room:") ? Number(v.slice(5)) : "");
+                        setAddArea(v.startsWith("area:") ? v.slice(5) : "");
+                      }}
+                      className="h-8 min-w-0 rounded-xl border bg-background px-2 text-sm"
                     >
-                      <option value="">{requireRoom ? "Select a room" : "— none —"}</option>
-                      {(roomNumbers ?? []).map((n) => (
-                        <option key={n} value={n}>
-                          Room {n}
-                        </option>
-                      ))}
+                      <option value="">{requireRoom ? "Select a location" : "No location"}</option>
+                      {(() => {
+                        const roomGroup = (
+                          <optgroup key="rooms" label="Rooms">
+                            {(roomNumbers ?? []).map((n) => (
+                              <option key={n} value={`room:${n}`}>
+                                Room {n}
+                              </option>
+                            ))}
+                          </optgroup>
+                        );
+                        const areaGroup = areaLabels.length > 0 && (
+                          <optgroup key="areas" label="Public & hotel areas">
+                            {areaLabels.map((a) => (
+                              <option key={a} value={`area:${a}`}>{a}</option>
+                            ))}
+                          </optgroup>
+                        );
+                        // F&B and Maintenance see the areas first; everyone else the rooms.
+                        return scope === "areas" ? [areaGroup, roomGroup] : [roomGroup, areaGroup];
+                      })()}
                     </select>
-                    )}
                   </div>
                   <Textarea
                     placeholder="Describe the item (e.g. black wallet on nightstand)"
