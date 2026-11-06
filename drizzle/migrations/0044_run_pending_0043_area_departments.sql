@@ -1,0 +1,2 @@
+-- Marker migration: applies the already-journaled 0043_area_departments.sql verbatim.
+-- Intentionally contains no statements; the pending journaled migration carries the SQL.

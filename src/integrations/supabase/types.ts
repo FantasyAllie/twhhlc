@@ -506,6 +506,7 @@ export type Database = {
       maintenance_areas: {
         Row: {
           created_at: string
+          departments: string[]
           hotel_id: string
           id: string
           label: string
@@ -514,6 +515,7 @@ export type Database = {
         }
         Insert: {
           created_at?: string
+          departments?: string[]
           hotel_id?: string
           id?: string
           label: string
@@ -522,6 +524,7 @@ export type Database = {
         }
         Update: {
           created_at?: string
+          departments?: string[]
           hotel_id?: string
           id?: string
           label?: string
