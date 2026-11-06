@@ -1371,6 +1371,32 @@ export type Database = {
           },
         ]
       }
+      room_pin_settings: {
+        Row: {
+          departments: string[]
+          hotel_id: string
+          updated_at: string
+        }
+        Insert: {
+          departments?: string[]
+          hotel_id?: string
+          updated_at?: string
+        }
+        Update: {
+          departments?: string[]
+          hotel_id?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "room_pin_settings_hotel_id_fkey"
+            columns: ["hotel_id"]
+            isOneToOne: true
+            referencedRelation: "hotels"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       room_pins: {
         Row: {
           created_at: string
