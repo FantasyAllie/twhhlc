@@ -538,7 +538,7 @@ export const notifyDepartmentMessage = createServerFn({ method: "POST" })
   .handler(async ({ data, context }) => {
     const sender = await getActor(context);
     if (!sender.active) return { ok: true, recipients: 0 };
-    if (!availableMessageGroups(sender.depts, sender.elevated).includes(data.thread)) {
+    if (data.thread !== "hotel" && !(availableMessageGroups(sender.depts, sender.elevated) as string[]).includes(data.thread)) {
       throw new Error("Forbidden");
     }
     if (!sender.hotelId) return { ok: true, recipients: 0 };
@@ -558,7 +558,8 @@ export const notifyDepartmentMessage = createServerFn({ method: "POST" })
     const ids = memberIds.filter(id => {
       const userRoles = rolesByUser.get(id) ?? [];
       const { depts, elevated } = deptsFromRoles(userRoles);
-      return userRoles.some(role => role !== "pending") && availableMessageGroups(depts, elevated).includes(data.thread);
+      return userRoles.some(role => role !== "pending") &&
+        (data.thread === "hotel" || (availableMessageGroups(depts, elevated) as string[]).includes(data.thread));
     });
     const from = sender.depts.includes(data.senderDepartment as Dept)
       ? data.senderDepartment : sender.depts[0];

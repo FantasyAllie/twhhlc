@@ -778,7 +778,7 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
   const [menuSheetOpen, setMenuSheetOpen] = useState(false);
   const [notificationsSheetOpen, setNotificationsSheetOpen] = useState(false);
   const [messagesSheetOpen, setMessagesSheetOpen] = useState(false);
-  const [messagesInitial, setMessagesInitial] = useState<{ thread?: MessagesThread; room?: number | null; text?: string; replyTo?: { id: string; sender: string; snippet: string } }>({});
+  const [messagesInitial, setMessagesInitial] = useState<{ thread?: MessagesThread; room?: number | null; text?: string; replyTo?: { id: string; sender: string; snippet: string }; pane?: "pins" | "chat" }>({});
   const [maintenanceLogOpen, setMaintenanceLogOpen] = useState(false);
   const [newMaintenanceRoom, setNewMaintenanceRoom] = useState<string>("");
  const [newMaintenancePhotos, setNewMaintenancePhotos] = useState<File[]>([]);
@@ -5072,8 +5072,10 @@ const toggleRoomCategory = async (roomNumber: number, value: Category) => {
 <MessagesSheet
   open={messagesSheetOpen}
   onOpenChange={setMessagesSheetOpen}
-  availableThreads={availableThreads}
-  initialThread={messagesInitial.thread}
+  availableThreads={["hotel"]}
+  initialThread="hotel"
+  initialPane={messagesInitial.pane}
+  pinViewer={pinViewer}
   initialRoom={messagesInitial.room ?? null}
   initialText={messagesInitial.text}
   initialReplyTo={messagesInitial.replyTo}

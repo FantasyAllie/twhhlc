@@ -11,9 +11,10 @@ import { notifyDepartmentMessage } from "@/lib/push.functions";
 import { useServerFn } from "@tanstack/react-start";
 import { useIsMobile } from "@/hooks/use-mobile";
 
-import { MESSAGE_GROUP_LABELS, type MessageGroup } from "@/lib/message-groups";
+import { MESSAGE_GROUP_LABELS, type MESSAGE_GROUPS, type MessageGroup } from "@/lib/message-groups";
+import { PinsList, pinByline, type PinViewer } from "@/components/rooms/room-pins";
 export type MessagesThread = MessageGroup;
-export type Department = MessageGroup;
+export type Department = (typeof MESSAGE_GROUPS)[number];
 const THREAD_LABELS = MESSAGE_GROUP_LABELS;
 const supportsRoomTag = (t: MessagesThread) => t !== "fnb";
 
@@ -23,6 +24,8 @@ type Msg = {
   room_number: number | null;
   message: string;
   created_by_username: string | null;
+  /** The sender's departments when they sent it (none for developers). */
+  created_by_departments?: string[] | null;
   done_at: string | null;
   deleted_at: string | null;
   created_at: string;
@@ -42,6 +45,8 @@ export function MessagesSheet({
   currentUsername,
   roomNumbers,
   myDepartments,
+  pinViewer,
+  initialPane,
 }: {
   open: boolean;
   onOpenChange: (o: boolean) => void;
@@ -54,6 +59,10 @@ export function MessagesSheet({
   roomNumbers: number[];
   myDepartments: Department[];
   isAdminOrManager: boolean;
+  /** Who's looking, for the Pins list. */
+  pinViewer: PinViewer;
+  /** Pins or the hotel chat; opening with a room, text or quote shows the chat. */
+  initialPane?: "pins" | "chat";
   onLogMaintenance?: (roomNumber: number, message: string) => Promise<{ ok: boolean; error?: string }>;
   onLogLostProperty?: (
     roomNumber: number | null,
@@ -72,6 +81,7 @@ export function MessagesSheet({
   const [room, setRoom] = useState<number | "">(initialRoom ?? "");
   const [replyTo, setReplyTo] = useState<{ id: string; sender: string; snippet: string } | null>(initialReplyTo ?? null);
   const [pickerOpen, setPickerOpen] = useState(false);
+  const [pane, setPane] = useState<"pins" | "chat">(initialPane ?? "pins");
   const [showDone, setShowDone] = useState(false);
   const feedRef = useRef<HTMLDivElement | null>(null);
   const availableGroupKey = availableThreads.join(",");
@@ -83,7 +93,8 @@ export function MessagesSheet({
     if (typeof initialRoom === "number") setRoom(initialRoom);
     if (typeof initialText === "string" && initialText.length > 0) setText(initialText);
     setReplyTo(initialReplyTo ?? null);
-  }, [open, initialThread, initialRoom, initialText, initialReplyTo, availableGroupKey]);
+    setPane(initialPane ?? (typeof initialRoom === "number" || initialText || initialReplyTo ? "chat" : "pins"));
+  }, [open, initialThread, initialRoom, initialText, initialReplyTo, availableGroupKey, initialPane]);
 
   const q = useQuery({
     queryKey: ["messages_feed", thread],
@@ -94,7 +105,7 @@ export function MessagesSheet({
       const cutoff = new Date(Date.now() - 90 * 24 * 60 * 60 * 1000).toISOString();
       const { data, error } = await supabase
         .from("room_messages" as never)
-          .select("id,group_key,room_number,message,created_by_username,done_at,deleted_at,created_at,reply_to_id,reply_to_sender,reply_to_snippet")
+          .select("id,group_key,room_number,message,created_by_username,created_by_departments,done_at,deleted_at,created_at,reply_to_id,reply_to_sender,reply_to_snippet")
         .eq("group_key", thread)
         .is("deleted_at", null)
         .gte("created_at", cutoff)
@@ -253,7 +264,7 @@ export function MessagesSheet({
               <MessageSquare className="h-4 w-4" />
               Messages
             </SheetTitle>
-            {isMobile && doneCount > 0 && (
+            {isMobile && pane === "chat" && doneCount > 0 && (
               <Button
                 type="button"
                 size="sm"
@@ -268,10 +279,24 @@ export function MessagesSheet({
           </div>
           {!isMobile && (
             <SheetDescription>
-              {THREAD_LABELS[thread]} group chat
+              {pane === "pins" ? "Open pins across the hotel" : "One chat for the whole hotel"}
             </SheetDescription>
           )}
         </SheetHeader>
+
+        <div className="mt-3 grid grid-cols-2 gap-1 rounded-lg bg-muted p-1" role="tablist" aria-label="Messages">
+          {(["pins", "chat"] as const).map((p) => (
+            <Button key={p} type="button" role="tab" aria-selected={pane === p} variant={pane === p ? "default" : "ghost"}
+              className="h-9 rounded-md" onClick={() => setPane(p)}>
+              {p === "pins" ? "Pins" : "Hotel chat"}
+            </Button>
+          ))}
+        </div>
+
+        {pane === "pins" ? (
+          <div className="mt-4 flex-1 min-h-0 overflow-y-auto pr-1"><PinsList viewer={pinViewer} /></div>
+        ) : (<>
+        {availableThreads.length > 1 && (<>
 
         <Button
           type="button" variant="outline"
@@ -292,6 +317,7 @@ export function MessagesSheet({
             ))}
           </div>
         )}
+        </>)}
 
         {!isMobile && doneCount > 0 && (
           <div className="mt-3 flex justify-end">
@@ -337,7 +363,7 @@ export function MessagesSheet({
                         )}
                       >
                         <div className="flex items-center gap-2 text-xs text-muted-foreground mb-1">
-                          <span className="font-medium">{m.created_by_username ?? "Someone"}</span>
+                          <span className="font-medium">{pinByline(m.created_by_username ?? "Someone", m.created_by_departments ?? [])}</span>
                           {typeof m.room_number === "number" && (
                             <span className="inline-flex items-center rounded-full bg-amber-500/15 text-amber-700 dark:text-amber-300 px-1.5 py-0.5 font-medium">
                               Room {m.room_number}
@@ -460,6 +486,7 @@ export function MessagesSheet({
             </Button>
           </div>
         </div>
+        </>)}
       </SheetContent>
     </Sheet>
   );

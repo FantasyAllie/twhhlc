@@ -1,6 +1,6 @@
 import { useState } from "react";
 import type { ReactNode } from "react";
-import { Clock, MessageSquare, DoorOpen, Footprints, Wrench, X, Dog, Inbox, Plus, PackageSearch, ChevronDown } from "lucide-react";
+import { Clock, MessageSquare, Pin, DoorOpen, Footprints, Wrench, X, Dog, Inbox, Plus, PackageSearch, ChevronDown } from "lucide-react";
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetDescription } from "@/components/ui/sheet";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -14,6 +14,7 @@ import type { LostPropertyLite, MaintenanceRequest, Room, RoomMessage } from "@/
 import type { MessagesThread } from "@/components/messages-sheet";
 
 type MessagesInitial = {
+  pane?: "pins" | "chat";
   thread?: MessagesThread;
   room?: number | null;
   text?: string;
@@ -129,15 +130,14 @@ export function RoomNotesSheet({
                   type="button"
                   variant="outline"
                   className="w-full justify-center gap-2 rounded-full"
-                  disabled={!canUseMessages}
                   onClick={() => {
                     closeHub();
-                    setMessagesInitial({});
+                    setMessagesInitial({ pane: "pins" });
                     setMessagesSheetOpen(true);
                   }}
                 >
-                  <MessageSquare className="h-4 w-4" />
-                  All Messages
+                  <Pin className="h-4 w-4" />
+                  All Pins
                 </Button>
                 <Button
                   type="button"
@@ -152,7 +152,7 @@ export function RoomNotesSheet({
                 </Button>
               </div>
               {newLogOpen && (
-                <div className="grid gap-2 rounded-xl border bg-background p-3 sm:grid-cols-3">
+                <div className="grid gap-2 rounded-xl border bg-background p-3 sm:grid-cols-2">
                   <Button
                     type="button"
                     variant="outline"
@@ -178,19 +178,6 @@ export function RoomNotesSheet({
                   >
                     <PackageSearch className="h-4 w-4 text-rose-600 dark:text-rose-400" />
                     Lost property
-                  </Button>
-                  <Button
-                    type="button"
-                    variant="outline"
-                    className="w-full justify-center gap-2"
-                    onClick={() => {
-                      closeHub();
-                      onMessageReception?.(n);
-                    }}
-                    disabled={!onMessageReception || !canUseMessages}
-                  >
-                    <MessageSquare className="h-4 w-4" />
-                    Message reception
                   </Button>
                 </div>
               )}
