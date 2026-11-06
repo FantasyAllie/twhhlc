@@ -288,6 +288,13 @@
       "when": 1793994934100,
       "tag": "0040_run_pending_0039",
       "breakpoints": true
+    },
+    {
+      "idx": 41,
+      "version": "7",
+      "when": 1793995642549,
+      "tag": "0041_room_pin_settings",
+      "breakpoints": true
     }
   ]
 }
