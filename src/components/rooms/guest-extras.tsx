@@ -1,13 +1,12 @@
 import { useCallback, useEffect, useState } from "react";
 import { useQuery, useQueryClient, type QueryClient } from "@tanstack/react-query";
 import {
-  ArrowDown, ArrowUp, ArrowLeftRight, Bath, Bed, BedDouble, Cake, Check, CheckSquare, ChevronDown, Coffee, Cookie, CupSoda, DoorOpen, Fan, Gift, GlassWater, Heart,
+  ArrowDown, ArrowUp, ArrowLeftRight, Bath, Bed, BedDouble, Cake, Check, CheckSquare, ChevronDown, ChevronLeft, ChevronRight, Coffee, Cookie, CupSoda, DoorOpen, Fan, Gift, GlassWater, Heart,
   Leaf, Luggage, Minus, Newspaper, Plus, Sparkles, Star, Sunrise, Trash2, Tv, Users, Utensils, Wind, Wine, type LucideIcon,
 } from "lucide-react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { supabase } from "@/integrations/supabase/client";
 import { useCurrentHotel } from "@/lib/hotels";
 import { useReceptionItemsQuery, useRoomFeaturesQuery, useRoomTypesQuery } from "@/hooks/use-rooms";
@@ -276,17 +275,16 @@ export function RoomGuestExtras({ room }: { room: Room }) {
 type Run = (fn: () => PromiseLike<{ error: unknown }>, ok?: string) => Promise<void>;
 type Opt = { value: string; label: string };
 
-/** Settings: the hotel's Room Checklist — checks and extras, each with rules. */
+/** Settings: the hotel's Room Checklist. A short list of checks and extras, like the app;
+ *  opening one shows its name, icon and rules, saved together. */
 export function GuestExtrasEditor() {
   const data = useGuestExtras();
-  const types = useRoomTypesQuery();
-  const features = useRoomFeaturesQuery();
-  const flagDefs = mergeFlagDefs(useFlagSettingsQuery().data ?? []);
   const hotel = useCurrentHotel().data;
   const qc = useQueryClient();
   const [name, setName] = useState("");
   const [kind, setKind] = useState<"check" | "leave">("check");
   const [busy, setBusy] = useState(false);
+  const [openId, setOpenId] = useState<string | null>(null);
   const run: Run = async (fn, ok) => {
     setBusy(true);
     try { const { error } = await fn(); if (error) throw error; await qc.invalidateQueries({ queryKey: ["guest-extras"] }); if (ok) toast.success(ok); }
@@ -296,11 +294,12 @@ export function GuestExtrasEditor() {
   if (data.isPending) return <p className="py-3 text-sm text-muted-foreground">Loading checklist…</p>;
   if (data.isError) return <Button className="my-3" onClick={() => void data.refetch()}>Retry</Button>;
   const { extras, rules } = data.data;
-  const opts = {
-    types: (types.data ?? []).map((t) => ({ value: t.value as string, label: t.label })),
-    features: (features.data ?? []).map((f) => ({ value: f.id, label: f.label })),
-    flags: flagDefs.map((d) => ({ value: d.key, label: d.label })),
-  };
+  const opened = extras.find((e) => e.id === openId);
+  if (opened) return <ExtraDetail key={opened.id} extra={opened} rules={rules.filter((r) => r.extra_id === opened.id)} onBack={() => setOpenId(null)} />;
+
+  const byOrder = (a: GuestExtra, b: GuestExtra) => a.sort_order - b.sort_order;
+  const checks = extras.filter((e) => e.kind === "check").sort(byOrder);
+  const leaves = extras.filter((e) => e.kind === "leave").sort(byOrder);
   const move = (list: GuestExtra[], i: number, dir: number) => {
     const next = [...list];
     [next[i], next[i + dir]] = [next[i + dir], next[i]];
@@ -312,32 +311,30 @@ export function GuestExtrasEditor() {
       return { error: null };
     });
   };
-  const section = (title: string, list: GuestExtra[]) => list.length > 0 && <div className="space-y-2">
+  const section = (title: string, list: GuestExtra[], footer: string) => <div className="space-y-1">
     <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">{title}</p>
-    {list.map((extra, i) => <div key={extra.id} className="space-y-2 rounded-xl border p-3">
-      <div className="flex items-center gap-1">
-        <IconPicker value={extra.icon} disabled={busy} onPick={(icon) => run(() => supabase.from("guest_extras").update({ icon }).eq("id", extra.id))} />
-        <Input aria-label="Item name" defaultValue={extra.name} disabled={busy} className="min-w-0 flex-1"
-          onBlur={(e) => { const v = e.target.value.trim(); if (v && v !== extra.name) void run(() => supabase.from("guest_extras").update({ name: v }).eq("id", extra.id)); }} />
-        <Button size="icon" variant="ghost" aria-label={`Move ${extra.name} up`} disabled={busy || i === 0} onClick={() => move(list, i, -1)}><ArrowUp className="h-4 w-4" /></Button>
-        <Button size="icon" variant="ghost" aria-label={`Move ${extra.name} down`} disabled={busy || i === list.length - 1} onClick={() => move(list, i, 1)}><ArrowDown className="h-4 w-4" /></Button>
-        <Button size="icon" variant="ghost" className="text-destructive" aria-label={`Remove ${extra.name}`} disabled={busy}
-          onClick={() => run(() => supabase.from("guest_extras").delete().eq("id", extra.id), "Item removed")}><Trash2 className="h-4 w-4" /></Button>
-      </div>
-      {rules.filter((r) => r.extra_id === extra.id).map((rule) => <RuleRow key={rule.id} rule={rule} kind={extra.kind} busy={busy} run={run} opts={opts} />)}
-      <Button size="sm" variant="outline" disabled={busy || !hotel} onClick={() => hotel && run(() => supabase.from("guest_extra_rules").insert({
-        hotel_id: hotel.id, extra_id: extra.id, sort_order: rules.length,
-        ...(extra.kind === "check" ? { applies_to: "any", quantities: [1], extra_per_guest: 0 } : { applies_to: "arrival", quantities: [1, 2], extra_per_guest: 1 }),
-      }))}><Plus className="mr-1 h-4 w-4" />Add rule</Button>
-    </div>)}
+    <div className="divide-y divide-border rounded-xl border">
+      {list.map((extra, i) => {
+        const count = rules.filter((r) => r.extra_id === extra.id).length;
+        return <div key={extra.id} className="flex items-center gap-1 pr-1">
+          <Button variant="ghost" className="h-auto min-w-0 flex-1 justify-start gap-3 rounded-none px-3 py-2.5 text-left" onClick={() => setOpenId(extra.id)}>
+            <ExtraIcon name={extra.icon} className="h-4 w-4 shrink-0 text-primary" />
+            <span className="min-w-0 flex-1">
+              <span className="block truncate font-medium">{extra.name}</span>
+              <span className="block text-xs font-normal text-muted-foreground">{count ? `${count} rule${count === 1 ? "" : "s"}` : "Not in any rooms yet"}</span>
+            </span>
+            <ChevronRight className="h-4 w-4 shrink-0 text-muted-foreground" />
+          </Button>
+          <Button size="icon" variant="ghost" className="h-9 w-9 shrink-0" aria-label={`Move ${extra.name} up`} disabled={busy || i === 0} onClick={() => move(list, i, -1)}><ArrowUp className="h-4 w-4" /></Button>
+          <Button size="icon" variant="ghost" className="h-9 w-9 shrink-0" aria-label={`Move ${extra.name} down`} disabled={busy || i === list.length - 1} onClick={() => move(list, i, 1)}><ArrowDown className="h-4 w-4" /></Button>
+        </div>;
+      })}
+      {!list.length && <p className="px-3 py-2.5 text-sm text-muted-foreground">None yet.</p>}
+    </div>
+    <p className="text-xs text-muted-foreground">{footer}</p>
   </div>;
-  const byOrder = (a: GuestExtra, b: GuestExtra) => a.sort_order - b.sort_order;
-  const checks = extras.filter((e) => e.kind === "check").sort(byOrder);
-  const leaves = extras.filter((e) => e.kind === "leave").sort(byOrder);
-  return <div className="space-y-4 py-3">
-    <p className="text-sm text-muted-foreground">Checks are ticked as present, like a TV remote. Extras are left for the guest, like water, with an amount per guest.</p>
-    {section("Checks", checks)}
-    {section("Extras", leaves)}
+
+  return <div className="space-y-5 py-3">
     <form className="space-y-2" onSubmit={(e) => {
       e.preventDefault();
       const v = name.trim();
@@ -347,41 +344,131 @@ export function GuestExtrasEditor() {
         const res = await supabase.from("guest_extras").insert({ hotel_id: hotel.id, name: v, kind, sort_order: list.length, icon: kind === "check" ? "check-square" : "gift" }).select("id").single();
         if (res.error) return res;
         setName("");
-        return supabase.from("guest_extra_rules").insert({
-          hotel_id: hotel.id, extra_id: res.data.id,
-          ...(kind === "check" ? { applies_to: "any", quantities: [1], extra_per_guest: 0 } : { applies_to: "arrival", quantities: [1, 2], extra_per_guest: 1 }),
-        });
+        const rule = await supabase.from("guest_extra_rules").insert({ hotel_id: hotel.id, extra_id: res.data.id, ...newRule(kind) });
+        if (!rule.error) setOpenId(res.data.id);
+        return rule;
       }, "Item added");
     }}>
+      <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">New item</p>
       <div className="grid grid-cols-2 gap-1">
         {(["check", "leave"] as const).map((k) => <Button key={k} type="button" size="sm" variant="outline" aria-pressed={kind === k} className={chip(kind === k)} onClick={() => setKind(k)}>
           {k === "check" ? "Check" : "Extra"}
         </Button>)}
       </div>
       <div className="flex gap-2">
-        <Input placeholder={kind === "check" ? "New check, e.g. TV remote" : "New extra, e.g. Bottled water"} value={name} onChange={(e) => setName(e.target.value)} disabled={busy} maxLength={80} />
-        <Button type="submit" disabled={busy || !name.trim()}><Plus className="mr-1 h-4 w-4" />Add</Button>
+        <Input aria-label="New item name" placeholder={kind === "check" ? "e.g. TV remote" : "e.g. Water bottle"} value={name} onChange={(e) => setName(e.target.value)} disabled={busy} maxLength={80} />
+        <Button type="submit" disabled={busy || !name.trim() || !hotel}><Plus className="mr-1 h-4 w-4" />Add</Button>
       </div>
+      <p className="text-xs text-muted-foreground">Checks are ticked as present, like a TV remote or fan. Extras are left for the guest, so many for each number of guests, like water or coffee pods.</p>
     </form>
+    {section("Checks", checks, "Ticked as present when the room is serviced. Open one to choose which rooms have it.")}
+    {section("Extras", leaves, "Left for the guest. Open one to choose which rooms get it, when, and how many for each number of guests.")}
   </div>;
 }
 
-function IconPicker({ value, disabled, onPick }: { value: string | null; disabled: boolean; onPick: (icon: string) => void }) {
-  const [open, setOpen] = useState(false);
-  return <Popover open={open} onOpenChange={setOpen}>
-    <PopoverTrigger asChild>
-      <Button size="icon" variant="outline" aria-label="Choose icon" disabled={disabled}>
-        {value && EXTRA_ICONS[value] ? <ExtraIcon name={value} className="h-4 w-4" /> : <Plus className="h-4 w-4" />}
-      </Button>
-    </PopoverTrigger>
-    <PopoverContent className="grid w-56 grid-cols-5 gap-1 p-2">
-      {Object.entries(EXTRA_ICONS).map(([key, I]) => <Button key={key} size="icon" variant="ghost" aria-label={key} aria-pressed={value === key}
-        className={chip(value === key)} onClick={() => { setOpen(false); onPick(key); }}><I className="h-4 w-4" /></Button>)}
-    </PopoverContent>
-  </Popover>;
+const newRule = (kind: "check" | "leave") => kind === "check"
+  ? { applies_to: "any" as const, quantities: [1], extra_per_guest: 0 }
+  : { applies_to: "arrival" as const, quantities: [1, 2], extra_per_guest: 1 };
+
+type DraftRule = Omit<GuestExtraRule, "id" | "extra_id" | "sort_order"> & { key: string };
+const toDraft = (r: GuestExtraRule): DraftRule => ({
+  key: r.id, applies_to: r.applies_to, room_types: r.room_types, room_features: r.room_features, except_features: r.except_features,
+  flags: r.flags, note_words: r.note_words, quantities: r.quantities, extra_per_guest: r.extra_per_guest,
+});
+const cleanWords = (words: string[]) => words.map((w) => w.trim()).filter(Boolean);
+const snapshot = (name: string, icon: string, rules: DraftRule[]) =>
+  JSON.stringify([name.trim(), icon, rules.map(({ key: _key, ...r }) => ({ ...r, note_words: cleanWords(r.note_words) }))]);
+
+/** One checklist item: name, icon and its rules, edited together and saved with Save. */
+function ExtraDetail({ extra, rules: savedRules, onBack }: { extra: GuestExtra; rules: GuestExtraRule[]; onBack: () => void }) {
+  const types = useRoomTypesQuery();
+  const features = useRoomFeaturesQuery();
+  const flagDefs = mergeFlagDefs(useFlagSettingsQuery().data ?? []);
+  const hotel = useCurrentHotel().data;
+  const qc = useQueryClient();
+  const initial = () => savedRules.slice().sort((a, b) => a.sort_order - b.sort_order).map(toDraft);
+  const [name, setName] = useState(extra.name);
+  const [icon, setIcon] = useState(extra.icon ?? "gift");
+  const [rules, setRules] = useState<DraftRule[]>(initial);
+  const [savedState, setSavedState] = useState(() => snapshot(extra.name, extra.icon ?? "gift", initial()));
+  const [busy, setBusy] = useState(false);
+  const isCheck = extra.kind === "check";
+  const saved = snapshot(name, icon, rules) === savedState;
+  const opts = {
+    types: (types.data ?? []).map((t) => ({ value: t.value as string, label: t.label })),
+    features: (features.data ?? []).map((f) => ({ value: f.id, label: f.label })),
+    flags: flagDefs.map((d) => ({ value: d.key, label: d.label })),
+  };
+  const update = (key: string, patch: Partial<DraftRule>) => setRules((rs) => rs.map((r) => r.key === key ? { ...r, ...patch } : r));
+
+  const save = async () => {
+    const v = name.trim();
+    if (!v || !hotel) return;
+    setBusy(true);
+    try {
+      const e = await supabase.from("guest_extras").update({ name: v, icon }).eq("id", extra.id);
+      if (e.error) throw e.error;
+      const d = await supabase.from("guest_extra_rules").delete().eq("extra_id", extra.id);
+      if (d.error) throw d.error;
+      if (rules.length) {
+        const i = await supabase.from("guest_extra_rules").insert(rules.map(({ key: _key, ...r }, j) => ({
+          ...r, note_words: cleanWords(r.note_words), hotel_id: hotel.id, extra_id: extra.id, sort_order: j,
+        })));
+        if (i.error) throw i.error;
+      }
+      setSavedState(snapshot(v, icon, rules));
+      await qc.invalidateQueries({ queryKey: ["guest-extras"] });
+      toast.success("Saved");
+    } catch (e) { toast.error(errMsg(e, "Could not save the room checklist.")); }
+    finally { setBusy(false); }
+  };
+  const remove = async () => {
+    if (!confirm(`Remove ${extra.name}? Rooms will stop showing it. This can't be undone.`)) return;
+    setBusy(true);
+    const { error } = await supabase.from("guest_extras").delete().eq("id", extra.id);
+    setBusy(false);
+    if (error) return void toast.error(errMsg(error, "Could not remove it."));
+    await qc.invalidateQueries({ queryKey: ["guest-extras"] });
+    toast.success("Item removed");
+    onBack();
+  };
+
+  return <div className="space-y-4 py-3">
+    <div className="flex items-center gap-2">
+      <Button variant="ghost" size="sm" className="gap-1 px-2" onClick={() => {
+        if (saved || confirm("Leave without saving your changes?")) onBack();
+      }}><ChevronLeft className="h-4 w-4" />Room Checklist</Button>
+      <span className="flex-1" />
+      <Button size="sm" disabled={busy || saved || !name.trim()} onClick={() => void save()}>{busy ? "Saving…" : saved ? "Saved" : "Save"}</Button>
+    </div>
+    <label className="block space-y-1">
+      <span className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">Name</span>
+      <Input value={name} maxLength={80} onChange={(e) => setName(e.target.value)} />
+    </label>
+    <div className="space-y-1">
+      <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">Icon</p>
+      <div className="flex flex-wrap gap-1">
+        {Object.entries(EXTRA_ICONS).map(([k, I]) => <Button key={k} size="icon" variant="outline" aria-label={k} aria-pressed={icon === k}
+          className={chip(icon === k)} onClick={() => setIcon(k)}><I className="h-4 w-4" /></Button>)}
+      </div>
+    </div>
+    {rules.map((rule) => <RuleCard key={rule.key} rule={rule} isCheck={isCheck} opts={opts}
+      onChange={(patch) => update(rule.key, patch)} onRemove={() => setRules((rs) => rs.filter((r) => r.key !== rule.key))} />)}
+    <div className="space-y-1">
+      <Button size="sm" variant="outline" onClick={() => setRules((rs) => [...rs, {
+        key: crypto.randomUUID(), room_types: [], room_features: [], except_features: [], flags: [], note_words: [], ...newRule(extra.kind),
+      }])}><Plus className="mr-1 h-4 w-4" />Add rule</Button>
+      <p className="text-xs text-muted-foreground">{isCheck
+        ? "A room needs this when one of the rules fits it. With no rules, no room needs it."
+        : "When more than one rule fits a room, the one with the most conditions is used, so \"Superior + Birthday\" comes before \"Birthday\". Rooms without a guest count from the paperwork use the 1 guest amount until it's set on the room."}</p>
+    </div>
+    <Button variant="ghost" size="sm" className="text-destructive" disabled={busy} onClick={() => void remove()}>
+      <Trash2 className="mr-1 h-4 w-4" />Remove {isCheck ? "check" : "extra"}
+    </Button>
+  </div>;
 }
 
-function ruleSummary(rule: GuestExtraRule, opts: { types: Opt[]; features: Opt[]; flags: Opt[] }) {
+function ruleSummary(rule: Omit<GuestExtraRule, "id" | "extra_id" | "sort_order">, opts: { types: Opt[]; features: Opt[]; flags: Opt[] }) {
   const label = (list: Opt[], v: string) => list.find((o) => o.value === v)?.label ?? v;
   const parts = [
     rule.room_types.map((v) => label(opts.types, v)).join(" or "),
@@ -411,47 +498,47 @@ function Chips({ title, anyLabel, options, value, busy, onChange }: {
   </div>;
 }
 
-function RuleRow({ rule, kind, busy, run, opts }: {
-  rule: GuestExtraRule; kind: "check" | "leave"; busy: boolean; run: Run; opts: { types: Opt[]; features: Opt[]; flags: Opt[] };
+function RuleCard({ rule, isCheck, opts, onChange, onRemove }: {
+  rule: DraftRule; isCheck: boolean; opts: { types: Opt[]; features: Opt[]; flags: Opt[] };
+  onChange: (patch: Partial<DraftRule>) => void; onRemove: () => void;
 }) {
-  const save = (patch: Partial<GuestExtraRule>) => run(() => supabase.from("guest_extra_rules").update(patch).eq("id", rule.id));
-  const setQty = (i: number, n: number) => save({ quantities: rule.quantities.map((q, j) => j === i ? Math.max(0, Math.min(99, n)) : q) });
-  return <div className="space-y-2 rounded-lg bg-muted/40 p-2 text-sm">
-    <div className="flex items-start justify-between gap-2">
-      <p className="text-sm font-medium">{ruleSummary(rule, opts)}</p>
-      <Button size="icon" variant="ghost" className="h-8 w-8 shrink-0 text-destructive" aria-label="Remove rule" disabled={busy}
-        onClick={() => run(() => supabase.from("guest_extra_rules").delete().eq("id", rule.id))}><Trash2 className="h-4 w-4" /></Button>
-    </div>
-    <div className="grid grid-cols-2 gap-1 sm:grid-cols-4">
-      {(["arrival", "stayover", "both", "any"] as const).map((a) => <Button key={a} size="sm" variant="outline" aria-pressed={rule.applies_to === a} disabled={busy}
-        className={chip(rule.applies_to === a)} onClick={() => save({ applies_to: a })}>
+  const clamp = (n: number) => Math.max(0, Math.min(99, n));
+  const stepper = (label: string, value: number, set: (n: number) => void) => <div className="flex items-center justify-between gap-2">
+    <span className="text-sm">{label}</span>
+    <span className="flex items-center gap-1">
+      <Button size="icon" variant="outline" className="h-8 w-8" aria-label={`Fewer: ${label}`} disabled={value <= 0} onClick={() => set(clamp(value - 1))}><Minus className="h-3.5 w-3.5" /></Button>
+      <span className="w-8 text-center font-semibold tabular-nums">{value}</span>
+      <Button size="icon" variant="outline" className="h-8 w-8" aria-label={`More: ${label}`} disabled={value >= 99} onClick={() => set(clamp(value + 1))}><Plus className="h-3.5 w-3.5" /></Button>
+    </span>
+  </div>;
+  return <div className="space-y-3 rounded-xl border p-3">
+    <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">{ruleSummary({ ...rule, note_words: cleanWords(rule.note_words) }, opts)}</p>
+    <div className="grid grid-cols-4 gap-1">
+      {(["arrival", "stayover", "both", "any"] as const).map((a) => <Button key={a} size="sm" variant="outline" aria-pressed={rule.applies_to === a}
+        className={chip(rule.applies_to === a) + " px-1"} onClick={() => onChange({ applies_to: a })}>
         {{ arrival: "Arrival", stayover: "Stayover", both: "Both", any: "Every day" }[a]}
       </Button>)}
     </div>
-    <Chips title="Room type" anyLabel="Any type" options={opts.types} value={rule.room_types} busy={busy} onChange={(v) => save({ room_types: v })} />
-    <Chips title="Has a feature" anyLabel="Any" options={opts.features} value={rule.room_features} busy={busy} onChange={(v) => save({ room_features: v })} />
-    <Chips title="Not in rooms with" anyLabel="No exceptions" options={opts.features} value={rule.except_features} busy={busy} onChange={(v) => save({ except_features: v })} />
-    <Chips title="Guest & Room Info" anyLabel="Any" options={opts.flags} value={rule.flags} busy={busy} onChange={(v) => save({ flags: v })} />
+    <Chips title="Room types" anyLabel="Any type" options={opts.types} value={rule.room_types} busy={false} onChange={(v) => onChange({ room_types: v })} />
+    <Chips title="Has a feature" anyLabel="Any" options={opts.features} value={rule.room_features} busy={false} onChange={(v) => onChange({ room_features: v })} />
+    <Chips title="Not in rooms with" anyLabel="No exceptions" options={opts.features} value={rule.except_features} busy={false} onChange={(v) => onChange({ except_features: v })} />
+    <Chips title="Guest & Room Info" anyLabel="Any" options={opts.flags} value={rule.flags} busy={false} onChange={(v) => onChange({ flags: v })} />
     <label className="block space-y-1">
       <span className="text-xs text-muted-foreground">Housekeeping note mentions</span>
-      <Input placeholder="e.g. anniversary, birthday" defaultValue={rule.note_words.join(", ")} disabled={busy}
-        onBlur={(e) => {
-          const words = e.target.value.split(",").map((w) => w.trim()).filter(Boolean);
-          if (words.join(",") !== rule.note_words.join(",")) void save({ note_words: words });
-        }} />
+      <Input placeholder="e.g. tour, honeymoon" value={rule.note_words.join(",")}
+        onChange={(e) => onChange({ note_words: e.target.value.split(",") })} />
+      <span className="block text-xs text-muted-foreground">Separate words with commas. The paperwork's notes are saved here too.</span>
     </label>
-    {kind === "leave" && <div className="flex flex-wrap items-end gap-2">
-      {rule.quantities.map((q, i) => <label key={i} className="flex flex-col items-center gap-1 text-xs text-muted-foreground">
-        {i + 1} guest{i ? "s" : ""}
-        <Input type="number" min={0} max={99} defaultValue={q} disabled={busy} className="h-9 w-14 text-center"
-          onBlur={(e) => { const n = Number(e.target.value); if (Number.isFinite(n) && n !== q) void setQty(i, n); }} />
-      </label>)}
-      {rule.quantities.length < 6 && <Button size="sm" variant="ghost" disabled={busy} onClick={() => save({ quantities: [...rule.quantities, rule.quantities[rule.quantities.length - 1] ?? 1] })}>+ guest</Button>}
-      <label className="flex flex-col items-center gap-1 text-xs text-muted-foreground">
-        Each extra guest
-        <Input type="number" min={0} max={99} defaultValue={rule.extra_per_guest} disabled={busy} className="h-9 w-14 text-center"
-          onBlur={(e) => { const n = Number(e.target.value); if (Number.isFinite(n) && n !== rule.extra_per_guest) void save({ extra_per_guest: Math.max(0, Math.min(99, n)) }); }} />
-      </label>
+    {!isCheck && <div className="space-y-2">
+      {rule.quantities.map((q, i) => <div key={i}>{stepper(`${i + 1} guest${i ? "s" : ""}`, q, (n) => onChange({ quantities: rule.quantities.map((x, j) => j === i ? n : x) }))}</div>)}
+      <div className="flex items-center justify-between">
+        <Button size="sm" variant="ghost" className="px-2" disabled={rule.quantities.length >= 6}
+          onClick={() => onChange({ quantities: [...rule.quantities, (rule.quantities[rule.quantities.length - 1] ?? 0) + rule.extra_per_guest] })}>
+          <Plus className="mr-1 h-4 w-4" />Add a guest count</Button>
+        {rule.quantities.length > 1 && <Button size="sm" variant="ghost" className="px-2 text-destructive" onClick={() => onChange({ quantities: rule.quantities.slice(0, -1) })}>Remove last</Button>}
+      </div>
+      {stepper("Each extra guest adds", rule.extra_per_guest, (n) => onChange({ extra_per_guest: n }))}
     </div>}
+    <Button size="sm" variant="ghost" className="px-2 text-destructive" onClick={onRemove}><Trash2 className="mr-1 h-4 w-4" />Remove rule</Button>
   </div>;
 }
