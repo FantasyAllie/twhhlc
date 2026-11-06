@@ -7,6 +7,8 @@
 - [x] Sad full-screen outcome + sad trombone sound when completion happens with Dirty rooms present
 
 ## Current work
+- [x] Add housekeeping Today's brief; verify saved open/closed state, Reception exclusion and phone layout with browser-only sample paperwork (live rooms currently have no jobs)
+- [x] Correct extras still-to-leave counts; all 10 targeted tests pass, no database changes
 - [x] Fix room linen counts reverting to zero; reproduced and verified count remains 3 after overlay expiry in an isolated browser check
 - [x] Match Paperwork dirty/Depart Arrival tiles to Dirty without the emoji, and use In Progress yellow once linen is counted; regression tests pass
 - [ ] Verify signed-in room counting and Paperwork tile changes; blocked because the requesting account's preview session could not be minted

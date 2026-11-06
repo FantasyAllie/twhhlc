@@ -1,8 +1,8 @@
 import { useCallback, useEffect, useState } from "react";
 import { useQuery, useQueryClient, type QueryClient } from "@tanstack/react-query";
 import {
-  ArrowDown, ArrowUp, Bath, Bed, Cake, Check, CheckSquare, Coffee, Cookie, CupSoda, Fan, Gift, GlassWater, Heart,
-  Leaf, Minus, Newspaper, Plus, Sparkles, Star, Trash2, Tv, Utensils, Wind, Wine, type LucideIcon,
+  ArrowDown, ArrowUp, ArrowLeftRight, Bath, Bed, BedDouble, Cake, Check, CheckSquare, ChevronDown, Coffee, Cookie, CupSoda, DoorOpen, Fan, Gift, GlassWater, Heart,
+  Leaf, Luggage, Minus, Newspaper, Plus, Sparkles, Star, Sunrise, Trash2, Tv, Users, Utensils, Wind, Wine, type LucideIcon,
 } from "lucide-react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
@@ -11,10 +11,10 @@ import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover
 import { supabase } from "@/integrations/supabase/client";
 import { useCurrentHotel } from "@/lib/hotels";
 import { useReceptionItemsQuery, useRoomFeaturesQuery, useRoomTypesQuery } from "@/hooks/use-rooms";
-import { mergeFlagDefs, useCustomFlagsQuery, useFlagSettingsQuery } from "@/lib/room-flags";
+import { FLAG_COLORS, FlagIcon, mergeFlagDefs, useCustomFlagsQuery, useFlagSettingsQuery, type CustomFlagRow, type FlagDef } from "@/lib/room-flags";
 import { parseCats } from "@/lib/app-format";
 import { extrasForRoom, roomJob, type GuestExtra, type GuestExtraRule, type RoomNeed } from "@/lib/guest-extras-rules";
-import type { Room } from "@/lib/app-types";
+import type { ReceptionItem, Room } from "@/lib/app-types";
 
 const errMsg = (e: unknown, f: string) => (e as { message?: string })?.message ?? f;
 const chip = (on: boolean) => (on ? "border-primary bg-primary/10 text-primary hover:bg-primary/15" : "");
@@ -75,6 +75,11 @@ const guestsFor = (room: Room) =>
   room.guest_extras_guests ??
   (["arrival", "turnover", "stayover"].includes(room.sheet_kind ?? "") ? room.sheet_guests ?? null : null);
 
+const statusLabelOf = (room: Room, statuses: ReceptionItem[] | undefined) => {
+  const sid = room.reception_status_id ?? room.default_status;
+  return (sid && statuses?.find((s) => s.id === sid)?.label) || "";
+};
+
 /** Works out each room's checks and extras for today. Returns null while loading. */
 export function useRoomNeeds() {
   const data = useGuestExtras().data;
@@ -83,8 +88,7 @@ export function useRoomNeeds() {
   const customFlags = useCustomFlagsQuery().data;
   return useCallback((room: Room): RoomNeed[] | null => {
     if (!data) return null;
-    const sid = room.reception_status_id ?? room.default_status;
-    const label = (sid && statuses?.find((s) => s.id === sid)?.label) || "";
+    const label = statusLabelOf(room, statuses);
     const flagKeysOn = mergeFlagDefs(flagSettings ?? []).filter((d) => d.custom
       ? (customFlags ?? []).some((c) => c.room_number === room.room_number && c.flag_key === d.key)
       : !!(room as unknown as Record<string, unknown>)[d.key]).map((d) => d.key);
@@ -110,27 +114,117 @@ export function GuestExtrasBadge({ room, className }: { room: Room | undefined; 
   </span>;
 }
 
-/** Room Completion pop-up: each extra today's rooms need, left of total. */
-export function ExtrasStillToLeave({ rooms, className }: { rooms: Room[]; className?: string }) {
-  const needsFor = useRoomNeeds();
+export function extrasTotals(rooms: Room[], needsFor: (room: Room) => RoomNeed[] | null) {
   const totals = new Map<string, { extra: GuestExtra; left: number; total: number }>();
   for (const room of rooms) for (const n of needsFor(room) ?? []) {
     if (n.extra.kind !== "leave") continue;
     const t = totals.get(n.extra.id) ?? { extra: n.extra, left: 0, total: 0 };
     t.total += n.quantity;
-    if (n.done) t.left += n.quantity;
+    if (!n.done) t.left += n.quantity;
     totals.set(n.extra.id, t);
   }
-  if (!totals.size) return null;
+  return [...totals.values()].sort((a, b) => a.extra.sort_order - b.extra.sort_order);
+}
+
+/** Room Completion pop-up: each extra today's rooms need, left of total. */
+export function ExtrasStillToLeave({ rooms, className }: { rooms: Room[]; className?: string }) {
+  const needsFor = useRoomNeeds();
+  const totals = extrasTotals(rooms, needsFor);
+  if (!totals.length) return null;
   return <div className={className}>
     <p className="text-xs font-semibold uppercase tracking-wide opacity-70">Extras still to leave</p>
     <ul className="mt-1.5 space-y-1.5 text-sm">
-      {[...totals.values()].sort((a, b) => a.extra.sort_order - b.extra.sort_order).map((t) => <li key={t.extra.id} className="flex items-center justify-between gap-2">
+      {totals.map((t) => <li key={t.extra.id} className="flex items-center justify-between gap-2">
         <span className="flex items-center gap-2"><ExtraIcon name={t.extra.icon} className="h-3.5 w-3.5" />{t.extra.name}</span>
         <span className="font-semibold tabular-nums">{t.left} of {t.total}</span>
       </li>)}
     </ul>
   </div>;
+}
+
+export function shiftBriefCounts(rooms: Room[], statuses: ReceptionItem[] | undefined, flagDefs: FlagDef[], customFlags: CustomFlagRow[]) {
+  const jobs = { departure: 0, turnover: 0, arrival: 0, stayover: 0 };
+  let guests = 0;
+  for (const room of rooms) {
+    const job = roomJob(room.sheet_kind, statusLabelOf(room, statuses));
+    if (room.sheet_kind === "departure") jobs.departure++;
+    else if (room.sheet_kind === "turnover") jobs.turnover++;
+    else if (room.sheet_kind === "arrival") jobs.arrival++;
+    else if (room.sheet_kind === "stayover") jobs.stayover++;
+    else if (!room.sheet_kind && job) jobs[job]++;
+    if (job) guests += guestsFor(room) ?? 0;
+  }
+  const flags = flagDefs.filter((d) => !d.hidden && d.key !== "guest_vacated" && d.key !== "stayover_out").map((def) => ({
+    def,
+    count: rooms.filter((room) => def.custom
+      ? customFlags.some((c) => c.room_number === room.room_number && c.flag_key === def.key)
+      : (room as unknown as Record<string, unknown>)[def.key] === true).length,
+  })).filter((f) => f.count > 0);
+  return { jobs, guests, flags };
+}
+
+/** Housekeeping Home: today's scheduled work, visible room flags and guest extras. */
+export function ShiftBrief({ rooms }: { rooms: Room[] }) {
+  const needsFor = useRoomNeeds();
+  const statuses = useReceptionItemsQuery().data;
+  const flagSettings = useFlagSettingsQuery().data;
+  const customFlags = useCustomFlagsQuery().data;
+  const [open, setOpen] = useState(true);
+  useEffect(() => {
+    try { setOpen(localStorage.getItem("shift_brief_open") !== "false"); } catch { /* Storage may be unavailable. */ }
+  }, []);
+  const { jobs, guests, flags } = shiftBriefCounts(rooms, statuses, mergeFlagDefs(flagSettings ?? []), customFlags ?? []);
+  const extras = extrasTotals(rooms, needsFor);
+  const jobTiles = [
+    { count: jobs.departure, singular: "Departure", plural: "Departures", icon: DoorOpen, color: "bg-room-dirty text-room-dirty-fg" },
+    { count: jobs.turnover, singular: "Depart / Arrival", plural: "Depart / Arrivals", icon: ArrowLeftRight, color: "bg-room-progress text-room-progress-fg" },
+    { count: jobs.arrival, singular: "Arrival", plural: "Arrivals", icon: Luggage, color: "bg-room-early text-room-early-fg" },
+    { count: jobs.stayover, singular: "Stayover", plural: "Stayovers", icon: BedDouble, color: "bg-room-stayover text-room-stayover-fg" },
+  ].filter((j) => j.count > 0);
+  if (!jobTiles.length && !guests && !flags.length && !extras.length) return null;
+  const summary = jobTiles.length
+    ? jobTiles.map((j) => `${j.count} ${(j.count === 1 ? j.singular : j.plural).toLowerCase()}`).join(" · ")
+    : [...flags.map((f) => `${f.count} ${f.def.label}`), ...extras.map((e) => `${e.total} ${e.extra.name}`)].join(" · ");
+  const tile = (key: string, icon: React.ReactNode, count: number, label: string, color: string, left?: number) => (
+    <div key={key} className="flex min-w-0 items-start gap-2.5 rounded-lg bg-sidebar-accent/40 p-3">
+      <span className={`grid size-8 shrink-0 place-items-center rounded-lg ${color}`}>{icon}</span>
+      <div className="min-w-0">
+        <p className="text-lg font-bold leading-tight tabular-nums">{count}</p>
+        <p className="break-words text-xs text-sidebar-foreground/65">{label}</p>
+        {left !== undefined && <p className="mt-0.5 text-xs text-sidebar-foreground/65">{left} left</p>}
+      </div>
+    </div>
+  );
+  return <section aria-label="Today's brief" className="w-full rounded-2xl border border-sidebar-border bg-sidebar text-sidebar-foreground shadow-elevation-2">
+    <Button type="button" variant="ghost" aria-expanded={open} aria-controls="shift-brief-details"
+      className="h-auto w-full justify-start gap-3 whitespace-normal rounded-2xl px-3 py-2.5 text-left text-sidebar-foreground hover:bg-sidebar-accent hover:text-sidebar-foreground sm:px-4"
+      onClick={() => {
+        const next = !open;
+        setOpen(next);
+        try { localStorage.setItem("shift_brief_open", String(next)); } catch { /* Keep the toggle working without storage. */ }
+      }}>
+      <span className="grid size-9 shrink-0 place-items-center rounded-full bg-sidebar-primary/15 text-sidebar-primary"><Sunrise className="h-4 w-4" /></span>
+      <span className="min-w-0 flex-1">
+        <span className="block font-display text-sm font-semibold leading-tight">Today's brief</span>
+        <span className="mt-0.5 block break-words text-xs text-sidebar-foreground/65">{summary}</span>
+      </span>
+      <ChevronDown className={`h-4 w-4 shrink-0 transition-transform motion-reduce:transition-none ${open ? "rotate-180" : ""}`} />
+    </Button>
+    {open && <div id="shift-brief-details" className="space-y-3 px-3 pb-3 sm:px-4">
+      {(jobTiles.length > 0 || guests > 0) && <div className="grid grid-cols-2 gap-2">
+        {jobTiles.map((j) => tile(j.singular, <j.icon className="h-4 w-4" />, j.count, j.count === 1 ? j.singular : j.plural, j.color))}
+        {guests > 0 && tile("guests", <Users className="h-4 w-4" />, guests, guests === 1 ? "Guest" : "Guests", "bg-muted text-muted-foreground")}
+      </div>}
+      {flags.length > 0 && <div className="space-y-2">
+        <p className="text-xs font-semibold uppercase text-sidebar-foreground/65">Guest &amp; Room Info</p>
+        <div className="grid grid-cols-2 gap-2">{flags.map(({ def, count }) => tile(def.key, <FlagIcon def={def} className="h-4 w-4" />, count, def.label, (FLAG_COLORS[def.color] ?? FLAG_COLORS.slate).badge))}</div>
+      </div>}
+      {extras.length > 0 && <div className="space-y-2">
+        <p className="text-xs font-semibold uppercase text-sidebar-foreground/65">Extras needed</p>
+        <div className="grid grid-cols-2 gap-2">{extras.map((e) => tile(e.extra.id, <ExtraIcon name={e.extra.icon} className="h-4 w-4" />, e.total, e.extra.name, FLAG_COLORS.pink.badge, e.left < e.total ? e.left : undefined))}</div>
+      </div>}
+    </div>}
+  </section>;
 }
 
 /** Room view: checks to tick as present, then extras to leave for the guest. */

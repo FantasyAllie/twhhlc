@@ -183,7 +183,7 @@ import { usePendingCounts } from "@/lib/pending-counts";
 import { cacheSavedRoomCount } from "@/lib/linen-count-cache";
 import { buildOpsState, captureOpsSnapshot, undoLastOpsSnapshot } from "@/lib/ops-snapshots";
 import { HousekeepingRoomTile, ReceptionRoomTile } from "@/components/rooms/room-tile";
-import { ExtrasStillToLeave } from "@/components/rooms/guest-extras";
+import { ExtrasStillToLeave, ShiftBrief } from "@/components/rooms/guest-extras";
 import { MorningSheetBanner, OPEN_PAPERWORK_EVENT } from "@/components/morning-sheet-banner";
 import { canUploadMorningSheet, setAsBed } from "@/lib/morning-sheet";
 
@@ -4633,6 +4633,8 @@ const toggleRoomCategory = async (roomNumber: number, value: Category) => {
      hideBanner={isMaintenance || isFnb}
    />
  )}
+
+ {!isReception && !isMaintenance && !isFnb && <ShiftBrief rooms={rooms} />}
 
  {/* Mobile role-picker sheet (triggered from the burger menu or the tablet top bar).
       iOS: frosted centred card with glass buttons; Android: bottom sheet, Material buttons. */}
