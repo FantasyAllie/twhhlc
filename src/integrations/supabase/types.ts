@@ -826,6 +826,44 @@ export type Database = {
         }
         Relationships: []
       }
+      quick_replies: {
+        Row: {
+          applies_to: string
+          created_at: string
+          hotel_id: string
+          id: string
+          label: string
+          resolves: boolean
+          sort_order: number
+        }
+        Insert: {
+          applies_to?: string
+          created_at?: string
+          hotel_id?: string
+          id?: string
+          label: string
+          resolves?: boolean
+          sort_order?: number
+        }
+        Update: {
+          applies_to?: string
+          created_at?: string
+          hotel_id?: string
+          id?: string
+          label?: string
+          resolves?: boolean
+          sort_order?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "quick_replies_hotel_id_fkey"
+            columns: ["hotel_id"]
+            isOneToOne: false
+            referencedRelation: "hotels"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       reception_items: {
         Row: {
           created_at: string
@@ -1285,6 +1323,116 @@ export type Database = {
           },
         ]
       }
+      room_pin_replies: {
+        Row: {
+          created_at: string
+          created_by: string
+          created_by_departments: string[]
+          created_by_name: string
+          hotel_id: string
+          id: string
+          message: string
+          pin_id: string
+        }
+        Insert: {
+          created_at?: string
+          created_by?: string
+          created_by_departments?: string[]
+          created_by_name?: string
+          hotel_id?: string
+          id?: string
+          message: string
+          pin_id: string
+        }
+        Update: {
+          created_at?: string
+          created_by?: string
+          created_by_departments?: string[]
+          created_by_name?: string
+          hotel_id?: string
+          id?: string
+          message?: string
+          pin_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "room_pin_replies_hotel_id_fkey"
+            columns: ["hotel_id"]
+            isOneToOne: false
+            referencedRelation: "hotels"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "room_pin_replies_pin_id_fkey"
+            columns: ["pin_id"]
+            isOneToOne: false
+            referencedRelation: "room_pins"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      room_pins: {
+        Row: {
+          created_at: string
+          created_by: string
+          created_by_departments: string[]
+          created_by_name: string
+          hotel_id: string
+          id: string
+          kind: string
+          last_reply_at: string | null
+          message: string
+          resolved_at: string | null
+          resolved_by_name: string | null
+          room_number: number
+          sender_seen_at: string
+          status: string
+          to_department: string
+        }
+        Insert: {
+          created_at?: string
+          created_by?: string
+          created_by_departments?: string[]
+          created_by_name?: string
+          hotel_id?: string
+          id?: string
+          kind?: string
+          last_reply_at?: string | null
+          message: string
+          resolved_at?: string | null
+          resolved_by_name?: string | null
+          room_number: number
+          sender_seen_at?: string
+          status?: string
+          to_department: string
+        }
+        Update: {
+          created_at?: string
+          created_by?: string
+          created_by_departments?: string[]
+          created_by_name?: string
+          hotel_id?: string
+          id?: string
+          kind?: string
+          last_reply_at?: string | null
+          message?: string
+          resolved_at?: string | null
+          resolved_by_name?: string | null
+          room_number?: number
+          sender_seen_at?: string
+          status?: string
+          to_department?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "room_pins_hotel_id_fkey"
+            columns: ["hotel_id"]
+            isOneToOne: false
+            referencedRelation: "hotels"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       room_preferred_items: {
         Row: {
           created_at: string
@@ -1698,14 +1846,20 @@ export type Database = {
           totals: Json
         }[]
       }
+      mark_room_pin_seen: { Args: { p_pin: string }; Returns: undefined }
       resolve_morning_sheet: {
         Args: { p_apply: boolean; p_import: string; p_name: string }
         Returns: number
+      }
+      resolve_room_pin: {
+        Args: { p_pin: string; p_status: string }
+        Returns: undefined
       }
       save_missing_nightly_exports: {
         Args: { p_now?: string }
         Returns: number
       }
+      seed_quick_replies: { Args: { p_hotel: string }; Returns: undefined }
       set_guest_extra_done: {
         Args: { p_done: boolean; p_extra: string; p_room_number: number }
         Returns: Json
