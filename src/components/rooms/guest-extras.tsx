@@ -7,6 +7,8 @@ import {
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { Switch } from "@/components/ui/switch";
+import { Sheet, SheetContent, SheetDescription, SheetHeader, SheetTitle } from "@/components/ui/sheet";
 import { supabase } from "@/integrations/supabase/client";
 import { useCurrentHotel } from "@/lib/hotels";
 import { useReceptionItemsQuery, useRoomFeaturesQuery, useRoomTypesQuery } from "@/hooks/use-rooms";
@@ -143,6 +145,68 @@ export function ExtrasStillToLeave({ rooms, className }: { rooms: Room[]; classN
   </div>;
 }
 
+/** Today's brief tiles this hotel has turned off. Keys: job:departure|turnover|arrival|stayover|guests, flag:<key>, extra:<id>. */
+export function useBriefHidden() {
+  const hotel = useCurrentHotel().data;
+  return useQuery({
+    queryKey: ["shift_brief_settings", hotel?.id],
+    enabled: !!hotel?.id,
+    queryFn: async () => {
+      // Before the table exists (or offline) everything shows.
+      const { data, error } = await supabase.from("shift_brief_settings" as never).select("hidden").eq("hotel_id", hotel!.id).maybeSingle();
+      if (error) return [] as string[];
+      return ((data as { hidden?: string[] } | null)?.hidden ?? []) as string[];
+    },
+  }).data ?? [];
+}
+
+const BRIEF_JOBS = [
+  { key: "departure", label: "Departures", icon: DoorOpen },
+  { key: "turnover", label: "Depart / Arrivals", icon: ArrowLeftRight },
+  { key: "arrival", label: "Arrivals", icon: Luggage },
+  { key: "stayover", label: "Stayovers", icon: BedDouble },
+  { key: "guests", label: "Guests", icon: Users },
+] as const;
+
+/** Hotel settings → Today's brief: a switch for each tile the brief can show, the same for everyone. */
+export function ShiftBriefSettingsSheet({ open, onOpenChange }: { open: boolean; onOpenChange: (o: boolean) => void }) {
+  const qc = useQueryClient();
+  const hotel = useCurrentHotel().data;
+  const hidden = useBriefHidden();
+  const flagDefs = mergeFlagDefs(useFlagSettingsQuery().data ?? []).filter((d) => !d.hidden && d.key !== "guest_vacated" && d.key !== "stayover_out");
+  const extras = (useGuestExtras().data?.extras ?? []).filter((e) => e.kind === "leave");
+  const [busy, setBusy] = useState(false);
+  const set = async (key: string, shown: boolean) => {
+    if (!hotel) return;
+    const next = shown ? hidden.filter((k) => k !== key) : [...new Set([...hidden, key])].sort();
+    setBusy(true);
+    const { error } = await supabase.from("shift_brief_settings" as never)
+      .upsert({ hotel_id: hotel.id, hidden: next, updated_at: new Date().toISOString() } as never, { onConflict: "hotel_id" });
+    setBusy(false);
+    if (error) toast.error(errMsg(error, "Couldn't save Today's brief settings."));
+    await qc.invalidateQueries({ queryKey: ["shift_brief_settings"] });
+  };
+  const row = (key: string, label: string, icon: React.ReactNode) => (
+    <label key={key} className="flex items-center justify-between gap-3 rounded-lg px-1 py-2 text-sm">
+      <span className="flex items-center gap-2.5">{icon}{label}</span>
+      <Switch checked={!hidden.includes(key)} disabled={busy} onCheckedChange={(on) => void set(key, on)} />
+    </label>
+  );
+  const heading = (t: string) => <p className="mt-4 text-xs font-semibold uppercase tracking-wide text-muted-foreground">{t}</p>;
+  return <Sheet open={open} onOpenChange={onOpenChange}>
+    <SheetContent side="right" className="w-full overflow-y-auto sm:max-w-md">
+      <SheetHeader><SheetTitle>Today's brief</SheetTitle>
+        <SheetDescription>What the morning brief on housekeeping's Home shows. It's the same for everyone at this hotel.</SheetDescription></SheetHeader>
+      {heading("Rooms & guests")}
+      <div className="divide-y">{BRIEF_JOBS.map((j) => row(`job:${j.key}`, j.label, <j.icon className="h-4 w-4 text-muted-foreground" />))}</div>
+      {flagDefs.length > 0 && <>{heading("Guest & room info")}
+        <div className="divide-y">{flagDefs.map((d) => row(`flag:${d.key}`, d.label, <FlagIcon def={d} className="h-4 w-4 text-muted-foreground" />))}</div></>}
+      {extras.length > 0 && <>{heading("Extras needed")}
+        <div className="divide-y">{extras.map((e) => row(`extra:${e.id}`, e.name, <ExtraIcon name={e.icon} className="h-4 w-4 text-muted-foreground" />))}</div></>}
+    </SheetContent>
+  </Sheet>;
+}
+
 /** Today's brief is the day's plan: the morning paperwork only, so it doesn't change as rooms are done. */
 export function shiftBriefCounts(rooms: Room[], flagDefs: FlagDef[], customFlags: CustomFlagRow[]) {
   const jobs = { departure: 0, turnover: 0, arrival: 0, stayover: 0 };
@@ -167,18 +231,19 @@ export function ShiftBrief({ rooms }: { rooms: Room[] }) {
   const needsFor = useRoomNeeds(true);
   const flagSettings = useFlagSettingsQuery().data;
   const customFlags = useCustomFlagsQuery().data;
-  const [open, setOpen] = useState(true);
-  useEffect(() => {
-    try { setOpen(localStorage.getItem("shift_brief_open") !== "false"); } catch { /* Storage may be unavailable. */ }
-  }, []);
-  const { hasPaperwork, jobs, guests, flags } = shiftBriefCounts(rooms, mergeFlagDefs(flagSettings ?? []), customFlags ?? []);
-  const extras = extrasTotals(rooms, needsFor);
+  const [open, setOpen] = useState(false);
+  const hidden = new Set(useBriefHidden());
+  const counts = shiftBriefCounts(rooms, mergeFlagDefs(flagSettings ?? []), customFlags ?? []);
+  const { hasPaperwork, jobs } = counts;
+  const guests = hidden.has("job:guests") ? 0 : counts.guests;
+  const flags = counts.flags.filter((f) => !hidden.has(`flag:${f.def.key}`));
+  const extras = extrasTotals(rooms, needsFor).filter((e) => !hidden.has(`extra:${e.extra.id}`));
   const jobTiles = [
-    { count: jobs.departure, singular: "Departure", plural: "Departures", icon: DoorOpen, color: "bg-room-dirty text-room-dirty-fg" },
-    { count: jobs.turnover, singular: "Depart / Arrival", plural: "Depart / Arrivals", icon: ArrowLeftRight, color: "bg-room-progress text-room-progress-fg" },
-    { count: jobs.arrival, singular: "Arrival", plural: "Arrivals", icon: Luggage, color: "bg-room-early text-room-early-fg" },
-    { count: jobs.stayover, singular: "Stayover", plural: "Stayovers", icon: BedDouble, color: "bg-room-stayover text-room-stayover-fg" },
-  ].filter((j) => j.count > 0);
+    { key: "departure", count: jobs.departure, singular: "Departure", plural: "Departures", icon: DoorOpen, color: "bg-room-dirty text-room-dirty-fg" },
+    { key: "turnover", count: jobs.turnover, singular: "Depart / Arrival", plural: "Depart / Arrivals", icon: ArrowLeftRight, color: "bg-room-progress text-room-progress-fg" },
+    { key: "arrival", count: jobs.arrival, singular: "Arrival", plural: "Arrivals", icon: Luggage, color: "bg-room-early text-room-early-fg" },
+    { key: "stayover", count: jobs.stayover, singular: "Stayover", plural: "Stayovers", icon: BedDouble, color: "bg-room-stayover text-room-stayover-fg" },
+  ].filter((j) => j.count > 0 && !hidden.has(`job:${j.key}`));
   if (!hasPaperwork || (!jobTiles.length && !guests && !flags.length && !extras.length)) return null;
   const summary = jobTiles.length
     ? jobTiles.map((j) => `${j.count} ${(j.count === 1 ? j.singular : j.plural).toLowerCase()}`).join(" · ")
@@ -192,22 +257,25 @@ export function ShiftBrief({ rooms }: { rooms: Room[] }) {
       </div>
     </div>
   );
+  // Like the app: a one-line card that opens the details in a pop-up sheet.
   return <section aria-label="Today's brief" className="w-full rounded-2xl border border-sidebar-border bg-sidebar text-sidebar-foreground shadow-elevation-2">
-    <Button type="button" variant="ghost" aria-expanded={open} aria-controls="shift-brief-details"
+    <Button type="button" variant="ghost" aria-haspopup="dialog"
       className="h-auto w-full justify-start gap-3 whitespace-normal rounded-2xl px-3 py-2.5 text-left text-sidebar-foreground hover:bg-sidebar-accent hover:text-sidebar-foreground sm:px-4"
-      onClick={() => {
-        const next = !open;
-        setOpen(next);
-        try { localStorage.setItem("shift_brief_open", String(next)); } catch { /* Keep the toggle working without storage. */ }
-      }}>
+      onClick={() => setOpen(true)}>
       <span className="grid size-9 shrink-0 place-items-center rounded-full bg-sidebar-primary/15 text-sidebar-primary"><Sunrise className="h-4 w-4" /></span>
       <span className="min-w-0 flex-1">
         <span className="block font-display text-sm font-semibold leading-tight">Today's brief</span>
         <span className="mt-0.5 block break-words text-xs text-sidebar-foreground/65">{summary}</span>
       </span>
-      <ChevronDown className={`h-4 w-4 shrink-0 transition-transform motion-reduce:transition-none ${open ? "rotate-180" : ""}`} />
+      <ChevronRight className="h-4 w-4 shrink-0" />
     </Button>
-    {open && <div id="shift-brief-details" className="space-y-3 px-3 pb-3 sm:px-4">
+    <Sheet open={open} onOpenChange={setOpen}>
+      <SheetContent side="bottom" className="max-lg:h-auto max-h-[85dvh] overflow-y-auto rounded-t-2xl bg-sidebar p-4 text-sidebar-foreground sm:mx-auto sm:max-w-2xl sm:p-6">
+        <SheetHeader className="mb-3 text-left">
+          <SheetTitle className="font-display">Today's brief</SheetTitle>
+          <SheetDescription className="text-sidebar-foreground/65">{summary}</SheetDescription>
+        </SheetHeader>
+        <div className="space-y-3">
       {(jobTiles.length > 0 || guests > 0) && <div className="grid grid-cols-2 gap-2">
         {jobTiles.map((j) => tile(j.singular, <j.icon className="h-4 w-4" />, j.count, j.count === 1 ? j.singular : j.plural, j.color))}
         {guests > 0 && tile("guests", <Users className="h-4 w-4" />, guests, guests === 1 ? "Guest" : "Guests", "bg-muted text-muted-foreground")}
@@ -234,7 +302,9 @@ export function ShiftBrief({ rooms }: { rooms: Room[] }) {
           <div className="grid grid-cols-2 gap-2">{extras.map((e) => tile(e.extra.id, <ExtraIcon name={e.extra.icon} className="h-4 w-4" />, e.total, e.extra.name, FLAG_COLORS.pink.badge))}</div>
         </div>}
       </>}
-    </div>}
+        </div>
+      </SheetContent>
+    </Sheet>
   </section>;
 }
 
@@ -259,7 +329,10 @@ export function RoomGuestExtras({ room }: { room: Room }) {
     {items.map(({ extra, quantity, done }) => <Button key={extra.id} type="button" variant="outline" aria-pressed={done} disabled={busy}
       className={`h-auto min-h-12 w-full min-w-0 justify-center gap-2 whitespace-normal rounded-xl px-3 py-3 text-sm font-medium ${chip(done)}`}
       onClick={() => run(() => supabase.rpc("set_guest_extra_done", { p_room_number: room.room_number, p_extra: extra.id, p_done: !done }))}>
-      {done ? <Check className="h-4 w-4 shrink-0" /> : <ExtraIcon name={extra.icon} className="h-4 w-4 shrink-0" />}
+      {/* The plain tick icon looked like a checkbox, so items without their own icon get a bullet. */}
+      {done ? <Check className="h-4 w-4 shrink-0" />
+        : !extra.icon || extra.icon === "check-square" ? <span aria-hidden className="size-1.5 shrink-0 rounded-full bg-muted-foreground/60" />
+        : <ExtraIcon name={extra.icon} className="h-4 w-4 shrink-0" />}
       <span className="min-w-0 break-words">{extra.kind === "leave" ? `${quantity} × ${extra.name}` : extra.name}</span>
     </Button>)}
   </div>;

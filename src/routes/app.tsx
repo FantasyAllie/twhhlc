@@ -10,7 +10,7 @@ import { playDoorBell } from "@/lib/door-bell";
 import { createPortal } from "react-dom";
 import React, { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { CountRow } from "@/components/linen/inventory-dialog";
-import { Loader2, CalendarDays, Trophy, FileUp } from "lucide-react";
+import { Loader2, CalendarDays, Trophy, FileUp, Sunrise } from "lucide-react";
 import { LeaderboardSheet } from "@/components/leaderboard-sheet";
 import { RoomFlagsContext, FlagIcon, mergeFlagDefs, useFlagSettingsQuery, useCustomFlagsQuery, type FlagDef } from "@/lib/room-flags";
 import { RoomFlagsSheet } from "@/components/rooms/room-flags-sheet";
@@ -183,7 +183,7 @@ import { usePendingCounts } from "@/lib/pending-counts";
 import { cacheSavedRoomCount } from "@/lib/linen-count-cache";
 import { buildOpsState, captureOpsSnapshot, undoLastOpsSnapshot } from "@/lib/ops-snapshots";
 import { HousekeepingRoomTile, ReceptionRoomTile } from "@/components/rooms/room-tile";
-import { ExtrasStillToLeave, ShiftBrief } from "@/components/rooms/guest-extras";
+import { ExtrasStillToLeave, ShiftBrief, ShiftBriefSettingsSheet } from "@/components/rooms/guest-extras";
 import { PinRepliesStrip, RoomPinSettingsSheet, RoomPins, pinDotFor, pinsNeedingYou, useRoomPins, type PinViewer } from "@/components/rooms/room-pins";
 import { MorningSheetBanner, OPEN_PAPERWORK_EVENT } from "@/components/morning-sheet-banner";
 import { canUploadMorningSheet, setAsBed } from "@/lib/morning-sheet";
@@ -516,6 +516,7 @@ function AppPage() {
   const customFlagsQ = useCustomFlagsQuery();
   const [roomFlagsSheetOpen, setRoomFlagsSheetOpen] = useState(false);
   const [quickRepliesOpen, setQuickRepliesOpen] = useState(false);
+  const [briefSettingsOpen, setBriefSettingsOpen] = useState(false);
   // Realtime: push room status changes to all signed-in clients (esp. reception)
   const [realtimeEpoch, setRealtimeEpoch] = useState(0);
   useEffect(() => {
@@ -3770,22 +3771,6 @@ const toggleRoomCategory = async (roomNumber: number, value: Category) => {
         >
           Status
         </Button>
-        <Button
-          type="button"
-          data-ios-glass
-          variant="outline"
-          aria-pressed={active === "linen"}
-          data-ios-selected={active === "linen" ? "true" : undefined}
-          onClick={() => selectRoomTab(n, "linen")}
-          className={cn(
-            "flex items-center justify-center gap-1.5 rounded-xl border bg-background px-3 sm:px-4 h-11 shadow-sm active:scale-[0.97] active:shadow-none flex-1 text-sm font-medium cursor-pointer transition-colors hover:bg-accent",
-            active === "linen"
-              ? "border-primary bg-primary/10 text-primary"
-              : ""
-          )}
-        >
-          Extra linen
-        </Button>
         {isAdmin && (
           <Button
             type="button"
@@ -4080,6 +4065,11 @@ const toggleRoomCategory = async (roomNumber: number, value: Category) => {
 
     {isReception ? null : (
     <div className="flex-1 min-h-0 overflow-y-auto mt-3 max-lg:mt-1 space-y-4">
+    {/* Like the app: a switch above the list instead of an Extra linen button. */}
+    <label className="flex items-center justify-between gap-3 px-1 text-sm font-medium">
+      <span>Show all items</span>
+      <Switch checked={showAll} onCheckedChange={(on) => setShowAllLinen(on ? { [n]: true } : {})} />
+    </label>
     {visibleTemplate.length === 0 && roomExtras.length === 0 ? (
     <p className="text-sm text-muted-foreground">
     No items yet. Add linen list items from the menu, or add an extra below.
@@ -4315,6 +4305,7 @@ const toggleRoomCategory = async (roomNumber: number, value: Category) => {
       }
       locations.push({ key: "room-flags", icon: Flag, label: "Room Flags", onClick: () => setRoomFlagsSheetOpen(true) });
       locations.push({ key: "room-pins", icon: Pin, label: "Pins & Chat", onClick: () => setQuickRepliesOpen(true) });
+      locations.push({ key: "shift-brief", icon: Sunrise, label: "Today's Brief", onClick: () => setBriefSettingsOpen(true) });
     }
     if ((realIsAdmin || (realIsManager && hasHousekeeperRole)) && !isMaintenance) {
       linen.push({ key: "linen-days", icon: CalendarDays, label: "Delivery Schedule", onClick: () => setLinenDeliveryOpen(true) });
@@ -4409,6 +4400,7 @@ const toggleRoomCategory = async (roomNumber: number, value: Category) => {
 <RoomFlagsContext.Provider value={roomFlagsCtx}>
 <RoomFlagsSheet open={roomFlagsSheetOpen} onOpenChange={setRoomFlagsSheetOpen} />
 <RoomPinSettingsSheet open={quickRepliesOpen} onOpenChange={setQuickRepliesOpen} />
+<ShiftBriefSettingsSheet open={briefSettingsOpen} onOpenChange={setBriefSettingsOpen} />
 <main
   ref={homeRefresh.ref}
   data-home-refresh
