@@ -1,6 +1,6 @@
 import { describe, it } from "node:test";
 import assert from "node:assert/strict";
-import { buildSheet, classifyRoom, type ParsedSheetRoom } from "./morning-sheet";
+import { buildSheet, classifyRoom, dayFlags, type ParsedSheetRoom } from "./morning-sheet";
 import { computeTileMeta, showsDirtyEmoji, type RoomStatusFlags } from "./rooms";
 
 const base: ParsedSheetRoom = {
@@ -135,5 +135,24 @@ describe("paperwork departures are scheduled cleans", () => {
     assert.equal(_sched("turnover"), true);
     assert.equal(_sched(null), false);
     assert.equal(_sched("stayover"), false);
+  });
+});
+
+describe("dayFlags", () => {
+  const room = (kind: "arrival" | "turnover" | "departure" | "stayover", extra: Partial<ParsedSheetRoom> = {}) =>
+    ({ ...base, ...extra, kind });
+  it("dogs, cots and early check-in only on arrival", () => {
+    const notes = "baby cot, 12pm early check in please";
+    assert.deepEqual(dayFlags(room("arrival", { dog: true, notes })), { dog: true, cot: true, eci: true, lco: false });
+    assert.deepEqual(dayFlags(room("turnover", { dog: true, eci: true })), { dog: true, cot: false, eci: true, lco: false });
+    assert.deepEqual(dayFlags(room("stayover", { dog: true, eci: true, notes })), { dog: false, cot: false, eci: false, lco: false });
+  });
+  it("late checkout only on departure", () => {
+    assert.equal(dayFlags(room("departure", { notes: "LATE CHECK OUT" })).lco, true);
+    assert.equal(dayFlags(room("turnover", { lco: true })).lco, true);
+    assert.equal(dayFlags(room("stayover", { lco: true, notes: "late checkout" })).lco, false);
+  });
+  it("doesn't read cot inside other words", () => {
+    assert.equal(dayFlags(room("arrival", { notes: "Scotland trip" })).cot, false);
   });
 });

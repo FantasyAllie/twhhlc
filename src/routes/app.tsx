@@ -2570,7 +2570,12 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
   const resetReceptionAll = async () => {
     // Reception's "Reset all" now resets exactly the same content as the
     // housekeeping reset (same preservation rules, counts, and pinned messages).
-    if (!confirm("Reset all rooms? Reception flags added after 4pm will stay.")) return;
+    const hkResetIso = currentHotelQ.data?.last_hk_reset_at ?? null;
+    const startOfToday = new Date();
+    startOfToday.setHours(0, 0, 0, 0);
+    const hkResetToday = !!hkResetIso && new Date(hkResetIso).getTime() >= startOfToday.getTime();
+    const warning = hkResetToday ? "Housekeeping already reset today, so this also clears their progress since. " : "";
+    if (!confirm(`Reset all rooms? ${warning}Reception flags added after 4pm will stay.`)) return;
     await performResetAll();
   };
 
@@ -6054,17 +6059,8 @@ const toggleRoomCategory = async (roomNumber: number, value: Category) => {
       </Button>
    )}
     {isReception && (() => {
-      // Reception can reset their own selections (status/bed) once per day
-      // after 7am, but only if Housekeeping hasn't already done a full reset.
-      const now = new Date();
-      if (now.getHours() < 7) return null;
-      const hkResetIso = currentHotelQ.data?.last_hk_reset_at ?? null;
-      if (hkResetIso) {
-        const hk = new Date(hkResetIso);
-        const startOfToday = new Date();
-        startOfToday.setHours(0, 0, 0, 0);
-        if (hk.getTime() >= startOfToday.getTime()) return null;
-      }
+      // Reception can Reset all at any time, like housekeeping. It warns first
+      // if housekeeping has already reset today (see resetReceptionAll).
       return (
         <Button
           data-ios-glass

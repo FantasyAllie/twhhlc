@@ -26,6 +26,23 @@ export type SheetRoom = ParsedSheetRoom & { kind: SheetKind; status_label: strin
 
 export type SheetSummary = Record<SheetKind, number> & { dogs: number; guests: number };
 
+/**
+ * The flags a room gets today, as applying the sheet sets them (see
+ * resolve_morning_sheet): dogs, cots and early check-in on arrival, late
+ * checkout on departure. Notes written out in full ("early check in") count too.
+ */
+export function dayFlags(r: Pick<SheetRoom, "kind" | "dog" | "eci" | "lco" | "notes">) {
+  const arriving = r.kind === "arrival" || r.kind === "turnover";
+  const departing = r.kind === "departure" || r.kind === "turnover";
+  const notes = r.notes ?? "";
+  return {
+    dog: arriving && !!r.dog,
+    cot: arriving && /\bcots?\b/i.test(notes),
+    eci: arriving && (!!r.eci || /early\s*check[\s-]*in/i.test(notes)),
+    lco: departing && (!!r.lco || /late\s*check[\s-]*out/i.test(notes)),
+  };
+}
+
 /** Status label each kind sets on the room tile. Turnovers start Dirty; Arrival follows once cleaned. */
 export const KIND_STATUS: Record<SheetKind, string> = {
   turnover: "Dirty",
@@ -67,7 +84,7 @@ export function buildSheet(rows: ParsedSheetRoom[]): { rooms: SheetRoom[]; summa
   const summary: SheetSummary = { turnover: 0, departure: 0, stayover: 0, arrival: 0, ros: 0, vacant: 0, dogs: 0, guests: 0 };
   for (const r of rooms) {
     summary[r.kind] += 1;
-    if (r.dog) summary.dogs += 1;
+    if (dayFlags(r).dog) summary.dogs += 1;
     if (r.kind !== "ros" && r.kind !== "vacant") summary.guests += r.adults + r.children + r.infants;
   }
   return { rooms, summary };

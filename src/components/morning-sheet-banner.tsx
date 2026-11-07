@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
-import { FileText, FileUp, Loader2, Dog, Users } from "lucide-react";
+import { Baby, Clock, FileText, FileUp, Loader2, Dog, Users } from "lucide-react";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
@@ -9,7 +9,7 @@ import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetDescription } from "
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { cn } from "@/lib/utils";
 import { parseMorningSheet } from "@/lib/morning-sheet.functions";
-import { buildSheet, KIND_LABEL, type SheetKind, type SheetRoom, type SheetSummary } from "@/lib/morning-sheet";
+import { buildSheet, dayFlags, KIND_LABEL, type SheetKind, type SheetRoom, type SheetSummary } from "@/lib/morning-sheet";
 
 export const MORNING_SHEET_INPUT_ID = "morning-sheet-input";
 /** Opens the Paperwork popup from anywhere (home button, More menu). */
@@ -234,7 +234,14 @@ function MorningSheetPreview({ open, onOpenChange, sheet, canConfirm, busy, onAp
                   <span className={cn("rounded-full px-2 py-0.5 text-xs font-semibold", KIND_CHIP[r.kind])}>{KIND_LABEL[r.kind]}</span>
                   {r.kind === "turnover" && <span className="text-xs text-muted-foreground">Dirty → Arrival once clean</span>}
                   {r.bed && <span className="rounded-full border px-2 py-0.5 text-xs capitalize">{r.bed}</span>}
-                  {r.dog && <span className="inline-flex items-center gap-1 rounded-full border border-accent px-2 py-0.5 text-xs"><Dog className="h-3 w-3" />Dog</span>}
+                  {(() => {
+                    const f = dayFlags(r);
+                    return ([[f.dog, Dog, "Dog"], [f.cot, Baby, "Cot"], [f.eci, Clock, "Early check-in"], [f.lco, Clock, "Late checkout"]] as const)
+                      .filter(([on]) => on)
+                      .map(([, Icon, label]) => (
+                        <span key={label} className="inline-flex items-center gap-1 rounded-full border border-accent px-2 py-0.5 text-xs"><Icon className="h-3 w-3" />{label}</span>
+                      ));
+                  })()}
                 </div>
                 {(r.lead_name || r.adults + r.children + r.infants > 0) && (
                   <p className="flex items-center gap-1.5 text-xs text-muted-foreground">
