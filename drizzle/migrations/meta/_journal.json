@@ -351,6 +351,13 @@
       "when": 1794093435033,
       "tag": "0049_shift_brief_settings",
       "breakpoints": true
+    },
+    {
+      "idx": 50,
+      "version": "7",
+      "when": 1794094694530,
+      "tag": "0050_run_pending_0049_shift_brief_settings",
+      "breakpoints": true
     }
   ]
 }

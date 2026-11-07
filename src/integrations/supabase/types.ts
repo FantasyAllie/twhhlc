@@ -1689,6 +1689,32 @@ export type Database = {
           },
         ]
       }
+      shift_brief_settings: {
+        Row: {
+          hidden: string[]
+          hotel_id: string
+          updated_at: string
+        }
+        Insert: {
+          hidden?: string[]
+          hotel_id?: string
+          updated_at?: string
+        }
+        Update: {
+          hidden?: string[]
+          hotel_id?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "shift_brief_settings_hotel_id_fkey"
+            columns: ["hotel_id"]
+            isOneToOne: true
+            referencedRelation: "hotels"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       stayover_photos: {
         Row: {
           created_at: string
