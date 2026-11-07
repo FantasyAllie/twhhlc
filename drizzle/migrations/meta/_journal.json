@@ -330,6 +330,13 @@
       "when": 1794003634376,
       "tag": "0046_run_pending_0045_hotel_chat",
       "breakpoints": true
+    },
+    {
+      "idx": 47,
+      "version": "7",
+      "when": 1794090235035,
+      "tag": "0047_paperwork_flags_on_the_day",
+      "breakpoints": true
     }
   ]
 }
