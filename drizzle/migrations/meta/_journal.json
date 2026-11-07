@@ -344,6 +344,13 @@
       "when": 1794091603570,
       "tag": "0048_run_pending_0047_paperwork_flags",
       "breakpoints": true
+    },
+    {
+      "idx": 49,
+      "version": "7",
+      "when": 1794093435033,
+      "tag": "0049_shift_brief_settings",
+      "breakpoints": true
     }
   ]
 }
