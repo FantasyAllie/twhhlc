@@ -212,14 +212,28 @@ export function ShiftBrief({ rooms }: { rooms: Room[] }) {
         {jobTiles.map((j) => tile(j.singular, <j.icon className="h-4 w-4" />, j.count, j.count === 1 ? j.singular : j.plural, j.color))}
         {guests > 0 && tile("guests", <Users className="h-4 w-4" />, guests, guests === 1 ? "Guest" : "Guests", "bg-muted text-muted-foreground")}
       </div>}
-      {flags.length > 0 && <div className="space-y-2">
-        <p className="text-xs font-semibold uppercase text-sidebar-foreground/65">Guest &amp; Room Info</p>
-        <div className="grid grid-cols-2 gap-2">{flags.map(({ def, count }) => tile(def.key, <FlagIcon def={def} className="h-4 w-4" />, count, def.label, (FLAG_COLORS[def.color] ?? FLAG_COLORS.slate).badge))}</div>
-      </div>}
-      {extras.length > 0 && <div className="space-y-2">
-        <p className="text-xs font-semibold uppercase text-sidebar-foreground/65">Extras needed</p>
-        <div className="grid grid-cols-2 gap-2">{extras.map((e) => tile(e.extra.id, <ExtraIcon name={e.extra.icon} className="h-4 w-4" />, e.total, e.extra.name, FLAG_COLORS.pink.badge))}</div>
-      </div>}
+      {flags.length === 1 && extras.length === 1 ? (
+        // One of each fits side by side, each under its own heading.
+        <div className="grid grid-cols-2 gap-2">
+          <div className="min-w-0 space-y-2">
+            <p className="text-xs font-semibold uppercase text-sidebar-foreground/65">Guest &amp; Room Info</p>
+            {tile(flags[0].def.key, <FlagIcon def={flags[0].def} className="h-4 w-4" />, flags[0].count, flags[0].def.label, (FLAG_COLORS[flags[0].def.color] ?? FLAG_COLORS.slate).badge)}
+          </div>
+          <div className="min-w-0 space-y-2">
+            <p className="text-xs font-semibold uppercase text-sidebar-foreground/65">Extras needed</p>
+            {tile(extras[0].extra.id, <ExtraIcon name={extras[0].extra.icon} className="h-4 w-4" />, extras[0].total, extras[0].extra.name, FLAG_COLORS.pink.badge)}
+          </div>
+        </div>
+      ) : <>
+        {flags.length > 0 && <div className="space-y-2">
+          <p className="text-xs font-semibold uppercase text-sidebar-foreground/65">Guest &amp; Room Info</p>
+          <div className="grid grid-cols-2 gap-2">{flags.map(({ def, count }) => tile(def.key, <FlagIcon def={def} className="h-4 w-4" />, count, def.label, (FLAG_COLORS[def.color] ?? FLAG_COLORS.slate).badge))}</div>
+        </div>}
+        {extras.length > 0 && <div className="space-y-2">
+          <p className="text-xs font-semibold uppercase text-sidebar-foreground/65">Extras needed</p>
+          <div className="grid grid-cols-2 gap-2">{extras.map((e) => tile(e.extra.id, <ExtraIcon name={e.extra.icon} className="h-4 w-4" />, e.total, e.extra.name, FLAG_COLORS.pink.badge))}</div>
+        </div>}
+      </>}
     </div>}
   </section>;
 }

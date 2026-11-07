@@ -923,6 +923,10 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
   const [topBarSlot, setTopBarSlot] = useState<HTMLDivElement | null>(null);
   // Stayover / DND photo state
   const [stayoverPhotosOpen, setStayoverPhotosOpen] = useState(false);
+  // A panel has taken Home over (or a menu page is showing), so Home's own
+  // cards such as Today's brief step aside.
+  const homePanelOpen = homeView !== null || menuTakeoverActive || maintenanceLogOpen || messagesSheetOpen
+    || lostPropertyOpen || stayoverPhotosOpen || quickReceptionOpen;
   const [stayoverPhotosRoomFilter, setStayoverPhotosRoomFilter] = useState<number | undefined>(undefined);
   // Leave the home takeover when its panel is closed from inside.
   useEffect(() => {
@@ -4662,7 +4666,8 @@ const toggleRoomCategory = async (roomNumber: number, value: Category) => {
    />
  )}
 
- {!isReception && !isMaintenance && !isFnb && <ShiftBrief rooms={rooms} />}
+ {/* Today's brief is for housekeeping's Home only, not over a panel that takes Home over. */}
+ {!isReception && !isMaintenance && !isFnb && !homePanelOpen && <ShiftBrief rooms={rooms} />}
  <PinRepliesStrip viewer={pinViewer} />
 
  {/* Mobile role-picker sheet (triggered from the burger menu or the tablet top bar).
