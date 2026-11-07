@@ -20,6 +20,29 @@ function MattressBadge({ room }: { room: Room | undefined }) {
 import { RotateCw } from "lucide-react";
 import { GuestExtrasBadge } from "@/components/rooms/guest-extras";
 
+// Early check-in and late checkout, first among the badges: a paperwork job or a
+// room being cleaned takes over the tile's colour and label, which would hide them.
+function TimingBadges({ room, n }: { room: Room | undefined; n: number }) {
+  const { flags, isOn } = useRoomFlags();
+  const on = flags.filter((d) => (d.key === "early_check_in" || d.key === "late_checkout") && isOn(room, n, d));
+  if (on.length === 0) return null;
+  return (
+    <>
+      {on.map((d) => (
+        <span
+          key={d.key}
+          aria-label={d.label}
+          title={d.label}
+          className={BADGE_CLASS + " " + (FLAG_COLORS[d.color] ?? FLAG_COLORS.slate).badge}
+        >
+          <FlagIcon def={d} className="h-2.5 w-2.5 shrink-0" />
+          <span className="hidden @[120px]:inline">{d.key === "early_check_in" ? "Early" : "Late"}</span>
+        </span>
+      ))}
+    </>
+  );
+}
+
 // Badges for admin-defined custom guest & room info toggles.
 function CustomFlagBadges({ n }: { n: number }) {
   const { flags, isOn } = useRoomFlags();
@@ -249,6 +272,7 @@ function ReceptionRoomTileBase({
               className={"h-2 w-2 rounded-full ring-2 ring-background " + (pinDot === "reply" ? "bg-yellow-400" : "bg-orange-500")}
             />
           )}
+          <TimingBadges room={room} n={n} />
           {room?.guest_vacated && (
             <DoorOpen
               aria-label="Guest vacated"
@@ -406,6 +430,7 @@ function HousekeepingRoomTileBase({
           <span aria-label={pinDot === "reply" ? "New reply to your pin" : "Open request"}
             className={"h-2 w-2 rounded-full ring-2 ring-background " + (pinDot === "reply" ? "bg-yellow-400" : "bg-orange-500")} />
         )}
+        <TimingBadges room={room} n={n} />
         {room?.guest_vacated && (
           <span
             aria-label="Guest vacated"
