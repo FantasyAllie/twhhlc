@@ -1,0 +1,2 @@
+-- No-op marker: applies the already-journaled 0047_paperwork_flags_on_the_day migration exactly as written.
+-- The recorded SQL replaces public.resolve_morning_sheet so paperwork flags apply only on the day they are needed and today's hand-set flags are kept.
