@@ -45,14 +45,15 @@ describe("paperwork clean arrival setup", () => {
 });
 
 describe("morning sheet rules", () => {
-  it("paperwork dirty rooms and Depart / Arrival use Dirty brown without the dirty emoji", () => {
+  it("paperwork departures and Depart / Arrival use Dirty brown, stayovers the deeper stayover blue, without the dirty emoji", () => {
     for (const sheetKind of ["stayover", "departure", "turnover"]) {
+      const tone = sheetKind === "stayover" ? "room-stayover-job" : "room-dirty";
       for (const role of ["housekeeping", "reception"] as const) {
         const flags = { ...arrivalFlags, isArrival: false, isDirty: true };
         const meta = computeTileMeta({ flags, state: "todo", isNR: false, hasLinenCount: false, earlyCheckIn: false, role, sheetKind });
-        assert.equal(meta.bg, "var(--room-dirty)");
-        assert.equal(meta.fg, "var(--room-dirty-fg)");
-        assert.equal(meta.accent, "var(--room-dirty-accent)");
+        assert.equal(meta.bg, `var(--${tone})`);
+        assert.equal(meta.fg, `var(--${tone}-fg)`);
+        assert.equal(meta.accent, `var(--${tone}-accent)`);
       }
       assert.equal(showsDirtyEmoji(true, sheetKind), false);
     }

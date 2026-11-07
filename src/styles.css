@@ -87,6 +87,9 @@
   --color-room-stayover: var(--room-stayover);
   --color-room-stayover-fg: var(--room-stayover-fg);
   --color-room-stayover-accent: var(--room-stayover-accent);
+  --color-room-stayover-job: var(--room-stayover-job);
+  --color-room-stayover-job-fg: var(--room-stayover-job-fg);
+  --color-room-stayover-job-accent: var(--room-stayover-job-accent);
   --color-room-stayover-out: var(--room-stayover-out);
   --color-room-stayover-out-fg: var(--room-stayover-out-fg);
   --color-room-stayover-out-accent: var(--room-stayover-out-accent);
@@ -166,6 +169,10 @@
   --room-stayover: oklch(0.93 0.06 235);
   --room-stayover-fg: oklch(0.4 0.18 245);
   --room-stayover-accent: oklch(0.58 0.2 245);
+  /* A paperwork stayover still to do: the stayover blue, a step deeper. */
+  --room-stayover-job: oklch(0.88 0.045 238);
+  --room-stayover-job-fg: oklch(0.35 0.11 248);
+  --room-stayover-job-accent: oklch(0.53 0.12 248);
   --room-stayover-out: oklch(0.985 0.025 235);
   --room-stayover-out-fg: oklch(0.32 0.14 245);
   --room-stayover-out-accent: oklch(0.48 0.16 245);
@@ -243,6 +250,9 @@
   --room-stayover: oklch(0.3 0.09 240);
   --room-stayover-fg: oklch(0.82 0.12 240);
   --room-stayover-accent: oklch(0.62 0.2 245);
+  --room-stayover-job: oklch(0.26 0.06 245);
+  --room-stayover-job-fg: oklch(0.85 0.08 240);
+  --room-stayover-job-accent: oklch(0.56 0.13 248);
   --room-stayover-out: oklch(0.58 0.06 240);
   --room-stayover-out-fg: oklch(0.9 0.09 240);
   --room-stayover-out-accent: oklch(0.75 0.16 245);

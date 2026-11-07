@@ -147,6 +147,7 @@ export const computeTileMeta = (args: {
   const working = hasLinenCount || (role === "housekeeping" && state === "progress");
   const fromSheet = !!sheetKind && sheetKind !== "vacant" && sheetKind !== "ros";
   const dirtyTone = { bg: "var(--room-dirty)", fg: "var(--room-dirty-fg)", accent: "var(--room-dirty-accent)" };
+  const stayoverJobTone = { bg: "var(--room-stayover-job)", fg: "var(--room-stayover-job-fg)", accent: "var(--room-stayover-job-accent)" };
   if (flags.isStaff)
     return { bg: "var(--room-staff)", fg: "var(--room-staff-fg)", accent: "var(--room-staff-accent)", label: "Staff" };
   if (flags.isRos)
@@ -156,8 +157,9 @@ export const computeTileMeta = (args: {
   if (stayoverOut && !isDone && !working)
     return { bg: "var(--room-stayover-out)", fg: "var(--room-stayover-out-fg)", accent: "var(--room-stayover-out-accent)", label: "Not started" };
   // Paperwork jobs use Dirty until started, then the normal progress tone.
+  // Paperwork stayovers still to do use a deeper stayover blue, then the progress tone.
   if (sheetKind === "stayover" && (flags.isStayover || flags.isDirty) && !flags.isDnd && !isDone)
-    return { ...(working ? roomStateMeta.progress : dirtyTone), label: working ? "Stayover\nIn progress" : "Stayover\nNot started" };
+    return { ...(working ? roomStateMeta.progress : stayoverJobTone), label: working ? "Stayover\nIn progress" : "Stayover\nNot started" };
   if (flags.isStayover || flags.isDnd)
     return { bg: "var(--room-stayover)", fg: "var(--room-stayover-fg)", accent: "var(--room-stayover-accent)", label: "Stayover" };
   if (isDone)
