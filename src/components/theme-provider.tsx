@@ -7,19 +7,22 @@ import { createContext, useContext, useEffect, useState } from "react";
  * 3 navy   — deep ink dark mode
  * 4 oled   — true-black dark mode for OLED panels
  */
-export type ThemeLevel = "white" | "cream" | "navy" | "oled";
+export type ThemeLevel = "white" | "cream" | "navy" | "oled" | "auto";
 type Theme = "light" | "dark";
 
-export const THEME_LEVELS: ThemeLevel[] = ["cream", "navy"];
+/** The theme button cycles Light → Dark → Auto, like the iPhone app. */
+export const THEME_LEVELS: ThemeLevel[] = ["cream", "navy", "auto"];
 
 export const THEME_LEVEL_LABELS: Record<ThemeLevel, string> = {
   white: "White",
-  cream: "Cream",
-  navy: "Navy",
+  cream: "Light",
+  navy: "Dark",
   oled: "OLED black",
+  auto: "Auto",
 };
 
-const isDarkLevel = (l: ThemeLevel) => l === "navy" || l === "oled";
+const prefersDark = () =>
+  typeof window !== "undefined" && !!window.matchMedia?.("(prefers-color-scheme: dark)").matches;
 
 const ThemeContext = createContext<{
   /** Coarse light/dark, kept for colour-swatch logic. */
@@ -40,25 +43,32 @@ const ThemeContext = createContext<{
 });
 
 export function ThemeProvider({ children }: { children: React.ReactNode }) {
-  const [level, setLevelState] = useState<ThemeLevel>("cream");
+  const [level, setLevelState] = useState<ThemeLevel>("auto");
+  // Auto follows the device's light or dark setting, and changes with it.
+  const [systemDark, setSystemDark] = useState(false);
+  useEffect(() => {
+    const mql = window.matchMedia?.("(prefers-color-scheme: dark)");
+    setSystemDark(prefersDark());
+    if (!mql) return;
+    const update = () => setSystemDark(mql.matches);
+    mql.addEventListener("change", update);
+    return () => mql.removeEventListener("change", update);
+  }, []);
+  const isDarkLevel = (l: ThemeLevel) => l === "navy" || l === "oled" || (l === "auto" && systemDark);
 
   useEffect(() => {
     let stored: ThemeLevel | null = null;
     try {
-      // Only Cream (light) and Navy (dark) remain; older choices map onto them.
+      // Light (cream), Dark (navy) and Auto; older choices map onto them.
       const raw = localStorage.getItem("theme");
       if (raw === "light" || raw === "white" || raw === "cream") stored = "cream";
       else if (raw === "dark" || raw === "oled" || raw === "navy") stored = "navy";
+      else if (raw === "auto") stored = "auto";
     } catch {
       /* ignore */
     }
-    if (stored) {
-      setLevelState(stored);
-      return;
-    }
-    const prefersDark =
-      typeof window !== "undefined" && window.matchMedia?.("(prefers-color-scheme: dark)").matches;
-    setLevelState(prefersDark ? "navy" : "cream");
+    // With nothing saved, follow the device.
+    setLevelState(stored ?? "auto");
   }, []);
 
   useEffect(() => {
@@ -71,7 +81,7 @@ export function ThemeProvider({ children }: { children: React.ReactNode }) {
     } catch {
       /* ignore */
     }
-  }, [level]);
+  }, [level, systemDark]);
 
   const cycleTheme = () =>
     setLevelState((p) => THEME_LEVELS[(THEME_LEVELS.indexOf(p) + 1) % THEME_LEVELS.length]);

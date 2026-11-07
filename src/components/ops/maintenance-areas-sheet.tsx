@@ -40,7 +40,7 @@ export function MaintenanceAreasSheet({
     <Sheet open={open} onOpenChange={onOpenChange}>
       <SheetContent side="bottom" className="overflow-y-auto rounded-t-2xl p-4 sm:p-6">
         <SheetHeader className="text-left">
-          <SheetTitle>Public & Hotel Areas</SheetTitle>
+          <SheetTitle>Hotel Areas</SheetTitle>
           <SheetDescription>
             Other parts of the hotel, like the bar, laundry or a wing, for logging maintenance and
             lost property that isn't in a guest room. Choose which departments can pick each one;

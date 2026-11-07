@@ -68,7 +68,7 @@ export function ManageRoomsDialogs({
     <DialogContent shrinkToContent onBack={view !== "home" ? () => setView("home") : undefined} className="max-w-md w-[calc(100vw-1.5rem)] sm:w-full p-4 sm:p-6">
       {view === "home" && (
         <DialogHeader>
-          <DialogTitle>Room Management</DialogTitle>
+          <DialogTitle>Rooms</DialogTitle>
           <DialogDescription>
             Choose what to manage: rooms, room types, features and amenities, statuses and beds, the room checklist, or the linen list.
           </DialogDescription>

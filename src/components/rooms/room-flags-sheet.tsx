@@ -66,7 +66,7 @@ export function RoomFlagsSheet({ open, onOpenChange }: { open: boolean; onOpenCh
     <Sheet open={open} onOpenChange={onOpenChange}>
       <SheetContent side="bottom" className="overflow-y-auto rounded-t-2xl p-4 sm:p-6">
         <SheetHeader className="text-left">
-          <SheetTitle>Guest &amp; room info</SheetTitle>
+          <SheetTitle>Room Flags</SheetTitle>
           <SheetDescription>
             Add, remove, rename, reorder, hide or restyle the toggles reception and housekeeping use.
           </SheetDescription>

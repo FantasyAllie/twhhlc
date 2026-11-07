@@ -743,9 +743,9 @@ export function LostPropertySheet({
                     <p className="text-sm text-muted-foreground">No open lost property.</p>
                   ) : (
                     <>
-                      <div className="max-lg:hidden">{openPageBar}</div>
+                      {/* Pages sit above the list on every screen, so there's no scrolling to the end to change page. */}
+                      {openPageBar}
                       {pagedOpen.map((r) => renderOpenItem(r))}
-                      <div className="lg:hidden pb-2">{openPageBar}</div>
                     </>
                   )}
                 </div>

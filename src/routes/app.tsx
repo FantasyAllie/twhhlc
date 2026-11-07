@@ -48,7 +48,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { InventoryDialog, type InventorySection } from "@/components/linen/inventory-dialog";
 import { ManageRoomsDialogs } from "@/components/rooms/manage-rooms-dialogs";
-import { Minus, Plus, X, Menu, ArrowUp, ArrowDown, Pencil, Check, Trash2, Sun, SunDim, Moon, MoonStar, List, Bed, House, Ban, History, Users, User, Hash, ConciergeBell, ClipboardList, Printer, Filter, Wrench, DoorOpen, Footprints, Bell, Eye, EyeOff, HelpCircle, AlertCircle, MessageSquare, PackageSearch, RotateCcw, ChevronDown, ChevronRight, Camera, LayoutGrid, Truck, Clock, Dog, Undo2, Inbox, MapPin, Flag, Pin } from "lucide-react";
+import { Minus, Plus, X, Menu, ArrowUp, ArrowDown, Pencil, Check, Trash2, Sun, SunDim, Moon, MoonStar, List, Bed, House, Ban, History, Users, User, Hash, ConciergeBell, ClipboardList, Printer, Filter, Wrench, DoorOpen, Footprints, Bell, Eye, EyeOff, HelpCircle, AlertCircle, MessageSquare, PackageSearch, RotateCcw, ChevronDown, ChevronRight, Camera, LayoutGrid, Truck, Clock, Dog, Undo2, Inbox, MapPin, Flag, Pin, SunMoon } from "lucide-react";
 import {
   AccountDialog,
   AddConfigDialogs,
@@ -133,7 +133,7 @@ import {
   SheetDescription,
   SheetTrigger,
 } from "@/components/ui/sheet";
-import { useTheme } from "@/components/theme-provider";
+import { THEME_LEVELS, THEME_LEVEL_LABELS, useTheme, type ThemeLevel } from "@/components/theme-provider";
 import { armSheetTakeover, isTakeoverReplacing, setSheetTakeoverSlot, releaseSheetTakeover, useSheetTakeoverActive } from "@/components/ui/sheet";
 import { Palette } from "lucide-react";
 import { ACCENTS, accentSwatch, readAccent, applyAccent, type AccentId } from "@/lib/accent-colour";
@@ -206,13 +206,13 @@ export const Route = createFileRoute("/app")({
 /** Theme toggle (sun/moon) plus an expandable accent swatch menu, shared by
  *  the desktop dropdown and the phone/tablet More screen. */
 function AppearancePicker({
-  theme,
+  level,
   onToggleTheme,
   accent,
   onPickAccent,
   leading,
 }: {
-  theme: "light" | "dark";
+  level: ThemeLevel;
   onToggleTheme: () => void;
   accent: AccentId;
   onPickAccent: (id: AccentId) => void;
@@ -220,36 +220,39 @@ function AppearancePicker({
 }) {
   const [open, setOpen] = useState(false);
   const current = ACCENTS.find((a) => a.id === accent) ?? ACCENTS[0];
-  const dark = theme === "dark";
+  // The theme button cycles Light → Dark → Auto and shows the one in use.
+  const next = THEME_LEVELS[(THEME_LEVELS.indexOf(level) + 1) % THEME_LEVELS.length] ?? "cream";
+  const ThemeIcon = level === "auto" ? SunMoon : level === "navy" || level === "oled" ? Moon : Sun;
   return (
     <div data-ios-group className="space-y-2">
       <div className="flex items-center gap-2">
         {leading ?? <span className="flex-1 text-xs font-semibold uppercase tracking-wide text-muted-foreground">Appearance</span>}
-        <Button
-          variant="outline"
-          type="button"
-          onClick={onToggleTheme}
-          aria-label={dark ? "Switch to light mode" : "Switch to dark mode"}
-          title={dark ? "Dark mode" : "Light mode"}
-          className="h-10 w-10 min-h-0 min-w-0 shrink-0 rounded-full p-0 lg:h-9 lg:w-9"
-        >
-          {dark ? <Moon className="h-5 w-5 lg:h-4 lg:w-4" /> : <Sun className="h-5 w-5 lg:h-4 lg:w-4" />}
-        </Button>
-        <Button
-          variant="outline"
-          type="button"
-          onClick={() => setOpen((o) => !o)}
-          aria-expanded={open}
-          aria-label={`Accent colour: ${current.label}`}
-          title="Accent colour"
-          className="h-10 w-10 min-h-0 min-w-0 shrink-0 rounded-full p-0 lg:h-9 lg:w-9"
-        >
-          <span
-            className="h-5 w-5 rounded-full ring-1 ring-border lg:h-4 lg:w-4"
-            style={{ background: accentSwatch(current.hue) }}
-            aria-hidden
-          />
-        </Button>
+        {/* A small pill: the accent colour on the left, the theme on the right. */}
+        <div className="flex shrink-0 items-center gap-0.5 rounded-full border bg-card p-0.5">
+          <button
+            type="button"
+            onClick={() => setOpen((o) => !o)}
+            aria-expanded={open}
+            aria-label={`Accent colour: ${current.label}`}
+            title="Accent colour"
+            className={cn("grid h-9 w-10 min-h-0 min-w-0 place-items-center rounded-full transition-colors hover:bg-accent lg:h-8 lg:w-9", open && "bg-accent")}
+          >
+            <span
+              className="h-4 w-4 rounded-full ring-2 ring-card outline outline-[1.5px] outline-offset-1 outline-foreground"
+              style={{ background: accentSwatch(current.hue, current.k) }}
+              aria-hidden
+            />
+          </button>
+          <button
+            type="button"
+            onClick={onToggleTheme}
+            aria-label={`Theme: ${THEME_LEVEL_LABELS[level]}. Changes to ${THEME_LEVEL_LABELS[next]}`}
+            title={`${THEME_LEVEL_LABELS[level]} (click for ${THEME_LEVEL_LABELS[next]})`}
+            className="grid h-9 w-10 min-h-0 min-w-0 place-items-center rounded-full transition-colors hover:bg-accent lg:h-8 lg:w-9"
+          >
+            <ThemeIcon className="h-[18px] w-[18px] lg:h-4 lg:w-4" />
+          </button>
+        </div>
       </div>
       <div
         className={cn(
@@ -276,7 +279,7 @@ function AppearancePicker({
                     "flex h-8 w-8 min-h-0 min-w-0 shrink-0 items-center justify-center rounded-full p-0 ring-offset-2 ring-offset-background transition-transform active:scale-90 lg:h-7 lg:w-7",
                     selected ? "ring-2 ring-foreground" : "ring-1 ring-border",
                   )}
-                  style={{ background: accentSwatch(a.hue) }}
+                  style={{ background: accentSwatch(a.hue, a.k) }}
                 >
                   {selected && <Check className="h-4 w-4 text-background" strokeWidth={3} aria-hidden />}
                 </button>
@@ -286,6 +289,16 @@ function AppearancePicker({
         </div>
       </div>
     </div>
+  );
+}
+
+/** The signed-in person in the menu: their name, then the hotel and department. */
+function ProfileLines({ name, detail }: { name: string; detail: string }) {
+  return (
+    <span className="min-w-0">
+      <span className="block truncate font-display text-base font-semibold text-foreground">{name}</span>
+      <span className="block truncate text-xs text-muted-foreground">{detail}</span>
+    </span>
   );
 }
 
@@ -388,7 +401,7 @@ function AppPage() {
   const [accent, setAccent] = useState<AccentId>("brass");
   useEffect(() => { const a = readAccent(); setAccent(a); applyAccent(a); }, []);
   const pickAccent = (next: AccentId) => { setAccent(next); applyAccent(next); };
-  const ThemeGlyph = level === "navy" || level === "oled" ? Moon : Sun;
+  const ThemeGlyph = level === "auto" ? SunMoon : level === "navy" || level === "oled" ? Moon : Sun;
   const isMobile = useIsMobile();
   // Tablet: gets the mobile layout (tab bar, top bar) but is 768–1023px wide.
   const [isTablet, setIsTablet] = useState(false);
@@ -1816,6 +1829,9 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
    const isHousekeeper = effectiveRole === "user";
    const isFnb = effectiveRole === "fnb";
    const isMaintenance = effectiveRole === "maintenance";
+   // The menu's profile line: the hotel, and the department view.
+   const profileDetail = [hotelName, effectiveRole ? ({ user: "Housekeeping", reception: "Reception", fnb: "F&B", maintenance: "Maintenance" } as Record<string, string>)[effectiveRole] : null]
+     .filter(Boolean).join(" · ");
    useEffect(() => {
      setHomeView(null);
      setMaintenanceLogOpen(false);
@@ -4273,12 +4289,12 @@ const toggleRoomCategory = async (roomNumber: number, value: Category) => {
       }
     }
     if (menuIsAdmin && !isMaintenance) {
-      locations.push({ key: "manage-rooms", icon: Hash, label: "Room Management", onClick: () => setManageRoomsOpen(true) });
-      locations.push({ key: "hotel-areas", icon: MapPin, label: "Public & Hotel Areas", onClick: () => setMaintenanceAreasOpen(true) });
+      locations.push({ key: "manage-rooms", icon: Hash, label: "Rooms", onClick: () => setManageRoomsOpen(true) });
+      locations.push({ key: "hotel-areas", icon: MapPin, label: "Hotel Areas", onClick: () => setMaintenanceAreasOpen(true) });
       linen.push({
         key: "delivery",
         icon: Truck,
-        label: "Inventory & Stock",
+        label: "Linen & Stock",
         onClick: () => {
           qc.invalidateQueries({ queryKey: ["delivery_counts"] });
           qc.invalidateQueries({ queryKey: ["inventory_counts"] });
@@ -4288,8 +4304,8 @@ const toggleRoomCategory = async (roomNumber: number, value: Category) => {
       if (!isReception) {
         actions.push({ key: "history", icon: History, label: "History", onClick: () => setHistorySheetOpen(true) });
       }
-      locations.push({ key: "room-flags", icon: Flag, label: "Guest & Room Info", onClick: () => setRoomFlagsSheetOpen(true) });
-      locations.push({ key: "room-pins", icon: Pin, label: "Room Pins", onClick: () => setQuickRepliesOpen(true) });
+      locations.push({ key: "room-flags", icon: Flag, label: "Room Flags", onClick: () => setRoomFlagsSheetOpen(true) });
+      locations.push({ key: "room-pins", icon: Pin, label: "Pins & Chat", onClick: () => setQuickRepliesOpen(true) });
     }
     if ((realIsAdmin || (realIsManager && hasHousekeeperRole)) && !isMaintenance) {
       linen.push({ key: "linen-days", icon: CalendarDays, label: "Delivery Schedule", onClick: () => setLinenDeliveryOpen(true) });
@@ -4303,23 +4319,30 @@ const toggleRoomCategory = async (roomNumber: number, value: Category) => {
       account.push({ key: "switch-hotel", icon: RotateCcw, label: "Switch hotel", onClick: () => setHotelSwitcherOpen(true) });
     }
     if ((realIsAdmin || realIsManager) && !isMaintenance) {
-      account.push({ key: "users", icon: Users, label: "Users", onClick: () => setUsersOpen(true) });
+      account.push({ key: "users", icon: Users, label: "Staff", onClick: () => setUsersOpen(true) });
     }
     if (!menuIsFnbOnly) {
       account.push({ key: "notifications", icon: Bell, label: "Notifications", onClick: () => setNotificationsSheetOpen(true) });
     }
     account.push({ key: "account", icon: User, label: "Account", onClick: () => setAccountOpen(true) });
     const appearance: MenuAction[] = [{ key: "theme", icon: ThemeGlyph, label: "Theme", onClick: () => cycleTheme() }];
-    const opsOrder = ["morning-sheet", "messages", "maintenance-log", "lost-property", "stayover-photos", "leaderboard"];
-    utilities.sort((a, b) => opsOrder.indexOf(a.key) - opsOrder.indexOf(b.key));
-    const linenOrder = ["delivery", "linen-list", "linen-list-hk", "linen-days"];
-    linen.sort((a, b) => linenOrder.indexOf(a.key) - linenOrder.indexOf(b.key));
+    // Like the iPhone app: what's used on shift, records, then everything that
+    // sets the hotel up. Messages, Maintenance and Lost Property are on the tab
+    // bar on phones and tablets, so they're only listed here on wider screens.
+    const tabbed = new Set(["messages", "maintenance-log", "lost-property"]);
+    const order = (keys: string[]) => (a: MenuAction, b: MenuAction) => keys.indexOf(a.key) - keys.indexOf(b.key);
+    const shift = [...utilities.filter((i) => !(isMobile && tabbed.has(i.key))), ...linen.filter((i) => i.key !== "linen-days")]
+      .sort(order(["messages", "maintenance-log", "lost-property", "paperwork", "stayover-photos", "delivery", "linen-list", "linen-list-hk", "leaderboard"]));
+    const records = [...actions, ...account.filter((i) => i.key === "notifications")]
+      .sort(order(["end-of-shift", "history", "undo", "print", "help", "departments", "notifications"]));
+    const settings = [...locations, ...linen.filter((i) => i.key === "linen-days"), ...account.filter((i) => i.key === "users")]
+      .sort(order(["manage-rooms", "hotel-areas", "room-flags", "room-pins", "linen-days", "users"]));
+    const you = account.filter((i) => i.key === "switch-hotel" || i.key === "account");
     return [
-      { id: "utilities", title: "Daily Operations", items: utilities },
-      { id: "linen", title: "Linen Management", items: linen },
-      { id: "locations", title: "Property Setup", items: locations },
-      { id: "actions", title: "Actions", items: actions },
-      { id: "account", title: "Account", items: account },
+      { id: "shift", title: "On shift", items: shift },
+      { id: "records", title: "Records", items: records },
+      { id: "settings", title: "Hotel settings", items: settings },
+      { id: "account", title: "Account", items: you },
       { id: "appearance", title: "Appearance", items: appearance },
     ].filter((g) => g.items.length > 0);
   })();
@@ -4541,7 +4564,7 @@ const toggleRoomCategory = async (roomNumber: number, value: Category) => {
       </DropdownMenuTrigger>
       <DropdownMenuContent align="end" className="w-64">
         <div className="p-1.5" onKeyDown={(e) => e.stopPropagation()}>
-          <AppearancePicker theme={theme} onToggleTheme={cycleTheme} accent={accent} onPickAccent={pickAccent} />
+          <AppearancePicker level={level} onToggleTheme={cycleTheme} accent={accent} onPickAccent={pickAccent} />
         </div>
         <DropdownMenuSeparator />
         {menuGroups
@@ -5231,14 +5254,14 @@ const toggleRoomCategory = async (roomNumber: number, value: Category) => {
       <SheetTitle className="sr-only">Menu</SheetTitle>
 
       <AppearancePicker
-        theme={theme}
+        level={level}
         onToggleTheme={cycleTheme}
         accent={accent}
         onPickAccent={pickAccent}
         leading={
           <SheetDescription className="flex min-w-0 flex-1 items-center gap-2.5">
             {authUser && <NamedAvatar name={authUser.username} className="h-9 w-9 shrink-0 text-base" />}
-            <span className="min-w-0 break-words line-clamp-2">{authUser ? `Signed in as ${authUser.username}` : "Appearance"}</span>
+            {authUser ? <ProfileLines name={authUser.username} detail={profileDetail} /> : <span>Appearance</span>}
           </SheetDescription>
         }
       />
@@ -6697,14 +6720,14 @@ const activeFloor = selectedFloor && floorGroups.some((group) => group.key === s
     >
       <div className="shrink-0 border-b border-sidebar-border bg-background px-4 pt-6 pb-4">
         <AppearancePicker
-          theme={theme}
+          level={level}
           onToggleTheme={cycleTheme}
           accent={accent}
           onPickAccent={pickAccent}
           leading={
             <span className="flex min-w-0 flex-1 items-center gap-2.5">
               {authUser && <NamedAvatar name={authUser.username} className="h-8 w-8 shrink-0 text-sm" />}
-              <span className="min-w-0 break-words line-clamp-2">{authUser ? `Signed in as ${authUser.username}` : "Appearance"}</span>
+              {authUser ? <ProfileLines name={authUser.username} detail={profileDetail} /> : <span>Appearance</span>}
             </span>
           }
         />

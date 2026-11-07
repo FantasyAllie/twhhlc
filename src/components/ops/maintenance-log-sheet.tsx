@@ -706,8 +706,8 @@ export function MaintenanceLogSheet({
 
         </div>
 
-        {/* Pagination: above the list on desktop; phones get it at the end of the list */}
-        <div className="max-lg:hidden">{pageBar}</div>
+        {/* Pagination: above the list on every screen, so there's no scrolling to the end to change page */}
+        {pageBar && <div className="mt-3 max-lg:mt-2">{pageBar}</div>}
 
         <div
           className="flex-1 min-h-0 overflow-y-auto mt-4 max-lg:mt-2 space-y-4 overscroll-contain"
@@ -737,7 +737,6 @@ export function MaintenanceLogSheet({
           ) : (
             <div className="space-y-2">{pagedItems.map((m) => renderItem(m))}</div>
           )}
-          {pageBar && <div className="lg:hidden pb-2">{pageBar}</div>}
         </div>
         </>)}
       </SheetContent>

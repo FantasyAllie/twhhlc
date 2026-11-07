@@ -372,7 +372,7 @@ export function RoomPinSettingsSheet({ open, onOpenChange }: { open: boolean; on
   const summary = (q: QuickReply) => `${{ request: "Requests", note: "Notes", both: "Requests and notes" }[q.applies_to]}${q.resolves ? " · closes the pin" : ""}`;
   return <Sheet open={open} onOpenChange={onOpenChange}>
     <SheetContent side="right" className="w-full overflow-y-auto sm:max-w-md">
-      <SheetHeader><SheetTitle>Room Pins</SheetTitle><SheetDescription>Which departments use room pins, and the one-tap answers staff can give.</SheetDescription></SheetHeader>
+      <SheetHeader><SheetTitle>Pins & Chat</SheetTitle><SheetDescription>Which departments use room pins, and the one-tap answers staff can give.</SheetDescription></SheetHeader>
       {editing ? <form className="mt-4 space-y-4" onSubmit={(e) => { e.preventDefault(); if (editing.label.trim()) void save(editing); }}>
         <label className="block space-y-1"><span className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">Reply</span>
           <Input autoFocus placeholder="e.g. On it" maxLength={60} value={editing.label} onChange={(e) => setEditing({ ...editing, label: e.target.value })} /></label>
