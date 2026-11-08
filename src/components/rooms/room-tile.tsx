@@ -66,7 +66,6 @@ function CustomFlagBadges({ n }: { n: number }) {
 }
 import {
   computeTileMeta,
-  showsDirtyEmoji,
   resolveRoomStatusFlags,
   type RoomStatusIds,
   type RoomTileState,
@@ -398,14 +397,6 @@ function HousekeepingRoomTileBase({
           )}
         </>
       ) : (<>
-      {showsDirtyEmoji(flags.isDirty, room?.sheet_kind) && !isStaff && (
-        <span
-          aria-hidden="true"
-          className="pointer-events-none absolute inset-0 flex items-center justify-center text-6xl md:text-7xl opacity-15 leading-none"
-        >
-          💩
-        </span>
-      )}
       {!isStaff && !flags.isRos && !flags.isStayover && !flags.isDnd && isDone && (!room?.reception_bed_id || !flags.hasStatus) && (
         <AlertCircle
           aria-hidden="true"

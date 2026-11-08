@@ -1,7 +1,7 @@
 import { describe, it } from "node:test";
 import assert from "node:assert/strict";
 import { buildSheet, classifyRoom, dayFlags, type ParsedSheetRoom } from "./morning-sheet";
-import { computeTileMeta, showsDirtyEmoji, type RoomStatusFlags } from "./rooms";
+import { computeTileMeta, type RoomStatusFlags } from "./rooms";
 
 const base: ParsedSheetRoom = {
   room_number: 1, night: null, occupancy: "vacant", arriving_today: false, departing_today: false,
@@ -45,7 +45,7 @@ describe("paperwork clean arrival setup", () => {
 });
 
 describe("morning sheet rules", () => {
-  it("paperwork departures and Depart / Arrival use Dirty brown, stayovers the deeper stayover blue, without the dirty emoji", () => {
+  it("paperwork departures and Depart / Arrival use Dirty brown, stayovers the deeper stayover blue", () => {
     for (const sheetKind of ["stayover", "departure", "turnover"]) {
       const tone = sheetKind === "stayover" ? "room-stayover-job" : "room-dirty";
       for (const role of ["housekeeping", "reception"] as const) {
@@ -55,10 +55,7 @@ describe("morning sheet rules", () => {
         assert.equal(meta.fg, `var(--${tone}-fg)`);
         assert.equal(meta.accent, `var(--${tone}-accent)`);
       }
-      assert.equal(showsDirtyEmoji(true, sheetKind), false);
     }
-    assert.equal(showsDirtyEmoji(true, null), true);
-    assert.equal(showsDirtyEmoji(true, "vacant"), true);
   });
   it("paperwork clean rooms stay Not started red until checked", () => {
     const flags = { ...arrivalFlags, isArrival: false, isClean: true };

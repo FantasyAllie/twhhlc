@@ -109,10 +109,6 @@ export type TileMeta = { bg: string; fg: string; accent: string; label: string }
 export const isScheduledSheetClean = (sheetKind?: string | null): boolean =>
   sheetKind === "departure" || sheetKind === "turnover";
 
-/** The emoji marks rooms housekeeping set Dirty, not paperwork jobs due a service today. */
-export const showsDirtyEmoji = (isDirty: boolean, sheetKind?: string | null): boolean =>
-  isDirty && sheetKind !== "stayover" && !isScheduledSheetClean(sheetKind);
-
 // Bed short code used on room tiles (e.g. "ARRIVAL - D"), not the full label.
 export const bedCode = (label: string | null | undefined): string | null => {
   if (!label) return null;
