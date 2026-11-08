@@ -365,6 +365,13 @@
       "when": 1794158831196,
       "tag": "0051_keep_checklist_until_departure",
       "breakpoints": true
+    },
+    {
+      "idx": 52,
+      "version": "7",
+      "when": 1794159012985,
+      "tag": "0052_run_pending_0051_keep_checklist",
+      "breakpoints": true
     }
   ]
 }
