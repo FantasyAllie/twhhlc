@@ -103,6 +103,8 @@ export type Room = {
   // Guest extras already left in the room, and a hand-set guest count.
   guest_extras_done?: string[] | null;
   guest_extras_guests?: number | null;
+  /** When the room was left dirty (not cleaned by the end of the day); cleared once it's done. */
+  left_dirty_at?: string | null;
 };
 
 export type TemplateItemRoom = { id: string; template_item_id: string; room_number: number };

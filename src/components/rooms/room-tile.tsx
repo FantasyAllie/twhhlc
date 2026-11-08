@@ -1,6 +1,7 @@
 // Room tiles for the home grid. JSX moved verbatim from src/routes/app.tsx
 // (stage 5 of the staged refactor); colour/label rules live in @/lib/rooms.
 import { memo, useRef } from "react";
+import { leftDirtyState } from "@/lib/left-dirty";
 import { AlertCircle, ArrowLeft, Check, Dog, DoorOpen, Footprints, User, Wrench } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { playClick } from "@/lib/click-sound";
@@ -208,6 +209,7 @@ function ReceptionRoomTileBase({
     stayoverOut: !!room?.stayover_out,
     role: "reception",
     sheetKind: room?.sheet_kind,
+    leftDirty: leftDirtyState(room),
   });
 
   return (
@@ -342,6 +344,7 @@ function HousekeepingRoomTileBase({
     stayoverOut: !!room?.stayover_out,
     role: "housekeeping",
     sheetKind: room?.sheet_kind,
+    leftDirty: leftDirtyState(room),
   });
   const isDone = state === "done" || state === "complete";
 

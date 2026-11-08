@@ -141,8 +141,10 @@ export const computeTileMeta = (args: {
   role: "reception" | "housekeeping";
   /** Job type from the applied morning sheet, if any. */
   sheetKind?: string | null;
+  /** Left dirty today (set aside) or on an earlier day (to clean today). */
+  leftDirty?: "today" | "earlier" | null;
 }): TileMeta => {
-  const { flags, state, isNR, hasLinenCount, earlyCheckIn, lateCheckout, stayoverOut, role, sheetKind } = args;
+  const { flags, state, isNR, hasLinenCount, earlyCheckIn, lateCheckout, stayoverOut, role, sheetKind, leftDirty } = args;
   const isDone = state === "done" || state === "complete";
   const working = hasLinenCount || (role === "housekeeping" && state === "progress");
   const fromSheet = !!sheetKind && sheetKind !== "vacant" && sheetKind !== "ros";
@@ -166,6 +168,8 @@ export const computeTileMeta = (args: {
     return flags.isClean || (sheetKind === "departure" && flags.isDirty)
       ? { bg: "var(--room-cleandone)", fg: "var(--room-cleandone-fg)", accent: "var(--room-cleandone-accent)", label: "Clean" }
       : { bg: "var(--room-complete)", fg: "var(--room-complete-fg)", accent: "var(--room-complete-accent)", label: "Arrival" };
+  // Left dirty today: set aside until tomorrow.
+  if (leftDirty === "today") return { ...dirtyTone, label: "Dirty" };
   const dep = departureLabel(sheetKind);
   if (flags.isDirty && dep) return { ...(working ? roomStateMeta.progress : dirtyTone), label: `${dep}\n${working ? "In progress" : "Not started"}` };
   // An arrival without a departure is already clean on the paperwork,
@@ -176,6 +180,9 @@ export const computeTileMeta = (args: {
       ...(working ? roomStateMeta.progress : dirtyTone),
       label: `Clean / Arrival\n${working ? "In progress" : "Not started"}`,
     };
+  // Left dirty on an earlier day: on today's list to clean.
+  if (flags.isDirty && leftDirty === "earlier")
+    return { ...(working ? roomStateMeta.progress : dirtyTone), label: `Left dirty\n${working ? "In progress" : "Not started"}` };
   if (flags.isDirty)
     return {
       ...(fromSheet && working ? roomStateMeta.progress : dirtyTone),

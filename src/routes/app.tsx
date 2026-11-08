@@ -89,7 +89,7 @@ import { RoomInfoTiles } from "@/components/rooms/room-info-tiles";
 import { BroomBurst } from "@/components/broom-burst";
 import { CelebrationBurst } from "@/components/celebration-burst";
 import { areOutcomeAnimationsEnabled } from "@/lib/feedback-prefs";
-import { GloomBurst } from "@/components/gloom-burst";
+import { isSetAside, leftDirtyState } from "@/lib/left-dirty";
 import { playFart } from "@/lib/fart-sound";
 import { playSparkle } from "@/lib/sparkle-sound";
 
@@ -183,7 +183,7 @@ import { usePendingCounts } from "@/lib/pending-counts";
 import { cacheSavedRoomCount } from "@/lib/linen-count-cache";
 import { buildOpsState, captureOpsSnapshot, undoLastOpsSnapshot } from "@/lib/ops-snapshots";
 import { HousekeepingRoomTile, ReceptionRoomTile } from "@/components/rooms/room-tile";
-import { ExtrasStillToLeave, ShiftBrief, ShiftBriefSettingsSheet } from "@/components/rooms/guest-extras";
+import { ShiftBrief, ShiftBriefSettingsSheet } from "@/components/rooms/guest-extras";
 import { PinRepliesStrip, RoomPinSettingsSheet, RoomPins, pinDotFor, pinsNeedingYou, useRoomPins, type PinViewer } from "@/components/rooms/room-pins";
 import { MorningSheetBanner, OPEN_PAPERWORK_EVENT } from "@/components/morning-sheet-banner";
 import { canUploadMorningSheet, setAsBed } from "@/lib/morning-sheet";
@@ -1248,7 +1248,7 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
   // Dirty rooms are also left out of the visible count, but they don't hold the
   // shift open: once every other room is done the shift reads as complete and
   // any leftover Dirty rooms switch the outcome to the "not finished" one.
-  const { isShiftComplete, hasLeftoverDirtyRooms } = (() => {
+  const { isShiftComplete } = (() => {
     const statusLabelById = new Map(
       receptionStatuses.map((s) => [s.id, s.label.toLowerCase()]),
     );
@@ -1257,29 +1257,27 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
     const dirtyId = receptionStatuses.find((s) => s.label.toLowerCase() === "dirty")?.id ?? null;
     let counted = 0;
     let done = 0;
-    let dirtyLeft = 0;
+    let setAside = 0;
     for (const r of rooms) {
       const sid = r.reception_status_id ?? r.default_status;
       const lbl = sid ? (statusLabelById.get(sid) ?? sid).toLowerCase() : "";
       if (excluded.has(lbl)) continue;
       if (dndId && sid === dndId) continue;
-      const isDone = r.done || r.done_reception;
-      if (dirtyId && sid === dirtyId && !isScheduledSheetClean(r.sheet_kind)) {
-        if (!isDone) dirtyLeft += 1;
+      // Left dirty today, or Dirty but not on today's list: set aside.
+      if (isSetAside(r, !!dirtyId && sid === dirtyId)) {
+        setAside += 1;
         continue;
       }
       counted += 1;
-      if (isDone) done += 1;
+      if (r.done || r.done_reception) done += 1;
     }
-    const complete = counted + dirtyLeft > 0 && done >= counted;
-    return { isShiftComplete: complete, hasLeftoverDirtyRooms: dirtyLeft > 0 };
+    return { isShiftComplete: counted + setAside > 0 && done >= counted };
   })();
 
   // Outcome animation when the room progress reaches 100%. It only plays on the
   // device that marked the final room as done, once per time the bar fills:
-  // fireworks when everything was serviced, sad trombone when Dirty rooms remain.
+  // Always the fireworks: rooms left over aren't always down to the team.
   const [celebrationActive, setCelebrationActive] = useState(false);
-  const [gloomActive, setGloomActive] = useState(false);
   const wasShiftCompleteRef = useRef(false);
   const markedDoneHereRef = useRef(false);
   const celebratedRef = useRef(false);
@@ -1291,17 +1289,14 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
         // Full progress bar = end of shift: save today's backup automatically
         // (only on the device that finished the last room, to avoid duplicates).
         void autoBackupRef.current?.();
-        if (areOutcomeAnimationsEnabled()) {
-          if (hasLeftoverDirtyRooms) setGloomActive(true);
-          else setCelebrationActive(true);
-        }
+        if (areOutcomeAnimationsEnabled()) setCelebrationActive(true);
       }
     } else {
       celebratedRef.current = false;
     }
     markedDoneHereRef.current = false;
     wasShiftCompleteRef.current = isShiftComplete;
-  }, [isShiftComplete, hasLeftoverDirtyRooms]);
+  }, [isShiftComplete]);
 
   const [newMessageText, setNewMessageText] = useState("");
 
@@ -2047,6 +2042,40 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
     if (next) {
       fireRoomNotification("done", roomNumber);
       captureEmergencySnapshot(`Room ${roomNumber} marked done`);
+    }
+  };
+
+  // Rooms left dirty (or not): see @/lib/left-dirty. Rooms already done are skipped.
+  const setRoomsLeftDirty = async (roomNumbers: number[], on: boolean) => {
+    if (!roomNumbers.length) return;
+    // The shift may finish here, so the fireworks play on this device.
+    if (on) markedDoneHereRef.current = true;
+    const now = new Date().toISOString();
+    const dirtyId = receptionStatuses.find((s) => s.label.toLowerCase() === "dirty")?.id ?? null;
+    const labelOf = (id: string | null | undefined) =>
+      receptionStatuses.find((s) => s.id === id)?.label.toLowerCase() ?? "";
+    qc.setQueryData<Room[]>(["rooms"], (old) =>
+      (old ?? []).map((r) => {
+        if (!roomNumbers.includes(r.room_number) || r.done || r.done_reception) return r;
+        const lbl = labelOf(r.reception_status_id ?? r.default_status);
+        // Shown Dirty straight away, as the database does, unless a guest is in.
+        const guestIn = r.sheet_kind === "stayover" || lbl === "dnd" || lbl.startsWith("stay")
+          || ["staff", "ros", "staff/ros", "ros - staff"].includes(lbl);
+        return {
+          ...r,
+          left_dirty_at: on ? now : null,
+          ...(on && dirtyId && !guestIn ? { reception_status_id: dirtyId } : {}),
+        };
+      }),
+    );
+    const { error } = await supabase.rpc("set_rooms_left_dirty", { p_rooms: roomNumbers, p_on: on });
+    if (error) toast.error(error.message);
+    qc.invalidateQueries({ queryKey: ["rooms"] });
+    if (!error) {
+      if (on) playFart();
+      captureEmergencySnapshot(roomNumbers.length === 1
+        ? `Room ${roomNumbers[0]} ${on ? "left dirty" : "no longer left dirty"}`
+        : `${roomNumbers.length} rooms left dirty`);
     }
   };
 
@@ -5062,6 +5091,7 @@ const toggleRoomCategory = async (roomNumber: number, value: Category) => {
     setStayoverPhotosOpen={setStayoverPhotosOpen}
     toggleReceptionDone={toggleReceptionDone}
     toggleHousekeepingDone={toggleHousekeepingDone}
+    setRoomsLeftDirty={setRoomsLeftDirty}
     setRoomReceptionStatus={setRoomReceptionStatus}
     setRoomReceptionBed={setRoomReceptionBed}
     setRoomNotRequired={setRoomNotRequired}
@@ -5201,10 +5231,6 @@ const toggleRoomCategory = async (roomNumber: number, value: Category) => {
 <CelebrationBurst
   active={celebrationActive}
   onDone={() => setCelebrationActive(false)}
-/>
-<GloomBurst
-  active={gloomActive}
-  onDone={() => setGloomActive(false)}
 />
 <HomeInline active={homeView === "stayover"} target={homeSlotEl}>
 <LeaderboardSheet open={leaderboardOpen} onOpenChange={setLeaderboardOpen} hotelId={currentHotelQ.data?.id} />
@@ -6290,9 +6316,8 @@ const activeFloor = selectedFloor && floorGroups.some((group) => group.key === s
                     receptionStatuses.map((s) => [s.id, s.label.toLowerCase()]),
                   );
                   const excludedProgressStatuses = new Set(["staff", "ros", "staff/ros", "ros - staff"]);
-                  // Dirty rooms are hidden from the visible count, and they don't
-                  // hold the bar back either — the bar fills once everything else
-                  // is done (leftover Dirty rooms change the outcome animation).
+                  // Dirty rooms not on today's list and rooms left dirty today are
+                  // hidden from the count and don't hold the bar back either.
                   const dirtyProgressId =
                     receptionStatuses.find((s) => s.label.toLowerCase() === "dirty")?.id ?? null;
                   const eligible = rooms.filter((r) => {
@@ -6300,9 +6325,8 @@ const activeFloor = selectedFloor && floorGroups.some((group) => group.key === s
                     const statusLabel = sid ? (statusLabelById.get(sid) ?? sid).toLowerCase() : "";
                      if (excludedProgressStatuses.has(statusLabel)) return false;
                      if (dndId && sid === dndId) return false;
-                     if (dirtyProgressId && sid === dirtyProgressId && !isScheduledSheetClean(r.sheet_kind) && !(r.done || r.done_reception))
-                       return false;
-                     return true;
+                     // Left dirty today, or Dirty but not on today's list: set aside.
+                     return !isSetAside(r, !!dirtyProgressId && sid === dirtyProgressId);
                   });
                  const total = eligible.length;
                  const progress = eligible.filter((r) => r.done || r.done_reception).length;
@@ -6413,6 +6437,23 @@ const activeFloor = selectedFloor && floorGroups.some((group) => group.key === s
                       { label: "Dirty", value: countOf("dirty"), colour: "var(--color-room-dirty-accent)" },
                       { label: "ROS / Staff", value: countOf("rosstaff"), colour: "var(--color-room-staff-accent)" },
                     ];
+                    // End of the day: every room not done yet is left dirty for tomorrow.
+                    const stillToDo = isReception ? [] : eligible.filter((r) => !(r.done || r.done_reception)).map((r) => r.room_number);
+                    const leaveRestDirty = stillToDo.length > 0 && (
+                      <Button
+                        type="button"
+                        variant="outline"
+                        className="mt-3 w-full gap-2"
+                        onClick={() => {
+                          const n = stillToDo.length;
+                          if (!confirm(`Leave ${n} ${n === 1 ? "room" : "rooms"} dirty?\n\nRooms ${stillToDo.join(", ")} stay Dirty and are on tomorrow's list to clean. Today's shift can then finish.`)) return;
+                          setProgressSheetOpen(false);
+                          void setRoomsLeftDirty(stillToDo, true);
+                        }}
+                      >
+                        <MoonStar className="h-4 w-4" />Leave the rest dirty
+                      </Button>
+                    );
                     const isIOSPlatform = typeof document !== "undefined" && document.documentElement.dataset.platform === "ios";
                     if (isIOSPlatform) {
                       return (
@@ -6446,7 +6487,7 @@ const activeFloor = selectedFloor && floorGroups.some((group) => group.key === s
                                     </li>
                                   ))}
                                 </ul>
-                                <ExtrasStillToLeave rooms={rooms} className="mt-3 border-t border-sidebar-foreground/10 pt-3" />
+                                {leaveRestDirty}
                               </div>
                             </div>,
                             document.body,
@@ -6477,7 +6518,7 @@ const activeFloor = selectedFloor && floorGroups.some((group) => group.key === s
                                 </li>
                               ))}
                             </ul>
-                            <ExtrasStillToLeave rooms={rooms} className="mt-4 rounded-xl border border-border px-4 py-3" />
+                            {leaveRestDirty}
                           </SheetContent>
                         </Sheet>
                       </>

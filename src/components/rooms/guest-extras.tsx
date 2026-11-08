@@ -3,6 +3,7 @@ import { useQuery, useQueryClient, type QueryClient } from "@tanstack/react-quer
 import {
   ArrowDown, ArrowUp, ArrowLeftRight, Bath, Bed, BedDouble, Cake, Check, CheckSquare, ChevronDown, ChevronLeft, ChevronRight, Coffee, Cookie, CupSoda, DoorOpen, Fan, Gift, GlassWater, Heart,
   Leaf, Luggage, Minus, Newspaper, Plus, Sparkles, Star, Sunrise, Trash2, Tv, Users, Utensils, Wind, Wine, type LucideIcon,
+  MoonStar,
 } from "lucide-react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
@@ -16,6 +17,7 @@ import { FLAG_COLORS, FlagIcon, mergeFlagDefs, useCustomFlagsQuery, useFlagSetti
 import { parseCats } from "@/lib/app-format";
 import { extrasForRoom, roomJob, type GuestExtra, type GuestExtraRule, type RoomNeed } from "@/lib/guest-extras-rules";
 import type { ReceptionItem, Room } from "@/lib/app-types";
+import { carriedDirtyCount } from "@/lib/left-dirty";
 
 const errMsg = (e: unknown, f: string) => (e as { message?: string })?.message ?? f;
 const chip = (on: boolean) => (on ? "border-primary bg-primary/10 text-primary hover:bg-primary/15" : "");
@@ -129,22 +131,6 @@ export function extrasTotals(rooms: Room[], needsFor: (room: Room) => RoomNeed[]
   return [...totals.values()].sort((a, b) => a.extra.sort_order - b.extra.sort_order);
 }
 
-/** Room Completion pop-up: each extra today's rooms need, left of total. */
-export function ExtrasStillToLeave({ rooms, className }: { rooms: Room[]; className?: string }) {
-  const needsFor = useRoomNeeds();
-  const totals = extrasTotals(rooms, needsFor);
-  if (!totals.length) return null;
-  return <div className={className}>
-    <p className="text-xs font-semibold uppercase tracking-wide opacity-70">Extras still to leave</p>
-    <ul className="mt-1.5 space-y-1.5 text-sm">
-      {totals.map((t) => <li key={t.extra.id} className="flex items-center justify-between gap-2">
-        <span className="flex items-center gap-2"><ExtraIcon name={t.extra.icon} className="h-3.5 w-3.5" />{t.extra.name}</span>
-        <span className="font-semibold tabular-nums">{t.left} of {t.total}</span>
-      </li>)}
-    </ul>
-  </div>;
-}
-
 /** Today's brief tiles this hotel has turned off. Keys: job:departure|turnover|arrival|stayover|guests, flag:<key>, extra:<id>. */
 export function useBriefHidden() {
   const hotel = useCurrentHotel().data;
@@ -161,6 +147,7 @@ export function useBriefHidden() {
 }
 
 const BRIEF_JOBS = [
+  { key: "left_dirty", label: "Left dirty", icon: MoonStar },
   { key: "departure", label: "Departures", icon: DoorOpen },
   { key: "turnover", label: "Depart / Arrivals", icon: ArrowLeftRight },
   { key: "arrival", label: "Arrivals", icon: Luggage },
@@ -239,6 +226,7 @@ export function ShiftBrief({ rooms }: { rooms: Room[] }) {
   const flags = counts.flags.filter((f) => !hidden.has(`flag:${f.def.key}`));
   const extras = extrasTotals(rooms, needsFor).filter((e) => !hidden.has(`extra:${e.extra.id}`));
   const jobTiles = [
+    { key: "left_dirty", count: carriedDirtyCount(rooms), singular: "Left dirty", plural: "Left dirty", icon: MoonStar, color: "bg-room-dirty text-room-dirty-fg" },
     { key: "departure", count: jobs.departure, singular: "Departure", plural: "Departures", icon: DoorOpen, color: "bg-room-dirty text-room-dirty-fg" },
     { key: "turnover", count: jobs.turnover, singular: "Depart / Arrival", plural: "Depart / Arrivals", icon: ArrowLeftRight, color: "bg-room-progress text-room-progress-fg" },
     { key: "arrival", count: jobs.arrival, singular: "Arrival", plural: "Arrivals", icon: Luggage, color: "bg-room-early text-room-early-fg" },

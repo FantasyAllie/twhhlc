@@ -7,6 +7,7 @@ import { cn } from "@/lib/utils";
 import { FlagIcon, useRoomFlags } from "@/lib/room-flags";
 import type { ReceptionItem, Room } from "@/lib/app-types";
 import { RoomGuestExtras } from "@/components/rooms/guest-extras";
+import { leftDirtyState } from "@/lib/left-dirty";
 import { RotateCw } from "lucide-react";
 import { toast } from "sonner";
 import { formatFlipDate, isMattressDue, mattressNextDue, updateRoomMattress, useMattressInterval } from "@/lib/mattress";
@@ -40,6 +41,8 @@ type Props = {
   setStayoverPhotosOpen: (v: boolean) => void;
   toggleReceptionDone: (n: number) => void | Promise<void>;
   toggleHousekeepingDone: (n: number) => void | Promise<void>;
+  /** Housekeeping: leave rooms dirty for tomorrow, or undo it. */
+  setRoomsLeftDirty?: (rooms: number[], on: boolean) => void | Promise<void>;
   setRoomReceptionStatus: (n: number, id: string | null) => void;
   setRoomReceptionBed: (n: number, id: string | null) => void;
   setRoomNotRequired: (n: number, v: boolean) => void | Promise<void>;
@@ -77,6 +80,7 @@ export function ReceptionStatusSheet({
   setStayoverPhotosOpen,
   toggleReceptionDone,
   toggleHousekeepingDone,
+  setRoomsLeftDirty,
   setRoomReceptionStatus,
   setRoomReceptionBed,
   setRoomNotRequired,
@@ -367,7 +371,7 @@ export function ReceptionStatusSheet({
               </div>
              )}
                {room && <RoomGuestExtras key={n} room={room} />}
-               <div className={cn("border-y py-4", room?.mattress_tracking && "grid grid-cols-2 gap-1.5")}>
+               <div className={cn("border-y py-4", (room?.mattress_tracking || (!isReception && room && !room.done && !room.done_reception && setRoomsLeftDirty)) && "grid grid-cols-2 gap-1.5")}>
                  <Row
                    label="Mark as Done"
                    selected={isReception ? receptionDoneSet.has(n) : housekeepingDoneSet.has(n)}
@@ -379,6 +383,20 @@ export function ReceptionStatusSheet({
                    }}
 
                  />
+                 {/* Housekeeping can't get to it today: left dirty for tomorrow. */}
+                 {!isReception && room && !room.done && !room.done_reception && setRoomsLeftDirty && (() => {
+                   const left = leftDirtyState(room) === "today";
+                   return (
+                     <Row
+                       label={left ? "Left dirty" : "Leave dirty"}
+                       selected={left}
+                       onClick={() => {
+                         void setRoomsLeftDirty([n], !left);
+                         if (!left) closeRoomView?.();
+                       }}
+                     />
+                   );
+                 })()}
                  {room?.mattress_tracking && (() => {
                    const due = isMattressDue(room, mattressInterval);
                    const next = mattressNextDue(room, mattressInterval);
