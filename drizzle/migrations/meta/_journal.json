@@ -372,6 +372,13 @@
       "when": 1794159012985,
       "tag": "0052_run_pending_0051_keep_checklist",
       "breakpoints": true
+    },
+    {
+      "idx": 53,
+      "version": "7",
+      "when": 1794159386401,
+      "tag": "0053_rooms_left_dirty",
+      "breakpoints": true
     }
   ]
 }
