@@ -1566,6 +1566,7 @@ export type Database = {
           id: string
           late_checkout: boolean
           late_checkout_at: string | null
+          left_dirty_at: string | null
           mattress_flipped_at: string | null
           mattress_flipped_by: string | null
           mattress_interval_months: number
@@ -1608,6 +1609,7 @@ export type Database = {
           id?: string
           late_checkout?: boolean
           late_checkout_at?: string | null
+          left_dirty_at?: string | null
           mattress_flipped_at?: string | null
           mattress_flipped_by?: string | null
           mattress_interval_months?: number
@@ -1650,6 +1652,7 @@ export type Database = {
           id?: string
           late_checkout?: boolean
           late_checkout_at?: string | null
+          left_dirty_at?: string | null
           mattress_flipped_at?: string | null
           mattress_flipped_by?: string | null
           mattress_interval_months?: number
@@ -1929,6 +1932,10 @@ export type Database = {
       set_room_checked_item: {
         Args: { p_item: string; p_room_number: number; p_selected: boolean }
         Returns: Json
+      }
+      set_rooms_left_dirty: {
+        Args: { p_on: boolean; p_rooms: number[] }
+        Returns: number
       }
     }
     Enums: {
