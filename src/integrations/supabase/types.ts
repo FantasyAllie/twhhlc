@@ -55,6 +55,30 @@ export type Database = {
           },
         ]
       }
+      android_push_devices: {
+        Row: {
+          created_at: string
+          last_used_at: string
+          package_name: string
+          token: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          last_used_at?: string
+          package_name: string
+          token: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          last_used_at?: string
+          package_name?: string
+          token?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       delivery_counts: {
         Row: {
           count: number
