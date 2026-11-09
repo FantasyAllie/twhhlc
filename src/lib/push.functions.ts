@@ -162,6 +162,40 @@ async function sendToIosDevices(
   }
 }
 
+const ANDROID_PACKAGES = new Set(["com.allie.innsync"]);
+
+/** Also sends to the Android app, through Firebase. Never throws, so web push is unaffected. */
+async function sendToAndroidDevices(
+  userIds: string[],
+  body: { title: string; body: string; tag?: string },
+): Promise<number> {
+  if (userIds.length === 0) return 0;
+  try {
+    const { fcmServiceAccount, sendFcm } = await import("./fcm.server");
+    const account = fcmServiceAccount(process.env.FCM_SERVICE_ACCOUNT);
+    if (!account) return 0;
+    const db = await getDb();
+    const { data: rows } = await db
+      .from("android_push_devices" as never)
+      .select("token")
+      .in("user_id", userIds);
+    const devices = (rows ?? []) as import("./fcm.server").FcmDevice[];
+    if (devices.length === 0) return 0;
+    const results = await sendFcm(devices, body, account);
+    const gone = results.filter((r) => r.gone).map((r) => r.token);
+    if (gone.length > 0) {
+      await db.from("android_push_devices" as never).delete().in("token", gone);
+    }
+    for (const r of results) {
+      if (!r.ok) console.warn(`fcm FAIL status=${r.status} gone=${r.gone} reason=${r.reason ?? ""}`);
+    }
+    return results.filter((r) => r.ok).length;
+  } catch (error) {
+    console.error("fcm send failed", error);
+    return 0;
+  }
+}
+
 // Voids the whole "who gets this" pipeline into one call.
 async function fanOut(
   depts: Dept[],
@@ -174,7 +208,8 @@ async function fanOut(
   const subs = await subsForUsers(optedIn);
   await sendToSubs(subs, body);
   const iosSent = await sendToIosDevices(optedIn, body);
-  return subs.length + iosSent;
+  const androidSent = await sendToAndroidDevices(optedIn, body);
+  return subs.length + iosSent + androidSent;
 }
 
 export const getVapidPublicKey = createServerFn({ method: "GET" }).handler(async () => {
@@ -208,11 +243,33 @@ export const subscribeToPush = createServerFn({ method: "POST" })
 
 export const registerPushDevice = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
-  .inputValidator((d: { token: string; environment: string; bundleId: string }) => d)
+  .inputValidator(
+    (d: { token: string; environment?: string; bundleId?: string; platform?: string; packageName?: string }) => d,
+  )
   .handler(async ({ data, context }) => {
+    // The Android app sends its Firebase token instead of Apple's.
+    if (data.platform === "android") {
+      if (!/^[A-Za-z0-9_:-]{20,4096}$/.test(data.token ?? "")) throw new Error("Invalid device");
+      if (!ANDROID_PACKAGES.has(data.packageName ?? "")) throw new Error("Invalid device");
+      const db = await getDb();
+      // A phone belongs to whoever signed in last, so it moves to them.
+      const { error } = await db
+        .from("android_push_devices" as never)
+        .upsert(
+          {
+            token: data.token,
+            user_id: context.userId,
+            package_name: data.packageName,
+            last_used_at: new Date().toISOString(),
+          } as never,
+          { onConflict: "token" },
+        );
+      if (error) throw new Error(error.message);
+      return { ok: true };
+    }
     if (!/^[0-9a-f]{64,200}$/i.test(data.token ?? "")) throw new Error("Invalid device");
     if (data.environment !== "sandbox" && data.environment !== "production") throw new Error("Invalid device");
-    if (!IOS_BUNDLE_IDS.has(data.bundleId)) throw new Error("Invalid device");
+    if (!IOS_BUNDLE_IDS.has(data.bundleId ?? "")) throw new Error("Invalid device");
     const db = await getDb();
     // A phone belongs to whoever signed in last, so it moves to them.
     const { error } = await db
@@ -242,6 +299,13 @@ export const unregisterPushDevice = createServerFn({ method: "POST" })
       .eq("user_id", context.userId)
       .eq("token", data.token);
     if (error) throw new Error(error.message);
+    // Android phones' tokens are kept separately; one of the two holds it.
+    const { error: androidError } = await db
+      .from("android_push_devices" as never)
+      .delete()
+      .eq("user_id", context.userId)
+      .eq("token", data.token);
+    if (androidError) throw new Error(androidError.message);
     return { ok: true };
   });
 
@@ -378,7 +442,8 @@ export const sendTestNotification = createServerFn({ method: "POST" })
     };
     await sendToSubs(subs, test);
     const iosSent = await sendToIosDevices([context.userId], test);
-    return { ok: true, sent: subs.length + iosSent };
+    const androidSent = await sendToAndroidDevices([context.userId], test);
+    return { ok: true, sent: subs.length + iosSent + androidSent };
   });
 
 export type RoomEventKind =
