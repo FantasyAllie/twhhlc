@@ -442,6 +442,13 @@
       "when": 1794770384491,
       "tag": "0062_run_pending_0061_developers_test_hotels_only",
       "breakpoints": true
+    },
+    {
+      "idx": 63,
+      "version": "7",
+      "when": 1794770444491,
+      "tag": "0063_avatars_same_hotel",
+      "breakpoints": true
     }
   ]
 }
