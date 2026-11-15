@@ -1,4 +1,5 @@
 import { availableMessageGroups, MESSAGE_GROUP_LABELS, HOUSEKEEPING_ROOM_MESSAGE_GROUP, isHousekeepingRoomMessage, type MessageGroup } from "@/lib/message-groups";
+import { DEVELOPER_TEST_ONLY, isDeveloperViewOnly } from "@/lib/developer-scope";
 import { toggleRoomTab, roomTileAction, type RoomTab } from "@/lib/room-navigation";
 import { shouldShowDepartmentTab } from "@/lib/department-tabs";
 import { canAccessLeaderboard } from "@/lib/leaderboard-access";
@@ -1771,6 +1772,8 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
    const subRoles = authUser?.subRoles ?? [];
    const realIsRegionalAdmin = position === "regional_admin";
    const realIsDeveloper = position === "developer";
+   // Developer accounts can look at a live hotel but not change it (migration 0061).
+   const developerViewOnly = !!currentHotelQ.data && isDeveloperViewOnly(position, currentHotelQ.data.developer_only);
    // Developers get full admin/regional rights everywhere.
    const realIsAdmin = position === "admin" || realIsRegionalAdmin || realIsDeveloper;
    const realIsManager = position === "manager";
@@ -2868,6 +2871,10 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
   // per-kind manual exports remain available in Settings → Actions → Export.
   const runEndOfShiftBackup = async (opts?: { silent?: boolean }) => {
     const silent = opts?.silent === true;
+    if (developerViewOnly) {
+      if (!silent) toast.error(DEVELOPER_TEST_ONLY);
+      return;
+    }
     type Kind = "totals" | "fnb_totals" | "room_status" | "maintenance" | "delivery" | "inventory_rooms" | "inventory_cupboards" | "checklists";
     const jobs: Array<{ kind: Kind; rows: unknown[]; grand: number }> = [];
     // Completed room checklists from today, so the records export with the rest.
@@ -4469,7 +4476,10 @@ const toggleRoomCategory = async (roomNumber: number, value: Category) => {
       }}
     >
       <div data-mobile-topbar-row className="flex h-11 items-center justify-between gap-2">
-        <h1 data-ios-title className="min-w-0 flex-1 truncate text-base font-semibold tracking-tight">{hotelName}</h1>
+        <div className="min-w-0 flex-1">
+          <h1 data-ios-title className="truncate text-base font-semibold tracking-tight">{hotelName}</h1>
+          {developerViewOnly && <p className="text-xs font-medium text-amber-600 dark:text-amber-400">View only. Developer accounts can change test hotels only.</p>}
+        </div>
         {isTablet && canViewAs && (
           <Button
             variant="ghost"
@@ -4521,6 +4531,7 @@ const toggleRoomCategory = async (roomNumber: number, value: Category) => {
               The Hotel <span className="text-sidebar-foreground">Hub</span>
             </p>
             <h1 className="mt-1 text-xl sm:text-2xl font-semibold tracking-tight text-sidebar-foreground">{hotelName}</h1>
+            {developerViewOnly && <p className="mt-0.5 text-xs font-medium text-amber-600 dark:text-amber-400">View only. Developer accounts can change test hotels only.</p>}
           </div>
  <div className="flex items-center gap-2 [&_button]:border-sidebar-border [&_button]:bg-transparent [&_button]:text-sidebar-foreground [&_button:hover]:bg-sidebar-accent [&_button:hover]:text-sidebar-foreground">
     {!isMobile && ((isAdmin && !isReception) || isMaintenance) && (

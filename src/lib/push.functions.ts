@@ -53,7 +53,14 @@ async function getActor(ctx: { supabase: import("@supabase/supabase-js").Supabas
   }
   const p = profile as { display_name: string | null; email: string | null } | null;
   const username = p?.display_name || (p?.email ?? "").split("@")[0] || "user";
-  const active = roles.some((r) => r !== "pending");
+  let active = roles.some((r) => r !== "pending");
+  // Developer accounts are view-only on live hotels, so they send no alerts there.
+  if (active && roles.includes("developer")) {
+    const { data: hotel } = hotelId
+      ? await db.from("hotels").select("developer_only").eq("id", hotelId).maybeSingle()
+      : { data: null };
+    if ((hotel as { developer_only?: boolean } | null)?.developer_only !== true) active = false;
+  }
   return { id: ctx.userId, username, roles, depts, elevated, hotelId, active };
 }
 

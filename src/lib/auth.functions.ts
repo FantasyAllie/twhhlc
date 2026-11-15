@@ -1,4 +1,5 @@
 import { createServerFn } from "@tanstack/react-start";
+import { DEVELOPER_TEST_ONLY, developerScopeError } from "@/lib/developer-scope";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 
 // A user has exactly one Position and zero or more Sub-roles.
@@ -95,6 +96,38 @@ async function getAdminAccess(ctx: { userId: string }) {
   };
 }
 
+/**
+ * Developer accounts may only change test hotels and the accounts in them
+ * (see developer-scope.ts). `hotelIds` are the hotels the change touches; the
+ * target account's own hotels are added to them.
+ */
+async function assertDeveloperScope(
+  access: Awaited<ReturnType<typeof getAdminAccess>>,
+  opts: { hotelIds?: string[]; targetUserId?: string; targetWillBeDeveloper?: boolean },
+) {
+  if (!access.isDeveloper) return;
+  const { supabaseAdmin } = access;
+  const hotelIds = new Set(opts.hotelIds ?? []);
+  let target: { isDeveloper: boolean } | undefined;
+  if (opts.targetUserId) {
+    const [{ data: memberships }, { data: roleRows }] = await Promise.all([
+      supabaseAdmin.from("hotel_members").select("hotel_id").eq("user_id", opts.targetUserId),
+      supabaseAdmin.from("user_roles").select("role").eq("user_id", opts.targetUserId),
+    ]);
+    for (const m of (memberships ?? []) as { hotel_id: string }[]) hotelIds.add(m.hotel_id);
+    const isDeveloper = ((roleRows ?? []) as { role: string }[]).some((r) => r.role === "developer");
+    target = { isDeveloper: isDeveloper || opts.targetWillBeDeveloper === true };
+  }
+  let hotels: { developer_only: boolean }[] = [];
+  if (hotelIds.size > 0) {
+    const { data, error } = await supabaseAdmin.from("hotels").select("id, developer_only").in("id", Array.from(hotelIds));
+    if (error) throw new Error(error.message);
+    hotels = (data ?? []) as { developer_only: boolean }[];
+  }
+  const problem = developerScopeError(true, hotels, target);
+  if (problem) throw new Error(problem);
+}
+
 /** Enforce the "who can assign which position" ladder. */
 function assertCanAssignPosition(
   caller: { isSuperAdmin: boolean; isDeveloper: boolean; isRegionalManager: boolean; isManagerOnly: boolean },
@@ -105,6 +138,9 @@ function assertCanAssignPosition(
     if (caller.isDeveloper) return;
     throw new Error("Only developers can assign the developer position");
   }
+  // Admin and regional admin reach every hotel, so a developer (test hotels
+  // only) can't hand them out.
+  if (caller.isDeveloper) throw new Error(`${DEVELOPER_TEST_ONLY}, so they can only add developer accounts`);
   if (caller.isSuperAdmin) return; // admin/developer can assign anything else
   if (caller.isRegionalManager) {
     if (target === "admin") throw new Error("Only admins can assign the admin position");
@@ -122,6 +158,7 @@ async function assertAdmin(ctx: { userId: string }) {
   if (!acc.isSuperAdmin && !acc.isRegionalManager) {
     throw new Error("Admin or regional manager access required");
   }
+  return acc;
 }
 
 async function assertAdminOrManager(ctx: { userId: string }) {
@@ -271,6 +308,8 @@ export const updateUserAssignment = createServerFn({ method: "POST" })
       if (!nextHotelIds) nextHotelIds = [activeHotelId];
     }
 
+    await assertDeveloperScope(access, { hotelIds: nextHotelIds, targetUserId: data.id, targetWillBeDeveloper: position === "developer" });
+
     if (position !== "admin" && position !== "regional_admin") {
       const { data: adminRows } = await supabaseAdmin
         .from("user_roles")
@@ -332,7 +371,7 @@ export const deleteUser = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .inputValidator((d: { id: string }) => d)
   .handler(async ({ data, context }) => {
-    await assertAdmin(context);
+    await assertDeveloperScope(await assertAdmin(context), { targetUserId: data.id });
     if (context.userId === data.id) throw new Error("You cannot delete your own account");
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
     const { error } = await supabaseAdmin.auth.admin.deleteUser(data.id);
@@ -362,6 +401,7 @@ export const createUser = createServerFn({ method: "POST" })
     if (!isRegionalAdmin && requested.some((h) => h !== activeHotelId)) {
       throw new Error("You can only assign your active hotel");
     }
+    await assertDeveloperScope(access, { hotelIds });
     const { data: hotels, error: hErr } = await supabaseAdmin
       .from("hotels")
       .select("id")
@@ -459,7 +499,7 @@ export const createHotel = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .inputValidator((d: { name: string }) => d)
   .handler(async ({ data, context }): Promise<HotelOption> => {
-    const { supabaseAdmin, isCrossHotel } = await getAdminAccess(context);
+    const { supabaseAdmin, isCrossHotel, isDeveloper } = await getAdminAccess(context);
     if (!isCrossHotel) throw new Error("Only admins or regional managers can create hotels");
     const name = String(data.name ?? "").trim();
     if (name.length < 2 || name.length > 80) throw new Error("Hotel name must be 2-80 characters");
@@ -480,7 +520,8 @@ export const createHotel = createServerFn({ method: "POST" })
     }
     const { data: hotel, error } = await supabaseAdmin
       .from("hotels")
-      .insert({ name, slug })
+      // A hotel a developer creates is a test hotel (developer accounts only).
+      .insert(isDeveloper ? { name, slug, developer_only: true } : { name, slug })
       .select("id, name, slug")
       .single();
     if (error) throw new Error(error.message);
@@ -527,8 +568,10 @@ export const deleteHotel = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .inputValidator((d: { hotelId: string }) => d)
   .handler(async ({ data, context }) => {
-    const { supabaseAdmin, isCrossHotel } = await getAdminAccess(context);
+    const access = await getAdminAccess(context);
+    const { supabaseAdmin, isCrossHotel } = access;
     if (!isCrossHotel) throw new Error("Only admins or regional managers can delete hotels");
+    await assertDeveloperScope(access, { hotelIds: [data.hotelId] });
     const { data: remaining } = await supabaseAdmin.from("hotels").select("id");
     if (((remaining ?? []) as { id: string }[]).length <= 1) {
       throw new Error("Cannot delete the last hotel workspace");
@@ -555,8 +598,10 @@ export const setHotelWallpaper = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .inputValidator((d: { hotelId: string; image: string | null }) => d)
   .handler(async ({ data, context }) => {
-    const { supabaseAdmin, isCrossHotel } = await getAdminAccess(context);
+    const access = await getAdminAccess(context);
+    const { supabaseAdmin, isCrossHotel } = access;
     if (!isCrossHotel) throw new Error("Only admins or regional managers can change a hotel's wallpaper");
+    await assertDeveloperScope(access, { hotelIds: [data.hotelId] });
     const { data: hotel } = await supabaseAdmin
       .from("hotels")
       .select("id")
@@ -613,7 +658,7 @@ export const updateUserPassword = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .inputValidator((d: { id: string; password: string }) => d)
   .handler(async ({ data, context }) => {
-    await assertAdmin(context);
+    await assertDeveloperScope(await assertAdmin(context), { targetUserId: data.id });
     validatePassword(data.password);
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
     const { error } = await supabaseAdmin.auth.admin.updateUserById(data.id, {
@@ -627,7 +672,7 @@ export const setUserDisabled = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .inputValidator((d: { id: string; disabled: boolean }) => d)
   .handler(async ({ data, context }) => {
-    await assertAdmin(context);
+    await assertDeveloperScope(await assertAdmin(context), { targetUserId: data.id });
     if (context.userId === data.id && data.disabled) {
       throw new Error("You cannot disable your own account");
     }
@@ -717,6 +762,7 @@ export const approvePendingUser = createServerFn({ method: "POST" })
       nextHotelIds = [activeHotelId];
     }
     if (nextHotelIds.length === 0) throw new Error("Assign at least one hotel");
+    await assertDeveloperScope(access, { hotelIds: nextHotelIds });
     const { data: hotels, error: hErr } = await supabaseAdmin
       .from("hotels")
       .select("id")
