@@ -6,19 +6,18 @@ import { Button } from "@/components/ui/button";
 import { supabase } from "@/integrations/supabase/client";
 import { cn } from "@/lib/utils";
 import { UserAvatar, useAvatarUrls } from "@/components/user-avatar";
+import { rankCategory, type Tally } from "@/lib/leaderboard-rank";
 
 type Category = { key: string; title: string; badge: string; emoji: string; unit: string };
 
 const CATEGORIES: Category[] = [
   { key: "linen_counted", title: "Most linen counted", badge: "Linen Legend", emoji: "🧺", unit: "items" },
   { key: "room_clean", title: "Most rooms marked clean", badge: "Sparkle Champion", emoji: "✨", unit: "rooms" },
-  { key: "room_dirty", title: "Most rooms marked dirty", badge: "Turnover Titan", emoji: "🛏️", unit: "rooms" },
+  { key: "room_dirty", title: "Fewest rooms marked dirty", badge: "Spotless Star", emoji: "🌟", unit: "rooms" },
   { key: "stayover_photo", title: "Most DND photos", badge: "Door Detective", emoji: "📸", unit: "photos" },
   { key: "lost_logged", title: "Most lost property logged", badge: "Treasure Hunter", emoji: "🔎", unit: "items" },
   { key: "messages_sent", title: "Most messages sent", badge: "Chatterbox", emoji: "💬", unit: "messages" },
 ];
-
-type Tally = Record<string, Map<string, number>>;
 
 function monthRange(offset: number) {
   const now = new Date();
@@ -92,7 +91,7 @@ export function LeaderboardSheet({
   const mvp = useMemo(() => {
     const wins = new Map<string, number>();
     for (const c of CATEGORIES) {
-      const top = [...(q.data?.[c.key] ?? new Map()).entries()].sort((a, b) => b[1] - a[1])[0];
+      const top = rankCategory(c.key, q.data ?? {})[0];
       if (top) wins.set(top[0], (wins.get(top[0]) ?? 0) + 1);
     }
     return [...wins.entries()].sort((a, b) => b[1] - a[1])[0] ?? null;
@@ -134,7 +133,7 @@ export function LeaderboardSheet({
               )}
               <div className="grid gap-3 md:grid-cols-2">
                 {CATEGORIES.map((c) => (
-                  <CategoryCard key={c.key} cat={c} rows={[...(q.data?.[c.key] ?? new Map()).entries()].sort((a, b) => b[1] - a[1])} />
+                  <CategoryCard key={c.key} cat={c} rows={rankCategory(c.key, q.data ?? {})} />
                 ))}
               </div>
               <p className="mt-4 text-center text-xs text-muted-foreground">
