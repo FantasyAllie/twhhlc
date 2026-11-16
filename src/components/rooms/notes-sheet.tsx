@@ -191,7 +191,7 @@ export function RoomNotesSheet({
                          <FlagIcon def={d} className={cn("h-4 w-4", on ? (FLAG_COLORS[d.color] ?? FLAG_COLORS.slate).text : "text-muted-foreground")} />
                          {d.label}
                        </span>
-                       <Switch checked={on} onCheckedChange={(v) => roomFlags.toggle(n, d, v)} />
+                       <Switch checked={on} disabled={!roomFlags.canToggle(d)} onCheckedChange={(v) => roomFlags.toggle(n, d, v)} />
                      </div>
                    );
                  })}

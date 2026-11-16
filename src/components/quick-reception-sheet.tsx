@@ -262,6 +262,7 @@ export function QuickReceptionSheet({
                               </span>
                             }
                             selected={on}
+                            disabled={!roomFlags.canToggle(d)}
                             onClick={() => roomFlags.toggle(n, d, !on)}
                             truncate={false}
                           />

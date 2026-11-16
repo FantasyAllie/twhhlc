@@ -3969,6 +3969,8 @@ const toggleRoomCategory = async (roomNumber: number, value: Category) => {
               const on = roomFlagsCtx.isOn(room, n, d);
               return (
                 <Button key={d.key} type="button" variant="outline" aria-pressed={on}
+                  disabled={!roomFlagsCtx.canToggle(d)}
+                  title={roomFlagsCtx.canToggle(d) ? undefined : "Set by Reception"}
                   onClick={() => roomFlagsCtx.toggle(n, d, !on)}
                   className={cn("h-auto min-h-12 w-full min-w-0 justify-center gap-2 whitespace-normal rounded-xl px-3 py-3 text-center text-sm font-medium", on && "border-primary bg-primary/10 text-primary hover:bg-primary/15")}>
                   <FlagIcon def={d} className="h-4 w-4 shrink-0" />
@@ -4382,6 +4384,8 @@ const toggleRoomCategory = async (roomNumber: number, value: Category) => {
 
   const allFlagDefs = mergeFlagDefs(flagSettingsQ.data ?? []);
   const customFlagRows = customFlagsQ.data ?? [];
+  // Checked out (guest_vacated) is set by Reception, and by managers and above.
+  const canSetCheckedOut = isReception || isAdmin;
   const roomFlagsCtx = {
     all: allFlagDefs,
     flags: allFlagDefs.filter((d) => !d.hidden),
@@ -4389,7 +4393,9 @@ const toggleRoomCategory = async (roomNumber: number, value: Category) => {
       def.custom
         ? customFlagRows.some((r) => r.room_number === roomNumber && r.flag_key === def.key)
         : !!(room as Record<string, unknown> | undefined)?.[def.key],
+    canToggle: (def: FlagDef) => def.key !== "guest_vacated" || canSetCheckedOut,
     toggle: (roomNumber: number, def: FlagDef, value: boolean) => {
+      if (def.key === "guest_vacated" && !canSetCheckedOut) return;
       if (!def.custom) {
         const fn = {
           guest_vacated: setRoomGuestVacated,

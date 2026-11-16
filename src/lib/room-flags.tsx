@@ -103,6 +103,9 @@ type Ctx = {
   flags: FlagDef[];
   isOn: (room: Partial<Room> | undefined, roomNumber: number, def: FlagDef) => boolean;
   toggle: (roomNumber: number, def: FlagDef, value: boolean) => void;
+  /** Whether this person may change the flag. Checked out is Reception's, and
+   *  managers and above (canSetCheckedOut in Access.kt / Roles.swift). */
+  canToggle: (def: FlagDef) => boolean;
 };
 
 const defaults: Ctx = {
@@ -110,6 +113,7 @@ const defaults: Ctx = {
   flags: BUILTIN_FLAGS.map((b, i) => ({ ...b, hidden: false, custom: false, sort: i })),
   isOn: (room, _n, def) => !def.custom && !!(room as Record<string, unknown> | undefined)?.[def.key],
   toggle: () => {},
+  canToggle: () => true,
 };
 
 export const RoomFlagsContext = createContext<Ctx>(defaults);
