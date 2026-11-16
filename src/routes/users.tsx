@@ -10,7 +10,7 @@ export const Route = createFileRoute("/users")({
     { property: "og:title", content: "Team access — Tsuyu" },
     { property: "og:description", content: "Manage team access in Tsuyu." },
     { property: "og:type", content: "website" },
-    { name: "twitter:card", content: "summary" },
+    { name: "twitter:card", content: "summary_large_image" },
   ] }),
   beforeLoad: () => {
     throw redirect({ to: "/app" });

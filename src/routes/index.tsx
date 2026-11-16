@@ -11,7 +11,7 @@ export const Route = createFileRoute("/")({
     { property: "og:title", content: "Welcome — Tsuyu" },
     { property: "og:description", content: "Access your hotel's daily operations in Tsuyu." },
     { property: "og:type", content: "website" },
-    { name: "twitter:card", content: "summary" },
+    { name: "twitter:card", content: "summary_large_image" },
   ] }),
   component: IndexRedirect,
 });

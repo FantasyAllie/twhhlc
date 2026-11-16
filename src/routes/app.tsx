@@ -202,7 +202,7 @@ export const Route = createFileRoute("/app")({
       { property: "og:title", content: "Operations — Tsuyu" },
       { property: "og:description", content: "Manage rooms, housekeeping, linen and hotel operations in Tsuyu." },
       { property: "og:type", content: "website" },
-      { name: "twitter:card", content: "summary" },
+      { name: "twitter:card", content: "summary_large_image" },
     ],
   }),
   component: AppPage,

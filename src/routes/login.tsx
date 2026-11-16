@@ -21,7 +21,7 @@ export const Route = createFileRoute("/login")({
       { property: "og:title", content: "Sign in — Tsuyu" },
       { property: "og:description", content: "Sign in to Tsuyu." },
       { property: "og:type", content: "website" },
-      { name: "twitter:card", content: "summary" },
+      { name: "twitter:card", content: "summary_large_image" },
     ],
   }),
   component: LoginPage,
