@@ -12,7 +12,7 @@ import { useServerFn } from "@tanstack/react-start";
 import { useIsMobile } from "@/hooks/use-mobile";
 
 import { MESSAGE_GROUP_LABELS, type MESSAGE_GROUPS, type MessageGroup } from "@/lib/message-groups";
-import { PinsList, pinByline, type PinViewer } from "@/components/rooms/room-pins";
+import { PinsList, type PinViewer } from "@/components/rooms/room-pins";
 export type MessagesThread = MessageGroup;
 export type Department = (typeof MESSAGE_GROUPS)[number];
 const THREAD_LABELS = MESSAGE_GROUP_LABELS;
@@ -173,6 +173,11 @@ export function MessagesSheet({
       room_number: roomNumber,
       message: body,
       created_by_username: currentUsername ?? null,
+      // Labelled with the department this browser is working as, when it's one of
+      // theirs; the database checks it (migration 0065) and otherwise uses all of them.
+      ...((pinViewer.departments as readonly string[]).includes(pinViewer.department)
+        ? { created_by_departments: [pinViewer.department] }
+        : {}),
     };
     let { error } = await supabase.from("room_messages" as never).insert({
       ...basePayload,
@@ -354,30 +359,25 @@ export function MessagesSheet({
                     const mine = m.created_by_username && currentUsername && m.created_by_username === currentUsername;
                     const done = !!m.done_at;
                     return (
-                      <li
-                        key={m.id}
-                        className={cn(
-                          "rounded-lg border bg-background p-2.5 text-sm",
-                          mine && "ml-8 border-primary/40 bg-primary/5",
-                          done && "opacity-60",
-                        )}
-                      >
-                        <div className="flex items-center gap-2 text-xs text-muted-foreground mb-1">
-                          <span className="font-medium">{pinByline(m.created_by_username ?? "Someone", m.created_by_departments ?? [])}</span>
-                          {typeof m.room_number === "number" && (
-                            <span className="inline-flex items-center rounded-full bg-amber-500/15 text-amber-700 dark:text-amber-300 px-1.5 py-0.5 font-medium">
-                              Room {m.room_number}
-                            </span>
-                          )}
-                          <span className="ml-auto">{fmtTime(m.created_at)}</span>
-                          {done && (
-                            <span className="rounded-full bg-emerald-500/15 text-emerald-700 dark:text-emerald-300 px-1.5 py-0.5 font-medium">
-                              Done
-                            </span>
-                          )}
+                      <li key={m.id} className={cn("flex flex-col gap-1 text-sm", mine ? "items-end pl-8" : "items-start pr-8")}>
+                        {/* Name (or You), their department and the time, above the bubble. */}
+                        <div className="flex flex-wrap items-center gap-1.5 px-1 text-xs">
+                          <span className="font-semibold text-foreground">{mine ? "You" : m.created_by_username ?? "Someone"}</span>
+                          {(m.created_by_departments ?? []).map((d) => <DepartmentPill key={d} dept={d} />)}
+                          <span className="text-muted-foreground">{fmtTime(m.created_at)}</span>
                         </div>
+                        {/* Yours: navy on the right. Everyone else's: a card on the left. */}
+                        <div
+                          className={cn(
+                            "max-w-full px-3.5 py-2.5",
+                            mine
+                              ? "rounded-[18px] rounded-br-md bg-[#132238] text-[#F7F4EE] dark:bg-[#D8D0F0] dark:text-[#132238]"
+                              : "rounded-[18px] rounded-bl-md border bg-card text-card-foreground",
+                            done && "opacity-70",
+                          )}
+                        >
                         {m.reply_to_snippet && (
-                          <div className="mb-1.5 rounded-xl border-l-4 border-primary bg-muted/60 px-2 py-1">
+                          <div className="mb-1.5 rounded-xl border-l-4 border-primary bg-muted/60 px-2 py-1 text-foreground">
                             <div className="text-[10px] font-semibold text-primary">
                               {m.reply_to_sender ?? "Original"}
                             </div>
@@ -386,8 +386,15 @@ export function MessagesSheet({
                             </div>
                           </div>
                         )}
-                        <p className="whitespace-pre-wrap break-words">{m.message}</p>
-                        <div className="mt-1.5 flex justify-end gap-1">
+                        <p className={cn("whitespace-pre-wrap break-words text-[15px]", done && "line-through")}>{m.message}</p>
+                        {typeof m.room_number === "number" && (
+                          <span className={cn("mt-2 inline-flex rounded-lg px-2 py-1 text-xs font-semibold", mine ? "bg-white/15 dark:bg-black/10" : "bg-muted")}>
+                            Room {m.room_number} ›
+                          </span>
+                        )}
+                        </div>
+                        <div className="flex items-center gap-1">
+                          {done && <span className="px-1 text-xs font-semibold text-emerald-700 dark:text-emerald-400">✓ Done</span>}
                           {!done && (
                             <Button
                               type="button"
@@ -490,4 +497,16 @@ export function MessagesSheet({
       </SheetContent>
     </Sheet>
   );
+}
+
+/** A sender's department as a coloured pill: Housekeeping lavender, Reception slate, F&B terracotta, Maintenance amber. */
+function DepartmentPill({ dept }: { dept: string }) {
+  const styles: Record<string, [string, string]> = {
+    housekeeping: ["Housekeeping", "bg-[#ECE8F7] text-[#3D3474] dark:bg-[#2E2A4A] dark:text-[#D8D0F0]"],
+    reception: ["Reception", "bg-[#DDE4F2] text-[#2B4170] dark:bg-[#1E2C47] dark:text-[#C6D4F0]"],
+    fnb: ["F&B", "bg-[#F4DFD5] text-[#7A3A20] dark:bg-[#3F261C] dark:text-[#F2C9B6]"],
+    maintenance: ["Maintenance", "bg-[#F7E3C8] text-[#7A4A10] dark:bg-[#3E2E16] dark:text-[#F3D3A3]"],
+  };
+  const [label, cls] = styles[dept] ?? [dept.charAt(0).toUpperCase() + dept.slice(1), "bg-muted text-muted-foreground"];
+  return <span className={"rounded-full px-2 py-0.5 text-[11px] font-semibold " + cls}>{label}</span>;
 }

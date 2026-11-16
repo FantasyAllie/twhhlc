@@ -5292,6 +5292,32 @@ const toggleRoomCategory = async (roomNumber: number, value: Category) => {
       />
     </SheetHeader>
     <div className="flex-1 min-h-0 overflow-y-auto px-4 max-lg:px-0 sm:px-6 py-4 sm:py-6">
+    {/* Switch department right here, under your name (also in Departments). */}
+    {canViewAs && (
+      <div className="mb-4 space-y-2 rounded-2xl border bg-card p-3.5">
+        <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">Department</p>
+        <div className="flex flex-wrap gap-1.5">
+          {availableViews.map((r) => {
+            const active = effectiveRole === r;
+            return (
+              <button
+                key={r}
+                type="button"
+                aria-pressed={active}
+                onClick={() => setViewAsRole(r)}
+                className={cn(
+                  "inline-flex h-9 items-center gap-1.5 rounded-full px-3.5 text-sm transition-colors",
+                  active ? "bg-primary font-semibold text-primary-foreground" : "border border-border font-medium text-foreground hover:bg-accent",
+                )}
+              >
+                {viewRoleLabel(r)}{active && <Check aria-hidden className="h-3.5 w-3.5" />}
+              </button>
+            );
+          })}
+        </div>
+        <p className="text-xs text-muted-foreground">Switch between your assigned departments. New messages are labelled with this one.</p>
+      </div>
+    )}
     <AppMenuRows
       menuGroups={menuGroups}
       close={() => setMenuSheetOpen(false)}
