@@ -6,10 +6,10 @@ export const Route = createFileRoute("/")({
   // SSR has no localStorage; route to the gate on the client.
   ssr: false,
   head: () => ({ meta: [
-    { title: "Welcome — The Hotel Hub" },
-    { name: "description", content: "Access your hotel's daily operations in The Hotel Hub." },
-    { property: "og:title", content: "Welcome — The Hotel Hub" },
-    { property: "og:description", content: "Access your hotel's daily operations in The Hotel Hub." },
+    { title: "Welcome — Tsuyu" },
+    { name: "description", content: "Access your hotel's daily operations in Tsuyu." },
+    { property: "og:title", content: "Welcome — Tsuyu" },
+    { property: "og:description", content: "Access your hotel's daily operations in Tsuyu." },
     { property: "og:type", content: "website" },
     { name: "twitter:card", content: "summary" },
   ] }),

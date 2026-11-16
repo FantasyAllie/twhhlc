@@ -2,7 +2,8 @@
 // (stage 5 of the staged refactor); colour/label rules live in @/lib/rooms.
 import { memo, useRef } from "react";
 import { leftDirtyState } from "@/lib/left-dirty";
-import { AlertCircle, ArrowLeft, Check, Dog, DoorOpen, Footprints, User, Wrench } from "lucide-react";
+import { AlertCircle, ArrowLeft, BedDouble, Check, Dog, Footprints, User, Users, Wrench } from "lucide-react";
+import { cardLabel, guestsLabel } from "@/lib/home-list";
 import { cn } from "@/lib/utils";
 import { playClick } from "@/lib/click-sound";
 import type { Room } from "@/lib/app-types";
@@ -236,7 +237,7 @@ function ReceptionRoomTileBase({
       {!isStaffRoom && (
         <>
           <div className="flex flex-col items-start gap-0.5 pr-7 @[120px]:pr-12">
-            <span className="text-sm sm:text-base font-bold leading-none inline-flex min-w-0 items-baseline gap-1">
+            <span className="font-number text-sm sm:text-base font-bold leading-none inline-flex min-w-0 items-baseline gap-1">
               {n}
               {bedLabel && (
                 <>
@@ -261,7 +262,7 @@ function ReceptionRoomTileBase({
 
       {isStaffRoom && (
         <>
-          <span className="text-sm sm:text-base font-bold leading-none">{n}</span>
+          <span className="font-number text-sm sm:text-base font-bold leading-none">{n}</span>
           <span className="text-[9px] sm:text-[10px] md:text-xs font-medium uppercase leading-none opacity-90">Staff</span>
         </>
       )}
@@ -274,10 +275,11 @@ function ReceptionRoomTileBase({
             />
           )}
           <TimingBadges room={room} n={n} />
-          {room?.guest_vacated && (
-            <DoorOpen
-              aria-label="Guest vacated"
-              className="h-3.5 w-3.5 shrink-0 text-emerald-600 dark:text-emerald-400"
+          {room?.guest_vacated && !room?.done && !room?.done_reception && (
+            <span
+              aria-label="Checked out"
+              title="Checked out"
+              className="m-0.5 h-2 w-2 shrink-0 rounded-full bg-emerald-600 outline outline-[1.5px] outline-offset-[1.5px] outline-emerald-600 dark:bg-emerald-400 dark:outline-emerald-400"
             />
           )}
           {room?.stayover_out && !room?.done && (
@@ -370,7 +372,7 @@ function HousekeepingRoomTileBase({
       {isOpen ? (
         <>
           <span className="flex w-full min-w-0 items-baseline gap-1.5">
-            <span className="text-sm sm:text-base font-bold leading-none">{n}</span>
+            <span className="font-number text-sm sm:text-base font-bold leading-none">{n}</span>
             {!openBack && openTypeLabel && (
               <span className="min-w-0 truncate text-[9px] sm:text-[10px] md:text-xs font-bold uppercase leading-tight tracking-tight animate-in fade-in duration-200">{openTypeLabel}</span>
             )}
@@ -405,7 +407,7 @@ function HousekeepingRoomTileBase({
         />
       )}
       <div className="flex flex-col items-start gap-0.5 pr-7 @[120px]:pr-12">
-        <span className="text-sm sm:text-base font-bold leading-none inline-flex min-w-0 items-center gap-1">
+        <span className="font-number text-sm sm:text-base font-bold leading-none inline-flex min-w-0 items-center gap-1">
           {n}
           {!isStaff && isDone && <Check aria-label="Done" className="h-3.5 w-3.5 shrink-0 opacity-80" />}
         </span>
@@ -425,14 +427,12 @@ function HousekeepingRoomTileBase({
             className={"h-2 w-2 rounded-full ring-2 ring-background " + (pinDot === "reply" ? "bg-yellow-400" : "bg-orange-500")} />
         )}
         <TimingBadges room={room} n={n} />
-        {room?.guest_vacated && (
+        {room?.guest_vacated && !room?.done && !room?.done_reception && (
           <span
-            aria-label="Guest vacated"
-            className={BADGE_CLASS + " bg-emerald-600 text-white dark:bg-emerald-500 dark:text-emerald-950"}
-          >
-            <DoorOpen aria-hidden className="h-2.5 w-2.5 shrink-0" />
-            <span className="hidden @[120px]:inline">Vacant</span>
-          </span>
+            aria-label="Checked out"
+            title="Checked out"
+            className="m-0.5 h-2 w-2 shrink-0 rounded-full bg-emerald-600 outline outline-[1.5px] outline-offset-[1.5px] outline-emerald-600 dark:bg-emerald-400 dark:outline-emerald-400"
+          />
         )}
         {room?.stayover_out && !room?.done && !isDone && (
           <span
@@ -463,6 +463,88 @@ function HousekeepingRoomTileBase({
         />
       )}
       </>)}
+    </button>
+  );
+}
+
+// ---------------------------------------------------------------------------
+// Home's list view: one room as a card (HomeRoomCard in HomeList.swift / .kt).
+// Number, status, then the bed and head count for arriving guests and the
+// same badges as the tile, with their labels.
+
+type CardProps = Omit<BaseProps, "isOpen" | "onLongPress" | "bedLabel"> & {
+  role: "reception" | "housekeeping";
+  /** The bed to make up, for an arriving guest. */
+  bed?: string | null;
+  guests?: number | null;
+  disabled?: boolean;
+};
+
+export function HomeRoomCard({
+  n, room, statusIds, state, isNR, hasLinenCount, pinDot, hasOpenMaintenance = false, onClick, role, bed, guests, disabled,
+}: CardProps) {
+  const flags = resolveRoomStatusFlags(room, statusIds);
+  const meta = computeTileMeta({
+    flags,
+    state,
+    isNR,
+    hasLinenCount,
+    earlyCheckIn: !!room?.early_check_in,
+    lateCheckout: !!room?.late_checkout,
+    stayoverOut: !!room?.stayover_out,
+    role,
+    sheetKind: room?.sheet_kind,
+    leftDirty: leftDirtyState(room),
+  });
+  const label = cardLabel(flags.isStaff ? "Staff" : meta.label);
+  const checkedOut = !!room?.guest_vacated && !room?.done && !room?.done_reception;
+  const maintenance = !!room?.needs_maintenance || hasOpenMaintenance;
+  const dot = pinDot ?? (role === "reception" && room?.housekeeping_note ? "request" : null);
+  return (
+    <button
+      type="button"
+      disabled={disabled}
+      onClick={() => { playClick(); onClick(); }}
+      aria-label={[`Room ${n}`, label, checkedOut && "checked out", bed && `set as ${bed}`, guests ? guestsLabel(guests) : null,
+        maintenance && "maintenance"].filter(Boolean).join(", ")}
+      className="flex w-full flex-col gap-2 rounded-[18px] border bg-card px-3.5 py-3 text-left text-card-foreground shadow-sm transition-colors hover:bg-accent/40 disabled:opacity-90"
+    >
+      <span className="flex w-full min-w-0 items-center gap-2.5">
+        <span className="font-number min-w-8 text-2xl font-bold leading-none tabular-nums">{n}</span>
+        <span className="min-w-0 truncate rounded-full px-2.5 py-1 text-[13px] font-semibold"
+          style={{ backgroundColor: meta.bg, color: meta.fg }}>{label}</span>
+        <span className="ml-auto flex shrink-0 items-center gap-2">
+          {dot && <span aria-hidden className={"h-2.5 w-2.5 rounded-full " + (dot === "reply" ? "bg-yellow-400" : "bg-orange-500")} />}
+          {maintenance && <Wrench aria-hidden className="h-[18px] w-[18px] text-orange-600 dark:text-orange-400" />}
+          {checkedOut && (
+            <span className="flex items-center gap-1.5 text-[13px] font-semibold text-emerald-700 dark:text-emerald-400">
+              <span aria-hidden className="h-2 w-2 rounded-full bg-emerald-600" />Out
+            </span>
+          )}
+        </span>
+      </span>
+      {(bed || guests) && (
+        <span className="flex items-center gap-3.5 pl-[42px] text-sm font-semibold">
+          {bed && <span className="flex items-center gap-1.5"><BedDouble aria-hidden className="h-[18px] w-[18px] text-[#3D3474] dark:text-[#B9AEE6]" />{bed}</span>}
+          {guests ? <span className="flex items-center gap-1.5"><Users aria-hidden className="h-[18px] w-[18px] text-[#3D3474] dark:text-[#B9AEE6]" />{guestsLabel(guests)}</span> : null}
+        </span>
+      )}
+      <span className="@container flex w-full flex-wrap gap-1.5 pl-[42px] empty:hidden">
+        <TimingBadges room={room} n={n} />
+        {room?.stayover_out && !room?.done && (
+          <span className={BADGE_CLASS + " bg-sky-500 text-white dark:bg-sky-400 dark:text-sky-950"}>
+            <Footprints aria-hidden className="h-2.5 w-2.5 shrink-0" /><span>Out</span>
+          </span>
+        )}
+        {room?.dog_box && (
+          <span className={BADGE_CLASS + " bg-violet-600 text-white dark:bg-violet-500 dark:text-violet-950"}>
+            <Dog aria-hidden className="h-2.5 w-2.5 shrink-0" /><span>Dog</span>
+          </span>
+        )}
+        <MattressBadge room={room} />
+        <CustomFlagBadges n={n} />
+        <GuestExtrasBadge room={room} className={BADGE_CLASS} />
+      </span>
     </button>
   );
 }

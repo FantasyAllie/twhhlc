@@ -8,17 +8,18 @@ import { lovable } from "@/integrations/lovable";
 import { refreshSession } from "@/lib/auth-client";
 import { useServerFn } from "@tanstack/react-start";
 import { listMyHotels, setActiveHotel, type HotelOption } from "@/lib/auth.functions";
-import loginLogo from "@/assets/login-logo.png.asset.json";
-const logoUrl = loginLogo.url;
+import tsuyuLogo from "@/assets/tsuyu-logo.png";
+// Tsuyu's Dawn drop (the same artwork as the apps' icons).
+const logoUrl = tsuyuLogo;
 
 export const Route = createFileRoute("/login")({
   ssr: false,
   head: () => ({
     meta: [
-      { title: "Sign in — The Hotel Hub" },
-      { name: "description", content: "Sign in to The Hotel Hub." },
-      { property: "og:title", content: "Sign in — The Hotel Hub" },
-      { property: "og:description", content: "Sign in to The Hotel Hub." },
+      { title: "Sign in — Tsuyu" },
+      { name: "description", content: "Sign in to Tsuyu." },
+      { property: "og:title", content: "Sign in — Tsuyu" },
+      { property: "og:description", content: "Sign in to Tsuyu." },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary" },
     ],
@@ -188,7 +189,7 @@ function LoginPage() {
       {hotelChoices ? (
         <div className="w-full max-w-sm space-y-4 rounded-lg border bg-card p-6 shadow-sm">
           <div className="space-y-2 text-center">
-            <img src={logoUrl} alt="The Hotel Hub" className="mx-auto h-16 w-16 object-contain" />
+            <img src={logoUrl} alt="" className="mx-auto h-16 w-16 rounded-[14px] object-contain shadow-sm" />
             <h1 className="text-xl font-semibold">Choose a workspace</h1>
             <p className="text-sm text-muted-foreground">
               Select the hotel you want to open. You'll need to sign out to switch.
@@ -209,15 +210,17 @@ function LoginPage() {
           </div>
         </div>
       ) : (
-      <div className="w-full max-w-sm space-y-4 rounded-lg border bg-card p-6 shadow-sm">
-        <div className="space-y-2 text-center">
+      <div className="w-full max-w-sm space-y-7">
+        {/* The icon, the name with 露 (dew), then what this screen is for. */}
+        <div className="flex flex-col items-center text-center">
           <img
             src={logoUrl}
-            alt="The Hotel Hub"
-            className="mx-auto h-16 w-16 object-contain"
+            alt=""
+            className="h-[88px] w-[88px] rounded-[20px] object-contain shadow-[0_10px_28px_rgba(19,34,56,0.16)]"
           />
-          <h1 className="text-xl font-semibold">The Hotel Hub</h1>
-          <p className="text-sm text-muted-foreground">
+          <h1 className="mt-6 text-[44px] font-semibold leading-none tracking-tight">Tsuyu</h1>
+          <p lang="ja" aria-label="Tsuyu, dew in Japanese" className="mt-2.5 text-[22px] font-semibold leading-none text-[#6E62A8] dark:text-[#B9AEE6]">露</p>
+          <p className="mt-4 text-[15px] text-muted-foreground">
             {mode === "signup"
               ? "Create your account"
               : mode === "forgot"
@@ -225,6 +228,7 @@ function LoginPage() {
                 : "Sign in to your hotel workspace"}
           </p>
         </div>
+      <div className="space-y-4 rounded-3xl border bg-card p-5 shadow-sm">
 
         {mode !== "forgot" && (
           <>
@@ -309,7 +313,7 @@ function LoginPage() {
               />
             </div>
           )}
-          <Button type="submit" disabled={busy} className="w-full">
+          <Button type="submit" disabled={busy} className="h-12 w-full rounded-xl bg-ink text-base font-semibold text-ink-foreground hover:bg-ink/90 dark:bg-[#D8D0F0] dark:text-[#132238] dark:hover:bg-[#D8D0F0]/90">
             {busy
               ? "Please wait…"
               : mode === "signin"
@@ -334,6 +338,7 @@ function LoginPage() {
             New accounts need an admin to approve access before you can use the app.
           </p>
         )}
+      </div>
       </div>
       )}
     </div>

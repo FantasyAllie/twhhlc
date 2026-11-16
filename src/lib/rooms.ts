@@ -174,7 +174,7 @@ export const computeTileMeta = (args: {
   if (sheetKind === "arrival" && (flags.isArrival || flags.isClean))
     return {
       ...(working ? roomStateMeta.progress : dirtyTone),
-      label: `Clean / Arrival\n${working ? "In progress" : "Not started"}`,
+      label: `Arrival\n${working ? "In progress" : "Not started"}`,
     };
   // Left dirty on an earlier day: on today's list to clean.
   if (flags.isDirty && leftDirty === "earlier")

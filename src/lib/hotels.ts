@@ -12,7 +12,7 @@ export type CurrentHotel = {
   developer_only: boolean;
 } | null;
 
-export const DEFAULT_HOTEL_NAME = "The Hotel Hub";
+export const DEFAULT_HOTEL_NAME = "Tsuyu";
 
 export function useCurrentHotel() {
   return useQuery<CurrentHotel>({

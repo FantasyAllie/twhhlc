@@ -443,7 +443,7 @@ export const sendTestNotification = createServerFn({ method: "POST" })
       .eq("user_id", context.userId);
     const subs = (rows ?? []) as SubRow[];
     const test = {
-      title: "InnSync — Test notification",
+      title: "Tsuyu — Test notification",
       body: "If you can see this, push notifications are working on this device.",
       url: "/app",
     };

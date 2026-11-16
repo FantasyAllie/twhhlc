@@ -19,9 +19,10 @@
  */
 
 @theme inline {
-  /* Ink & Brass typography: Space Grotesk display, DM Sans UI body. */
-  --font-sans: "DM Sans", ui-sans-serif, system-ui, sans-serif;
-  --font-display: "Space Grotesk", "DM Sans", ui-sans-serif, sans-serif;
+  /* Tsuyu typography: Figtree for everything; Newsreader (serif) for room numbers. */
+  --font-sans: "Figtree", ui-sans-serif, system-ui, sans-serif;
+  --font-number: "Newsreader", Georgia, ui-serif, serif;
+  --font-display: "Figtree", ui-sans-serif, system-ui, sans-serif;
   --color-brass: var(--brass);
   --color-brass-foreground: var(--brass-foreground);
   --color-ink: var(--ink);
@@ -106,29 +107,29 @@
 
 :root {
   --radius: 0.875rem;
-  /* Ink & Brass — warm stone canvas, ink navy text, brass accent. */
-  --ink: oklch(0.203 0.033 264);
-  --ink-foreground: oklch(0.962 0.006 85);
+  /* Tsuyu — parchment canvas, midnight ink text, brass accent. */
+  --ink: oklch(0.251 0.047 258);
+  --ink-foreground: oklch(0.968 0.009 85);
   --brass: oklch(0.719 calc(0.129 * var(--accent-k)) var(--accent-h));
-  --brass-foreground: oklch(0.203 0.033 264);
-  --background: oklch(0.962 0.006 85);
-  --foreground: oklch(0.203 0.033 264);
-  --card: oklch(0.99 0.004 85);
-  --card-foreground: oklch(0.203 0.033 264);
-  --popover: oklch(0.99 0.004 85);
-  --popover-foreground: oklch(0.203 0.033 264);
-  --primary: oklch(0.203 0.033 264);
-  --primary-foreground: oklch(0.962 0.006 85);
-  --secondary: oklch(0.936 0.008 85);
-  --secondary-foreground: oklch(0.203 0.033 264);
-  --muted: oklch(0.936 0.008 85);
-  --muted-foreground: oklch(0.505 0.022 264);
+  --brass-foreground: oklch(0.251 0.047 258);
+  --background: oklch(0.968 0.009 85);
+  --foreground: oklch(0.251 0.047 258);
+  --card: oklch(1 0 0);
+  --card-foreground: oklch(0.251 0.047 258);
+  --popover: oklch(1 0 0);
+  --popover-foreground: oklch(0.251 0.047 258);
+  --primary: oklch(0.251 0.047 258);
+  --primary-foreground: oklch(0.968 0.009 85);
+  --secondary: oklch(0.932 0.013 87);
+  --secondary-foreground: oklch(0.251 0.047 258);
+  --muted: oklch(0.932 0.013 87);
+  --muted-foreground: oklch(0.501 0.03 261);
   --accent: oklch(0.93 calc(0.045 * var(--accent-k)) var(--accent-h));
   --accent-foreground: oklch(0.28 0.05 80);
   --destructive: oklch(0.577 0.245 27.325);
   --destructive-foreground: oklch(0.984 0.003 247.858);
-  --border: oklch(0.885 0.011 85);
-  --input: oklch(0.885 0.011 85);
+  --border: oklch(0.902 0.017 85);
+  --input: oklch(0.902 0.017 85);
   --ring: oklch(0.719 calc(0.129 * var(--accent-k)) var(--accent-h));
   --chart-1: oklch(0.719 calc(0.129 * var(--accent-k)) var(--accent-h));
   --chart-2: oklch(0.6 0.118 184.704);
@@ -136,39 +137,39 @@
   --chart-4: oklch(0.828 0.189 84.429);
   --chart-5: oklch(0.769 0.188 70.08);
   /* Light mode keeps the chrome on the cream canvas; dark mode goes ink. */
-  --sidebar: oklch(0.99 0.004 85);
-  --sidebar-foreground: oklch(0.203 0.033 264);
+  --sidebar: oklch(1 0 0);
+  --sidebar-foreground: oklch(0.251 0.047 258);
   --sidebar-primary: oklch(0.6 calc(0.115 * var(--accent-k)) var(--accent-h));
-  --sidebar-primary-foreground: oklch(0.99 0.004 85);
+  --sidebar-primary-foreground: oklch(1 0 0);
   --sidebar-accent: oklch(0.925 0.009 85);
-  --sidebar-accent-foreground: oklch(0.203 0.033 264);
+  --sidebar-accent-foreground: oklch(0.251 0.047 258);
   --sidebar-border: oklch(0.6 calc(0.115 * var(--accent-k))  var(--accent-h) / 28%);
   --sidebar-ring: oklch(0.6 calc(0.115 * var(--accent-k)) var(--accent-h));
   /* Material elevation tiers: ambient + key light for tactile depth. */
   --shadow-1: 0 1px 2px 0 rgb(0 0 0 / 0.08), 0 1px 1px -1px rgb(0 0 0 / 0.06);
   --shadow-2: 0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.08);
   --shadow-3: 0 20px 25px -5px rgb(0 0 0 / 0.14), 0 8px 10px -6px rgb(0 0 0 / 0.1);
-  --room-todo: oklch(0.955 0.025 25);
-  --room-todo-fg: oklch(0.45 0.18 27);
-  --room-todo-accent: oklch(0.62 0.22 27);
-  --room-progress: oklch(0.94 0.1 95);
-  --room-progress-fg: oklch(0.45 0.13 75);
-  --room-progress-accent: oklch(0.72 0.18 80);
+  --room-todo: oklch(0.931 0.024 34);
+  --room-todo-fg: oklch(0.408 0.109 31);
+  --room-todo-accent: oklch(0.774 0.073 34);
+  --room-progress: oklch(0.931 0.063 93);
+  --room-progress-fg: oklch(0.395 0.078 84);
+  --room-progress-accent: oklch(0.792 0.117 90);
   --room-done: oklch(0.95 0.04 240);
   --room-done-fg: oklch(0.45 0.18 255);
   --room-done-accent: oklch(0.6 0.2 255);
-  --room-complete: oklch(0.95 0.05 150);
-  --room-complete-fg: oklch(0.42 0.14 150);
-  --room-complete-accent: oklch(0.6 0.18 150);
-  --room-dirty: oklch(0.8 0.075 62);
-  --room-dirty-fg: oklch(0.36 0.1 55);
-  --room-dirty-accent: oklch(0.52 0.13 55);
-  --room-staff: oklch(0.93 0 0);
-  --room-staff-fg: oklch(0.45 0 0);
-  --room-staff-accent: oklch(0.62 0 0);
-  --room-stayover: oklch(0.93 0.06 235);
-  --room-stayover-fg: oklch(0.4 0.18 245);
-  --room-stayover-accent: oklch(0.58 0.2 245);
+  --room-complete: oklch(0.928 0.024 149);
+  --room-complete-fg: oklch(0.400 0.067 153);
+  --room-complete-accent: oklch(0.792 0.061 152);
+  --room-dirty: oklch(0.924 0.030 71);
+  --room-dirty-fg: oklch(0.419 0.073 59);
+  --room-dirty-accent: oklch(0.771 0.071 66);
+  --room-staff: oklch(0.916 0.009 85);
+  --room-staff-fg: oklch(0.396 0.013 82);
+  --room-staff-accent: oklch(0.803 0.018 85);
+  --room-stayover: oklch(0.923 0.023 242);
+  --room-stayover-fg: oklch(0.380 0.075 248);
+  --room-stayover-accent: oklch(0.805 0.053 244);
   /* A paperwork stayover still to do: the stayover blue, a step deeper. */
   --room-stayover-job: oklch(0.88 0.045 238);
   --room-stayover-job-fg: oklch(0.35 0.11 248);
@@ -182,28 +183,28 @@
   --room-late: oklch(0.47 0.17 25);
   --room-late-fg: oklch(0.97 0.03 25);
   --room-late-accent: oklch(0.37 0.15 25);
-  --room-cleandone: oklch(0.93 0.08 300);
-  --room-cleandone-fg: oklch(0.4 0.18 300);
-  --room-cleandone-accent: oklch(0.6 0.22 300);
+  --room-cleandone: oklch(0.938 0.020 298);
+  --room-cleandone-fg: oklch(0.370 0.106 286);
+  --room-cleandone-accent: oklch(0.827 0.060 296);
 }
 
 .dark {
   /* Ink — deep navy chrome (matching the app's dark mode), accent colour, cream text. */
-  --ink: oklch(0.203 0.033 264);
-  --ink-foreground: oklch(0.962 0.006 85);
+  --ink: oklch(0.251 0.047 258);
+  --ink-foreground: oklch(0.942 0.023 85);
   --brass: oklch(0.762 calc(0.135 * var(--accent-k)) var(--accent-h));
-  --brass-foreground: oklch(0.203 0.033 264);
-  --background: oklch(0.182 0.031 261);
-  --foreground: oklch(0.962 0.006 85);
-  --card: oklch(0.244 0.039 263);
-  --card-foreground: oklch(0.962 0.006 85);
-  --popover: oklch(0.244 0.039 263);
-  --popover-foreground: oklch(0.962 0.006 85);
+  --brass-foreground: oklch(0.251 0.047 258);
+  --background: oklch(0.186 0.029 260);
+  --foreground: oklch(0.942 0.023 85);
+  --card: oklch(0.242 0.034 260);
+  --card-foreground: oklch(0.942 0.023 85);
+  --popover: oklch(0.242 0.034 260);
+  --popover-foreground: oklch(0.942 0.023 85);
   --primary: oklch(0.762 calc(0.135 * var(--accent-k)) var(--accent-h));
-  --primary-foreground: oklch(0.182 0.031 261);
-  --secondary: oklch(0.244 0.039 263);
-  --secondary-foreground: oklch(0.962 0.006 85);
-  --muted: oklch(0.244 0.039 263);
+  --primary-foreground: oklch(0.186 0.029 260);
+  --secondary: oklch(0.242 0.034 260);
+  --secondary-foreground: oklch(0.942 0.023 85);
+  --muted: oklch(0.242 0.034 260);
   --muted-foreground: oklch(0.735 0.02 262);
   --accent: oklch(0.294 0.043 264);
   --accent-foreground: oklch(0.9 calc(0.09 * var(--accent-k)) var(--accent-h));
@@ -217,39 +218,39 @@
   --chart-3: oklch(0.75 0.19 70.08);
   --chart-4: oklch(0.6 0.26 303.9);
   --chart-5: oklch(0.62 0.25 16.439);
-  --sidebar: oklch(0.203 0.033 264);
-  --sidebar-foreground: oklch(0.962 0.006 85);
+  --sidebar: oklch(0.251 0.047 258);
+  --sidebar-foreground: oklch(0.942 0.023 85);
   --sidebar-primary: oklch(0.762 calc(0.135 * var(--accent-k)) var(--accent-h));
-  --sidebar-primary-foreground: oklch(0.203 0.033 264);
+  --sidebar-primary-foreground: oklch(0.251 0.047 258);
   --sidebar-accent: oklch(0.294 0.043 264);
-  --sidebar-accent-foreground: oklch(0.962 0.006 85);
+  --sidebar-accent-foreground: oklch(0.942 0.023 85);
   --sidebar-border: oklch(0.762 calc(0.135 * var(--accent-k))  var(--accent-h) / 22%);
   --sidebar-ring: oklch(0.762 calc(0.135 * var(--accent-k)) var(--accent-h));
   /* Dark surfaces need slightly stronger key lights to read depth. */
   --shadow-1: 0 1px 2px 0 rgb(0 0 0 / 0.25), 0 1px 1px -1px rgb(0 0 0 / 0.18);
   --shadow-2: 0 4px 6px -1px rgb(0 0 0 / 0.28), 0 2px 4px -2px rgb(0 0 0 / 0.22);
   --shadow-3: 0 20px 25px -5px rgb(0 0 0 / 0.4), 0 8px 10px -6px rgb(0 0 0 / 0.3);
-  --room-todo: oklch(0.28 0.09 27);
-  --room-todo-fg: oklch(0.85 0.1 25);
-  --room-todo-accent: oklch(0.62 0.2 27);
-  --room-progress: oklch(0.44 0.11 85);
-  --room-progress-fg: oklch(0.93 0.11 92);
-  --room-progress-accent: oklch(0.78 0.17 82);
+  --room-todo: oklch(0.296 0.051 26);
+  --room-todo-fg: oklch(0.884 0.043 32);
+  --room-todo-accent: oklch(0.506 0.083 30);
+  --room-progress: oklch(0.334 0.045 88);
+  --room-progress-fg: oklch(0.906 0.076 91);
+  --room-progress-accent: oklch(0.609 0.102 88);
   --room-done: oklch(0.28 0.09 255);
   --room-done-fg: oklch(0.82 0.11 250);
   --room-done-accent: oklch(0.62 0.2 255);
-  --room-complete: oklch(0.28 0.08 150);
-  --room-complete-fg: oklch(0.85 0.13 150);
-  --room-complete-accent: oklch(0.62 0.18 150);
-  --room-dirty: oklch(0.25 0.04 58);
-  --room-dirty-fg: oklch(0.8 0.08 62);
-  --room-dirty-accent: oklch(0.56 0.12 55);
-  --room-staff: oklch(0.28 0 0);
-  --room-staff-fg: oklch(0.82 0 0);
-  --room-staff-accent: oklch(0.6 0 0);
-  --room-stayover: oklch(0.3 0.09 240);
-  --room-stayover-fg: oklch(0.82 0.12 240);
-  --room-stayover-accent: oklch(0.62 0.2 245);
+  --room-complete: oklch(0.298 0.037 157);
+  --room-complete-fg: oklch(0.883 0.053 153);
+  --room-complete-accent: oklch(0.547 0.078 152);
+  --room-dirty: oklch(0.300 0.031 58);
+  --room-dirty-fg: oklch(0.884 0.054 69);
+  --room-dirty-accent: oklch(0.482 0.067 60);
+  --room-staff: oklch(0.276 0.008 264);
+  --room-staff-fg: oklch(0.865 0.012 85);
+  --room-staff-accent: oklch(0.460 0.010 264);
+  --room-stayover: oklch(0.312 0.057 253);
+  --room-stayover-fg: oklch(0.887 0.038 246);
+  --room-stayover-accent: oklch(0.512 0.083 249);
   --room-stayover-job: oklch(0.26 0.06 245);
   --room-stayover-job-fg: oklch(0.85 0.08 240);
   --room-stayover-job-accent: oklch(0.56 0.13 248);
@@ -262,9 +263,9 @@
   --room-late: oklch(0.36 0.15 25);
   --room-late-fg: oklch(0.95 0.05 25);
   --room-late-accent: oklch(0.6 0.2 25);
-  --room-cleandone: oklch(0.32 0.1 300);
-  --room-cleandone-fg: oklch(0.88 0.14 300);
-  --room-cleandone-accent: oklch(0.65 0.22 300);
+  --room-cleandone: oklch(0.265 0.058 287);
+  --room-cleandone-fg: oklch(0.874 0.044 297);
+  --room-cleandone-accent: oklch(0.473 0.107 288);
 }
 
 /* Theme level 1 — crisp white: neutral canvas, ink text, brass accent kept. */

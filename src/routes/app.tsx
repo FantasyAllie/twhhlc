@@ -176,6 +176,7 @@ import {
   computeResetPreserveMap,
   isScheduledSheetClean,
   getRoomTileState as computeRoomTileState,
+  resolveRoomStatusFlags,
   resolveRoomStatusIds,
   roomStateMeta,
 } from "@/lib/rooms";
@@ -183,7 +184,10 @@ import type { RoomTileState } from "@/lib/rooms";
 import { usePendingCounts } from "@/lib/pending-counts";
 import { cacheSavedRoomCount } from "@/lib/linen-count-cache";
 import { buildOpsState, captureOpsSnapshot, undoLastOpsSnapshot } from "@/lib/ops-snapshots";
-import { HousekeepingRoomTile, ReceptionRoomTile } from "@/components/rooms/room-tile";
+import { HomeRoomCard, HousekeepingRoomTile, ReceptionRoomTile } from "@/components/rooms/room-tile";
+import { HomeList, HomeLayoutToggle } from "@/components/rooms/home-list";
+import { RoomSummaryStrip, RoomTabs, type RoomTabKey } from "@/components/rooms/room-sheet-parts";
+import { finished as listFinished, hasIncomingGuest, loadLayout, saveLayout, toDo as listToDo, type HomeLayout, type ListRoom } from "@/lib/home-list";
 import { ShiftBrief, ShiftBriefSettingsSheet } from "@/components/rooms/guest-extras";
 import { PinRepliesStrip, RoomPinSettingsSheet, RoomPins, pinDotFor, pinsNeedingYou, useRoomPins, type PinViewer } from "@/components/rooms/room-pins";
 import { MorningSheetBanner, OPEN_PAPERWORK_EVENT } from "@/components/morning-sheet-banner";
@@ -193,10 +197,10 @@ export const Route = createFileRoute("/app")({
   ssr: false,
   head: () => ({
     meta: [
-      { title: "The Hotel Hub" },
-      { name: "description", content: "Manage rooms, housekeeping, linen and hotel operations in The Hotel Hub." },
-      { property: "og:title", content: "Operations — The Hotel Hub" },
-      { property: "og:description", content: "Manage rooms, housekeeping, linen and hotel operations in The Hotel Hub." },
+      { title: "Tsuyu" },
+      { name: "description", content: "Manage rooms, housekeeping, linen and hotel operations in Tsuyu." },
+      { property: "og:title", content: "Operations — Tsuyu" },
+      { property: "og:description", content: "Manage rooms, housekeeping, linen and hotel operations in Tsuyu." },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary" },
     ],
@@ -754,6 +758,11 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
   useEffect(() => {
     setSelectedFloor(null);
   }, [currentHotelQ.data?.id]);
+  // Grid or list on Home: each person's choice, kept in this browser (src/lib/home-list.ts).
+  const [homeLayout, setHomeLayout] = useState<HomeLayout>("grid");
+  useEffect(() => {
+    setHomeLayout(loadLayout(authUser?.id));
+  }, [authUser?.id]);
   const [hkFiltersOpen, setHkFiltersOpen] = useState(false);
   const [hkFiltersAnchor, setHkFiltersAnchor] = useState<{ top: number; left: number } | null>(null);
   const [hkStatusFilter, setHkStatusFilter] = useState<string[]>([]);
@@ -3788,84 +3797,59 @@ const toggleRoomCategory = async (roomNumber: number, value: Category) => {
 
  const renderRoomNavigation = (n: number) => {
     const active = activeRoomTab(n);
+    const room = rooms.find((r) => r.room_number === n);
+    // What housekeeping needs before anything else: the bed, the head count and whether the guest has gone.
+    const norm = (v: string) => v.toLowerCase().replace(/[^a-z0-9]/g, "");
+    const cats = parseCats(room?.category).map(norm);
+    const roomBed = receptionBeds.find((b) => b.id === room?.reception_bed_id)?.label
+      ?? (cats.includes("double") && !cats.includes("superking") ? "Double" : null);
+    const fromSheet = !!room?.sheet_kind && room.sheet_kind !== "vacant" && room.sheet_kind !== "ros";
+    const guests = fromSheet && room?.sheet_guests ? room.sheet_guests : null;
+    const bed = setAsBed({ sheetBed: room?.sheet_bed, sheetRoomType: room?.sheet_room_type, roomBed });
+    const checkedOut = !!room?.guest_vacated && !room?.done && !room?.done_reception;
+    // Room info (the room hub) is for everyone except plain housekeepers, as before.
+    const showsHub = !isHousekeeper || isAdmin;
+    const note = room?.housekeeping_note ?? null;
+    const maintenance = !!room?.needs_maintenance;
+    // A pin in the hub wants you: an open one for your department, or a reply to yours.
+    const hasMsg = pinsNeedingYou(pinsQ.data ?? [], n, pinViewer).length > 0;
+    const hasIndicator = hasMsg || !!note || maintenance;
+    const selected: RoomTabKey | null =
+      active === "edit" ? null : active === "status" ? "status" : active === "hub" ? "hub" : "linen";
     return (
-
-      <div role="group" aria-label="Room views" className="flex flex-row gap-2 shrink-0 mb-3 max-lg:mb-1">
-        <Button
-          type="button"
-          data-ios-glass
-          variant="outline"
-          aria-pressed={active === "status"}
-          data-ios-selected={active === "status" ? "true" : undefined}
-          onClick={() => selectRoomTab(n, "status")}
-          className={cn(
-              "flex items-center justify-center gap-1.5 rounded-xl border bg-background px-3 sm:px-4 h-11 shadow-sm active:scale-[0.97] active:shadow-none flex-1 text-sm font-medium cursor-pointer transition-colors hover:bg-accent",
-              active === "status"
-                ? "border-primary bg-primary/10 text-primary"
-                : ""
-            )}
-        >
-          Status
-        </Button>
-        {isAdmin && (
-          <Button
-            type="button"
-            data-ios-glass
-            variant="outline"
-            aria-pressed={active === "edit"}
-            data-ios-selected={active === "edit" ? "true" : undefined}
-            onClick={() => selectRoomTab(n, "edit")}
-            className={cn("inline-flex items-center justify-center h-11 w-11 shrink-0 rounded-xl border bg-background shadow-sm active:scale-[0.97] active:shadow-none text-sm font-medium cursor-pointer transition-colors hover:bg-accent", active === "edit" && "border-primary bg-primary/10 text-primary")}
-            aria-label="Edit defaults"
-          >
-            <Pencil className="h-4 w-4" />
-          </Button>
-        )}
-        {(!isHousekeeper || isAdmin) && (() => {
-          const msgs = activeMessagesByRoom(n);
-          const room = rooms.find((r) => r.room_number === n);
-          const note = room?.housekeeping_note ?? null;
-          const maintenance = !!room?.needs_maintenance;
-          const vacated = !!room?.guest_vacated;
-          // On reception, ignore messages reception themselves sent (they're
-          // outgoing to housekeeping). Housekeeping originals and any replies
-          // still trigger the dot.
-          // A pin in the hub wants you: an open one for your department, or a reply to yours.
-          const hasMsg = pinsNeedingYou(pinsQ.data ?? [], n, pinViewer).length > 0;
-          const hasNote = !!note;
-          const hasIndicator = hasMsg || hasNote || maintenance || vacated;
-          return (
+      <div className="shrink-0">
+        <RoomSummaryStrip bed={guests || bed ? bed : null} guests={guests} checkedOut={checkedOut} />
+        <div className="flex flex-row items-center gap-2 mb-3 max-lg:mb-1">
+          <RoomTabs
+            selected={selected}
+            tabs={showsHub ? ["linen", "status", "hub"] : ["linen", "status"]}
+            onSelect={(tab) => {
+              if (tab === "linen") { clearRoomTabs(); return; }
+              if (active !== tab) selectRoomTab(n, tab);
+            }}
+            hubIndicator={hasIndicator ? (
+              <span className="absolute right-1 top-1 flex items-center gap-0.5">
+                {hasMsg && <span aria-label="Pins waiting" className="h-2 w-2 rounded-full bg-orange-500" />}
+                {!!note && <span aria-label="Note" className="h-2 w-2 rounded-full bg-primary" />}
+                {maintenance && <Wrench aria-label="Maintenance" className="h-3 w-3 text-amber-600 dark:text-amber-400" />}
+              </span>
+            ) : null}
+          />
+          {isAdmin && (
             <Button
               type="button"
               data-ios-glass
               variant="outline"
-              aria-pressed={active === "hub"}
-              data-ios-selected={active === "hub" ? "true" : undefined}
-              onClick={() => selectRoomTab(n, "hub")}
-              className={cn("relative overflow-visible inline-flex items-center justify-center h-11 w-11 shrink-0 rounded-xl border bg-background shadow-sm active:scale-[0.97] active:shadow-none text-sm font-medium cursor-pointer transition-colors hover:bg-accent", active === "hub" && "border-primary bg-primary/10 text-primary")}
-              aria-label="Room hub"
+              aria-pressed={active === "edit"}
+              data-ios-selected={active === "edit" ? "true" : undefined}
+              onClick={() => selectRoomTab(n, "edit")}
+              className={cn("inline-flex items-center justify-center gap-1.5 h-11 shrink-0 rounded-xl border bg-background px-3 shadow-sm active:scale-[0.97] active:shadow-none text-sm font-medium cursor-pointer transition-colors hover:bg-accent", active === "edit" && "border-primary bg-primary/10 text-primary")}
+              aria-label="Edit defaults"
             >
-              <Inbox className="h-4 w-4" />
-
-              {hasIndicator && (
-                <span className="absolute -top-0.5 -right-0.5 z-10 flex items-center gap-0.5">
-                  {hasMsg && (
-                    <span aria-label="Pins waiting" className="h-2 w-2 rounded-full bg-orange-500 ring-2 ring-background" />
-                  )}
-                  {hasNote && (
-                    <span aria-label="Note" className="h-2 w-2 rounded-full bg-primary ring-2 ring-background" />
-                  )}
-                  {maintenance && (
-                    <Wrench aria-label="Maintenance" className="h-3 w-3 text-amber-600 dark:text-amber-400" />
-                  )}
-                  {vacated && (
-                    <DoorOpen aria-label="Vacated" className="h-3 w-3 text-emerald-600 dark:text-emerald-400" />
-                  )}
-                </span>
-              )}
+              <Pencil className="h-4 w-4" /><span className="max-sm:hidden">Edit</span>
             </Button>
-          );
-        })()}
+          )}
+        </div>
       </div>
     );
  };
@@ -5078,6 +5062,8 @@ const toggleRoomCategory = async (roomNumber: number, value: Category) => {
  {/* Reception sheet (Admin/User): Done + Status + Bed */}
   <HomeInline active={!isReception && openRoom !== null && receptionSheetRoom === openRoom} target={roomViewBodyEl} noFit>
   <ReceptionStatusSheet
+    openJobsFor={(n) => maintenanceRequests.filter((m) => !m.done && m.room_number === n).map((m) => m.message)}
+    onShowInfo={!isHousekeeper || isAdmin ? (n) => selectRoomTab(n, "hub") : undefined}
     inlineView={!isReception && openRoom !== null && receptionSheetRoom === openRoom}
     receptionSheetRoom={receptionSheetRoom}
     setReceptionSheetRoom={setReceptionSheetRoom}
@@ -6287,7 +6273,8 @@ const activeFloor = selectedFloor && floorGroups.some((group) => group.key === s
    setSelectedFloor(floor);
   };
  return <>
-   <div className="mb-3 mx-auto flex max-sm:w-fit max-sm:max-w-full items-center overflow-x-auto rounded-full border border-border bg-background p-1 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden" aria-label="Floor selection">
+   <div className="mb-3 flex items-center gap-2">
+   <div className="mx-auto flex min-w-0 flex-1 max-sm:w-fit max-sm:max-w-full items-center overflow-x-auto rounded-full border border-border bg-background p-1 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden" aria-label="Floor selection">
      <Button data-touch-exempt type="button" variant="outline" aria-pressed={activeFloor === null} onClick={() => chooseFloor(null)}
        className={cn("h-8 min-w-0 max-sm:shrink-0 rounded-full px-3 text-xs whitespace-nowrap transition-colors sm:flex-1 sm:text-sm", activeFloor === null ? "bg-primary text-primary-foreground shadow-sm font-medium" : "text-muted-foreground hover:text-foreground")}>
        {isMobile && !isTablet ? "All" : "All rooms"}
@@ -6302,7 +6289,57 @@ const activeFloor = selectedFloor && floorGroups.some((group) => group.key === s
        );
      })}
    </div>
+   <HomeLayoutToggle layout={homeLayout} onChange={(next) => { setHomeLayout(next); saveLayout(authUser?.id, next); }} />
+   </div>
 
+         {homeLayout === "list" ? (() => {
+           // The same rooms as the grid, as cards: the rooms to do first, then the rest folded away.
+           const listRooms: ListRoom[] = displayedRooms.map((n) => {
+             const room = roomByNumber.get(n);
+             const flags = resolveRoomStatusFlags(room, statusIds);
+             return {
+               n,
+               done: isReception ? !!room?.done || !!room?.done_reception : doneSet.has(n),
+               neverServiced: flags.isStaff || flags.isRos,
+               notRequired: nrOnRooms.has(n),
+               stayover: flags.isStayover || flags.isDnd,
+               sheetKind: room?.sheet_kind,
+               guestVacated: !!room?.guest_vacated,
+             };
+           });
+           const cardFor = (n: number) => {
+             const room = roomByNumber.get(n);
+             const incoming = hasIncomingGuest(room?.sheet_kind);
+             const norm = (v: string) => v.toLowerCase().replace(/[^a-z0-9]/g, "");
+             const cats = parseCats(room?.category).map(norm);
+             const roomBed = receptionBeds.find((b) => b.id === room?.reception_bed_id)?.label
+               ?? (cats.includes("double") && !cats.includes("superking") ? "Double" : null);
+             const flags = resolveRoomStatusFlags(room, statusIds);
+             return (
+               <HomeRoomCard
+                 n={n}
+                 room={room}
+                 statusIds={statusIds}
+                 state={getRoomTileState(n, isReception ? hkDoneSet.has(n) : doneSet.has(n))}
+                 isNR={nrOnRooms.has(n)}
+                 hasLinenCount={countedRooms.has(n)}
+                 pinDot={pinDotFor(pinsQ.data ?? [], n, pinViewer)}
+                 hasOpenMaintenance={roomsWithOpenMaintenance.has(n)}
+                 role={isReception ? "reception" : "housekeeping"}
+                 bed={incoming ? setAsBed({ sheetBed: room?.sheet_bed, sheetRoomType: room?.sheet_room_type, roomBed }) : null}
+                 guests={incoming ? room?.sheet_guests ?? null : null}
+                 disabled={isReception && flags.isStaff}
+                 onClick={() => openOrToggle(n)}
+               />
+             );
+           };
+           return (
+             <HomeList
+               toDo={listToDo(listRooms).map((r) => ({ n: r.n, card: cardFor(r.n) }))}
+               finished={listFinished(listRooms).map((r) => ({ n: r.n, card: cardFor(r.n) }))}
+             />
+           );
+         })() : (
          <div ref={setRoomGridEl} className="grid grid-cols-4 sm:grid-cols-6 md:grid-cols-[repeat(auto-fill,minmax(5.75rem,1fr))] lg:grid-cols-[repeat(auto-fill,minmax(7.5rem,1fr))] gap-2 md:gap-3">
            {displayedRooms.map((n, i) => (
              <React.Fragment key={`r-${n}`}>
@@ -6313,6 +6350,7 @@ const activeFloor = selectedFloor && floorGroups.some((group) => group.key === s
              </React.Fragment>
            ))}
          </div>
+         )}
  </>;
  })()}
  </div>

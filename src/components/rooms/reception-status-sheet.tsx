@@ -1,4 +1,5 @@
 import React from "react";
+import { RoomInfoSummary } from "@/components/rooms/room-sheet-parts";
 import { ArrowLeft, ChevronDown, ConciergeBell, DoorOpen, Footprints, Camera, Clock, Dog } from "lucide-react";
 import type { QueryClient } from "@tanstack/react-query";
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetDescription } from "@/components/ui/sheet";
@@ -50,6 +51,10 @@ type Props = {
   setPendingDndRoom: (n: number | null) => void;
   /** Closes the room view back to the tile grid once a room is marked done. */
   closeRoomView?: () => void;
+  /** The room's open maintenance jobs, for the summary under the checklist. */
+  openJobsFor?: (n: number) => string[];
+  /** Opens the Room info tab from that summary (left out where Room info isn't shown). */
+  onShowInfo?: (n: number) => void;
 
 };
 
@@ -87,7 +92,8 @@ export function ReceptionStatusSheet({
   deleteTodayStayoverPhotosForRoom,
   setPendingDndRoom,
   closeRoomView,
-
+  openJobsFor,
+  onShowInfo,
 }: Props) {
   const roomFlags = useRoomFlags();
   const mattressInterval = useMattressInterval();
@@ -134,7 +140,7 @@ export function ReceptionStatusSheet({
            onClick={onClick}
            data-no-click-sound={noClickSound ? "true" : undefined}
            className={cn(
-            "w-full flex items-center justify-center text-center gap-3 rounded-xl border bg-background shadow-sm px-4 min-h-12 text-sm font-medium transition-colors hover:bg-accent disabled:opacity-60 disabled:cursor-not-allowed",
+            "w-full flex items-center justify-center text-center gap-3 rounded-xl border bg-background shadow-sm px-1.5 sm:px-4 min-h-12 text-sm max-sm:text-[13px] font-medium transition-colors hover:bg-accent disabled:opacity-60 disabled:cursor-not-allowed",
              selected && "border-primary bg-primary/10 text-primary",
            )}
          >
@@ -371,6 +377,11 @@ export function ReceptionStatusSheet({
               </div>
              )}
                {room && <RoomGuestExtras key={n} room={room} />}
+               {/* The room's flags and open jobs at a glance; the full list is in Room info. */}
+               {!isReception && (
+                 <RoomInfoSummary room={room} n={n} openJobs={openJobsFor?.(n) ?? []}
+                   onShowInfo={onShowInfo ? () => onShowInfo(n) : undefined} />
+               )}
                <div className={cn("border-y py-4", (room?.mattress_tracking || (!isReception && room && !room.done && !room.done_reception && setRoomsLeftDirty)) && "grid grid-cols-2 gap-1.5")}>
                  <Row
                    label="Mark as Done"

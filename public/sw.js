@@ -1,4 +1,4 @@
-// Push notification service worker for The Hotel Hub.
+// Push notification service worker for Tsuyu.
 // Tiny: push + notificationclick only. No app-shell caching.
 
 self.addEventListener("install", (event) => {
@@ -14,9 +14,9 @@ self.addEventListener("push", (event) => {
   try {
     data = event.data ? event.data.json() : {};
   } catch (_e) {
-    data = { title: "The Hotel Hub", body: event.data ? event.data.text() : "" };
+    data = { title: "Tsuyu", body: event.data ? event.data.text() : "" };
   }
-  const title = data.title || "The Hotel Hub";
+  const title = data.title || "Tsuyu";
   const options = {
     body: data.body || " ",
     icon: "/favicon-192.png",
