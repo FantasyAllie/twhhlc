@@ -2491,8 +2491,9 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
           done: false,
           done_reception: false,
           housekeeping_note: null,
-          reception_status_id: null,
-          reception_bed_id: null,
+          // A finished room keeps its status (Clean, without the tick); every room
+          // keeps the bed it was made up as until its next departure.
+          reception_status_id: r.done || r.done_reception ? r.reception_status_id : null,
           guest_vacated: keep?.guest_vacated ?? false,
           stayover_out: keep?.stayover_out ?? false,
           stayover_out_at: keep?.stayover_out_at ?? null,
@@ -2530,8 +2531,6 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
       early_check_in_at: null,
       late_checkout: false,
       late_checkout_at: null,
-      reception_status_id: null,
-      reception_bed_id: null,
       not_required: false,
       not_required_at: null, sheet_kind: null, sheet_guests: null, sheet_bed: null, sheet_room_type: null,
     } as never).neq("room_number", -1);
@@ -2546,8 +2545,6 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
         done: false,
         done_reception: false,
         housekeeping_note: null,
-        reception_status_id: null,
-        reception_bed_id: null,
         guest_vacated: keep.guest_vacated,
         guest_vacated_at: keep.guest_vacated_at,
         stayover_out: keep.stayover_out,
@@ -2564,6 +2561,14 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
         not_required_at: null, sheet_kind: null, sheet_guests: null, sheet_bed: null, sheet_room_type: null,
       } as never).eq("room_number", rn);
       if (r.error) toast.error(r.error.message);
+    }
+
+    // Rooms that weren't finished lose their status; finished ones keep it. The
+    // bed is never cleared here: it goes at the room's next departure.
+    const unfinished = currentRooms.filter((r) => !r.done && !r.done_reception).map((r) => r.room_number);
+    if (unfinished.length > 0) {
+      const rs = await supabase.from("rooms").update({ reception_status_id: null } as never).in("room_number", unfinished);
+      if (rs.error) toast.error(rs.error.message);
     }
 
     // Clear room linen counts, rejects, and delivery counts so the reset
