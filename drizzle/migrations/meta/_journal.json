@@ -470,6 +470,13 @@
       "when": 1794857776167,
       "tag": "0066_run_pending_0065_chat_current_department",
       "breakpoints": true
+    },
+    {
+      "idx": 67,
+      "version": "7",
+      "when": 1794924631032,
+      "tag": "0067_keep_bed_until_departure",
+      "breakpoints": true
     }
   ]
 }
