@@ -4523,7 +4523,7 @@ const toggleRoomCategory = async (roomNumber: number, value: Category) => {
  <header className="flex items-start justify-between gap-3 flex-wrap rounded-2xl border border-primary/20 bg-sidebar px-4 pt-4 pb-3 sm:px-5 sm:pt-5 sm:pb-4 shadow-elevation-2">
           <div className="min-w-0 flex-1">
             <p className="text-[10px] font-bold uppercase tracking-[0.22em] text-sidebar-primary">
-              The Hotel <span className="text-sidebar-foreground">Hub</span>
+              Tsuyu
             </p>
             <h1 className="mt-1 text-xl sm:text-2xl font-semibold tracking-tight text-sidebar-foreground">{hotelName}</h1>
             {developerViewOnly && <p className="mt-0.5 text-xs font-medium text-amber-600 dark:text-amber-400">View only. Developer accounts can change test hotels only.</p>}

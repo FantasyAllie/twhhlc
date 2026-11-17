@@ -218,8 +218,11 @@ function LoginPage() {
             alt=""
             className="h-[88px] w-[88px] rounded-[20px] object-contain shadow-[0_10px_28px_rgba(19,34,56,0.16)]"
           />
-          <h1 className="mt-6 text-[44px] font-semibold leading-none tracking-tight">Tsuyu</h1>
-          <p lang="ja" aria-label="Tsuyu, dew in Japanese" className="mt-2.5 text-[22px] font-semibold leading-none text-[#6E62A8] dark:text-[#B9AEE6]">露</p>
+          {/* 露 sits beside the name, on the same baseline. */}
+          <div className="mt-6 flex items-baseline justify-center gap-2.5">
+            <h1 className="text-[44px] font-semibold leading-none tracking-tight">Tsuyu</h1>
+            <span lang="ja" aria-label="Tsuyu, dew in Japanese" className="text-[30px] font-semibold leading-none text-[#6E62A8] dark:text-[#B9AEE6]">露</span>
+          </div>
           <p className="mt-4 text-[15px] text-muted-foreground">
             {mode === "signup"
               ? "Create your account"
