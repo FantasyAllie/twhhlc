@@ -133,7 +133,8 @@ async function subsForUsers(userIds: string[]): Promise<SubRow[]> {
   return (subRows ?? []) as SubRow[];
 }
 
-const IOS_BUNDLE_IDS = new Set(["com.allie.innsync"]);
+// Tsuyu (new) and InnSync (older installs).
+const IOS_BUNDLE_IDS = new Set(["com.allie.tsuyu", "com.allie.innsync"]);
 
 /** Also sends to the iPhone app. Never throws, so web push is unaffected. */
 async function sendToIosDevices(
@@ -169,7 +170,8 @@ async function sendToIosDevices(
   }
 }
 
-const ANDROID_PACKAGES = new Set(["com.allie.innsync"]);
+// Tsuyu (new) and InnSync (older installs).
+const ANDROID_PACKAGES = new Set(["com.allie.tsuyu", "com.allie.innsync"]);
 
 /** Also sends to the Android app, through Firebase. Never throws, so web push is unaffected. */
 async function sendToAndroidDevices(
