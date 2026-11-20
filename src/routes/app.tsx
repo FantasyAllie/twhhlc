@@ -49,7 +49,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { InventoryDialog, type InventorySection } from "@/components/linen/inventory-dialog";
 import { ManageRoomsDialogs } from "@/components/rooms/manage-rooms-dialogs";
-import { Minus, Plus, X, Menu, ArrowUp, ArrowDown, Pencil, Check, Trash2, Sun, SunDim, Moon, MoonStar, List, Bed, House, Ban, History, Users, User, Hash, ConciergeBell, ClipboardList, Printer, Filter, Wrench, DoorOpen, Footprints, Bell, Eye, EyeOff, HelpCircle, AlertCircle, MessageSquare, PackageSearch, RotateCcw, ChevronDown, ChevronRight, Camera, LayoutGrid, Truck, Clock, Dog, Undo2, Inbox, MapPin, Flag, Pin, SunMoon } from "lucide-react";
+import { Minus, Plus, X, Menu, ArrowUp, ArrowDown, Pencil, Check, Trash2, Sun, SunDim, Moon, MoonStar, List, Bed, House, Ban, History, Users, User, Hash, ConciergeBell, ClipboardList, Printer, BedDouble, Utensils, Hammer, Filter, Wrench, DoorOpen, Footprints, Bell, Eye, EyeOff, HelpCircle, AlertCircle, MessageSquare, PackageSearch, RotateCcw, ChevronDown, ChevronRight, Camera, LayoutGrid, Truck, Clock, Dog, Undo2, Inbox, MapPin, Flag, Pin, SunMoon } from "lucide-react";
 import {
   AccountDialog,
   AddConfigDialogs,
@@ -185,8 +185,9 @@ import { usePendingCounts } from "@/lib/pending-counts";
 import { cacheSavedRoomCount } from "@/lib/linen-count-cache";
 import { buildOpsState, captureOpsSnapshot, undoLastOpsSnapshot } from "@/lib/ops-snapshots";
 import { HomeRoomCard, HousekeepingRoomTile, ReceptionRoomTile } from "@/components/rooms/room-tile";
-import { HomeList, HomeLayoutToggle } from "@/components/rooms/home-list";
+import { HomeList, HomeLayoutButton } from "@/components/rooms/home-list";
 import { RoomSummaryStrip, RoomTabs, type RoomTabKey } from "@/components/rooms/room-sheet-parts";
+import { loadTileIconsFor, setTileIconStyle, useTileIconStyle } from "@/lib/tile-icons";
 import { finished as listFinished, hasIncomingGuest, loadLayout, saveLayout, toDo as listToDo, type HomeLayout, type ListRoom } from "@/lib/home-list";
 import { ShiftBrief, ShiftBriefSettingsSheet } from "@/components/rooms/guest-extras";
 import { PinRepliesStrip, RoomPinSettingsSheet, RoomPins, pinDotFor, pinsNeedingYou, useRoomPins, type PinViewer } from "@/components/rooms/room-pins";
@@ -224,6 +225,7 @@ function AppearancePicker({
   leading?: React.ReactNode;
 }) {
   const [open, setOpen] = useState(false);
+  const tileIcons = useTileIconStyle();
   const current = ACCENTS.find((a) => a.id === accent) ?? ACCENTS[0];
   // The theme button cycles Light → Dark → Auto and shows the one in use.
   const next = THEME_LEVELS[(THEME_LEVELS.indexOf(level) + 1) % THEME_LEVELS.length] ?? "cream";
@@ -290,6 +292,27 @@ function AppearancePicker({
                 </button>
               );
             })}
+          </div>
+          {/* Tile icons (AppearanceSettings.swift): Calm in the tile's own colour, or
+              Colourful with each flag's own colour. Each person's own choice in this browser. */}
+          <div className="flex items-center justify-between gap-3 px-1 pt-2 pb-1">
+            <span className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">Tile icons</span>
+            <div role="radiogroup" aria-label="Tile icons" className="flex shrink-0 items-center rounded-full border bg-card p-0.5">
+              {(["calm", "colourful"] as const).map((style) => (
+                <button
+                  key={style}
+                  type="button"
+                  role="radio"
+                  aria-checked={tileIcons === style}
+                  tabIndex={open ? 0 : -1}
+                  onClick={() => setTileIconStyle(style)}
+                  className={cn("h-8 min-h-0 rounded-full px-3 text-xs font-semibold transition-colors",
+                    tileIcons === style ? "bg-primary text-primary-foreground" : "text-muted-foreground hover:text-foreground")}
+                >
+                  {style === "calm" ? "Calm" : "Colourful"}
+                </button>
+              ))}
+            </div>
           </div>
         </div>
       </div>
@@ -418,6 +441,8 @@ function AppPage() {
     return () => mql.removeEventListener("change", update);
   }, []);
   const [authUser, setAuthUser] = useState(() => getStoredUser());
+  // Each person's tile icon choice (More → Appearance), kept in this browser.
+  useEffect(() => { loadTileIconsFor(authUser?.id); }, [authUser?.id]);
   const currentHotelQ = useCurrentHotel();
   const floorsQ = useFloors();
   const cupboards = cupboardLocations(floorsQ.data ?? []);
@@ -763,6 +788,7 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
   useEffect(() => {
     setHomeLayout(loadLayout(authUser?.id));
   }, [authUser?.id]);
+  const changeHomeLayout = (next: HomeLayout) => { setHomeLayout(next); saveLayout(authUser?.id, next); };
   const [hkFiltersOpen, setHkFiltersOpen] = useState(false);
   const [hkFiltersAnchor, setHkFiltersAnchor] = useState<{ top: number; left: number } | null>(null);
   const [hkStatusFilter, setHkStatusFilter] = useState<string[]>([]);
@@ -4516,6 +4542,13 @@ const toggleRoomCategory = async (roomNumber: number, value: Category) => {
             <ConciergeBell className="h-4 w-4" />
           </Button>
         )}
+        {/* Grid or list, beside Quick Setup, so the floor pills keep their row. */}
+        {!isFnb && !isMaintenance && (
+          <HomeLayoutButton layout={homeLayout} onChange={changeHomeLayout} render={({ icon, label, onClick }) => (
+            <Button variant="ghost" size="sm" data-ios-glass aria-label={label} title={label}
+              className="shrink-0 size-9 p-0 text-sidebar-foreground" onClick={onClick}>{icon}</Button>
+          )} />
+        )}
         <div ref={setTopBarSlot} className="empty:hidden shrink-0 order-last" />
       </div>
     </div>
@@ -4550,6 +4583,11 @@ const toggleRoomCategory = async (roomNumber: number, value: Category) => {
         <ConciergeBell className="h-4 w-4 sm:mr-2" />
         <span className="hidden sm:inline">Quick Setup</span>
       </Button>
+    )}
+    {!isFnb && !isMaintenance && (
+      <HomeLayoutButton layout={homeLayout} onChange={changeHomeLayout} render={({ icon, label, onClick }) => (
+        <Button variant="outline" size="sm" onClick={onClick} title={label} aria-label={label}>{icon}</Button>
+      )} />
     )}
     {!isMobile && isReception && (
       <Button
@@ -4713,27 +4751,31 @@ const toggleRoomCategory = async (roomNumber: number, value: Category) => {
      >
        <SheetHeader className="text-left">
          <SheetTitle>Department</SheetTitle>
-         <SheetDescription>Switch between your assigned departments.</SheetDescription>
+         <SheetDescription className="sr-only">Switch between your assigned departments.</SheetDescription>
        </SheetHeader>
-       <div className="mt-4 grid gap-2">
+       {/* One row per department with its icon and a tick on the current one, like the
+           Paperwork screen's rows, with the explanation under the card (DepartmentListView). */}
+       <div className="mt-4 divide-y overflow-hidden rounded-2xl border bg-card">
          {availableViews.map((r) => {
            const active = effectiveRole === r;
+           const DeptIcon = viewRoleIcon(r);
            return (
-             <Button
+             <button
                key={r}
-               variant={isIosDevice ? "outline" : active ? "default" : "outline"}
-               data-ios-glass={isIosDevice ? "" : undefined}
-               data-ios-selected={isIosDevice && active ? "" : undefined}
-               size="lg"
-               className="justify-start h-12"
+               type="button"
+               role="radio"
+               aria-checked={active}
+               className="flex min-h-[52px] w-full items-center gap-4 px-4 text-left transition-colors hover:bg-accent"
                onClick={() => { setViewAsRole(active ? null : r); setRolePickerSheetOpen(false); }}
              >
-               <span className="flex-1 text-left">{viewRoleLabel(r)}</span>
-               {active && <Check className="h-4 w-4 ml-2" />}
-             </Button>
+               <DeptIcon aria-hidden className="h-5 w-5 shrink-0" />
+               <span className="flex-1 text-[15px]">{viewRoleLabel(r)}</span>
+               {active && <Check aria-hidden className="h-4 w-4 text-primary" />}
+             </button>
            );
          })}
        </div>
+       <p className="mt-2 px-4 text-xs text-muted-foreground">Switch between your assigned departments. New messages are labelled with this one.</p>
      </SheetContent>
    </Sheet>
    );
@@ -5303,32 +5345,23 @@ const toggleRoomCategory = async (roomNumber: number, value: Category) => {
       />
     </SheetHeader>
     <div className="flex-1 min-h-0 overflow-y-auto px-4 max-lg:px-0 sm:px-6 py-4 sm:py-6">
-    {/* Switch department right here, under your name (also in Departments). */}
-    {canViewAs && (
-      <div className="mb-4 space-y-2 rounded-2xl border bg-card p-3.5">
-        <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">Department</p>
-        <div className="flex flex-wrap gap-1.5">
-          {availableViews.map((r) => {
-            const active = effectiveRole === r;
-            return (
-              <button
-                key={r}
-                type="button"
-                aria-pressed={active}
-                onClick={() => setViewAsRole(r)}
-                className={cn(
-                  "inline-flex h-9 items-center gap-1.5 rounded-full px-3.5 text-sm transition-colors",
-                  active ? "bg-primary font-semibold text-primary-foreground" : "border border-border font-medium text-foreground hover:bg-accent",
-                )}
-              >
-                {viewRoleLabel(r)}{active && <Check aria-hidden className="h-3.5 w-3.5" />}
-              </button>
-            );
-          })}
-        </div>
-        <p className="text-xs text-muted-foreground">Switch between your assigned departments. New messages are labelled with this one.</p>
-      </div>
-    )}
+    {/* The department being viewed, under your name; it opens the list of
+        assigned departments to switch between (also in Departments). */}
+    {canViewAs && (() => {
+      const DeptIcon = viewRoleIcon(effectiveRole ?? "user");
+      return (
+        <button
+          type="button"
+          onClick={() => setRolePickerSheetOpen(true)}
+          className="mb-4 flex min-h-[52px] w-full items-center gap-4 rounded-2xl border bg-card px-4 text-left transition-colors hover:bg-accent"
+        >
+          <DeptIcon aria-hidden className="h-5 w-5 shrink-0" />
+          <span className="flex-1 text-[15px]">Department</span>
+          <span className="text-[15px] text-muted-foreground">{viewRoleLabel(effectiveRole ?? "user")}</span>
+          <ChevronRight aria-hidden className="h-4 w-4 text-muted-foreground" />
+        </button>
+      );
+    })()}
     <AppMenuRows
       menuGroups={menuGroups}
       close={() => setMenuSheetOpen(false)}
@@ -6300,33 +6333,30 @@ const toggleRoomCategory = async (roomNumber: number, value: Category) => {
      );
    }
    }
- // Phones open on the first floor until the user picks a view; "All rooms" is available everywhere.
+ // Every floor until one is picked; tapping the chosen floor again shows every floor (no "All" pill).
 const activeFloor = selectedFloor && floorGroups.some((group) => group.key === selectedFloor)
   ? selectedFloor : null;
  const displayedRooms = activeFloor ? floorGroups.find((group) => group.key === activeFloor)?.rooms ?? [] : visibleRooms;
  const slotAfter = slotAfterFor(displayedRooms);
  const chooseFloor = (floor: string | null) => {
    if (openRoom !== null) closeRoomView();
-   setSelectedFloor(floor);
+   setSelectedFloor(floor !== null && floor === activeFloor ? null : floor);
   };
  return <>
-   <div className="mb-3 flex items-center gap-2">
-   <div className="mx-auto flex min-w-0 flex-1 max-sm:w-fit max-sm:max-w-full items-center overflow-x-auto rounded-full border border-border bg-background p-1 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden" aria-label="Floor selection">
-     <Button data-touch-exempt type="button" variant="outline" aria-pressed={activeFloor === null} onClick={() => chooseFloor(null)}
-       className={cn("h-8 min-w-0 max-sm:shrink-0 rounded-full px-3 text-xs whitespace-nowrap transition-colors sm:flex-1 sm:text-sm", activeFloor === null ? "bg-primary text-primary-foreground shadow-sm font-medium" : "text-muted-foreground hover:text-foreground")}>
-       {isMobile && !isTablet ? "All" : "All rooms"}
-     </Button>
+   <div className="mb-3 flex items-center justify-center">
+   {/* Centred when they all fit; scrolls sideways when there are too many. */}
+   <div className="mx-auto flex w-fit min-w-0 max-w-full items-center overflow-x-auto rounded-full border border-border bg-background p-1 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden" aria-label="Floor selection">
      {floorGroups.map((group) => {
        const active = activeFloor === group.key;
        return (
          <Button key={group.key} data-touch-exempt type="button" variant="outline" aria-pressed={active} onClick={() => chooseFloor(group.key)}
-           className={cn("h-8 min-w-0 gap-1 rounded-full px-3 text-xs whitespace-nowrap transition-colors max-sm:shrink-0 sm:flex-1 sm:text-sm", active ? "bg-primary text-primary-foreground shadow-sm font-medium" : "text-muted-foreground hover:text-foreground")}>
-           <span className="truncate">{group.label}</span><span className="shrink-0 text-[0.65rem] opacity-70 tabular-nums">{group.rooms.length}</span>
+           title={active ? "Show every floor" : undefined}
+           className={cn("h-8 shrink-0 gap-1 rounded-full px-3 text-xs whitespace-nowrap transition-colors sm:text-sm", active ? "bg-primary text-primary-foreground shadow-sm font-medium" : "text-muted-foreground hover:text-foreground")}>
+           <span>{group.label}</span><span className="shrink-0 text-[0.65rem] opacity-70 tabular-nums">{group.rooms.length}</span>
          </Button>
        );
      })}
    </div>
-   <HomeLayoutToggle layout={homeLayout} onChange={(next) => { setHomeLayout(next); saveLayout(authUser?.id, next); }} />
    </div>
 
          {homeLayout === "list" ? (() => {
@@ -6340,8 +6370,10 @@ const activeFloor = selectedFloor && floorGroups.some((group) => group.key === s
                neverServiced: flags.isStaff || flags.isRos,
                notRequired: nrOnRooms.has(n),
                stayover: flags.isStayover || flags.isDnd,
+               dnd: flags.isDnd,
                sheetKind: room?.sheet_kind,
                guestVacated: !!room?.guest_vacated,
+               firstUp: !!room?.early_check_in || !!room?.late_checkout,
              };
            });
            const cardFor = (n: number) => {
@@ -6980,6 +7012,10 @@ const IOS_CENTRED_POPUP =
   "ios-compose-glass max-lg:left-4 max-lg:right-4 max-lg:top-1/2 max-lg:bottom-auto max-lg:w-auto max-lg:h-auto max-lg:max-h-[80dvh] max-lg:-translate-y-1/2 max-lg:rounded-3xl max-lg:border max-lg:data-[state=open]:animate-[sheet-pop-in_250ms_ease-out] max-lg:data-[state=closed]:animate-[sheet-pop-out_180ms_ease-in]";
 
 // Display name for each view role, shared by the header pills and the picker.
+/** Each department's icon, for the department rows (Department.systemImage in Roles.swift). */
+const viewRoleIcon = (r: string) =>
+  r === "user" ? BedDouble : r === "reception" ? ConciergeBell : r === "fnb" ? Utensils : r === "maintenance" ? Hammer : LayoutGrid;
+
 const viewRoleLabel = (r: string): string =>
   r === "user" ? "Housekeeping"
   : r === "fnb" ? "F&B"

@@ -106,7 +106,7 @@ export function setAsBed(a: { sheetBed: string | null | undefined; sheetRoomType
 
 /** Tile wording for sheet departures (hidden "Departure" status shown instead of Dirty). */
 export const departureLabel = (kind: string | null | undefined): string | null =>
-  kind === "turnover" ? "Depart / Arrival" : kind === "departure" ? "Depart" : null;
+  kind === "turnover" ? "Turnover" : kind === "departure" ? "Depart" : null;
 
 /** Reception (any), Housekeeping managers and admins/developers may upload. Database policy mirrors this. */
 export function canUploadMorningSheet(position: string | undefined, departments: readonly string[]): boolean {

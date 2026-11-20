@@ -1,5 +1,6 @@
 // Home's list view (HomeList.kt on Android, HomeList.swift on iPhone): the rooms
-// still to do, most urgent first, with finished rooms folded away underneath.
+// still to do (early check-ins and late checkouts first, then by room number), with
+// finished rooms folded away underneath.
 // "Checked out" is the room's Guest vacated flag (guest_vacated), which clears
 // when the room is done or on Reset all.
 
@@ -14,32 +15,25 @@ export type ListRoom = {
   notRequired: boolean;
   /** A stayover or DND room. */
   stayover: boolean;
+  /** Do Not Disturb: the guest asked not to be serviced. */
+  dnd?: boolean;
   sheetKind?: string | null;
   guestVacated?: boolean;
+  /** An early check-in or late checkout: goes to the top of the list. */
+  firstUp?: boolean;
 };
 
-/** A room that still needs cleaning today. */
-export const isToDo = (r: ListRoom) => !r.done && !r.notRequired && !r.neverServiced;
-
 /**
- * How urgent a room is: checked-out departures first (they're empty and safe to
- * go in), then turnovers, departures, arrivals, stayovers and everything else.
+ * A room that still needs cleaning today. Do Not Disturb rooms aren't: the guest
+ * has asked not to be serviced, so they go straight to Done.
  */
-export function priority(r: ListRoom): number {
-  const leaving = r.sheetKind === "turnover" || r.sheetKind === "departure";
-  if (leaving && r.guestVacated) return 0;
-  if (r.sheetKind === "turnover") return 1;
-  if (r.sheetKind === "departure") return 2;
-  if (r.sheetKind === "arrival") return 3;
-  if (r.sheetKind === "stayover" || r.stayover) return 4;
-  return 5;
-}
+export const isToDo = (r: ListRoom) => !r.done && !r.notRequired && !r.neverServiced && !r.dnd;
 
-/** The rooms to do, most urgent first, then by room number. */
+/** The rooms to do: early check-ins and late checkouts first, then in room number order. */
 export const toDo = (rooms: ListRoom[]) =>
-  rooms.filter(isToDo).sort((a, b) => priority(a) - priority(b) || a.n - b.n);
+  rooms.filter(isToDo).sort((a, b) => Number(!!b.firstUp) - Number(!!a.firstUp) || a.n - b.n);
 
-/** Everything else (done, Staff, ROS, not required), by room number. */
+/** Everything else (done, DND, Staff, ROS, not required), by room number. */
 export const finished = (rooms: ListRoom[]) => rooms.filter((r) => !isToDo(r)).sort((a, b) => a.n - b.n);
 
 /** A guest is arriving today, so housekeeping needs the bed and the head count. */
@@ -47,7 +41,7 @@ export const hasIncomingGuest = (sheetKind?: string | null) => sheetKind === "tu
 
 export const guestsLabel = (count: number) => (count === 1 ? "1 guest" : `${count} guests`);
 
-/** The tile's two-line label on one line ("Depart / Arrival · Not started"). */
+/** The tile's two-line label on one line ("Turnover · Not started"). */
 export const cardLabel = (tileLabel: string) => tileLabel.split("\n").join(" · ");
 
 /** Each person's choice of grid or list, kept in this browser by their user id. */

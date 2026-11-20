@@ -45,7 +45,7 @@ describe("paperwork clean arrival setup", () => {
 });
 
 describe("morning sheet rules", () => {
-  it("paperwork departures and Depart / Arrival use Dirty brown, stayovers the deeper stayover blue", () => {
+  it("paperwork departures and turnovers use Dirty brown, stayovers the deeper stayover blue", () => {
     for (const sheetKind of ["stayover", "departure", "turnover"]) {
       const tone = sheetKind === "stayover" ? "room-stayover-job" : "room-dirty";
       for (const role of ["housekeeping", "reception"] as const) {
@@ -111,9 +111,9 @@ describe("morning sheet room details", () => {
     for (const t of ["TWIN_KING", "SUP_TW_KING", "Family"]) assert.equal(setAsBed({ sheetBed: null, sheetRoomType: t, roomBed: "King" }), "Unknown");
   });
   it("other rooms use their set bed", () => assert.equal(setAsBed({ sheetBed: null, sheetRoomType: "STD_DBL", roomBed: "Double" }), "Double"));
-  it("departures say Depart, turnovers Depart / Arrival", () => {
+  it("departures say Depart, turnovers Turnover", () => {
     assert.equal(departureLabel("departure"), "Depart");
-    assert.equal(departureLabel("turnover"), "Depart / Arrival");
+    assert.equal(departureLabel("turnover"), "Turnover");
     assert.equal(departureLabel("stayover"), null);
   });
   it("only Reception, Housekeeping managers and admins can upload", () => {

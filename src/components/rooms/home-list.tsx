@@ -2,31 +2,25 @@
 // "To do" with the room cards, then "Done · n rooms" to show the rest.
 import { useState, type ReactNode } from "react";
 import { LayoutGrid, List } from "lucide-react";
-import { cn } from "@/lib/utils";
 import { playClick } from "@/lib/click-sound";
 import type { HomeLayout } from "@/lib/home-list";
 
-export function HomeLayoutToggle({ layout, onChange }: { layout: HomeLayout; onChange: (layout: HomeLayout) => void }) {
-  const option = (value: HomeLayout, label: string, icon: ReactNode) => (
-    <button
-      type="button"
-      aria-label={label}
-      aria-pressed={layout === value}
-      onClick={() => { playClick(); onChange(value); }}
-      className={cn(
-        "flex h-8 w-10 items-center justify-center rounded-full transition-colors",
-        layout === value ? "bg-primary text-primary-foreground shadow-sm" : "text-muted-foreground hover:text-foreground",
-      )}
-    >
-      {icon}
-    </button>
-  );
-  return (
-    <div role="group" aria-label="View" className="flex shrink-0 items-center rounded-full border border-border bg-background p-1">
-      {option("grid", "Grid view", <LayoutGrid aria-hidden className="h-4 w-4" />)}
-      {option("list", "List view", <List aria-hidden className="h-4 w-4" />)}
-    </div>
-  );
+/**
+ * Grid or list: one button beside Reset all and Quick Room Setup (HomeLayoutButton in
+ * HomeList.swift). It shows the view it switches to. `children` draws it in the
+ * header's own button style.
+ */
+export function HomeLayoutButton({ layout, onChange, render }: {
+  layout: HomeLayout;
+  onChange: (layout: HomeLayout) => void;
+  render: (props: { icon: ReactNode; label: string; onClick: () => void }) => ReactNode;
+}) {
+  const next: HomeLayout = layout === "grid" ? "list" : "grid";
+  return <>{render({
+    icon: next === "list" ? <List aria-hidden className="h-4 w-4" /> : <LayoutGrid aria-hidden className="h-4 w-4" />,
+    label: next === "list" ? "List view" : "Grid view",
+    onClick: () => { playClick(); onChange(next); },
+  })}</>;
 }
 
 export function HomeList({ toDo, finished }: { toDo: { n: number; card: ReactNode }[]; finished: { n: number; card: ReactNode }[] }) {

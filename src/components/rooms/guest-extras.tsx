@@ -148,8 +148,7 @@ export function useBriefHidden() {
 
 const BRIEF_JOBS = [
   { key: "left_dirty", label: "Left dirty", icon: MoonStar },
-  { key: "departure", label: "Departures", icon: DoorOpen },
-  { key: "turnover", label: "Depart / Arrivals", icon: ArrowLeftRight },
+  { key: "departure", label: "Departures to clean", icon: DoorOpen },
   { key: "arrival", label: "Arrivals", icon: Luggage },
   { key: "stayover", label: "Stayovers", icon: BedDouble },
   { key: "guests", label: "Guests", icon: Users },
@@ -225,17 +224,29 @@ export function ShiftBrief({ rooms }: { rooms: Room[] }) {
   const guests = hidden.has("job:guests") ? 0 : counts.guests;
   const flags = counts.flags.filter((f) => !hidden.has(`flag:${f.def.key}`));
   const extras = extrasTotals(rooms, needsFor).filter((e) => !hidden.has(`extra:${e.extra.id}`));
+  // Totals first, then how each splits (ShiftBrief.swift, layout A): a turnover is both a
+  // room to clean and an arrival, so it counts in both and shows as the shared part.
   const jobTiles = [
     { key: "left_dirty", count: carriedDirtyCount(rooms), singular: "Left dirty", plural: "Left dirty", icon: MoonStar, color: "bg-room-dirty text-room-dirty-fg" },
-    { key: "departure", count: jobs.departure, singular: "Departure", plural: "Departures", icon: DoorOpen, color: "bg-room-dirty text-room-dirty-fg" },
-    { key: "turnover", count: jobs.turnover, singular: "Depart / Arrival", plural: "Depart / Arrivals", icon: ArrowLeftRight, color: "bg-room-progress text-room-progress-fg" },
-    { key: "arrival", count: jobs.arrival, singular: "Arrival", plural: "Arrivals", icon: Luggage, color: "bg-room-early text-room-early-fg" },
+    { key: "departure", count: jobs.departure + jobs.turnover, singular: "Departure to clean", plural: "Departures to clean", icon: DoorOpen, color: "bg-room-dirty text-room-dirty-fg",
+      parts: [
+        { key: "turnover", count: jobs.turnover, label: "with an arrival tonight", color: "bg-room-progress/40" },
+        { key: "departure", count: jobs.departure, label: "free tonight", color: "bg-muted" },
+      ].filter((p) => p.count > 0) },
+    { key: "arrival", count: jobs.arrival + jobs.turnover, singular: "Arrival", plural: "Arrivals", icon: Luggage, color: "bg-room-early text-room-early-fg",
+      parts: [
+        { key: "turnover", count: jobs.turnover, label: "after a departure", color: "bg-room-progress/40" },
+        { key: "arrival", count: jobs.arrival, label: "into a clean room", color: "bg-room-early/40" },
+      ].filter((p) => p.count > 0) },
     { key: "stayover", count: jobs.stayover, singular: "Stayover", plural: "Stayovers", icon: BedDouble, color: "bg-room-stayover text-room-stayover-fg" },
   ].filter((j) => j.count > 0 && !hidden.has(`job:${j.key}`));
   if (!hasPaperwork || (!jobTiles.length && !guests && !flags.length && !extras.length)) return null;
+  // "30 to clean · 21 arrivals · 5 stayovers"
   const summary = jobTiles.length
-    ? jobTiles.map((j) => `${j.count} ${(j.count === 1 ? j.singular : j.plural).toLowerCase()}`).join(" · ")
+    ? jobTiles.map((j) => j.key === "departure" ? `${j.count} to clean` : `${j.count} ${(j.count === 1 ? j.singular : j.plural).toLowerCase()}`).join(" · ")
     : [...flags.map((f) => `${f.count} ${f.def.label}`), ...extras.map((e) => `${e.total} ${e.extra.name}`)].join(" · ");
+  const splitJobs = jobTiles.filter((j) => "parts" in j);
+  const smallJobs = jobTiles.filter((j) => !("parts" in j));
   const tile = (key: string, icon: React.ReactNode, count: number, label: string, color: string) => (
     <div key={key} className="flex min-w-0 items-start gap-2.5 rounded-lg bg-sidebar-accent/40 p-3">
       <span className={`grid size-8 shrink-0 place-items-center rounded-lg ${color}`}>{icon}</span>
@@ -264,8 +275,24 @@ export function ShiftBrief({ rooms }: { rooms: Room[] }) {
           <SheetDescription className="text-sidebar-foreground/65">{summary}</SheetDescription>
         </SheetHeader>
         <div className="space-y-3">
-      {(jobTiles.length > 0 || guests > 0) && <div className="grid grid-cols-2 gap-2">
-        {jobTiles.map((j) => tile(j.singular, <j.icon className="h-4 w-4" />, j.count, j.count === 1 ? j.singular : j.plural, j.color))}
+      {/* Departures and arrivals get a wide card each, with their split as chips. */}
+      {splitJobs.map((j) => (
+        <div key={j.key} className="space-y-2 rounded-lg bg-sidebar-accent/40 p-3">
+          <div className="flex items-center gap-2.5">
+            <span className={`grid size-8 shrink-0 place-items-center rounded-lg ${j.color}`}><j.icon className="h-4 w-4" /></span>
+            <span className="text-lg font-bold tabular-nums">{j.count}</span>
+            <span className="text-sm">{j.count === 1 ? j.singular : j.plural}</span>
+          </div>
+          {"parts" in j && j.parts && j.parts.length > 1 && (
+            <div className="flex flex-wrap gap-1.5 pl-[42px]">
+              {j.parts.map((p) => <span key={p.key} className={`rounded-full px-2.5 py-0.5 text-xs font-medium ${p.color}`}>{p.count} {p.label}</span>)}
+            </div>
+          )}
+        </div>
+      ))}
+      {/* The rest (left dirty, stayovers, guests) sit two to a row. */}
+      {(smallJobs.length > 0 || guests > 0) && <div className="grid grid-cols-2 gap-2">
+        {smallJobs.map((j) => tile(j.singular, <j.icon className="h-4 w-4" />, j.count, j.count === 1 ? j.singular : j.plural, j.color))}
         {guests > 0 && tile("guests", <Users className="h-4 w-4" />, guests, guests === 1 ? "Guest" : "Guests", "bg-muted text-muted-foreground")}
       </div>}
       {flags.length === 1 && extras.length === 1 ? (

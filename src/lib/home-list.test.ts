@@ -7,12 +7,23 @@ const room = (n: number, extra: Partial<ListRoom> = {}): ListRoom => ({
 });
 
 describe("home list", () => {
-  it("puts checked-out departures first, then by job", () => {
+  it("lists the rooms to do in room number order", () => {
     const rooms = [
       room(9, { sheetKind: "stayover" }), room(4, { sheetKind: "arrival" }), room(7, { sheetKind: "departure" }),
       room(3, { sheetKind: "turnover" }), room(12, { sheetKind: "turnover", guestVacated: true }), room(2),
     ];
-    assert.deepEqual(toDo(rooms).map((r) => r.n), [12, 3, 7, 4, 9, 2]);
+    assert.deepEqual(toDo(rooms).map((r) => r.n), [2, 3, 4, 7, 9, 12]);
+  });
+
+  it("puts early check-ins and late checkouts first", () => {
+    const rooms = [room(2), room(9, { firstUp: true }), room(5), room(7, { firstUp: true })];
+    assert.deepEqual(toDo(rooms).map((r) => r.n), [7, 9, 2, 5]);
+  });
+
+  it("sends Do Not Disturb rooms straight to Done", () => {
+    const rooms = [room(6, { stayover: true, dnd: true }), room(5)];
+    assert.deepEqual(toDo(rooms).map((r) => r.n), [5]);
+    assert.deepEqual(finished(rooms).map((r) => r.n), [6]);
   });
 
   it("folds away done, Staff/ROS and not required rooms", () => {
@@ -31,7 +42,7 @@ describe("home list", () => {
   });
 
   it("puts the tile label on one line", () => {
-    assert.equal(cardLabel("Depart / Arrival\nNot started"), "Depart / Arrival · Not started");
+    assert.equal(cardLabel("Turnover\nNot started"), "Turnover · Not started");
     assert.equal(cardLabel("Clean"), "Clean");
   });
 });
