@@ -6136,7 +6136,9 @@ const toggleRoomCategory = async (roomNumber: number, value: Category) => {
         Paperwork
       </Button>
     )}
-    {!isReception && (
+    {/* On phones Reset all lives in the ring's Shift progress pop-up (as on
+        the iPhone and Android), so the top row keeps room for the rest. */}
+    {!isReception && !(isMobile && topBarSlot) && (
       <Button
         data-ios-glass
         variant="outline"
@@ -6572,6 +6574,17 @@ const activeFloor = selectedFloor && floorGroups.some((group) => group.key === s
                         <MoonStar className="h-4 w-4" />Leave the rest dirty
                       </Button>
                     );
+                    // Reset all (once a day) sits here on phones, under the shift's progress.
+                    const resetAllAction = (
+                      <Button
+                        type="button"
+                        variant="outline"
+                        className={`${leaveRestDirty ? "mt-2" : "mt-3"} w-full gap-2`}
+                        onClick={() => { setProgressSheetOpen(false); void resetAll(); }}
+                      >
+                        <RotateCcw className="h-4 w-4" />Reset all
+                      </Button>
+                    );
                     const isIOSPlatform = typeof document !== "undefined" && document.documentElement.dataset.platform === "ios";
                     if (isIOSPlatform) {
                       return (
@@ -6606,6 +6619,7 @@ const activeFloor = selectedFloor && floorGroups.some((group) => group.key === s
                                   ))}
                                 </ul>
                                 {leaveRestDirty}
+                                {resetAllAction}
                               </div>
                             </div>,
                             document.body,
@@ -6637,6 +6651,7 @@ const activeFloor = selectedFloor && floorGroups.some((group) => group.key === s
                               ))}
                             </ul>
                             {leaveRestDirty}
+                            {resetAllAction}
                           </SheetContent>
                         </Sheet>
                       </>
