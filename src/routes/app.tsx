@@ -6564,7 +6564,8 @@ const activeFloor = selectedFloor && floorGroups.some((group) => group.key === s
            {displayedRooms.map((n, i) => (
              <React.Fragment key={`r-${n}`}>
                {tileByRoom.get(n)}
-               {i === slotAfter && (
+               {/* The open room expands here; the new desktop layout shows it in its side panel instead. */}
+               {i === slotAfter && !deskOn && (
                  <div data-room-slot ref={setRoomSlotEl} className="col-span-full" />
                )}
              </React.Fragment>
