@@ -206,7 +206,8 @@ export function PhotoAttachments({
     };
   }, [paths]);
 
-  const allowVideo = kind === "maintenance";
+  // Short videos on maintenance jobs and lost property, like the apps.
+  const allowVideo = kind === "maintenance" || kind === "lost_property";
   const handlePick = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const raw = Array.from(e.target.files ?? []);
     e.target.value = "";

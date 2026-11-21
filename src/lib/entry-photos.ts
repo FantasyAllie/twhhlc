@@ -6,7 +6,7 @@ export const MAX_PHOTOS_PER_ENTRY = 4;
 
 const BUCKET = "entry-photos";
 
-/** Maintenance jobs may carry short video clips alongside photos. */
+/** Maintenance jobs and lost property may carry short video clips alongside photos. */
 export const MAX_CLIP_SECONDS = 5;
 export const MAX_CLIP_BYTES = 50 * 1024 * 1024;
 

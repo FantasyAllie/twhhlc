@@ -468,7 +468,7 @@ export function LostPropertySheet({
                     rows={2}
                     className="resize-none"
                   />
-                  <PhotoComposer value={addPhotos} onChange={setAddPhotos} />
+                  <PhotoComposer value={addPhotos} onChange={setAddPhotos} allowVideo />
                   {/* Stays in reach at the bottom of the form, above the keyboard. */}
                   <div className="touch-action-bar flex justify-end">
                     <Button
