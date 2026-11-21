@@ -4560,7 +4560,12 @@ const toggleRoomCategory = async (roomNumber: number, value: Category) => {
   className="min-h-[100dvh] bg-background"
   style={{
     paddingBottom: isMobile ? 0 : "max(1.5rem, env(safe-area-inset-bottom))",
-    ...(deskOn ? { paddingLeft: "16rem", paddingRight: isMaintenance || isFnb ? undefined : "26rem" } : {}),
+    // The room panel slides in only while a room is open, so the rooms sit centred otherwise.
+    ...(deskOn ? {
+      paddingLeft: "16rem",
+      paddingRight: !isMaintenance && !isFnb && openRoom !== null ? "26rem" : undefined,
+      transition: "padding-right 200ms ease-out",
+    } : {}),
   }}
 >
 {(homeRefresh.pull > 0 || homeRefresh.refreshing) && (
@@ -7101,11 +7106,13 @@ const activeFloor = selectedFloor && floorGroups.some((group) => group.key === s
     <aside
       data-desk-panel
       aria-label={openRoom !== null ? `Room ${openRoom}` : "Room"}
-      className="fixed inset-y-0 right-0 z-20 w-[26rem] overflow-y-auto border-l border-border bg-background p-4"
+      aria-hidden={openRoom === null}
+      className={cn(
+        "fixed inset-y-0 right-0 z-20 w-[26rem] overflow-y-auto border-l border-border bg-background p-4 shadow-elevation-2 transition-transform duration-200 ease-out",
+        openRoom === null && "pointer-events-none translate-x-full",
+      )}
     >
-      {openRoom === null ? (
-        <p className="mt-6 text-center text-sm text-muted-foreground">Pick a room to see everything about it here.</p>
-      ) : (
+      {openRoom !== null && (
         <div className="mb-3 flex items-center gap-3">
           <h2 className="font-serif text-3xl font-bold leading-none">{openRoom}</h2>
           <span className="min-w-0 flex-1 truncate text-sm text-muted-foreground">
