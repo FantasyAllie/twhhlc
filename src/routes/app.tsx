@@ -1,4 +1,4 @@
-import { availableMessageGroups, MESSAGE_GROUP_LABELS, HOUSEKEEPING_ROOM_MESSAGE_GROUP, isHousekeepingRoomMessage, type MessageGroup } from "@/lib/message-groups";
+import { availableMessageGroups, MESSAGE_GROUP_LABELS, HOUSEKEEPING_ROOM_MESSAGE_GROUP, HOTEL_CHAT, isHousekeepingRoomMessage, type MessageGroup } from "@/lib/message-groups";
 import { DEVELOPER_TEST_ONLY, isDeveloperViewOnly } from "@/lib/developer-scope";
 import { toggleRoomTab, roomTileAction, type RoomTab } from "@/lib/room-navigation";
 import { shouldShowDepartmentTab } from "@/lib/department-tabs";
@@ -136,7 +136,9 @@ import {
 } from "@/components/ui/sheet";
 import { THEME_LEVELS, THEME_LEVEL_LABELS, useTheme, type ThemeLevel } from "@/components/theme-provider";
 import { armSheetTakeover, isTakeoverReplacing, setSheetTakeoverSlot, releaseSheetTakeover, useSheetTakeoverActive } from "@/components/ui/sheet";
-import { Palette } from "lucide-react";
+import { Palette, PanelLeft } from "lucide-react";
+import { DeskSidebar, SETTINGS_GROUP, type DeskMenuItem } from "@/components/desktop/desk-sidebar";
+import { UP_NEXT_LIMIT, fixFirst, liveFeed, liveTime, upNext, useDesktopLayoutPref } from "@/lib/desktop-layout";
 import { ACCENTS, accentSwatch, readAccent, applyAccent, type AccentId } from "@/lib/accent-colour";
 import { useCurrentHotel, DEFAULT_HOTEL_NAME } from "@/lib/hotels";
 import { useFloors } from "@/hooks/use-floors";
@@ -440,6 +442,21 @@ function AppPage() {
     mql.addEventListener("change", update);
     return () => mql.removeEventListener("change", update);
   }, []);
+  // The new desktop layout (DESKTOP-layout-spec.md): computers only (1024px+),
+  // opt-in per browser, off by default. With it off nothing below changes.
+  const [isWide, setIsWide] = useState(false);
+  useEffect(() => {
+    const mql = window.matchMedia("(min-width: 1024px)");
+    const update = () => setIsWide(mql.matches);
+    update();
+    mql.addEventListener("change", update);
+    return () => mql.removeEventListener("change", update);
+  }, []);
+  const [deskPref, setDeskPref] = useDesktopLayoutPref();
+  const deskOn = deskPref && isWide;
+  const [deskPanelEl, setDeskPanelEl] = useState<HTMLDivElement | null>(null);
+  // The sidebar item whose page is open, for its highlight.
+  const [deskActiveKey, setDeskActiveKey] = useState<string | null>(null);
   const [authUser, setAuthUser] = useState(() => getStoredUser());
   // Each person's tile icon choice (More → Appearance), kept in this browser.
   useEffect(() => { loadTileIconsFor(authUser?.id); }, [authUser?.id]);
@@ -936,7 +953,7 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
   // The slot grows over its open animation, so lower rows can't scroll up far
   // enough at first; scroll again as it grows. Offset by the sticky top bar.
   useEffect(() => {
-    if (openRoom === null || !roomSlotEl) return;
+    if (openRoom === null || !roomSlotEl || deskOn) return;
     const scrollToTile = () => {
       let tile: HTMLElement | undefined;
       for (const grid of roomGridElsRef.current) {
@@ -956,7 +973,7 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
     const raf = requestAnimationFrame(scrollToTile);
     const timers = [250, 500, 800].map((ms) => window.setTimeout(scrollToTile, ms));
     return () => { cancelAnimationFrame(raf); timers.forEach((t) => window.clearTimeout(t)); };
-  }, [openRoom, roomGridTick, roomSlotEl]);
+  }, [openRoom, roomGridTick, roomSlotEl, deskOn]);
   const [topBarSlot, setTopBarSlot] = useState<HTMLDivElement | null>(null);
   // Stayover / DND photo state
   const [stayoverPhotosOpen, setStayoverPhotosOpen] = useState(false);
@@ -4278,14 +4295,15 @@ const toggleRoomCategory = async (roomNumber: number, value: Category) => {
     }
     // Settings menu content is uniform across screen sizes. Larger screens also
     // surface End of shift / Departments on the home header, but they stay here too.
-    if ((realIsAdmin || (realIsManager && hasHousekeeperRole)) && !isReception && !menuIsFnbOnly && isMobile) {
+    // The new desktop layout lists them in its sidebar too (it has no header menu for them).
+    if ((realIsAdmin || (realIsManager && hasHousekeeperRole)) && !isReception && !menuIsFnbOnly && (isMobile || deskOn)) {
       actions.push({
         key: "end-of-shift",
         icon: ClipboardList,
         label: "Reports",
         onClick: () => void openReports(),
       });
-    } else if (isMaintenance && isMobile) {
+    } else if (isMaintenance && (isMobile || deskOn)) {
       actions.push({
         key: "end-of-shift",
         icon: ClipboardList,
@@ -4293,7 +4311,7 @@ const toggleRoomCategory = async (roomNumber: number, value: Category) => {
         onClick: () => void openReports(),
       });
     }
-    if (isReception && isMobile) {
+    if (isReception && (isMobile || deskOn)) {
       actions.push({
         key: "print", icon: Printer, label: "Print",
         onClick: async () => {
@@ -4391,6 +4409,13 @@ const toggleRoomCategory = async (roomNumber: number, value: Category) => {
     const settings = [...locations, ...linen.filter((i) => i.key === "linen-days"), ...account.filter((i) => i.key === "users")]
       .sort(order(["manage-rooms", "hotel-areas", "room-flags", "room-pins", "linen-days", "users"]));
     const you = account.filter((i) => i.key === "switch-hotel" || i.key === "account");
+    if (isWide) {
+      you.push({
+        key: "desktop-layout", icon: PanelLeft,
+        label: deskPref ? "New desktop layout: On" : "New desktop layout: Off",
+        onClick: () => setDeskPref(!deskPref),
+      });
+    }
     return [
       { id: "shift", title: "On shift", items: shift },
       { id: "records", title: "Records", items: records },
@@ -4399,6 +4424,77 @@ const toggleRoomCategory = async (roomNumber: number, value: Category) => {
       { id: "appearance", title: "Appearance", items: appearance },
     ].filter((g) => g.items.length > 0);
   })();
+
+  // New desktop layout: a header button steps aside only when the sidebar has the
+  // same item for this person, so nothing can go missing.
+  const inDeskSidebar = (key: string) => deskOn && menuGroups.some((g) => g.items.some((i) => i.key === key));
+  // Home's filter options and their counts, shared by the Filters pop-over and the
+  // new desktop layout's Views, so both always offer the same filters.
+  const hkFilterOptions = () => {
+    // Compute per-room primary status bucket for HK filter counts.
+    const statusLabelById = new Map(
+      receptionStatuses.map((s) => [s.id, s.label.toLowerCase()]),
+    );
+    const bucketFor = (n: number): string => {
+      const r = rooms.find((x) => x.room_number === n);
+      if (!r) return "not_started";
+      if (nrOnRooms.has(n)) return "nr";
+      const sid = r.reception_status_id ?? r.default_status;
+      const label = sid ? (statusLabelById.get(sid) ?? "") : "";
+      if (label === "staff") return "staff";
+      if (label === "ros") return "ros";
+      if (label === "dnd") return "dnd";
+      if (label === "stayover") return "stayover";
+      if (label === "arrival") return "arrival";
+      if (label === "dirty") return "dirty";
+      if (label === "clean") return "clean";
+      if (label) return "progress";
+      const hasLinen = counts.some((c) => c.room_number === n && (c.count ?? 0) > 0);
+      if (hasLinen) return "progress";
+      return "not_started";
+    };
+    const isRoomDone = (n: number) => doneSet.has(n) || receptionDoneSet.has(n);
+    const roomBuckets = rooms.map((r) => ({
+      n: r.room_number,
+      bucket: bucketFor(r.room_number),
+      done: isRoomDone(r.room_number),
+    }));
+    const statusOptions: { key: string; label: string }[] = [
+      { key: "done", label: "Done" },
+      { key: "not_started", label: "Not started" },
+      { key: "progress", label: "In progress" },
+      { key: "dirty", label: "Dirty" },
+      { key: "clean", label: "Clean" },
+      { key: "arrival", label: "Arrival" },
+      { key: "stayover", label: "Stayover" },
+      { key: "staff", label: "Staff" },
+      { key: "ros", label: "ROS" },
+    ];
+    const countFor = (key: string) =>
+      key === "done"
+        ? roomBuckets.filter((r) => r.done).length
+        : key === "stayover"
+        ? roomBuckets.filter((r) => r.bucket === "stayover" || r.bucket === "dnd" || r.bucket === "nr").length
+        : roomBuckets.filter((r) => r.bucket === key).length;
+    return { statusOptions, countFor };
+  };
+  const receptionFilterOptions = () => {
+    const statusFilterLabels: string[] = ["Stayover", "Arrival", "Dirty", "Clean"];
+    const statusFilterOptions = statusFilterLabels
+      .map((label) => {
+        const match = receptionStatuses.find(
+          (s) => s.label.toLowerCase() === label.toLowerCase(),
+        );
+        return match ? { id: match.id, label } : null;
+      })
+      .filter((v): v is { id: string; label: string } => v !== null);
+    const doneOnlyCount = rooms.filter((r) => r.done_reception || r.done).length;
+    const statusCountFor = (statusId: string) =>
+      rooms.filter(
+        (r) => (r.reception_status_id ?? r.default_status) === statusId,
+      ).length;
+    return { statusFilterOptions, doneOnlyCount, statusCountFor };
+  };
 
   // Pull the home screen down from the top to refetch everything on screen.
   const homeRefresh = useHomeRefresh(
@@ -4462,7 +4558,10 @@ const toggleRoomCategory = async (roomNumber: number, value: Category) => {
   ref={homeRefresh.ref}
   data-home-refresh
   className="min-h-[100dvh] bg-background"
-  style={{ paddingBottom: isMobile ? 0 : "max(1.5rem, env(safe-area-inset-bottom))" }}
+  style={{
+    paddingBottom: isMobile ? 0 : "max(1.5rem, env(safe-area-inset-bottom))",
+    ...(deskOn ? { paddingLeft: "16rem", paddingRight: isMaintenance || isFnb ? undefined : "26rem" } : {}),
+  }}
 >
 {(homeRefresh.pull > 0 || homeRefresh.refreshing) && (
   <div
@@ -4553,16 +4652,32 @@ const toggleRoomCategory = async (roomNumber: number, value: Category) => {
       </div>
     </div>
  ) : (
- <header className="flex items-start justify-between gap-3 flex-wrap rounded-2xl border border-primary/20 bg-sidebar px-4 pt-4 pb-3 sm:px-5 sm:pt-5 sm:pb-4 shadow-elevation-2">
-          <div className="min-w-0 flex-1">
+ <header className={deskOn
+   // New desktop layout: a slim toolbar (the sidebar already names the hotel).
+   ? "flex items-center justify-between gap-3 flex-wrap"
+   : "flex items-start justify-between gap-3 flex-wrap rounded-2xl border border-primary/20 bg-sidebar px-4 pt-4 pb-3 sm:px-5 sm:pt-5 sm:pb-4 shadow-elevation-2"}>
+          <div className={deskOn ? "mr-auto shrink-0" : "min-w-0 flex-1"}>
+            {deskOn ? (
+              <>
+                <p className="whitespace-nowrap text-xs text-muted-foreground">
+                  {new Date().toLocaleDateString("en-GB", { weekday: "long", day: "numeric", month: "long" })}
+                </p>
+                <h1 className="text-2xl font-semibold tracking-tight">
+                  {isMaintenance ? "Jobs" : isFnb ? "F&B counts" : "Rooms"}
+                </h1>
+              </>
+            ) : (
+              <>
             <p className="text-[10px] font-bold uppercase tracking-[0.22em] text-sidebar-primary">
               Tsuyu
             </p>
             <h1 className="mt-1 text-xl sm:text-2xl font-semibold tracking-tight text-sidebar-foreground">{hotelName}</h1>
+              </>
+            )}
             {developerViewOnly && <p className="mt-0.5 text-xs font-medium text-amber-600 dark:text-amber-400">View only. Developer accounts can change test hotels only.</p>}
           </div>
- <div className="flex items-center gap-2 [&_button]:border-sidebar-border [&_button]:bg-transparent [&_button]:text-sidebar-foreground [&_button:hover]:bg-sidebar-accent [&_button:hover]:text-sidebar-foreground">
-    {!isMobile && ((isAdmin && !isReception) || isMaintenance) && (
+ <div className={cn("flex items-center gap-2", deskOn ? "order-2" : "[&_button]:border-sidebar-border [&_button]:bg-transparent [&_button]:text-sidebar-foreground [&_button:hover]:bg-sidebar-accent [&_button:hover]:text-sidebar-foreground")}>
+    {!isMobile && ((isAdmin && !isReception) || isMaintenance) && !inDeskSidebar("end-of-shift") && (
       <Button
         variant="outline"
         size="sm"
@@ -4589,7 +4704,7 @@ const toggleRoomCategory = async (roomNumber: number, value: Category) => {
         <Button variant="outline" size="sm" onClick={onClick} title={label} aria-label={label}>{icon}</Button>
       )} />
     )}
-    {!isMobile && isReception && (
+    {!isMobile && isReception && !inDeskSidebar("print") && (
       <Button
         variant="outline"
         size="sm"
@@ -4602,7 +4717,7 @@ const toggleRoomCategory = async (roomNumber: number, value: Category) => {
         Print
       </Button>
     )}
-    {!isMobile && isReception && (
+    {!isMobile && isReception && !inDeskSidebar("help") && (
       <Button
         variant="outline"
         size="sm"
@@ -4623,7 +4738,7 @@ const toggleRoomCategory = async (roomNumber: number, value: Category) => {
         />
       )}
     </Button>
-  ) : (
+  ) : deskOn ? null : (
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
         <Button variant="ghost" size="sm" aria-label="Menu" className="relative">
@@ -4651,7 +4766,7 @@ const toggleRoomCategory = async (roomNumber: number, value: Category) => {
             </DropdownMenuLabel>
             {group.items.map((item) => {
               const Icon = item.icon;
-              const keepOpen = item.key === "theme" || item.key === "accent";
+              const keepOpen = item.key === "theme" || item.key === "accent" || item.key === "desktop-layout";
               return (
                 <DropdownMenuItem
                   key={item.key}
@@ -4676,7 +4791,7 @@ const toggleRoomCategory = async (roomNumber: number, value: Category) => {
     </DropdownMenu>
   )}
  </div>
-            <p className="basis-full -mt-2 text-xs text-sidebar-foreground/60 whitespace-pre-line">
+            <p className={cn("basis-full -mt-2 text-xs text-sidebar-foreground/60 whitespace-pre-line", deskOn && "hidden")}>
               {isReception
                 ? "An auto-updating room tracker for Housekeeping. Use the help button if you're stuck"
                 : isFnb
@@ -4687,7 +4802,9 @@ const toggleRoomCategory = async (roomNumber: number, value: Category) => {
 
             </p>
             {canViewAs && !isMobile && (
-              <div className="basis-full w-full flex rounded-full border p-1 bg-background items-center">
+              <div className={deskOn
+                ? "order-1 flex items-center rounded-full border bg-background p-0.5"
+                : "basis-full w-full flex rounded-full border p-1 bg-background items-center"}>
                 {availableViews.map((r) => {
                   const active = effectiveRole === r;
                   const label =
@@ -4708,7 +4825,7 @@ const toggleRoomCategory = async (roomNumber: number, value: Category) => {
                       type="button"
                       onClick={() => setViewAsRole(active ? null : r)}
                       className={cn(
-                        "flex-1 px-4 h-8 text-xs sm:text-sm rounded-full transition-colors whitespace-nowrap",
+                        deskOn ? "h-7 border-0 px-3 text-xs rounded-full transition-colors whitespace-nowrap" : "flex-1 px-4 h-8 text-xs sm:text-sm rounded-full transition-colors whitespace-nowrap",
                         active
                           ? "bg-primary text-primary-foreground shadow-sm font-medium"
                           : "text-muted-foreground hover:text-foreground",
@@ -5669,9 +5786,72 @@ const toggleRoomCategory = async (roomNumber: number, value: Category) => {
 
  {/* Rooms */}
  {homeView && <div ref={setHomeSlotEl} className="mb-4" />}
+ {deskOn && menuTakeoverActive && (() => {
+   // New desktop layout: Hotel settings is one page; its sections run along the top
+   // and each opens the same panel the menu opens today.
+   const settings = menuGroups.find((g) => g.id === SETTINGS_GROUP)?.items ?? [];
+   if (!settings.some((i) => i.key === deskActiveKey)) return null;
+   return (
+     <nav aria-label="Settings sections" className="mb-3 flex flex-wrap gap-1 rounded-xl border border-border bg-background p-1">
+       {settings.map((item) => {
+         const Icon = item.icon;
+         const active = item.key === deskActiveKey;
+         return (
+           <Button
+             key={item.key}
+             type="button"
+             variant="ghost"
+             size="sm"
+             aria-current={active ? "page" : undefined}
+             className={cn("gap-1.5", active && "bg-primary text-primary-foreground hover:bg-primary hover:text-primary-foreground")}
+             onClick={() => { if (active) return; closeHomePanels(); armSheetTakeover(); setDeskActiveKey(item.key); item.onClick(); }}
+           >
+             <Icon className="h-4 w-4" />
+             {item.label}
+           </Button>
+         );
+       })}
+     </nav>
+   );
+ })()}
  <div ref={setSheetTakeoverSlot} className="[&:not(:empty)]:mb-4" />
  <div className={homeView || quickSetupInline || menuTakeoverActive ? "hidden" : undefined}>
  {isMaintenance ? (
+<>
+{deskOn && (() => {
+  // New desktop layout: Fix first. Urgent jobs, then jobs in rooms a guest is due
+  // in today. A summary only: the job's actions stay on its row in the list below.
+  const guestDue = new Set(rooms.filter((r) => hasIncomingGuest(r.sheet_kind) || r.early_check_in).map((r) => r.room_number));
+  const jobs = fixFirst(maintenanceRequests, guestDue);
+  if (jobs.length === 0) return null;
+  return (
+    <section aria-label="Fix first" className="mb-4 space-y-2">
+      <div className="flex items-baseline gap-2">
+        <h2 className="text-sm font-semibold">Fix first</h2>
+        <span className="text-xs text-muted-foreground">
+          Urgent, or a guest is due in the room today
+          {jobs.length > UP_NEXT_LIMIT ? ` · ${jobs.length - UP_NEXT_LIMIT} more below` : ""}
+        </span>
+      </div>
+      <div className="grid grid-cols-[repeat(auto-fill,minmax(15rem,1fr))] gap-2">
+        {jobs.slice(0, UP_NEXT_LIMIT).map((m) => (
+          <div key={m.id} className="space-y-1.5 rounded-xl border border-border bg-card p-3 shadow-elevation-1">
+            <div className="flex items-center gap-2">
+              <span className="text-sm font-semibold">{maintenanceLocation(m)}</span>
+              {m.urgent ? (
+                <span className="rounded-md bg-destructive px-1.5 py-0.5 text-[11px] font-semibold text-destructive-foreground">Urgent</span>
+              ) : (
+                <span className="rounded-md bg-room-early px-1.5 py-0.5 text-[11px] font-semibold text-room-early-fg">Guest due today</span>
+              )}
+            </div>
+            <p className="line-clamp-2 text-sm">{m.message}</p>
+            {m.created_by_username && <p className="text-xs text-muted-foreground">{m.created_by_username}</p>}
+          </div>
+        ))}
+      </div>
+    </section>
+  );
+})()}
 <MaintenanceDashboard
      maintenanceRequests={maintenanceRequests}
      roomMessages={roomMessages}
@@ -5687,6 +5867,7 @@ const toggleRoomCategory = async (roomNumber: number, value: Category) => {
        setMaintenanceLogOpen(true);
      }}
    />
+</>
  ) : isFnb ? (
    <section className="space-y-4">
      <div className="flex items-baseline justify-between gap-2">
@@ -5767,20 +5948,7 @@ const toggleRoomCategory = async (roomNumber: number, value: Category) => {
             receptionStatusFilter.length +
             receptionRoomTypeFilter.length +
             (receptionDoneOnlyFilter ? 1 : 0);
-         const statusFilterLabels: string[] = ["Stayover", "Arrival", "Dirty", "Clean"];
-         const statusFilterOptions = statusFilterLabels
-           .map((label) => {
-             const match = receptionStatuses.find(
-               (s) => s.label.toLowerCase() === label.toLowerCase(),
-             );
-             return match ? { id: match.id, label } : null;
-           })
-           .filter((v): v is { id: string; label: string } => v !== null);
-          const doneOnlyCount = rooms.filter((r) => r.done_reception || r.done).length;
-          const statusCountFor = (statusId: string) =>
-            rooms.filter(
-              (r) => (r.reception_status_id ?? r.default_status) === statusId,
-            ).length;
+          const { statusFilterOptions, doneOnlyCount, statusCountFor } = receptionFilterOptions();
           const roomTypeCountFor = (val: string) =>
             rooms.filter((r) => parseCats(r.category).includes(val as Category)).length;
           const featureCountFor = (featureId: string) =>
@@ -5933,51 +6101,7 @@ const toggleRoomCategory = async (roomNumber: number, value: Category) => {
     })()}
     {!isReception && (
      (() => {
-        // Compute per-room primary status bucket for HK filter counts.
-        const statusLabelById = new Map(
-          receptionStatuses.map((s) => [s.id, s.label.toLowerCase()]),
-        );
-        const bucketFor = (n: number): string => {
-          const r = rooms.find((x) => x.room_number === n);
-          if (!r) return "not_started";
-          if (nrOnRooms.has(n)) return "nr";
-          const sid = r.reception_status_id ?? r.default_status;
-          const label = sid ? (statusLabelById.get(sid) ?? "") : "";
-          if (label === "staff") return "staff";
-          if (label === "ros") return "ros";
-          if (label === "dnd") return "dnd";
-          if (label === "stayover") return "stayover";
-          if (label === "arrival") return "arrival";
-          if (label === "dirty") return "dirty";
-          if (label === "clean") return "clean";
-          if (label) return "progress";
-          const hasLinen = counts.some((c) => c.room_number === n && (c.count ?? 0) > 0);
-          if (hasLinen) return "progress";
-          return "not_started";
-        };
-        const isRoomDone = (n: number) => doneSet.has(n) || receptionDoneSet.has(n);
-        const roomBuckets = rooms.map((r) => ({
-          n: r.room_number,
-          bucket: bucketFor(r.room_number),
-          done: isRoomDone(r.room_number),
-        }));
-        const statusOptions: { key: string; label: string }[] = [
-          { key: "done", label: "Done" },
-          { key: "not_started", label: "Not started" },
-          { key: "progress", label: "In progress" },
-          { key: "dirty", label: "Dirty" },
-          { key: "clean", label: "Clean" },
-          { key: "arrival", label: "Arrival" },
-          { key: "stayover", label: "Stayover" },
-          { key: "staff", label: "Staff" },
-          { key: "ros", label: "ROS" },
-        ];
-        const countFor = (key: string) =>
-          key === "done"
-            ? roomBuckets.filter((r) => r.done).length
-            : key === "stayover"
-            ? roomBuckets.filter((r) => r.bucket === "stayover" || r.bucket === "dnd" || r.bucket === "nr").length
-            : roomBuckets.filter((r) => r.bucket === key).length;
+        const { statusOptions, countFor } = hkFilterOptions();
         const totalActive = hkStatusFilter.length + (hideCompletedRooms ? 1 : 0);
         const clearHkFilters = () => {
           setHkStatusFilter([]);
@@ -6344,7 +6468,67 @@ const activeFloor = selectedFloor && floorGroups.some((group) => group.key === s
    if (openRoom !== null) closeRoomView();
    setSelectedFloor(floor !== null && floor === activeFloor ? null : floor);
   };
+ // Each room as a list row, and its list card: shared by the list view and Up next.
+   const listRoomFor = (n: number): ListRoom => {
+     const room = roomByNumber.get(n);
+     const flags = resolveRoomStatusFlags(room, statusIds);
+     return {
+       n,
+       done: isReception ? !!room?.done || !!room?.done_reception : doneSet.has(n),
+       neverServiced: flags.isStaff || flags.isRos,
+       notRequired: nrOnRooms.has(n),
+       stayover: flags.isStayover || flags.isDnd,
+       dnd: flags.isDnd,
+       sheetKind: room?.sheet_kind,
+       guestVacated: !!room?.guest_vacated,
+       firstUp: !!room?.early_check_in || !!room?.late_checkout,
+     };
+   };
+   const cardFor = (n: number) => {
+     const room = roomByNumber.get(n);
+     const incoming = hasIncomingGuest(room?.sheet_kind);
+     const norm = (v: string) => v.toLowerCase().replace(/[^a-z0-9]/g, "");
+     const cats = parseCats(room?.category).map(norm);
+     const roomBed = receptionBeds.find((b) => b.id === room?.reception_bed_id)?.label
+       ?? (cats.includes("double") && !cats.includes("superking") ? "Double" : null);
+     const flags = resolveRoomStatusFlags(room, statusIds);
+     return (
+       <HomeRoomCard
+         n={n}
+         room={room}
+         statusIds={statusIds}
+         state={getRoomTileState(n, isReception ? hkDoneSet.has(n) : doneSet.has(n))}
+         isNR={nrOnRooms.has(n)}
+         hasLinenCount={countedRooms.has(n)}
+         pinDot={pinDotFor(pinsQ.data ?? [], n, pinViewer)}
+         hasOpenMaintenance={roomsWithOpenMaintenance.has(n)}
+         role={isReception ? "reception" : "housekeeping"}
+         bed={incoming ? setAsBed({ sheetBed: room?.sheet_bed, sheetRoomType: room?.sheet_room_type, roomBed }) : null}
+         guests={incoming ? room?.sheet_guests ?? null : null}
+         disabled={isReception && flags.isStaff}
+         onClick={() => openOrToggle(n)}
+       />
+     );
+   };
+ // New desktop layout: the rooms a guest is waiting on (DESKTOP-layout-spec.md).
+ const upNextRooms = deskOn && !isMaintenance && !isFnb ? upNext(allRooms.map(listRoomFor)) : [];
  return <>
+   {upNextRooms.length > 0 && (
+     <section aria-label={isReception ? "Up next" : "Clean first"} className="mb-4 space-y-2">
+       <div className="flex items-baseline gap-2">
+         <h2 className="text-sm font-semibold">{isReception ? "Up next" : "Clean first"}</h2>
+         <span className="text-xs text-muted-foreground">
+           {isReception ? "Guests waiting on a room" : "A guest is waiting on these"}
+           {upNextRooms.length > UP_NEXT_LIMIT ? ` · ${upNextRooms.length - UP_NEXT_LIMIT} more in To do` : ""}
+         </span>
+       </div>
+       <div className="grid grid-cols-[repeat(auto-fill,minmax(15rem,1fr))] gap-2">
+         {upNextRooms.slice(0, UP_NEXT_LIMIT).map((r) => (
+           <React.Fragment key={`up-${r.n}`}>{cardFor(r.n)}</React.Fragment>
+         ))}
+       </div>
+     </section>
+   )}
    <div className="mb-3 flex items-center justify-center">
    {/* Centred when they all fit; scrolls sideways when there are too many. */}
    <div className="mx-auto flex w-fit min-w-0 max-w-full items-center overflow-x-auto rounded-full border border-border bg-background p-1 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden" aria-label="Floor selection">
@@ -6363,47 +6547,7 @@ const activeFloor = selectedFloor && floorGroups.some((group) => group.key === s
 
          {homeLayout === "list" ? (() => {
            // The same rooms as the grid, as cards: the rooms to do first, then the rest folded away.
-           const listRooms: ListRoom[] = displayedRooms.map((n) => {
-             const room = roomByNumber.get(n);
-             const flags = resolveRoomStatusFlags(room, statusIds);
-             return {
-               n,
-               done: isReception ? !!room?.done || !!room?.done_reception : doneSet.has(n),
-               neverServiced: flags.isStaff || flags.isRos,
-               notRequired: nrOnRooms.has(n),
-               stayover: flags.isStayover || flags.isDnd,
-               dnd: flags.isDnd,
-               sheetKind: room?.sheet_kind,
-               guestVacated: !!room?.guest_vacated,
-               firstUp: !!room?.early_check_in || !!room?.late_checkout,
-             };
-           });
-           const cardFor = (n: number) => {
-             const room = roomByNumber.get(n);
-             const incoming = hasIncomingGuest(room?.sheet_kind);
-             const norm = (v: string) => v.toLowerCase().replace(/[^a-z0-9]/g, "");
-             const cats = parseCats(room?.category).map(norm);
-             const roomBed = receptionBeds.find((b) => b.id === room?.reception_bed_id)?.label
-               ?? (cats.includes("double") && !cats.includes("superking") ? "Double" : null);
-             const flags = resolveRoomStatusFlags(room, statusIds);
-             return (
-               <HomeRoomCard
-                 n={n}
-                 room={room}
-                 statusIds={statusIds}
-                 state={getRoomTileState(n, isReception ? hkDoneSet.has(n) : doneSet.has(n))}
-                 isNR={nrOnRooms.has(n)}
-                 hasLinenCount={countedRooms.has(n)}
-                 pinDot={pinDotFor(pinsQ.data ?? [], n, pinViewer)}
-                 hasOpenMaintenance={roomsWithOpenMaintenance.has(n)}
-                 role={isReception ? "reception" : "housekeeping"}
-                 bed={incoming ? setAsBed({ sheetBed: room?.sheet_bed, sheetRoomType: room?.sheet_room_type, roomBed }) : null}
-                 guests={incoming ? room?.sheet_guests ?? null : null}
-                 disabled={isReception && flags.isStaff}
-                 onClick={() => openOrToggle(n)}
-               />
-             );
-           };
+           const listRooms: ListRoom[] = displayedRooms.map(listRoomFor);
            return (
              <HomeList
                toDo={listToDo(listRooms).map((r) => ({ n: r.n, card: cardFor(r.n) }))}
@@ -6665,7 +6809,7 @@ const activeFloor = selectedFloor && floorGroups.some((group) => group.key === s
  </div>
  </div>
 
- <HomeInline active={openRoom !== null} target={roomSlotEl} noFit>
+ <HomeInline active={openRoom !== null} target={deskOn && !isMaintenance && !isFnb ? deskPanelEl : roomSlotEl} noFit>
  <Sheet open={openRoom !== null} onOpenChange={(o) => { if (!o) closeRoomView(); }}>
    <SheetContent side="bottom" className={cn("flex flex-col overflow-hidden rounded-t-2xl p-4 sm:p-6")}>
       <SheetHeader className="sr-only !absolute !p-0 !space-y-0">
@@ -6873,6 +7017,108 @@ const activeFloor = selectedFloor && floorGroups.some((group) => group.key === s
       </DialogFooter>
     </DialogContent>
   </Dialog>
+  {deskOn && (() => {
+    const pick = (item: DeskMenuItem) => {
+        // The same as picking it from the menu: pages open in place of Home.
+        if (item.key !== "signout" && item.key !== "theme" && item.key !== "accent" && item.key !== "desktop-layout") {
+          closeHomePanels();
+          armSheetTakeover();
+          setDeskActiveKey(item.key);
+        }
+        item.onClick();
+    };
+    // Live: only what everyone here can already see (the hotel chat for people who
+    // can use Messages, the maintenance log, open lost property). Each opens its page.
+    const menuItem = (key: string) => menuGroups.flatMap((g) => g.items).find((it) => it.key === key);
+    const open = (key: string) => () => { const it = menuItem(key); if (it) pick(it); };
+    const now = new Date();
+    const feed = liveFeed([
+      ...(canUseMessages ? roomMessages.filter((m) => m.group_key === HOTEL_CHAT && !m.deleted_at) : []).map((m) => ({
+        id: `msg-${m.id}`, kind: "message" as const, created_at: m.created_at,
+        title: m.created_by_username ?? "Hotel chat", detail: m.message,
+      })),
+      ...maintenanceRequests.filter((m) => !m.done).map((m) => ({
+        id: `job-${m.id}`, kind: "maintenance" as const, created_at: m.created_at,
+        title: `${maintenanceLocation(m)}${m.urgent ? " · Urgent" : ""}`, detail: m.message,
+      })),
+      ...lostPropertyOpenItems.map((l) => ({
+        id: `lost-${l.id}`, kind: "lost" as const, created_at: l.created_at,
+        title: `Lost property · ${l.room_number != null ? `Room ${l.room_number}` : "Hotel"}`, detail: l.message,
+      })),
+    ]);
+    // Views: Home's own filters, one at a time ("All rooms" clears them).
+    const toHome = () => { setDeskActiveKey(null); closeHomePanels(); };
+    const views = isMaintenance || isFnb ? [] : isReception ? (() => {
+      const { statusFilterOptions, doneOnlyCount, statusCountFor } = receptionFilterOptions();
+      const none = receptionFeatureFilter.length === 0 && receptionRoomTypeFilter.length === 0;
+      const clear = () => { setReceptionFeatureFilter([]); setReceptionStatusFilter([]); setReceptionRoomTypeFilter([]); setReceptionDoneOnlyFilter(false); };
+      return [
+        { key: "all", label: "All rooms", count: rooms.length, active: none && receptionStatusFilter.length === 0 && !receptionDoneOnlyFilter, onSelect: () => { toHome(); clear(); } },
+        ...statusFilterOptions.map((o) => ({
+          key: o.id, label: o.label, count: statusCountFor(o.id),
+          active: none && !receptionDoneOnlyFilter && receptionStatusFilter.length === 1 && receptionStatusFilter[0] === o.id,
+          onSelect: () => { toHome(); clear(); setReceptionStatusFilter([o.id]); },
+        })),
+        { key: "done", label: "Marked done", count: doneOnlyCount, active: none && receptionStatusFilter.length === 0 && receptionDoneOnlyFilter, onSelect: () => { toHome(); clear(); setReceptionDoneOnlyFilter(true); } },
+      ];
+    })() : (() => {
+      const { statusOptions, countFor } = hkFilterOptions();
+      return [
+        { key: "all", label: "All rooms", count: rooms.length, active: hkStatusFilter.length === 0 && !hideCompletedRooms, onSelect: () => { toHome(); setHkStatusFilter([]); setHideCompletedRooms(false); } },
+        ...statusOptions.map((o) => ({
+          key: o.key, label: o.label, count: countFor(o.key),
+          active: !hideCompletedRooms && hkStatusFilter.length === 1 && hkStatusFilter[0] === o.key,
+          onSelect: () => { toHome(); setHideCompletedRooms(false); setHkStatusFilter([o.key]); },
+        })),
+      ];
+    })();
+    const live = feed.map((f) => ({
+      id: f.id, title: f.title, detail: f.detail, time: liveTime(f.created_at, now),
+      dotClass: f.kind === "message" ? "bg-sidebar-primary" : f.kind === "lost" ? "bg-room-stayover-accent" : f.title.endsWith("Urgent") ? "bg-destructive" : "bg-room-dirty-accent",
+      onOpen: open(f.kind === "message" ? "messages" : f.kind === "lost" ? "lost-property" : "maintenance-log"),
+    }));
+    return (
+    <DeskSidebar
+      hotelName={hotelName}
+      department={effectiveRole ? viewRoleLabel(effectiveRole) : null}
+      userName={authUser?.username ?? null}
+      groups={menuGroups}
+      homeActive={!homePanelOpen}
+      activeKey={menuTakeoverActive ? deskActiveKey : null}
+      keepsMenuOpen={(key) => key === "theme" || key === "accent" || key === "desktop-layout"}
+      onHome={() => {
+        setDeskActiveKey(null);
+        closeHomePanels();
+        window.scrollTo({ top: 0, behavior: "smooth" });
+      }}
+      onPick={pick}
+      live={live}
+      views={views}
+    />
+    );
+  })()}
+  {deskOn && !isMaintenance && !isFnb && (
+    <aside
+      data-desk-panel
+      aria-label={openRoom !== null ? `Room ${openRoom}` : "Room"}
+      className="fixed inset-y-0 right-0 z-20 w-[26rem] overflow-y-auto border-l border-border bg-background p-4"
+    >
+      {openRoom === null ? (
+        <p className="mt-6 text-center text-sm text-muted-foreground">Pick a room to see everything about it here.</p>
+      ) : (
+        <div className="mb-3 flex items-center gap-3">
+          <h2 className="font-serif text-3xl font-bold leading-none">{openRoom}</h2>
+          <span className="min-w-0 flex-1 truncate text-sm text-muted-foreground">
+            {categoryLabel(roomCategory(openRoom), roomTypes)}
+          </span>
+          <Button variant="ghost" size="icon" aria-label={`Close room ${openRoom}`} onClick={() => closeRoomView()}>
+            <X className="h-4 w-4" />
+          </Button>
+        </div>
+      )}
+      <div ref={setDeskPanelEl} />
+    </aside>
+  )}
   {/* Tablet: the menu stays permanently docked on the right of the screen. */}
   {isTablet && (
     <aside
