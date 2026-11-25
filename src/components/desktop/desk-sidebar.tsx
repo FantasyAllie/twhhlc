@@ -3,7 +3,8 @@
 // opening each item the same way the menu does. Account and appearance items go
 // in the chip at the bottom.
 import * as React from "react";
-import { ChevronUp, House, Settings } from "lucide-react";
+import { ChevronUp, House, Search, Settings } from "lucide-react";
+import { commandShortcut } from "@/lib/polish";
 import { cn } from "@/lib/utils";
 import { NamedAvatar } from "@/components/user-avatar";
 import {
@@ -46,6 +47,7 @@ export function DeskSidebar({
   keepsMenuOpen,
   live = [],
   views = [],
+  onSearch,
 }: {
   hotelName: string;
   department: string | null;
@@ -62,6 +64,8 @@ export function DeskSidebar({
   live?: DeskLiveLine[];
   /** Home's filters as one-click views; empty for departments without them. */
   views?: DeskView[];
+  /** Polish preview: opens the command menu. */
+  onSearch?: () => void;
 }) {
   const listed = groups.filter((g) => !CHIP_GROUPS.has(g.id) && g.items.length > 0);
   const chip = groups.filter((g) => CHIP_GROUPS.has(g.id) && g.items.length > 0);
@@ -83,6 +87,19 @@ export function DeskSidebar({
         <p className="mt-1 truncate text-base font-semibold">{hotelName}</p>
         {department && <p className="text-xs text-sidebar-foreground/60">{department}</p>}
       </div>
+      {onSearch && (
+        <div className="shrink-0 px-2.5 pb-2">
+          <button
+            type="button"
+            onClick={onSearch}
+            className="flex w-full items-center gap-2 rounded-lg border border-sidebar-border bg-background/60 px-2.5 py-1.5 text-left text-sm text-sidebar-foreground/70 transition-colors hover:bg-sidebar-accent"
+          >
+            <Search className="h-4 w-4 shrink-0" />
+            <span className="flex-1">Find a room or page</span>
+            <kbd className="rounded border border-sidebar-border px-1.5 text-[10px] font-medium tracking-wide">{commandShortcut()}</kbd>
+          </button>
+        </div>
+      )}
       <nav className="flex-1 min-h-0 space-y-4 overflow-y-auto px-2.5 pb-3">
         <button type="button" onClick={onHome} aria-current={homeActive ? "page" : undefined} className={row(homeActive)}>
           <House className="h-4 w-4 shrink-0" />

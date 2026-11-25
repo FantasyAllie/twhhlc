@@ -2,6 +2,7 @@
 // counts. Every row has -/+ for single steps, an editable total, and an
 // "add amount" box that adds a typed number onto the total.
 import React from "react";
+import { ask } from "@/lib/polish";
 import { Minus, Plus } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -366,8 +367,8 @@ export function InventoryDialog({
               size="sm"
               className="text-destructive hover:text-destructive"
               disabled={section === "cupboard" && !cupboard}
-              onClick={() => {
-                if (confirm(`Reset all counts for ${resetLabel}?`)) onResetSection(section, resetLocation);
+              onClick={async () => {
+                if ((await ask(`Reset all counts for ${resetLabel}?`))) onResetSection(section, resetLocation);
               }}
             >
               Reset

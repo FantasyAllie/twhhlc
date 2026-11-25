@@ -57,6 +57,22 @@ export function upNext(rooms: ListRoom[]): ListRoom[] {
   return toDo(rooms).filter((r) => r.firstUp || hasIncomingGuest(r.sheetKind));
 }
 
+/** Clean first's order: the more urgent the day's job, the earlier it comes. */
+const CLEAN_FIRST_RANK: Record<string, number> = { turnover: 0, arrival: 1, stayover: 2 };
+
+/**
+ * Clean first (Housekeeping): the rooms that have to be done today, most urgent
+ * first. Early check-ins and late checkouts, then turnovers (a guest leaving and
+ * another arriving), arrivals, then stayovers; room number within each. Departures
+ * with nobody arriving can wait, so they stay in To do but not here.
+ */
+export function cleanFirst(rooms: ListRoom[]): ListRoom[] {
+  const rank = (r: ListRoom) => (r.firstUp ? -1 : CLEAN_FIRST_RANK[r.sheetKind ?? ""] ?? 3);
+  return toDo(rooms)
+    .filter((r) => rank(r) < 3)
+    .sort((a, b) => rank(a) - rank(b) || a.n - b.n);
+}
+
 export type FixFirstJob = { id: string; room_number: number | null; urgent?: boolean; done: boolean };
 
 /**

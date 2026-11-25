@@ -382,7 +382,7 @@ export function ReceptionStatusSheet({
                  <RoomInfoSummary room={room} n={n} openJobs={openJobsFor?.(n) ?? []}
                    onShowInfo={onShowInfo ? () => onShowInfo(n) : undefined} />
                )}
-               <div className={cn("border-y py-4", (room?.mattress_tracking || (!isReception && room && !room.done && !room.done_reception && setRoomsLeftDirty)) && "grid grid-cols-2 gap-1.5")}>
+               <div className={cn("border-y py-4", (room?.mattress_tracking || (room && !room.done && !room.done_reception && setRoomsLeftDirty)) && "grid grid-cols-2 gap-1.5")}>
                  <Row
                    label="Mark as Done"
                    selected={isReception ? receptionDoneSet.has(n) : housekeepingDoneSet.has(n)}
@@ -394,8 +394,8 @@ export function ReceptionStatusSheet({
                    }}
 
                  />
-                 {/* Housekeeping can't get to it today: left dirty for tomorrow. */}
-                 {!isReception && room && !room.done && !room.done_reception && setRoomsLeftDirty && (() => {
+                 {/* Nobody can get to it today: left dirty for tomorrow (housekeeping or reception). */}
+                 {room && !room.done && !room.done_reception && setRoomsLeftDirty && (() => {
                    const left = leftDirtyState(room) === "today";
                    return (
                      <Row

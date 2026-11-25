@@ -10,6 +10,8 @@ import {
 
 import appCss from "../styles.css?url";
 import { Toaster } from "sonner";
+import { AskHost } from "@/components/polish/ask-host";
+import { HintHost } from "@/components/polish/hint-host";
 import { ThemeProvider } from "@/components/theme-provider";
 import { useEffect } from "react";
 import { useGlobalRipple } from "@/lib/ripple";
@@ -179,6 +181,8 @@ function RootComponent() {
       <ThemeProvider>
         <Outlet />
         <Toaster position="top-center" />
+        <AskHost />
+        <HintHost />
       </ThemeProvider>
     </QueryClientProvider>
   );

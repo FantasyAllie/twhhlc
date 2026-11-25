@@ -106,7 +106,7 @@ const ENTRIES: Entry[] = [
     key: "big-tick",
     label: "Large tick across the tile",
     description:
-      "Housekeeping has pressed “Mark as Done” for this room. It only appears for rooms that are actually serviced — never for DND, service declined, Dirty, ROS or Staff rooms.",
+      "Housekeeping has pressed “Mark as Done” for this room. It appears for every room that's been seen to, including DND and service declined rooms (they're marked done when set). Never for Dirty, ROS or Staff rooms.",
     render: () => <Check strokeWidth={2} className="h-6 w-6 opacity-40" />,
   },
   {
@@ -122,7 +122,7 @@ const ENTRIES: Entry[] = [
     key: "dnd",
     label: "DND",
     description:
-      "Do Not Disturb sign on the door. The room is treated as a stayover, is marked done and is left out of the housekeeping progress total. The door photo is kept in Settings → Stayover Photos.",
+      "Do Not Disturb sign on the door. The room is treated as a stayover, and is marked done as soon as the door photo is saved, so it counts as done in the housekeeping progress. The door photo is kept in Settings → Stayover Photos.",
     render: () => (
       <span className="text-xs font-bold leading-none tracking-wide">DND</span>
     ),

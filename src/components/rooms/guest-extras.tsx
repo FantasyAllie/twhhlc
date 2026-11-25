@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useState } from "react";
+import { ask } from "@/lib/polish";
 import { useQuery, useQueryClient, type QueryClient } from "@tanstack/react-query";
 import {
   ArrowDown, ArrowUp, ArrowLeftRight, Bath, Bed, BedDouble, Cake, Check, CheckSquare, ChevronDown, ChevronLeft, ChevronRight, Coffee, Cookie, CupSoda, DoorOpen, Fan, Gift, GlassWater, Heart,
@@ -525,7 +526,7 @@ function ExtraDetail({ extra, rules: savedRules, onBack }: { extra: GuestExtra; 
     finally { setBusy(false); }
   };
   const remove = async () => {
-    if (!confirm(`Remove ${extra.name}? Rooms will stop showing it. This can't be undone.`)) return;
+    if (!(await ask(`Remove ${extra.name}? Rooms will stop showing it. This can't be undone.`))) return;
     setBusy(true);
     const { error } = await supabase.from("guest_extras").delete().eq("id", extra.id);
     setBusy(false);
@@ -537,8 +538,8 @@ function ExtraDetail({ extra, rules: savedRules, onBack }: { extra: GuestExtra; 
 
   return <div className="space-y-4 py-3">
     <div className="flex items-center gap-2">
-      <Button variant="ghost" size="sm" className="gap-1 px-2" onClick={() => {
-        if (saved || confirm("Leave without saving your changes?")) onBack();
+      <Button variant="ghost" size="sm" className="gap-1 px-2" onClick={async () => {
+        if (saved || (await ask("Leave without saving your changes?"))) onBack();
       }}><ChevronLeft className="h-4 w-4" />Room Checklist</Button>
       <span className="flex-1" />
       <Button size="sm" disabled={busy || saved || !name.trim()} onClick={() => void save()}>{busy ? "Saving…" : saved ? "Saved" : "Save"}</Button>

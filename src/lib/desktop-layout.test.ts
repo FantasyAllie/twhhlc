@@ -1,6 +1,6 @@
 import { describe, it } from "node:test";
 import assert from "node:assert/strict";
-import { fixFirst, liveFeed, liveTime, upNext } from "./desktop-layout";
+import { cleanFirst, fixFirst, liveFeed, liveTime, upNext } from "./desktop-layout";
 import type { ListRoom } from "./home-list";
 
 const room = (n: number, extra: Partial<ListRoom> = {}): ListRoom => ({
@@ -28,6 +28,24 @@ describe("up next", () => {
       room(6, { firstUp: true }),
     ];
     assert.deepEqual(upNext(rooms).map((r) => r.n), [6]);
+  });
+});
+
+describe("clean first", () => {
+  it("puts early/late first, then turnovers, arrivals and stayovers, each by room number", () => {
+    const rooms = [
+      room(2, { sheetKind: "stayover" }), room(9, { sheetKind: "arrival" }), room(7, { sheetKind: "turnover" }),
+      room(3, { sheetKind: "turnover" }), room(30, { firstUp: true, sheetKind: "stayover" }), room(1, { sheetKind: "stayover" }),
+    ];
+    assert.deepEqual(cleanFirst(rooms).map((r) => r.n), [30, 3, 7, 9, 1, 2]);
+  });
+
+  it("leaves out departures with nobody arriving, and rooms already done or DND", () => {
+    const rooms = [
+      room(1, { sheetKind: "departure" }), room(2), room(3, { sheetKind: "turnover", done: true }),
+      room(4, { sheetKind: "stayover", dnd: true }), room(5, { sheetKind: "stayover" }),
+    ];
+    assert.deepEqual(cleanFirst(rooms).map((r) => r.n), [5]);
   });
 });
 

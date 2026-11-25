@@ -1,6 +1,7 @@
 // Room tiles for the home grid. JSX moved verbatim from src/routes/app.tsx
 // (stage 5 of the staged refactor); colour/label rules live in @/lib/rooms.
 import { memo, useLayoutEffect, useRef, useState } from "react";
+import { usePolishTiles } from "@/lib/polish";
 import { leftDirtyState } from "@/lib/left-dirty";
 import { AlertCircle, ArrowLeft, BedDouble, Check, Dog, DoorOpen, Flag, Footprints, Gift, User, Users, Wrench, type LucideIcon } from "lucide-react";
 import { cardLabel, guestsLabel } from "@/lib/home-list";
@@ -14,6 +15,7 @@ import { RotateCw } from "lucide-react";
 import { EXTRA_ICONS, useRoomNeeds } from "@/components/rooms/guest-extras";
 import {
   computeTileMeta,
+  receptionTileLabel,
   resolveRoomStatusFlags,
   type RoomStatusIds,
   type RoomTileState,
@@ -147,7 +149,7 @@ function GlyphRow({ glyphs, colourful }: { glyphs: Glyph[]; colourful: boolean }
   const per = 15;
   const count = width === 0 || glyphs.length * per <= width ? glyphs.length : Math.max(0, Math.floor((width - 20) / per));
   return (
-    <span ref={ref} className="flex min-w-0 flex-1 items-center gap-[3px] overflow-hidden">
+    <span ref={ref} data-tile-extra className="flex min-w-0 flex-1 items-center gap-[3px] overflow-hidden">
       {glyphs.slice(0, count).map((g) => (
         <g.Icon key={g.key} aria-label={g.label} className={cn("h-3 w-3 shrink-0", colourful && (FLAG_COLORS[g.color] ?? FLAG_COLORS.slate).text)} />
       ))}
@@ -159,11 +161,13 @@ function GlyphRow({ glyphs, colourful }: { glyphs: Glyph[]; colourful: boolean }
 }
 
 function TileFace({
-  n, room, bedLabel, done, dot, bedReminder, label, marker, maintenance, bg, fg,
+  n, room, bedLabel, done, dot, bedReminder, label, marker, maintenance, bg, fg, badge = false,
 }: {
   n: number; room: Room | undefined; bedLabel?: string | null; done: boolean;
   dot: "reply" | "request" | "note" | null; bedReminder: boolean; label: string; marker: string | null;
   maintenance: boolean; bg: string; fg: string;
+  /** Polish preview: done is a filled badge in the corner rather than a small tick. */
+  badge?: boolean;
 }) {
   const colourful = useTileIconStyle() === "colourful";
   const glyphs = withoutRepeats(useTileGlyphs(room, n), label);
@@ -173,31 +177,41 @@ function TileFace({
       <span className="flex w-full min-w-0 items-center gap-1">
         <span className="font-number text-sm sm:text-base font-bold leading-none">{n}</span>
         {bedLabel && <span className="min-w-0 truncate text-[9px] sm:text-[10px] md:text-xs font-bold uppercase leading-none opacity-80">- {bedLabel}</span>}
-        {done && <Check aria-label="Done" strokeWidth={3} className="h-3 w-3 shrink-0" />}
+        {done && !badge && <Check aria-label="Done" strokeWidth={3} className="h-3 w-3 shrink-0" />}
         <span className="ml-auto flex shrink-0 items-center gap-1">
+          {/* Simple tiles: the spanner sits up here, so it can't be clipped at the bottom. */}
+          {maintenance && <Wrench data-tile-simple aria-label="Maintenance" className="h-3 w-3 shrink-0 text-orange-500" />}
+
           {dot && (
             <span
+              data-tile-extra
               aria-label={dot === "reply" ? "New reply to your pin" : dot === "request" ? "Open request" : "Housekeeping note"}
               className={"h-2 w-2 rounded-full ring-2 ring-background " + (dot === "reply" ? "bg-yellow-400" : "bg-orange-500")}
             />
           )}
-          {bedReminder && <AlertCircle aria-label="Bed not set" className="h-3 w-3 opacity-45" />}
+          {bedReminder && <AlertCircle data-tile-extra aria-label="Bed not set" className="h-3 w-3 opacity-45" />}
           {checkedOut && (
-            <DoorOpen aria-label="Checked out" className={cn("h-3.5 w-3.5", colourful && "text-emerald-600 dark:text-emerald-400")} />
+            <DoorOpen data-tile-extra aria-label="Checked out" className={cn("h-3.5 w-3.5", colourful && "text-emerald-600 dark:text-emerald-400")} />
           )}
         </span>
       </span>
       <span className="text-[9px] sm:text-[10px] md:text-xs font-bold uppercase tracking-tight leading-tight opacity-85 whitespace-pre-line">
         {label}
       </span>
-      <span className="flex h-[15px] w-full min-w-0 items-center gap-[3px]">
+      {/* Polish preview: done sits in the bottom corner, clear of the number and bed. */}
+      {done && badge && (
+        <span aria-label="Done" className="absolute bottom-1.5 right-1.5 grid h-[1.125rem] w-[1.125rem] place-items-center rounded-full" style={{ backgroundColor: fg, color: bg }}>
+          <Check aria-hidden strokeWidth={3.5} className="h-3 w-3" />
+        </span>
+      )}
+      <span data-tile-row className="flex h-[15px] w-full min-w-0 items-center gap-[3px]">
         {marker && (
-          <span className="shrink-0 rounded px-1 py-px text-[9px] font-extrabold leading-none" style={{ backgroundColor: fg, color: bg }}>
+          <span data-tile-marker className="shrink-0 rounded px-1 py-px text-[9px] font-extrabold leading-none" style={{ backgroundColor: fg, color: bg }}>
             {marker}
           </span>
         )}
         <GlyphRow glyphs={glyphs} colourful={colourful} />
-        {maintenance && <Wrench aria-label="Maintenance" className="h-3 w-3 shrink-0 text-orange-500" />}
+        {maintenance && <Wrench data-tile-full aria-label="Maintenance" className="h-3 w-3 shrink-0 text-orange-500" />}
       </span>
     </>
   );
@@ -252,9 +266,11 @@ function ReceptionRoomTileBase({
   // Done marker reflects HOUSEKEEPING completion only (room.done) — reception's
   // own done flag must not light it up. Hidden for rooms that are never
   // serviced: DND, Service Declined (NR), ROS, Staff, or Dirty.
+  const checkTones = usePolishTiles();
+  // A room marked done shows it, DND and NR included (they're marked done when
+  // set), so reception can see it was asked about. Never ROS, Staff or Dirty.
   const showDoneMark =
-    !!room?.done &&
-    !isNR && !flags.isDnd && !flags.isRos && !isStaffRoom && !flags.isDirty;
+    (!!room?.done || ((isNR || flags.isDnd) && !!room?.done_reception)) && !flags.isRos && !isStaffRoom && !flags.isDirty;
   const meta = computeTileMeta({
     flags,
     state,
@@ -266,7 +282,11 @@ function ReceptionRoomTileBase({
     role: "reception",
     sheetKind: room?.sheet_kind,
     leftDirty: leftDirtyState(room),
+    checkTones,
   });
+  // Polish preview: reception sees the room's status without "Not started" or
+  // "Not checked" (the pale dashed tile already says it isn't done).
+  const receptionLabel = checkTones ? receptionTileLabel(meta.label, room) : meta.label;
 
   return (
     <button
@@ -278,6 +298,8 @@ function ReceptionRoomTileBase({
         onClick();
       }}
 
+      data-room-tile={n}
+      data-pending={meta.pending && !isOpen ? "" : undefined}
       className={cn(
         TILE_CLASS,
         isOpen && !isStaffRoom && "ring-2 ring-ring border-transparent bg-accent",
@@ -298,7 +320,8 @@ function ReceptionRoomTileBase({
           done={showDoneMark}
           dot={pinDot ?? (room?.housekeeping_note ? "note" : null)}
           bedReminder={false}
-          label={meta.label}
+          label={receptionLabel}
+          badge={checkTones}
           marker={[flags.isDnd && "DND", isNR && "NR"].filter(Boolean).join(" ") || null}
           maintenance={!!room?.needs_maintenance || hasOpenMaintenance}
           bg={meta.bg}
@@ -336,6 +359,7 @@ function HousekeepingRoomTileBase({
   const longPress = useLongPress(onLongPress);
   const flags = resolveRoomStatusFlags(room, statusIds);
   const isStaff = flags.isStaff;
+  const checkTones = usePolishTiles();
   const meta = computeTileMeta({
     flags,
     state,
@@ -347,6 +371,7 @@ function HousekeepingRoomTileBase({
     role: "housekeeping",
     sheetKind: room?.sheet_kind,
     leftDirty: leftDirtyState(room),
+    checkTones,
   });
   const isDone = state === "done" || state === "complete";
 
@@ -358,6 +383,8 @@ function HousekeepingRoomTileBase({
         if (longPress.consumeClick()) return;
         onClick();
       }}
+      data-room-tile={n}
+      data-pending={meta.pending && !isOpen ? "" : undefined}
       className={cn(TILE_CLASS, isOpen && "ring-2 ring-ring border-transparent bg-accent")}
       style={
         isOpen
@@ -409,6 +436,7 @@ function HousekeepingRoomTileBase({
           bedReminder={!isStaff && !flags.isRos && !flags.isStayover && !flags.isDnd && isDone && (!room?.reception_bed_id || !flags.hasStatus)}
           label={isStaff ? "Staff" : meta.label}
           marker={isStaff ? null : [flags.isDnd && "DND", isNR && "NR"].filter(Boolean).join(" ") || null}
+          badge={checkTones}
           maintenance={!!room?.needs_maintenance || hasOpenMaintenance}
           bg={isStaff ? "var(--room-staff)" : meta.bg}
           fg={isStaff ? "var(--room-staff-fg)" : meta.fg}
@@ -488,6 +516,7 @@ export function HomeRoomCard({
   n, room, statusIds, state, isNR, hasLinenCount, pinDot, hasOpenMaintenance = false, onClick, role, bed, guests, disabled,
 }: CardProps) {
   const flags = resolveRoomStatusFlags(room, statusIds);
+  const checkTones = usePolishTiles();
   const meta = computeTileMeta({
     flags,
     state,
@@ -499,6 +528,7 @@ export function HomeRoomCard({
     role,
     sheetKind: room?.sheet_kind,
     leftDirty: leftDirtyState(room),
+    checkTones,
   });
   const colourful = useTileIconStyle() === "colourful";
   const needsFor = useRoomNeeds();

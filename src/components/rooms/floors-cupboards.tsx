@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { ask } from "@/lib/polish";
 import { useQueryClient } from "@tanstack/react-query";
 import { ArrowDown, ArrowLeft, ArrowUp, Check, ChevronRight, Plus, Save, Trash2 } from "lucide-react";
 import { toast } from "sonner";
@@ -76,8 +77,8 @@ export function FloorsCupboards({ rooms }: { rooms: Room[] }) {
           if (error) throw error;
           toast.success("Room assignments saved");
         })}><Save className="h-4 w-4" />Save rooms</Button>
-        <Button variant="ghost" size="icon" className="text-destructive" aria-label="Remove floor" disabled={busy} onClick={() => {
-          if (!confirm(`Remove ${selected.name}? Its rooms will become unassigned. Cupboards with linen counts cannot be removed.`)) return;
+        <Button variant="ghost" size="icon" className="text-destructive" aria-label="Remove floor" disabled={busy} onClick={async () => {
+          if (!(await ask(`Remove ${selected.name}? Its rooms will become unassigned. Cupboards with linen counts cannot be removed.`))) return;
           void run(async () => { const { error } = await supabase.from("hotel_floors").delete().eq("id", selected.id); if (error) throw error; setSelected(null); toast.success("Floor removed"); });
         }}><Trash2 className="h-4 w-4" /></Button>
       </div>

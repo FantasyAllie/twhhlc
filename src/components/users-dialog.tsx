@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { ask } from "@/lib/polish";
 import { useServerFn } from "@tanstack/react-start";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import {
@@ -201,7 +202,7 @@ export function UsersDialog({
 
   async function onDeleteFromEdit() {
     if (!editUser) return;
-    if (!confirm(`Delete account "${editUser.username}"? This cannot be undone.`)) return;
+    if (!(await ask(`Delete account "${editUser.username}"? This cannot be undone.`))) return;
     try {
       await deleteFn({ data: { id: editUser.id } });
       toast.success("User deleted");
@@ -215,7 +216,7 @@ export function UsersDialog({
   async function onToggleDisabled() {
     if (!editUser || disableBusy) return;
     const next = !editUser.disabled;
-    if (next && !confirm(`Disable "${editUser.username}"? They will be signed out and unable to log in until re-enabled.`)) return;
+    if (next && !(await ask(`Disable "${editUser.username}"? They will be signed out and unable to log in until re-enabled.`))) return;
     setDisableBusy(true);
     try {
       await disableFn({ data: { id: editUser.id, disabled: next } });
@@ -276,7 +277,7 @@ export function UsersDialog({
   }
 
   async function onDelete(u: AppUserRow) {
-    if (!confirm(`Delete account "${u.username}"? This cannot be undone.`)) return;
+    if (!(await ask(`Delete account "${u.username}"? This cannot be undone.`))) return;
     try {
       await deleteFn({ data: { id: u.id } });
       toast.success("User deleted");
@@ -488,7 +489,7 @@ export function UsersDialog({
                         type="button"
                         aria-label={`Delete ${h.name}`}
                         onClick={async () => {
-                          if (!confirm(`Delete hotel workspace "${h.name}"? This permanently removes all of its rooms, templates, messages, photos and other data. This cannot be undone.`)) return;
+                          if (!(await ask(`Delete hotel workspace "${h.name}"? This permanently removes all of its rooms, templates, messages, photos and other data. This cannot be undone.`))) return;
                           try {
                             await deleteHotelFn({ data: { hotelId: h.id } });
                             toast.success("Hotel workspace deleted");

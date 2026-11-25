@@ -74,7 +74,10 @@ export function MaintenanceLogSheet({
   scope,
   composeOnly = false,
   contentClassName,
+  desk = false,
 }: {
+  /** Mouse-and-keyboard desktop layout: the log as a table of one-line rows. */
+  desk?: boolean;
   // Only show the new-issue form (Maintenance staff work the list from Home).
   composeOnly?: boolean;
   // Extra classes for the panel itself (e.g. the centred iOS compose popup).
@@ -285,6 +288,78 @@ export function MaintenanceLogSheet({
             ? deleteMaintenanceRequest(e.rawId)
             : deleteMessage?.(e.rawId))
       : undefined;
+    if (desk) {
+      return (
+        <div
+          key={e.id}
+          className={
+            "grid grid-cols-1 @3xl:grid-cols-[9rem_minmax(0,1fr)_9rem_12.5rem] items-start gap-3 border-b px-3 py-2.5 transition-colors last:border-b-0 hover:bg-muted/40 " +
+            (e.urgent && !isCompleted ? "bg-destructive/[0.06]" : "")
+          }
+        >
+          <div className="flex flex-wrap items-center gap-1.5 pt-0.5">
+            <span className={"inline-flex h-6 items-center rounded-md px-2 text-xs font-semibold " + (isCompleted ? "bg-muted text-muted-foreground" : "bg-primary/10 text-primary")}>
+              {e.location}
+            </span>
+            {e.urgent && !isCompleted && (
+              <span className="inline-flex h-6 items-center gap-1 rounded-md bg-destructive/15 px-1.5 text-[10px] font-bold uppercase tracking-wide text-destructive">
+                <AlertTriangle className="h-3 w-3" aria-hidden /> Urgent
+              </span>
+            )}
+          </div>
+          <div className="min-w-0">
+            <p className={"text-sm whitespace-pre-wrap break-words " + (isCompleted ? "text-muted-foreground line-through" : "")}>{e.message}</p>
+            {isCompleted && e.workDone ? <p className="mt-0.5 text-xs whitespace-pre-wrap">Work done: {e.workDone}</p> : null}
+            {e.source === "req" && (e.photoPaths.length > 0 || e.canEditPhotos) ? (
+              <div className="mt-1.5">
+                <PhotoAttachments
+                  kind="maintenance"
+                  entryId={e.rawId}
+                  paths={e.photoPaths}
+                  canEdit={e.canEditPhotos}
+                  onChange={(next) => setMaintenancePhotoPaths(e.rawId, next)}
+                />
+              </div>
+            ) : null}
+          </div>
+          <div className="pt-0.5 text-xs text-muted-foreground tabular-nums">
+            {isCompleted ? (
+              <>Done{e.doneBy ? ` by ${e.doneBy}` : ""}{e.doneAt ? <span className="block">{fmt(e.doneAt)}</span> : null}</>
+            ) : (
+              <>{fmt(e.createdAt)}{e.createdBy ? <span className="block">{e.createdBy}</span> : null}</>
+            )}
+          </div>
+          <div className="flex items-center justify-end gap-1">
+            <MaintenanceNotes requestId={e.rawId} source={e.source === "req" ? "request" : "message"} notes={e.notes} iconOnly />
+            {e.source === "req" && setMaintenanceUrgent && !isCompleted && (
+              <Button
+                type="button"
+                size="icon"
+                variant={e.urgent ? "default" : "ghost"}
+                className={"h-8 w-8 " + (e.urgent ? "bg-destructive text-destructive-foreground hover:bg-destructive/90" : "")}
+                onClick={() => void setMaintenanceUrgent(e.rawId, !e.urgent)}
+                aria-pressed={e.urgent}
+                aria-label={e.urgent ? "Urgent action" : "Mark urgent"}
+              >
+                <AlertTriangle className="h-4 w-4" />
+              </Button>
+            )}
+            {remove && (
+              <Button type="button" size="icon" variant="ghost" className="h-8 w-8 hover:text-destructive" onClick={remove} aria-label="Delete request">
+                <Trash2 className="h-4 w-4" />
+              </Button>
+            )}
+            {primary ? (
+              <Button type="button" size="sm" variant="outline" className="ml-1 h-8" onClick={primary}>
+                <Check className="mr-1 h-4 w-4" /> Done
+              </Button>
+            ) : !isCompleted && !canDone ? (
+              <span className="ml-1 text-xs text-muted-foreground">Awaiting action</span>
+            ) : null}
+          </div>
+        </div>
+      );
+    }
     return (
       <SwipeRow key={e.id} onPrimary={primary} onDelete={remove}>
         <div
@@ -459,7 +534,9 @@ export function MaintenanceLogSheet({
           </SheetTitle>
           <SheetDescription className="max-lg:sr-only">
             {composeOnly
-              ? "Report a new maintenance issue. Open jobs are on your Home screen."
+              ? isMaintenance
+                ? "Report a new maintenance issue. Open jobs are on your Home screen."
+                : "Report a new maintenance issue. Open jobs are in the Maintenance Log."
               : isReception || isMaintenance
               ? "Reception and Maintenance can mark requests as complete."
               : "Log a maintenance issue for Reception or Maintenance to action."}
@@ -540,7 +617,8 @@ export function MaintenanceLogSheet({
                 <select
                   value={newMaintenanceRoom}
                   onChange={(e) => setNewMaintenanceRoom(e.target.value)}
-                  className="h-9 rounded-xl border bg-background px-2 text-sm sm:w-44"
+                  aria-label="Location"
+                  className="h-9 rounded-md border border-input bg-background px-2 text-sm sm:w-44"
                 >
                   <option value="">Select a location</option>
                   {(() => {
@@ -579,25 +657,18 @@ export function MaintenanceLogSheet({
                       void submitMaintenanceRequest();
                     }
                   }}
-                  className="flex-1"
+                  className="h-9 flex-1"
                 />
-                <Button
-                  type="button"
-                  onClick={async () => {
-                    await submitMaintenanceRequest();
-                    setMaintenanceComposerOpen(false);
-                  }}
-                >
-                  <Plus className="h-4 w-4 mr-1" /> Log
-                </Button>
               </div>
+              {/* Urgent, photos and Log on one line: the form reads top to bottom, then sends. */}
+              <div className="flex flex-wrap items-center gap-2">
               {setNewMaintenanceUrgent && (
                 <Button
                   type="button"
                   variant={newMaintenanceUrgent ? "default" : "outline"}
                   size="sm"
                   className={
-                    "self-start text-xs " +
+                    "h-9 text-xs " +
                     (newMaintenanceUrgent
                       ? "bg-destructive text-destructive-foreground hover:bg-destructive/90"
                       : "")
@@ -609,7 +680,18 @@ export function MaintenanceLogSheet({
                   {newMaintenanceUrgent ? "Urgent action" : "Needs urgent action"}
                 </Button>
               )}
-              <PhotoComposer value={newMaintenancePhotos} onChange={setNewMaintenancePhotos} allowVideo />
+              <PhotoComposer value={newMaintenancePhotos} onChange={setNewMaintenancePhotos} allowVideo compact />
+                <Button
+                  type="button"
+                  className="ml-auto h-9"
+                  onClick={async () => {
+                    await submitMaintenanceRequest();
+                    setMaintenanceComposerOpen(false);
+                  }}
+                >
+                  <Plus className="h-4 w-4 mr-1" /> Log
+                </Button>
+              </div>
 
               {canManageAreas && onManageAreas && (
                 <Button
@@ -669,7 +751,9 @@ export function MaintenanceLogSheet({
         {!composeOnly && (<>
         {/* Section pills */}
         <div
-          className="mt-4 max-lg:mt-2 inline-flex w-full justify-center rounded-full border p-1 bg-background items-center"
+          className={desk
+            ? "mt-4 inline-flex w-fit items-center rounded-lg border bg-background p-0.5"
+            : "mt-4 max-lg:mt-2 inline-flex w-full justify-center rounded-full border p-1 bg-background items-center"}
           {...tabSwipe}
         >
           {([
@@ -689,7 +773,7 @@ export function MaintenanceLogSheet({
                   setPage(0);
                 }}
                 className={
-                  "flex-1 px-2 sm:px-4 h-8 text-xs sm:text-sm rounded-full transition-colors whitespace-nowrap " +
+                  (desk ? "h-7 rounded-md px-3 text-xs " : "flex-1 px-2 sm:px-4 h-8 text-xs sm:text-sm rounded-full ") + "transition-colors whitespace-nowrap " +
                   (active
                     ? urgentPill
                       ? "bg-destructive text-destructive-foreground shadow-sm font-medium"
@@ -735,7 +819,16 @@ export function MaintenanceLogSheet({
 
             </p>
           ) : (
+            desk ? (
+              <div className="@container overflow-hidden rounded-lg border">
+                <div className="hidden @3xl:grid @3xl:grid-cols-[9rem_minmax(0,1fr)_9rem_12.5rem] gap-3 border-b bg-muted/40 px-3 py-1.5 text-[11px] font-semibold uppercase tracking-wide text-muted-foreground">
+                  <span>Where</span><span>Issue</span><span>{activeTab === "completed" ? "Done" : "Logged"}</span><span className="sr-only">Actions</span>
+                </div>
+                {pagedItems.map((m) => renderItem(m))}
+              </div>
+            ) : (
             <div className="space-y-2">{pagedItems.map((m) => renderItem(m))}</div>
+            )
           )}
         </div>
         </>)}

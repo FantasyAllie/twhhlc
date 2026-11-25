@@ -30,7 +30,10 @@ export function MaintenanceDashboard({
   setMessagesSheetOpen,
   onLogNewIssue,
   setMaintenanceUrgent,
+  desk = false,
 }: {
+  /** Mouse-and-keyboard desktop layout: jobs as a table of rows. */
+  desk?: boolean;
   maintenanceRequests: MaintenanceRequest[];
   roomMessages: RoomMessage[];
   openMaintenanceCount: number;
@@ -203,14 +206,16 @@ export function MaintenanceDashboard({
        <Button
          type="button"
          variant="outline"
-         className="w-full justify-center"
+         className={desk ? "w-fit" : "w-full justify-center"}
          onClick={onLogNewIssue}
        >
          <Plus className="mr-1 h-4 w-4" /> Log a new issue
        </Button>
      )}
       <div
-        className="inline-flex w-full items-center justify-center rounded-full border bg-background p-1"
+        className={desk
+          ? "inline-flex w-fit items-center rounded-lg border bg-background p-0.5"
+          : "inline-flex w-full items-center justify-center rounded-full border bg-background p-1"}
         {...tabSwipe}
       >
         {([
@@ -224,7 +229,7 @@ export function MaintenanceDashboard({
             variant={activeTab === tab.key ? "default" : "ghost"}
             size="sm"
             className={
-              "h-8 flex-1 rounded-full px-2 text-xs sm:px-4 sm:text-sm " +
+              (desk ? "h-7 rounded-md px-3 text-xs " : "h-8 flex-1 rounded-full px-2 text-xs sm:px-4 sm:text-sm ") +
               (tab.key === "urgent"
                 ? activeTab === tab.key
                   ? "bg-destructive text-destructive-foreground hover:bg-destructive/90"
@@ -277,6 +282,69 @@ export function MaintenanceDashboard({
                {activeTab === "urgent" ? "No urgent maintenance items." : "No open maintenance items."}
              </p>
            ) : (
+             desk ? (
+               <div className="@container overflow-hidden rounded-lg border">
+                 <div className="hidden @3xl:grid @3xl:grid-cols-[9rem_minmax(0,1fr)_9rem_14rem] gap-3 border-b bg-muted/40 px-3 py-1.5 text-[11px] font-semibold uppercase tracking-wide text-muted-foreground">
+                   <span>Where</span><span>Issue</span><span>Logged</span><span className="sr-only">Actions</span>
+                 </div>
+                 {(pagedItems as Item[]).map((it) => {
+                   const req = it.source === "req" ? openReqs.find((r) => r.id === rawId(it.id)) : undefined;
+                   const paths = req && Array.isArray(req.photo_paths) ? req.photo_paths : [];
+                   return (
+                     <div key={it.id} className={"grid grid-cols-1 @3xl:grid-cols-[9rem_minmax(0,1fr)_9rem_14rem] items-start gap-3 border-b px-3 py-2.5 transition-colors last:border-b-0 hover:bg-muted/40 " + (it.urgent ? "bg-destructive/[0.06]" : "")}>
+                       <div className="flex flex-wrap items-center gap-1.5 pt-0.5">
+                         {it.location && <span className="inline-flex h-6 items-center rounded-md bg-primary/10 px-2 text-xs font-semibold text-primary">{it.location}</span>}
+                         {it.urgent && (
+                           <span className="inline-flex h-6 items-center gap-1 rounded-md bg-destructive/15 px-1.5 text-[10px] font-bold uppercase tracking-wide text-destructive">
+                             <AlertTriangle className="h-3 w-3" aria-hidden /> Urgent
+                           </span>
+                         )}
+                       </div>
+                       <div className="min-w-0">
+                         <p className="text-sm whitespace-pre-wrap break-words">{it.message}</p>
+                         {paths.length > 0 && (
+                           <div className="mt-1.5">
+                             <PhotoAttachments kind="maintenance" entryId={rawId(it.id)} paths={paths} canEdit={false} onChange={() => {}} />
+                           </div>
+                         )}
+                       </div>
+                       <div className="pt-0.5 text-xs text-muted-foreground tabular-nums">
+                         {new Date(it.createdAt).toLocaleString(undefined, { month: "short", day: "numeric", hour: "numeric", minute: "2-digit" })}
+                         {it.sender ? <span className="block">{it.sender}</span> : null}
+                         {it.origin && <span className="block">{it.origin === "reception" ? "Reception" : "Housekeeping"}</span>}
+                       </div>
+                       <div className="flex items-center justify-end gap-1">
+                         <MaintenanceNotes
+                           requestId={rawId(it.id)}
+                           source={it.source === "req" ? "request" : "message"}
+                           notes={it.source === "req" ? req?.notes : openMsgs.find((m) => m.id === rawId(it.id))?.notes}
+                           iconOnly
+                         />
+                         {it.source === "req" && setMaintenanceUrgent && (
+                           <Button
+                             type="button" size="icon" variant={it.urgent ? "default" : "ghost"}
+                             className={"h-8 w-8 " + (it.urgent ? "bg-destructive text-destructive-foreground hover:bg-destructive/90" : "")}
+                             aria-pressed={it.urgent} aria-label={it.urgent ? "Urgent action" : "Mark urgent"}
+                             onClick={() => void setMaintenanceUrgent(rawId(it.id), !it.urgent)}
+                           >
+                             <AlertTriangle className="h-4 w-4" />
+                           </Button>
+                         )}
+                         <Button type="button" size="icon" variant="ghost" className="h-8 w-8 hover:text-destructive" onClick={() => void deleteItem(it)} aria-label="Delete">
+                           <Trash2 className="h-4 w-4" />
+                         </Button>
+                         <Button type="button" size="icon" variant="ghost" className="h-8 w-8" onClick={() => void replyToItem(it)} aria-label="Reply">
+                           <MessageSquare className="h-4 w-4" />
+                         </Button>
+                         <Button type="button" size="sm" className="ml-1 h-8 text-xs" onClick={() => void markDoneItem(it)}>
+                           <Check className="mr-1 h-4 w-4" /> Done
+                         </Button>
+                       </div>
+                     </div>
+                   );
+                 })}
+               </div>
+             ) : (
              <ul className="space-y-2" {...pageSwipe}>
                 {(pagedItems as Item[]).map((it) => (
                  <li key={it.id}>
@@ -378,6 +446,7 @@ export function MaintenanceDashboard({
                  </li>
                ))}
              </ul>
+             )
             )
       ) : doneReqs.length === 0 ? (
         <p className="py-8 text-center text-sm text-muted-foreground">No completed maintenance requests.</p>

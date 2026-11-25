@@ -1,4 +1,5 @@
 import { availableMessageGroups, MESSAGE_GROUP_LABELS, HOUSEKEEPING_ROOM_MESSAGE_GROUP, HOTEL_CHAT, isHousekeepingRoomMessage, type MessageGroup } from "@/lib/message-groups";
+import { ask } from "@/lib/polish";
 import { DEVELOPER_TEST_ONLY, isDeveloperViewOnly } from "@/lib/developer-scope";
 import { toggleRoomTab, roomTileAction, type RoomTab } from "@/lib/room-navigation";
 import { shouldShowDepartmentTab } from "@/lib/department-tabs";
@@ -136,9 +137,12 @@ import {
 } from "@/components/ui/sheet";
 import { THEME_LEVELS, THEME_LEVEL_LABELS, useTheme, type ThemeLevel } from "@/components/theme-provider";
 import { armSheetTakeover, isTakeoverReplacing, setSheetTakeoverSlot, releaseSheetTakeover, useSheetTakeoverActive } from "@/components/ui/sheet";
-import { Palette, PanelLeft } from "lucide-react";
+import { Palette, PanelLeft, Sparkles } from "lucide-react";
+import { usePolishPref, useTileDetailPref } from "@/lib/polish";
+import { Skeleton } from "@/components/ui/skeleton";
+import { CommandMenu } from "@/components/polish/command-menu";
 import { DeskSidebar, SETTINGS_GROUP, type DeskMenuItem } from "@/components/desktop/desk-sidebar";
-import { UP_NEXT_LIMIT, fixFirst, liveFeed, liveTime, upNext, useDesktopLayoutPref } from "@/lib/desktop-layout";
+import { UP_NEXT_LIMIT, cleanFirst, fixFirst, liveFeed, liveTime, upNext, useDesktopLayoutPref } from "@/lib/desktop-layout";
 import { ACCENTS, accentSwatch, readAccent, applyAccent, type AccentId } from "@/lib/accent-colour";
 import { useCurrentHotel, DEFAULT_HOTEL_NAME } from "@/lib/hotels";
 import { useFloors } from "@/hooks/use-floors";
@@ -181,6 +185,8 @@ import {
   resolveRoomStatusFlags,
   resolveRoomStatusIds,
   roomStateMeta,
+  roomBedChoices,
+  BED_CHANGED_PREFIX,
 } from "@/lib/rooms";
 import type { RoomTileState } from "@/lib/rooms";
 import { usePendingCounts } from "@/lib/pending-counts";
@@ -454,6 +460,26 @@ function AppPage() {
   }, []);
   const [deskPref, setDeskPref] = useDesktopLayoutPref();
   const deskOn = deskPref && isWide;
+  // Polish preview (Plans/WEBSITE-polish-research.md): opt-in per browser, computers only.
+  const [polishPref, setPolishPref] = usePolishPref();
+  const polishOn = polishPref && isWide;
+  const [commandOpen, setCommandOpen] = useState(false);
+  // Mouse and keyboard: Filters and grid/list sit at the end of the Floor row.
+  const [floorBarSlot, setFloorBarSlot] = useState<HTMLDivElement | null>(null);
+  const toFloorBar = (node: React.ReactNode) => (deskMouse && floorBarSlot ? createPortal(node, floorBarSlot) : node);
+  // Polish preview + new desktop layout: sized for a mouse and keyboard (styles.css).
+  const deskMouse = polishOn && deskOn;
+  useEffect(() => {
+    if (!deskMouse) return;
+    document.documentElement.dataset.deskMouse = "on";
+    return () => { delete document.documentElement.dataset.deskMouse; };
+  }, [deskMouse]);
+  const [tileDetail, setTileDetail] = useTileDetailPref();
+  useEffect(() => {
+    if (!deskMouse || !tileDetail) return;
+    document.documentElement.dataset.tileDetail = "on";
+    return () => { delete document.documentElement.dataset.tileDetail; };
+  }, [deskMouse, tileDetail]);
   const [deskPanelEl, setDeskPanelEl] = useState<HTMLDivElement | null>(null);
   // The sidebar item whose page is open, for its highlight.
   const [deskActiveKey, setDeskActiveKey] = useState<string | null>(null);
@@ -1306,7 +1332,6 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
       receptionStatuses.map((s) => [s.id, s.label.toLowerCase()]),
     );
     const excluded = new Set(["staff", "ros", "staff/ros", "ros - staff"]);
-    const dndId = receptionStatuses.find((s) => s.label.toLowerCase() === "dnd")?.id ?? null;
     const dirtyId = receptionStatuses.find((s) => s.label.toLowerCase() === "dirty")?.id ?? null;
     let counted = 0;
     let done = 0;
@@ -1315,7 +1340,6 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
       const sid = r.reception_status_id ?? r.default_status;
       const lbl = sid ? (statusLabelById.get(sid) ?? sid).toLowerCase() : "";
       if (excluded.has(lbl)) continue;
-      if (dndId && sid === dndId) continue;
       // Left dirty today, or Dirty but not on today's list: set aside.
       if (isSetAside(r, !!dirtyId && sid === dirtyId)) {
         setAside += 1;
@@ -1668,7 +1692,7 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
   };
 
   const resetRejects = async (skipConfirm = false) => {
-    if (!skipConfirm && !confirm("Reset all reject tallies?")) return;
+    if (!skipConfirm && !(await ask("Reset all reject tallies?"))) return;
     qc.setQueryData<RejectCount[]>(["reject_counts"], []);
     const { error } = await supabase
       .from("reject_counts" as never)
@@ -1811,7 +1835,7 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
   };
 
   const resetDeliveryCounts = async (skipConfirm = false) => {
-    if (!skipConfirm && !confirm("Reset all delivery counts?")) return;
+    if (!skipConfirm && !(await ask("Reset all delivery counts?"))) return;
     qc.setQueryData<DeliveryCount[]>(["delivery_counts"], []);
     const { error } = await supabase
       .from("delivery_counts" as never)
@@ -2001,9 +2025,26 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
     await Promise.all([qc.invalidateQueries({ queryKey: ["rooms"] }), qc.invalidateQueries({ queryKey: ["room-checklist-records"] })]);
     fireRoomNotification("done", roomNumber);
     captureEmergencySnapshot(`Room ${roomNumber} marked done`);
+    // Polish preview: the checklist is saved as a record too, so there's no quick
+    // Undo here; Undo last change in Records still rolls it back.
+    if (polishOn) toast.success(`Room ${roomNumber} ${department === "reception" ? "checked" : "marked clean"}`);
+  };
+
+  // Log a maintenance issue for one room, from its room view. Phones (iOS) and
+  // the polish preview get just the "Log a new issue" pop-up; otherwise the log
+  // opens with the form ready.
+  const logMaintenanceFor = (n: number) => {
+    setNewMaintenanceRoom(String(n));
+    if (isIosMobileView() || polishOn) {
+      setMaintenanceComposeRoom(n);
+      return;
+    }
+    setMaintenanceComposerOpen(true);
+    setMaintenanceLogOpen(true);
   };
 
   const toggleReceptionDone = async (roomNumber: number) => {
+    const before = rooms.find((r) => r.room_number === roomNumber);
     const current = receptionDoneSet.has(roomNumber);
     const next = !current;
     if (next && hasRoomItemSelection(rooms.find((r) => r.room_number === roomNumber)?.checked_items)) {
@@ -2050,6 +2091,7 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
     if (next) {
       fireRoomNotification("done", roomNumber);
       captureEmergencySnapshot(`Room ${roomNumber} marked done`);
+      if (!error && polishOn && before) offerRoomUndo(before, `Room ${roomNumber} checked`);
     }
   };
 
@@ -2063,6 +2105,7 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
     // Flag before the optimistic cache update so the celebration effect,
     // which runs on the resulting re-render, sees that this user did it.
     if (next) markedDoneHereRef.current = true;
+    const before = room;
     // Marking done clears reception's guest flags: the room is serviced, so
     // early check-in / late checkout / vacated / stayover-out no longer apply.
     const clearedFlags = {
@@ -2097,7 +2140,43 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
     if (next) {
       fireRoomNotification("done", roomNumber);
       captureEmergencySnapshot(`Room ${roomNumber} marked done`);
+      if (!error && polishOn && before) offerRoomUndo(before, `Room ${roomNumber} marked clean`);
     }
+  };
+  // Polish preview: "Room 12 marked clean · Undo". Undo puts back exactly the
+  // fields marking it changed (done, checked and the guest flags it cleared).
+  const offerRoomUndo = (before: Room, message: string) => {
+    const b = before as Room & Record<string, unknown>;
+    toast(message, {
+      duration: 6000,
+      action: {
+        label: "Undo",
+        onClick: async () => {
+          const restore = {
+            done: b.done,
+            done_reception: b.done_reception,
+            guest_vacated: b.guest_vacated ?? false,
+            guest_vacated_at: b.guest_vacated_at ?? null,
+            early_check_in: b.early_check_in ?? false,
+            early_check_in_at: b.early_check_in_at ?? null,
+            late_checkout: b.late_checkout ?? false,
+            late_checkout_at: b.late_checkout_at ?? null,
+            stayover_out: b.stayover_out ?? false,
+            stayover_out_at: b.stayover_out_at ?? null,
+          };
+          qc.setQueryData<Room[]>(["rooms"], (old) =>
+            (old ?? []).map((r) => (r.room_number === b.room_number ? ({ ...r, ...restore } as Room) : r)),
+          );
+          const { error } = await supabase.from("rooms").upsert(
+            { room_number: b.room_number, ...restore, updated_at: new Date().toISOString() } as never,
+            { onConflict: "user_id,hotel_id,room_number" },
+          );
+          if (error) toast.error(error.message);
+          else toast.success(`Room ${b.room_number} put back`);
+          qc.invalidateQueries({ queryKey: ["rooms"] });
+        },
+      },
+    });
   };
 
   // Rooms left dirty (or not): see @/lib/left-dirty. Rooms already done are skipped.
@@ -2204,7 +2283,7 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
   };
 
   const assignAllRooms = async (templateItemId: string) => {
-    if (!confirm("Add this item to every room?")) return;
+    if (!(await ask("Add this item to every room?"))) return;
     const missing = rooms
       .map((r) => r.room_number)
       .filter((n) => !isAssigned(templateItemId, n));
@@ -2225,7 +2304,7 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
   };
 
   const removeAllRooms = async (templateItemId: string) => {
-    if (!confirm("Remove this item from all rooms?")) return;
+    if (!(await ask("Remove this item from all rooms?"))) return;
     const existing = assignments.filter((a) => a.template_item_id === templateItemId);
     if (existing.length === 0) return;
     qc.setQueryData<TemplateItemRoom[]>(["template_item_rooms"], (old) =>
@@ -2512,7 +2591,7 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
   };
 
   const resetAll = async () => {
-    if (!confirm("Reset all rooms? Reception flags added after 4pm will stay.")) return;
+    if (!(await ask("Reset all rooms? Reception flags added after 4pm will stay."))) return;
     await performResetAll();
   };
 
@@ -2669,7 +2748,7 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
     startOfToday.setHours(0, 0, 0, 0);
     const hkResetToday = !!hkResetIso && new Date(hkResetIso).getTime() >= startOfToday.getTime();
     const warning = hkResetToday ? "Housekeeping already reset today, so this also clears their progress since. " : "";
-    if (!confirm(`Reset all rooms? ${warning}Reception flags added after 4pm will stay.`)) return;
+    if (!(await ask(`Reset all rooms? ${warning}Reception flags added after 4pm will stay.`))) return;
     await performResetAll();
   };
 
@@ -2703,7 +2782,7 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
   };
 
   const removeRoom = async (n: number) => {
-    if (!confirm(`Remove Room ${n}? This will delete its counts, linen assignments, and messages.`)) return;
+    if (!(await ask(`Remove Room ${n}? This will delete its counts, linen assignments, and messages.`))) return;
     qc.setQueryData<Room[]>(["rooms"], (old) => old?.filter((r) => r.room_number !== n) ?? []);
     qc.setQueryData<RoomCount[]>(["room_counts"], (old) => old?.filter((c) => c.room_number !== n) ?? []);
     qc.setQueryData<TemplateItemRoom[]>(["template_item_rooms"], (old) => old?.filter((a) => a.room_number !== n) ?? []);
@@ -3020,7 +3099,7 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
   const [undoing, setUndoing] = useState(false);
   const runEmergencyUndo = async () => {
     if (undoing) return;
-    if (!confirm("Undo the last recorded change? Rooms and linen counts will go back to the previous snapshot.")) return;
+    if (!(await ask("Undo the last recorded change? Rooms and linen counts will go back to the previous snapshot."))) return;
     setUndoing(true);
     const result = await undoLastOpsSnapshot();
     setUndoing(false);
@@ -3252,6 +3331,19 @@ const toggleRoomCategory = async (roomNumber: number, value: Category) => {
     setRoomReceptionField(n, "reception_status_id", v);
   const setRoomReceptionBed = (n: number, v: string | null) =>
     setRoomReceptionField(n, "reception_bed_id", v);
+
+  // Reception changes a room's bed from a Note pin: housekeeping's Status bed and
+  // the "Set as" strip both follow (the strip reads the paperwork bed first).
+  const setRoomBedFromReception = async (n: number, bed: { id: string; label: string }) => {
+    qc.setQueryData<Room[]>(["rooms"], (old) =>
+      (old ?? []).map((r) => (r.room_number === n ? { ...r, reception_bed_id: bed.id, sheet_bed: bed.label } : r)));
+    const { error } = await supabase.from("rooms").upsert(
+      { room_number: n, reception_bed_id: bed.id, sheet_bed: bed.label, updated_at: new Date().toISOString() } as never,
+      { onConflict: "user_id,hotel_id,room_number" },
+    );
+    qc.invalidateQueries({ queryKey: ["rooms"] });
+    if (error) throw error;
+  };
 
   const setRoomHousekeepingNote = async (roomNumber: number, value: string) => {
     const clean = value.trim();
@@ -4029,6 +4121,33 @@ const toggleRoomCategory = async (roomNumber: number, value: Category) => {
               );
             })}
             </div>
+            {/* A guest reports a fault: reception logs it straight from the room. */}
+            <div className={cn("grid gap-1.5", room && !room.done && !room.done_reception && "grid-cols-2")}>
+              <Button
+                type="button"
+                variant="outline"
+                className="w-full justify-center gap-2"
+                onClick={() => logMaintenanceFor(n)}
+              >
+                <Wrench className="h-4 w-4 text-orange-600 dark:text-orange-400" />
+                Log a maintenance issue
+              </Button>
+              {/* Nobody can get to it today: left dirty for tomorrow, as housekeeping can. */}
+              {room && !room.done && !room.done_reception && (() => {
+                const left = leftDirtyState(room) === "today";
+                return (
+                  <Button
+                    type="button"
+                    variant="outline"
+                    aria-pressed={left}
+                    className={cn("w-full justify-center gap-2", left && "border-primary bg-primary/10 text-primary")}
+                    onClick={() => void setRoomsLeftDirty([n], !left)}
+                  >
+                    {left ? "Left dirty" : "Leave dirty"}
+                  </Button>
+                );
+              })()}
+            </div>
             {maintenance && (
               <div className="flex items-center gap-2 rounded-xl border border-amber-500/60 bg-amber-50 dark:bg-amber-950/40 p-3 text-sm">
                 <Wrench className="h-4 w-4 text-amber-600 dark:text-amber-400 shrink-0" />
@@ -4069,7 +4188,15 @@ const toggleRoomCategory = async (roomNumber: number, value: Category) => {
                 <p className="text-sm text-muted-foreground">No notes from Housekeeping.</p>
               )}
             </div>
-            <RoomPins room={n} viewer={pinViewer} />
+            <RoomPins
+              room={n}
+              viewer={pinViewer}
+              bed={{
+                choices: roomBedChoices(parseCats(room?.category), receptionBeds),
+                currentId: room?.reception_bed_id ?? null,
+                onSet: (b) => setRoomBedFromReception(n, b),
+              }}
+            />
           </div>
         );
       }
@@ -4114,6 +4241,26 @@ const toggleRoomCategory = async (roomNumber: number, value: Category) => {
       const latest = waiting[waiting.length - 1];
       const preview = latest?.message ?? room?.housekeeping_note ?? "";
       const sender = latest ? latest.created_by_name : "Note";
+      // Reception changed the bed: a notice of its own at the top of the linen counter.
+      const bedPin = waiting.find((p) => p.message.startsWith(BED_CHANGED_PREFIX));
+      if (bedPin) {
+        const [change, extra] = bedPin.message.slice(BED_CHANGED_PREFIX.length).split(" · ");
+        return (
+          <button
+            type="button"
+            onClick={() => setNotesSheetRoom(n)}
+            className="mt-2 flex w-full items-center gap-2.5 rounded-xl border border-[#9C8FD6] bg-[#ECE8F7] px-3 py-2 text-left text-sm hover:brightness-[0.98] dark:border-[#5A4FA0] dark:bg-[#242040]"
+            aria-label={`Bed changed to ${change}. Open pins`}
+          >
+            <BedDouble className="h-4 w-4 shrink-0 text-[#2F2860] dark:text-[#B9AEE6]" />
+            <span className="min-w-0 flex-1">
+              <span className="font-semibold">Bed changed to {change}</span>
+              <span className="text-muted-foreground"> · {bedPin.created_by_name}{extra ? ` · ${extra}` : ""}</span>
+            </span>
+            {waiting.length > 1 && <span className="shrink-0 text-xs text-muted-foreground">+{waiting.length - 1} more</span>}
+          </button>
+        );
+      }
       return (
         <button
           type="button"
@@ -4415,10 +4562,25 @@ const toggleRoomCategory = async (roomNumber: number, value: Category) => {
         label: deskPref ? "New desktop layout: On" : "New desktop layout: Off",
         onClick: () => setDeskPref(!deskPref),
       });
+      you.push({
+        key: "polish-preview", icon: Sparkles,
+        label: polishPref ? "Polish preview: On" : "Polish preview: Off",
+        onClick: () => setPolishPref(!polishPref),
+      });
     }
     return [
       { id: "shift", title: "On shift", items: shift },
-      { id: "records", title: "Records", items: records },
+      deskMouse && !isFnb && !isMaintenance
+        // Mouse and keyboard: Records becomes Actions, with Quick Setup first and
+        // Reset all last (each for the people who see its button today).
+        ? { id: "records", title: "Actions", items: [
+            ...((isReception || isHousekeeper || isAdmin)
+              ? [{ key: "quick-setup", icon: ConciergeBell, label: "Quick Setup", onClick: () => { closeHomePanels("quick"); setQuickReceptionOpen(true); } }]
+              : []),
+            ...records,
+            { key: "reset-all", icon: RotateCcw, label: "Reset all", destructive: true, onClick: () => void (isReception ? resetReceptionAll() : resetAll()) },
+          ] }
+        : { id: "records", title: "Records", items: records },
       { id: "settings", title: "Hotel settings", items: settings },
       { id: "account", title: "Account", items: you },
       { id: "appearance", title: "Appearance", items: appearance },
@@ -4428,6 +4590,84 @@ const toggleRoomCategory = async (roomNumber: number, value: Category) => {
   // New desktop layout: a header button steps aside only when the sidebar has the
   // same item for this person, so nothing can go missing.
   const inDeskSidebar = (key: string) => deskOn && menuGroups.some((g) => g.items.some((i) => i.key === key));
+  // Items that act in place rather than opening a page.
+  const actsInPlace = (key: string) =>
+    key === "theme" || key === "accent" || key === "desktop-layout" || key === "polish-preview" || key === "quick-setup" || key === "reset-all";
+  // Picking a menu item: on the new desktop layout pages open in place of Home.
+  const deskPick = (item: DeskMenuItem) => {
+    if (deskOn && item.key !== "signout" && !actsInPlace(item.key)) {
+      closeHomePanels();
+      armSheetTakeover();
+      setDeskActiveKey(item.key);
+    }
+    item.onClick();
+  };
+  // Mouse and keyboard: arrows move between room tiles, Enter opens one (it's a
+  // button), Esc closes the open room, "/" finds a room or page.
+  const closeRoomViewRef = useRef(closeRoomView);
+  closeRoomViewRef.current = closeRoomView;
+  useEffect(() => {
+    if (!deskMouse) return;
+    const typing = (el: Element | null) =>
+      !!el && (el.matches("input, textarea, select, [contenteditable='true']") || !!el.closest("[role='dialog'], [role='alertdialog'], [role='menu']"));
+    const onKey = (e: KeyboardEvent) => {
+      if (e.metaKey || e.ctrlKey || e.altKey || typing(document.activeElement)) return;
+      if (document.querySelector("[role='dialog'], [role='alertdialog']")) return;
+      if (e.key === "/") { e.preventDefault(); setCommandOpen(true); return; }
+      if (e.key === "Escape" && openRoom !== null) {
+        const n = openRoom;
+        closeRoomViewRef.current();
+        setTimeout(() => document.querySelector<HTMLElement>(`[data-room-grid] [data-room-tile="${n}"]`)?.focus({ preventScroll: true }), 220);
+        return;
+      }
+      if (!["ArrowLeft", "ArrowRight", "ArrowUp", "ArrowDown"].includes(e.key)) return;
+      const tiles = [...document.querySelectorAll<HTMLElement>("[data-room-grid] [data-room-tile]")];
+      if (tiles.length === 0) return;
+      const here = document.activeElement instanceof HTMLElement ? document.activeElement.closest<HTMLElement>("[data-room-tile]") : null;
+      const i = here ? tiles.indexOf(here) : -1;
+      if (i < 0) {
+        if (document.activeElement && document.activeElement !== document.body) return;
+        e.preventDefault();
+        tiles[0].focus();
+        return;
+      }
+      e.preventDefault();
+      let next: HTMLElement | undefined;
+      if (e.key === "ArrowLeft") next = tiles[i - 1];
+      else if (e.key === "ArrowRight") next = tiles[i + 1];
+      else {
+        // Up/down: the tile in the row above/below nearest this one's column.
+        const r = here!.getBoundingClientRect();
+        const cx = r.left + r.width / 2;
+        const rows = tiles.filter((t) => {
+          const tr = t.getBoundingClientRect();
+          return e.key === "ArrowDown" ? tr.top > r.top + r.height / 2 : tr.top < r.top - r.height / 2;
+        });
+        const rowTop = rows.length === 0 ? null
+          : e.key === "ArrowDown" ? Math.min(...rows.map((t) => t.getBoundingClientRect().top))
+          : Math.max(...rows.map((t) => t.getBoundingClientRect().top));
+        next = rows
+          .filter((t) => Math.abs(t.getBoundingClientRect().top - (rowTop ?? 0)) < 4)
+          .sort((a, b) => {
+            const ax = a.getBoundingClientRect(), bx = b.getBoundingClientRect();
+            return Math.abs(ax.left + ax.width / 2 - cx) - Math.abs(bx.left + bx.width / 2 - cx);
+          })[0];
+      }
+      if (next) { next.focus(); next.scrollIntoView({ block: "nearest" }); }
+    };
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, [deskMouse, openRoom]);
+
+  // Polish preview: open a room from the command menu, as clicking its tile does.
+  const openRoomFromCommand = (n: number) => {
+    if (deskOn) { setDeskActiveKey(null); closeHomePanels(); }
+    clearRoomTabs();
+    setOpenRoom(n);
+    if (!deskOn) {
+      setTimeout(() => document.querySelector("[data-room-slot]")?.scrollIntoView({ behavior: "smooth", block: "center" }), 120);
+    }
+  };
   // Home's filter options and their counts, shared by the Filters pop-over and the
   // new desktop layout's Views, so both always offer the same filters.
   const hkFilterOptions = () => {
@@ -4668,7 +4908,14 @@ const toggleRoomCategory = async (roomNumber: number, value: Category) => {
                   {new Date().toLocaleDateString("en-GB", { weekday: "long", day: "numeric", month: "long" })}
                 </p>
                 <h1 className="text-2xl font-semibold tracking-tight">
-                  {isMaintenance ? "Jobs" : isFnb ? "F&B counts" : "Rooms"}
+                  {(() => {
+                    // A page from the sidebar names itself; Home names the department's grid.
+                    const page = menuTakeoverActive && deskActiveKey
+                      ? menuGroups.flatMap((g) => g.items).find((i) => i.key === deskActiveKey)?.label
+                      : null;
+                    if (typeof page === "string") return menuGroups.find((g) => g.id === SETTINGS_GROUP)?.items.some((i) => i.key === deskActiveKey) ? "Hotel settings" : page;
+                    return isMaintenance ? "Jobs" : isFnb ? "F&B counts" : "Rooms";
+                  })()}
                 </h1>
               </>
             ) : (
@@ -4693,7 +4940,7 @@ const toggleRoomCategory = async (roomNumber: number, value: Category) => {
         Reports
       </Button>
     )}
-    {(isReception || isHousekeeper || (isAdmin && !isFnb && !isMaintenance)) && (
+    {(isReception || isHousekeeper || (isAdmin && !isFnb && !isMaintenance)) && !deskMouse && (
       <Button
         variant="outline"
         size="sm"
@@ -4704,7 +4951,7 @@ const toggleRoomCategory = async (roomNumber: number, value: Category) => {
         <span className="hidden sm:inline">Quick Setup</span>
       </Button>
     )}
-    {!isFnb && !isMaintenance && (
+    {!isFnb && !isMaintenance && !deskMouse && (
       <HomeLayoutButton layout={homeLayout} onChange={changeHomeLayout} render={({ icon, label, onClick }) => (
         <Button variant="outline" size="sm" onClick={onClick} title={label} aria-label={label}>{icon}</Button>
       )} />
@@ -4806,7 +5053,31 @@ const toggleRoomCategory = async (roomNumber: number, value: Category) => {
                 : "Shared workspace for Housekeeping staff"}
 
             </p>
-            {canViewAs && !isMobile && (
+            {canViewAs && !isMobile && deskMouse && (() => {
+              // Mouse and keyboard: the department picker is one dropdown.
+              const nameOf = (r: string) => (r === "user" ? "Housekeeping" : r === "fnb" ? "F&B" : r === "reception" ? "Reception" : r === "admin" ? "Admin" : r === "maintenance" ? "Maintenance" : "Manager");
+              return (
+                <DropdownMenu>
+                  <DropdownMenuTrigger asChild>
+                    <Button variant="outline" type="button" className="order-1 h-8 gap-2 rounded-lg px-3 text-sm font-medium">
+                      <span className="text-muted-foreground">Department</span>
+                      <span>{effectiveRole ? nameOf(effectiveRole) : "—"}</span>
+                      <ChevronDown className="h-3.5 w-3.5 opacity-60" />
+                    </Button>
+                  </DropdownMenuTrigger>
+                  <DropdownMenuContent align="end" className="min-w-44">
+                    <DropdownMenuLabel className="text-xs text-muted-foreground">View as</DropdownMenuLabel>
+                    {availableViews.map((r) => (
+                      <DropdownMenuItem key={r} onSelect={() => { if (effectiveRole !== r) setViewAsRole(r); }}>
+                        <Check className={cn("mr-2 h-4 w-4", effectiveRole === r ? "opacity-100" : "opacity-0")} />
+                        {nameOf(r)}
+                      </DropdownMenuItem>
+                    ))}
+                  </DropdownMenuContent>
+                </DropdownMenu>
+              );
+            })()}
+            {canViewAs && !isMobile && !deskMouse && (
               <div className={deskOn
                 ? "order-1 flex items-center rounded-full border bg-background p-0.5"
                 : "basis-full w-full flex rounded-full border p-1 bg-background items-center"}>
@@ -5198,15 +5469,7 @@ const toggleRoomCategory = async (roomNumber: number, value: Category) => {
     submitRoomMessage={submitRoomMessage}
     confirmRoomMessage={confirmRoomMessage}
     dismissRoomMessage={dismissRoomMessage}
-    onLogMaintenance={(n) => {
-      setNewMaintenanceRoom(String(n));
-      if (isIosMobileView()) {
-        setMaintenanceComposeRoom(n);
-        return;
-      }
-      setMaintenanceComposerOpen(true);
-      setMaintenanceLogOpen(true);
-    }}
+    onLogMaintenance={logMaintenanceFor}
     onLogLostProperty={(n) => {
       if (isIosMobileView()) {
         setLostComposeRoom(n);
@@ -5345,6 +5608,7 @@ const toggleRoomCategory = async (roomNumber: number, value: Category) => {
 </HomeInline>
 <HomeInline active={homeView === "lost"} target={homeSlotEl}>
 <LostPropertySheet
+  desk={deskMouse}
   open={lostPropertyOpen}
   onOpenChange={(o) => {
     setLostPropertyOpen(o);
@@ -5443,6 +5707,14 @@ const toggleRoomCategory = async (roomNumber: number, value: Category) => {
       return;
     }
     setRoomReceptionStatus(room, dndId);
+    // DND marks the room done: the door was checked and the guest asked not to be disturbed.
+    qc.setQueryData<Room[]>(["rooms"], (old) => (old ?? []).map((r) => (r.room_number === room ? { ...r, done: true } : r)));
+    const doneRes = await supabase.from("rooms").upsert(
+      { room_number: room, done: true, updated_at: new Date().toISOString() },
+      { onConflict: "user_id,hotel_id,room_number" },
+    );
+    if (doneRes.error) toast.error(doneRes.error.message);
+    else captureEmergencySnapshot(`Room ${room} marked DND`);
     qc.invalidateQueries({ queryKey: ["rooms"] });
     qc.invalidateQueries({ queryKey: ["stayover_photos"] });
     toast.success("DND set and photo saved");
@@ -5565,6 +5837,7 @@ const toggleRoomCategory = async (roomNumber: number, value: Category) => {
 
 <HomeInline active={homeView === "maintenance"} target={homeSlotEl}>
 <MaintenanceLogSheet
+  desk={deskMouse}
   open={maintenanceLogOpen}
   onOpenChange={setMaintenanceLogOpen}
   rooms={rooms}
@@ -5838,7 +6111,7 @@ const toggleRoomCategory = async (roomNumber: number, value: Category) => {
           {jobs.length > UP_NEXT_LIMIT ? ` · ${jobs.length - UP_NEXT_LIMIT} more below` : ""}
         </span>
       </div>
-      <div className="grid grid-cols-[repeat(auto-fill,minmax(15rem,1fr))] gap-2">
+      <div data-up-next className="grid grid-cols-[repeat(auto-fill,minmax(15rem,1fr))] gap-2">
         {jobs.slice(0, UP_NEXT_LIMIT).map((m) => (
           <div key={m.id} className="space-y-1.5 rounded-xl border border-border bg-card p-3 shadow-elevation-1">
             <div className="flex items-center gap-2">
@@ -5858,6 +6131,7 @@ const toggleRoomCategory = async (roomNumber: number, value: Category) => {
   );
 })()}
 <MaintenanceDashboard
+     desk={deskMouse}
      maintenanceRequests={maintenanceRequests}
      roomMessages={roomMessages}
      openMaintenanceCount={openMaintenanceCount}
@@ -5926,7 +6200,7 @@ const toggleRoomCategory = async (roomNumber: number, value: Category) => {
              size="sm"
              className="text-destructive hover:text-destructive"
              onClick={async () => {
-               if (!confirm("Reset all F&B counts?")) return;
+               if (!(await ask("Reset all F&B counts?"))) return;
                for (const t of templateFnbList) {
                  if ((fnbCountByItem.get(t.id) ?? 0) !== 0) await setFnbCount(t.id, 0);
                }
@@ -5946,8 +6220,8 @@ const toggleRoomCategory = async (roomNumber: number, value: Category) => {
   <section className="space-y-4">
 
 
- <div className="relative flex items-center justify-between gap-2">
-     {isReception && (() => {
+ <div className={cn("relative flex items-center justify-between gap-2", deskMouse && "hidden")}>
+     {isReception && toFloorBar((() => {
           const totalSelected =
             receptionFeatureFilter.length +
             receptionStatusFilter.length +
@@ -5969,7 +6243,7 @@ const toggleRoomCategory = async (roomNumber: number, value: Category) => {
             setReceptionDoneOnlyFilter(false);
           };
        return (
-          <div data-ios-glass data-ios-filter-row className="absolute left-0 inline-flex items-center rounded-lg border border-input bg-background shadow-sm overflow-hidden">
+          <div data-ios-glass data-ios-filter-row className={cn(!deskMouse && "absolute left-0", "inline-flex items-center rounded-lg border border-input bg-background shadow-sm overflow-hidden")}>
         <Popover open={filtersSheetOpen} onOpenChange={setFiltersSheetOpen}>
           <PopoverTrigger asChild>
             <Button
@@ -6103,8 +6377,8 @@ const toggleRoomCategory = async (roomNumber: number, value: Category) => {
           )}
           </div>
       );
-    })()}
-    {!isReception && (
+    })())}
+    {!isReception && toFloorBar(
      (() => {
         const { statusOptions, countFor } = hkFilterOptions();
         const totalActive = hkStatusFilter.length + (hideCompletedRooms ? 1 : 0);
@@ -6252,7 +6526,7 @@ const toggleRoomCategory = async (roomNumber: number, value: Category) => {
         );
       })()
     )}
-    <div className="ml-auto flex items-center gap-2">
+    <div className={cn("ml-auto flex items-center gap-2", deskMouse && "hidden")}>
     {canUploadMorningSheet(position, subRoles) && (
       <Button
         data-ios-glass
@@ -6516,25 +6790,65 @@ const activeFloor = selectedFloor && floorGroups.some((group) => group.key === s
      );
    };
  // New desktop layout: the rooms a guest is waiting on (DESKTOP-layout-spec.md).
- const upNextRooms = deskOn && !isMaintenance && !isFnb ? upNext(allRooms.map(listRoomFor)) : [];
+ const upNextRooms = deskOn && !isMaintenance && !isFnb ? (isReception ? upNext : cleanFirst)(allRooms.map(listRoomFor)) : [];
  return <>
    {upNextRooms.length > 0 && (
      <section aria-label={isReception ? "Up next" : "Clean first"} className="mb-4 space-y-2">
        <div className="flex items-baseline gap-2">
          <h2 className="text-sm font-semibold">{isReception ? "Up next" : "Clean first"}</h2>
          <span className="text-xs text-muted-foreground">
-           {isReception ? "Guests waiting on a room" : "A guest is waiting on these"}
+           {isReception ? "Guests waiting on a room" : "Turnovers, arrivals and stayovers still to do"}
            {upNextRooms.length > UP_NEXT_LIMIT ? ` · ${upNextRooms.length - UP_NEXT_LIMIT} more in To do` : ""}
          </span>
        </div>
-       <div className="grid grid-cols-[repeat(auto-fill,minmax(15rem,1fr))] gap-2">
+       <div data-up-next className="grid grid-cols-[repeat(auto-fill,minmax(15rem,1fr))] gap-2">
          {upNextRooms.slice(0, UP_NEXT_LIMIT).map((r) => (
            <React.Fragment key={`up-${r.n}`}>{cardFor(r.n)}</React.Fragment>
          ))}
        </div>
      </section>
    )}
-   <div className="mb-3 flex items-center justify-center">
+   {deskMouse && (
+     // Mouse and keyboard: the floors are one dropdown above the grid, with
+     // Filters and grid/list at the other end of the row.
+     <div className="mb-2 flex items-center gap-2">
+       {floorGroups.length > 1 && (
+       <DropdownMenu>
+         <DropdownMenuTrigger asChild>
+           <Button variant="outline" type="button" className="h-8 gap-2 rounded-lg px-3 text-sm font-medium">
+             <span className="text-muted-foreground">Floor</span>
+             <span>{activeFloor ? floorGroups.find((g) => g.key === activeFloor)?.label : "All floors"}</span>
+             <span className="text-xs tabular-nums text-muted-foreground">{displayedRooms.length}</span>
+             <ChevronDown className="h-3.5 w-3.5 opacity-60" />
+           </Button>
+         </DropdownMenuTrigger>
+         <DropdownMenuContent align="start" className="min-w-48">
+           <DropdownMenuItem onSelect={() => { if (activeFloor) chooseFloor(activeFloor); }}>
+             <Check className={cn("mr-2 h-4 w-4", activeFloor ? "opacity-0" : "opacity-100")} />
+             <span className="flex-1">All floors</span>
+             <span className="text-xs tabular-nums text-muted-foreground">{visibleRooms.length}</span>
+           </DropdownMenuItem>
+           {floorGroups.map((g) => (
+             <DropdownMenuItem key={g.key} onSelect={() => { if (activeFloor !== g.key) chooseFloor(g.key); }}>
+               <Check className={cn("mr-2 h-4 w-4", activeFloor === g.key ? "opacity-100" : "opacity-0")} />
+               <span className="flex-1">{g.label}</span>
+               <span className="text-xs tabular-nums text-muted-foreground">{g.rooms.length}</span>
+             </DropdownMenuItem>
+           ))}
+         </DropdownMenuContent>
+       </DropdownMenu>
+       )}
+       <div ref={setFloorBarSlot} className="ml-auto flex items-center gap-2" />
+       <label className="flex h-8 cursor-pointer items-center gap-2 rounded-lg border px-2.5 text-xs font-medium">
+         <Switch checked={tileDetail} onCheckedChange={setTileDetail} className="scale-75" aria-label="Detailed tiles" />
+         Detailed
+       </label>
+       <HomeLayoutButton layout={homeLayout} onChange={changeHomeLayout} render={({ icon, label, onClick }) => (
+         <Button variant="outline" size="sm" className="h-8 w-8 p-0" onClick={onClick} aria-label={label}>{icon}</Button>
+       )} />
+     </div>
+   )}
+   <div className={cn("mb-3 flex items-center justify-center", deskMouse && floorGroups.length > 1 && "hidden")}>
    {/* Centred when they all fit; scrolls sideways when there are too many. */}
    <div className="mx-auto flex w-fit min-w-0 max-w-full items-center overflow-x-auto rounded-full border border-border bg-background p-1 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden" aria-label="Floor selection">
      {floorGroups.map((group) => {
@@ -6550,7 +6864,12 @@ const activeFloor = selectedFloor && floorGroups.some((group) => group.key === s
    </div>
    </div>
 
-         {homeLayout === "list" ? (() => {
+         {polishOn && roomsQ.isLoading ? (
+           // Polish preview: the shape of the room grid while rooms load.
+           <div aria-busy="true" aria-label="Loading rooms" className="grid lg:grid-cols-[repeat(auto-fill,minmax(7.5rem,1fr))] gap-3">
+             {Array.from({ length: 18 }, (_, i) => <Skeleton key={i} className="h-24 rounded-2xl" />)}
+           </div>
+         ) : homeLayout === "list" ? (() => {
            // The same rooms as the grid, as cards: the rooms to do first, then the rest folded away.
            const listRooms: ListRoom[] = displayedRooms.map(listRoomFor);
            return (
@@ -6560,7 +6879,7 @@ const activeFloor = selectedFloor && floorGroups.some((group) => group.key === s
              />
            );
          })() : (
-         <div ref={setRoomGridEl} className="grid grid-cols-4 sm:grid-cols-6 md:grid-cols-[repeat(auto-fill,minmax(5.75rem,1fr))] lg:grid-cols-[repeat(auto-fill,minmax(7.5rem,1fr))] gap-2 md:gap-3">
+         <div ref={setRoomGridEl} data-room-grid className="grid grid-cols-4 sm:grid-cols-6 md:grid-cols-[repeat(auto-fill,minmax(5.75rem,1fr))] lg:grid-cols-[repeat(auto-fill,minmax(7.5rem,1fr))] gap-2 md:gap-3">
            {displayedRooms.map((n, i) => (
              <React.Fragment key={`r-${n}`}>
                {tileByRoom.get(n)}
@@ -6581,7 +6900,6 @@ const activeFloor = selectedFloor && floorGroups.some((group) => group.key === s
                (() => {
                   const staffId = receptionStatuses.find((s) => s.label.toLowerCase() === "staff")?.id ?? null;
                   const rosId = receptionStatuses.find((s) => s.label.toLowerCase() === "ros")?.id ?? null;
-                  const dndId = receptionStatuses.find((s) => s.label.toLowerCase() === "dnd")?.id ?? null;
                   const statusLabelById = new Map(
                     receptionStatuses.map((s) => [s.id, s.label.toLowerCase()]),
                   );
@@ -6594,7 +6912,6 @@ const activeFloor = selectedFloor && floorGroups.some((group) => group.key === s
                     const sid = r.reception_status_id ?? r.default_status;
                     const statusLabel = sid ? (statusLabelById.get(sid) ?? sid).toLowerCase() : "";
                      if (excludedProgressStatuses.has(statusLabel)) return false;
-                     if (dndId && sid === dndId) return false;
                      // Left dirty today, or Dirty but not on today's list: set aside.
                      return !isSetAside(r, !!dirtyProgressId && sid === dirtyProgressId);
                   });
@@ -6714,9 +7031,9 @@ const activeFloor = selectedFloor && floorGroups.some((group) => group.key === s
                         type="button"
                         variant="outline"
                         className="mt-3 w-full gap-2"
-                        onClick={() => {
+                        onClick={async () => {
                           const n = stillToDo.length;
-                          if (!confirm(`Leave ${n} ${n === 1 ? "room" : "rooms"} dirty?\n\nRooms ${stillToDo.join(", ")} stay Dirty and are on tomorrow's list to clean. Today's shift can then finish.`)) return;
+                          if (!(await ask(`Leave ${n} ${n === 1 ? "room" : "rooms"} dirty?\n\nRooms ${stillToDo.join(", ")} stay Dirty and are on tomorrow's list to clean. Today's shift can then finish.`))) return;
                           setProgressSheetOpen(false);
                           void setRoomsLeftDirty(stillToDo, true);
                         }}
@@ -7023,16 +7340,21 @@ const activeFloor = selectedFloor && floorGroups.some((group) => group.key === s
       </DialogFooter>
     </DialogContent>
   </Dialog>
+  {polishOn && (
+    <CommandMenu
+      open={commandOpen}
+      onOpenChange={setCommandOpen}
+      rooms={isMaintenance || isFnb ? [] : rooms.map((r) => ({
+        number: r.room_number,
+        detail: r.done_reception ? "Checked" : r.done ? "Clean" : "To do",
+      }))}
+      groups={menuGroups.filter((g) => g.items.length > 0)}
+      onOpenRoom={openRoomFromCommand}
+      onPick={deskPick}
+    />
+  )}
   {deskOn && (() => {
-    const pick = (item: DeskMenuItem) => {
-        // The same as picking it from the menu: pages open in place of Home.
-        if (item.key !== "signout" && item.key !== "theme" && item.key !== "accent" && item.key !== "desktop-layout") {
-          closeHomePanels();
-          armSheetTakeover();
-          setDeskActiveKey(item.key);
-        }
-        item.onClick();
-    };
+    const pick = deskPick;
     // Live: only what everyone here can already see (the hotel chat for people who
     // can use Messages, the maintenance log, open lost property). Each opens its page.
     const menuItem = (key: string) => menuGroups.flatMap((g) => g.items).find((it) => it.key === key);
@@ -7091,7 +7413,8 @@ const activeFloor = selectedFloor && floorGroups.some((group) => group.key === s
       groups={menuGroups}
       homeActive={!homePanelOpen}
       activeKey={menuTakeoverActive ? deskActiveKey : null}
-      keepsMenuOpen={(key) => key === "theme" || key === "accent" || key === "desktop-layout"}
+      keepsMenuOpen={actsInPlace}
+      onSearch={polishOn ? () => setCommandOpen(true) : undefined}
       onHome={() => {
         setDeskActiveKey(null);
         closeHomePanels();
@@ -7099,7 +7422,7 @@ const activeFloor = selectedFloor && floorGroups.some((group) => group.key === s
       }}
       onPick={pick}
       live={live}
-      views={views}
+      views={deskMouse ? [] : views}
     />
     );
   })()}

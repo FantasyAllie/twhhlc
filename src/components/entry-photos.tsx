@@ -45,11 +45,14 @@ export function PhotoComposer({
   onChange,
   max = MAX_PHOTOS_PER_ENTRY,
   allowVideo = false,
+  compact = false,
 }: {
   value: File[];
   onChange: (files: File[]) => void;
   max?: number;
   allowVideo?: boolean;
+  /** Button-height thumbnails and buttons, to sit in a row with other controls. */
+  compact?: boolean;
 }) {
   const inputRef = useRef<HTMLInputElement | null>(null);
   const cameraInputRef = useRef<HTMLInputElement | null>(null);
@@ -98,7 +101,7 @@ export function PhotoComposer({
   };
 
   return (
-    <div className="space-y-2">
+    <div className={compact ? "contents" : "space-y-2"}>
       <input
         ref={inputRef}
         type="file"
@@ -117,7 +120,7 @@ export function PhotoComposer({
       />
       <div className="flex flex-wrap gap-2">
         {pending.map((p, idx) => (
-          <div key={p.id} className="relative h-16 w-16 overflow-hidden rounded-xl border bg-muted">
+          <div key={p.id} className={(compact ? "h-9 w-9 rounded-md" : "h-16 w-16 rounded-xl") + " relative overflow-hidden border bg-muted"}>
             {isVideoFile(p.file) ? (
               <>
                 <video src={p.previewUrl} muted playsInline preload="metadata" className="pointer-events-none h-full w-full object-cover" />
@@ -144,18 +147,22 @@ export function PhotoComposer({
             <button
               type="button"
               onClick={() => cameraInputRef.current?.click()}
-              className="flex h-16 w-16 flex-col items-center justify-center gap-0.5 rounded-xl border border-dashed text-muted-foreground hover:bg-muted"
+              className={compact
+                ? "flex h-9 items-center gap-1.5 rounded-md border px-2.5 text-xs font-medium text-muted-foreground hover:bg-muted hover:text-foreground"
+                : "flex h-16 w-16 flex-col items-center justify-center gap-0.5 rounded-xl border border-dashed text-muted-foreground hover:bg-muted"}
             >
               <Camera className="h-4 w-4" />
-              <span className="text-[10px]">Camera</span>
+              <span className={compact ? undefined : "text-[10px]"}>Camera</span>
             </button>
             <button
               type="button"
               onClick={() => inputRef.current?.click()}
-              className="flex h-16 w-16 flex-col items-center justify-center gap-0.5 rounded-xl border border-dashed text-muted-foreground hover:bg-muted"
+              className={compact
+                ? "flex h-9 items-center gap-1.5 rounded-md border px-2.5 text-xs font-medium text-muted-foreground hover:bg-muted hover:text-foreground"
+                : "flex h-16 w-16 flex-col items-center justify-center gap-0.5 rounded-xl border border-dashed text-muted-foreground hover:bg-muted"}
             >
               <ImagePlus className="h-4 w-4" />
-              <span className="text-[10px]">Library</span>
+              <span className={compact ? undefined : "text-[10px]"}>Library</span>
             </button>
           </>
         )}

@@ -14,6 +14,18 @@ import { Switch } from "@/components/ui/switch";
 import { Sheet, SheetContent, SheetDescription, SheetHeader, SheetTitle } from "@/components/ui/sheet";
 import { cn } from "@/lib/utils";
 import { notifyRoomPin } from "@/lib/push.functions";
+import { BED_CHANGED_PREFIX } from "@/lib/rooms";
+import { BedDouble } from "lucide-react";
+
+/**
+ * Reception's bed change from a Note pin: the beds this room can be made up as, the
+ * one it's set as now, and how to set it (housekeeping's Status bed and Set as).
+ */
+export type PinBedOption = {
+  choices: { id: string; label: string }[];
+  currentId: string | null;
+  onSet: (bed: { id: string; label: string }) => Promise<void> | void;
+};
 
 export type PinDepartment = "housekeeping" | "reception" | "fnb" | "maintenance";
 export type RoomPin = {
@@ -220,7 +232,7 @@ export function PinThread({ pin, viewer }: { pin: RoomPin; viewer: PinViewer }) 
 }
 
 /** Pin a request or note to the room for a department. */
-function PinComposer({ room, viewer }: { room: number; viewer: PinViewer }) {
+function PinComposer({ room, viewer, bed }: { room: number; viewer: PinViewer; bed?: PinBedOption }) {
   const actions = usePinActions();
   const departments = usePinDepartments();
   const wanted: PinDepartment = viewer.department === "reception" ? "housekeeping" : "reception";
@@ -229,13 +241,22 @@ function PinComposer({ room, viewer }: { room: number; viewer: PinViewer }) {
   const [kind, setKind] = useState<"request" | "note">("request");
   const [draft, setDraft] = useState("");
   const [busy, setBusy] = useState(false);
+  // A Note can also change the room's bed (reception only, when there's a choice).
+  const [bedId, setBedId] = useState<string | null>(null);
   const target = to && departments.includes(to) ? to : fallback;
+  const showsBeds = kind === "note" && !!bed && bed.choices.length > 1;
+  const chosenBed = showsBeds ? bed!.choices.find((b) => b.id === bedId) ?? null : null;
   return <form className="space-y-2" onSubmit={(e) => {
     e.preventDefault();
     const t = draft.trim();
-    if (!t) return;
+    if (!t && !chosenBed) return;
+    // The note says the bed changed first, so housekeeping sees it at a glance.
+    const message = chosenBed ? `${BED_CHANGED_PREFIX}${chosenBed.label}${t ? ` · ${t}` : ""}` : t;
     setBusy(true);
-    actions.add(room, target, kind, t).then(() => setDraft(""), (err) => toast.error(errMsg(err, "Couldn't pin that."))).finally(() => setBusy(false));
+    Promise.resolve(chosenBed ? bed!.onSet(chosenBed) : undefined)
+      .then(() => actions.add(room, target, kind, message))
+      .then(() => { setDraft(""); setBedId(null); }, (err) => toast.error(errMsg(err, "Couldn't pin that.")))
+      .finally(() => setBusy(false));
   }}>
     <div className="flex flex-wrap items-center gap-2">
       <label className="relative flex items-center gap-1 text-sm font-medium">
@@ -251,16 +272,28 @@ function PinComposer({ room, viewer }: { room: number; viewer: PinViewer }) {
           className={cn("h-7 text-xs", kind === k && "border-primary bg-primary/10 text-primary hover:bg-primary/15")} onClick={() => setKind(k)}>{k === "request" ? "Request" : "Note"}</Button>)}
       </div>
     </div>
+    {showsBeds && (
+      <div className="flex flex-wrap items-center gap-1.5">
+        <span className="flex items-center gap-1 text-xs font-medium text-muted-foreground"><BedDouble className="h-3.5 w-3.5" />Bed</span>
+        {bed!.choices.map((b) => {
+          const on = bedId === b.id;
+          const current = bed!.currentId === b.id;
+          return <Button key={b.id} type="button" size="sm" variant="outline" aria-pressed={on}
+            className={cn("h-7 text-xs", on && "border-primary bg-primary/10 text-primary hover:bg-primary/15")}
+            onClick={() => setBedId(on ? null : b.id)}>{b.label}{current ? " (now)" : ""}</Button>;
+        })}
+      </div>
+    )}
     <div className="flex gap-2">
-      <Input aria-label="Pin message" placeholder={kind === "request" ? "e.g. Extra pillows please" : "e.g. Guest is a regular"} value={draft} maxLength={1000} onChange={(e) => setDraft(e.target.value)} />
-      <Button type="submit" disabled={busy || !draft.trim()}><Pin className="mr-1 h-4 w-4" />Pin</Button>
+      <Input aria-label="Pin message" placeholder={kind === "request" ? "e.g. Extra pillows please" : chosenBed ? "Anything else? (optional)" : "e.g. Guest is a regular"} value={draft} maxLength={1000} onChange={(e) => setDraft(e.target.value)} />
+      <Button type="submit" disabled={busy || (!draft.trim() && !chosenBed)}><Pin className="mr-1 h-4 w-4" />Pin</Button>
     </div>
     <p className="text-[11px] text-muted-foreground">{kind === "request" ? "A request stays on the room until it's done or dismissed." : "A note stays on the room until it's seen or dismissed."}</p>
   </form>;
 }
 
 /** The room's pins and a box to pin a new one. Used in the room hub. */
-export function RoomPins({ room, viewer }: { room: number; viewer: PinViewer }) {
+export function RoomPins({ room, viewer, bed }: { room: number; viewer: PinViewer; bed?: PinBedOption }) {
   const pins = useRoomPins(viewer.id).data ?? [];
   const departments = usePinDepartments();
   const here = pinsForRoom(pins, room, viewer).sort((a, b) =>
@@ -270,7 +303,7 @@ export function RoomPins({ room, viewer }: { room: number; viewer: PinViewer }) 
   return <div className="space-y-2 rounded-xl border border-orange-400/60 bg-orange-50 p-3 dark:bg-orange-950/30">
     <p className="text-xs font-semibold uppercase tracking-wide text-orange-700 dark:text-orange-300">Pins{here.length ? ` · ${here.length}` : ""}</p>
     {here.map((p) => <PinThread key={p.id} pin={p} viewer={viewer} />)}
-    <PinComposer room={room} viewer={viewer} />
+    <PinComposer room={room} viewer={viewer} bed={bed} />
   </div>;
 }
 

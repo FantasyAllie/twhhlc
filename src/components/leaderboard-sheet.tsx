@@ -1,4 +1,6 @@
 import { useMemo, useState } from "react";
+import { readPolish } from "@/lib/polish";
+import { Skeleton } from "@/components/ui/skeleton";
 import { useQuery } from "@tanstack/react-query";
 import { ChevronLeft, ChevronRight, Loader2, Trophy } from "lucide-react";
 import { Sheet, SheetContent, SheetDescription, SheetHeader, SheetTitle } from "@/components/ui/sheet";
@@ -119,7 +121,12 @@ export function LeaderboardSheet({
 
         <div className="mt-4 min-h-0 flex-1 overflow-y-auto pb-6">
           {q.isLoading ? (
-            <div className="flex justify-center py-10"><Loader2 className="h-6 w-6 animate-spin text-muted-foreground" /></div>
+            readPolish() ? (
+            <div aria-busy="true" className="space-y-2">
+              <Skeleton className="h-24 rounded-2xl" />
+              {Array.from({ length: 5 }, (_, i) => <Skeleton key={i} className="h-12 rounded-xl" />)}
+            </div>
+          ) : (<div className="flex justify-center py-10"><Loader2 className="h-6 w-6 animate-spin text-muted-foreground" /></div>)
           ) : q.error ? (
             <p className="py-6 text-center text-sm text-destructive">Couldn't load the leaderboard.</p>
           ) : (

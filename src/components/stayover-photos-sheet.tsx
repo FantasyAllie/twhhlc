@@ -1,4 +1,6 @@
 import { useEffect, useMemo, useState } from "react";
+import { readPolish } from "@/lib/polish";
+import { Skeleton } from "@/components/ui/skeleton";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { Sheet, SheetContent, SheetDescription, SheetHeader, SheetTitle } from "@/components/ui/sheet";
 import { Button } from "@/components/ui/button";
@@ -78,9 +80,15 @@ export function StayoverPhotosSheet({
         </SheetHeader>
         <div className="flex-1 min-h-0 overflow-y-auto mt-4">
           {q.isLoading ? (
+readPolish() ? (
+              <div aria-busy="true" className="grid grid-cols-2 sm:grid-cols-3 gap-3">
+                {Array.from({ length: 6 }, (_, i) => <Skeleton key={i} className="aspect-[3/4] rounded-xl" />)}
+              </div>
+            ) : (
             <div className="flex justify-center py-8">
               <Loader2 className="h-5 w-5 animate-spin text-muted-foreground" />
             </div>
+            )
           ) : photos.length === 0 ? (
             <p className="text-sm text-muted-foreground text-center py-8">
               No stayover photos.

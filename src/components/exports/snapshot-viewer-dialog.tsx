@@ -1,6 +1,7 @@
 // Saved-snapshot viewer dialog (linen totals, room status, maintenance).
 // Extracted verbatim from src/routes/app.tsx (stage 5).
 import { toast } from "sonner";
+import { ask } from "@/lib/polish";
 import { Button } from "@/components/ui/button";
 import {
   Dialog,
@@ -88,7 +89,7 @@ export function SnapshotViewerDialog({
               size="sm"
               className="text-destructive hover:text-destructive"
               onClick={async () => {
-                if (!confirm("Delete this snapshot?")) return;
+                if (!(await ask("Delete this snapshot?"))) return;
                 const id = viewingSnapshot.id;
                 setViewingSnapshot(null);
                 await deleteSnapshot(id);
@@ -150,7 +151,7 @@ export function SnapshotViewerDialog({
               size="sm"
               className="text-destructive hover:text-destructive"
               onClick={async () => {
-                if (!confirm("Delete this snapshot?")) return;
+                if (!(await ask("Delete this snapshot?"))) return;
                 const id = viewingSnapshot.id;
                 setViewingSnapshot(null);
                 await deleteSnapshot(id);
@@ -210,7 +211,7 @@ export function SnapshotViewerDialog({
               size="sm"
               className="text-destructive hover:text-destructive"
               onClick={async () => {
-                if (!confirm("Delete this snapshot?")) return;
+                if (!(await ask("Delete this snapshot?"))) return;
                 const id = viewingSnapshot.id;
                 setViewingSnapshot(null);
                 await deleteSnapshot(id);
@@ -262,7 +263,7 @@ export function SnapshotViewerDialog({
              size="sm"
              className="text-destructive hover:text-destructive"
              onClick={async () => {
-               if (!confirm("Delete this snapshot?")) return;
+               if (!(await ask("Delete this snapshot?"))) return;
                const id = viewingSnapshot.id;
                setViewingSnapshot(null);
                await deleteSnapshot(id);

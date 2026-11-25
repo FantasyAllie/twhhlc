@@ -1,5 +1,6 @@
 // Admin/manager editor for the "Guest & room info" toggles.
 import { useState } from "react";
+import { ask } from "@/lib/polish";
 import { useQueryClient } from "@tanstack/react-query";
 import { ArrowDown, ArrowUp, Eye, EyeOff, Pencil, Plus, Trash2 } from "lucide-react";
 import { toast } from "sonner";
@@ -48,7 +49,7 @@ export function RoomFlagsSheet({ open, onOpenChange }: { open: boolean; onOpenCh
     setEditing(key);
   };
   const remove = async (d: FlagDef) => {
-    if (!confirm(`Remove "${d.label}"? It will be cleared from every room.`)) return;
+    if (!(await ask(`Remove "${d.label}"? It will be cleared from every room.`))) return;
     if (!d.custom) {
       const idx = all.findIndex((x) => x.key === d.key);
       await save([{ ...toRow(d, idx), removed: true } as ReturnType<typeof toRow>]);

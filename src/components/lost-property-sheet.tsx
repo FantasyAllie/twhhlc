@@ -52,7 +52,10 @@ export function LostPropertySheet({
   scope = "rooms",
   areaLabels = [],
   departments = null,
+  desk = false,
 }: {
+  /** Mouse-and-keyboard desktop layout: the open items as a table of rows. */
+  desk?: boolean;
   // Only entries logged by these departments are shown; null shows everything (Reception/admins).
   departments?: string[] | null;
   open: boolean;
@@ -526,7 +529,9 @@ export function LostPropertySheet({
           {/* Section pills */}
           {!composeOnly && (
           <div
-            className="inline-flex w-full justify-center rounded-full border p-1 bg-background items-center"
+            className={desk
+              ? "inline-flex w-fit items-center rounded-lg border bg-background p-0.5"
+              : "inline-flex w-full justify-center rounded-full border p-1 bg-background items-center"}
             {...tabSwipe}
           >
             {([
@@ -542,7 +547,7 @@ export function LostPropertySheet({
                   aria-pressed={active}
                   onClick={() => setActiveTab(tab.key)}
                   className={
-                    "flex-1 px-2 sm:px-4 h-8 text-xs sm:text-sm rounded-full transition-colors whitespace-nowrap " +
+                    (desk ? "h-7 rounded-md px-3 text-xs " : "flex-1 px-2 sm:px-4 h-8 text-xs sm:text-sm rounded-full ") + "transition-colors whitespace-nowrap " +
                     (active
                       ? "bg-primary text-primary-foreground shadow-sm font-medium"
                       : "text-muted-foreground hover:text-foreground")
@@ -556,7 +561,66 @@ export function LostPropertySheet({
           )}
 
           {!composeOnly && (() => {
-            const renderOpenItem = (r: LostPropertyRow) => (
+            const renderDeskItem = (r: LostPropertyRow) => {
+              const ms = canDiscard(r.created_at) ? 0 : msUntilDiscardable(r.created_at);
+              return (
+                <div key={r.id} className="grid grid-cols-1 @3xl:grid-cols-[9rem_minmax(0,1fr)_9rem_12.5rem] items-start gap-3 border-b px-3 py-2.5 transition-colors last:border-b-0 hover:bg-muted/40">
+                  <div className="flex flex-wrap items-center gap-1.5 pt-0.5">
+                    {typeof r.room_number === "number" && (
+                      <span className="inline-flex h-6 items-center rounded-md bg-primary/10 px-2 text-xs font-semibold text-primary">Room {r.room_number}</span>
+                    )}
+                    {r.area_label && (
+                      <span className="inline-flex h-6 items-center rounded-md bg-primary/10 px-2 text-xs font-semibold text-primary">{r.area_label}</span>
+                    )}
+                  </div>
+                  <div className="min-w-0">
+                    <p className="text-sm whitespace-pre-wrap break-words">{r.message}</p>
+                    <div className="mt-1.5">
+                      <PhotoAttachments
+                        kind="lost_property"
+                        entryId={r.id}
+                        paths={r.photo_paths ?? []}
+                        canEdit={!!isAdmin || (!!currentUsername && r.created_by_username === currentUsername)}
+                        onChange={(next) => setRowPhotoPaths(r.id, next)}
+                      />
+                    </div>
+                  </div>
+                  <div className="pt-0.5 text-xs text-muted-foreground tabular-nums">
+                    {fmt(r.created_at)}
+                    {r.created_by_username ? <span className="block">{r.created_by_username}</span> : null}
+                    {ms > 0 && (
+                      <span className={"block " + (ms <= 24 * 60 * 60 * 1000 ? "font-semibold text-destructive" : "")}>{formatCountdown(ms)}</span>
+                    )}
+                  </div>
+                  {canResolve ? (
+                    <div className="flex items-center justify-end gap-1">
+                      {onReply && (
+                        <Button
+                          type="button" size="icon" variant="ghost" className="h-8 w-8" aria-label="Reply"
+                          onClick={() => onReply({ id: r.id, roomNumber: r.room_number, message: r.message, sender: r.created_by_username })}
+                        >
+                          <MessageSquare className="h-4 w-4" />
+                        </Button>
+                      )}
+                      <Button
+                        type="button" size="icon" variant="ghost" className="h-8 w-8 hover:text-destructive"
+                        aria-label={canDiscard(r.created_at) ? "Throw away" : "Throw away (not yet)"}
+                        disabled={!canDiscard(r.created_at)}
+                        onClick={() => void setStatus(r.id, "discarded")}
+                      >
+                        <Trash2 className="h-4 w-4" />
+                      </Button>
+                      <Button type="button" size="sm" className="ml-1 h-8 text-xs" onClick={() => void setStatus(r.id, "collected")}>
+                        <Check className="mr-1 h-3.5 w-3.5" /> Collected
+                      </Button>
+                    </div>
+                  ) : (
+                    <span className="pt-1 text-xs text-muted-foreground">Awaiting reception</span>
+                  )}
+                </div>
+              );
+            };
+            const renderOpenItem = (r: LostPropertyRow) => desk ? renderDeskItem(r) : (
               <SwipeRow
                 key={r.id}
                 primaryLabel="Collected"
@@ -745,7 +809,14 @@ export function LostPropertySheet({
                     <>
                       {/* Pages sit above the list on every screen, so there's no scrolling to the end to change page. */}
                       {openPageBar}
-                      {pagedOpen.map((r) => renderOpenItem(r))}
+                      {desk ? (
+                        <div className="@container overflow-hidden rounded-lg border">
+                          <div className="hidden @3xl:grid @3xl:grid-cols-[9rem_minmax(0,1fr)_9rem_12.5rem] gap-3 border-b bg-muted/40 px-3 py-1.5 text-[11px] font-semibold uppercase tracking-wide text-muted-foreground">
+                            <span>Where</span><span>Item</span><span>Logged</span><span className="sr-only">Actions</span>
+                          </div>
+                          {pagedOpen.map((r) => renderOpenItem(r))}
+                        </div>
+                      ) : pagedOpen.map((r) => renderOpenItem(r))}
                     </>
                   )}
                 </div>
