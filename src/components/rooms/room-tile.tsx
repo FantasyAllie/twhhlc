@@ -552,9 +552,11 @@ export function HomeRoomCard({
       }))
     : [];
   const chips = [...flagChips, ...extraChips];
+  // The status and Checked out pills wrap onto a second line when the card is too
+  // narrow for both, instead of spilling into the next card.
   const pills = (
-    <span className="flex shrink-0 items-center gap-1.5">
-      <span className="whitespace-nowrap rounded-full px-2.5 py-1 text-xs font-bold uppercase"
+    <span className="flex min-w-0 max-w-full flex-wrap items-center gap-1.5">
+      <span className="max-w-full truncate whitespace-nowrap rounded-full px-2.5 py-1 text-xs font-bold uppercase"
         style={isDnd ? { backgroundColor: meta.fg, color: meta.bg } : { backgroundColor: meta.bg, color: meta.fg }}>{label}</span>
       {checkedOut && (
         <span className="inline-flex items-center gap-1 whitespace-nowrap rounded-full bg-[#1F9D55] px-2 py-1 text-xs font-bold text-white">
@@ -571,7 +573,7 @@ export function HomeRoomCard({
       onClick={() => { playClick(); onClick(); }}
       aria-label={[`Room ${n}`, done && "done", label, checkedOut && "checked out", bed && `set as ${bed}`, guests ? guestsLabel(guests) : null,
         maintenance && "maintenance", ...chips.map((c) => c.label)].filter(Boolean).join(", ")}
-      className="flex w-full flex-col gap-2 rounded-[18px] border bg-card px-3.5 py-3 text-left shadow-sm transition-colors hover:brightness-[0.98] disabled:opacity-90"
+      className="flex w-full min-w-0 flex-col gap-2 overflow-hidden rounded-[18px] border bg-card px-3.5 py-3 text-left shadow-sm transition-colors hover:brightness-[0.98] disabled:opacity-90"
       style={isDnd ? { backgroundColor: meta.bg, color: meta.fg, borderColor: meta.accent } : undefined}
     >
       <span className={cn("flex w-full min-w-0 items-center gap-3", !isDnd && "text-card-foreground")}>
