@@ -189,12 +189,14 @@ import {
   BED_CHANGED_PREFIX,
 } from "@/lib/rooms";
 import type { RoomTileState } from "@/lib/rooms";
+import { leftOutOfProgress } from "@/lib/rooms";
 import { usePendingCounts } from "@/lib/pending-counts";
 import { cacheSavedRoomCount } from "@/lib/linen-count-cache";
 import { buildOpsState, captureOpsSnapshot, undoLastOpsSnapshot } from "@/lib/ops-snapshots";
 import { HomeRoomCard, HousekeepingRoomTile, ReceptionRoomTile } from "@/components/rooms/room-tile";
 import { HomeList, HomeLayoutButton } from "@/components/rooms/home-list";
-import { RoomSummaryStrip, RoomTabs, type RoomTabKey } from "@/components/rooms/room-sheet-parts";
+import { LinenChangeStrip, RoomSummaryStrip, RoomTabs, type RoomTabKey } from "@/components/rooms/room-sheet-parts";
+import { linenChangeRooms } from "@/lib/morning-sheet";
 import { loadTileIconsFor, setTileIconStyle, useTileIconStyle } from "@/lib/tile-icons";
 import { finished as listFinished, hasIncomingGuest, loadLayout, saveLayout, toDo as listToDo, type HomeLayout, type ListRoom } from "@/lib/home-list";
 import { ShiftBrief, ShiftBriefSettingsSheet } from "@/components/rooms/guest-extras";
@@ -495,6 +497,25 @@ function AppPage() {
   const listHotelsFn = useServerFn(listHotels);
   const setActiveHotelFn = useServerFn(setActiveHotel);
   const createHotelFn = useServerFn(createHotel);
+  // Today's applied paperwork: stayovers whose notes say LINEN CHANGE.
+  const appliedSheetQ = useQuery({
+    queryKey: ["morning_sheet_applied", currentHotelQ.data?.id],
+    enabled: !!currentHotelQ.data?.id,
+    queryFn: async () => {
+      const { data, error } = await supabase.from("morning_sheet_imports")
+        .select("sheet_date,payload")
+        .eq("hotel_id", currentHotelQ.data!.id).eq("status", "applied")
+        .order("resolved_at", { ascending: false }).limit(1).maybeSingle();
+      if (error) throw error;
+      return data as { sheet_date: string | null; payload: unknown } | null;
+    },
+  });
+  const linenChanges = useMemo(() => {
+    const d = new Date();
+    const today = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
+    return linenChangeRooms(appliedSheetQ.data, today);
+  }, [appliedSheetQ.data]);
+
   const hotelsQ = useQuery({
     queryKey: ["my-hotels"],
     enabled: !!authUser,
@@ -1331,7 +1352,6 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
     const statusLabelById = new Map(
       receptionStatuses.map((s) => [s.id, s.label.toLowerCase()]),
     );
-    const excluded = new Set(["staff", "ros", "staff/ros", "ros - staff"]);
     const dirtyId = receptionStatuses.find((s) => s.label.toLowerCase() === "dirty")?.id ?? null;
     let counted = 0;
     let done = 0;
@@ -1339,7 +1359,7 @@ const [showAllLinen, setShowAllLinen] = useState<Record<number, boolean>>({});
     for (const r of rooms) {
       const sid = r.reception_status_id ?? r.default_status;
       const lbl = sid ? (statusLabelById.get(sid) ?? sid).toLowerCase() : "";
-      if (excluded.has(lbl)) continue;
+      if (leftOutOfProgress(lbl, r.sheet_kind)) continue;
       // Left dirty today, or Dirty but not on today's list: set aside.
       if (isSetAside(r, !!dirtyId && sid === dirtyId)) {
         setAside += 1;
@@ -3959,6 +3979,7 @@ const toggleRoomCategory = async (roomNumber: number, value: Category) => {
     return (
       <div className="shrink-0">
         <RoomSummaryStrip bed={guests || bed ? bed : null} guests={guests} checkedOut={checkedOut} />
+        {room?.sheet_kind === "stayover" && !room.done && linenChanges.has(n) && <LinenChangeStrip />}
         <div className="flex flex-row items-center gap-2 mb-3 max-lg:mb-1">
           <RoomTabs
             selected={selected}
@@ -6903,7 +6924,6 @@ const activeFloor = selectedFloor && floorGroups.some((group) => group.key === s
                   const statusLabelById = new Map(
                     receptionStatuses.map((s) => [s.id, s.label.toLowerCase()]),
                   );
-                  const excludedProgressStatuses = new Set(["staff", "ros", "staff/ros", "ros - staff"]);
                   // Dirty rooms not on today's list and rooms left dirty today are
                   // hidden from the count and don't hold the bar back either.
                   const dirtyProgressId =
@@ -6911,7 +6931,7 @@ const activeFloor = selectedFloor && floorGroups.some((group) => group.key === s
                   const eligible = rooms.filter((r) => {
                     const sid = r.reception_status_id ?? r.default_status;
                     const statusLabel = sid ? (statusLabelById.get(sid) ?? sid).toLowerCase() : "";
-                     if (excludedProgressStatuses.has(statusLabel)) return false;
+                     if (leftOutOfProgress(statusLabel, r.sheet_kind)) return false;
                      // Left dirty today, or Dirty but not on today's list: set aside.
                      return !isSetAside(r, !!dirtyProgressId && sid === dirtyProgressId);
                   });

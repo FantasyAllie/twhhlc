@@ -1,6 +1,6 @@
 import { describe, it } from "node:test";
 import assert from "node:assert/strict";
-import { buildSheet, classifyRoom, dayFlags, type ParsedSheetRoom } from "./morning-sheet";
+import { asksLinenChange, buildSheet, classifyRoom, dayFlags, linenChangeRooms, type ParsedSheetRoom } from "./morning-sheet";
 import { computeTileMeta, type RoomStatusFlags } from "./rooms";
 
 const base: ParsedSheetRoom = {
@@ -152,4 +152,25 @@ describe("dayFlags", () => {
   it("doesn't read cot inside other words", () => {
     assert.equal(dayFlags(room("arrival", { notes: "Scotland trip" })).cot, false);
   });
+});
+
+
+describe("linen change", () => {
+it("LINEN CHANGE in the notes asks for a linen change", () => {
+  assert.equal(asksLinenChange("LINEN CHANGE"), true);
+  assert.equal(asksLinenChange("guest asked, linen change today"), true);
+  assert.equal(asksLinenChange("extra linen please"), false);
+  assert.equal(asksLinenChange(null), false);
+});
+
+it("linen change rooms come only from today's applied sheet", () => {
+  const sheet = { sheet_date: "2026-11-25", payload: [
+    { room_number: 4, notes: "LINEN CHANGE" }, { room_number: 5, notes: "DOG" }, { room_number: 9, notes: null },
+  ] };
+  assert.deepEqual([...linenChangeRooms(sheet, "2026-11-25")], [4]);
+  assert.equal(linenChangeRooms(sheet, "2026-11-26").size, 0);
+  assert.equal(linenChangeRooms(null, "2026-11-25").size, 0);
+  // The report's Housekeeping Status column, saved as linen_change.
+  assert.deepEqual([...linenChangeRooms({ sheet_date: "2026-11-25", payload: [{ room_number: 7, notes: null, linen_change: true }] }, "2026-11-25")], [7]);
+});
 });

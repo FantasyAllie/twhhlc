@@ -120,6 +120,8 @@ export function parseReportPages(pages: ReportTextItem[][]): { sheet_date: strin
         adults: count(8), children: count(9), infants: count(10), lead_name: cells[7] || null,
         bed: bedMatch ? bedMatch[1].toLowerCase() as ParsedSheetRoom["bed"] : null,
         dog: /\bDOG\b/i.test(rawNotes), eci: /\bECI\b/i.test(rawNotes), lco: /\bLCO\b/i.test(rawNotes),
+        // The report prints "Linen Change" in the Housekeeping Status column.
+        linen_change: /\bLinen\s*Change\b/i.test(cells[4]),
         notes: rawNotes.replace(/\b(TWIN|KING|DOUBLE|DOG|ECI|LCO)\b/ig, "").replace(/^[\s,;:/-]+|[\s,;:/-]+$/g, "").replace(/\s+/g, " ") || null,
       };
       const previous = rooms.get(parsed.room_number);

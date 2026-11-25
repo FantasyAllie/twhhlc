@@ -152,6 +152,15 @@ type TileArgs = {
 /** Tile labels that never use the done flag, so never get the pale dashed look. */
 const NEVER_DONE_LABELS = new Set(["ROS", "Staff", "Dirty", "ROS - Dirty"]);
 
+const NOT_COUNTED_LABELS = new Set(["staff", "ros", "staff/ros", "ros - staff"]);
+
+/**
+ * Left out of the progress ring and the end-of-shift check: Staff and ROS rooms,
+ * by status, plus any room today's paperwork lists as out of service.
+ */
+export const leftOutOfProgress = (statusLabel: string, sheetKind?: string | null): boolean =>
+  NOT_COUNTED_LABELS.has(statusLabel.toLowerCase()) || sheetKind === "ros";
+
 /**
  * Polish preview: a pale version of a tile colour (mixed halfway to the page),
  * for rooms that aren't done yet.

@@ -74,7 +74,11 @@ export function MorningSheetBanner({ hotelId, userName, canConfirm, hideBanner =
     if (!hotelId) return;
     const ch = supabase.channel(`morning-sheet-${Math.random().toString(36).slice(2)}`)
       .on("postgres_changes", { event: "*", schema: "public", table: "morning_sheet_imports", filter: `hotel_id=eq.${hotelId}` },
-        () => qc.invalidateQueries({ queryKey: ["morning_sheet_pending", hotelId] }))
+        () => {
+          qc.invalidateQueries({ queryKey: ["morning_sheet_pending", hotelId] });
+          // A sheet just applied: the room views' Linen change strips follow it.
+          qc.invalidateQueries({ queryKey: ["morning_sheet_applied", hotelId] });
+        })
       .subscribe();
     return () => { void supabase.removeChannel(ch); };
   }, [hotelId, qc]);

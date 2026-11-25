@@ -88,3 +88,18 @@ describe("room bed choices", () => {
     assert.deepEqual(roomBedChoices(["Double"], beds).map((b) => b.label), ["Double"]);
   });
 });
+
+describe("progress ring leaves out ROS", async () => {
+  const { leftOutOfProgress } = await import("./rooms");
+  it("leaves out Staff and ROS by status", () => {
+    assert.equal(leftOutOfProgress("ROS", null), true);
+    assert.equal(leftOutOfProgress("staff", "turnover"), true);
+  });
+  it("leaves out rooms the paperwork lists out of service", () => {
+    assert.equal(leftOutOfProgress("clean", "ros"), true);
+  });
+  it("counts everything else, DND included", () => {
+    assert.equal(leftOutOfProgress("dnd", "stayover"), false);
+    assert.equal(leftOutOfProgress("dirty", "turnover"), false);
+  });
+});

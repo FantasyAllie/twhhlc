@@ -3,7 +3,7 @@
 // tabs. Status ends with a summary of the room's flags and open jobs, which
 // opens Room info.
 import type { ReactNode } from "react";
-import { BedDouble, Users, Wrench } from "lucide-react";
+import { BedDouble, RefreshCw, Users, Wrench } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { playClick } from "@/lib/click-sound";
 import { guestsLabel } from "@/lib/home-list";
@@ -30,6 +30,20 @@ export function RoomSummaryStrip({ bed, guests, checkedOut }: { bed: string | nu
           <span aria-hidden className="h-2 w-2 rounded-full bg-emerald-600" />Out
         </span>
       )}
+    </div>
+  );
+}
+
+/**
+ * "Linen change": today's paperwork asks for this stayover's bed linen to be
+ * changed. Sits under the Set as strip, in orange so it's noticed.
+ */
+export function LinenChangeStrip() {
+  return (
+    <div className="mb-3 flex items-center gap-2 rounded-2xl border border-orange-400/70 bg-orange-100 px-3.5 py-2 text-[15px] font-bold text-orange-900 dark:border-orange-500/50 dark:bg-orange-950/60 dark:text-orange-200 max-lg:mb-2">
+      <RefreshCw aria-hidden className="h-[18px] w-[18px] text-orange-600 dark:text-orange-300" />
+      Linen change
+      <span className="text-[13px] font-medium text-orange-800/80 dark:text-orange-200/70">· on today's paperwork</span>
     </div>
   );
 }

@@ -16,6 +16,8 @@ export type ParsedSheetRoom = {
   eci?: boolean;
   lco?: boolean;
   notes: string | null;
+  /** Housekeeping Status said "Linen Change" (a stayover's bed linen to change). Older uploads lack it. */
+  linen_change?: boolean;
   /** Paperwork room type code, e.g. SUP_TW_KING. Older uploads lack it. */
   room_type?: string | null;
 };
@@ -113,4 +115,25 @@ export function canUploadMorningSheet(position: string | undefined, departments:
   if (position === "admin" || position === "developer" || position === "regional_admin") return true;
   if (departments.includes("reception")) return true;
   return position === "manager" && departments.includes("housekeeper");
+}
+
+/** The paperwork's housekeeping notes ask for the bed linen to be changed. */
+export const asksLinenChange = (notes: string | null | undefined): boolean =>
+  /\blinen\s*change\b/i.test(notes ?? "");
+
+/**
+ * Rooms whose notes on today's applied paperwork say LINEN CHANGE. Only a sheet
+ * for today counts, so yesterday's request doesn't linger.
+ */
+export function linenChangeRooms(
+  sheet: { sheet_date: string | null; payload: unknown } | null | undefined,
+  today: string,
+): Set<number> {
+  if (!sheet || sheet.sheet_date !== today || !Array.isArray(sheet.payload)) return new Set();
+  return new Set(
+    (sheet.payload as { room_number?: unknown; notes?: unknown; linen_change?: unknown }[])
+      .filter((r) => typeof r.room_number === "number" &&
+        (r.linen_change === true || asksLinenChange(typeof r.notes === "string" ? r.notes : null)))
+      .map((r) => r.room_number as number),
+  );
 }
