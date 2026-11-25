@@ -6775,7 +6775,7 @@ const activeFloor = selectedFloor && floorGroups.some((group) => group.key === s
      return {
        n,
        done: isReception ? !!room?.done || !!room?.done_reception : doneSet.has(n),
-       neverServiced: flags.isStaff || flags.isRos,
+       neverServiced: flags.isStaff || flags.isRos || room?.sheet_kind === "ros",
        notRequired: nrOnRooms.has(n),
        stayover: flags.isStayover || flags.isDnd,
        dnd: flags.isDnd,
