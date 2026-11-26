@@ -10,7 +10,7 @@ import { Switch } from "@/components/ui/switch";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Sheet, SheetContent, SheetDescription, SheetHeader, SheetTitle } from "@/components/ui/sheet";
 import { useCurrentHotel } from "@/lib/hotels";
-import { defaultSettings, newId, parseTimes, type ScreenSettings } from "@/lib/tv-settings";
+import { autoRoutesFor, defaultSettings, localIsoDate, newId, parseTimes, type ScreenSettings } from "@/lib/tv-settings";
 import {
   lookupPostcode,
   removeBrandingImage,
@@ -76,6 +76,24 @@ function ImagePicker({ label, path, onPick, onClear, busy, tall }: { label: stri
         </Button>
         {path && <Button type="button" variant="ghost" size="sm" onClick={onClear}>Remove</Button>}
       </div>
+    </div>
+  );
+}
+
+/** How the morning BODS fetch went for this hotel's stops. */
+function BodsStatus({ settings }: { settings: ScreenSettings }) {
+  const auto = settings.bus_timetable_auto;
+  if (settings.bus_stops.length === 0) return null;
+  if (!auto) return hint("Saved stops are first fetched the next morning, around 6:45am.");
+  const when = auto.generated_at ? new Date(auto.generated_at).toLocaleString("en-GB", { weekday: "short", day: "numeric", month: "short", hour: "2-digit", minute: "2-digit" }) : "";
+  const today = autoRoutesFor(auto, localIsoDate());
+  const named = auto.stops.filter((x) => x.name).map((x) => x.name);
+  return (
+    <div className="rounded-lg bg-muted/60 p-2 text-xs">
+      {auto.error
+        ? <p className="text-amber-600 dark:text-amber-400">{auto.error} Check the stop codes.</p>
+        : <p>{today ? `${today.length} route${today.length === 1 ? "" : "s"} and ${today.reduce((n, r) => n + r.times.length, 0)} departures today` : "No buses today"}{named.length ? ` from ${[...new Set(named)].join(" and ")}` : ""}.</p>}
+      {when && <p className="text-muted-foreground">Last fetched {when}.</p>}
     </div>
   );
 }
@@ -295,6 +313,7 @@ export function LobbyScreenSettingsSheet({ open, onOpenChange }: { open: boolean
                     onChange={(e) => update((x) => ({ ...x, bus_stops: e.target.value.split(/[\s,]+/).filter(Boolean).slice(0, 3).map((code) => ({ code, name: x.bus_stops.find((b) => b.code === code)?.name ?? "" })) }))} />
                 </label>
                 {hint(<>Find a stop's code on its page at <a className="underline" href="https://bustimes.org" target="_blank" rel="noreferrer">bustimes.org</a> (the ATCO code). Up to three.</>)}
+                <BodsStatus settings={s} />
                 <label className="block text-sm">Railway station code
                   <Input className="mt-1 w-28 uppercase" maxLength={3} value={s.rail_station ?? ""} placeholder="HYB"
                     onChange={(e) => update((x) => ({ ...x, rail_station: e.target.value.toUpperCase() || null }))} />
@@ -303,7 +322,7 @@ export function LobbyScreenSettingsSheet({ open, onOpenChange }: { open: boolean
                   <Input className="mt-1 w-28" type="number" min={1} max={50} value={s.road_radius_miles}
                     onChange={(e) => update((x) => ({ ...x, road_radius_miles: Math.max(1, Math.min(50, Number(e.target.value) || 10)) }))} />
                 </label>
-                {hint("Live bus times, trains and road closures are switched on once their data feeds are connected. Until then the screen uses the timetables below and the notices you type in.")}
+                {hint("Bus times for these stops are fetched every morning from the Bus Open Data Service (England) and replace the typed timetable below. Live trains and road closures come later; until then use the trains below and the notices you type in.")}
               </div>
 
               {heading("Bus timetable")}

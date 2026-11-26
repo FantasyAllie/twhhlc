@@ -255,7 +255,7 @@ function LobbyPlayer({ content: c }: { content: PlayerContent }) {
                 <section className="tv-card tv-glass">
                   <div className="tv-card-head">
                     <h2 className="tv-card-title tv-serif">Bus timetable</h2>
-                    <span className="tv-card-sub">From the nearest stop · today · next bus in gold</span>
+                    <span className="tv-card-sub">From {c.timetableFrom ?? "the nearest stop"} · today · next bus in gold</span>
                   </div>
                   {c.timetable.slice(0, 4).map((r) => (
                     <div key={`${r.route}-${r.to}`} className="tv-line">

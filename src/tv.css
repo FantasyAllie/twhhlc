@@ -144,3 +144,4 @@ html, body { margin: 0; height: 100%; background: #000; overflow: hidden; cursor
 .tv-updated { position: absolute; right: 36px; bottom: 6px; font-size: 13px; color: rgba(255, 255, 255, 0.45); }
 .tv-demo { position: absolute; left: 36px; bottom: 6px; font-size: 13px; color: rgba(255, 255, 255, 0.45); }
 .tv-logo { height: 60px; max-width: 220px; object-fit: contain; margin-right: 18px; }
+.tv-timetable-to { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }

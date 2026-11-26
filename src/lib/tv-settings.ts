@@ -24,6 +24,13 @@ export type BusRoute = { id: string; route: string; to: string; times: string[] 
 export type TrainLine = { id: string; to: string; times: string[] };
 export type Taxi = { id: string; name: string; note: string; phone: string };
 export type BusStop = { code: string; name: string };
+/** Filled in daily from the Bus Open Data Service (scripts/bods_timetables.py). */
+export type AutoTimetable = {
+  generated_at: string;
+  stops: BusStop[];
+  days: { date: string; routes: { route: string; to: string; times: string[] }[] }[];
+  error: string | null;
+};
 
 export type ScreenSettings = {
   hotel_id: string;
@@ -42,6 +49,8 @@ export type ScreenSettings = {
   info_cards: InfoCard[];
   features: FeatureCard[];
   notices: NoticeItem[];
+  /** Read only: written by the daily timetable job, never saved from the page. */
+  bus_timetable_auto: AutoTimetable | null;
 };
 
 export const newId = () => Math.random().toString(36).slice(2, 10);
@@ -71,6 +80,7 @@ export function defaultSettings(hotelId: string): ScreenSettings {
     ],
     features: [],
     notices: [],
+    bus_timetable_auto: null,
   };
 }
 
@@ -116,7 +126,38 @@ export function normalizeSettings(hotelId: string, row: Record<string, unknown> 
       show: x.show !== false,
     })),
     notices: arr(row.notices, (x) => ({ id: str(x.id) || newId(), tag: str(x.tag), text: str(x.text), show: x.show !== false })),
+    bus_timetable_auto: normalizeAuto(row.bus_timetable_auto),
   };
+}
+
+function normalizeAuto(v: unknown): AutoTimetable | null {
+  if (!v || typeof v !== "object") return null;
+  const o = v as Record<string, unknown>;
+  return {
+    generated_at: str(o.generated_at),
+    stops: arr(o.stops, (x) => ({ code: str(x.code), name: str(x.name) })),
+    days: arr(o.days, (d) => ({
+      date: str(d.date),
+      routes: arr(d.routes, (r) => ({ route: str(r.route), to: str(r.to), times: times(r.times) })),
+    })),
+    error: typeof o.error === "string" ? o.error : null,
+  };
+}
+
+/** Today's BODS routes, if the job has run recently enough to cover today. */
+export function autoRoutesFor(auto: AutoTimetable | null, isoDate: string) {
+  const day = auto?.days.find((d) => d.date === isoDate);
+  return day && day.routes.length > 0 ? day.routes : null;
+}
+
+/** The settings row as saved from the page: the job's column is left alone. */
+export function savable(s: ScreenSettings): Omit<ScreenSettings, "bus_timetable_auto"> {
+  const { bus_timetable_auto: _auto, ...rest } = s;
+  return rest;
+}
+
+export function localIsoDate(d = new Date()): string {
+  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
 }
 
 /** "07:46, 8:46 9.46" → ["07:46", "08:46", "09:46"]; anything that isn't a time is dropped. */
@@ -144,6 +185,8 @@ export type PlayerContent = {
   features: (FeaturePage & { photoUrl: string | null })[];
   info: InfoPage[];
   timetable: TimetableRoute[];
+  /** "Mickleton, Village Hall" when the times come from BODS. */
+  timetableFrom: string | null;
   trains: { to: string; times: string[] }[];
   taxis: typeof DEMO_TAXIS;
   notices: Notice[];
@@ -160,7 +203,10 @@ export function initialsOf(name: string): string {
 const hasText = (s: string) => s.trim().length > 0;
 
 /** What the TV shows for a hotel: only filled-in, switched-on items. */
-export function playerContent(s: ScreenSettings, hotelName: string, imageUrl: (path: string) => string | null): PlayerContent {
+export function playerContent(s: ScreenSettings, hotelName: string, imageUrl: (path: string) => string | null, today = localIsoDate()): PlayerContent {
+  // BODS times win once the daily job has run; typed times are the fallback.
+  const auto = autoRoutesFor(s.bus_timetable_auto, today);
+  const stopNames = (s.bus_timetable_auto?.stops ?? []).map((x) => x.name).filter(hasText);
   const info = s.info_cards
     .filter((c) => c.show && hasText(c.title))
     .map((c) => ({ title: c.title, qr: hasText(c.link) ? "Scan for more" : "", rows: c.rows.filter((r) => hasText(r.value)) }))
@@ -179,7 +225,10 @@ export function playerContent(s: ScreenSettings, hotelName: string, imageUrl: (p
     longitude: s.longitude ?? -1.77,
     features,
     info,
-    timetable: s.bus_timetable.filter((r) => hasText(r.route) && r.times.length > 0).map((r) => ({ route: r.route, to: r.to, times: r.times })),
+    timetable: auto
+      ? auto.map((r) => ({ route: r.route, to: r.to, times: r.times }))
+      : s.bus_timetable.filter((r) => hasText(r.route) && r.times.length > 0).map((r) => ({ route: r.route, to: r.to, times: r.times })),
+    timetableFrom: auto && stopNames.length > 0 ? [...new Set(stopNames)].join(" and ") : null,
     trains: s.trains.filter((t) => hasText(t.to) && t.times.length > 0).map((t) => ({ to: t.to, times: t.times })),
     taxis: {
       title: "Local taxis",
@@ -202,6 +251,7 @@ export const DEMO_PLAYER: PlayerContent = {
   features: DEMO_FEATURES.map((f) => ({ ...f, photoUrl: null })),
   info: DEMO_INFO,
   timetable: DEMO_TIMETABLE,
+  timetableFrom: null,
   trains: DEMO_TRAINS,
   taxis: DEMO_TAXIS,
   notices: DEMO_NOTICES,

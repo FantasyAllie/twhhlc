@@ -1,6 +1,6 @@
 import { describe, test } from "node:test";
 import assert from "node:assert/strict";
-import { defaultSettings, initialsOf, normalizeSettings, parseTimes, playerContent } from "./tv-settings";
+import { defaultSettings, initialsOf, normalizeSettings, parseTimes, playerContent, savable } from "./tv-settings";
 
 const url = (p: string) => `https://cdn.example/${p}`;
 
@@ -33,6 +33,27 @@ describe("lobby screen settings", () => {
     assert.deepEqual(c.info.map((i) => i.title), ["Checking in and out", "Dining today"]);
     assert.deepEqual(c.notices, [{ tag: "Notice", text: "Jazz tonight" }]);
     assert.equal(c.demo, false);
+  });
+
+  test("BODS times replace typed ones for the day they cover", () => {
+    const s = normalizeSettings("h1", {
+      bus_timetable: [{ id: "x", route: "9", to: "Typed", times: ["10:00"] }],
+      bus_timetable_auto: {
+        generated_at: "2026-11-27T06:50:00Z",
+        stops: [{ code: "1600A", name: "Village Hall" }],
+        days: [{ date: "2026-11-27", routes: [{ route: "1", to: "Stratford", times: ["07:06", "bad"] }] }],
+        error: null,
+      },
+    });
+    const today = playerContent(s, "H", url, "2026-11-27");
+    assert.deepEqual(today.timetable, [{ route: "1", to: "Stratford", times: ["07:06"] }]);
+    assert.equal(today.timetableFrom, "Village Hall");
+    // A day the job didn't cover falls back to the typed timetable.
+    const later = playerContent(s, "H", url, "2026-12-05");
+    assert.equal(later.timetable[0].to, "Typed");
+    assert.equal(later.timetableFrom, null);
+    // Saving from the page never touches the job's column.
+    assert.ok(!("bus_timetable_auto" in savable(s)));
   });
 
   test("hotel initials skip small words", () => {

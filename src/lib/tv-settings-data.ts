@@ -1,7 +1,7 @@
 // Loading and saving lobby screen settings (browser only).
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
-import { BRANDING_BUCKET, normalizeSettings, type ScreenSettings } from "./tv-settings";
+import { BRANDING_BUCKET, normalizeSettings, savable, type ScreenSettings } from "./tv-settings";
 
 export const screenSettingsKey = (hotelId: string | undefined) => ["hotel_screen_settings", hotelId] as const;
 
@@ -27,7 +27,7 @@ export function useScreenSettings(hotelId: string | undefined) {
 export async function saveScreenSettings(s: ScreenSettings) {
   const { error } = await supabase
     .from("hotel_screen_settings" as never)
-    .upsert(s as never, { onConflict: "hotel_id" });
+    .upsert(savable(s) as never, { onConflict: "hotel_id" });
   if (error) throw error;
 }
 
