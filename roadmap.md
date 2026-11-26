@@ -1,4 +1,7 @@
 
+## Lobby TV branding
+- [x] Create the private hotel-branding bucket (5 MB, PNG/JPEG/WebP), add authenticated same-hotel image reads, and verify all four storage policies
+
 ## Dirty-room completion outcome
 - [x] Replace AI PDF reading with a fixed-format reader; verify all 48 rooms and notes from the real export and run 20 passing tests
 - [ ] Verify signed-in Paperwork upload and preview; blocked because no preview session could be minted for the requesting account

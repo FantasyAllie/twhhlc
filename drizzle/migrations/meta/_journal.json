@@ -484,6 +484,13 @@
       "when": 1795723963083,
       "tag": "0068_hotel_screen_settings",
       "breakpoints": true
+    },
+    {
+      "idx": 69,
+      "version": "7",
+      "when": 1795724052742,
+      "tag": "0069_hotel_branding_same_hotel_read",
+      "breakpoints": true
     }
   ]
 }
