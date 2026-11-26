@@ -354,6 +354,84 @@ export type Database = {
           },
         ]
       }
+      hotel_screen_settings: {
+        Row: {
+          bus_stops: Json
+          bus_timetable: Json
+          features: Json
+          hotel_id: string
+          info_cards: Json
+          latitude: number | null
+          logo_path: string | null
+          longitude: number | null
+          notices: Json
+          photo_path: string | null
+          postcode: string | null
+          rail_station: string | null
+          road_radius_miles: number
+          taxis: Json
+          trains: Json
+          updated_at: string
+          updated_by: string | null
+          welcome: string
+        }
+        Insert: {
+          bus_stops?: Json
+          bus_timetable?: Json
+          features?: Json
+          hotel_id: string
+          info_cards?: Json
+          latitude?: number | null
+          logo_path?: string | null
+          longitude?: number | null
+          notices?: Json
+          photo_path?: string | null
+          postcode?: string | null
+          rail_station?: string | null
+          road_radius_miles?: number
+          taxis?: Json
+          trains?: Json
+          updated_at?: string
+          updated_by?: string | null
+          welcome?: string
+        }
+        Update: {
+          bus_stops?: Json
+          bus_timetable?: Json
+          features?: Json
+          hotel_id?: string
+          info_cards?: Json
+          latitude?: number | null
+          logo_path?: string | null
+          longitude?: number | null
+          notices?: Json
+          photo_path?: string | null
+          postcode?: string | null
+          rail_station?: string | null
+          road_radius_miles?: number
+          taxis?: Json
+          trains?: Json
+          updated_at?: string
+          updated_by?: string | null
+          welcome?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "hotel_screen_settings_hotel_id_fkey"
+            columns: ["hotel_id"]
+            isOneToOne: true
+            referencedRelation: "hotels"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "hotel_screen_settings_updated_by_fkey"
+            columns: ["updated_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       hotels: {
         Row: {
           created_at: string
