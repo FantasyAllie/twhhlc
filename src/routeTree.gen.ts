@@ -13,6 +13,7 @@ import { Route as IndexRouteImport } from './routes/index'
 import { Route as AppRouteImport } from './routes/app'
 import { Route as LoginRouteImport } from './routes/login'
 import { Route as ResetPasswordRouteImport } from './routes/reset-password'
+import { Route as TvRouteImport } from './routes/tv'
 import { Route as UsersRouteImport } from './routes/users'
 import { Route as ApiUsersRouteImport } from './routes/api.users'
 import { Route as LovableEmailAuthPreviewRouteImport } from './routes/lovable/email/auth/preview'
@@ -36,6 +37,11 @@ const LoginRoute = LoginRouteImport.update({
 const ResetPasswordRoute = ResetPasswordRouteImport.update({
   id: '/reset-password',
   path: '/reset-password',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const TvRoute = TvRouteImport.update({
+  id: '/tv',
+  path: '/tv',
   getParentRoute: () => rootRouteImport,
 } as any)
 const UsersRoute = UsersRouteImport.update({
@@ -64,6 +70,7 @@ export interface FileRoutesByFullPath {
   '/app': typeof AppRoute
   '/login': typeof LoginRoute
   '/reset-password': typeof ResetPasswordRoute
+  '/tv': typeof TvRoute
   '/users': typeof UsersRoute
   '/api/users': typeof ApiUsersRoute
   '/lovable/email/auth/preview': typeof LovableEmailAuthPreviewRoute
@@ -74,6 +81,7 @@ export interface FileRoutesByTo {
   '/app': typeof AppRoute
   '/login': typeof LoginRoute
   '/reset-password': typeof ResetPasswordRoute
+  '/tv': typeof TvRoute
   '/users': typeof UsersRoute
   '/api/users': typeof ApiUsersRoute
   '/lovable/email/auth/preview': typeof LovableEmailAuthPreviewRoute
@@ -85,6 +93,7 @@ export interface FileRoutesById {
   '/app': typeof AppRoute
   '/login': typeof LoginRoute
   '/reset-password': typeof ResetPasswordRoute
+  '/tv': typeof TvRoute
   '/users': typeof UsersRoute
   '/api/users': typeof ApiUsersRoute
   '/lovable/email/auth/preview': typeof LovableEmailAuthPreviewRoute
@@ -97,6 +106,7 @@ export interface FileRouteTypes {
     | '/app'
     | '/login'
     | '/reset-password'
+    | '/tv'
     | '/users'
     | '/api/users'
     | '/lovable/email/auth/preview'
@@ -107,6 +117,7 @@ export interface FileRouteTypes {
     | '/app'
     | '/login'
     | '/reset-password'
+    | '/tv'
     | '/users'
     | '/api/users'
     | '/lovable/email/auth/preview'
@@ -117,6 +128,7 @@ export interface FileRouteTypes {
     | '/app'
     | '/login'
     | '/reset-password'
+    | '/tv'
     | '/users'
     | '/api/users'
     | '/lovable/email/auth/preview'
@@ -128,6 +140,7 @@ export interface RootRouteChildren {
   AppRoute: typeof AppRoute
   LoginRoute: typeof LoginRoute
   ResetPasswordRoute: typeof ResetPasswordRoute
+  TvRoute: typeof TvRoute
   UsersRoute: typeof UsersRoute
   ApiUsersRoute: typeof ApiUsersRoute
   LovableEmailAuthPreviewRoute: typeof LovableEmailAuthPreviewRoute
@@ -162,6 +175,13 @@ declare module '@tanstack/react-router' {
       path: '/reset-password'
       fullPath: '/reset-password'
       preLoaderRoute: typeof ResetPasswordRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/tv': {
+      id: '/tv'
+      path: '/tv'
+      fullPath: '/tv'
+      preLoaderRoute: typeof TvRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/users': {
@@ -200,6 +220,7 @@ const rootRouteChildren: RootRouteChildren = {
   AppRoute: AppRoute,
   LoginRoute: LoginRoute,
   ResetPasswordRoute: ResetPasswordRoute,
+  TvRoute: TvRoute,
   UsersRoute: UsersRoute,
   ApiUsersRoute: ApiUsersRoute,
   LovableEmailAuthPreviewRoute: LovableEmailAuthPreviewRoute,

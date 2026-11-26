@@ -1,0 +1,145 @@
+/* Lobby TV (/tv). Plain CSS kept apart from the app's Tailwind theme.
+   Written for older TV browsers: no flex gap (spacing uses margins),
+   no backdrop-filter (the photo itself is blurred), no inset shorthand. */
+
+html, body { margin: 0; height: 100%; background: #000; overflow: hidden; cursor: none; }
+
+.tv-viewport { position: fixed; top: 0; left: 0; right: 0; bottom: 0; overflow: hidden; background: #000; }
+
+.tv-stage {
+  position: absolute; left: 50%; top: 50%; width: 1920px; height: 1080px;
+  overflow: hidden; color: #fff; background: #1d1a17;
+  font-family: Figtree, system-ui, sans-serif;
+  -webkit-font-smoothing: antialiased;
+}
+
+.tv-bg {
+  position: absolute; top: -60px; left: -60px; width: 2040px; height: 1200px;
+  object-fit: cover; filter: blur(26px); -webkit-filter: blur(26px); transform: scale(1.04);
+}
+.tv-dim { position: absolute; top: 0; left: 0; right: 0; bottom: 0; background: rgba(12, 10, 8, 0.55); }
+
+.tv-frame {
+  position: absolute; top: 24px; left: 24px; right: 24px; bottom: 24px;
+  display: flex; flex-direction: column;
+  transition: transform 2s ease;
+}
+
+.tv-serif { font-family: "Playfair Display", Georgia, serif; }
+.tv-eyebrow { font-family: "Playfair Display", Georgia, serif; font-style: italic; color: #e7c993; }
+.tv-muted { color: rgba(255, 255, 255, 0.78); }
+.tv-nums { font-variant-numeric: tabular-nums; }
+
+.tv-glass {
+  box-sizing: border-box;
+  background: rgba(18, 16, 14, 0.42);
+  border: 1.5px solid rgba(255, 255, 255, 0.18);
+  border-radius: 24px;
+}
+
+/* Spacing without flex gap */
+.tv-col > * + * { margin-top: 24px; }
+.tv-row > * + * { margin-left: 24px; }
+
+/* Top band */
+.tv-top { display: flex; align-items: center; justify-content: space-between; padding: 16px 32px; flex-shrink: 0; }
+.tv-brand { display: flex; align-items: center; }
+.tv-badge {
+  width: 60px; height: 60px; border-radius: 30px; background: #c8a46e; color: #2a2016;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 24px; font-weight: 700; margin-right: 18px;
+}
+.tv-hotel-name { display: block; font-size: 32px; font-weight: 600; line-height: 1.1; }
+.tv-welcome { display: block; font-size: 20px; margin-top: 2px; }
+.tv-clock { display: flex; flex-direction: column; align-items: center; }
+.tv-clock-time { font-size: 52px; font-weight: 600; line-height: 1; }
+.tv-clock-date { font-size: 20px; }
+.tv-weather { display: flex; align-items: center; }
+.tv-weather-now { display: flex; align-items: center; margin-right: 28px; }
+.tv-weather-now svg { margin-right: 14px; }
+.tv-temp { display: block; font-size: 40px; font-weight: 600; line-height: 1; }
+.tv-sky { display: block; font-size: 20px; }
+.tv-forecast { display: flex; }
+.tv-forecast > * + * { margin-left: 10px; }
+.tv-day {
+  display: flex; flex-direction: column; align-items: center;
+  padding: 8px 16px; border-radius: 14px; background: rgba(255, 255, 255, 0.1);
+}
+.tv-day-name { font-size: 18px; color: rgba(255, 255, 255, 0.75); }
+.tv-day-high { font-size: 24px; font-weight: 600; }
+
+/* Middle */
+.tv-middle { flex: 1; min-height: 0; display: flex; }
+.tv-left { flex: 1.9; min-width: 0; display: flex; flex-direction: column; }
+.tv-right { flex: 1; min-width: 0; display: flex; flex-direction: column; }
+
+.tv-fade { transition: opacity 450ms ease; }
+
+.tv-feature { flex: 1; min-height: 0; padding: 26px; display: flex; }
+.tv-feature-inner { flex: 1; min-width: 0; display: flex; }
+.tv-feature-photo { width: 440px; height: 100%; object-fit: cover; border-radius: 16px; margin-right: 32px; flex-shrink: 0; }
+.tv-feature-text { flex: 1; min-width: 0; display: flex; flex-direction: column; justify-content: center; }
+.tv-feature-text > * + * { margin-top: 14px; }
+.tv-feature-eyebrow { font-size: 24px; }
+.tv-feature-title { margin: 0; font-size: 46px; font-weight: 600; line-height: 1.08; }
+.tv-when {
+  align-self: flex-start; padding: 6px 14px; border-radius: 10px;
+  background: rgba(231, 201, 147, 0.2); color: #f1d9ad; font-size: 20px; font-weight: 600;
+}
+.tv-feature-body { margin: 0; font-size: 22px; line-height: 1.45; color: rgba(255, 255, 255, 0.86); }
+
+.tv-qr { display: flex; flex-direction: column; align-items: center; justify-content: center; margin-left: 32px; flex-shrink: 0; }
+.tv-qr-box { border-radius: 12px; background: #fff; display: flex; align-items: center; justify-content: center; margin-bottom: 10px; }
+.tv-qr-label { font-size: 20px; color: rgba(255, 255, 255, 0.86); }
+
+.tv-dots { display: flex; margin-top: 8px; }
+.tv-dots > * + * { margin-left: 8px; }
+.tv-dot { height: 6px; width: 10px; border-radius: 3px; background: rgba(255, 255, 255, 0.4); transition: width 300ms ease, background 300ms ease; }
+.tv-dot.is-on { width: 32px; background: #fff; }
+
+.tv-card { padding: 24px 30px; display: flex; flex-direction: column; }
+.tv-card-title { margin: 0 0 6px; font-size: 30px; font-weight: 600; }
+.tv-card-head { display: flex; align-items: baseline; justify-content: space-between; margin-bottom: 6px; }
+.tv-card-head .tv-card-title { margin: 0; }
+.tv-card-sub { font-size: 18px; color: rgba(255, 255, 255, 0.7); }
+.tv-card-note { margin-top: 6px; font-size: 17px; color: rgba(255, 255, 255, 0.68); }
+
+.tv-line { display: flex; align-items: center; padding: 9px 0; border-bottom: 1px solid rgba(255, 255, 255, 0.12); }
+.tv-pill {
+  min-width: 60px; padding: 4px 0; border-radius: 8px; color: #1d1a17;
+  font-size: 19px; font-weight: 700; text-align: center; margin-right: 16px; flex-shrink: 0;
+}
+.tv-pill.bus { background: #9ed6c3; color: #0f2a22; min-width: 52px; }
+.tv-pill.rail { background: #e7c993; }
+.tv-pill.taxi { background: #f2d36b; }
+.tv-pill.car { background: #c9c2f0; }
+.tv-line-to { flex: 1; min-width: 0; font-size: 23px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.tv-line-time { font-size: 23px; font-weight: 600; margin-left: 16px; }
+
+.tv-timetable-to { width: 270px; font-size: 22px; flex-shrink: 0; margin-right: 16px; }
+.tv-times { flex: 1; min-width: 0; display: flex; }
+.tv-times > * { flex: 1; }
+.tv-times > * + * { margin-left: 8px; }
+.tv-time { text-align: center; padding: 4px 0; border-radius: 8px; font-size: 21px; background: rgba(255, 255, 255, 0.08); }
+.tv-time.gone { background: transparent; color: rgba(255, 255, 255, 0.4); }
+.tv-time.next { background: #e7c993; color: #2a2016; font-weight: 700; }
+
+.tv-info { flex: 1; min-height: 0; padding: 26px 30px; display: flex; flex-direction: column; }
+.tv-info-body { flex: 1; min-height: 0; display: flex; flex-direction: column; }
+.tv-info-eyebrow { font-size: 20px; margin-bottom: 6px; }
+.tv-info-rows { display: flex; align-items: flex-start; }
+.tv-info-list { flex: 1; min-width: 0; }
+.tv-info-row { display: flex; align-items: baseline; padding: 8px 0; border-bottom: 1px solid rgba(255, 255, 255, 0.12); }
+.tv-info-label { min-width: 150px; font-size: 20px; font-weight: 600; color: #e7c993; margin-right: 16px; }
+.tv-info-value { flex: 1; min-width: 0; font-size: 22px; }
+.tv-info-rows .tv-qr { margin-left: 20px; }
+.tv-info-rows .tv-qr-label { font-size: 17px; }
+
+/* Bottom bar */
+.tv-bottom { display: flex; align-items: center; padding: 16px 32px; border-radius: 20px; flex-shrink: 0; }
+.tv-tag { padding: 6px 16px; border-radius: 10px; background: #e9a23b; color: #2a1a05; font-size: 19px; font-weight: 700; margin-right: 22px; flex-shrink: 0; }
+.tv-notice { flex: 1; min-width: 0; font-size: 25px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.tv-bottom .tv-dots { margin: 0 0 0 22px; }
+
+.tv-updated { position: absolute; right: 36px; bottom: 6px; font-size: 13px; color: rgba(255, 255, 255, 0.45); }
+.tv-demo { position: absolute; left: 36px; bottom: 6px; font-size: 13px; color: rgba(255, 255, 255, 0.45); }
