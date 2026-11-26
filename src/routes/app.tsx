@@ -12,7 +12,7 @@ import { playDoorBell } from "@/lib/door-bell";
 import { createPortal } from "react-dom";
 import React, { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { CountRow } from "@/components/linen/inventory-dialog";
-import { Loader2, CalendarDays, Trophy, FileUp, Sunrise } from "lucide-react";
+import { Loader2, CalendarDays, Trophy, FileUp, Sunrise, Tv } from "lucide-react";
 import { LeaderboardSheet } from "@/components/leaderboard-sheet";
 import { RoomFlagsContext, FlagIcon, mergeFlagDefs, useFlagSettingsQuery, useCustomFlagsQuery, type FlagDef } from "@/lib/room-flags";
 import { RoomFlagsSheet } from "@/components/rooms/room-flags-sheet";
@@ -200,6 +200,7 @@ import { linenChangeRooms } from "@/lib/morning-sheet";
 import { loadTileIconsFor, setTileIconStyle, useTileIconStyle } from "@/lib/tile-icons";
 import { finished as listFinished, hasIncomingGuest, loadLayout, saveLayout, toDo as listToDo, type HomeLayout, type ListRoom } from "@/lib/home-list";
 import { ShiftBrief, ShiftBriefSettingsSheet } from "@/components/rooms/guest-extras";
+import { LobbyScreenSettingsSheet } from "@/components/lobby-screen-settings";
 import { PinRepliesStrip, RoomPinSettingsSheet, RoomPins, pinDotFor, pinsNeedingYou, useRoomPins, type PinViewer } from "@/components/rooms/room-pins";
 import { MorningSheetBanner, OPEN_PAPERWORK_EVENT } from "@/components/morning-sheet-banner";
 import { canUploadMorningSheet, setAsBed } from "@/lib/morning-sheet";
@@ -611,6 +612,7 @@ function AppPage() {
   const [roomFlagsSheetOpen, setRoomFlagsSheetOpen] = useState(false);
   const [quickRepliesOpen, setQuickRepliesOpen] = useState(false);
   const [briefSettingsOpen, setBriefSettingsOpen] = useState(false);
+  const [lobbyScreenOpen, setLobbyScreenOpen] = useState(false);
   // Realtime: push room status changes to all signed-in clients (esp. reception)
   const [realtimeEpoch, setRealtimeEpoch] = useState(0);
   useEffect(() => {
@@ -4545,6 +4547,7 @@ const toggleRoomCategory = async (roomNumber: number, value: Category) => {
       locations.push({ key: "room-flags", icon: Flag, label: "Room Flags", onClick: () => setRoomFlagsSheetOpen(true) });
       locations.push({ key: "room-pins", icon: Pin, label: "Pins & Chat", onClick: () => setQuickRepliesOpen(true) });
       locations.push({ key: "shift-brief", icon: Sunrise, label: "Today's Brief", onClick: () => setBriefSettingsOpen(true) });
+      locations.push({ key: "lobby-screen", icon: Tv, label: "Lobby Screen", onClick: () => setLobbyScreenOpen(true) });
     }
     if ((realIsAdmin || (realIsManager && hasHousekeeperRole)) && !isMaintenance) {
       linen.push({ key: "linen-days", icon: CalendarDays, label: "Delivery Schedule", onClick: () => setLinenDeliveryOpen(true) });
@@ -4575,7 +4578,7 @@ const toggleRoomCategory = async (roomNumber: number, value: Category) => {
     const records = [...actions, ...account.filter((i) => i.key === "notifications")]
       .sort(order(["end-of-shift", "history", "undo", "print", "help", "departments", "notifications"]));
     const settings = [...locations, ...linen.filter((i) => i.key === "linen-days"), ...account.filter((i) => i.key === "users")]
-      .sort(order(["manage-rooms", "hotel-areas", "room-flags", "room-pins", "linen-days", "users"]));
+      .sort(order(["manage-rooms", "hotel-areas", "room-flags", "room-pins", "shift-brief", "lobby-screen", "linen-days", "users"]));
     const you = account.filter((i) => i.key === "switch-hotel" || i.key === "account");
     if (isWide) {
       you.push({
@@ -4815,6 +4818,7 @@ const toggleRoomCategory = async (roomNumber: number, value: Category) => {
 <RoomFlagsSheet open={roomFlagsSheetOpen} onOpenChange={setRoomFlagsSheetOpen} />
 <RoomPinSettingsSheet open={quickRepliesOpen} onOpenChange={setQuickRepliesOpen} />
 <ShiftBriefSettingsSheet open={briefSettingsOpen} onOpenChange={setBriefSettingsOpen} />
+<LobbyScreenSettingsSheet open={lobbyScreenOpen} onOpenChange={setLobbyScreenOpen} />
 <main
   ref={homeRefresh.ref}
   data-home-refresh

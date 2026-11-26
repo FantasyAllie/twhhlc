@@ -143,20 +143,24 @@ export function departureLabel(at: string, nowMinutes: number): string {
 }
 
 /** Next departures: the next bus per route and direction, then the next train per destination. */
-export function nextDepartures(nowMinutes: number): TravelPage {
+export function nextDepartures(
+  nowMinutes: number,
+  timetable: TimetableRoute[] = DEMO_TIMETABLE,
+  trains: { to: string; times: string[] }[] = DEMO_TRAINS,
+): TravelPage {
   const rows: TravelRow[] = [];
-  for (const r of DEMO_TIMETABLE.slice(0, 3)) {
+  for (const r of timetable) {
     const next = r.times.find((t) => toMinutes(t) >= nowMinutes);
     if (next) rows.push({ badge: r.route, kind: "bus", to: r.to, time: departureLabel(next, nowMinutes) });
   }
-  for (const t of DEMO_TRAINS) {
+  for (const t of trains) {
     const next = t.times.find((at) => toMinutes(at) >= nowMinutes);
     if (next) rows.push({ badge: "Rail", kind: "rail", to: t.to, time: departureLabel(next, nowMinutes) });
   }
   rows.sort((a, b) => sortKey(a.time, nowMinutes) - sortKey(b.time, nowMinutes));
   return {
     title: "Next departures",
-    note: rows.length ? "Live times where the operator sends them" : "No more departures today",
+    note: rows.length ? "Timetabled times" : "No more departures today",
     rows: rows.slice(0, 4),
   };
 }

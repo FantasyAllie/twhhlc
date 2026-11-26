@@ -2,14 +2,11 @@ import { useEffect, useState } from "react";
 import { createFileRoute } from "@tanstack/react-router";
 import tvCss from "../tv.css?url";
 import tvBackground from "@/assets/tv-background.jpg";
+import { useCurrentHotel } from "@/lib/hotels";
+import { DEMO_PLAYER, defaultSettings, playerContent, type PlayerContent } from "@/lib/tv-settings";
+import { useBrandingUrls, useScreenSettings } from "@/lib/tv-settings-data";
 import {
   BURN_IN_OFFSETS,
-  DEMO_FEATURES,
-  DEMO_HOTEL,
-  DEMO_INFO,
-  DEMO_NOTICES,
-  DEMO_TAXIS,
-  DEMO_TIMETABLE,
   nextDepartures,
   timetableWindow,
   weatherIcon,
@@ -17,9 +14,9 @@ import {
   type WeatherIcon,
 } from "@/lib/tv-content";
 
-// Lobby TV player, demo version: made-up content and live demo weather.
-// No sign-in and no database. Pairing and real content come after the
-// move off Lovable (see Plans/LOBBY-SCREENS-and-app-split.md).
+// Lobby TV player. Signed in, it shows the active hotel's Lobby Screen settings
+// (More → Hotel settings → Lobby Screen); signed out, the demo content.
+// Pairing a TV with a code comes later (Plans/LOBBY-SCREENS-and-app-split.md).
 export const Route = createFileRoute("/tv")({
   ssr: false,
   head: () => ({
@@ -59,6 +56,7 @@ function useRotator(length: number, everyMs: number) {
   const [page, setPage] = useState(0);
   const [visible, setVisible] = useState(true);
   useEffect(() => {
+    if (length < 2) return;
     let swap: ReturnType<typeof setTimeout> | undefined;
     const id = setInterval(() => {
       setVisible(false);
@@ -72,7 +70,7 @@ function useRotator(length: number, everyMs: number) {
       if (swap) clearTimeout(swap);
     };
   }, [length, everyMs]);
-  return { page: page % length, opacity: visible ? 1 : 0 };
+  return { page: length > 0 ? page % length : 0, opacity: visible ? 1 : 0 };
 }
 
 function useStageScale() {
@@ -95,14 +93,15 @@ function useBurnInOffset(everyMs = 3 * 60_000) {
   return BURN_IN_OFFSETS[i];
 }
 
-const WEATHER_CACHE_KEY = "tv-demo-weather";
+const WEATHER_CACHE_KEY = "tv-weather";
 
-function useDemoWeather() {
+function useWeather(latitude: number, longitude: number) {
   const [weather, setWeather] = useState<Weather | null>(() => {
     try {
       const raw = localStorage.getItem(WEATHER_CACHE_KEY);
       if (!raw) return null;
       const w = JSON.parse(raw);
+      if (w.latitude !== latitude || w.longitude !== longitude) return null;
       return { ...w, updatedAt: new Date(w.updatedAt) };
     } catch {
       return null;
@@ -113,7 +112,7 @@ function useDemoWeather() {
     const load = async () => {
       try {
         const url =
-          `https://api.open-meteo.com/v1/forecast?latitude=${DEMO_HOTEL.latitude}&longitude=${DEMO_HOTEL.longitude}` +
+          `https://api.open-meteo.com/v1/forecast?latitude=${latitude}&longitude=${longitude}` +
           "&current=temperature_2m,weather_code&daily=weather_code,temperature_2m_max&timezone=Europe%2FLondon&forecast_days=4";
         const res = await fetch(url);
         if (!res.ok) return;
@@ -131,7 +130,7 @@ function useDemoWeather() {
         if (cancelled) return;
         setWeather(next);
         try {
-          localStorage.setItem(WEATHER_CACHE_KEY, JSON.stringify(next));
+          localStorage.setItem(WEATHER_CACHE_KEY, JSON.stringify({ ...next, latitude, longitude }));
         } catch {
           /* storage off: carry on without the offline copy */
         }
@@ -145,27 +144,53 @@ function useDemoWeather() {
       cancelled = true;
       clearInterval(id);
     };
-  }, []);
+  }, [latitude, longitude]);
   return weather;
 }
 
 function LobbyScreen() {
+  const hotelQ = useCurrentHotel();
+  const hotel = hotelQ.data;
+  const settingsQ = useScreenSettings(hotel?.id);
+  const saved = settingsQ.data?.settings;
+  const imageUrl = useBrandingUrls(saved ? [saved.logo_path, saved.photo_path, ...saved.features.map((f) => f.photo_path)] : []);
+  if (hotelQ.isLoading || (hotel && settingsQ.isLoading)) return <div className="tv-viewport" />;
+  // Until the hotel saves its settings (or before the table exists) it shows the starting examples.
+  const content = hotel
+    ? playerContent(saved ?? defaultSettings(hotel.id), hotel.name, imageUrl)
+    : DEMO_PLAYER;
+  return <LobbyPlayer content={content} />;
+}
+
+function LobbyPlayer({ content: c }: { content: PlayerContent }) {
   const now = useNow();
   const scale = useStageScale();
   const [dx, dy] = useBurnInOffset();
-  const weather = useDemoWeather();
-  const feature = useRotator(DEMO_FEATURES.length, 12_000);
-  const travel = useRotator(2, 9_000);
-  const info = useRotator(DEMO_INFO.length, 7_000);
-  const notice = useRotator(DEMO_NOTICES.length, 8_000);
-
+  const weather = useWeather(c.latitude, c.longitude);
   const nowMinutes = now.getHours() * 60 + now.getMinutes();
+
+  // Anything the hotel hasn't filled in steps aside rather than showing empty.
+  const features = c.features.length > 0
+    ? c.features
+    : [{ eyebrow: "Welcome", title: c.hotelName, when: "", body: c.welcome, qr: "", photoUrl: null }];
+  const hasTransport = c.timetable.length > 0 || c.trains.length > 0;
+  const travelPages = [
+    ...(hasTransport ? [nextDepartures(nowMinutes, c.timetable, c.trains)] : []),
+    ...(c.taxis.rows.length > 0 ? [c.taxis] : []),
+  ];
+
+  const feature = useRotator(features.length, 12_000);
+  const travel = useRotator(travelPages.length, 9_000);
+  const info = useRotator(c.info.length, 7_000);
+  const notice = useRotator(c.notices.length, 8_000);
+
   const time = now.toLocaleTimeString("en-GB", { hour: "2-digit", minute: "2-digit" });
   const date = now.toLocaleDateString("en-GB", { weekday: "long", day: "numeric", month: "long" });
-  const travelPage = travel.page === 0 ? nextDepartures(nowMinutes) : DEMO_TAXIS;
-  const featurePage = DEMO_FEATURES[feature.page];
-  const infoPage = DEMO_INFO[info.page];
-  const noticePage = DEMO_NOTICES[notice.page];
+  const background = c.photoUrl ?? tvBackground;
+  const featurePage = features[feature.page] ?? features[0];
+  const travelPage = travelPages[travel.page];
+  const infoPage = c.info[info.page];
+  const noticePage = c.notices[notice.page];
 
   return (
     <div className="tv-viewport">
@@ -173,16 +198,18 @@ function LobbyScreen() {
         className="tv-stage"
         style={{ transform: `translate(-50%, -50%) scale(${scale})` }}
       >
-        <img className="tv-bg" src={tvBackground} alt="" />
+        <img className="tv-bg" src={background} alt="" />
         <div className="tv-dim" />
 
         <div className="tv-frame tv-col" style={{ transform: `translate(${dx}px, ${dy}px)` }}>
           <header className="tv-top tv-glass">
             <div className="tv-brand">
-              <div className="tv-badge tv-serif">{DEMO_HOTEL.initials}</div>
+              {c.logoUrl
+                ? <img className="tv-logo" src={c.logoUrl} alt="" />
+                : <div className="tv-badge tv-serif">{c.initials}</div>}
               <div>
-                <span className="tv-hotel-name tv-serif">{DEMO_HOTEL.name}</span>
-                <span className="tv-welcome tv-muted">{DEMO_HOTEL.welcome}</span>
+                <span className="tv-hotel-name tv-serif">{c.hotelName}</span>
+                {c.welcome && <span className="tv-welcome tv-muted">{c.welcome}</span>}
               </div>
             </div>
             <div className="tv-clock">
@@ -212,84 +239,94 @@ function LobbyScreen() {
             <div className="tv-left tv-col">
               <section className="tv-feature tv-glass">
                 <div className="tv-feature-inner tv-fade" style={{ opacity: feature.opacity }}>
-                  <img className="tv-feature-photo" src={tvBackground} alt="" />
+                  <img className="tv-feature-photo" src={featurePage.photoUrl ?? background} alt="" />
                   <div className="tv-feature-text">
-                    <span className="tv-feature-eyebrow tv-eyebrow">{featurePage.eyebrow}</span>
+                    {featurePage.eyebrow && <span className="tv-feature-eyebrow tv-eyebrow">{featurePage.eyebrow}</span>}
                     <h1 className="tv-feature-title tv-serif">{featurePage.title}</h1>
                     {featurePage.when && <span className="tv-when">{featurePage.when}</span>}
-                    <p className="tv-feature-body">{featurePage.body}</p>
-                    <Dots count={DEMO_FEATURES.length} on={feature.page} />
+                    {featurePage.body && <p className="tv-feature-body">{featurePage.body}</p>}
+                    {features.length > 1 && <Dots count={features.length} on={feature.page} />}
                   </div>
-                  <QrBlock size={110} label={featurePage.qr} />
+                  {featurePage.qr && <QrBlock size={110} label={featurePage.qr} />}
                 </div>
               </section>
 
-              <section className="tv-card tv-glass">
-                <div className="tv-card-head">
-                  <h2 className="tv-card-title tv-serif">Bus timetable</h2>
-                  <span className="tv-card-sub">From the village stop · today · next bus in gold</span>
-                </div>
-                {DEMO_TIMETABLE.map((r) => (
-                  <div key={`${r.route}-${r.to}`} className="tv-line">
-                    <span className="tv-pill bus">{r.route}</span>
-                    <span className="tv-timetable-to">{r.to}</span>
-                    <div className="tv-times">
-                      {timetableWindow(r.times, nowMinutes).map((t) => (
-                        <span key={t.at} className={`tv-time tv-nums ${t.state}`}>{t.at}</span>
-                      ))}
-                    </div>
+              {c.timetable.length > 0 && (
+                <section className="tv-card tv-glass">
+                  <div className="tv-card-head">
+                    <h2 className="tv-card-title tv-serif">Bus timetable</h2>
+                    <span className="tv-card-sub">From the nearest stop · today · next bus in gold</span>
                   </div>
-                ))}
-              </section>
-            </div>
-
-            <div className="tv-right tv-col">
-              <section className="tv-card tv-glass">
-                <div className="tv-fade" style={{ opacity: travel.opacity }}>
-                  <h2 className="tv-card-title tv-serif">{travelPage.title}</h2>
-                  {travelPage.rows.map((row, i) => (
-                    <div key={i} className="tv-line">
-                      <span className={`tv-pill ${row.kind}`}>{row.badge}</span>
-                      <span className="tv-line-to">{row.to}</span>
-                      <span className="tv-line-time tv-nums">{row.time}</span>
+                  {c.timetable.slice(0, 4).map((r) => (
+                    <div key={`${r.route}-${r.to}`} className="tv-line">
+                      <span className="tv-pill bus">{r.route}</span>
+                      <span className="tv-timetable-to">{r.to}</span>
+                      <div className="tv-times">
+                        {timetableWindow(r.times, nowMinutes).map((t) => (
+                          <span key={t.at} className={`tv-time tv-nums ${t.state}`}>{t.at}</span>
+                        ))}
+                      </div>
                     </div>
                   ))}
-                  <div className="tv-card-note">{travelPage.note}</div>
-                </div>
-                <Dots count={2} on={travel.page} />
-              </section>
+                </section>
+              )}
+            </div>
 
-              <section className="tv-info tv-glass">
-                <div className="tv-info-body tv-fade" style={{ opacity: info.opacity }}>
-                  <span className="tv-info-eyebrow tv-eyebrow">At the hotel</span>
-                  <h2 className="tv-card-title tv-serif">{infoPage.title}</h2>
-                  <div className="tv-info-rows">
-                    <div className="tv-info-list">
-                      {infoPage.rows.map((row) => (
-                        <div key={row.label} className="tv-info-row">
-                          <span className="tv-info-label">{row.label}</span>
-                          <span className="tv-info-value">{row.value}</span>
+            {(travelPage || infoPage) && (
+              <div className="tv-right tv-col">
+                {travelPage && (
+                  <section className="tv-card tv-glass">
+                    <div className="tv-fade" style={{ opacity: travel.opacity }}>
+                      <h2 className="tv-card-title tv-serif">{travelPage.title}</h2>
+                      {travelPage.rows.map((row, i) => (
+                        <div key={i} className="tv-line">
+                          <span className={`tv-pill ${row.kind}`}>{row.badge}</span>
+                          <span className="tv-line-to">{row.to}</span>
+                          <span className="tv-line-time tv-nums">{row.time}</span>
                         </div>
                       ))}
+                      <div className="tv-card-note">{travelPage.note}</div>
                     </div>
-                    {infoPage.qr && <QrBlock size={104} label={infoPage.qr} />}
-                  </div>
-                </div>
-                <Dots count={DEMO_INFO.length} on={info.page} />
-              </section>
-            </div>
+                    {travelPages.length > 1 && <Dots count={travelPages.length} on={travel.page} />}
+                  </section>
+                )}
+
+                {infoPage && (
+                  <section className="tv-info tv-glass">
+                    <div className="tv-info-body tv-fade" style={{ opacity: info.opacity }}>
+                      <span className="tv-info-eyebrow tv-eyebrow">At the hotel</span>
+                      <h2 className="tv-card-title tv-serif">{infoPage.title}</h2>
+                      <div className="tv-info-rows">
+                        <div className="tv-info-list">
+                          {infoPage.rows.map((row, i) => (
+                            <div key={i} className="tv-info-row">
+                              <span className="tv-info-label">{row.label}</span>
+                              <span className="tv-info-value">{row.value}</span>
+                            </div>
+                          ))}
+                        </div>
+                        {infoPage.qr && <QrBlock size={104} label={infoPage.qr} />}
+                      </div>
+                    </div>
+                    {c.info.length > 1 && <Dots count={c.info.length} on={info.page} />}
+                  </section>
+                )}
+              </div>
+            )}
           </div>
 
-          <footer className="tv-bottom tv-glass">
-            <div className="tv-fade" style={{ opacity: notice.opacity, display: "flex", alignItems: "center", flex: 1, minWidth: 0 }}>
-              <span className="tv-tag">{noticePage.tag}</span>
-              <span className="tv-notice">{noticePage.text}</span>
-            </div>
-            <Dots count={DEMO_NOTICES.length} on={notice.page} />
-          </footer>
+          {noticePage && (
+            <footer className="tv-bottom tv-glass">
+              <div className="tv-fade" style={{ opacity: notice.opacity, display: "flex", alignItems: "center", flex: 1, minWidth: 0 }}>
+                <span className="tv-tag">{noticePage.tag}</span>
+                <span className="tv-notice">{noticePage.text}</span>
+              </div>
+              {c.notices.length > 1 && <Dots count={c.notices.length} on={notice.page} />}
+            </footer>
+          )}
         </div>
 
-        <span className="tv-demo">Demo content</span>
+        {c.demo && <span className="tv-demo">Demo content · sign in to show your hotel</span>}
         {weather && (
           <span className="tv-updated">
             Weather updated {weather.updatedAt.toLocaleTimeString("en-GB", { hour: "2-digit", minute: "2-digit" })}
