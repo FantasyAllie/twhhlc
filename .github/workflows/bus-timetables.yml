@@ -1,0 +1,34 @@
+# Daily bus timetables for the lobby TV (scripts/bods_timetables.py).
+# BODS refreshes its timetables around 06:00 GMT, so this runs just after.
+# Needs three repository secrets: BODS_API_KEY, SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY.
+name: Bus timetables
+
+on:
+  schedule:
+    - cron: "45 6 * * *"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: bus-timetables
+  cancel-in-progress: false
+
+jobs:
+  timetables:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Test the timetable reader
+        run: python -m unittest scripts/test_bods_timetables.py
+      - name: Fetch timetables and save them for each hotel
+        env:
+          BODS_API_KEY: ${{ secrets.BODS_API_KEY }}
+          SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
+          SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
+        run: python scripts/bods_timetables.py
