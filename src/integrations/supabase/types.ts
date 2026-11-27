@@ -869,6 +869,71 @@ export type Database = {
           },
         ]
       }
+      notes: {
+        Row: {
+          body: string
+          created_at: string
+          created_by: string
+          created_by_name: string
+          deleted_at: string | null
+          deleted_by_name: string | null
+          department: string | null
+          hotel_id: string
+          id: string
+          owner_id: string | null
+          pinned: boolean
+          title: string
+          updated_at: string
+          updated_by: string | null
+          updated_by_name: string | null
+          version: number
+        }
+        Insert: {
+          body?: string
+          created_at?: string
+          created_by?: string
+          created_by_name?: string
+          deleted_at?: string | null
+          deleted_by_name?: string | null
+          department?: string | null
+          hotel_id?: string
+          id?: string
+          owner_id?: string | null
+          pinned?: boolean
+          title?: string
+          updated_at?: string
+          updated_by?: string | null
+          updated_by_name?: string | null
+          version?: number
+        }
+        Update: {
+          body?: string
+          created_at?: string
+          created_by?: string
+          created_by_name?: string
+          deleted_at?: string | null
+          deleted_by_name?: string | null
+          department?: string | null
+          hotel_id?: string
+          id?: string
+          owner_id?: string | null
+          pinned?: boolean
+          title?: string
+          updated_at?: string
+          updated_by?: string | null
+          updated_by_name?: string | null
+          version?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "notes_hotel_id_fkey"
+            columns: ["hotel_id"]
+            isOneToOne: false
+            referencedRelation: "hotels"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       notification_preferences: {
         Row: {
           checkout_enabled: boolean
