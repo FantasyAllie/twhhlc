@@ -2188,6 +2188,150 @@ export type Database = {
           },
         ]
       }
+      routine_steps: {
+        Row: {
+          archived_at: string | null
+          hotel_id: string
+          id: string
+          routine_id: string
+          sort_order: number
+          text: string
+        }
+        Insert: {
+          archived_at?: string | null
+          hotel_id: string
+          id?: string
+          routine_id: string
+          sort_order?: number
+          text: string
+        }
+        Update: {
+          archived_at?: string | null
+          hotel_id?: string
+          id?: string
+          routine_id?: string
+          sort_order?: number
+          text?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "routine_steps_hotel_id_fkey"
+            columns: ["hotel_id"]
+            isOneToOne: false
+            referencedRelation: "hotels"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "routine_steps_routine_id_fkey"
+            columns: ["routine_id"]
+            isOneToOne: false
+            referencedRelation: "routines"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      routine_ticks: {
+        Row: {
+          at: string
+          by_name: string
+          by_user: string | null
+          hotel_id: string
+          id: string
+          routine_id: string
+          run_date: string
+          step_id: string
+          step_text: string
+        }
+        Insert: {
+          at?: string
+          by_name?: string
+          by_user?: string | null
+          hotel_id: string
+          id?: string
+          routine_id: string
+          run_date: string
+          step_id: string
+          step_text?: string
+        }
+        Update: {
+          at?: string
+          by_name?: string
+          by_user?: string | null
+          hotel_id?: string
+          id?: string
+          routine_id?: string
+          run_date?: string
+          step_id?: string
+          step_text?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "routine_ticks_hotel_id_fkey"
+            columns: ["hotel_id"]
+            isOneToOne: false
+            referencedRelation: "hotels"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "routine_ticks_routine_id_fkey"
+            columns: ["routine_id"]
+            isOneToOne: false
+            referencedRelation: "routines"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "routine_ticks_step_id_fkey"
+            columns: ["step_id"]
+            isOneToOne: false
+            referencedRelation: "routine_steps"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      routines: {
+        Row: {
+          archived_at: string | null
+          created_at: string
+          department: string
+          hotel_id: string
+          id: string
+          name: string
+          sort_order: number
+          updated_at: string
+          weekdays: number[]
+        }
+        Insert: {
+          archived_at?: string | null
+          created_at?: string
+          department: string
+          hotel_id?: string
+          id?: string
+          name: string
+          sort_order?: number
+          updated_at?: string
+          weekdays?: number[]
+        }
+        Update: {
+          archived_at?: string | null
+          created_at?: string
+          department?: string
+          hotel_id?: string
+          id?: string
+          name?: string
+          sort_order?: number
+          updated_at?: string
+          weekdays?: number[]
+        }
+        Relationships: [
+          {
+            foreignKeyName: "routines_hotel_id_fkey"
+            columns: ["hotel_id"]
+            isOneToOne: false
+            referencedRelation: "hotels"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       shift_brief_settings: {
         Row: {
           hidden: string[]
@@ -2327,6 +2471,145 @@ export type Database = {
             columns: ["hotel_id"]
             isOneToOne: false
             referencedRelation: "hotels"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      todo_marks: {
+        Row: {
+          at: string
+          by_name: string
+          by_user: string | null
+          hotel_id: string
+          id: string
+          occurrence_key: string
+          status: string
+          todo_id: string
+        }
+        Insert: {
+          at?: string
+          by_name?: string
+          by_user?: string | null
+          hotel_id: string
+          id?: string
+          occurrence_key: string
+          status: string
+          todo_id: string
+        }
+        Update: {
+          at?: string
+          by_name?: string
+          by_user?: string | null
+          hotel_id?: string
+          id?: string
+          occurrence_key?: string
+          status?: string
+          todo_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "todo_marks_hotel_id_fkey"
+            columns: ["hotel_id"]
+            isOneToOne: false
+            referencedRelation: "hotels"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "todo_marks_todo_id_fkey"
+            columns: ["todo_id"]
+            isOneToOne: false
+            referencedRelation: "todos"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      todos: {
+        Row: {
+          area_id: string | null
+          created_at: string
+          created_by: string
+          created_by_name: string
+          department: string | null
+          due_all_day: boolean
+          due_at: string | null
+          hotel_id: string
+          id: string
+          notes: string
+          owner_id: string | null
+          priority: string
+          repeat_until: string | null
+          room_number: number | null
+          rrule: string | null
+          timezone: string
+          title: string
+          updated_at: string
+          updated_by_name: string | null
+          version: number
+        }
+        Insert: {
+          area_id?: string | null
+          created_at?: string
+          created_by?: string
+          created_by_name?: string
+          department?: string | null
+          due_all_day?: boolean
+          due_at?: string | null
+          hotel_id?: string
+          id?: string
+          notes?: string
+          owner_id?: string | null
+          priority?: string
+          repeat_until?: string | null
+          room_number?: number | null
+          rrule?: string | null
+          timezone: string
+          title: string
+          updated_at?: string
+          updated_by_name?: string | null
+          version?: number
+        }
+        Update: {
+          area_id?: string | null
+          created_at?: string
+          created_by?: string
+          created_by_name?: string
+          department?: string | null
+          due_all_day?: boolean
+          due_at?: string | null
+          hotel_id?: string
+          id?: string
+          notes?: string
+          owner_id?: string | null
+          priority?: string
+          repeat_until?: string | null
+          room_number?: number | null
+          rrule?: string | null
+          timezone?: string
+          title?: string
+          updated_at?: string
+          updated_by_name?: string | null
+          version?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "todos_area_id_fkey"
+            columns: ["area_id"]
+            isOneToOne: false
+            referencedRelation: "maintenance_areas"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "todos_hotel_id_fkey"
+            columns: ["hotel_id"]
+            isOneToOne: false
+            referencedRelation: "hotels"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "todos_owner_id_fkey"
+            columns: ["owner_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
             referencedColumns: ["id"]
           },
         ]
