@@ -79,6 +79,242 @@ export type Database = {
         }
         Relationships: []
       }
+      calendar_event_exceptions: {
+        Row: {
+          all_day: boolean | null
+          cancelled: boolean
+          ends_at: string | null
+          event_id: string
+          hotel_id: string
+          id: string
+          location: string | null
+          notes: string | null
+          occurrence_start: string
+          starts_at: string | null
+          title: string | null
+          updated_at: string
+          updated_by_name: string | null
+        }
+        Insert: {
+          all_day?: boolean | null
+          cancelled?: boolean
+          ends_at?: string | null
+          event_id: string
+          hotel_id: string
+          id?: string
+          location?: string | null
+          notes?: string | null
+          occurrence_start: string
+          starts_at?: string | null
+          title?: string | null
+          updated_at?: string
+          updated_by_name?: string | null
+        }
+        Update: {
+          all_day?: boolean | null
+          cancelled?: boolean
+          ends_at?: string | null
+          event_id?: string
+          hotel_id?: string
+          id?: string
+          location?: string | null
+          notes?: string | null
+          occurrence_start?: string
+          starts_at?: string | null
+          title?: string | null
+          updated_at?: string
+          updated_by_name?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "calendar_event_exceptions_event_id_fkey"
+            columns: ["event_id"]
+            isOneToOne: false
+            referencedRelation: "calendar_events"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "calendar_event_exceptions_hotel_id_fkey"
+            columns: ["hotel_id"]
+            isOneToOne: false
+            referencedRelation: "hotels"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      calendar_events: {
+        Row: {
+          all_day: boolean
+          calendar_id: string
+          created_at: string
+          created_by: string
+          created_by_name: string
+          ends_at: string
+          hotel_id: string
+          id: string
+          location: string
+          notes: string
+          repeat_until: string | null
+          room_number: number | null
+          rrule: string | null
+          starts_at: string
+          timezone: string
+          title: string
+          updated_at: string
+          updated_by: string | null
+          updated_by_name: string | null
+          version: number
+        }
+        Insert: {
+          all_day?: boolean
+          calendar_id: string
+          created_at?: string
+          created_by?: string
+          created_by_name?: string
+          ends_at: string
+          hotel_id: string
+          id?: string
+          location?: string
+          notes?: string
+          repeat_until?: string | null
+          room_number?: number | null
+          rrule?: string | null
+          starts_at: string
+          timezone: string
+          title: string
+          updated_at?: string
+          updated_by?: string | null
+          updated_by_name?: string | null
+          version?: number
+        }
+        Update: {
+          all_day?: boolean
+          calendar_id?: string
+          created_at?: string
+          created_by?: string
+          created_by_name?: string
+          ends_at?: string
+          hotel_id?: string
+          id?: string
+          location?: string
+          notes?: string
+          repeat_until?: string | null
+          room_number?: number | null
+          rrule?: string | null
+          starts_at?: string
+          timezone?: string
+          title?: string
+          updated_at?: string
+          updated_by?: string | null
+          updated_by_name?: string | null
+          version?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "calendar_events_calendar_id_fkey"
+            columns: ["calendar_id"]
+            isOneToOne: false
+            referencedRelation: "calendars"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "calendar_events_hotel_id_fkey"
+            columns: ["hotel_id"]
+            isOneToOne: false
+            referencedRelation: "hotels"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      calendar_shares: {
+        Row: {
+          calendar_id: string
+          can_edit: boolean
+          department: string | null
+          hotel_id: string
+          id: string
+          user_id: string | null
+        }
+        Insert: {
+          calendar_id: string
+          can_edit?: boolean
+          department?: string | null
+          hotel_id: string
+          id?: string
+          user_id?: string | null
+        }
+        Update: {
+          calendar_id?: string
+          can_edit?: boolean
+          department?: string | null
+          hotel_id?: string
+          id?: string
+          user_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "calendar_shares_calendar_id_fkey"
+            columns: ["calendar_id"]
+            isOneToOne: false
+            referencedRelation: "calendars"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "calendar_shares_hotel_id_fkey"
+            columns: ["hotel_id"]
+            isOneToOne: false
+            referencedRelation: "hotels"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      calendars: {
+        Row: {
+          archived_at: string | null
+          colour: string
+          created_at: string
+          created_by: string | null
+          hotel_id: string
+          id: string
+          name: string
+          owner_department: string | null
+          sort_order: number
+          updated_at: string
+        }
+        Insert: {
+          archived_at?: string | null
+          colour?: string
+          created_at?: string
+          created_by?: string | null
+          hotel_id?: string
+          id?: string
+          name: string
+          owner_department?: string | null
+          sort_order?: number
+          updated_at?: string
+        }
+        Update: {
+          archived_at?: string | null
+          colour?: string
+          created_at?: string
+          created_by?: string | null
+          hotel_id?: string
+          id?: string
+          name?: string
+          owner_department?: string | null
+          sort_order?: number
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "calendars_hotel_id_fkey"
+            columns: ["hotel_id"]
+            isOneToOne: false
+            referencedRelation: "hotels"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       delivery_counts: {
         Row: {
           count: number
@@ -2197,6 +2433,17 @@ export type Database = {
       set_rooms_left_dirty: {
         Args: { p_on: boolean; p_rooms: number[] }
         Returns: number
+      }
+      split_calendar_event: {
+        Args: {
+          p_event: string
+          p_from: string
+          p_new: Json
+          p_old_repeat_until: string
+          p_old_rrule: string
+          p_version: number
+        }
+        Returns: string
       }
     }
     Enums: {
