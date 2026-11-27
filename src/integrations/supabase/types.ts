@@ -358,6 +358,7 @@ export type Database = {
         Row: {
           bus_stops: Json
           bus_timetable: Json
+          bus_timetable_auto: Json | null
           features: Json
           hotel_id: string
           info_cards: Json
@@ -378,6 +379,7 @@ export type Database = {
         Insert: {
           bus_stops?: Json
           bus_timetable?: Json
+          bus_timetable_auto?: Json | null
           features?: Json
           hotel_id: string
           info_cards?: Json
@@ -398,6 +400,7 @@ export type Database = {
         Update: {
           bus_stops?: Json
           bus_timetable?: Json
+          bus_timetable_auto?: Json | null
           features?: Json
           hotel_id?: string
           info_cards?: Json
