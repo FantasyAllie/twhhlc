@@ -498,6 +498,13 @@
       "when": 1795768410757,
       "tag": "0070_bus_timetable_auto",
       "breakpoints": true
+    },
+    {
+      "idx": 71,
+      "version": "7",
+      "when": 1795791960456,
+      "tag": "0071_module_switches",
+      "breakpoints": true
     }
   ]
 }

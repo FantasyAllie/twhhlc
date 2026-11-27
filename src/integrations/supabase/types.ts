@@ -354,6 +354,41 @@ export type Database = {
           },
         ]
       }
+      hotel_modules: {
+        Row: {
+          all_departments: boolean
+          enabled: boolean
+          hotel_id: string
+          module: string
+          updated_at: string
+          updated_by: string | null
+        }
+        Insert: {
+          all_departments?: boolean
+          enabled?: boolean
+          hotel_id: string
+          module: string
+          updated_at?: string
+          updated_by?: string | null
+        }
+        Update: {
+          all_departments?: boolean
+          enabled?: boolean
+          hotel_id?: string
+          module?: string
+          updated_at?: string
+          updated_by?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "hotel_modules_hotel_id_fkey"
+            columns: ["hotel_id"]
+            isOneToOne: false
+            referencedRelation: "hotels"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       hotel_screen_settings: {
         Row: {
           bus_stops: Json
@@ -710,6 +745,61 @@ export type Database = {
         Relationships: [
           {
             foreignKeyName: "maintenance_requests_hotel_id_fkey"
+            columns: ["hotel_id"]
+            isOneToOne: false
+            referencedRelation: "hotels"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      module_departments: {
+        Row: {
+          department: string
+          hotel_id: string
+          module: string
+        }
+        Insert: {
+          department: string
+          hotel_id: string
+          module: string
+        }
+        Update: {
+          department?: string
+          hotel_id?: string
+          module?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "module_departments_hotel_id_fkey"
+            columns: ["hotel_id"]
+            isOneToOne: false
+            referencedRelation: "hotels"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      module_people: {
+        Row: {
+          allowed: boolean
+          hotel_id: string
+          module: string
+          user_id: string
+        }
+        Insert: {
+          allowed: boolean
+          hotel_id: string
+          module: string
+          user_id: string
+        }
+        Update: {
+          allowed?: boolean
+          hotel_id?: string
+          module?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "module_people_hotel_id_fkey"
             columns: ["hotel_id"]
             isOneToOne: false
             referencedRelation: "hotels"
@@ -2013,6 +2103,7 @@ export type Database = {
         }[]
       }
       mark_room_pin_seen: { Args: { p_pin: string }; Returns: undefined }
+      my_modules: { Args: never; Returns: string[] }
       resolve_morning_sheet: {
         Args: { p_apply: boolean; p_import: string; p_name: string }
         Returns: number
