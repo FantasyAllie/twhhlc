@@ -533,6 +533,13 @@
       "when": 1795882736818,
       "tag": "0075_compliance_module",
       "breakpoints": true
+    },
+    {
+      "idx": 76,
+      "version": "7",
+      "when": 1795883345139,
+      "tag": "0076_my_modules_all_modules",
+      "breakpoints": true
     }
   ]
 }
