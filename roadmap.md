@@ -2,6 +2,10 @@
 ## Lobby TV branding
 - [x] Create the private hotel-branding bucket (5 MB, PNG/JPEG/WebP), add authenticated same-hotel image reads, and verify all four storage policies
 
+## Compliance database
+- [x] Apply one Compliance migration and create private photo storage; verify module constraints, table checks, grants, policies, triggers, functions, realtime and regenerated types
+- [x] Exercise signing, urgent maintenance jobs, corrections, historical snapshots, locked history and invalid submissions with rolled-back database regression fixtures
+
 ## Dirty-room completion outcome
 - [x] Replace AI PDF reading with a fixed-format reader; verify all 48 rooms and notes from the real export and run 20 passing tests
 - [ ] Verify signed-in Paperwork upload and preview; blocked because no preview session could be minted for the requesting account

@@ -315,6 +315,282 @@ export type Database = {
           },
         ]
       }
+      compliance_checks: {
+        Row: {
+          archived_at: string | null
+          area_id: string | null
+          category: string
+          created_at: string
+          department: string
+          every: number
+          frequency: string
+          hotel_id: string
+          id: string
+          instructions: string
+          name: string
+          room_number: number | null
+          sort_order: number
+          updated_at: string
+        }
+        Insert: {
+          archived_at?: string | null
+          area_id?: string | null
+          category?: string
+          created_at?: string
+          department: string
+          every?: number
+          frequency: string
+          hotel_id?: string
+          id?: string
+          instructions?: string
+          name: string
+          room_number?: number | null
+          sort_order?: number
+          updated_at?: string
+        }
+        Update: {
+          archived_at?: string | null
+          area_id?: string | null
+          category?: string
+          created_at?: string
+          department?: string
+          every?: number
+          frequency?: string
+          hotel_id?: string
+          id?: string
+          instructions?: string
+          name?: string
+          room_number?: number | null
+          sort_order?: number
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "compliance_checks_area_id_fkey"
+            columns: ["area_id"]
+            isOneToOne: false
+            referencedRelation: "maintenance_areas"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "compliance_checks_hotel_id_fkey"
+            columns: ["hotel_id"]
+            isOneToOne: false
+            referencedRelation: "hotels"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      compliance_items: {
+        Row: {
+          archived_at: string | null
+          check_id: string
+          hotel_id: string
+          id: string
+          kind: string
+          label: string
+          max_value: number | null
+          min_value: number | null
+          pass_answer: boolean
+          required: boolean
+          sort_order: number
+          unit: string
+        }
+        Insert: {
+          archived_at?: string | null
+          check_id: string
+          hotel_id: string
+          id?: string
+          kind: string
+          label: string
+          max_value?: number | null
+          min_value?: number | null
+          pass_answer?: boolean
+          required?: boolean
+          sort_order?: number
+          unit?: string
+        }
+        Update: {
+          archived_at?: string | null
+          check_id?: string
+          hotel_id?: string
+          id?: string
+          kind?: string
+          label?: string
+          max_value?: number | null
+          min_value?: number | null
+          pass_answer?: boolean
+          required?: boolean
+          sort_order?: number
+          unit?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "compliance_items_check_id_fkey"
+            columns: ["check_id"]
+            isOneToOne: false
+            referencedRelation: "compliance_checks"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "compliance_items_hotel_id_fkey"
+            columns: ["hotel_id"]
+            isOneToOne: false
+            referencedRelation: "hotels"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      compliance_records: {
+        Row: {
+          by_name: string
+          by_user: string
+          check_id: string
+          check_name: string
+          correction_reason: string | null
+          corrects_id: string | null
+          hotel_id: string
+          id: string
+          maintenance_request_id: string | null
+          notes: string
+          passed: boolean
+          photo_paths: string[]
+          signed_at: string
+        }
+        Insert: {
+          by_name: string
+          by_user: string
+          check_id: string
+          check_name: string
+          correction_reason?: string | null
+          corrects_id?: string | null
+          hotel_id: string
+          id?: string
+          maintenance_request_id?: string | null
+          notes?: string
+          passed: boolean
+          photo_paths?: string[]
+          signed_at?: string
+        }
+        Update: {
+          by_name?: string
+          by_user?: string
+          check_id?: string
+          check_name?: string
+          correction_reason?: string | null
+          corrects_id?: string | null
+          hotel_id?: string
+          id?: string
+          maintenance_request_id?: string | null
+          notes?: string
+          passed?: boolean
+          photo_paths?: string[]
+          signed_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "compliance_records_check_id_fkey"
+            columns: ["check_id"]
+            isOneToOne: false
+            referencedRelation: "compliance_checks"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "compliance_records_corrects_id_fkey"
+            columns: ["corrects_id"]
+            isOneToOne: false
+            referencedRelation: "compliance_records"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "compliance_records_hotel_id_fkey"
+            columns: ["hotel_id"]
+            isOneToOne: false
+            referencedRelation: "hotels"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "compliance_records_maintenance_request_id_fkey"
+            columns: ["maintenance_request_id"]
+            isOneToOne: false
+            referencedRelation: "maintenance_requests"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      compliance_values: {
+        Row: {
+          hotel_id: string
+          id: string
+          in_range: boolean
+          item_id: string | null
+          kind: string
+          label: string
+          max_value: number | null
+          min_value: number | null
+          record_id: string
+          sort_order: number
+          unit: string
+          value_bool: boolean | null
+          value_number: number | null
+          value_text: string | null
+        }
+        Insert: {
+          hotel_id: string
+          id?: string
+          in_range: boolean
+          item_id?: string | null
+          kind: string
+          label: string
+          max_value?: number | null
+          min_value?: number | null
+          record_id: string
+          sort_order?: number
+          unit?: string
+          value_bool?: boolean | null
+          value_number?: number | null
+          value_text?: string | null
+        }
+        Update: {
+          hotel_id?: string
+          id?: string
+          in_range?: boolean
+          item_id?: string | null
+          kind?: string
+          label?: string
+          max_value?: number | null
+          min_value?: number | null
+          record_id?: string
+          sort_order?: number
+          unit?: string
+          value_bool?: boolean | null
+          value_number?: number | null
+          value_text?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "compliance_values_hotel_id_fkey"
+            columns: ["hotel_id"]
+            isOneToOne: false
+            referencedRelation: "hotels"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "compliance_values_item_id_fkey"
+            columns: ["item_id"]
+            isOneToOne: false
+            referencedRelation: "compliance_items"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "compliance_values_record_id_fkey"
+            columns: ["record_id"]
+            isOneToOne: false
+            referencedRelation: "compliance_records"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       delivery_counts: {
         Row: {
           count: number
@@ -2725,6 +3001,17 @@ export type Database = {
           p_old_repeat_until: string
           p_old_rrule: string
           p_version: number
+        }
+        Returns: string
+      }
+      submit_compliance_record: {
+        Args: {
+          p_check: string
+          p_corrects?: string
+          p_notes?: string
+          p_photos?: string[]
+          p_reason?: string
+          p_values: Json
         }
         Returns: string
       }
